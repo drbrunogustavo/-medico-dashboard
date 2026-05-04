@@ -5,7 +5,6 @@ import { TopBar } from "@/components/TopBar"
 import { StatCard } from "@/components/StatCard"
 import { Plus, FileText, Search, Filter, Tag, Clock, Star, ChevronRight, Pencil, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { supabase } from "@/lib/supabase"
 
 const CATEGORIAS = ["Todas","Nutrologia","Endocrinologia","Longevidade","Metabolismo","Microbioma","Hormônios","Anti-aging","Genômica"]
 const PRIORIDADES = ["Todas","Alta","Média","Baixa"]
@@ -15,7 +14,7 @@ interface Pauta {
   id: string
   titulo: string
   categoria: string
-  prioridade: "Alta" | "Média" | "Baixa"
+  prioridade: string
   estagio: string
   tags: string[]
   nota: string
@@ -23,10 +22,10 @@ interface Pauta {
   criada_em: string
 }
 
-const PRIORIDADE_STYLES = {
-  Alta:  "bg-red-950/60 border-red-500/40 text-red-400",
-  Média: "bg-amber-950/60 border-amber-500/40 text-amber-400",
-  Baixa: "bg-green-950/60 border-green-600/40 text-green-400",
+const PRIORIDADE_STYLES: Record<string, string> = {
+  "Alta":  "bg-red-950/60 border-red-500/40 text-red-400",
+  "Média": "bg-amber-950/60 border-amber-500/40 text-amber-400",
+  "Baixa": "bg-green-950/60 border-green-600/40 text-green-400",
 }
 
 const ESTAGIO_STYLES: Record<string, string> = {
@@ -48,7 +47,7 @@ export default function PautasPage() {
   const [showForm, setShowForm]   = useState(false)
   const [newTitulo, setNewTitulo] = useState("")
   const [newCat, setNewCat]       = useState("Nutrologia")
-  const [newPri, setNewPri]       = useState<"Alta"|"Média"|"Baixa">("Média")
+  const [newPri, setNewPri]       = useState("Média")
   const [newNota, setNewNota]     = useState("")
   const [newFonte, setNewFonte]   = useState("")
   const [toast, setToast]         = useState<string | null>(null)
@@ -60,12 +59,13 @@ export default function PautasPage() {
 
   const fetchPautas = async () => {
     setLoading(true)
-    const { data, error } = await supabase
-      .from("pautas")
-      .select("*")
-      .order("criada_em", { ascending: false })
-    if (error) console.error("Erro ao buscar pautas:", error)
-    else setPautas(data || [])
+    try {
+      const res = await fetch('/api/pautas')
+      const data = await res.json()
+      setPautas(data || [])
+    } catch (e) {
+      console.error(e)
+    }
     setLoading(false)
   }
 
@@ -74,7 +74,7 @@ export default function PautasPage() {
   const filtered = pautas.filter(p => {
     if (filterCat !== "Todas" && p.categoria !== filterCat) return false
     if (filterPri !== "Todas" && p.prioridade !== filterPri) return false
-    if (filterEst !== "Todos" && p.estagio    !== filterEst) return false
+    if (filterEst !== "Todos" && p.estagio !== filterEst) return false
     if (search && !p.titulo.toLowerCase().includes(search.toLowerCase())) return false
     return true
   })
@@ -82,23 +82,42 @@ export default function PautasPage() {
   const addPauta = async () => {
     if (!newTitulo.trim()) return
     setSaving(true)
-    const { error } = await supabase.from("pautas").insert({
-      titulo: newTitulo, categoria: newCat, prioridade: newPri,
-      estagio: "Ideia", tags: [], nota: newNota, fonte: newFonte,
-    })
-    if (error) showToast("Erro ao salvar. Tente novamente.")
-    else {
-      showToast("Pauta salva com sucesso!")
-      setNewTitulo(""); setNewNota(""); setNewFonte(""); setShowForm(false)
-      fetchPautas()
+    try {
+      const res = await fetch('/api/pautas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          titulo: newTitulo, categoria: newCat, prioridade: newPri,
+          estagio: "Ideia", tags: [], nota: newNota, fonte: newFonte,
+        })
+      })
+      if (res.ok) {
+        showToast("Pauta salva com sucesso!")
+        setNewTitulo(""); setNewNota(""); setNewFonte(""); setShowForm(false)
+        fetchPautas()
+      } else {
+        showToast("Erro ao salvar.")
+      }
+    } catch (e) {
+      showToast("Erro ao salvar.")
     }
     setSaving(false)
   }
 
   const removePauta = async (id: string) => {
-    const { error } = await supabase.from("pautas").delete().eq("id", id)
-    if (error) showToast("Erro ao remover. Tente novamente.")
-    else { showToast("Pauta removida."); setPautas(prev => prev.filter(p => p.id !== id)) }
+    try {
+      const res = await fetch('/api/pautas', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+      })
+      if (res.ok) {
+        showToast("Pauta removida.")
+        setPautas(prev => prev.filter(p => p.id !== id))
+      }
+    } catch (e) {
+      showToast("Erro ao remover.")
+    }
   }
 
   const fmtData = (d: string) => new Date(d).toLocaleDateString("pt-BR")
@@ -140,7 +159,7 @@ export default function PautasPage() {
                 className="bg-background border border-border rounded-lg px-3 py-2 text-[12px] text-text-primary outline-none focus:border-accent/40">
                 {CATEGORIAS.filter(c => c !== "Todas").map(c => <option key={c}>{c}</option>)}
               </select>
-              <select value={newPri} onChange={e => setNewPri(e.target.value as "Alta"|"Média"|"Baixa")}
+              <select value={newPri} onChange={e => setNewPri(e.target.value)}
                 className="bg-background border border-border rounded-lg px-3 py-2 text-[12px] text-text-primary outline-none focus:border-accent/40">
                 {["Alta","Média","Baixa"].map(p => <option key={p}>{p}</option>)}
               </select>
@@ -211,7 +230,7 @@ export default function PautasPage() {
                 <div className="flex items-start gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-2 flex-wrap">
-                      <span className={cn("text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full border", PRIORIDADE_STYLES[p.prioridade])}>
+                      <span className={cn("text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full border", PRIORIDADE_STYLES[p.prioridade] || PRIORIDADE_STYLES["Baixa"])}>
                         {p.prioridade}
                       </span>
                       <span className={cn("text-[9px] font-mono px-2 py-0.5 rounded-full border", ESTAGIO_STYLES[p.estagio] || ESTAGIO_STYLES["Ideia"])}>

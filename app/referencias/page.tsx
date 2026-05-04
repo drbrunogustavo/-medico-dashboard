@@ -5,7 +5,6 @@ import { TopBar } from "@/components/TopBar"
 import { StatCard } from "@/components/StatCard"
 import { Plus, Users, TrendingUp, Eye, Star, ExternalLink, Search, Instagram, Globe, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { supabase } from "@/lib/supabase"
 
 const NICHOS = ["Todos","Nutrologia","Endocrinologia","Longevidade","Metabolismo","Geral"]
 const RELEVANCIA = ["Todas","Alta","Media","Baixa"]
@@ -25,36 +24,36 @@ interface Referencia {
 }
 
 const RELEVANCIA_STYLES: Record<string, string> = {
-  "Alta": "bg-red-950/60 border-red-500/40 text-red-400",
+  "Alta":  "bg-red-950/60 border-red-500/40 text-red-400",
   "Media": "bg-amber-950/60 border-amber-500/40 text-amber-400",
   "Baixa": "bg-green-950/60 border-green-600/40 text-green-400",
 }
 
 const FREQ_STYLES: Record<string, string> = {
-  "Diaria": "text-emerald-400",
+  "Diaria":    "text-emerald-400",
   "3x/semana": "text-blue-400",
   "2x/semana": "text-blue-400",
   "1x/semana": "text-amber-400",
-  "Esporadica": "text-text-muted",
+  "Esporadica":"text-text-muted",
 }
 
 export default function ReferenciasPage() {
-  const [refs, setRefs] = useState<Referencia[]>([])
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [search, setSearch] = useState("")
+  const [refs, setRefs]               = useState<Referencia[]>([])
+  const [loading, setLoading]         = useState(true)
+  const [saving, setSaving]           = useState(false)
+  const [search, setSearch]           = useState("")
   const [filterNicho, setFilterNicho] = useState("Todos")
-  const [filterRel, setFilterRel] = useState("Todas")
-  const [showForm, setShowForm] = useState(false)
-  const [newNome, setNewNome] = useState("")
-  const [newInsta, setNewInsta] = useState("")
-  const [newEsp, setNewEsp] = useState("Endocrinologia")
-  const [newSeg, setNewSeg] = useState("")
-  const [newFreq, setNewFreq] = useState("2x/semana")
-  const [newRel, setNewRel] = useState("Media")
-  const [newNota, setNewNota] = useState("")
-  const [newSite, setNewSite] = useState("")
-  const [toast, setToast] = useState<string | null>(null)
+  const [filterRel, setFilterRel]     = useState("Todas")
+  const [showForm, setShowForm]       = useState(false)
+  const [newNome, setNewNome]         = useState("")
+  const [newInsta, setNewInsta]       = useState("")
+  const [newEsp, setNewEsp]           = useState("Endocrinologia")
+  const [newSeg, setNewSeg]           = useState("")
+  const [newFreq, setNewFreq]         = useState("2x/semana")
+  const [newRel, setNewRel]           = useState("Media")
+  const [newNota, setNewNota]         = useState("")
+  const [newSite, setNewSite]         = useState("")
+  const [toast, setToast]             = useState<string | null>(null)
 
   const showToast = (msg: string) => {
     setToast(msg)
@@ -63,12 +62,13 @@ export default function ReferenciasPage() {
 
   const fetchRefs = async () => {
     setLoading(true)
-    const { data, error } = await supabase
-      .from("referencias")
-      .select("*")
-      .order("criada_em", { ascending: false })
-    if (error) console.error("Erro:", error)
-    else setRefs(data || [])
+    try {
+      const res = await fetch('/api/referencias')
+      const data = await res.json()
+      setRefs(data || [])
+    } catch (e) {
+      console.error(e)
+    }
     setLoading(false)
   }
 
@@ -84,25 +84,44 @@ export default function ReferenciasPage() {
   const addRef = async () => {
     if (!newNome.trim()) return
     setSaving(true)
-    const { error } = await supabase.from("referencias").insert({
-      nome: newNome, especialidade: newEsp, instagram: newInsta || "-",
-      seguidores: newSeg || "-", frequencia: newFreq, temas: [],
-      relevancia: newRel, nota: newNota, site: newSite,
-    })
-    if (error) showToast("Erro ao salvar.")
-    else {
-      showToast("Referencia salva!")
-      setNewNome(""); setNewInsta(""); setNewNota(""); setNewSite(""); setNewSeg("")
-      setShowForm(false)
-      fetchRefs()
+    try {
+      const res = await fetch('/api/referencias', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nome: newNome, especialidade: newEsp, instagram: newInsta || "-",
+          seguidores: newSeg || "-", frequencia: newFreq, temas: [],
+          relevancia: newRel, nota: newNota, site: newSite,
+        })
+      })
+      if (res.ok) {
+        showToast("Referencia salva!")
+        setNewNome(""); setNewInsta(""); setNewNota(""); setNewSite(""); setNewSeg("")
+        setShowForm(false)
+        fetchRefs()
+      } else {
+        showToast("Erro ao salvar.")
+      }
+    } catch (e) {
+      showToast("Erro ao salvar.")
     }
     setSaving(false)
   }
 
   const removeRef = async (id: string) => {
-    const { error } = await supabase.from("referencias").delete().eq("id", id)
-    if (error) showToast("Erro ao remover.")
-    else { showToast("Removida."); setRefs(prev => prev.filter(r => r.id !== id)) }
+    try {
+      const res = await fetch('/api/referencias', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+      })
+      if (res.ok) {
+        showToast("Removida.")
+        setRefs(prev => prev.filter(r => r.id !== id))
+      }
+    } catch (e) {
+      showToast("Erro ao remover.")
+    }
   }
 
   const totalSeg = refs.map(r => parseInt(r.seguidores.replace(/[^0-9]/g, "")) || 0).reduce((a, b) => a + b, 0)
@@ -114,7 +133,8 @@ export default function ReferenciasPage() {
         title="Monitor de Referencias"
         subtitle="MEDICOS INFLUENTES NO SEU NICHO"
         actions={
-          <button onClick={() => setShowForm(v => !v)} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-accent-dim border border-accent-border text-accent text-[12px] font-medium hover:bg-accent/20 transition-colors">
+          <button onClick={() => setShowForm(v => !v)}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-accent-dim border border-accent-border text-accent text-[12px] font-medium hover:bg-accent/20 transition-colors">
             <Plus className="w-3.5 h-3.5" /> Adicionar Referencia
           </button>
         }
@@ -164,8 +184,8 @@ export default function ReferenciasPage() {
           </div>
           <div className="border-t border-border pt-3 space-y-2.5">
             {[
-              { label:"Nicho", items:NICHOS, value:filterNicho, set:setFilterNicho },
-              { label:"Relevancia", items:RELEVANCIA, value:filterRel, set:setFilterRel },
+              { label:"Nicho",      items:NICHOS,     value:filterNicho, set:setFilterNicho },
+              { label:"Relevancia", items:RELEVANCIA, value:filterRel,   set:setFilterRel   },
             ].map(g => (
               <div key={g.label} className="flex items-center gap-3">
                 <span className="text-[9px] font-mono text-text-muted tracking-widest uppercase w-16 flex-shrink-0">{g.label}</span>
@@ -214,8 +234,8 @@ export default function ReferenciasPage() {
                 <div className="grid grid-cols-3 gap-2 mb-4">
                   {[
                     { label:"Especialidade", value:r.especialidade, colored:false },
-                    { label:"Seguidores", value:r.seguidores, colored:false },
-                    { label:"Frequencia", value:r.frequencia, colored:true },
+                    { label:"Seguidores",    value:r.seguidores,    colored:false },
+                    { label:"Frequencia",    value:r.frequencia,    colored:true  },
                   ].map(info => (
                     <div key={info.label} className="bg-background border border-border rounded-md px-3 py-2">
                       <div className="text-[8px] font-mono text-text-muted tracking-widest uppercase mb-0.5">{info.label}</div>

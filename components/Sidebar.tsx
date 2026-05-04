@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   ChevronRight,
   Activity,
+  Sparkles,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -24,6 +25,12 @@ const NAV_ITEMS = [
     href: "/radar",
     icon: Radio,
     badge: "LIVE",
+  },
+  {
+    label: "Gerador de Legendas",
+    href: "/legendas",
+    icon: Sparkles,
+    badge: null,
   },
   {
     label: "Banco de Pautas",
@@ -44,7 +51,6 @@ export function Sidebar() {
 
   return (
     <aside className="fixed left-0 top-0 h-full w-60 flex flex-col bg-surface border-r border-border z-40">
-      {/* Logo */}
       <div className="flex items-center gap-3 px-5 py-5 border-b border-border">
         <div className="relative w-8 h-8 rounded-lg bg-accent-dim border border-accent-border flex items-center justify-center flex-shrink-0">
           <Activity className="w-4 h-4 text-accent-text" />
@@ -56,7 +62,6 @@ export function Sidebar() {
         </div>
       </div>
 
-      {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
         <div className="text-[9px] font-mono text-text-muted tracking-widest uppercase px-2 mb-3">
           Módulos
@@ -96,7 +101,6 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* Footer */}
       <div className="px-5 py-4 border-t border-border">
         <div className="flex items-center gap-2">
           <div className="w-1.5 h-1.5 rounded-full bg-accent animate-blink" />

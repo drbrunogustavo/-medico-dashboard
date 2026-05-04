@@ -1,0 +1,59 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+    border-color: #1c1d2a;
+  }
+
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: #08090e;
+    color: #e8eaf2;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #2a2c3e; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #3a3c52; }
+
+  /* Selection */
+  ::selection { background: rgba(0,192,127,0.2); color: #e8eaf2; }
+}
+
+@layer utilities {
+  .grid-bg {
+    background-image:
+      linear-gradient(rgba(0,200,255,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,200,255,0.02) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+
+  .text-gradient-accent {
+    background: linear-gradient(135deg, #00c07f, #3b7fff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .card-glow-accent {
+    box-shadow: 0 0 0 1px rgba(0,192,127,0.1), 0 8px 32px rgba(0,0,0,0.4);
+  }
+
+  .card-glow-blue {
+    box-shadow: 0 0 0 1px rgba(59,127,255,0.1), 0 8px 32px rgba(0,0,0,0.4);
+  }
+}

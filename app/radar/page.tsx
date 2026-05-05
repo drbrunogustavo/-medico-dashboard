@@ -98,7 +98,7 @@ export default function RadarPage() {
           "anthropic-dangerous-direct-browser-access": "true",
         },
         body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
+          model: "claude-sonnet-4-6",
           max_tokens: 2000,
           tools: [{ type: "web_search_20250305", name: "web_search" }],
           system: "You are a medical intelligence aggregator for a Brazilian dashboard. Return ONLY a valid JSON array, no markdown, no backticks. Respond in Brazilian Portuguese.",
@@ -134,11 +134,30 @@ export default function RadarPage() {
     return true
   })
 
-  const toggleSave = (item: Article) => {
-    setSaved(prev => {
-      if (prev.includes(item.id)) {
-        showToast("Removida do banco de pautas")
-        return prev.filter(id => id !== item.id)
+  const toggleSave = async (item: Article) => {
+  if (saved.includes(item.id)) {
+    setSaved(prev => prev.filter(id => id !== item.id))
+    showToast("Removida do banco de pautas")
+    return
+  }
+  try {
+    const res = await fetch("/api/pautas", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        titulo: item.title,
+        descricao: item.summary,
+        categoria: item.category,
+        fonte: item.source,
+      }),
+    })
+    if (!res.ok) throw new Error()
+    setSaved(prev => [...prev, item.id])
+    showToast("Adicionada ao banco de pautas!")
+  } catch {
+    showToast("Erro ao salvar pauta.")
+  }
+}
       }
       showToast("Adicionada ao banco de pautas!")
       return [...prev, item.id]

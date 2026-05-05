@@ -144,11 +144,24 @@ export default function RadarPage() {
     const res = await fetch("/api/pautas", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        titulo: item.title,
-        descricao: item.summary,
-        categoria: item.category,
-        fonte: item.source,
+     // ANTES
+body: JSON.stringify({
+  titulo: item.title,
+  descricao: item.summary,
+  categoria: item.category,
+  fonte: item.source,
+}),
+
+// DEPOIS
+body: JSON.stringify({
+  titulo: item.title,
+  nota: item.summary,
+  categoria: item.category,
+  fonte: item.source,
+  prioridade: item.relevance === "Alto" ? "Alta" : item.relevance === "Médio" ? "Média" : "Baixa",
+  estagio: "Ideia",
+  tags: [],
+}),
       }),
     })
     if (!res.ok) throw new Error()

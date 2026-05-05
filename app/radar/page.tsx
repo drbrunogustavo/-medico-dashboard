@@ -5,9 +5,18 @@ import { TopBar } from "@/components/TopBar"
 import { RefreshCw, Plus, Check } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-const SOURCES_LIST   = ["Todos","PubMed","The Lancet","NEJM","Nature Medicine","MedScape","G1 Saúde","CNN Health","Instagram Trending"]
-const CATEGORIES_LIST = ["Todos","Nutrologia","Endocrinologia","Longevidade","Metabolismo","Microbioma","Hormônios","Anti-aging","Genômica"]
-const PERIODS        = ["24h","Semana","Mês"]
+const SOURCES_LIST = [
+  "Todos","PubMed","The Lancet","NEJM","Nature Medicine","MedScape","G1 Saúde","CNN Health","Instagram Trending",
+  "FDA","BMJ","JAMA","UpToDate","Medscape Brasil","Healthline","Mayo Clinic","SBD"
+]
+
+const CATEGORIES_LIST = [
+  "Todos","Nutrologia","Endocrinologia","Longevidade","Metabolismo","Microbioma","Hormônios","Anti-aging","Genômica",
+  "Obesidade","Nutrição Clínica","Saúde Mental","Cardiometabolismo","Medicina do Esporte","Suplementação",
+  "Sono e Cronobiologia","Imunologia","Menopausa","Andropausa","Envelhecimento","Terapia Hormonal","Emagrecimento"
+]
+
+const PERIODS = ["24h","Semana","Mês"]
 
 const SOURCE_STYLES: Record<string, { bg: string; border: string; text: string; dot: string }> = {
   "PubMed":            { bg:"bg-emerald-950/60", border:"border-emerald-600/40", text:"text-emerald-400", dot:"bg-emerald-400" },
@@ -16,8 +25,16 @@ const SOURCE_STYLES: Record<string, { bg: string; border: string; text: string; 
   "Nature Medicine":   { bg:"bg-lime-950/60",    border:"border-lime-600/40",    text:"text-lime-400",   dot:"bg-lime-400"    },
   "MedScape":          { bg:"bg-fuchsia-950/60", border:"border-fuchsia-600/40", text:"text-fuchsia-400",dot:"bg-fuchsia-400" },
   "G1 Saúde":          { bg:"bg-amber-950/60",   border:"border-amber-600/40",   text:"text-amber-400",  dot:"bg-amber-400"   },
-  "CNN Health":        { bg:"bg-red-950/60",      border:"border-red-600/40",     text:"text-red-400",    dot:"bg-red-400"     },
+  "CNN Health":        { bg:"bg-red-950/60",     border:"border-red-600/40",     text:"text-red-400",    dot:"bg-red-400"     },
   "Instagram Trending":{ bg:"bg-purple-950/60",  border:"border-purple-600/40",  text:"text-purple-400", dot:"bg-purple-400"  },
+  "FDA":               { bg:"bg-blue-950/60",    border:"border-blue-700/40",    text:"text-blue-300",   dot:"bg-blue-300"    },
+  "BMJ":               { bg:"bg-teal-950/60",    border:"border-teal-600/40",    text:"text-teal-400",   dot:"bg-teal-400"    },
+  "JAMA":              { bg:"bg-indigo-950/60",  border:"border-indigo-600/40",  text:"text-indigo-400", dot:"bg-indigo-400"  },
+  "UpToDate":          { bg:"bg-sky-950/60",     border:"border-sky-600/40",     text:"text-sky-400",    dot:"bg-sky-400"     },
+  "Medscape Brasil":   { bg:"bg-pink-950/60",    border:"border-pink-600/40",    text:"text-pink-400",   dot:"bg-pink-400"    },
+  "Healthline":        { bg:"bg-green-950/60",   border:"border-green-600/40",   text:"text-green-400",  dot:"bg-green-400"   },
+  "Mayo Clinic":       { bg:"bg-cyan-950/60",    border:"border-cyan-600/40",    text:"text-cyan-400",   dot:"bg-cyan-400"    },
+  "SBD":               { bg:"bg-orange-950/60",  border:"border-orange-600/40",  text:"text-orange-400", dot:"bg-orange-400"  },
 }
 
 const RELEVANCE_STYLES: Record<string, { bg: string; border: string; text: string; pulse: boolean }> = {
@@ -29,10 +46,10 @@ const RELEVANCE_STYLES: Record<string, { bg: string; border: string; text: strin
 const MOCK_DATA = [
   { id:1, title:"Restrição calórica intermitente e marcadores de longevidade: novo estudo randomizado", source:"PubMed", category:"Longevidade", date:"03/05/2025", relevance:"Alto", summary:"Estudo controlado demonstra redução de 18% nos marcadores inflamatórios com jejum 16:8 por 12 semanas. Pesquisadores destacam impacto na expressão de sirtuínas." },
   { id:2, title:"GLP-1 além da diabetes: evidências emergentes para doenças neurodegenerativas", source:"The Lancet", category:"Endocrinologia", date:"02/05/2025", relevance:"Alto", summary:"Revisão sistemática aponta benefício neuroprotetor dos agonistas GLP-1 em modelos de Alzheimer e Parkinson. Ensaios clínicos de fase III já em andamento." },
-  { id:3, title:"Microbiota e eixo intestino-tireoide: novas vias regulatórias identificadas", source:"Nature Medicine", category:"Microbioma", date:"01/05/2025", relevance:"Alto", summary:"Pesquisadores mapearam como bactérias do gênero Akkermansia modulam a conversão de T4 para T3. Descoberta pode revolucionar o tratamento do hipotireoidismo subclínico." },
-  { id:4, title:"Protocolo de crioterapia corporal inteira viraliza entre biohackers de saúde", source:"Instagram Trending", category:"Longevidade", date:"03/05/2025", relevance:"Médio", summary:"Influenciadores promovem sessões de -110°C como protocolo anti-aging. Comunidade médica alerta para ausência de evidências em humanos saudáveis." },
-  { id:5, title:"Resistência insulínica subclínica: prevalência subestimada em adultos eutróficos", source:"NEJM", category:"Metabolismo", date:"30/04/2025", relevance:"Alto", summary:"Coorte de 12.000 participantes revela que 34% dos adultos com IMC normal apresentam resistência insulínica. Novo critério diagnóstico proposto." },
-  { id:6, title:"Testosterona e envelhecimento cardiovascular: meta-análise de 48 estudos", source:"MedScape", category:"Hormônios", date:"02/05/2025", relevance:"Médio", summary:"Meta-análise robusta esclarece relação entre reposição de testosterona e risco cardiovascular em homens acima de 50 anos." },
+  { id:3, title:"Terapia de reposição hormonal na menopausa: novas diretrizes internacionais", source:"JAMA", category:"Menopausa", date:"01/05/2025", relevance:"Alto", summary:"Novas diretrizes ampliam indicações da TRH para mulheres sintomáticas abaixo de 60 anos. Benefícios cardiovasculares e ósseos são destacados quando iniciada precocemente." },
+  { id:4, title:"Semaglutida e tirzepatida: comparativo de eficácia no emagrecimento a longo prazo", source:"NEJM", category:"Emagrecimento", date:"03/05/2025", relevance:"Alto", summary:"Meta-análise de 18 meses aponta superioridade da tirzepatida na redução de peso. Perfil de efeitos colaterais semelhante entre as duas drogas." },
+  { id:5, title:"Andropausa e reposição de testosterona: quando e como tratar", source:"Medscape Brasil", category:"Andropausa", date:"30/04/2025", relevance:"Médio", summary:"Consenso brasileiro atualiza critérios diagnósticos do hipogonadismo tardio. Nível de corte de testosterona total revisado para 350 ng/dL." },
+  { id:6, title:"Microbiota e eixo intestino-tireoide: novas vias regulatórias identificadas", source:"Nature Medicine", category:"Microbioma", date:"01/05/2025", relevance:"Alto", summary:"Pesquisadores mapearam como bactérias do gênero Akkermansia modulam a conversão de T4 para T3. Descoberta pode revolucionar o tratamento do hipotireoidismo subclínico." },
 ]
 
 interface Article {
@@ -104,7 +121,7 @@ export default function RadarPage() {
           system: "You are a medical intelligence aggregator for a Brazilian dashboard. Return ONLY a valid JSON array, no markdown, no backticks. Respond in Brazilian Portuguese.",
           messages: [{
             role: "user",
-            content: `Search top 8 trending medical topics${catFilter} from ${periodLabel}${sourceFilter} relevant to nutrologia, endocrinologia, longevidade, metabolismo, microbioma, hormônios, anti-aging, genômica. Return JSON array with: title (Portuguese, max 120 chars), source (PubMed|The Lancet|NEJM|Nature Medicine|MedScape|G1 Saúde|CNN Health|Instagram Trending), category (Nutrologia|Endocrinologia|Longevidade|Metabolismo|Microbioma|Hormônios|Anti-aging|Genômica), date (DD/MM/YYYY), relevance (Alto|Médio|Baixo), summary (2 sentences Portuguese).`
+            content: `Search top 8 trending medical topics${catFilter} from ${periodLabel}${sourceFilter} relevant to nutrologia, endocrinologia, longevidade, metabolismo, microbioma, hormônios, anti-aging, genômica, obesidade, nutrição clínica, saúde mental, cardiometabolismo, medicina do esporte, suplementação, sono, imunologia, menopausa, andropausa, envelhecimento, terapia hormonal, emagrecimento, medicamentos para emagrecimento (semaglutida, tirzepatida, ozempic, wegovy). Sources to prioritize: PubMed, The Lancet, NEJM, Nature Medicine, MedScape, FDA, BMJ, JAMA, UpToDate, Medscape Brasil, Healthline, Mayo Clinic, SBD, G1 Saúde, CNN Health, Instagram Trending. Return JSON array with: title (Portuguese, max 120 chars), source (one of the sources listed), category (Nutrologia|Endocrinologia|Longevidade|Metabolismo|Microbioma|Hormônios|Anti-aging|Genômica|Obesidade|Nutrição Clínica|Saúde Mental|Cardiometabolismo|Medicina do Esporte|Suplementação|Sono e Cronobiologia|Imunologia|Menopausa|Andropausa|Envelhecimento|Terapia Hormonal|Emagrecimento), date (DD/MM/YYYY), relevance (Alto|Médio|Baixo), summary (2 sentences Portuguese).`
           }]
         })
       })

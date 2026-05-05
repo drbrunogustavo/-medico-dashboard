@@ -162,7 +162,7 @@ body: JSON.stringify({
   estagio: "Ideia",
   tags: [],
 }),
-      }),
+      
     })
     if (!res.ok) throw new Error()
     setSaved(prev => [...prev, item.id])

@@ -135,68 +135,31 @@ export default function RadarPage() {
   })
 
   const toggleSave = async (item: Article) => {
-  if (saved.includes(item.id)) {
-    setSaved(prev => prev.filter(id => id !== item.id))
-    showToast("Removida do banco de pautas")
-    return
-  }
-  try {
-    const res = await fetch("/api/pautas", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        titulo: item.title,
-        nota: item.summary,
-        categoria: item.category,
-        fonte: item.source,
-        prioridade: item.relevance === "Alto" ? "Alta" : item.relevance === "Médio" ? "Média" : "Baixa",
-        estagio: "Ideia",
-        tags: [],
-      }),
-    })
-    if (!res.ok) throw new Error()
-    setSaved(prev => [...prev, item.id])
-    showToast("Adicionada ao banco de pautas!")
-  } catch {
-    showToast("Erro ao salvar pauta.")
-  }
-}
-  }
-  try {
-    const res = await fetch("/api/pautas", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-     // ANTES
-body: JSON.stringify({
-  titulo: item.title,
-  descricao: item.summary,
-  categoria: item.category,
-  fonte: item.source,
-}),
-
-// DEPOIS
-body: JSON.stringify({
-  titulo: item.title,
-  nota: item.summary,
-  categoria: item.category,
-  fonte: item.source,
-  prioridade: item.relevance === "Alto" ? "Alta" : item.relevance === "Médio" ? "Média" : "Baixa",
-  estagio: "Ideia",
-  tags: [],
-}),
-      
-    })
-    if (!res.ok) throw new Error()
-    setSaved(prev => [...prev, item.id])
-    showToast("Adicionada ao banco de pautas!")
-  } catch {
-    showToast("Erro ao salvar pauta.")
-  }
-}
-      }
+    if (saved.includes(item.id)) {
+      setSaved(prev => prev.filter(id => id !== item.id))
+      showToast("Removida do banco de pautas")
+      return
+    }
+    try {
+      const res = await fetch("/api/pautas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          titulo: item.title,
+          nota: item.summary,
+          categoria: item.category,
+          fonte: item.source,
+          prioridade: item.relevance === "Alto" ? "Alta" : item.relevance === "Médio" ? "Média" : "Baixa",
+          estagio: "Ideia",
+          tags: [],
+        }),
+      })
+      if (!res.ok) throw new Error()
+      setSaved(prev => [...prev, item.id])
       showToast("Adicionada ao banco de pautas!")
-      return [...prev, item.id]
-    })
+    } catch {
+      showToast("Erro ao salvar pauta.")
+    }
   }
 
   const fmtTime = (d: Date | null) => d ? d.toLocaleTimeString("pt-BR", { hour:"2-digit", minute:"2-digit" }) : "--:--"
@@ -219,7 +182,6 @@ body: JSON.stringify({
       />
 
       <div className="p-8 space-y-6">
-        {/* Filters */}
         <div className="bg-card border border-border rounded-lg p-5 space-y-4">
           {[
             { label: "Fonte",     items: SOURCES_LIST,    key: "source"   as const },
@@ -256,13 +218,12 @@ body: JSON.stringify({
           </div>
         </div>
 
-        {/* Stats */}
         <div className="grid grid-cols-4 gap-3 text-center">
           {[
-            { label:"Tendências",    value: articles.length,                                     },
-            { label:"Urgência Alta", value: articles.filter(a=>a.relevance==="Alto").length,     },
-            { label:"Fontes",        value: new Set(articles.map(a=>a.source)).size,             },
-            { label:"Na Pauta",      value: saved.length,                                        },
+            { label:"Tendências",    value: articles.length },
+            { label:"Urgência Alta", value: articles.filter(a=>a.relevance==="Alto").length },
+            { label:"Fontes",        value: new Set(articles.map(a=>a.source)).size },
+            { label:"Na Pauta",      value: saved.length },
           ].map(s => (
             <div key={s.label} className="bg-card border border-border rounded-lg py-3 px-4">
               <div className="text-[9px] font-mono text-text-muted tracking-widest uppercase">{s.label}</div>
@@ -271,7 +232,6 @@ body: JSON.stringify({
           ))}
         </div>
 
-        {/* Cards */}
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
             <RefreshCw className="w-8 h-8 text-accent animate-spin" />

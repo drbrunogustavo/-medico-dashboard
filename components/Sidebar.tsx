@@ -1,5 +1,4 @@
 "use client"
-
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
@@ -10,9 +9,9 @@ import {
   ChevronRight,
   Activity,
   Sparkles,
+  Layers,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-
 const NAV_ITEMS = [
   {
     label: "Dashboard",
@@ -25,6 +24,12 @@ const NAV_ITEMS = [
     href: "/radar",
     icon: Radio,
     badge: "LIVE",
+  },
+  {
+    label: "Gerador de Imagens",
+    href: "/imagens",
+    icon: Layers,
+    badge: "NEW",
   },
   {
     label: "Gerador de Legendas",
@@ -45,10 +50,8 @@ const NAV_ITEMS = [
     badge: null,
   },
 ]
-
 export function Sidebar() {
   const pathname = usePathname()
-
   return (
     <aside className="fixed left-0 top-0 h-full w-60 flex flex-col bg-surface border-r border-border z-40">
       <div className="flex items-center gap-3 px-5 py-5 border-b border-border">
@@ -61,7 +64,6 @@ export function Sidebar() {
           <div className="text-[10px] text-text-muted mt-0.5 font-mono">Dr. Bruno Gustavo</div>
         </div>
       </div>
-
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
         <div className="text-[9px] font-mono text-text-muted tracking-widest uppercase px-2 mb-3">
           Módulos
@@ -69,7 +71,6 @@ export function Sidebar() {
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon
           const isActive = pathname === item.href
-
           return (
             <Link
               key={item.href}
@@ -100,7 +101,6 @@ export function Sidebar() {
           )
         })}
       </nav>
-
       <div className="px-5 py-4 border-t border-border">
         <div className="flex items-center gap-2">
           <div className="w-1.5 h-1.5 rounded-full bg-accent animate-blink" />

@@ -148,9 +148,9 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale }: Canvas
   ) : null
 
   const LogoFooter = ({ center = false }: { center?: boolean }) => (
-    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '26px 72px', display: 'flex', justifyContent: center ? 'center' : 'space-between', alignItems: 'center', gap: 16 }}>
+    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 72px', display: 'flex', justifyContent: center ? 'center' : 'space-between', alignItems: 'center', gap: 16 }}>
       {!center && <div style={{ color: C.d2, fontSize: 24, fontWeight: 700, letterSpacing: 2 }}>{NOME}</div>}
-      {logo && <div style={{ background: 'rgba(0,0,0,0.6)', borderRadius: 10, padding: '8px 14px' }}><img src={logo} alt="" style={{ height: 80, maxWidth: 240, objectFit: 'contain', display: 'block' }} /></div>}
+      {logo && <div style={{ background: 'rgba(0,0,0,0.6)', borderRadius: 10, padding: '10px 16px' }}><img src={logo} alt="" style={{ height: 80, maxWidth: 240, objectFit: 'contain', display: 'block' }} /></div>}
     </div>
   )
 
@@ -314,7 +314,7 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale }: Canvas
           ))}
         </div>
 
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '22px 72px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 72px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ color: C.wFaint, fontSize: 20 }}>{HANDLE}</div>
           {logo && <div style={{ background: 'rgba(0,0,0,0.55)', borderRadius: 8, padding: '6px 10px' }}><img src={logo} alt="" style={{ height: 80, maxWidth: 240, objectFit: 'contain', display: 'block' }} /></div>}
         </div>
@@ -381,7 +381,7 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale }: Canvas
           </div>
         </div>
 
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 72px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: `1px solid rgba(184,151,106,0.1)` }}>
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '24px 72px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: `1px solid rgba(184,151,106,0.1)` }}>
           <div style={{ color: C.wFaint, fontSize: 17, textTransform: 'uppercase' as const, letterSpacing: 2 }}>{slide.fonte ?? ''}</div>
           {logo && <div style={{ background: 'rgba(0,0,0,0.55)', borderRadius: 8, padding: '6px 10px' }}><img src={logo} alt="" style={{ height: 80, objectFit: 'contain', display: 'block' }} /></div>}
           <div style={{ color: C.d2, fontSize: 20, fontWeight: 700 }}>{NOME}</div>
@@ -429,7 +429,7 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale }: Canvas
         {String(slide.id - 1).padStart(2, '0')}
       </div>
 
-      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '22px 72px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: `1px solid rgba(184,151,106,0.12)` }}>
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '24px 72px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: `1px solid rgba(184,151,106,0.12)` }}>
         {logo
           ? <div style={{ background: 'rgba(0,0,0,0.55)', borderRadius: 8, padding: '7px 12px' }}><img src={logo} alt="" style={{ height: 80, maxWidth: 240, objectFit: 'contain', display: 'block' }} /></div>
           : <div style={{ color: C.wFaint, fontSize: 20 }}>{HANDLE}</div>}

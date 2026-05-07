@@ -540,12 +540,13 @@ export default function ImagensPage() {
   // ── Download / Save ──
   const downloadCurrentSlide = useCallback(async () => {
     try {
-      // Captura o canvas oculto em 1080px real — não o preview escalado
-      const slideEl = document.getElementById('slide-capture-fullres')
+      // Captura o SlideCanvas interno diretamente — ignora o transform:scale do preview
+      const wrapper = document.getElementById('slide-canvas-wrapper')
+      const slideEl = wrapper?.firstElementChild as HTMLElement | null
       if (!slideEl) return
 
       setIsCapturing(true)
-      await new Promise(r => setTimeout(r, 80)) // garante re-render sem outline
+      await new Promise(r => setTimeout(r, 80))
 
       const { toPng } = await import('html-to-image')
       const { w, h } = FORMATOS_CONFIG[formato]
@@ -553,6 +554,7 @@ export default function ImagensPage() {
       const dataUrl = await toPng(slideEl, {
         width: w,
         height: h,
+        style: { transform: 'none', transformOrigin: 'top left' },
         pixelRatio: 1,
         cacheBust: true,
       })
@@ -900,9 +902,7 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
           </div>
 
           {currentS && (
-            <>
-              {/* Preview escalado para tela */}
-              <div id='slide-canvas-wrapper' style={{ width: PREVIEW_W, height: previewH, flexShrink: 0, position: 'relative', borderRadius: 8, overflow: 'hidden', boxShadow: '0 24px 60px rgba(0,0,0,0.85)', outline: `1px solid ${border}` }}>
+            <div id='slide-canvas-wrapper' style={{ width: PREVIEW_W, height: previewH, flexShrink: 0, position: 'relative', borderRadius: 8, overflow: 'hidden', boxShadow: '0 24px 60px rgba(0,0,0,0.85)', outline: `1px solid ${border}` }}>
                 <SlideCanvas
                   slide={currentS}
                   formato={formato}
@@ -916,25 +916,6 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
                 />
               </div>
 
-              {/* Canvas oculto em resolução real — opacity:0 garante renderização pelo browser */}
-              <div
-                id="slide-capture-fullres"
-                aria-hidden="true"
-                style={{ position: 'fixed', top: 0, left: 0, width: w, height: h, opacity: 0, pointerEvents: 'none', zIndex: -1, overflow: 'hidden' }}
-              >
-                <SlideCanvas
-                  slide={currentS}
-                  formato={formato}
-                  fotos={fotos}
-                  logo={logo}
-                  totalSlides={slides.length}
-                  scale={1}
-                  dragMode={false}
-                  offsets={currentOffsets}
-                  onDrag={() => {}}
-                />
-              </div>
-            </>
           )}
 
           {/* Botões de ação abaixo do preview */}

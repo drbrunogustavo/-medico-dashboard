@@ -591,7 +591,7 @@ Gere ${slides.length} slides. Retorne SOMENTE JSON válido (zero markdown, zero 
 
 Slide: tipo="${s.tipo}" | headline="${s.headline}" | corpo="${s.corpo}"${s.items ? ` | items=${JSON.stringify(s.items)}` : ''}${s.stats ? ` | stats=${JSON.stringify(s.stats)}` : ''}
 
-INSTRUÇÃO: "${editInstruction}"
+TAREFA: Reescreva APENAS os textos (headline, subtitulo, corpo) seguindo esta instrução: "${editInstruction}". NÃO coloque a instrução como texto no slide. Reescreva o conteúdo médico com base nela.
 
 Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headline, subtitulo, corpo${li === 2 ? ', items (4 itens {titulo,descricao})' : ''}${li === 3 ? ', stats (3 itens {valor,unidade,descricao}), fonte' : ''}`
 

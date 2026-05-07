@@ -511,7 +511,7 @@ export default function ImagensPage() {
     if (!tema.trim()) return
     setIsGenerating(true)
     try {
-      const apiKey = process.env.NEXT_PUBLIC_ANTHROPIC_API_KEY
+      const apiKey = process.env.NEXT_PUBLIC_ANTHROPIC_API_KEY; console.log("APIKEY:", apiKey)
       const contentSlides = slides.filter(s => s.tipo === 'conteudo').map(s => ({ id: s.id, layout: layoutOf(s.id) }))
 
       const prompt = `Você é redator de conteúdo médico para Instagram do Dr. Bruno Gustavo — Clínico-Geral, Pós-Graduado em Endocrinologia e Nutrologia. Poços de Caldas-MG.

@@ -1,36 +1,32 @@
 import { NextResponse } from 'next/server'
-import Anthropic from '@anthropic-ai/sdk'
-
-const client = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-})
 
 export async function POST(request: Request) {
-  const { tema, contexto, formato, tom, emojis } = await request.json()
+  const { contexto, formato, tom, emojis } = await request.json()
 
   try {
-    const message = await client.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 1500,
-      system: `Você é um especialista em marketing médico digital para Instagram. Cria legendas profissionais para médicos brasileiros nas áreas de nutrologia, endocrinologia e longevidade. Responda APENAS com JSON válido, sem markdown, sem texto antes ou depois.`,
-      messages: [{
-        role: "user",
-        content: `Crie uma legenda para Instagram no formato ${formato} com tom ${tom} ${emojis ? "com emojis" : "sem emojis"}.
-
-${contexto}
-
-Retorne APENAS um JSON com exatamente estes campos:
-{
-  "gancho": "primeira linha impactante que para o scroll (máx 150 chars)",
-  "desenvolvimento": "corpo do texto com informação de valor (2-4 parágrafos)",
-  "cta": "chamada para ação final (máx 100 chars)",
-  "hashtags": "15-20 hashtags relevantes separadas por espaço",
-  "completa": "legenda completa formatada pronta para copiar"
-}`
-      }]
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": process.env.ANTHROPIC_API_KEY || "",
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1500,
+        system: "Você é um especialista em marketing médico digital para Instagram. Cria legendas profissionais para médicos brasileiros nas áreas de nutrologia, endocrinologia e longevidade. Responda APENAS com JSON válido, sem markdown, sem texto antes ou depois.",
+        messages: [{
+          role: "user",
+          content: `Crie uma legenda para Instagram no formato ${formato} com tom ${tom} ${emojis ? "com emojis" : "sem emojis"}.\n\n${contexto}\n\nRetorne APENAS um JSON com exatamente estes campos:\n{\n  "gancho": "primeira linha impactante que para o scroll (máx 150 chars)",\n  "desenvolvimento": "corpo do texto com informação de valor (2-4 parágrafos)",\n  "cta": "chamada para ação final (máx 100 chars)",\n  "hashtags": "15-20 hashtags relevantes separadas por espaço",\n  "completa": "legenda completa formatada pronta para copiar"\n}`
+        }]
+      })
     })
 
-    const texto = message.content[0].type === 'text' ? message.content[0].text : ''
+    const data = await res.json()
+    let texto = ""
+    for (const block of (data.content || [])) {
+      if (block.type === "text") texto += block.text
+    }
     const clean = texto.replace(/```json|```/g, "").trim()
     const idx = clean.indexOf("{")
     const parsed = JSON.parse(idx >= 0 ? clean.slice(idx) : clean)

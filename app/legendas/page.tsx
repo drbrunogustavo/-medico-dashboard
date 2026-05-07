@@ -66,7 +66,7 @@ export default function LegendaPage() {
 
     setLoading(true)
     setLegenda(null)
-
+console.log('tema:', tema, 'topico:', topico, 'usarPauta:', usarPauta)
     const contexto = usarPauta && pautaSel
       ? `Título: ${pautaSel.titulo}\nCategoria: ${pautaSel.categoria}\nNotas: ${pautaSel.nota || "Nenhuma"}\nFonte: ${pautaSel.fonte || "Não informada"}`
       : `Tema: ${topico}`

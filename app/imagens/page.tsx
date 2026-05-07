@@ -560,7 +560,7 @@ Gere ${slides.length} slides. Retorne SOMENTE JSON válido (zero markdown, zero 
         body: JSON.stringify({ model: 'claude-sonnet-4-5-20250929', max_tokens: 3500, messages: [{ role: 'user', content: prompt }] }),
       })
       const data = await res.json()
-      const json = JSON.parse(data.content?.[0]?.text?.trim() || '')
+      const raw = data.content?.[0]?.text?.trim() || '{}'; const clean = raw.replace(/```json/g,'').replace(/```/g,'').trim(); const json = JSON.parse(clean)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const newSlides: SlideData[] = json.slides.map((s: any) => ({
         ...s,
@@ -601,7 +601,7 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
         body: JSON.stringify({ model: 'claude-sonnet-4-5-20250929', max_tokens: 700, messages: [{ role: 'user', content: prompt }] }),
       })
       const data = await res.json()
-      const json = JSON.parse(data.content?.[0]?.text?.trim() || '{}')
+      const raw2 = data.content?.[0]?.text?.trim() || '{}'; const clean2 = raw2.replace(/```json/g,'').replace(/```/g,'').trim(); const json = JSON.parse(clean2)
       setSlides(prev => prev.map((sl, i) => i === idx ? { ...sl, ...json } : sl))
       setEditInstruction('')
     } catch (err) {

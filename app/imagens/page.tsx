@@ -629,25 +629,28 @@ export default function ImagensPage() {
     try {
       const contentSlides = slides.filter(s => s.tipo === 'conteudo').map(s => ({ id: s.id, layout: layoutOf(s.id) }))
 
-      const layoutLabel = (l: number) => l===1?'A CIÊNCIA':l===2?'OS FATOS':l===3?'A EVIDÊNCIA':'ENTENDA'
-      const prompt = `Redator médico Instagram — Dr. Bruno Gustavo, Clínico-Geral, Endocrinologia/Nutrologia, Poços de Caldas-MG.
-TEMA: "${tema}"${publico ? `. PÚBLICO: ${publico}` : ''}
-Tom: direto, humano. Proibido: mergulhar/transformador/jornada/empoderar. Use *palavra* para dourado itálico.
-
-Retorne SOMENTE JSON: {"slides":[...]}
-
-Slides necessários:
-1. capa — headline impactante com *itálico dourado*, subtitulo "INFORMAÇÃO", corpo citação curta (max 90 chars)
-${contentSlides.map(({ id, layout }) => `${id}. conteudo — subtitulo "${String(id-1).padStart(2,'0')} — ${layoutLabel(layout)}"${
-  layout===1 ? ', headline vazio, corpo frase impacto max 120 chars com *destaque*' :
-  layout===2 ? ', headline com *dourado*, items:[{titulo,descricao}] 4 itens relacionados ao tema' :
-  layout===3 ? ', headline com *dourado*, fonte:"journal real", stats:[{valor,unidade,descricao}] 3 dados reais' :
-               ', headline com *dourado*, corpo explicação max 180 chars'
-}`).join('
-')}
-${slides.length}. cta — headline "SALVE *ESTE POST*", subtitulo "GOSTOU DESTE CONTEÚDO?", corpo "📌 Salve para ter esta informação sempre à mão|📤 Compartilhe com quem precisa ler isso agora|💬 Comente: ${publico ? 'pergunta para ' + publico : 'o que mais te surpreendeu?'}"
-
-Campos obrigatórios em todos: id, tipo, headline, subtitulo, corpo, fonte (null se não usado), items (null se não usado), stats (null se não usado)`
+      const slideInstructions = contentSlides.map(({ id, layout }) => {
+        const num = String(id - 1).padStart(2, '0')
+        const lbl = layout===1?'A CIÊNCIA':layout===2?'OS FATOS':layout===3?'A EVIDÊNCIA':'ENTENDA'
+        const detail = layout===1
+          ? ', headline vazio, corpo frase impacto max 120 chars com *destaque*'
+          : layout===2
+          ? ', headline com *dourado*, items:[{titulo,descricao}] 4 itens do tema'
+          : layout===3
+          ? ', headline com *dourado*, fonte:"journal real", stats:[{valor,unidade,descricao}] 3 dados'
+          : ', headline com *dourado*, corpo explicação max 180 chars'
+        return id + '. conteudo — subtitulo "' + num + ' — ' + lbl + '"' + detail
+      }).join('\n')
+      const ctaCorpo = '📌 Salve para ter esta informação sempre à mão|📤 Compartilhe com quem precisa ler isso agora|💬 Comente: ' + (publico ? 'pergunta para ' + publico : 'o que mais te surpreendeu?')
+      const prompt = 'Redator médico Instagram — Dr. Bruno Gustavo, Clínico-Geral, Endocrinologia/Nutrologia, Poços de Caldas-MG.\n'
+        + 'TEMA: ' + tema + (publico ? '. PÚBLICO: ' + publico : '') + '\n'
+        + 'Tom: direto, humano. Proibido: mergulhar/transformador/jornada/empoderar. Use *palavra* para dourado itálico.\n\n'
+        + 'Retorne SOMENTE JSON válido: {"slides":[...]}\n\n'
+        + 'Slides necessários:\n'
+        + '1. capa — headline impactante com *itálico dourado*, subtitulo "INFORMAÇÃO", corpo citação curta max 90 chars\n'
+        + slideInstructions + '\n'
+        + slides.length + '. cta — headline "SALVE *ESTE POST*", subtitulo "GOSTOU DESTE CONTEÚDO?", corpo "' + ctaCorpo + '"\n\n'
+        + 'Campos obrigatórios: id, tipo, headline, subtitulo, corpo, fonte (null se vazio), items (null se vazio), stats (null se vazio)'
 
       const res = await fetch('/api/imagens', {
         method: 'POST',

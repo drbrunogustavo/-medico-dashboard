@@ -6,6 +6,8 @@ import { useState, useRef, useCallback } from 'react'
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Formato = 'feed-retrato' | 'quadrado' | 'stories' | 'reels-capa'
 type Tipo    = 'unica' | 'carrossel'
+type OffsetMap   = Record<string, { x: number; y: number }>
+type TextOffsets = Record<number, OffsetMap>
 
 interface BoxItem  { titulo: string; descricao: string }
 interface StatItem { valor: string; unidade?: string; descricao: string }
@@ -13,16 +15,16 @@ interface StatItem { valor: string; unidade?: string; descricao: string }
 interface SlideData {
   id: number
   tipo: 'capa' | 'conteudo' | 'cta'
-  headline:  string   // use *palavra* para dourado itálico
-  subtitulo: string   // label de categoria: "02 — A CIÊNCIA"
+  headline:  string
+  subtitulo: string
   corpo:     string
   fotoIndex: number | null
-  fonte?:    string        // "New England Journal of Medicine"
-  items?:    BoxItem[]     // layout Boxes 2×2 (4 itens)
-  stats?:    StatItem[]    // layout Dados (3 stats)
+  fonte?:    string
+  items?:    BoxItem[]
+  stats?:    StatItem[]
 }
 
-// ─── Paleta — fiel aos posts do Instagram ────────────────────────────────────
+// ─── Paleta ───────────────────────────────────────────────────────────────────
 const C = {
   bg:     '#120a04',
   bgCard: '#1c0f06',
@@ -46,7 +48,6 @@ const NOME   = 'DR. BRUNO GUSTAVO'
 const ASSIN  = 'MEDICINA BASEADA EM EVIDÊNCIA'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
 const clamp = (n: number): React.CSSProperties => ({
   display: '-webkit-box' as React.CSSProperties['display'],
   WebkitLineClamp: n,
@@ -55,7 +56,6 @@ const clamp = (n: number): React.CSSProperties => ({
   overflow: 'hidden',
 })
 
-// Headline tipografia mista: Montserrat bold branco + *Playfair Display italic dourado*
 function Headline({ text, fs, lh, cn }: { text: string; fs: number; lh: number; cn: number }) {
   const parts = text.split(/\*([^*]+)\*/)
   return (
@@ -69,7 +69,6 @@ function Headline({ text, fs, lh, cn }: { text: string; fs: number; lh: number; 
   )
 }
 
-// Badge de fonte científica
 function SourceBadge({ fonte }: { fonte: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 14, fontFamily: "'Montserrat', sans-serif" }}>
@@ -79,6 +78,62 @@ function SourceBadge({ fonte }: { fonte: string }) {
       <div style={{ color: C.d2, fontSize: 18, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase' as const }}>
         {fonte}
       </div>
+    </div>
+  )
+}
+
+// ─── DragWrap ─────────────────────────────────────────────────────────────────
+// Torna qualquer bloco arrastável. Usa ref para evitar closures desatualizadas.
+function DragWrap({
+  dragKey, offsets, onDrag, scale, enabled, children, style,
+}: {
+  dragKey: string
+  offsets: OffsetMap
+  onDrag:  (key: string, x: number, y: number) => void
+  scale:   number
+  enabled: boolean
+  children: React.ReactNode
+  style?: React.CSSProperties
+}) {
+  const off = offsets[dragKey] ?? { x: 0, y: 0 }
+  // ref para nunca ter closure desatualizada dentro dos event listeners globais
+  const live = useRef({ off, onDrag, scale, dragKey })
+  live.current = { off, onDrag, scale, dragKey }
+
+  const beginDrag = (startX: number, startY: number) => {
+    const origin = { ...live.current.off }
+    const onMove = (e: MouseEvent | TouchEvent) => {
+      const cx = 'touches' in e ? e.touches[0].clientX : (e as MouseEvent).clientX
+      const cy = 'touches' in e ? e.touches[0].clientY : (e as MouseEvent).clientY
+      const { scale: s, onDrag: cb, dragKey: k } = live.current
+      cb(k, origin.x + (cx - startX) / s, origin.y + (cy - startY) / s)
+    }
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup',   onUp)
+      window.removeEventListener('touchmove', onMove)
+      window.removeEventListener('touchend',  onUp)
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup',   onUp)
+    window.addEventListener('touchmove', onMove, { passive: false })
+    window.addEventListener('touchend',  onUp)
+  }
+
+  return (
+    <div
+      style={{
+        ...style,
+        transform: `translate(${off.x}px, ${off.y}px)`,
+        cursor:      enabled ? 'move'   : undefined,
+        outline:     enabled ? '1.5px dashed rgba(200,168,76,0.55)' : 'none',
+        userSelect:  enabled ? 'none'   : undefined,
+        touchAction: enabled ? 'none'   : undefined,
+      } as React.CSSProperties}
+      onMouseDown={enabled ? (e) => { e.preventDefault(); e.stopPropagation(); beginDrag(e.clientX, e.clientY) } : undefined}
+      onTouchStart={enabled ? (e) => { e.stopPropagation(); beginDrag(e.touches[0].clientX, e.touches[0].clientY) } : undefined}
+    >
+      {children}
     </div>
   )
 }
@@ -128,9 +183,12 @@ function createDefaultSlides(tipo: Tipo, n: number): SlideData[] {
 interface CanvasProps {
   slide: SlideData; formato: Formato; fotos: string[]
   logo: string | null; totalSlides: number; scale: number
+  dragMode?: boolean
+  offsets?:  OffsetMap
+  onDrag?:   (key: string, x: number, y: number) => void
 }
 
-function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale }: CanvasProps) {
+function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale, dragMode = false, offsets = {}, onDrag = () => {} }: CanvasProps) {
   const { w, h } = FORMATOS_CONFIG[formato]
   const foto = slide.fotoIndex !== null ? (fotos[slide.fotoIndex] ?? null) : null
   const li = ((slide.id - 2) % 4) + 1
@@ -141,20 +199,16 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale }: Canvas
     transform: `scale(${scale})`, transformOrigin: 'top left', flexShrink: 0,
   }
 
+  // Shared drag props for DragWrap
+  const dp = { offsets, onDrag, scale, enabled: dragMode }
+
   const Counter = () => totalSlides > 1 ? (
-    <div style={{ position: 'absolute', top: 90, right: 52, background: 'rgba(0,0,0,0.55)', borderRadius: 40, padding: '10px 22px', color: C.w, fontSize: 22, fontWeight: 700 }}>
+    <div style={{ position: 'absolute', top: 90, right: 52, background: 'rgba(0,0,0,0.55)', borderRadius: 40, padding: '10px 22px', color: C.w, fontSize: 22, fontWeight: 700, zIndex: 10 }}>
       {slide.id}/{totalSlides}
     </div>
   ) : null
 
-  const LogoFooter = ({ center = false }: { center?: boolean }) => (
-    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '26px 90px', display: 'flex', justifyContent: center ? 'center' : 'space-between', alignItems: 'center', gap: 16 }}>
-      {!center && <div style={{ color: C.d2, fontSize: 24, fontWeight: 700, letterSpacing: 2 }}>{NOME}</div>}
-      {logo && <div style={{ background: 'transparent', padding: '0' }}><img src={logo} alt="" style={{ height: 110, maxWidth: 320, objectFit: 'contain', display: 'block' }} /></div>}
-    </div>
-  )
-
-  // ── CAPA — foto como silhueta + tag INFORMAÇÃO + blockquote ──────────────
+  // ── CAPA ──────────────────────────────────────────────────────────────────
   if (slide.tipo === 'capa') {
     return (
       <div style={base}>
@@ -164,19 +218,18 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale }: Canvas
           <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(to bottom, rgba(18,10,4,0.15) 0%, rgba(18,10,4,0.35) 55%, ${C.bg} 88%)` }} />
         </>)}
 
-        {/* Tag canto superior esquerdo */}
-        <div style={{ position: 'absolute', top: 90, left: 72 }}>
+        {/* Tag */}
+        <DragWrap dragKey="tag" {...dp} style={{ position: 'absolute', top: 90, left: 72, zIndex: 5 }}>
           <div style={{ display: 'inline-block', padding: '10px 22px', border: `1px solid rgba(184,151,106,0.55)`, background: 'rgba(0,0,0,0.5)', color: C.w, fontSize: 20, fontWeight: 700, letterSpacing: 4, textTransform: 'uppercase' as const }}>
             {slide.subtitulo || 'INFORMAÇÃO'}
           </div>
-        </div>
+        </DragWrap>
         <Counter />
 
-        {/* Conteúdo */}
-        <div style={{ position: 'absolute', left: 90, right: 90, top: foto ? 240 : 200 }}>
+        {/* Conteúdo principal */}
+        <DragWrap dragKey="content" {...dp} style={{ position: 'absolute', left: 90, right: 90, top: foto ? 240 : 200, zIndex: 5 }}>
           <div style={{ color: C.d1, fontSize: 26, fontWeight: 700, letterSpacing: 4, textTransform: 'uppercase' as const, marginBottom: 28 }}>A GRANDE QUESTÃO</div>
           <Headline text={slide.headline || 'Título do *Post*'} fs={92} lh={1.04} cn={5} />
-
           {slide.corpo && (
             <div style={{ display: 'flex', gap: 24, marginTop: 52, alignItems: 'flex-start' }}>
               <div style={{ width: 4, flexShrink: 0, background: `linear-gradient(to bottom, ${C.d2}, transparent)`, minHeight: 88 }} />
@@ -185,18 +238,19 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale }: Canvas
               </div>
             </div>
           )}
-        </div>
+        </DragWrap>
 
         {/* Rodapé */}
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '40px 72px', background: `linear-gradient(to top, ${C.bg} 60%, transparent)`, display: 'flex', alignItems: 'center', justifyContent: logo ? 'space-between' : 'center' }}>
-          
-          {logo && <div style={{ background: 'transparent', padding: '0' }}><img src={logo} alt="" style={{ height: 110, maxWidth: 320, objectFit: 'contain', display: 'block' }} /></div>}
-        </div>
+        <DragWrap dragKey="footer" {...dp} style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 5 }}>
+          <div style={{ padding: '40px 72px', background: `linear-gradient(to top, ${C.bg} 60%, transparent)`, display: 'flex', alignItems: 'center', justifyContent: logo ? 'flex-end' : 'center' }}>
+            {logo && <div><img src={logo} alt="" style={{ height: 110, maxWidth: 320, objectFit: 'contain', display: 'block' }} /></div>}
+          </div>
+        </DragWrap>
       </div>
     )
   }
 
-  // ── CTA — "Salve este post" + lista de ações ──────────────────────────────
+  // ── CTA ───────────────────────────────────────────────────────────────────
   if (slide.tipo === 'cta') {
     const actions = slide.corpo.split('|').filter(Boolean)
     return (
@@ -207,7 +261,7 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale }: Canvas
           <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(to bottom, rgba(18,10,4,0.6) 0%, ${C.bg} 60%)` }} />
         </>)}
 
-        <div style={{ position: 'absolute', left: 90, right: 90, top: 140 }}>
+        <DragWrap dragKey="content" {...dp} style={{ position: 'absolute', left: 90, right: 90, top: 140, zIndex: 5 }}>
           <div style={{ color: C.d1, fontSize: 24, fontWeight: 700, letterSpacing: 5, textTransform: 'uppercase' as const, marginBottom: 36, textAlign: 'center' }}>
             {slide.subtitulo}
           </div>
@@ -215,7 +269,6 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale }: Canvas
             <Headline text={slide.headline} fs={96} lh={1.05} cn={2} />
           </div>
           <div style={{ width: 100, height: 3, background: C.d2, margin: '36px auto' }} />
-
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
             {actions.map((action, i) => {
               const [emoji, ...rest] = action.split(' ')
@@ -231,19 +284,20 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale }: Canvas
               )
             })}
           </div>
-        </div>
+        </DragWrap>
 
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '44px 90px', textAlign: 'center', background: `linear-gradient(to top, ${C.bg} 65%, transparent)` }}>
-          <div style={{ color: C.d2, fontSize: 42, fontWeight: 900, letterSpacing: 1, marginBottom: 10 }}>{HANDLE}</div>
-          <div style={{ color: C.wFaint, fontSize: 22, letterSpacing: 3 }}>{ASSIN}</div>
-          {logo && <div style={{ marginTop: 18, display: 'inline-block', background: 'transparent', padding: '0' }}><img src={logo} alt="" style={{ height: 110, maxWidth: 320, objectFit: 'contain', display: 'block' }} /></div>}
-        </div>
+        <DragWrap dragKey="footer" {...dp} style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 5 }}>
+          <div style={{ padding: '44px 90px', textAlign: 'center', background: `linear-gradient(to top, ${C.bg} 65%, transparent)` }}>
+            <div style={{ color: C.d2, fontSize: 42, fontWeight: 900, letterSpacing: 1, marginBottom: 10 }}>{HANDLE}</div>
+            <div style={{ color: C.wFaint, fontSize: 22, letterSpacing: 3 }}>{ASSIN}</div>
+            {logo && <div style={{ marginTop: 18, display: 'inline-block' }}><img src={logo} alt="" style={{ height: 110, maxWidth: 320, objectFit: 'contain', display: 'block' }} /></div>}
+          </div>
+        </DragWrap>
       </div>
     )
   }
 
-  // ── LAYOUT 1 — Citação sobre foto escurecida ──────────────────────────────
-  // Fiel ao slide "Se fosse só dieta e treino..."
+  // ── LAYOUT 1 — Citação ────────────────────────────────────────────────────
   if (li === 1) {
     return (
       <div style={base}>
@@ -255,15 +309,17 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale }: Canvas
           <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse at 65% 25%, ${C.bgMid} 0%, ${C.bg} 68%)` }} />
         )}
 
-        <div style={{ position: 'absolute', top: 90, left: 90, color: C.d1, fontSize: 22, fontWeight: 700, letterSpacing: 4, textTransform: 'uppercase' as const }}>{slide.subtitulo}</div>
+        <DragWrap dragKey="tag" {...dp} style={{ position: 'absolute', top: 90, left: 90, zIndex: 5 }}>
+          <div style={{ color: C.d1, fontSize: 22, fontWeight: 700, letterSpacing: 4, textTransform: 'uppercase' as const }}>{slide.subtitulo}</div>
+        </DragWrap>
         <div style={{ position: 'absolute', top: 90, right: 90, color: C.d2, fontSize: 22, fontWeight: 700, letterSpacing: 2 }}>{NOME}</div>
         <Counter />
 
         {/* Aspas decorativas */}
         <div style={{ position: 'absolute', left: 56, top: '24%', color: C.d1, fontSize: 220, lineHeight: 1, opacity: 0.3, fontFamily: "'Playfair Display', serif", userSelect: 'none' }}>"</div>
 
-        {/* Texto da citação — Playfair Display itálico */}
-        <div style={{ position: 'absolute', left: 90, right: 90, top: '33%', bottom: 160 }}>
+        {/* Citação */}
+        <DragWrap dragKey="content" {...dp} style={{ position: 'absolute', left: 90, right: 90, top: '33%', bottom: 160, zIndex: 5 }}>
           <div style={{ color: C.w, fontSize: 62, fontStyle: 'italic', lineHeight: 1.38, fontFamily: "'Playfair Display', serif", fontWeight: 400, ...clamp(7) }}>
             {slide.corpo.split(/\*(.*?)\*/).map((part, i) =>
               i % 2 === 1
@@ -271,20 +327,20 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale }: Canvas
                 : part
             )}
           </div>
-        </div>
+        </DragWrap>
 
-        {/* Linha + autor */}
-        <div style={{ position: 'absolute', bottom: 64, right: 90, display: 'flex', alignItems: 'center', gap: 18 }}>
-          <div style={{ width: 56, height: 1, background: C.d1 }} />
-          <div style={{ color: C.d1, fontSize: 21, fontWeight: 700, letterSpacing: 2 }}>{NOME}</div>
-          {logo && <div style={{ background: 'transparent', padding: '0' }}><img src={logo} alt="" style={{ height: 110, maxWidth: 320, objectFit: 'contain', display: 'block' }} /></div>}
-        </div>
+        <DragWrap dragKey="footer" {...dp} style={{ position: 'absolute', bottom: 64, right: 90, zIndex: 5 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+            <div style={{ width: 56, height: 1, background: C.d1 }} />
+            <div style={{ color: C.d1, fontSize: 21, fontWeight: 700, letterSpacing: 2 }}>{NOME}</div>
+            {logo && <div><img src={logo} alt="" style={{ height: 110, maxWidth: 320, objectFit: 'contain', display: 'block' }} /></div>}
+          </div>
+        </DragWrap>
       </div>
     )
   }
 
   // ── LAYOUT 2 — Boxes 2×2 ─────────────────────────────────────────────────
-  // Fiel ao slide "Os hormônios que comandam o seu peso"
   if (li === 2) {
     const items = slide.items ?? []
     return (
@@ -292,39 +348,44 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale }: Canvas
         <div style={{ position: 'absolute', inset: 0, background: C.bg }} />
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 320, background: `linear-gradient(to bottom, ${C.bgMid} 0%, transparent 100%)` }} />
 
-        <div style={{ position: 'absolute', top: 90, left: 90, color: C.wFaint, fontSize: 21, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase' as const }}>{slide.subtitulo}</div>
+        <DragWrap dragKey="tag" {...dp} style={{ position: 'absolute', top: 90, left: 90, zIndex: 5 }}>
+          <div style={{ color: C.wFaint, fontSize: 21, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase' as const }}>{slide.subtitulo}</div>
+        </DragWrap>
         <div style={{ position: 'absolute', top: 90, right: 90, color: C.d2, fontSize: 21, fontWeight: 700, letterSpacing: 2 }}>{NOME}</div>
         <Counter />
 
-        <div style={{ position: 'absolute', left: 90, right: 90, top: 116 }}>
+        <DragWrap dragKey="content" {...dp} style={{ position: 'absolute', left: 90, right: 90, top: 116, zIndex: 5 }}>
           <Headline text={slide.headline} fs={72} lh={1.1} cn={2} />
-        </div>
+        </DragWrap>
 
         {/* Grid 2×2 */}
-        <div style={{ position: 'absolute', left: 60, right: 60, top: 310, bottom: 110, display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', gap: 20 }}>
-          {(items.length > 0 ? items : [
-            { titulo: 'Tópico A', descricao: 'Descrição do primeiro ponto.' },
-            { titulo: 'Tópico B', descricao: 'Descrição do segundo ponto.' },
-            { titulo: 'Tópico C', descricao: 'Descrição do terceiro ponto.' },
-            { titulo: 'Tópico D', descricao: 'Descrição do quarto ponto.' },
-          ]).slice(0, 4).map((item, i) => (
-            <div key={i} style={{ background: C.bgCard, border: `1px solid rgba(184,151,106,0.2)`, borderRadius: 3, padding: '32px 32px', overflow: 'hidden' }}>
-              <div style={{ color: C.d2, fontSize: 34, fontWeight: 800, marginBottom: 16, ...clamp(2) }}>{item.titulo}</div>
-              <div style={{ color: C.wMid, fontSize: 28, lineHeight: 1.5, ...clamp(5) }}>{item.descricao}</div>
-            </div>
-          ))}
-        </div>
+        <DragWrap dragKey="grid" {...dp} style={{ position: 'absolute', left: 60, right: 60, top: 310, bottom: 110, zIndex: 5 }}>
+          <div style={{ width: '100%', height: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', gap: 20 }}>
+            {(items.length > 0 ? items : [
+              { titulo: 'Tópico A', descricao: 'Descrição do primeiro ponto.' },
+              { titulo: 'Tópico B', descricao: 'Descrição do segundo ponto.' },
+              { titulo: 'Tópico C', descricao: 'Descrição do terceiro ponto.' },
+              { titulo: 'Tópico D', descricao: 'Descrição do quarto ponto.' },
+            ]).slice(0, 4).map((item, i) => (
+              <div key={i} style={{ background: C.bgCard, border: `1px solid rgba(184,151,106,0.2)`, borderRadius: 3, padding: '32px 32px', overflow: 'hidden' }}>
+                <div style={{ color: C.d2, fontSize: 34, fontWeight: 800, marginBottom: 16, ...clamp(2) }}>{item.titulo}</div>
+                <div style={{ color: C.wMid, fontSize: 28, lineHeight: 1.5, ...clamp(5) }}>{item.descricao}</div>
+              </div>
+            ))}
+          </div>
+        </DragWrap>
 
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '22px 90px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ color: C.wFaint, fontSize: 20 }}>{HANDLE}</div>
-          {logo && <div style={{ background: 'transparent', padding: '0' }}><img src={logo} alt="" style={{ height: 110, maxWidth: 320, objectFit: 'contain', display: 'block' }} /></div>}
-        </div>
+        <DragWrap dragKey="footer" {...dp} style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 5 }}>
+          <div style={{ padding: '22px 90px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ color: C.wFaint, fontSize: 20 }}>{HANDLE}</div>
+            {logo && <div><img src={logo} alt="" style={{ height: 110, maxWidth: 320, objectFit: 'contain', display: 'block' }} /></div>}
+          </div>
+        </DragWrap>
       </div>
     )
   }
 
-  // ── LAYOUT 3 — Dados Científicos + Stats ─────────────────────────────────
-  // Fiel ao slide "Adaptação Metabólica" com dados do NEJM
+  // ── LAYOUT 3 — Dados Científicos ──────────────────────────────────────────
   if (li === 3) {
     const stats = slide.stats ?? []
     return (
@@ -332,71 +393,64 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale }: Canvas
         <div style={{ position: 'absolute', inset: 0, background: C.bg }} />
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 360, background: `linear-gradient(135deg, ${C.bgMid} 0%, ${C.bg} 100%)` }} />
 
-        {/* Topo: fonte + label */}
-        <div style={{ position: 'absolute', top: 90, left: 72 }}>
-          {slide.fonte && <SourceBadge fonte={slide.fonte} />}
-          <div style={{ color: C.wFaint, fontSize: 20, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase' as const, marginTop: 14 }}>{slide.subtitulo}</div>
-        </div>
+        <DragWrap dragKey="tag" {...dp} style={{ position: 'absolute', top: 90, left: 72, zIndex: 5 }}>
+          <div>
+            {slide.fonte && <SourceBadge fonte={slide.fonte} />}
+            <div style={{ color: C.wFaint, fontSize: 20, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase' as const, marginTop: 14 }}>{slide.subtitulo}</div>
+          </div>
+        </DragWrap>
         <Counter />
 
-        {/* Headline + divisor */}
-        <div style={{ position: 'absolute', left: 90, right: 90, top: 180 }}>
+        <DragWrap dragKey="content" {...dp} style={{ position: 'absolute', left: 90, right: 90, top: 180, zIndex: 5 }}>
           <Headline text={slide.headline} fs={78} lh={1.08} cn={2} />
           <div style={{ width: 56, height: 3, background: C.d2, marginTop: 26 }} />
-        </div>
+        </DragWrap>
 
         {/* Corpo + stats */}
-        <div style={{ position: 'absolute', left: 60, right: 60, top: 390, bottom: 120, display: 'flex', gap: 0 }}>
-          {/* Esquerda: texto descritivo */}
-          <div style={{ flex: 1, paddingRight: 36, paddingTop: 8, display: 'flex', flexDirection: 'column', gap: 20 }}>
-            {slide.corpo && (
-              <div style={{ color: C.wMid, fontSize: 34, lineHeight: 1.6, ...clamp(5) }}>{slide.corpo}</div>
-            )}
-            {slide.fonte && (
-              <div style={{ color: C.wFaint, fontSize: 18, textTransform: 'uppercase' as const, letterSpacing: 2, marginTop: 'auto' }}>
-                {slide.fonte}
-              </div>
-            )}
-          </div>
-
-          {/* Separador vertical dourado */}
-          <div style={{ width: 2, background: `linear-gradient(to bottom, ${C.d2}, transparent)`, flexShrink: 0, marginRight: 36, alignSelf: 'stretch' }} />
-
-          {/* Direita: stat cards */}
-          <div style={{ width: 330, display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <div style={{ color: C.d1, fontSize: 17, fontWeight: 700, letterSpacing: 4, textTransform: 'uppercase' as const, marginBottom: 4 }}>DADOS DO ESTUDO</div>
-            {stats.map((stat, i) => (
-              <div key={i} style={{ background: C.bgCard, border: `1px solid rgba(184,151,106,0.18)`, borderRadius: 3, padding: '20px 22px' }}>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
-                  <div style={{ color: C.d2, fontSize: 56, fontWeight: 900, lineHeight: 1 }}>{stat.valor}</div>
-                  {stat.unidade && <div style={{ color: C.d1, fontSize: 26, fontWeight: 700 }}>{stat.unidade}</div>}
+        <DragWrap dragKey="body" {...dp} style={{ position: 'absolute', left: 60, right: 60, top: 390, bottom: 120, zIndex: 5 }}>
+          <div style={{ width: '100%', height: '100%', display: 'flex', gap: 0 }}>
+            <div style={{ flex: 1, paddingRight: 36, paddingTop: 8, display: 'flex', flexDirection: 'column', gap: 20 }}>
+              {slide.corpo && (
+                <div style={{ color: C.wMid, fontSize: 34, lineHeight: 1.6, ...clamp(5) }}>{slide.corpo}</div>
+              )}
+              {slide.fonte && (
+                <div style={{ color: C.wFaint, fontSize: 18, textTransform: 'uppercase' as const, letterSpacing: 2, marginTop: 'auto' }}>{slide.fonte}</div>
+              )}
+            </div>
+            <div style={{ width: 2, background: `linear-gradient(to bottom, ${C.d2}, transparent)`, flexShrink: 0, marginRight: 36, alignSelf: 'stretch' }} />
+            <div style={{ width: 330, display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{ color: C.d1, fontSize: 17, fontWeight: 700, letterSpacing: 4, textTransform: 'uppercase' as const, marginBottom: 4 }}>DADOS DO ESTUDO</div>
+              {stats.map((stat, i) => (
+                <div key={i} style={{ background: C.bgCard, border: `1px solid rgba(184,151,106,0.18)`, borderRadius: 3, padding: '20px 22px' }}>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
+                    <div style={{ color: C.d2, fontSize: 56, fontWeight: 900, lineHeight: 1 }}>{stat.valor}</div>
+                    {stat.unidade && <div style={{ color: C.d1, fontSize: 26, fontWeight: 700 }}>{stat.unidade}</div>}
+                  </div>
+                  <div style={{ color: C.wMid, fontSize: 24, lineHeight: 1.4, ...clamp(3) }}>{stat.descricao}</div>
                 </div>
-                <div style={{ color: C.wMid, fontSize: 24, lineHeight: 1.4, ...clamp(3) }}>{stat.descricao}</div>
+              ))}
+              <div style={{ background: 'rgba(200,168,76,0.08)', border: `1px solid rgba(200,168,76,0.35)`, borderRadius: 3, padding: '16px 22px' }}>
+                <div style={{ color: C.wFaint, fontSize: 15, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase' as const, marginBottom: 6 }}>SIGNIFICÂNCIA</div>
+                <div style={{ color: C.d2, fontSize: 34, fontWeight: 900 }}>p &lt; 0,001</div>
               </div>
-            ))}
-            {/* Significância */}
-            <div style={{ background: 'rgba(200,168,76,0.08)', border: `1px solid rgba(200,168,76,0.35)`, borderRadius: 3, padding: '16px 22px' }}>
-              <div style={{ color: C.wFaint, fontSize: 15, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase' as const, marginBottom: 6 }}>SIGNIFICÂNCIA</div>
-              <div style={{ color: C.d2, fontSize: 34, fontWeight: 900 }}>p &lt; 0,001</div>
             </div>
           </div>
-        </div>
+        </DragWrap>
 
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 90px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: `1px solid rgba(184,151,106,0.1)` }}>
-          <div style={{ color: C.wFaint, fontSize: 17, textTransform: 'uppercase' as const, letterSpacing: 2 }}>{slide.fonte ?? ''}</div>
-          {logo && <div style={{ background: 'transparent', padding: '0' }}><img src={logo} alt="" style={{ height: 110, maxWidth: 320, objectFit: 'contain', display: 'block' }} /></div>}
-          
-        </div>
+        <DragWrap dragKey="footer" {...dp} style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 5 }}>
+          <div style={{ padding: '20px 90px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: `1px solid rgba(184,151,106,0.1)` }}>
+            <div style={{ color: C.wFaint, fontSize: 17, textTransform: 'uppercase' as const, letterSpacing: 2 }}>{slide.fonte ?? ''}</div>
+            {logo && <div><img src={logo} alt="" style={{ height: 110, maxWidth: 320, objectFit: 'contain', display: 'block' }} /></div>}
+          </div>
+        </DragWrap>
       </div>
     )
   }
 
-  // ── LAYOUT 4 — Editorial com blockquote ──────────────────────────────────
+  // ── LAYOUT 4 — Editorial ──────────────────────────────────────────────────
   return (
     <div style={base}>
       <div style={{ position: 'absolute', inset: 0, background: C.bg }} />
-
-      {/* Foto recuada se disponível */}
       {foto && (
         <div style={{ position: 'absolute', top: 0, right: 0, width: '46%', height: '46%', overflow: 'hidden' }}>
           <img src={foto} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.38 }} />
@@ -408,34 +462,36 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale }: Canvas
       {/* Tarja dourada topo */}
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 6, background: `linear-gradient(to right, ${C.d2} 0%, ${C.d1} 40%, transparent 72%)` }} />
 
-      <div style={{ position: 'absolute', top: 90, left: 90, color: C.wFaint, fontSize: 22, fontWeight: 700, letterSpacing: 4, textTransform: 'uppercase' as const }}>{slide.subtitulo}</div>
+      <DragWrap dragKey="tag" {...dp} style={{ position: 'absolute', top: 90, left: 90, zIndex: 5 }}>
+        <div style={{ color: C.wFaint, fontSize: 22, fontWeight: 700, letterSpacing: 4, textTransform: 'uppercase' as const }}>{slide.subtitulo}</div>
+      </DragWrap>
       <div style={{ position: 'absolute', top: 90, right: 90, color: C.d2, fontSize: 22, fontWeight: 700, letterSpacing: 2 }}>{NOME}</div>
       <Counter />
 
-      <div style={{ position: 'absolute', left: 90, right: foto ? 400 : 72, top: 116, bottom: 150 }}>
+      <DragWrap dragKey="content" {...dp} style={{ position: 'absolute', left: 90, right: foto ? 400 : 72, top: 116, bottom: 150, zIndex: 5 }}>
         <Headline text={slide.headline} fs={78} lh={1.1} cn={3} />
         <div style={{ width: '100%', height: 2, background: `linear-gradient(to right, ${C.d2} 0%, rgba(200,168,76,0.08) 100%)`, margin: '42px 0' }} />
         <div style={{ color: C.wMid, fontSize: 40, lineHeight: 1.6, ...clamp(6) }}>{slide.corpo}</div>
-
         {slide.fonte && (
           <div style={{ display: 'flex', gap: 20, marginTop: 44, alignItems: 'flex-start' }}>
             <div style={{ width: 4, flexShrink: 0, background: `linear-gradient(to bottom, ${C.d2}, transparent)`, minHeight: 72 }} />
             <div style={{ color: C.d1, fontSize: 24, fontStyle: 'italic', lineHeight: 1.5, fontFamily: "'Playfair Display', serif" }}>Fonte: {slide.fonte}</div>
           </div>
         )}
-      </div>
+      </DragWrap>
 
       {/* Número decorativo */}
       <div style={{ position: 'absolute', bottom: 80, right: 60, color: C.d2, fontSize: 200, fontWeight: 900, opacity: 0.05, lineHeight: 1, userSelect: 'none' }}>
         {String(slide.id - 1).padStart(2, '0')}
       </div>
 
-      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '22px 90px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: `1px solid rgba(184,151,106,0.12)` }}>
-        {logo
-          ? <div style={{ background: 'transparent', padding: '0' }}><img src={logo} alt="" style={{ height: 110, maxWidth: 320, objectFit: 'contain', display: 'block' }} /></div>
-          : <div style={{ color: C.wFaint, fontSize: 20 }}>{HANDLE}</div>}
-        
-      </div>
+      <DragWrap dragKey="footer" {...dp} style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 5 }}>
+        <div style={{ padding: '22px 90px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: `1px solid rgba(184,151,106,0.12)` }}>
+          {logo
+            ? <div><img src={logo} alt="" style={{ height: 110, maxWidth: 320, objectFit: 'contain', display: 'block' }} /></div>
+            : <div style={{ color: C.wFaint, fontSize: 20 }}>{HANDLE}</div>}
+        </div>
+      </DragWrap>
     </div>
   )
 }
@@ -457,20 +513,40 @@ export default function ImagensPage() {
   const [fotoCapa, setFotoCapa]   = useState<number | null>(null)
   const [fotoCTA, setFotoCTA]     = useState<number | null>(null)
 
+  // ── Drag state ──
+  const [dragMode, setDragMode]       = useState(false)
+  const [textOffsets, setTextOffsets] = useState<TextOffsets>({})
+  const [isCapturing, setIsCapturing] = useState(false)
+
+  // ── iOS save modal ──
+  const [saveModalUrl, setSaveModalUrl] = useState<string | null>(null)
+
   const fotoRef = useRef<HTMLInputElement>(null)
   const logoRef = useRef<HTMLInputElement>(null)
 
-  // Mobile detection
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
   const PREVIEW_W = isMobile ? Math.min(window.innerWidth - 32, 380) : 400
 
-  // Download function - works on iOS Safari
+  // Atualiza offset de um elemento num slide específico
+  const updateDragOffset = useCallback((slideIdx: number, key: string, x: number, y: number) => {
+    setTextOffsets(prev => ({
+      ...prev,
+      [slideIdx]: { ...(prev[slideIdx] ?? {}), [key]: { x, y } },
+    }))
+  }, [])
+
+  const resetOffsets = () => setTextOffsets({})
+
+  // ── Download / Save ──
   const downloadCurrentSlide = useCallback(async () => {
     try {
       const slideEl = document.getElementById('slide-canvas-wrapper')
       if (!slideEl) return
 
-      // Dynamically import html-to-image
+      // Desativa drag mode para captura limpa (sem outline pontilhado)
+      setIsCapturing(true)
+      await new Promise(r => setTimeout(r, 40))
+
       const { toPng } = await import('html-to-image')
       const { w, h } = FORMATOS_CONFIG[formato]
 
@@ -481,13 +557,12 @@ export default function ImagensPage() {
         pixelRatio: 1,
       })
 
-      // iOS Safari: open in new tab (user can long-press to save)
+      setIsCapturing(false)
+
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
       if (isIOS) {
-        const win = window.open()
-        if (win) {
-          win.document.write('<img src="' + dataUrl + '" style="width:100%;height:auto;" /><p style="font-family:sans-serif;text-align:center;color:#666">Pressione e segure a imagem para salvar no álbum</p>')
-        }
+        // Modal inline — window.open() é bloqueado pelo Safari após operação async
+        setSaveModalUrl(dataUrl)
       } else {
         const link = document.createElement('a')
         link.download = 'drbrunogustavo-slide-' + (currentSlide + 1) + '.png'
@@ -495,12 +570,14 @@ export default function ImagensPage() {
         link.click()
       }
     } catch (err) {
+      setIsCapturing(false)
       console.error('Erro ao baixar:', err)
       alert('Erro ao gerar imagem para download.')
     }
-  }, [currentSlide, formato, slides])
+  }, [currentSlide, formato])
+
   const { w, h } = FORMATOS_CONFIG[formato]
-  const scale = PREVIEW_W / w
+  const scale   = PREVIEW_W / w
   const previewH = h * scale
 
   const syncFotos = (s: SlideData[], cap: number | null, cta: number | null) =>
@@ -534,15 +611,15 @@ export default function ImagensPage() {
     e.target.value = ''
   }
 
-  const handleFotoCapaChange = (i: number | null) => { setFotoCapa(i); setSlides(prev => prev.map(s => s.tipo === 'capa' ? { ...s, fotoIndex: i } : s)) }
-  const handleFotoCTAChange  = (i: number | null) => { setFotoCTA(i);  setSlides(prev => prev.map(s => s.tipo === 'cta'  ? { ...s, fotoIndex: i } : s)) }
-  const handleFotoSlideChange = (si: number, fi: number | null) => setSlides(prev => prev.map((s, i) => i === si ? { ...s, fotoIndex: fi } : s))
+  const handleFotoCapaChange  = (i: number | null) => { setFotoCapa(i); setSlides(prev => prev.map(s => s.tipo === 'capa' ? { ...s, fotoIndex: i } : s)) }
+  const handleFotoCTAChange   = (i: number | null) => { setFotoCTA(i);  setSlides(prev => prev.map(s => s.tipo === 'cta'  ? { ...s, fotoIndex: i } : s)) }
+  const handleFotoSlideChange = (si: number, fi: number | null) => setSlides(prev => prev.map((s, idx) => idx === si ? { ...s, fotoIndex: fi } : s))
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const updateSlide = (idx: number, field: keyof SlideData, value: any) =>
     setSlides(prev => prev.map((s, i) => i === idx ? { ...s, [field]: value } : s))
 
-  const layoutOf = (id: number) => ((id - 2) % 4) + 1
+  const layoutOf    = (id: number) => ((id - 2) % 4) + 1
   const layoutNames = ['', 'Citação', 'Boxes 2×2', 'Dados Científicos', 'Editorial']
 
   // ── Geração com IA ──
@@ -578,10 +655,10 @@ Gere ${slides.length} slides. Retorne SOMENTE JSON válido (zero markdown, zero 
       "id": ${id}, "tipo": "conteudo",
       "headline": ${layout === 1 ? '""' : '"Título com *parte dourada*"'},
       "subtitulo": "${String(id - 1).padStart(2, '0')} — ${layout === 1 ? 'A CIÊNCIA' : layout === 2 ? 'OS FATOS' : layout === 3 ? 'A EVIDÊNCIA' : 'ENTENDA'}",
-      "corpo": ${layout === 1 ? '"Frase de impacto em itálico. Use *negrito dourado*. Max 120 chars. Pode ser provocativa ou reveladora."' : layout === 4 ? '"Explicação direta, max 180 chars."' : '""'},
+      "corpo": ${layout === 1 ? '"Frase de impacto em itálico. Use *negrito dourado*. Max 120 chars."' : layout === 4 ? '"Explicação direta, max 180 chars."' : '""'},
       "fonte": ${layout === 3 ? '"Nome exato do journal (ex: New England Journal of Medicine)"' : 'null'},
-      "items": ${layout === 2 ? '[{"titulo":"Nome do conceito","descricao":"Max 85 chars, direto."}, ... (exatos 4 itens relacionados ao tema)]' : 'null'},
-      "stats": ${layout === 3 ? '[{"valor":"número ou % ou ×","unidade":"unidade curta","descricao":"max 65 chars"}, ... (exatos 3 dados reais do tema)]' : 'null'}
+      "items": ${layout === 2 ? '[{"titulo":"Nome do conceito","descricao":"Max 85 chars, direto."}, ... (exatos 4 itens)]' : 'null'},
+      "stats": ${layout === 3 ? '[{"valor":"número ou % ou ×","unidade":"unidade curta","descricao":"max 65 chars"}, ... (exatos 3 dados)]' : 'null'}
     }`).join('')},
     {
       "id": ${slides.length}, "tipo": "cta",
@@ -599,16 +676,18 @@ Gere ${slides.length} slides. Retorne SOMENTE JSON válido (zero markdown, zero 
         body: JSON.stringify({ model: 'claude-sonnet-4-5-20250929', max_tokens: 3500, messages: [{ role: 'user', content: prompt }] }),
       })
       const data = await res.json()
-      const _raw = (data.content?.[0]?.text || '{}').replace(/```json/g,'').replace(/```/g,'').trim(); const json = JSON.parse(_raw)
+      const _raw = (data.content?.[0]?.text || '{}').replace(/```json/g,'').replace(/```/g,'').trim()
+      const json = JSON.parse(_raw)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const newSlides: SlideData[] = json.slides.map((s: any) => ({
         ...s,
         fotoIndex: s.tipo === 'capa' ? fotoCapa : s.tipo === 'cta' ? fotoCTA : null,
-        items:  s.items  || undefined,
-        stats:  s.stats  || undefined,
-        fonte:  s.fonte  || undefined,
+        items: s.items  || undefined,
+        stats: s.stats  || undefined,
+        fonte: s.fonte  || undefined,
       }))
       setSlides(newSlides)
+      setTextOffsets({}) // reset posições ao gerar novo conteúdo
       setCurrentSlide(0)
     } catch (err) {
       console.error(err)
@@ -624,7 +703,7 @@ Gere ${slides.length} slides. Retorne SOMENTE JSON válido (zero markdown, zero 
     setIsEditGenerating(true)
     try {
       const apiKey = process.env.NEXT_PUBLIC_ANTHROPIC_API_KEY
-      const s = slides[idx]
+      const s  = slides[idx]
       const li = s.tipo === 'conteudo' ? layoutOf(s.id) : 0
       const prompt = `Reescreva este slide para o Dr. Bruno Gustavo (Clínico-Geral, Endocrinologia e Nutrologia). Tom: humano, direto, sem jargões de IA.
 
@@ -640,7 +719,8 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
         body: JSON.stringify({ model: 'claude-sonnet-4-5-20250929', max_tokens: 700, messages: [{ role: 'user', content: prompt }] }),
       })
       const data = await res.json()
-      const _raw2 = (data.content?.[0]?.text || '{}').replace(/```json/g,'').replace(/```/g,'').trim(); const json = JSON.parse(_raw2)
+      const _raw2 = (data.content?.[0]?.text || '{}').replace(/```json/g,'').replace(/```/g,'').trim()
+      const json  = JSON.parse(_raw2)
       setSlides(prev => prev.map((sl, i) => i === idx ? { ...sl, ...json } : sl))
       setEditInstruction('')
     } catch (err) {
@@ -650,10 +730,10 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
     }
   }
 
-  const currentS = slides[currentSlide]
+  const currentS      = slides[currentSlide]
   const currentLayout = currentS?.tipo === 'conteudo' ? layoutOf(currentS.id) : 0
+  const currentOffsets = textOffsets[currentSlide] ?? {}
 
-  // ── Renderização ──
   const panelBg  = '#0e0804'
   const sideBg   = '#1c0f06'
   const border   = '#2a1a0a'
@@ -663,6 +743,29 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
   return (
     <div className="min-h-screen" style={{ background: panelBg, color: C.w, fontFamily: "'Montserrat', sans-serif" }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&display=swap');`}</style>
+
+      {/* ── Modal iOS — Salvar Imagem ── */}
+      {saveModalUrl && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.93)', zIndex: 9999, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <div style={{ color: C.d2, fontSize: 15, fontWeight: 700, marginBottom: 6, textAlign: 'center', letterSpacing: 1 }}>
+            📱 SALVAR IMAGEM
+          </div>
+          <div style={{ color: C.wMid, fontSize: 13, marginBottom: 20, textAlign: 'center', lineHeight: 1.6 }}>
+            Pressione e segure a imagem abaixo<br />→ <strong style={{ color: C.w }}>Salvar na Fototeca</strong>
+          </div>
+          <img
+            src={saveModalUrl}
+            alt="Slide para salvar"
+            style={{ maxWidth: '100%', maxHeight: '65vh', objectFit: 'contain', borderRadius: 8, boxShadow: '0 16px 48px rgba(0,0,0,0.7)' }}
+          />
+          <button
+            onClick={() => setSaveModalUrl(null)}
+            style={{ marginTop: 28, padding: '12px 40px', background: C.d2, color: C.bg, border: 'none', borderRadius: 10, fontWeight: 900, fontSize: 14, cursor: 'pointer', fontFamily: "'Montserrat', sans-serif" }}
+          >
+            ✕ Fechar
+          </button>
+        </div>
+      )}
 
       {/* Header */}
       <div style={{ borderBottom: `1px solid ${border}`, padding: '18px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -754,7 +857,7 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
           <div>
             <label style={{ fontSize: 11, fontWeight: 700, color: labelClr, letterSpacing: 3, textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>Fotos</label>
             <button onClick={() => fotoRef.current?.click()}
-              style={{ width: '100%', padding: '12px', borderRadius: 8, border: `1px dashed ${border}`, background: 'none', color: labelClr, fontSize: 12, cursor: 'pointer', fontFamily: "'Montserrat', sans-serif', marginBottom: 12" }}>
+              style={{ width: '100%', padding: '12px', borderRadius: 8, border: `1px dashed ${border}`, background: 'none', color: labelClr, fontSize: 12, cursor: 'pointer', fontFamily: "'Montserrat', sans-serif" }}>
               + Upload de Fotos (múltiplas)
             </button>
             <input ref={fotoRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={handleFotoUpload} />
@@ -809,15 +912,56 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
 
           {currentS && (
             <div id='slide-canvas-wrapper' style={{ width: PREVIEW_W, height: previewH, flexShrink: 0, position: 'relative', borderRadius: 8, overflow: 'hidden', boxShadow: '0 24px 60px rgba(0,0,0,0.85)', outline: `1px solid ${border}` }}>
-              <SlideCanvas slide={currentS} formato={formato} fotos={fotos} logo={logo} totalSlides={slides.length} scale={scale} />
+              <SlideCanvas
+                slide={currentS}
+                formato={formato}
+                fotos={fotos}
+                logo={logo}
+                totalSlides={slides.length}
+                scale={scale}
+                dragMode={dragMode && !isCapturing}
+                offsets={currentOffsets}
+                onDrag={(key, x, y) => updateDragOffset(currentSlide, key, x, y)}
+              />
             </div>
           )}
 
-          {/* Download button always visible */}
-          <button onClick={downloadCurrentSlide}
-            style={{ marginTop: 16, padding: '12px 32px', background: '#C9A84C', border: 'none', borderRadius: 10, color: '#120a04', fontWeight: 900, fontSize: 14, cursor: 'pointer', fontFamily: "'Montserrat', sans-serif", display: 'flex', alignItems: 'center', gap: 8 }}>
-            ⬇ Salvar Slide {currentSlide + 1}
-          </button>
+          {/* Botões de ação abaixo do preview */}
+          <div style={{ marginTop: 16, display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
+            {/* Salvar */}
+            <button onClick={downloadCurrentSlide}
+              style={{ padding: '12px 28px', background: C.d2, border: 'none', borderRadius: 10, color: C.bg, fontWeight: 900, fontSize: 14, cursor: 'pointer', fontFamily: "'Montserrat', sans-serif", display: 'flex', alignItems: 'center', gap: 8 }}>
+              ⬇ Salvar Slide {currentSlide + 1}
+            </button>
+
+            {/* Toggle Mover Textos */}
+            <button
+              onClick={() => setDragMode(d => !d)}
+              style={{
+                padding: '12px 20px', border: `1px solid ${dragMode ? C.d2 : border}`,
+                borderRadius: 10, background: dragMode ? 'rgba(200,168,76,0.12)' : 'none',
+                color: dragMode ? C.d2 : labelClr, fontWeight: 700, fontSize: 13,
+                cursor: 'pointer', fontFamily: "'Montserrat', sans-serif", display: 'flex', alignItems: 'center', gap: 8,
+              }}
+            >
+              ✥ {dragMode ? 'Editando posições' : 'Mover textos'}
+            </button>
+
+            {/* Reset posições */}
+            {Object.keys(textOffsets).length > 0 && (
+              <button onClick={resetOffsets}
+                style={{ padding: '12px 16px', border: `1px solid ${border}`, borderRadius: 10, background: 'none', color: labelClr, fontWeight: 700, fontSize: 12, cursor: 'pointer', fontFamily: "'Montserrat', sans-serif" }}>
+                ↺ Reset posições
+              </button>
+            )}
+          </div>
+
+          {/* Dica de drag mode */}
+          {dragMode && (
+            <div style={{ marginTop: 10, padding: '8px 16px', borderRadius: 8, background: 'rgba(200,168,76,0.08)', border: `1px solid rgba(200,168,76,0.2)`, fontSize: 11, color: C.d1, textAlign: 'center' }}>
+              Arraste os blocos com borda dourada pontilhada · Desative antes de salvar
+            </div>
+          )}
 
           {slides.length > 1 && (
             <>
@@ -851,42 +995,36 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
 
           {currentS && (
             <>
-              {/* Dica */}
               <div style={{ fontSize: 11, padding: '8px 12px', borderRadius: 6, background: sideBg, color: labelClr }}>
                 Use <strong style={{ color: C.d2 }}>*palavra*</strong> para texto dourado itálico
               </div>
 
-              {/* Headline */}
               <Field label="Headline">
                 <textarea value={currentS.headline} onChange={e => updateSlide(currentSlide, 'headline', e.target.value)} rows={3} style={{ ...inputSty, resize: 'none', display: 'block' }} />
               </Field>
 
-              {/* Subtítulo */}
               <Field label="Label / Categoria">
                 <input type="text" value={currentS.subtitulo} onChange={e => updateSlide(currentSlide, 'subtitulo', e.target.value)} style={inputSty} />
               </Field>
 
-              {/* Corpo (não para boxes) */}
               {(currentS.tipo !== 'conteudo' || currentLayout !== 2) && (
                 <Field label={currentLayout === 1 ? 'Citação (use *destaque*)' : currentS.tipo === 'cta' ? 'Ações (separe com |)' : 'Corpo'}>
                   <textarea value={currentS.corpo} onChange={e => updateSlide(currentSlide, 'corpo', e.target.value)} rows={4} style={{ ...inputSty, resize: 'none', display: 'block' }} />
                 </Field>
               )}
 
-              {/* Fonte científica */}
               {currentS.tipo === 'conteudo' && (currentLayout === 3 || currentLayout === 4) && (
                 <Field label="Fonte Científica">
                   <input type="text" value={currentS.fonte ?? ''} onChange={e => updateSlide(currentSlide, 'fonte', e.target.value)} placeholder="Ex: New England Journal of Medicine" style={inputSty} />
                 </Field>
               )}
 
-              {/* Boxes editor */}
               {currentS.tipo === 'conteudo' && currentLayout === 2 && (
                 <div>
                   <label style={{ fontSize: 11, fontWeight: 700, color: labelClr, letterSpacing: 3, textTransform: 'uppercase', display: 'block', marginBottom: 10 }}>Boxes (4 itens)</label>
                   {[0,1,2,3].map(bi => {
                     const items = currentS.items ?? [{titulo:'',descricao:''},{titulo:'',descricao:''},{titulo:'',descricao:''},{titulo:'',descricao:''}]
-                    const item = items[bi] ?? {titulo:'',descricao:''}
+                    const item  = items[bi] ?? {titulo:'',descricao:''}
                     return (
                       <div key={bi} style={{ marginBottom: 10, padding: 10, borderRadius: 6, background: sideBg, border: `1px solid ${border}` }}>
                         <input type="text" value={item.titulo} placeholder={`Título ${bi + 1}`} onChange={e => {
@@ -901,13 +1039,12 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
                 </div>
               )}
 
-              {/* Stats editor */}
               {currentS.tipo === 'conteudo' && currentLayout === 3 && (
                 <div>
                   <label style={{ fontSize: 11, fontWeight: 700, color: labelClr, letterSpacing: 3, textTransform: 'uppercase', display: 'block', marginBottom: 10 }}>Stats (3 dados)</label>
                   {[0,1,2].map(si => {
                     const stats = currentS.stats ?? [{valor:'',unidade:'',descricao:''},{valor:'',unidade:'',descricao:''},{valor:'',unidade:'',descricao:''}]
-                    const stat = stats[si] ?? {valor:'',unidade:'',descricao:''}
+                    const stat  = stats[si] ?? {valor:'',unidade:'',descricao:''}
                     return (
                       <div key={si} style={{ marginBottom: 10, padding: 10, borderRadius: 6, background: sideBg, border: `1px solid ${border}` }}>
                         <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
@@ -927,7 +1064,6 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
                 </div>
               )}
 
-              {/* Foto do slide */}
               {currentS.tipo === 'conteudo' && fotos.length > 0 && (
                 <FotoSelect label="Foto neste slide" value={currentS.fotoIndex} fotos={fotos} onChange={i => handleFotoSlideChange(currentSlide, i)} />
               )}

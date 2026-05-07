@@ -540,12 +540,12 @@ export default function ImagensPage() {
   // ── Download / Save ──
   const downloadCurrentSlide = useCallback(async () => {
     try {
-      const slideEl = document.getElementById('slide-canvas-wrapper')
+      // Captura o canvas oculto em 1080px real — não o preview escalado
+      const slideEl = document.getElementById('slide-capture-fullres')
       if (!slideEl) return
 
-      // Desativa drag mode para captura limpa (sem outline pontilhado)
       setIsCapturing(true)
-      await new Promise(r => setTimeout(r, 40))
+      await new Promise(r => setTimeout(r, 80)) // garante re-render sem outline
 
       const { toPng } = await import('html-to-image')
       const { w, h } = FORMATOS_CONFIG[formato]
@@ -553,8 +553,8 @@ export default function ImagensPage() {
       const dataUrl = await toPng(slideEl, {
         width: w,
         height: h,
-        style: { transform: 'scale(1)', transformOrigin: 'top left' },
         pixelRatio: 1,
+        cacheBust: true,
       })
 
       setIsCapturing(false)
@@ -677,6 +677,9 @@ Gere ${slides.length} slides. Retorne SOMENTE JSON válido (zero markdown, zero 
       const data = await res.json()
       const _raw = (data.content?.[0]?.text || '{}').replace(/```json/g,'').replace(/```/g,'').trim()
       const json = JSON.parse(_raw)
+      if (!json.slides || !Array.isArray(json.slides)) {
+        throw new Error('API retornou: ' + JSON.stringify(data).slice(0, 300))
+      }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const newSlides: SlideData[] = json.slides.map((s: any) => ({
         ...s,
@@ -909,19 +912,41 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
           </div>
 
           {currentS && (
-            <div id='slide-canvas-wrapper' style={{ width: PREVIEW_W, height: previewH, flexShrink: 0, position: 'relative', borderRadius: 8, overflow: 'hidden', boxShadow: '0 24px 60px rgba(0,0,0,0.85)', outline: `1px solid ${border}` }}>
-              <SlideCanvas
-                slide={currentS}
-                formato={formato}
-                fotos={fotos}
-                logo={logo}
-                totalSlides={slides.length}
-                scale={scale}
-                dragMode={dragMode && !isCapturing}
-                offsets={currentOffsets}
-                onDrag={(key, x, y) => updateDragOffset(currentSlide, key, x, y)}
-              />
-            </div>
+            <>
+              {/* Preview escalado para tela */}
+              <div id='slide-canvas-wrapper' style={{ width: PREVIEW_W, height: previewH, flexShrink: 0, position: 'relative', borderRadius: 8, overflow: 'hidden', boxShadow: '0 24px 60px rgba(0,0,0,0.85)', outline: `1px solid ${border}` }}>
+                <SlideCanvas
+                  slide={currentS}
+                  formato={formato}
+                  fotos={fotos}
+                  logo={logo}
+                  totalSlides={slides.length}
+                  scale={scale}
+                  dragMode={dragMode && !isCapturing}
+                  offsets={currentOffsets}
+                  onDrag={(key, x, y) => updateDragOffset(currentSlide, key, x, y)}
+                />
+              </div>
+
+              {/* Canvas oculto em resolução real para captura — scale=1, sem drag outline */}
+              <div
+                id="slide-capture-fullres"
+                aria-hidden="true"
+                style={{ position: 'fixed', left: -99999, top: -99999, width: w, height: h, overflow: 'hidden', pointerEvents: 'none', zIndex: -1 }}
+              >
+                <SlideCanvas
+                  slide={currentS}
+                  formato={formato}
+                  fotos={fotos}
+                  logo={logo}
+                  totalSlides={slides.length}
+                  scale={1}
+                  dragMode={false}
+                  offsets={currentOffsets}
+                  onDrag={() => {}}
+                />
+              </div>
+            </>
           )}
 
           {/* Botões de ação abaixo do preview */}

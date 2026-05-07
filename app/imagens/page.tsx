@@ -627,7 +627,6 @@ export default function ImagensPage() {
     if (!tema.trim()) return
     setIsGenerating(true)
     try {
-      const apiKey = process.env.NEXT_PUBLIC_ANTHROPIC_API_KEY
       const contentSlides = slides.filter(s => s.tipo === 'conteudo').map(s => ({ id: s.id, layout: layoutOf(s.id) }))
 
       const prompt = `Você é redator de conteúdo médico para Instagram do Dr. Bruno Gustavo — Clínico-Geral, Pós-Graduado em Endocrinologia e Nutrologia. Poços de Caldas-MG.
@@ -670,10 +669,10 @@ Gere ${slides.length} slides. Retorne SOMENTE JSON válido (zero markdown, zero 
   ]
 }`
 
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
+      const res = await fetch('/api/imagens', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey || '', 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-        body: JSON.stringify({ model: 'claude-sonnet-4-5-20250929', max_tokens: 3500, messages: [{ role: 'user', content: prompt }] }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 3500, messages: [{ role: 'user', content: prompt }] }),
       })
       const data = await res.json()
       const _raw = (data.content?.[0]?.text || '{}').replace(/```json/g,'').replace(/```/g,'').trim()
@@ -691,7 +690,7 @@ Gere ${slides.length} slides. Retorne SOMENTE JSON válido (zero markdown, zero 
       setCurrentSlide(0)
     } catch (err) {
       console.error(err)
-      alert('Erro ao gerar. Verifique NEXT_PUBLIC_ANTHROPIC_API_KEY.')
+      alert('Erro ao gerar: ' + String(err))
     } finally {
       setIsGenerating(false)
     }
@@ -702,7 +701,6 @@ Gere ${slides.length} slides. Retorne SOMENTE JSON válido (zero markdown, zero 
     if (!editInstruction.trim()) return
     setIsEditGenerating(true)
     try {
-      const apiKey = process.env.NEXT_PUBLIC_ANTHROPIC_API_KEY
       const s  = slides[idx]
       const li = s.tipo === 'conteudo' ? layoutOf(s.id) : 0
       const prompt = `Reescreva este slide para o Dr. Bruno Gustavo (Clínico-Geral, Endocrinologia e Nutrologia). Tom: humano, direto, sem jargões de IA.
@@ -713,10 +711,10 @@ INSTRUÇÃO: "${editInstruction}"
 
 Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headline, subtitulo, corpo${li === 2 ? ', items (4 itens {titulo,descricao})' : ''}${li === 3 ? ', stats (3 itens {valor,unidade,descricao}), fonte' : ''}`
 
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
+      const res = await fetch('/api/imagens', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey || '', 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-        body: JSON.stringify({ model: 'claude-sonnet-4-5-20250929', max_tokens: 700, messages: [{ role: 'user', content: prompt }] }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 700, messages: [{ role: 'user', content: prompt }] }),
       })
       const data = await res.json()
       const _raw2 = (data.content?.[0]?.text || '{}').replace(/```json/g,'').replace(/```/g,'').trim()
@@ -724,7 +722,7 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
       setSlides(prev => prev.map((sl, i) => i === idx ? { ...sl, ...json } : sl))
       setEditInstruction('')
     } catch (err) {
-      console.error(err); alert('Erro ao regenerar.')
+      console.error(err); alert('Erro ao regenerar: ' + String(err))
     } finally {
       setIsEditGenerating(false)
     }

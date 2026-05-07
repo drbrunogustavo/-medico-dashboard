@@ -1,7 +1,7 @@
 // Salvar em: app/imagens/page.tsx
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useCallback } from 'react'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Formato = 'feed-retrato' | 'quadrado' | 'stories' | 'reels-capa'
@@ -142,15 +142,15 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale }: Canvas
   }
 
   const Counter = () => totalSlides > 1 ? (
-    <div style={{ position: 'absolute', top: 90, right: 90, background: 'rgba(0,0,0,0.55)', borderRadius: 40, padding: '10px 22px', color: C.w, fontSize: 22, fontWeight: 700 }}>
+    <div style={{ position: 'absolute', top: 90, right: 52, background: 'rgba(0,0,0,0.55)', borderRadius: 40, padding: '10px 22px', color: C.w, fontSize: 22, fontWeight: 700 }}>
       {slide.id}/{totalSlides}
     </div>
   ) : null
 
   const LogoFooter = ({ center = false }: { center?: boolean }) => (
-    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 90px', display: 'flex', justifyContent: center ? 'center' : 'space-between', alignItems: 'center', gap: 16 }}>
+    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '26px 90px', display: 'flex', justifyContent: center ? 'center' : 'space-between', alignItems: 'center', gap: 16 }}>
       {!center && <div style={{ color: C.d2, fontSize: 24, fontWeight: 700, letterSpacing: 2 }}>{NOME}</div>}
-      {logo && <div style={{ background: 'transparent' }}><img src={logo} alt="" style={{ height: 120, maxWidth: 340, objectFit: 'contain', display: 'block' }} /></div>}
+      {logo && <div style={{ background: 'transparent', padding: '0' }}><img src={logo} alt="" style={{ height: 110, maxWidth: 320, objectFit: 'contain', display: 'block' }} /></div>}
     </div>
   )
 
@@ -161,11 +161,11 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale }: Canvas
         <div style={{ position: 'absolute', inset: 0, background: C.bg }} />
         {foto && (<>
           <img src={foto} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', opacity: 0.75 }} />
-          <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(to bottom, rgba(18,10,4,0.15) 0%, rgba(18,10,4,0.3) 50%, ${C.bg} 88%)` }} />
+          <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(to bottom, rgba(18,10,4,0.15) 0%, rgba(18,10,4,0.35) 55%, ${C.bg} 88%)` }} />
         </>)}
 
         {/* Tag canto superior esquerdo */}
-        <div style={{ position: 'absolute', top: 90, left: 90 }}>
+        <div style={{ position: 'absolute', top: 90, left: 72 }}>
           <div style={{ display: 'inline-block', padding: '10px 22px', border: `1px solid rgba(184,151,106,0.55)`, background: 'rgba(0,0,0,0.5)', color: C.w, fontSize: 20, fontWeight: 700, letterSpacing: 4, textTransform: 'uppercase' as const }}>
             {slide.subtitulo || 'INFORMAÇÃO'}
           </div>
@@ -188,9 +188,9 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale }: Canvas
         </div>
 
         {/* Rodapé */}
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '40px 90px', background: `linear-gradient(to top, ${C.bg} 60%, transparent)`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '40px 72px', background: `linear-gradient(to top, ${C.bg} 60%, transparent)`, display: 'flex', alignItems: 'center', justifyContent: logo ? 'space-between' : 'center' }}>
           
-          {logo && <div style={{ background: 'transparent' }}><img src={logo} alt="" style={{ height: 120, maxWidth: 340, objectFit: 'contain', display: 'block' }} /></div>}
+          {logo && <div style={{ background: 'transparent', padding: '0' }}><img src={logo} alt="" style={{ height: 110, maxWidth: 320, objectFit: 'contain', display: 'block' }} /></div>}
         </div>
       </div>
     )
@@ -204,7 +204,7 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale }: Canvas
         <div style={{ position: 'absolute', inset: 0, background: C.bg }} />
         {foto && (<>
           <img src={foto} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', opacity: 0.75 }} />
-          <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(to bottom, rgba(18,10,4,0.2) 0%, rgba(18,10,4,0.4) 45%, ${C.bg} 85%)` }} />
+          <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(to bottom, rgba(18,10,4,0.6) 0%, ${C.bg} 60%)` }} />
         </>)}
 
         <div style={{ position: 'absolute', left: 90, right: 90, top: 140 }}>
@@ -236,7 +236,7 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale }: Canvas
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '44px 90px', textAlign: 'center', background: `linear-gradient(to top, ${C.bg} 65%, transparent)` }}>
           <div style={{ color: C.d2, fontSize: 42, fontWeight: 900, letterSpacing: 1, marginBottom: 10 }}>{HANDLE}</div>
           <div style={{ color: C.wFaint, fontSize: 22, letterSpacing: 3 }}>{ASSIN}</div>
-          {logo && <div style={{ marginTop: 18, display: 'inline-block', background: 'transparent' }}><img src={logo} alt="" style={{ height: 120, maxWidth: 340, objectFit: 'contain', display: 'block' }} /></div>}
+          {logo && <div style={{ marginTop: 18, display: 'inline-block', background: 'transparent', padding: '0' }}><img src={logo} alt="" style={{ height: 110, maxWidth: 320, objectFit: 'contain', display: 'block' }} /></div>}
         </div>
       </div>
     )
@@ -277,7 +277,7 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale }: Canvas
         <div style={{ position: 'absolute', bottom: 64, right: 90, display: 'flex', alignItems: 'center', gap: 18 }}>
           <div style={{ width: 56, height: 1, background: C.d1 }} />
           <div style={{ color: C.d1, fontSize: 21, fontWeight: 700, letterSpacing: 2 }}>{NOME}</div>
-          {logo && <div style={{ background: 'transparent' }}><img src={logo} alt="" style={{ height: 120, maxWidth: 340, objectFit: 'contain', display: 'block' }} /></div>}
+          {logo && <div style={{ background: 'transparent', padding: '0' }}><img src={logo} alt="" style={{ height: 110, maxWidth: 320, objectFit: 'contain', display: 'block' }} /></div>}
         </div>
       </div>
     )
@@ -315,9 +315,9 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale }: Canvas
           ))}
         </div>
 
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 90px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '22px 90px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ color: C.wFaint, fontSize: 20 }}>{HANDLE}</div>
-          {logo && <div style={{ background: 'transparent' }}><img src={logo} alt="" style={{ height: 120, maxWidth: 340, objectFit: 'contain', display: 'block' }} /></div>}
+          {logo && <div style={{ background: 'transparent', padding: '0' }}><img src={logo} alt="" style={{ height: 110, maxWidth: 320, objectFit: 'contain', display: 'block' }} /></div>}
         </div>
       </div>
     )
@@ -333,7 +333,7 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale }: Canvas
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 360, background: `linear-gradient(135deg, ${C.bgMid} 0%, ${C.bg} 100%)` }} />
 
         {/* Topo: fonte + label */}
-        <div style={{ position: 'absolute', top: 90, left: 90 }}>
+        <div style={{ position: 'absolute', top: 90, left: 72 }}>
           {slide.fonte && <SourceBadge fonte={slide.fonte} />}
           <div style={{ color: C.wFaint, fontSize: 20, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase' as const, marginTop: 14 }}>{slide.subtitulo}</div>
         </div>
@@ -382,9 +382,9 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale }: Canvas
           </div>
         </div>
 
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '24px 72px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: `1px solid rgba(184,151,106,0.1)` }}>
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 90px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: `1px solid rgba(184,151,106,0.1)` }}>
           <div style={{ color: C.wFaint, fontSize: 17, textTransform: 'uppercase' as const, letterSpacing: 2 }}>{slide.fonte ?? ''}</div>
-          {logo && <div style={{ background: 'transparent' }}><img src={logo} alt="" style={{ height: 120, maxWidth: 340, objectFit: 'contain', display: 'block' }} /></div>}
+          {logo && <div style={{ background: 'transparent', padding: '0' }}><img src={logo} alt="" style={{ height: 110, maxWidth: 320, objectFit: 'contain', display: 'block' }} /></div>}
           
         </div>
       </div>
@@ -430,9 +430,9 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale }: Canvas
         {String(slide.id - 1).padStart(2, '0')}
       </div>
 
-      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '24px 72px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: `1px solid rgba(184,151,106,0.12)` }}>
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '22px 90px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: `1px solid rgba(184,151,106,0.12)` }}>
         {logo
-          ? <div style={{ background: 'transparent' }}><img src={logo} alt="" style={{ height: 120, maxWidth: 340, objectFit: 'contain', display: 'block' }} /></div>
+          ? <div style={{ background: 'transparent', padding: '0' }}><img src={logo} alt="" style={{ height: 110, maxWidth: 320, objectFit: 'contain', display: 'block' }} /></div>
           : <div style={{ color: C.wFaint, fontSize: 20 }}>{HANDLE}</div>}
         
       </div>
@@ -460,7 +460,45 @@ export default function ImagensPage() {
   const fotoRef = useRef<HTMLInputElement>(null)
   const logoRef = useRef<HTMLInputElement>(null)
 
-  const PREVIEW_W = 400
+  // Mobile detection
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
+  const PREVIEW_W = isMobile ? Math.min(window.innerWidth - 32, 380) : 400
+
+  // Download function - works on iOS Safari
+  const downloadCurrentSlide = useCallback(async () => {
+    try {
+      const slideEl = document.getElementById('slide-canvas-wrapper')
+      if (!slideEl) return
+
+      // Dynamically import html-to-image
+      const { toPng } = await import('html-to-image')
+      const { w, h } = FORMATOS_CONFIG[formato]
+
+      const dataUrl = await toPng(slideEl, {
+        width: w,
+        height: h,
+        style: { transform: 'scale(1)', transformOrigin: 'top left' },
+        pixelRatio: 1,
+      })
+
+      // iOS Safari: open in new tab (user can long-press to save)
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+      if (isIOS) {
+        const win = window.open()
+        if (win) {
+          win.document.write('<img src="' + dataUrl + '" style="width:100%;height:auto;" /><p style="font-family:sans-serif;text-align:center;color:#666">Pressione e segure a imagem para salvar no álbum</p>')
+        }
+      } else {
+        const link = document.createElement('a')
+        link.download = 'drbrunogustavo-slide-' + (currentSlide + 1) + '.png'
+        link.href = dataUrl
+        link.click()
+      }
+    } catch (err) {
+      console.error('Erro ao baixar:', err)
+      alert('Erro ao gerar imagem para download.')
+    }
+  }, [currentSlide, formato, slides])
   const { w, h } = FORMATOS_CONFIG[formato]
   const scale = PREVIEW_W / w
   const previewH = h * scale
@@ -512,7 +550,7 @@ export default function ImagensPage() {
     if (!tema.trim()) return
     setIsGenerating(true)
     try {
-      const apiKey = process.env.NEXT_PUBLIC_ANTHROPIC_API_KEY; console.log("APIKEY:", apiKey)
+      const apiKey = process.env.NEXT_PUBLIC_ANTHROPIC_API_KEY
       const contentSlides = slides.filter(s => s.tipo === 'conteudo').map(s => ({ id: s.id, layout: layoutOf(s.id) }))
 
       const prompt = `Você é redator de conteúdo médico para Instagram do Dr. Bruno Gustavo — Clínico-Geral, Pós-Graduado em Endocrinologia e Nutrologia. Poços de Caldas-MG.
@@ -592,7 +630,7 @@ Gere ${slides.length} slides. Retorne SOMENTE JSON válido (zero markdown, zero 
 
 Slide: tipo="${s.tipo}" | headline="${s.headline}" | corpo="${s.corpo}"${s.items ? ` | items=${JSON.stringify(s.items)}` : ''}${s.stats ? ` | stats=${JSON.stringify(s.stats)}` : ''}
 
-TAREFA: Reescreva APENAS os textos (headline, subtitulo, corpo) seguindo esta instrução: "${editInstruction}". NÃO coloque a instrução como texto no slide. Reescreva o conteúdo médico com base nela.
+INSTRUÇÃO: "${editInstruction}"
 
 Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headline, subtitulo, corpo${li === 2 ? ', items (4 itens {titulo,descricao})' : ''}${li === 3 ? ', stats (3 itens {valor,unidade,descricao}), fonte' : ''}`
 
@@ -638,10 +676,10 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
         </button>
       </div>
 
-      <div style={{ display: 'flex', height: 'calc(100vh - 74px)' }}>
+      <div style={{ display: 'flex', height: isMobile ? 'auto' : 'calc(100vh - 74px)', flexDirection: isMobile ? 'column' : 'row' }}>
 
         {/* ── Painel Esquerdo ── */}
-        <div style={{ width: 356, flexShrink: 0, borderRight: `1px solid ${border}`, overflowY: 'auto', padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div style={{ width: isMobile ? '100%' : 356, flexShrink: 0, borderRight: isMobile ? 'none' : `1px solid ${border}`, borderBottom: isMobile ? `1px solid ${border}` : 'none', overflowY: 'auto', padding: isMobile ? '16px' : 24, display: 'flex', flexDirection: 'column', gap: isMobile ? 12 : 20 }}>
 
           {/* Tipo */}
           <div>
@@ -764,16 +802,22 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
         </div>
 
         {/* ── Centro — Preview ── */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', padding: '32px 16px', overflowY: 'auto', background: '#090503' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', padding: isMobile ? '20px 16px' : '32px 16px', overflowY: 'auto', background: '#090503' }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: labelClr, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 16 }}>
             {FORMATOS_CONFIG[formato].label} · {w}×{h}px
           </div>
 
           {currentS && (
-            <div style={{ width: PREVIEW_W, height: previewH, flexShrink: 0, position: 'relative', borderRadius: 8, overflow: 'hidden', boxShadow: '0 24px 60px rgba(0,0,0,0.85)', outline: `1px solid ${border}` }}>
+            <div id='slide-canvas-wrapper' style={{ width: PREVIEW_W, height: previewH, flexShrink: 0, position: 'relative', borderRadius: 8, overflow: 'hidden', boxShadow: '0 24px 60px rgba(0,0,0,0.85)', outline: `1px solid ${border}` }}>
               <SlideCanvas slide={currentS} formato={formato} fotos={fotos} logo={logo} totalSlides={slides.length} scale={scale} />
             </div>
           )}
+
+          {/* Download button always visible */}
+          <button onClick={downloadCurrentSlide}
+            style={{ marginTop: 16, padding: '12px 32px', background: '#C9A84C', border: 'none', borderRadius: 10, color: '#120a04', fontWeight: 900, fontSize: 14, cursor: 'pointer', fontFamily: "'Montserrat', sans-serif", display: 'flex', alignItems: 'center', gap: 8 }}>
+            ⬇ Salvar Slide {currentSlide + 1}
+          </button>
 
           {slides.length > 1 && (
             <>
@@ -795,7 +839,7 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
         </div>
 
         {/* ── Painel Direito — Editor ── */}
-        <div style={{ width: 304, flexShrink: 0, borderLeft: `1px solid ${border}`, overflowY: 'auto', padding: 24, display: 'flex', flexDirection: 'column', gap: 18 }}>
+        <div style={{ width: isMobile ? '100%' : 304, flexShrink: 0, borderLeft: isMobile ? 'none' : `1px solid ${border}`, borderTop: isMobile ? `1px solid ${border}` : 'none', overflowY: 'auto', padding: isMobile ? '16px' : 24, display: 'flex', flexDirection: 'column', gap: 18 }}>
           <div>
             <span style={{ fontSize: 11, fontWeight: 700, color: labelClr, letterSpacing: 3, textTransform: 'uppercase' }}>
               Editar slide {currentSlide + 1}

@@ -142,13 +142,13 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale }: Canvas
   }
 
   const Counter = () => totalSlides > 1 ? (
-    <div style={{ position: 'absolute', top: 52, right: 52, background: 'rgba(0,0,0,0.55)', borderRadius: 40, padding: '10px 22px', color: C.w, fontSize: 22, fontWeight: 700 }}>
+    <div style={{ position: 'absolute', top: 90, right: 90, background: 'rgba(0,0,0,0.55)', borderRadius: 40, padding: '10px 22px', color: C.w, fontSize: 22, fontWeight: 700 }}>
       {slide.id}/{totalSlides}
     </div>
   ) : null
 
   const LogoFooter = ({ center = false }: { center?: boolean }) => (
-    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 72px', display: 'flex', justifyContent: center ? 'center' : 'space-between', alignItems: 'center', gap: 16 }}>
+    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 90px', display: 'flex', justifyContent: center ? 'center' : 'space-between', alignItems: 'center', gap: 16 }}>
       {!center && <div style={{ color: C.d2, fontSize: 24, fontWeight: 700, letterSpacing: 2 }}>{NOME}</div>}
       {logo && <div style={{ background: 'transparent' }}><img src={logo} alt="" style={{ height: 120, maxWidth: 340, objectFit: 'contain', display: 'block' }} /></div>}
     </div>
@@ -165,7 +165,7 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale }: Canvas
         </>)}
 
         {/* Tag canto superior esquerdo */}
-        <div style={{ position: 'absolute', top: 56, left: 72 }}>
+        <div style={{ position: 'absolute', top: 90, left: 90 }}>
           <div style={{ display: 'inline-block', padding: '10px 22px', border: `1px solid rgba(184,151,106,0.55)`, background: 'rgba(0,0,0,0.5)', color: C.w, fontSize: 20, fontWeight: 700, letterSpacing: 4, textTransform: 'uppercase' as const }}>
             {slide.subtitulo || 'INFORMAÇÃO'}
           </div>
@@ -173,7 +173,7 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale }: Canvas
         <Counter />
 
         {/* Conteúdo */}
-        <div style={{ position: 'absolute', left: 72, right: 72, top: foto ? 240 : 200 }}>
+        <div style={{ position: 'absolute', left: 90, right: 90, top: foto ? 240 : 200 }}>
           <div style={{ color: C.d1, fontSize: 26, fontWeight: 700, letterSpacing: 4, textTransform: 'uppercase' as const, marginBottom: 28 }}>A GRANDE QUESTÃO</div>
           <Headline text={slide.headline || 'Título do *Post*'} fs={92} lh={1.04} cn={5} />
 
@@ -188,7 +188,7 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale }: Canvas
         </div>
 
         {/* Rodapé */}
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '40px 72px', background: `linear-gradient(to top, ${C.bg} 60%, transparent)`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '40px 90px', background: `linear-gradient(to top, ${C.bg} 60%, transparent)`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           
           {logo && <div style={{ background: 'transparent' }}><img src={logo} alt="" style={{ height: 120, maxWidth: 340, objectFit: 'contain', display: 'block' }} /></div>}
         </div>
@@ -207,7 +207,7 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale }: Canvas
           <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(to bottom, rgba(18,10,4,0.2) 0%, rgba(18,10,4,0.4) 45%, ${C.bg} 85%)` }} />
         </>)}
 
-        <div style={{ position: 'absolute', left: 72, right: 72, top: 140 }}>
+        <div style={{ position: 'absolute', left: 90, right: 90, top: 140 }}>
           <div style={{ color: C.d1, fontSize: 24, fontWeight: 700, letterSpacing: 5, textTransform: 'uppercase' as const, marginBottom: 36, textAlign: 'center' }}>
             {slide.subtitulo}
           </div>
@@ -233,7 +233,7 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale }: Canvas
           </div>
         </div>
 
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '44px 72px', textAlign: 'center', background: `linear-gradient(to top, ${C.bg} 65%, transparent)` }}>
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '44px 90px', textAlign: 'center', background: `linear-gradient(to top, ${C.bg} 65%, transparent)` }}>
           <div style={{ color: C.d2, fontSize: 42, fontWeight: 900, letterSpacing: 1, marginBottom: 10 }}>{HANDLE}</div>
           <div style={{ color: C.wFaint, fontSize: 22, letterSpacing: 3 }}>{ASSIN}</div>
           {logo && <div style={{ marginTop: 18, display: 'inline-block', background: 'transparent' }}><img src={logo} alt="" style={{ height: 120, maxWidth: 340, objectFit: 'contain', display: 'block' }} /></div>}
@@ -255,15 +255,15 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale }: Canvas
           <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse at 65% 25%, ${C.bgMid} 0%, ${C.bg} 68%)` }} />
         )}
 
-        <div style={{ position: 'absolute', top: 56, left: 72, color: C.d1, fontSize: 22, fontWeight: 700, letterSpacing: 4, textTransform: 'uppercase' as const }}>{slide.subtitulo}</div>
-        <div style={{ position: 'absolute', top: 56, right: 72, color: C.d2, fontSize: 22, fontWeight: 700, letterSpacing: 2 }}>{NOME}</div>
+        <div style={{ position: 'absolute', top: 90, left: 90, color: C.d1, fontSize: 22, fontWeight: 700, letterSpacing: 4, textTransform: 'uppercase' as const }}>{slide.subtitulo}</div>
+        <div style={{ position: 'absolute', top: 90, right: 90, color: C.d2, fontSize: 22, fontWeight: 700, letterSpacing: 2 }}>{NOME}</div>
         <Counter />
 
         {/* Aspas decorativas */}
         <div style={{ position: 'absolute', left: 56, top: '24%', color: C.d1, fontSize: 220, lineHeight: 1, opacity: 0.3, fontFamily: "'Playfair Display', serif", userSelect: 'none' }}>"</div>
 
         {/* Texto da citação — Playfair Display itálico */}
-        <div style={{ position: 'absolute', left: 72, right: 72, top: '33%', bottom: 160 }}>
+        <div style={{ position: 'absolute', left: 90, right: 90, top: '33%', bottom: 160 }}>
           <div style={{ color: C.w, fontSize: 62, fontStyle: 'italic', lineHeight: 1.38, fontFamily: "'Playfair Display', serif", fontWeight: 400, ...clamp(7) }}>
             {slide.corpo.split(/\*(.*?)\*/).map((part, i) =>
               i % 2 === 1
@@ -274,7 +274,7 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale }: Canvas
         </div>
 
         {/* Linha + autor */}
-        <div style={{ position: 'absolute', bottom: 64, right: 72, display: 'flex', alignItems: 'center', gap: 18 }}>
+        <div style={{ position: 'absolute', bottom: 64, right: 90, display: 'flex', alignItems: 'center', gap: 18 }}>
           <div style={{ width: 56, height: 1, background: C.d1 }} />
           <div style={{ color: C.d1, fontSize: 21, fontWeight: 700, letterSpacing: 2 }}>{NOME}</div>
           {logo && <div style={{ background: 'transparent' }}><img src={logo} alt="" style={{ height: 120, maxWidth: 340, objectFit: 'contain', display: 'block' }} /></div>}
@@ -292,11 +292,11 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale }: Canvas
         <div style={{ position: 'absolute', inset: 0, background: C.bg }} />
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 320, background: `linear-gradient(to bottom, ${C.bgMid} 0%, transparent 100%)` }} />
 
-        <div style={{ position: 'absolute', top: 56, left: 72, color: C.wFaint, fontSize: 21, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase' as const }}>{slide.subtitulo}</div>
-        <div style={{ position: 'absolute', top: 56, right: 72, color: C.d2, fontSize: 21, fontWeight: 700, letterSpacing: 2 }}>{NOME}</div>
+        <div style={{ position: 'absolute', top: 90, left: 90, color: C.wFaint, fontSize: 21, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase' as const }}>{slide.subtitulo}</div>
+        <div style={{ position: 'absolute', top: 90, right: 90, color: C.d2, fontSize: 21, fontWeight: 700, letterSpacing: 2 }}>{NOME}</div>
         <Counter />
 
-        <div style={{ position: 'absolute', left: 72, right: 72, top: 116 }}>
+        <div style={{ position: 'absolute', left: 90, right: 90, top: 116 }}>
           <Headline text={slide.headline} fs={72} lh={1.1} cn={2} />
         </div>
 
@@ -315,7 +315,7 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale }: Canvas
           ))}
         </div>
 
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 72px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 90px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ color: C.wFaint, fontSize: 20 }}>{HANDLE}</div>
           {logo && <div style={{ background: 'transparent' }}><img src={logo} alt="" style={{ height: 120, maxWidth: 340, objectFit: 'contain', display: 'block' }} /></div>}
         </div>
@@ -333,14 +333,14 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale }: Canvas
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 360, background: `linear-gradient(135deg, ${C.bgMid} 0%, ${C.bg} 100%)` }} />
 
         {/* Topo: fonte + label */}
-        <div style={{ position: 'absolute', top: 52, left: 72 }}>
+        <div style={{ position: 'absolute', top: 90, left: 90 }}>
           {slide.fonte && <SourceBadge fonte={slide.fonte} />}
           <div style={{ color: C.wFaint, fontSize: 20, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase' as const, marginTop: 14 }}>{slide.subtitulo}</div>
         </div>
         <Counter />
 
         {/* Headline + divisor */}
-        <div style={{ position: 'absolute', left: 72, right: 72, top: 180 }}>
+        <div style={{ position: 'absolute', left: 90, right: 90, top: 180 }}>
           <Headline text={slide.headline} fs={78} lh={1.08} cn={2} />
           <div style={{ width: 56, height: 3, background: C.d2, marginTop: 26 }} />
         </div>
@@ -408,11 +408,11 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale }: Canvas
       {/* Tarja dourada topo */}
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 6, background: `linear-gradient(to right, ${C.d2} 0%, ${C.d1} 40%, transparent 72%)` }} />
 
-      <div style={{ position: 'absolute', top: 46, left: 72, color: C.wFaint, fontSize: 22, fontWeight: 700, letterSpacing: 4, textTransform: 'uppercase' as const }}>{slide.subtitulo}</div>
-      <div style={{ position: 'absolute', top: 46, right: 72, color: C.d2, fontSize: 22, fontWeight: 700, letterSpacing: 2 }}>{NOME}</div>
+      <div style={{ position: 'absolute', top: 90, left: 90, color: C.wFaint, fontSize: 22, fontWeight: 700, letterSpacing: 4, textTransform: 'uppercase' as const }}>{slide.subtitulo}</div>
+      <div style={{ position: 'absolute', top: 90, right: 90, color: C.d2, fontSize: 22, fontWeight: 700, letterSpacing: 2 }}>{NOME}</div>
       <Counter />
 
-      <div style={{ position: 'absolute', left: 72, right: foto ? 400 : 72, top: 116, bottom: 150 }}>
+      <div style={{ position: 'absolute', left: 90, right: foto ? 400 : 72, top: 116, bottom: 150 }}>
         <Headline text={slide.headline} fs={78} lh={1.1} cn={3} />
         <div style={{ width: '100%', height: 2, background: `linear-gradient(to right, ${C.d2} 0%, rgba(200,168,76,0.08) 100%)`, margin: '42px 0' }} />
         <div style={{ color: C.wMid, fontSize: 40, lineHeight: 1.6, ...clamp(6) }}>{slide.corpo}</div>

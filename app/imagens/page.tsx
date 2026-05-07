@@ -188,8 +188,9 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale }: Canvas
         </div>
 
         {/* Rodapé */}
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '50px 72px', background: `linear-gradient(to top, ${C.bg} 60%, transparent)`, textAlign: 'center' }}>
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '40px 72px', background: `linear-gradient(to top, ${C.bg} 60%, transparent)`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ color: C.d2, fontSize: 30, fontWeight: 700, letterSpacing: 3 }}>{NOME}</div>
+          {logo && <div style={{ background: 'rgba(0,0,0,0.6)', borderRadius: 10, padding: '10px 16px' }}><img src={logo} alt="" style={{ height: 80, maxWidth: 240, objectFit: 'contain', display: 'block' }} /></div>}
         </div>
       </div>
     )
@@ -235,7 +236,7 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale }: Canvas
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '44px 72px', textAlign: 'center', background: `linear-gradient(to top, ${C.bg} 65%, transparent)` }}>
           <div style={{ color: C.d2, fontSize: 42, fontWeight: 900, letterSpacing: 1, marginBottom: 10 }}>{HANDLE}</div>
           <div style={{ color: C.wFaint, fontSize: 22, letterSpacing: 3 }}>{ASSIN}</div>
-          {logo && <div style={{ marginTop: 18, display: 'inline-block', background: 'rgba(0,0,0,0.55)', borderRadius: 10, padding: '8px 16px' }}><img src={logo} alt="" style={{ height: 36, maxWidth: 110, objectFit: 'contain', display: 'block' }} /></div>}
+          {logo && <div style={{ marginTop: 18, display: 'inline-block', background: 'rgba(0,0,0,0.55)', borderRadius: 10, padding: '8px 16px' }}><img src={logo} alt="" style={{ height: 80, maxWidth: 240, objectFit: 'contain', display: 'block' }} /></div>}
         </div>
       </div>
     )

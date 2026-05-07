@@ -629,45 +629,25 @@ export default function ImagensPage() {
     try {
       const contentSlides = slides.filter(s => s.tipo === 'conteudo').map(s => ({ id: s.id, layout: layoutOf(s.id) }))
 
-      const prompt = `Você é redator de conteúdo médico para Instagram do Dr. Bruno Gustavo — Clínico-Geral, Pós-Graduado em Endocrinologia e Nutrologia. Poços de Caldas-MG.
+      const layoutLabel = (l: number) => l===1?'A CIÊNCIA':l===2?'OS FATOS':l===3?'A EVIDÊNCIA':'ENTENDA'
+      const prompt = `Redator médico Instagram — Dr. Bruno Gustavo, Clínico-Geral, Endocrinologia/Nutrologia, Poços de Caldas-MG.
+TEMA: "${tema}"${publico ? `. PÚBLICO: ${publico}` : ''}
+Tom: direto, humano. Proibido: mergulhar/transformador/jornada/empoderar. Use *palavra* para dourado itálico.
 
-TEMA: "${tema}"${publico ? `\nPÚBLICO: ${publico}` : ''}
+Retorne SOMENTE JSON: {"slides":[...]}
 
-REGRAS DE TOM:
-- Escreva como um médico que conversa com o paciente, não como um robô
-- PROIBIDO usar: "mergulhar", "transformador", "desbloqueie", "jornada", "empoderar", "revolucionar"
-- Use frases curtas, diretas, humanas
-- Dados reais e verificáveis quando possível
+Slides necessários:
+1. capa — headline impactante com *itálico dourado*, subtitulo "INFORMAÇÃO", corpo citação curta (max 90 chars)
+${contentSlides.map(({ id, layout }) => `${id}. conteudo — subtitulo "${String(id-1).padStart(2,'0')} — ${layoutLabel(layout)}"${
+  layout===1 ? ', headline vazio, corpo frase impacto max 120 chars com *destaque*' :
+  layout===2 ? ', headline com *dourado*, items:[{titulo,descricao}] 4 itens relacionados ao tema' :
+  layout===3 ? ', headline com *dourado*, fonte:"journal real", stats:[{valor,unidade,descricao}] 3 dados reais' :
+               ', headline com *dourado*, corpo explicação max 180 chars'
+}`).join('
+')}
+${slides.length}. cta — headline "SALVE *ESTE POST*", subtitulo "GOSTOU DESTE CONTEÚDO?", corpo "📌 Salve para ter esta informação sempre à mão|📤 Compartilhe com quem precisa ler isso agora|💬 Comente: ${publico ? 'pergunta para ' + publico : 'o que mais te surpreendeu?'}"
 
-Gere ${slides.length} slides. Retorne SOMENTE JSON válido (zero markdown, zero explicação):
-
-{
-  "slides": [
-    {
-      "id": 1, "tipo": "capa",
-      "headline": "Texto branco com *parte dourada itálica*",
-      "subtitulo": "INFORMAÇÃO",
-      "corpo": "Frase provocativa curta (max 90 chars). Use *negrito dourado* para destaque.",
-      "fonte": null, "items": null, "stats": null
-    }${contentSlides.map(({ id, layout }) => `,
-    {
-      "id": ${id}, "tipo": "conteudo",
-      "headline": ${layout === 1 ? '""' : '"Título com *parte dourada*"'},
-      "subtitulo": "${String(id - 1).padStart(2, '0')} — ${layout === 1 ? 'A CIÊNCIA' : layout === 2 ? 'OS FATOS' : layout === 3 ? 'A EVIDÊNCIA' : 'ENTENDA'}",
-      "corpo": ${layout === 1 ? '"Frase de impacto em itálico. Use *negrito dourado*. Max 120 chars."' : layout === 4 ? '"Explicação direta, max 180 chars."' : '""'},
-      "fonte": ${layout === 3 ? '"Nome exato do journal (ex: New England Journal of Medicine)"' : 'null'},
-      "items": ${layout === 2 ? '[{"titulo":"Nome do conceito","descricao":"Max 85 chars, direto."}, ... (exatos 4 itens)]' : 'null'},
-      "stats": ${layout === 3 ? '[{"valor":"número ou % ou ×","unidade":"unidade curta","descricao":"max 65 chars"}, ... (exatos 3 dados)]' : 'null'}
-    }`).join('')},
-    {
-      "id": ${slides.length}, "tipo": "cta",
-      "headline": "SALVE *ESTE POST*",
-      "subtitulo": "GOSTOU DESTE CONTEÚDO?",
-      "corpo": "📌 Salve para ter esta informação sempre à mão|📤 Compartilhe com quem precisa ler isso agora|💬 Comente: ${publico ? 'pergunta relevante para ' + publico : 'o que mais te surpreendeu?'}",
-      "fonte": null, "items": null, "stats": null
-    }
-  ]
-}`
+Campos obrigatórios em todos: id, tipo, headline, subtitulo, corpo, fonte (null se não usado), items (null se não usado), stats (null se não usado)`
 
       const res = await fetch('/api/imagens', {
         method: 'POST',
@@ -693,7 +673,12 @@ Gere ${slides.length} slides. Retorne SOMENTE JSON válido (zero markdown, zero 
       setCurrentSlide(0)
     } catch (err) {
       console.error(err)
-      alert('Erro ao gerar: ' + String(err))
+      const msg = String(err)
+      if (msg.includes('rate_limit')) {
+        alert('Limite de requisições atingido.\nAguarde 1 minuto e tente novamente.')
+      } else {
+        alert('Erro ao gerar: ' + msg)
+      }
     } finally {
       setIsGenerating(false)
     }
@@ -928,11 +913,11 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
                 />
               </div>
 
-              {/* Canvas oculto em resolução real para captura — scale=1, sem drag outline */}
+              {/* Canvas oculto em resolução real — opacity:0 garante renderização pelo browser */}
               <div
                 id="slide-capture-fullres"
                 aria-hidden="true"
-                style={{ position: 'fixed', left: -99999, top: -99999, width: w, height: h, overflow: 'hidden', pointerEvents: 'none', zIndex: -1 }}
+                style={{ position: 'fixed', top: 0, left: 0, width: w, height: h, opacity: 0, pointerEvents: 'none', zIndex: -1, overflow: 'hidden' }}
               >
                 <SlideCanvas
                   slide={currentS}

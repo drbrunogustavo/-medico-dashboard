@@ -160,8 +160,8 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale }: Canvas
       <div style={base}>
         <div style={{ position: 'absolute', inset: 0, background: C.bg }} />
         {foto && (<>
-          <img src={foto} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', opacity: 0.55 }} />
-          <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(170deg, rgba(18,10,4,0.45) 0%, ${C.bg} 72%)` }} />
+          <img src={foto} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', opacity: 0.75 }} />
+          <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(to bottom, rgba(18,10,4,0.15) 0%, rgba(18,10,4,0.3) 50%, ${C.bg} 88%)` }} />
         </>)}
 
         {/* Tag canto superior esquerdo */}
@@ -202,8 +202,8 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale }: Canvas
       <div style={base}>
         <div style={{ position: 'absolute', inset: 0, background: C.bg }} />
         {foto && (<>
-          <img src={foto} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', opacity: 0.55 }} />
-          <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(to bottom, rgba(18,10,4,0.6) 0%, ${C.bg} 60%)` }} />
+          <img src={foto} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', opacity: 0.75 }} />
+          <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(to bottom, rgba(18,10,4,0.2) 0%, rgba(18,10,4,0.4) 45%, ${C.bg} 85%)` }} />
         </>)}
 
         <div style={{ position: 'absolute', left: 72, right: 72, top: 140 }}>
@@ -248,7 +248,7 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale }: Canvas
       <div style={base}>
         <div style={{ position: 'absolute', inset: 0, background: C.bg }} />
         {foto ? (<>
-          <img src={foto} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', opacity: 0.55 }} />
+          <img src={foto} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', opacity: 0.75 }} />
           <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(180deg, rgba(18,10,4,0.5) 0%, rgba(18,10,4,0.15) 35%, ${C.bg} 82%)` }} />
         </>) : (
           <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse at 65% 25%, ${C.bgMid} 0%, ${C.bg} 68%)` }} />

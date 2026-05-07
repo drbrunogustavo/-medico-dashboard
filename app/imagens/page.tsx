@@ -556,7 +556,7 @@ Gere ${slides.length} slides. Retorne SOMENTE JSON válido (zero markdown, zero 
 
       const res = await fetch('/api/imagens', {
         method: 'POST',
-        body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 3500, messages: [{ role: 'user', content: prompt }] }),
+        body: JSON.stringify({ model: 'claude-sonnet-4-5-20250929', max_tokens: 3500, messages: [{ role: 'user', content: prompt }] }),
       })
       const data = await res.json()
       const json = JSON.parse(data.content?.[0]?.text?.trim() || '')
@@ -596,7 +596,7 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
 
       const res = await fetch('/api/imagens', {
         method: 'POST',
-        body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 700, messages: [{ role: 'user', content: prompt }] }),
+        body: JSON.stringify({ model: 'claude-sonnet-4-5-20250929', max_tokens: 700, messages: [{ role: 'user', content: prompt }] }),
       })
       const data = await res.json()
       const json = JSON.parse(data.content?.[0]?.text?.trim() || '{}')

@@ -538,12 +538,13 @@ export default function ImagensPage() {
   const resetOffsets = () => setTextOffsets({})
 
   // ── Download / Save ──
-  // Estratégia: usa o SlideCanvas já renderizado no preview (imagens já carregadas),
-  // expande para resolução real via DOM direto enquanto o overlay de loading cobre a tela.
+  // Abordagem de composição manual em canvas:
+  // 1. Esconde imgs + div de fundo escuro → html-to-image captura gradientes/texto com bg transparente
+  // 2. Compõe canvas: fundo escuro → foto (cover) → overlay html-to-image → logo (topo)
   const downloadCurrentSlide = useCallback(async () => {
+    const slide = slides[currentSlide]
+    if (!slide) return
     const { w, h } = FORMATOS_CONFIG[formato]
-
-    // 1. Mostra overlay de loading e aguarda o React re-renderizar
     setIsCapturing(true)
     await new Promise<void>(r => requestAnimationFrame(() => requestAnimationFrame(() => r())))
 
@@ -551,38 +552,97 @@ export default function ImagensPage() {
     const inner   = wrapper?.firstElementChild as HTMLElement | null
     if (!inner || !wrapper) { setIsCapturing(false); return }
 
-    // 2. Salva estilos originais (React vai restaurar no próximo render)
-    const origInnerTransform = inner.style.transform
+    const origTransform       = inner.style.transform
     const origWrapperOverflow = wrapper.style.overflow
-    const origWrapperW = wrapper.style.width
-    const origWrapperH = wrapper.style.height
-
-    // 3. Expande para resolução real — sem transform scale
-    inner.style.transform = 'none'
-    wrapper.style.overflow = 'visible'
-    wrapper.style.width  = w + 'px'
-    wrapper.style.height = h + 'px'
-
-    // 4. Aguarda o browser repintar o layout expandido
+    inner.style.transform     = 'none'
+    wrapper.style.overflow    = 'visible'
     await new Promise<void>(r => requestAnimationFrame(() => requestAnimationFrame(() => r())))
 
+    // Determina qual src é a foto de fundo (vs. logo)
+    const photoSrc = (slide.fotoIndex !== null && slide.fotoIndex !== undefined)
+      ? (fotos[slide.fotoIndex] ?? null)
+      : null
+
+    // Captura geometria de cada <img> ANTES de escondê-las
+    const innerRect = inner.getBoundingClientRect()
+    const allImgs   = Array.from(inner.querySelectorAll('img')) as HTMLImageElement[]
+    const snapshots = allImgs.map(img => {
+      const r = img.getBoundingClientRect()
+      return {
+        src:            img.src,
+        x:              r.left - innerRect.left,
+        y:              r.top  - innerRect.top,
+        dw:             r.width,
+        dh:             r.height,
+        fit:            img.style.objectFit || 'cover',
+        pos:            img.style.objectPosition || 'center top',
+        alpha:          parseFloat(img.style.opacity || '1'),
+        isPhoto:        !!photoSrc && img.src === photoSrc,
+      }
+    })
+
+    // Esconde imgs + primeiro filho (div fundo escuro) para captura transparente
+    const darkBg = inner.firstElementChild as HTMLElement | null
+    allImgs.forEach(img => { img.style.visibility = 'hidden' })
+    if (darkBg) darkBg.style.visibility = 'hidden'
+
+    const restore = () => {
+      inner.style.transform    = origTransform
+      wrapper.style.overflow   = origWrapperOverflow
+      allImgs.forEach(img => { img.style.visibility = '' })
+      if (darkBg) darkBg.style.visibility = ''
+    }
+
     try {
-      const { toPng } = await import('html-to-image')
-      const dataUrl = await toPng(inner, {
-        width:    w,
-        height:   h,
-        pixelRatio: 1,
-        cacheBust: true,
+      const { toCanvas } = await import('html-to-image')
+      // overlayCanvas: gradientes + texto + boxes — fundo transparente onde havia imgs/darkBg
+      const overlayCanvas = await toCanvas(inner, { width: w, height: h, pixelRatio: 1 })
+
+      const canvas = document.createElement('canvas')
+      canvas.width = w; canvas.height = h
+      const ctx = canvas.getContext('2d')!
+
+      const loadImg = (src: string) => new Promise<HTMLImageElement>((res, rej) => {
+        const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src
       })
 
-      // 5. Restaura estilos (React vai sobrescrever em qualquer caso no próximo render)
-      inner.style.transform    = origInnerTransform
-      wrapper.style.overflow   = origWrapperOverflow
-      wrapper.style.width      = origWrapperW
-      wrapper.style.height     = origWrapperH
+      const blit = async (snap: typeof snapshots[number]) => {
+        if (!snap.src || snap.dw <= 0 || snap.dh <= 0) return
+        try {
+          const img = await loadImg(snap.src)
+          ctx.save(); ctx.globalAlpha = snap.alpha
+          if (snap.fit === 'cover') {
+            const sc = Math.max(snap.dw / img.width, snap.dh / img.height)
+            const sw = img.width * sc, sh = img.height * sc
+            const dx = snap.x + (snap.dw - sw) / 2
+            const dy = snap.pos.includes('top') ? snap.y : snap.y + (snap.dh - sh) / 2
+            ctx.beginPath(); ctx.rect(snap.x, snap.y, snap.dw, snap.dh); ctx.clip()
+            ctx.drawImage(img, dx, dy, sw, sh)
+          } else {
+            const sc = Math.min(snap.dw / img.width, snap.dh / img.height)
+            const sw = img.width * sc, sh = img.height * sc
+            ctx.drawImage(img, snap.x + (snap.dw - sw) / 2, snap.y + (snap.dh - sh) / 2, sw, sh)
+          }
+          ctx.restore()
+        } catch { ctx.restore() }
+      }
 
+      // Camada 1: fundo escuro sólido
+      ctx.fillStyle = '#120a04'; ctx.fillRect(0, 0, w, h)
+
+      // Camada 2: foto de fundo (abaixo do gradiente overlay)
+      for (const s of snapshots.filter(s => s.isPhoto)) await blit(s)
+
+      // Camada 3: gradientes + texto capturados (bg transparente)
+      ctx.drawImage(overlayCanvas, 0, 0)
+
+      // Camada 4: logo (acima de tudo, incluindo gradiente do rodapé)
+      for (const s of snapshots.filter(s => !s.isPhoto)) await blit(s)
+
+      restore()
       setIsCapturing(false)
 
+      const dataUrl = canvas.toDataURL('image/png')
       if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
         setSaveModalUrl(dataUrl)
       } else {
@@ -592,14 +652,11 @@ export default function ImagensPage() {
         link.click()
       }
     } catch (err) {
-      inner.style.transform    = origInnerTransform
-      wrapper.style.overflow   = origWrapperOverflow
-      wrapper.style.width      = origWrapperW
-      wrapper.style.height     = origWrapperH
+      restore()
       setIsCapturing(false)
       alert('Erro: ' + String(err))
     }
-  }, [currentSlide, formato])
+  }, [currentSlide, slides, formato, fotos])
 
   const { w, h } = FORMATOS_CONFIG[formato]
   const scale   = PREVIEW_W / w

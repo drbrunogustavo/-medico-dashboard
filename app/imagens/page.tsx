@@ -588,7 +588,7 @@ export default function ImagensPage() {
       )
 
       // Dois frames de animação para garantir que o paint está completo
-      await new Promise<void>(r => requestAnimationFrame(() => requestAnimationFrame(r)))
+      await new Promise<void>(r => requestAnimationFrame(() => requestAnimationFrame(() => r())))
 
       const target = container.firstElementChild as HTMLElement
       const dataUrl = await toPng(target, { width: w, height: h, pixelRatio: 1, cacheBust: true })

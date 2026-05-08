@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { TopBar } from "@/components/TopBar"
 import { StatCard } from "@/components/StatCard"
 import { Plus, FileText, Search, Filter, Tag, Clock, Star, ChevronRight, Pencil, Trash2 } from "lucide-react"
@@ -37,6 +38,7 @@ const ESTAGIO_STYLES: Record<string, string> = {
 }
 
 export default function PautasPage() {
+  const router = useRouter()
   const [pautas, setPautas]       = useState<Pauta[]>([])
   const [loading, setLoading]     = useState(true)
   const [saving, setSaving]       = useState(false)
@@ -253,6 +255,16 @@ export default function PautasPage() {
                     )}
                   </div>
                   <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                    <button
+                      onClick={() => router.push('/imagens?tema=' + encodeURIComponent(p.titulo))}
+                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-md border border-border text-text-muted hover:text-accent hover:border-accent-border text-[10px] font-mono transition-colors whitespace-nowrap">
+                      📸 Imagens
+                    </button>
+                    <button
+                      onClick={() => router.push('/roteiros?tema=' + encodeURIComponent(p.titulo))}
+                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-md border border-border text-text-muted hover:text-accent hover:border-accent-border text-[10px] font-mono transition-colors whitespace-nowrap">
+                      🎬 Roteiro
+                    </button>
                     <button onClick={() => removePauta(p.id)}
                       className="w-7 h-7 rounded-md border border-border flex items-center justify-center text-text-muted hover:text-red-400 hover:border-red-500/40 transition-colors">
                       <Trash2 className="w-3 h-3" />

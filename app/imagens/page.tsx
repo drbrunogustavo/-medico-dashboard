@@ -538,63 +538,49 @@ export default function ImagensPage() {
   const resetOffsets = () => setTextOffsets({})
 
   // ── Download / Save ──
+  // Estratégia: usa o SlideCanvas já renderizado no preview (imagens já carregadas),
+  // expande para resolução real via DOM direto enquanto o overlay de loading cobre a tela.
   const downloadCurrentSlide = useCallback(async () => {
-    const slide = slides[currentSlide]
-    if (!slide) return
     const { w, h } = FORMATOS_CONFIG[formato]
-    setIsCapturing(true)
 
-    const container = document.createElement('div')
-    container.style.cssText =
-      'position:fixed;top:0;left:0;width:' + w + 'px;height:' + h + 'px;' +
-      'overflow:hidden;z-index:9989;pointer-events:none;'
-    document.body.appendChild(container)
+    // 1. Mostra overlay de loading e aguarda o React re-renderizar
+    setIsCapturing(true)
+    await new Promise<void>(r => requestAnimationFrame(() => requestAnimationFrame(() => r())))
+
+    const wrapper = document.getElementById('slide-canvas-wrapper')
+    const inner   = wrapper?.firstElementChild as HTMLElement | null
+    if (!inner || !wrapper) { setIsCapturing(false); return }
+
+    // 2. Salva estilos originais (React vai restaurar no próximo render)
+    const origInnerTransform = inner.style.transform
+    const origWrapperOverflow = wrapper.style.overflow
+    const origWrapperW = wrapper.style.width
+    const origWrapperH = wrapper.style.height
+
+    // 3. Expande para resolução real — sem transform scale
+    inner.style.transform = 'none'
+    wrapper.style.overflow = 'visible'
+    wrapper.style.width  = w + 'px'
+    wrapper.style.height = h + 'px'
+
+    // 4. Aguarda o browser repintar o layout expandido
+    await new Promise<void>(r => requestAnimationFrame(() => requestAnimationFrame(() => r())))
 
     try {
-      const [{ createRoot }, { flushSync }, { toPng }, ReactMod] = await Promise.all([
-        import('react-dom/client'),
-        import('react-dom'),
-        import('html-to-image'),
-        import('react'),
-      ])
-
-      const root = createRoot(container)
-
-      // flushSync garante render síncrono — sem atrasos de batching
-      flushSync(() => {
-        root.render(
-          ReactMod.createElement(SlideCanvas, {
-            slide,
-            formato,
-            fotos,
-            logo,
-            totalSlides: slides.length,
-            scale:       1,
-            dragMode:    false,
-            offsets:     textOffsets[currentSlide] ?? {},
-            onDrag:      () => {},
-          })
-        )
+      const { toPng } = await import('html-to-image')
+      const dataUrl = await toPng(inner, {
+        width:    w,
+        height:   h,
+        pixelRatio: 1,
+        cacheBust: true,
       })
 
-      // Aguarda todas as <img> carregarem (fotos e logo são data URLs)
-      const imgs = Array.from(container.querySelectorAll('img')) as HTMLImageElement[]
-      await Promise.all(
-        imgs.map(img =>
-          img.complete
-            ? Promise.resolve()
-            : new Promise<void>(r => { img.onload = () => r(); img.onerror = () => r() })
-        )
-      )
+      // 5. Restaura estilos (React vai sobrescrever em qualquer caso no próximo render)
+      inner.style.transform    = origInnerTransform
+      wrapper.style.overflow   = origWrapperOverflow
+      wrapper.style.width      = origWrapperW
+      wrapper.style.height     = origWrapperH
 
-      // Dois frames de animação para garantir que o paint está completo
-      await new Promise<void>(r => requestAnimationFrame(() => requestAnimationFrame(() => r())))
-
-      const target = container.firstElementChild as HTMLElement
-      const dataUrl = await toPng(target, { width: w, height: h, pixelRatio: 1, cacheBust: true })
-
-      root.unmount()
-      document.body.removeChild(container)
       setIsCapturing(false)
 
       if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
@@ -606,11 +592,14 @@ export default function ImagensPage() {
         link.click()
       }
     } catch (err) {
-      if (document.body.contains(container)) document.body.removeChild(container)
+      inner.style.transform    = origInnerTransform
+      wrapper.style.overflow   = origWrapperOverflow
+      wrapper.style.width      = origWrapperW
+      wrapper.style.height     = origWrapperH
       setIsCapturing(false)
       alert('Erro: ' + String(err))
     }
-  }, [currentSlide, slides, formato, fotos, logo, textOffsets])
+  }, [currentSlide, formato])
 
   const { w, h } = FORMATOS_CONFIG[formato]
   const scale   = PREVIEW_W / w

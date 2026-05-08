@@ -11,6 +11,9 @@ import {
   Sparkles,
   Layers,
   Video,
+  Hash,
+  Zap,
+  Type,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 const NAV_ITEMS = [
@@ -37,6 +40,24 @@ const NAV_ITEMS = [
     href: "/legendas",
     icon: Sparkles,
     badge: null,
+  },
+  {
+    label: "Gerador de Títulos",
+    href: "/titulos",
+    icon: Type,
+    badge: "NEW",
+  },
+  {
+    label: "Análise de Hashtags",
+    href: "/hashtags",
+    icon: Hash,
+    badge: "NEW",
+  },
+  {
+    label: "Biblioteca de Ganchos",
+    href: "/ganchos",
+    icon: Zap,
+    badge: "NEW",
   },
   {
     label: "Banco de Pautas",

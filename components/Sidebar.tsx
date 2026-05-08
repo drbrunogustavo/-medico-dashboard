@@ -10,6 +10,7 @@ import {
   Activity,
   Sparkles,
   Layers,
+  Video,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 const NAV_ITEMS = [

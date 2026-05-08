@@ -2,6 +2,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import { PautasModal } from '@/components/PautasModal'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Duracao  = '15s' | '30s' | '60s' | '90s'
@@ -103,6 +104,7 @@ export default function RoteirosPage() {
   const [editInstr,  setEditInstr]  = useState('')
   const [regenLoad,  setRegenLoad]  = useState(false)
   const [activeTab,  setActiveTab]  = useState<'roteiro' | 'legenda' | 'hashtags'>('roteiro')
+  const [showPautas, setShowPautas] = useState(false)
 
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
 
@@ -192,6 +194,12 @@ export default function RoteirosPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: C.panel, color: C.w, fontFamily: "'Montserrat', sans-serif" }}>
+      {showPautas && (
+        <PautasModal
+          onSelect={(titulo, nota) => { setTema(titulo); if (nota) setPublico(''); setShowPautas(false) }}
+          onClose={() => setShowPautas(false)}
+        />
+      )}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=Playfair+Display:ital,wght@0,700;1,700&display=swap');
         * { box-sizing: border-box; }
@@ -220,7 +228,13 @@ export default function RoteirosPage() {
         <div style={{ width: isMobile ? '100%' : 300, flexShrink: 0, borderRight: isMobile ? 'none' : `1px solid ${C.border}`, borderBottom: isMobile ? `1px solid ${C.border}` : 'none', overflowY: 'auto', padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
 
           <div>
-            <Label>Tema do Reel</Label>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: C.label, letterSpacing: 3, textTransform: 'uppercase' as const }}>Tema do Reel</span>
+              <button onClick={() => setShowPautas(true)}
+                style={{ fontSize: 10, fontWeight: 700, color: C.d2, background: 'rgba(200,168,76,0.08)', border: '1px solid rgba(200,168,76,0.25)', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontFamily: "'Montserrat', sans-serif", letterSpacing: 1 }}>
+                📋 Banco de Pautas
+              </button>
+            </div>
             <textarea
               value={tema}
               onChange={e => setTema(e.target.value)}

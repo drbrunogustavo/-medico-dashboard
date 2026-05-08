@@ -2,6 +2,7 @@
 'use client'
 
 import { useState, useRef, useCallback } from 'react'
+import { PautasModal } from '@/components/PautasModal'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Formato = 'feed-retrato' | 'quadrado' | 'stories' | 'reels-capa'
@@ -512,6 +513,7 @@ export default function ImagensPage() {
   const [isEditGenerating, setIsEditGenerating] = useState(false)
   const [fotoCapa, setFotoCapa]   = useState<number | null>(null)
   const [fotoCTA, setFotoCTA]     = useState<number | null>(null)
+  const [showPautas, setShowPautas] = useState(false)
 
   // ── Drag state ──
   const [dragMode, setDragMode]       = useState(false)
@@ -847,6 +849,14 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
         </div>
       )}
 
+      {/* Modal Banco de Pautas */}
+      {showPautas && (
+        <PautasModal
+          onSelect={(titulo) => { setTema(titulo); setShowPautas(false) }}
+          onClose={() => setShowPautas(false)}
+        />
+      )}
+
       {/* Header */}
       <div style={{ borderBottom: `1px solid ${border}`, padding: '18px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
@@ -903,7 +913,13 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
 
           {/* Tema */}
           <div>
-            <label style={{ fontSize: 11, fontWeight: 700, color: labelClr, letterSpacing: 3, textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>Tema</label>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+              <label style={{ fontSize: 11, fontWeight: 700, color: labelClr, letterSpacing: 3, textTransform: 'uppercase' }}>Tema</label>
+              <button onClick={() => setShowPautas(true)}
+                style={{ fontSize: 10, fontWeight: 700, color: C.d2, background: 'rgba(200,168,76,0.08)', border: '1px solid rgba(200,168,76,0.25)', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontFamily: "'Montserrat', sans-serif", letterSpacing: 1 }}>
+                📋 Banco de Pautas
+              </button>
+            </div>
             <input type="text" value={tema} onChange={e => setTema(e.target.value)} placeholder="Ex: Resistência à insulina" style={inputSty} />
           </div>
 

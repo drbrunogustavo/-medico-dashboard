@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { TopBar } from "@/components/TopBar"
 import { StatCard } from "@/components/StatCard"
 import { Plus, Users, TrendingUp, Eye, Star, ExternalLink, Search, Instagram, Globe, Trash2 } from "lucide-react"
@@ -38,6 +39,7 @@ const FREQ_STYLES: Record<string, string> = {
 }
 
 export default function ReferenciasPage() {
+  const router = useRouter()
   const [refs, setRefs]               = useState<Referencia[]>([])
   const [loading, setLoading]         = useState(true)
   const [saving, setSaving]           = useState(false)
@@ -53,6 +55,7 @@ export default function ReferenciasPage() {
   const [newRel, setNewRel]           = useState("Media")
   const [newNota, setNewNota]         = useState("")
   const [newSite, setNewSite]         = useState("")
+  const [newTemas, setNewTemas]       = useState("")
   const [toast, setToast]             = useState<string | null>(null)
 
   const showToast = (msg: string) => {
@@ -74,12 +77,17 @@ export default function ReferenciasPage() {
 
   useEffect(() => { fetchRefs() }, [])
 
-  const filtered = refs.filter(r => {
-    if (filterNicho !== "Todos" && r.especialidade !== filterNicho) return false
-    if (filterRel !== "Todas" && r.relevancia !== filterRel) return false
-    if (search && !r.nome.toLowerCase().includes(search.toLowerCase())) return false
-    return true
-  })
+  const filtered = refs
+    .filter(r => {
+      if (filterNicho !== "Todos" && r.especialidade !== filterNicho) return false
+      if (filterRel !== "Todas" && r.relevancia !== filterRel) return false
+      if (search && !r.nome.toLowerCase().includes(search.toLowerCase())) return false
+      return true
+    })
+    .sort((a, b) => {
+      const order: Record<string, number> = { Alta: 0, Media: 1, Baixa: 2 }
+      return (order[a.relevancia] ?? 2) - (order[b.relevancia] ?? 2)
+    })
 
   const addRef = async () => {
     if (!newNome.trim()) return
@@ -90,13 +98,14 @@ export default function ReferenciasPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           nome: newNome, especialidade: newEsp, instagram: newInsta || "-",
-          seguidores: newSeg || "-", frequencia: newFreq, temas: [],
+          seguidores: newSeg || "-", frequencia: newFreq,
+          temas: newTemas ? newTemas.split(",").map(t => t.trim()).filter(Boolean) : [],
           relevancia: newRel, nota: newNota, site: newSite,
         })
       })
       if (res.ok) {
         showToast("Referencia salva!")
-        setNewNome(""); setNewInsta(""); setNewNota(""); setNewSite(""); setNewSeg("")
+        setNewNome(""); setNewInsta(""); setNewNota(""); setNewSite(""); setNewSeg(""); setNewTemas("")
         setShowForm(false)
         fetchRefs()
       } else {
@@ -127,6 +136,13 @@ export default function ReferenciasPage() {
   const totalSeg = refs.map(r => parseInt(r.seguidores.replace(/[^0-9]/g, "")) || 0).reduce((a, b) => a + b, 0)
   const fmtSeg = totalSeg > 0 ? (totalSeg >= 1000000 ? (totalSeg/1000000).toFixed(1)+"M+" : (totalSeg/1000).toFixed(0)+"k+") : "-"
 
+  const inspirarPauta = (r: Referencia) => {
+    const base = r.temas && r.temas.length > 0
+      ? r.temas[0]
+      : r.especialidade
+    router.push('/roteiros?tema=' + encodeURIComponent(base))
+  }
+
   return (
     <div className="animate-fade-in">
       <TopBar
@@ -151,26 +167,45 @@ export default function ReferenciasPage() {
           <div className="bg-card border border-accent-border rounded-lg p-6 space-y-4 animate-fade-in">
             <div className="text-[11px] font-mono text-accent tracking-widest uppercase">Nova Referencia</div>
             <div className="grid grid-cols-2 gap-3">
-              <input value={newNome} onChange={e => setNewNome(e.target.value)} placeholder="Nome do medico..." className="bg-background border border-border rounded-lg px-4 py-2.5 text-[13px] text-text-primary placeholder:text-text-muted outline-none focus:border-accent/40 col-span-2" />
-              <input value={newInsta} onChange={e => setNewInsta(e.target.value)} placeholder="@instagram" className="bg-background border border-border rounded-lg px-4 py-2.5 text-[13px] text-text-primary placeholder:text-text-muted outline-none focus:border-accent/40" />
-              <input value={newSeg} onChange={e => setNewSeg(e.target.value)} placeholder="Seguidores (ex: 150k)" className="bg-background border border-border rounded-lg px-4 py-2.5 text-[13px] text-text-primary placeholder:text-text-muted outline-none focus:border-accent/40" />
-              <select value={newEsp} onChange={e => setNewEsp(e.target.value)} className="bg-background border border-border rounded-lg px-3 py-2 text-[12px] text-text-primary outline-none focus:border-accent/40">
+              <input value={newNome} onChange={e => setNewNome(e.target.value)}
+                placeholder="Nome do medico..."
+                className="bg-background border border-border rounded-lg px-4 py-2.5 text-[13px] text-text-primary placeholder:text-text-muted outline-none focus:border-accent/40 col-span-2" />
+              <input value={newInsta} onChange={e => setNewInsta(e.target.value)}
+                placeholder="@instagram"
+                className="bg-background border border-border rounded-lg px-4 py-2.5 text-[13px] text-text-primary placeholder:text-text-muted outline-none focus:border-accent/40" />
+              <input value={newSeg} onChange={e => setNewSeg(e.target.value)}
+                placeholder="Seguidores (ex: 150k)"
+                className="bg-background border border-border rounded-lg px-4 py-2.5 text-[13px] text-text-primary placeholder:text-text-muted outline-none focus:border-accent/40" />
+              <select value={newEsp} onChange={e => setNewEsp(e.target.value)}
+                className="bg-background border border-border rounded-lg px-3 py-2 text-[12px] text-text-primary outline-none focus:border-accent/40">
                 {NICHOS.filter(n => n !== "Todos").map(n => <option key={n}>{n}</option>)}
               </select>
-              <select value={newFreq} onChange={e => setNewFreq(e.target.value)} className="bg-background border border-border rounded-lg px-3 py-2 text-[12px] text-text-primary outline-none focus:border-accent/40">
+              <select value={newFreq} onChange={e => setNewFreq(e.target.value)}
+                className="bg-background border border-border rounded-lg px-3 py-2 text-[12px] text-text-primary outline-none focus:border-accent/40">
                 {["Diaria","3x/semana","2x/semana","1x/semana","Esporadica"].map(f => <option key={f}>{f}</option>)}
               </select>
-              <select value={newRel} onChange={e => setNewRel(e.target.value)} className="bg-background border border-border rounded-lg px-3 py-2 text-[12px] text-text-primary outline-none focus:border-accent/40">
+              <select value={newRel} onChange={e => setNewRel(e.target.value)}
+                className="bg-background border border-border rounded-lg px-3 py-2 text-[12px] text-text-primary outline-none focus:border-accent/40">
                 {["Alta","Media","Baixa"].map(r => <option key={r}>{r}</option>)}
               </select>
-              <input value={newSite} onChange={e => setNewSite(e.target.value)} placeholder="Site (opcional)" className="bg-background border border-border rounded-lg px-4 py-2.5 text-[13px] text-text-primary placeholder:text-text-muted outline-none focus:border-accent/40" />
+              <input value={newSite} onChange={e => setNewSite(e.target.value)}
+                placeholder="Site (opcional)"
+                className="bg-background border border-border rounded-lg px-4 py-2.5 text-[13px] text-text-primary placeholder:text-text-muted outline-none focus:border-accent/40" />
+              {/* Temas frequentes */}
+              <input value={newTemas} onChange={e => setNewTemas(e.target.value)}
+                placeholder="Temas frequentes (ex: insulina, tireoide, emagrecimento)"
+                className="bg-background border border-border rounded-lg px-4 py-2.5 text-[13px] text-text-primary placeholder:text-text-muted outline-none focus:border-accent/40 col-span-2" />
             </div>
-            <textarea value={newNota} onChange={e => setNewNota(e.target.value)} placeholder="Observacoes..." rows={3} className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-[13px] text-text-primary placeholder:text-text-muted outline-none focus:border-accent/40 resize-none" />
+            <textarea value={newNota} onChange={e => setNewNota(e.target.value)}
+              placeholder="Observacoes..." rows={3}
+              className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-[13px] text-text-primary placeholder:text-text-muted outline-none focus:border-accent/40 resize-none" />
             <div className="flex gap-3">
-              <button onClick={addRef} disabled={saving} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-accent-dim border border-accent-border text-accent text-[12px] font-medium hover:bg-accent/20 transition-colors disabled:opacity-50">
+              <button onClick={addRef} disabled={saving}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-accent-dim border border-accent-border text-accent text-[12px] font-medium hover:bg-accent/20 transition-colors disabled:opacity-50">
                 <Plus className="w-3.5 h-3.5" /> {saving ? "Salvando..." : "Adicionar"}
               </button>
-              <button onClick={() => setShowForm(false)} className="px-4 py-2 rounded-lg border border-border text-text-muted text-[12px] hover:text-text-secondary transition-colors">
+              <button onClick={() => setShowForm(false)}
+                className="px-4 py-2 rounded-lg border border-border text-text-muted text-[12px] hover:text-text-secondary transition-colors">
                 Cancelar
               </button>
             </div>
@@ -180,7 +215,9 @@ export default function ReferenciasPage() {
         <div className="bg-card border border-border rounded-lg p-5 space-y-3">
           <div className="flex items-center gap-3">
             <Search className="w-3.5 h-3.5 text-text-muted" />
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por nome ou @instagram..." className="flex-1 bg-transparent text-[13px] text-text-primary placeholder:text-text-muted outline-none" />
+            <input value={search} onChange={e => setSearch(e.target.value)}
+              placeholder="Buscar por nome ou @instagram..."
+              className="flex-1 bg-transparent text-[13px] text-text-primary placeholder:text-text-muted outline-none" />
           </div>
           <div className="border-t border-border pt-3 space-y-2.5">
             {[
@@ -191,7 +228,11 @@ export default function ReferenciasPage() {
                 <span className="text-[9px] font-mono text-text-muted tracking-widest uppercase w-16 flex-shrink-0">{g.label}</span>
                 <div className="flex flex-wrap gap-1.5">
                   {g.items.map(item => (
-                    <button key={item} onClick={() => g.set(item)} className={cn("text-[10px] px-2.5 py-0.5 rounded-full border transition-all", g.value === item ? "bg-accent-dim border-accent-border text-accent-text font-medium" : "border-border text-text-muted hover:text-text-secondary")}>
+                    <button key={item} onClick={() => g.set(item)}
+                      className={cn("text-[10px] px-2.5 py-0.5 rounded-full border transition-all",
+                        g.value === item
+                          ? "bg-accent-dim border-accent-border text-accent-text font-medium"
+                          : "border-border text-text-muted hover:text-text-secondary")}>
                       {item}
                     </button>
                   ))}
@@ -226,11 +267,13 @@ export default function ReferenciasPage() {
                     <span className={cn("text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full border", RELEVANCIA_STYLES[r.relevancia] || RELEVANCIA_STYLES["Media"])}>
                       {r.relevancia}
                     </span>
-                    <button onClick={() => removeRef(r.id)} className="opacity-0 group-hover:opacity-100 w-6 h-6 rounded border border-border flex items-center justify-center text-text-muted hover:text-red-400 hover:border-red-500/40 transition-all">
+                    <button onClick={() => removeRef(r.id)}
+                      className="opacity-0 group-hover:opacity-100 w-6 h-6 rounded border border-border flex items-center justify-center text-text-muted hover:text-red-400 hover:border-red-500/40 transition-all">
                       <Trash2 className="w-3 h-3" />
                     </button>
                   </div>
                 </div>
+
                 <div className="grid grid-cols-3 gap-2 mb-4">
                   {[
                     { label:"Especialidade", value:r.especialidade, colored:false },
@@ -243,17 +286,37 @@ export default function ReferenciasPage() {
                     </div>
                   ))}
                 </div>
+
+                {/* Temas frequentes */}
+                {r.temas && r.temas.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mb-3">
+                    {r.temas.map((t: string) => (
+                      <span key={t} className="text-[9px] px-2 py-0.5 rounded-full bg-accent-dim border border-accent-border text-accent-text font-mono">
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
                 {r.nota && <p className="text-[11px] text-text-secondary leading-relaxed mb-3">{r.nota}</p>}
+
                 <div className="flex items-center gap-3 pt-3 border-t border-border">
-                  <a href={"https://instagram.com/" + r.instagram.replace("@","")} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-[10px] text-text-muted hover:text-text-secondary transition-colors">
+                  <a href={"https://instagram.com/" + r.instagram.replace("@","")} target="_blank" rel="noreferrer"
+                    className="flex items-center gap-1.5 text-[10px] text-text-muted hover:text-text-secondary transition-colors">
                     <Instagram className="w-3 h-3" /> Ver perfil
                   </a>
                   {r.site && (
-                    <a href={"https://" + r.site} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-[10px] text-text-muted hover:text-text-secondary transition-colors">
+                    <a href={"https://" + r.site} target="_blank" rel="noreferrer"
+                      className="flex items-center gap-1.5 text-[10px] text-text-muted hover:text-text-secondary transition-colors">
                       <Globe className="w-3 h-3" /> {r.site}
                     </a>
                   )}
-                  <div className="ml-auto">
+                  <div className="ml-auto flex items-center gap-2">
+                    <button
+                      onClick={() => inspirarPauta(r)}
+                      className="opacity-0 group-hover:opacity-100 flex items-center gap-1 px-2.5 py-1 rounded-md border border-border text-text-muted hover:text-accent hover:border-accent-border text-[10px] font-mono transition-all whitespace-nowrap">
+                      💡 Inspirar Pauta
+                    </button>
                     <ExternalLink className="w-3 h-3 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
                 </div>

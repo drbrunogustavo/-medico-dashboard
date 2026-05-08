@@ -990,7 +990,7 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
             <button
               onClick={gerarImagemIA}
               disabled={isGenAI || !tema.trim()}
-              style={{ width:'100%', marginTop:8, padding:'12px', borderRadius:8, border:`1px solid ${isGenAI || !tema.trim() ? C.border : 'rgba(200,168,76,0.4)'}`, background: isGenAI || !tema.trim() ? 'none' : 'rgba(200,168,76,0.06)', color: isGenAI || !tema.trim() ? labelClr : C.d2, fontSize:12, fontWeight:700, cursor: isGenAI || !tema.trim() ? 'not-allowed' : 'pointer', fontFamily:"'Montserrat',sans-serif", display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
+              style={{ width:'100%', marginTop:8, padding:'12px', borderRadius:8, border:`1px solid ${isGenAI || !tema.trim() ? '#2a1a0a' : 'rgba(200,168,76,0.4)'}`, background: isGenAI || !tema.trim() ? 'none' : 'rgba(200,168,76,0.06)', color: isGenAI || !tema.trim() ? labelClr : C.d2, fontSize:12, fontWeight:700, cursor: isGenAI || !tema.trim() ? 'not-allowed' : 'pointer', fontFamily:"'Montserrat',sans-serif", display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
               {isGenAI ? (
                 <>
                   <span style={{ display:'inline-block', width:14, height:14, border:'2px solid rgba(200,168,76,0.3)', borderTop:`2px solid ${C.d2}`, borderRadius:'50%', animation:'spin 0.8s linear infinite' }} />

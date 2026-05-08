@@ -2,6 +2,7 @@
 'use client'
 
 import { useState, useRef, useCallback, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { PautasModal } from '@/components/PautasModal'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -513,8 +514,11 @@ export default function ImagensPage() {
   const [isEditGenerating, setIsEditGenerating] = useState(false)
   const [fotoCapa, setFotoCapa]   = useState<number | null>(null)
   const [fotoCTA, setFotoCTA]     = useState<number | null>(null)
-  const [showPautas, setShowPautas] = useState(false)
-  useEffect(() => { if (typeof window === 'undefined') return; const t = new URLSearchParams(window.location.search).get('tema'); if (t) setTema(decodeURIComponent(t)) }, [])
+  const [showPautas,     setShowPautas]     = useState(false)
+  const [isGenAI,        setIsGenAI]        = useState(false)
+  const [genAIError,     setGenAIError]     = useState('')
+  const searchParams = useSearchParams()
+  useEffect(() => { const t = searchParams.get('tema'); if (t) setTema(decodeURIComponent(t)) }, [searchParams])
 
   // ── Drag state ──
   const [dragMode, setDragMode]       = useState(false)
@@ -539,6 +543,29 @@ export default function ImagensPage() {
   }, [])
 
   const resetOffsets = () => setTextOffsets({})
+
+  // ── Gerar imagem com IA (Gemini Imagen 3) ──
+  const gerarImagemIA = async () => {
+    if (!tema.trim()) { alert('Defina o tema do post antes de gerar a imagem.'); return }
+    setIsGenAI(true)
+    setGenAIError('')
+    try {
+      const res  = await fetch('/api/imagegen', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ tema, formato }),
+      })
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
+      if (data.image) {
+        setFotos(prev => [...prev, data.image])
+      }
+    } catch (err) {
+      setGenAIError('Erro: ' + String(err))
+    } finally {
+      setIsGenAI(false)
+    }
+  }
 
   // ── Download / Save ──
   // Abordagem de composição manual em canvas:
@@ -958,6 +985,23 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
               + Upload de Fotos (múltiplas)
             </button>
             <input ref={fotoRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={handleFotoUpload} />
+
+            {/* Gerar imagem por I.A */}
+            <button
+              onClick={gerarImagemIA}
+              disabled={isGenAI || !tema.trim()}
+              style={{ width:'100%', marginTop:8, padding:'12px', borderRadius:8, border:`1px solid ${isGenAI || !tema.trim() ? C.border : 'rgba(200,168,76,0.4)'}`, background: isGenAI || !tema.trim() ? 'none' : 'rgba(200,168,76,0.06)', color: isGenAI || !tema.trim() ? labelClr : C.d2, fontSize:12, fontWeight:700, cursor: isGenAI || !tema.trim() ? 'not-allowed' : 'pointer', fontFamily:"'Montserrat',sans-serif", display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
+              {isGenAI ? (
+                <>
+                  <span style={{ display:'inline-block', width:14, height:14, border:'2px solid rgba(200,168,76,0.3)', borderTop:`2px solid ${C.d2}`, borderRadius:'50%', animation:'spin 0.8s linear infinite' }} />
+                  Gerando imagem...
+                </>
+              ) : (
+                <>✨ Gerar Imagem por I.A</>
+              )}
+            </button>
+            {genAIError && <div style={{ fontSize:11, color:'#f87171', marginTop:6, lineHeight:1.5 }}>{genAIError}</div>}
+            <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
 
             {fotos.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12 }}>

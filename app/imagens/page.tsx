@@ -539,31 +539,65 @@ export default function ImagensPage() {
 
   // ── Download / Save ──
   const downloadCurrentSlide = useCallback(async () => {
+    const slide = slides[currentSlide]
+    if (!slide) return
+    const { w, h } = FORMATOS_CONFIG[formato]
+    setIsCapturing(true)
+
+    const container = document.createElement('div')
+    container.style.cssText =
+      'position:fixed;top:0;left:0;width:' + w + 'px;height:' + h + 'px;' +
+      'overflow:hidden;z-index:9989;pointer-events:none;'
+    document.body.appendChild(container)
+
     try {
-      // Captura o SlideCanvas interno diretamente — ignora o transform:scale do preview
-      const wrapper = document.getElementById('slide-canvas-wrapper')
-      const slideEl = wrapper?.firstElementChild as HTMLElement | null
-      if (!slideEl) return
+      const [{ createRoot }, { flushSync }, { toPng }, ReactMod] = await Promise.all([
+        import('react-dom/client'),
+        import('react-dom'),
+        import('html-to-image'),
+        import('react'),
+      ])
 
-      setIsCapturing(true)
-      await new Promise(r => setTimeout(r, 80))
+      const root = createRoot(container)
 
-      const { toPng } = await import('html-to-image')
-      const { w, h } = FORMATOS_CONFIG[formato]
-
-      const dataUrl = await toPng(slideEl, {
-        width: w,
-        height: h,
-        style: { transform: 'none', transformOrigin: 'top left' },
-        pixelRatio: 1,
-        cacheBust: true,
+      // flushSync garante render síncrono — sem atrasos de batching
+      flushSync(() => {
+        root.render(
+          ReactMod.createElement(SlideCanvas, {
+            slide,
+            formato,
+            fotos,
+            logo,
+            totalSlides: slides.length,
+            scale:       1,
+            dragMode:    false,
+            offsets:     textOffsets[currentSlide] ?? {},
+            onDrag:      () => {},
+          })
+        )
       })
 
+      // Aguarda todas as <img> carregarem (fotos e logo são data URLs)
+      const imgs = Array.from(container.querySelectorAll('img')) as HTMLImageElement[]
+      await Promise.all(
+        imgs.map(img =>
+          img.complete
+            ? Promise.resolve()
+            : new Promise<void>(r => { img.onload = () => r(); img.onerror = () => r() })
+        )
+      )
+
+      // Dois frames de animação para garantir que o paint está completo
+      await new Promise<void>(r => requestAnimationFrame(() => requestAnimationFrame(r)))
+
+      const target = container.firstElementChild as HTMLElement
+      const dataUrl = await toPng(target, { width: w, height: h, pixelRatio: 1, cacheBust: true })
+
+      root.unmount()
+      document.body.removeChild(container)
       setIsCapturing(false)
 
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
-      if (isIOS) {
-        // Modal inline — window.open() é bloqueado pelo Safari após operação async
+      if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
         setSaveModalUrl(dataUrl)
       } else {
         const link = document.createElement('a')
@@ -572,11 +606,11 @@ export default function ImagensPage() {
         link.click()
       }
     } catch (err) {
+      if (document.body.contains(container)) document.body.removeChild(container)
       setIsCapturing(false)
-      console.error('Erro ao baixar:', err)
-      alert('Erro ao gerar imagem para download.')
+      alert('Erro: ' + String(err))
     }
-  }, [currentSlide, formato])
+  }, [currentSlide, slides, formato, fotos, logo, textOffsets])
 
   const { w, h } = FORMATOS_CONFIG[formato]
   const scale   = PREVIEW_W / w
@@ -734,6 +768,15 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
   return (
     <div className="min-h-screen" style={{ background: panelBg, color: C.w, fontFamily: "'Montserrat', sans-serif" }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&display=swap');`}</style>
+
+      {/* ── Overlay de Loading durante captura ── */}
+      {isCapturing && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(9,5,3,0.92)', zIndex: 9990, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
+          <div style={{ width: 48, height: 48, border: '3px solid rgba(200,168,76,0.2)', borderTop: '3px solid #C9A84C', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+          <div style={{ color: '#C9A84C', fontSize: 15, fontWeight: 700, letterSpacing: 2 }}>GERANDO IMAGEM...</div>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
+      )}
 
       {/* ── Modal iOS — Salvar Imagem ── */}
       {saveModalUrl && (

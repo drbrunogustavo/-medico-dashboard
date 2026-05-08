@@ -9,65 +9,63 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'GOOGLE_AI_API_KEY não configurada' }, { status: 500 })
   }
 
-  // Aspect ratio baseado no formato
-  const aspectMap: Record<string, string> = {
-    'feed-retrato': '4:5',
-    'quadrado':     '1:1',
-    'stories':      '9:16',
-    'reels-capa':   '9:16',
-  }
-  const aspectRatio = aspectMap[formato] ?? '4:5'
-
-  // Prompt otimizado — estética das fotos de referência do Dr. Bruno
   const prompt = [
-    'Cinematic professional medical photography,',
-    'ultra-realistic, 8K quality,',
-    'doctor or medical professional in elegant dark environment,',
-    'warm golden amber bokeh background,',
-    'soft dramatic lighting, depth of field,',
-    'sophisticated luxury aesthetic,',
-    'dark moody tones with golden highlights,',
-    'medical laboratory or clinical setting visible softly out of focus,',
-    'subject dressed in professional attire,',
-    'theme: ' + tema + ',',
-    'no text, no watermarks, no logos,',
-    'editorial medical photography style,',
-    'inspired by high-end Brazilian medical influencer content',
+    'Generate a photorealistic cinematic medical photography image.',
+    'Style: dark moody background, warm golden amber bokeh, soft dramatic lighting, depth of field.',
+    'A professional doctor or medical professional in elegant attire.',
+    'High-end luxury aesthetic, sophisticated atmosphere.',
+    'Medical or clinical environment softly visible out of focus in background.',
+    'Theme of the image: ' + tema + '.',
+    'No text, no watermarks, no logos, no captions.',
+    'Ultra-realistic, 8K quality, editorial photography style.',
+    'Inspired by high-end Brazilian medical influencer content aesthetics.',
   ].join(' ')
 
-  try {
-    const res = await fetch(
-      'https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=' + apiKey,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          instances: [{ prompt }],
-          parameters: {
-            sampleCount:      1,
-            aspectRatio,
-            personGeneration: 'allow_adult',
-            safetyFilterLevel: 'block_few',
-          },
-        }),
+  // Tenta modelos em ordem de preferência
+  const models = [
+    'gemini-2.0-flash-preview-image-generation',
+    'gemini-2.0-flash-exp',
+  ]
+
+  for (const model of models) {
+    try {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { responseModalities: ['IMAGE', 'TEXT'] },
+          }),
+        }
+      )
+
+      if (!res.ok) {
+        const err = await res.json()
+        // Se modelo não encontrado, tenta o próximo
+        if (err?.error?.code === 404 || err?.error?.status === 'NOT_FOUND') continue
+        return NextResponse.json({ error: JSON.stringify(err) }, { status: res.status })
       }
-    )
 
-    if (!res.ok) {
-      const err = await res.json()
-      return NextResponse.json({ error: JSON.stringify(err) }, { status: res.status })
+      const data = await res.json()
+      const parts = data?.candidates?.[0]?.content?.parts ?? []
+      const imgPart = parts.find((p: {inlineData?: {mimeType: string; data: string}}) => p.inlineData)
+
+      if (imgPart?.inlineData?.data) {
+        const mime = imgPart.inlineData.mimeType || 'image/png'
+        return NextResponse.json({
+          image: `data:${mime};base64,${imgPart.inlineData.data}`,
+          model,
+        })
+      }
+    } catch (e) {
+      console.error(`Model ${model} failed:`, e)
+      continue
     }
-
-    const data = await res.json()
-    const b64  = data?.predictions?.[0]?.bytesBase64Encoded
-
-    if (!b64) {
-      return NextResponse.json({ error: 'Sem imagem na resposta' }, { status: 500 })
-    }
-
-    return NextResponse.json({ image: 'data:image/png;base64,' + b64 })
-  } catch (e) {
-    console.error(e)
-    return NextResponse.json({ error: String(e) }, { status: 500 })
   }
+
+  return NextResponse.json({
+    error: 'Nenhum modelo disponível gerou a imagem. Verifique se sua chave do Google AI Studio tem acesso à geração de imagens em aistudio.google.com.',
+  }, { status: 500 })
 }

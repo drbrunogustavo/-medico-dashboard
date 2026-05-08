@@ -2,7 +2,6 @@
 'use client'
 
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { useSearchParams } from 'next/navigation'
 import { PautasModal } from '@/components/PautasModal'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -517,8 +516,7 @@ export default function ImagensPage() {
   const [showPautas,     setShowPautas]     = useState(false)
   const [isGenAI,        setIsGenAI]        = useState(false)
   const [genAIError,     setGenAIError]     = useState('')
-  const searchParams = useSearchParams()
-  useEffect(() => { const t = searchParams.get('tema'); if (t) setTema(decodeURIComponent(t)) }, [searchParams])
+  useEffect(() => { if (typeof window === 'undefined') return; const t = new URLSearchParams(window.location.search).get('tema'); if (t) setTema(decodeURIComponent(t)) }, [])
 
   // ── Drag state ──
   const [dragMode, setDragMode]       = useState(false)

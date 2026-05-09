@@ -25,6 +25,16 @@ interface SlideData {
   stats?:    StatItem[]
 }
 
+// ─── Paleta · Estrutura ──────────────────────────────────────────────────────
+type PaletaId   = 'dourado' | 'azul' | 'esmeralda' | 'vinho'
+type EstruturaId = 'classico' | 'split' | 'topo-bold' | 'minimal'
+
+interface PaletaCores {
+  bg: string; bgCard: string; bgMid: string
+  d1: string; d2: string
+  w: string; wMid: string; wFaint: string
+}
+
 // ─── Paleta ───────────────────────────────────────────────────────────────────
 const C = {
   bg:     '#120a04',
@@ -35,6 +45,24 @@ const C = {
   w:      '#F5F0EB',
   wMid:   'rgba(245,240,235,0.68)',
   wFaint: 'rgba(245,240,235,0.38)',
+}
+
+const PALETAS: Record<PaletaId, { label: string; emoji: string; preview: string[]; cores: PaletaCores }> = {
+  dourado:   { label: 'Dourado Escuro', emoji: '🟤', preview: ['#120a04','#C9A84C','#F5F0EB'],
+    cores: { bg:'#120a04', bgCard:'#1c0f06', bgMid:'#261408', d1:'#b8976a', d2:'#C9A84C', w:'#F5F0EB', wMid:'rgba(245,240,235,0.68)', wFaint:'rgba(245,240,235,0.38)' } },
+  azul:      { label: 'Azul Médico',    emoji: '🔵', preview: ['#040d1a','#3b82f6','#EFF6FF'],
+    cores: { bg:'#040d1a', bgCard:'#071428', bgMid:'#0a1f3d', d1:'#60a5fa', d2:'#3b82f6', w:'#EFF6FF', wMid:'rgba(239,246,255,0.68)', wFaint:'rgba(239,246,255,0.35)' } },
+  esmeralda: { label: 'Esmeralda',      emoji: '🟢', preview: ['#020f0a','#10b981','#ECFDF5'],
+    cores: { bg:'#020f0a', bgCard:'#041a10', bgMid:'#052b18', d1:'#34d399', d2:'#10b981', w:'#ECFDF5', wMid:'rgba(236,253,245,0.68)', wFaint:'rgba(236,253,245,0.35)' } },
+  vinho:     { label: 'Vinho Premium',  emoji: '🔴', preview: ['#120408','#e11d48','#FFF1F2'],
+    cores: { bg:'#120408', bgCard:'#1c060d', bgMid:'#2a0912', d1:'#f43f5e', d2:'#e11d48', w:'#FFF1F2', wMid:'rgba(255,241,242,0.68)', wFaint:'rgba(255,241,242,0.35)' } },
+}
+
+const ESTRUTURAS: Record<EstruturaId, { label: string; emoji: string; desc: string }> = {
+  'classico':  { label: 'Clássico',  emoji: '🖼️', desc: 'Foto full-screen, texto inferior' },
+  'split':     { label: 'Split',     emoji: '▪️▪️', desc: 'Foto à direita, texto à esquerda' },
+  'topo-bold': { label: 'Topo Bold', emoji: '⬆️', desc: 'Headline grande no topo com faixa' },
+  'minimal':   { label: 'Minimal',   emoji: '◻️', desc: 'Tipografia maximalista, sem foto' },
 }
 
 const FORMATOS_CONFIG = {
@@ -57,26 +85,28 @@ const clamp = (n: number): React.CSSProperties => ({
   overflow: 'hidden',
 })
 
-function Headline({ text, fs, lh, cn }: { text: string; fs: number; lh: number; cn: number }) {
+function Headline({ text, fs, lh, cn, pal }: { text: string; fs: number; lh: number; cn: number; pal?: PaletaCores }) {
+  const activeP = pal ?? C
   const parts = text.split(/\*([^*]+)\*/)
   return (
-    <div style={{ fontSize: fs, lineHeight: lh, fontWeight: 900, color: C.w, fontFamily: "'Montserrat', sans-serif", ...clamp(cn) }}>
+    <div style={{ fontSize: fs, lineHeight: lh, fontWeight: 900, color: activeP.w, fontFamily: "'Montserrat', sans-serif", ...clamp(cn) }}>
       {parts.map((p, i) =>
         i % 2 === 1
-          ? <span key={i} style={{ color: C.d2, fontStyle: 'italic', fontFamily: "'Playfair Display', serif", fontWeight: 700 }}>{p}</span>
+          ? <span key={i} style={{ color: activeP.d2, fontStyle: 'italic', fontFamily: "'Playfair Display', serif", fontWeight: 700 }}>{p}</span>
           : <span key={i}>{p}</span>
       )}
     </div>
   )
 }
 
-function SourceBadge({ fonte }: { fonte: string }) {
+function SourceBadge({ fonte, pal }: { fonte: string; pal?: PaletaCores }) {
+  const activeP = pal ?? C
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 14, fontFamily: "'Montserrat', sans-serif" }}>
-      <div style={{ width: 36, height: 36, background: C.d2, color: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, fontWeight: 900, flexShrink: 0 }}>
+      <div style={{ width: 36, height: 36, background: activeP.d2, color: activeP.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, fontWeight: 900, flexShrink: 0 }}>
         {fonte.charAt(0)}
       </div>
-      <div style={{ color: C.d2, fontSize: 18, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase' as const }}>
+      <div style={{ color: activeP.d2, fontSize: 18, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase' as const }}>
         {fonte}
       </div>
     </div>
@@ -187,12 +217,15 @@ interface CanvasProps {
   dragMode?: boolean
   offsets?:  OffsetMap
   onDrag?:   (key: string, x: number, y: number) => void
+  paleta?:   PaletaId
+  estrutura?: EstruturaId
 }
 
-function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale, dragMode = false, offsets = {}, onDrag = () => {} }: CanvasProps) {
+function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale, dragMode = false, offsets = {}, onDrag = () => {}, paleta = 'dourado', estrutura = 'classico' }: CanvasProps) {
   const { w, h } = FORMATOS_CONFIG[formato]
   const foto = slide.fotoIndex !== null ? (fotos[slide.fotoIndex] ?? null) : null
   const li = ((slide.id - 2) % 4) + 1
+  const P = PALETAS[paleta]?.cores ?? C  // active palette
 
   const base: React.CSSProperties = {
     width: w, height: h, position: 'relative', overflow: 'hidden',
@@ -204,24 +237,131 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale, dragMode
   const dp = { offsets, onDrag, scale, enabled: dragMode }
 
   const Counter = () => totalSlides > 1 ? (
-    <div style={{ position: 'absolute', top: 90, right: 52, background: 'rgba(0,0,0,0.55)', borderRadius: 40, padding: '10px 22px', color: C.w, fontSize: 22, fontWeight: 700, zIndex: 10 }}>
+    <div style={{ position: 'absolute', top: 90, right: 52, background: 'rgba(0,0,0,0.55)', borderRadius: 40, padding: '10px 22px', color: P.w, fontSize: 22, fontWeight: 700, zIndex: 10 }}>
       {slide.id}/{totalSlides}
     </div>
   ) : null
 
+  // ── CAPA — Split Layout ─────────────────────────────────────────────────
+  if (slide.tipo === 'capa' && estrutura === 'split') {
+    return (
+      <div style={{ width:w, height:h, position:'relative', overflow:'hidden', fontFamily:"'Montserrat',sans-serif", transform:`scale(${scale})`, transformOrigin:'top left', flexShrink:0 }}>
+        <div style={{ position:'absolute', inset:0, background:P.bg }} />
+        {/* Right half — foto */}
+        {foto && (
+          <div style={{ position:'absolute', top:0, right:0, width:'52%', height:'100%', overflow:'hidden' }}>
+            <img src={foto} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'center top', opacity:0.85 }} />
+            <div style={{ position:'absolute', inset:0, background:`linear-gradient(to right, ${P.bg} 0%, rgba(0,0,0,0) 50%)` }} />
+          </div>
+        )}
+        {/* Vertical divider line */}
+        <div style={{ position:'absolute', left:'48%', top:'10%', bottom:'10%', width:2, background:`linear-gradient(to bottom, transparent, ${P.d2}, transparent)` }} />
+        {/* Left half — text */}
+        <DragWrap dragKey="tag" {...{offsets, onDrag, scale, enabled:dragMode}} style={{ position:'absolute', top:90, left:60, zIndex:5 }}>
+          <div style={{ display:'inline-block', padding:'8px 18px', border:`1px solid rgba(${P.d2.replace('#','').match(/.{2}/g)?.map(x=>parseInt(x,16)).join(',')},0.5)`, background:'rgba(0,0,0,0.5)', color:P.w, fontSize:18, fontWeight:700, letterSpacing:4, textTransform:'uppercase' as const }}>{slide.subtitulo||'INFORMAÇÃO'}</div>
+        </DragWrap>
+        <DragWrap dragKey="content" {...{offsets, onDrag, scale, enabled:dragMode}} style={{ position:'absolute', left:60, right:'54%', top:200, zIndex:5 }}>
+          <div style={{ color:P.d1, fontSize:22, fontWeight:700, letterSpacing:4, textTransform:'uppercase' as const, marginBottom:24 }}>A GRANDE QUESTÃO</div>
+          <Headline text={slide.headline||'Título do *Post*'} fs={86} lh={1.05} cn={6} pal={P} />
+          {slide.corpo && <div style={{ display:'flex', gap:20, marginTop:44, alignItems:'flex-start' }}>
+            <div style={{ width:4, flexShrink:0, background:`linear-gradient(to bottom,${P.d2},transparent)`, minHeight:72 }} />
+            <div style={{ color:P.wMid, fontSize:32, fontStyle:'italic', lineHeight:1.5, fontFamily:"'Playfair Display',serif", overflow:'hidden', display:'-webkit-box', WebkitLineClamp:3, WebkitBoxOrient:'vertical' as const }}>"{slide.corpo}"</div>
+          </div>}
+        </DragWrap>
+        <DragWrap dragKey="footer" {...{offsets, onDrag, scale, enabled:dragMode}} style={{ position:'absolute', bottom:0, left:0, right:0, zIndex:5 }}>
+          <div style={{ padding:'32px 60px', background:`linear-gradient(to top,${P.bg} 60%,transparent)`, display:'flex', alignItems:'center', justifyContent:logo?'flex-end':'center' }}>
+            {logo && <img src={logo} alt="" style={{ height:90, maxWidth:280, objectFit:'contain' }} />}
+          </div>
+        </DragWrap>
+      </div>
+    )
+  }
+
+  // ── CAPA — Topo Bold Layout ───────────────────────────────────────────────
+  if (slide.tipo === 'capa' && estrutura === 'topo-bold') {
+    return (
+      <div style={{ width:w, height:h, position:'relative', overflow:'hidden', fontFamily:"'Montserrat',sans-serif", transform:`scale(${scale})`, transformOrigin:'top left', flexShrink:0 }}>
+        <div style={{ position:'absolute', inset:0, background:P.bg }} />
+        {foto && (<>
+          <img src={foto} alt="" style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', objectPosition:'center', opacity:0.35 }} />
+          <div style={{ position:'absolute', inset:0, background:`linear-gradient(to bottom,${P.bg} 0%,rgba(0,0,0,0) 40%,${P.bg} 80%)` }} />
+        </>)}
+        {/* Top color bar */}
+        <div style={{ position:'absolute', top:0, left:0, right:0, height:8, background:`linear-gradient(to right,${P.d2},${P.d1},transparent)` }} />
+        {/* Top section — headline */}
+        <DragWrap dragKey="content" {...{offsets, onDrag, scale, enabled:dragMode}} style={{ position:'absolute', top:60, left:80, right:80, zIndex:5 }}>
+          <div style={{ display:'flex', alignItems:'center', gap:16, marginBottom:32 }}>
+            <div style={{ width:44, height:44, background:P.d2, display:'flex', alignItems:'center', justifyContent:'center' }}>
+              <div style={{ color:P.bg, fontSize:20, fontWeight:900 }}>+</div>
+            </div>
+            <div style={{ color:P.d2, fontSize:18, fontWeight:700, letterSpacing:4, textTransform:'uppercase' as const }}>{slide.subtitulo||'INFORMAÇÃO'}</div>
+          </div>
+          <Headline text={slide.headline||'Título do *Post*'} fs={100} lh={1.0} cn={4} pal={P} />
+        </DragWrap>
+        {/* Bottom section */}
+        <DragWrap dragKey="footer" {...{offsets, onDrag, scale, enabled:dragMode}} style={{ position:'absolute', bottom:0, left:0, right:0, zIndex:5 }}>
+          <div style={{ padding:'0 80px 60px', background:`linear-gradient(to top,${P.bg} 70%,transparent)` }}>
+            {slide.corpo && <div style={{ display:'flex', gap:20, marginBottom:32, alignItems:'flex-start' }}>
+              <div style={{ width:4, flexShrink:0, background:`linear-gradient(to bottom,${P.d2},transparent)`, minHeight:72 }} />
+              <div style={{ color:P.wMid, fontSize:36, fontStyle:'italic', lineHeight:1.5, fontFamily:"'Playfair Display',serif", overflow:'hidden', display:'-webkit-box', WebkitLineClamp:3, WebkitBoxOrient:'vertical' as const }}>"{slide.corpo}"</div>
+            </div>}
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+              <div style={{ color:P.d1, fontSize:20, fontWeight:700, letterSpacing:2 }}>DR. BRUNO GUSTAVO</div>
+              {logo && <img src={logo} alt="" style={{ height:80, maxWidth:240, objectFit:'contain' }} />}
+            </div>
+          </div>
+        </DragWrap>
+      </div>
+    )
+  }
+
+  // ── CAPA — Minimal Layout ─────────────────────────────────────────────────
+  if (slide.tipo === 'capa' && estrutura === 'minimal') {
+    return (
+      <div style={{ width:w, height:h, position:'relative', overflow:'hidden', fontFamily:"'Montserrat',sans-serif", transform:`scale(${scale})`, transformOrigin:'top left', flexShrink:0, background:P.bg }}>
+        {/* Geometric accent */}
+        <div style={{ position:'absolute', top:0, right:0, width:'40%', height:'40%', background:`linear-gradient(135deg,${P.d2}18,transparent)`, borderBottom:`1px solid ${P.d2}22` }} />
+        <div style={{ position:'absolute', bottom:0, left:0, width:'40%', height:'30%', background:`linear-gradient(315deg,${P.d2}12,transparent)` }} />
+        {/* Horizontal lines */}
+        <div style={{ position:'absolute', top:'28%', left:80, right:80, height:1, background:`linear-gradient(to right,${P.d2},${P.d1}44,transparent)` }} />
+        <div style={{ position:'absolute', top:'72%', left:80, right:80, height:1, background:`linear-gradient(to right,transparent,${P.d1}44,${P.d2})` }} />
+        {/* Tag */}
+        <DragWrap dragKey="tag" {...{offsets, onDrag, scale, enabled:dragMode}} style={{ position:'absolute', top:80, left:80, zIndex:5 }}>
+          <div style={{ color:P.d2, fontSize:18, fontWeight:700, letterSpacing:6, textTransform:'uppercase' as const }}>● {slide.subtitulo||'INFORMAÇÃO'}</div>
+        </DragWrap>
+        {/* Center — headline */}
+        <DragWrap dragKey="content" {...{offsets, onDrag, scale, enabled:dragMode}} style={{ position:'absolute', left:80, right:80, top:'30%', zIndex:5 }}>
+          <Headline text={slide.headline||'Título do *Post*'} fs={106} lh={1.0} cn={5} pal={P} />
+          {slide.corpo && <div style={{ marginTop:48, color:P.wMid, fontSize:38, fontStyle:'italic', lineHeight:1.5, fontFamily:"'Playfair Display',serif", overflow:'hidden', display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical' as const }}>"{slide.corpo}"</div>}
+        </DragWrap>
+        {/* Footer */}
+        <DragWrap dragKey="footer" {...{offsets, onDrag, scale, enabled:dragMode}} style={{ position:'absolute', bottom:60, left:80, right:80, zIndex:5 }}>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+            <div>
+              <div style={{ color:P.d2, fontSize:22, fontWeight:900, letterSpacing:1 }}>DR. BRUNO GUSTAVO</div>
+              <div style={{ color:P.wFaint, fontSize:16, letterSpacing:3, marginTop:4 }}>MEDICINA BASEADA EM EVIDÊNCIA</div>
+            </div>
+            {logo && <img src={logo} alt="" style={{ height:90, maxWidth:260, objectFit:'contain' }} />}
+          </div>
+        </DragWrap>
+      </div>
+    )
+  }
+
+  // ── CAPA — Clássico (estrutura padrão) ────────────────────────────────────
   // ── CAPA ──────────────────────────────────────────────────────────────────
   if (slide.tipo === 'capa') {
     return (
       <div style={base}>
-        <div style={{ position: 'absolute', inset: 0, background: C.bg }} />
+        <div style={{ position: 'absolute', inset: 0, background: P.bg }} />
         {foto && (<>
           <img src={foto} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', opacity: 0.75 }} />
-          <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(to bottom, rgba(18,10,4,0.15) 0%, rgba(18,10,4,0.35) 55%, ${C.bg} 88%)` }} />
+          <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(to bottom, rgba(18,10,4,0.15) 0%, rgba(18,10,4,0.35) 55%, ${P.bg} 88%)` }} />
         </>)}
 
         {/* Tag */}
         <DragWrap dragKey="tag" {...dp} style={{ position: 'absolute', top: 90, left: 72, zIndex: 5 }}>
-          <div style={{ display: 'inline-block', padding: '10px 22px', border: `1px solid rgba(184,151,106,0.55)`, background: 'rgba(0,0,0,0.5)', color: C.w, fontSize: 20, fontWeight: 700, letterSpacing: 4, textTransform: 'uppercase' as const }}>
+          <div style={{ display: 'inline-block', padding: '10px 22px', border: `1px solid rgba(184,151,106,0.55)`, background: 'rgba(0,0,0,0.5)', color: P.w, fontSize: 20, fontWeight: 700, letterSpacing: 4, textTransform: 'uppercase' as const }}>
             {slide.subtitulo || 'INFORMAÇÃO'}
           </div>
         </DragWrap>
@@ -229,12 +369,12 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale, dragMode
 
         {/* Conteúdo principal */}
         <DragWrap dragKey="content" {...dp} style={{ position: 'absolute', left: 90, right: 90, top: foto ? 240 : 200, zIndex: 5 }}>
-          <div style={{ color: C.d1, fontSize: 26, fontWeight: 700, letterSpacing: 4, textTransform: 'uppercase' as const, marginBottom: 28 }}>A GRANDE QUESTÃO</div>
-          <Headline text={slide.headline || 'Título do *Post*'} fs={92} lh={1.04} cn={5} />
+          <div style={{ color: P.d1, fontSize: 26, fontWeight: 700, letterSpacing: 4, textTransform: 'uppercase' as const, marginBottom: 28 }}>A GRANDE QUESTÃO</div>
+          <Headline text={slide.headline || 'Título do *Post*'} fs={92} lh={1.04} cn={5} /> pal={P} />
           {slide.corpo && (
             <div style={{ display: 'flex', gap: 24, marginTop: 52, alignItems: 'flex-start' }}>
-              <div style={{ width: 4, flexShrink: 0, background: `linear-gradient(to bottom, ${C.d2}, transparent)`, minHeight: 88 }} />
-              <div style={{ color: C.wMid, fontSize: 36, fontStyle: 'italic', lineHeight: 1.5, fontFamily: "'Playfair Display', serif", ...clamp(3) }}>
+              <div style={{ width: 4, flexShrink: 0, background: `linear-gradient(to bottom, ${P.d2}, transparent)`, minHeight: 88 }} />
+              <div style={{ color: P.wMid, fontSize: 36, fontStyle: 'italic', lineHeight: 1.5, fontFamily: "'Playfair Display', serif", ...clamp(3) }}>
                 "{slide.corpo}"
               </div>
             </div>
@@ -243,7 +383,7 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale, dragMode
 
         {/* Rodapé */}
         <DragWrap dragKey="footer" {...dp} style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 5 }}>
-          <div style={{ padding: '40px 72px', background: `linear-gradient(to top, ${C.bg} 60%, transparent)`, display: 'flex', alignItems: 'center', justifyContent: logo ? 'flex-end' : 'center' }}>
+          <div style={{ padding: '40px 72px', background: `linear-gradient(to top, ${P.bg} 60%, transparent)`, display: 'flex', alignItems: 'center', justifyContent: logo ? 'flex-end' : 'center' }}>
             {logo && <div><img src={logo} alt="" style={{ height: 110, maxWidth: 320, objectFit: 'contain', display: 'block' }} /></div>}
           </div>
         </DragWrap>
@@ -256,20 +396,20 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale, dragMode
     const actions = slide.corpo.split('|').filter(Boolean)
     return (
       <div style={base}>
-        <div style={{ position: 'absolute', inset: 0, background: C.bg }} />
+        <div style={{ position: 'absolute', inset: 0, background: P.bg }} />
         {foto && (<>
           <img src={foto} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', opacity: 0.75 }} />
-          <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(to bottom, rgba(18,10,4,0.6) 0%, ${C.bg} 60%)` }} />
+          <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(to bottom, rgba(18,10,4,0.6) 0%, ${P.bg} 60%)` }} />
         </>)}
 
         <DragWrap dragKey="content" {...dp} style={{ position: 'absolute', left: 90, right: 90, top: 140, zIndex: 5 }}>
-          <div style={{ color: C.d1, fontSize: 24, fontWeight: 700, letterSpacing: 5, textTransform: 'uppercase' as const, marginBottom: 36, textAlign: 'center' }}>
+          <div style={{ color: P.d1, fontSize: 24, fontWeight: 700, letterSpacing: 5, textTransform: 'uppercase' as const, marginBottom: 36, textAlign: 'center' }}>
             {slide.subtitulo}
           </div>
           <div style={{ textAlign: 'center', marginBottom: 14 }}>
-            <Headline text={slide.headline} fs={96} lh={1.05} cn={2} />
+            <Headline text={slide.headline} fs={96} lh={1.05} cn={2} /> pal={P} />
           </div>
-          <div style={{ width: 100, height: 3, background: C.d2, margin: '36px auto' }} />
+          <div style={{ width: 100, height: 3, background: P.d2, margin: '36px auto' }} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
             {actions.map((action, i) => {
               const [emoji, ...rest] = action.split(' ')
@@ -278,8 +418,8 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale, dragMode
               return (
                 <div key={i} style={{ padding: '22px 30px', background: 'rgba(0,0,0,0.45)', border: `1px solid rgba(184,151,106,0.18)`, display: 'flex', alignItems: 'center', gap: 20 }}>
                   <span style={{ fontSize: 36, flexShrink: 0 }}>{emoji}</span>
-                  <span style={{ color: C.w, fontSize: 34, lineHeight: 1.4, flex: 1 }}>
-                    {parts[0]}{parts.length > 1 && <><span>: </span><strong style={{ color: C.d2 }}>{parts.slice(1).join(':')}</strong></>}
+                  <span style={{ color: P.w, fontSize: 34, lineHeight: 1.4, flex: 1 }}>
+                    {parts[0]}{parts.length > 1 && <><span>: </span><strong style={{ color: P.d2 }}>{parts.slice(1).join(':')}</strong></>}
                   </span>
                 </div>
               )
@@ -288,9 +428,9 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale, dragMode
         </DragWrap>
 
         <DragWrap dragKey="footer" {...dp} style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 5 }}>
-          <div style={{ padding: '44px 90px', textAlign: 'center', background: `linear-gradient(to top, ${C.bg} 65%, transparent)` }}>
-            <div style={{ color: C.d2, fontSize: 42, fontWeight: 900, letterSpacing: 1, marginBottom: 10 }}>{HANDLE}</div>
-            <div style={{ color: C.wFaint, fontSize: 22, letterSpacing: 3 }}>{ASSIN}</div>
+          <div style={{ padding: '44px 90px', textAlign: 'center', background: `linear-gradient(to top, ${P.bg} 65%, transparent)` }}>
+            <div style={{ color: P.d2, fontSize: 42, fontWeight: 900, letterSpacing: 1, marginBottom: 10 }}>{HANDLE}</div>
+            <div style={{ color: P.wFaint, fontSize: 22, letterSpacing: 3 }}>{ASSIN}</div>
             {logo && <div style={{ marginTop: 18, display: 'inline-block' }}><img src={logo} alt="" style={{ height: 110, maxWidth: 320, objectFit: 'contain', display: 'block' }} /></div>}
           </div>
         </DragWrap>
@@ -302,29 +442,29 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale, dragMode
   if (li === 1) {
     return (
       <div style={base}>
-        <div style={{ position: 'absolute', inset: 0, background: C.bg }} />
+        <div style={{ position: 'absolute', inset: 0, background: P.bg }} />
         {foto ? (<>
           <img src={foto} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', opacity: 0.75 }} />
-          <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(180deg, rgba(18,10,4,0.5) 0%, rgba(18,10,4,0.15) 35%, ${C.bg} 82%)` }} />
+          <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(180deg, rgba(18,10,4,0.5) 0%, rgba(18,10,4,0.15) 35%, ${P.bg} 82%)` }} />
         </>) : (
-          <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse at 65% 25%, ${C.bgMid} 0%, ${C.bg} 68%)` }} />
+          <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse at 65% 25%, ${P.bgMid} 0%, ${P.bg} 68%)` }} />
         )}
 
         <DragWrap dragKey="tag" {...dp} style={{ position: 'absolute', top: 90, left: 90, zIndex: 5 }}>
-          <div style={{ color: C.d1, fontSize: 22, fontWeight: 700, letterSpacing: 4, textTransform: 'uppercase' as const }}>{slide.subtitulo}</div>
+          <div style={{ color: P.d1, fontSize: 22, fontWeight: 700, letterSpacing: 4, textTransform: 'uppercase' as const }}>{slide.subtitulo}</div>
         </DragWrap>
-        <div style={{ position: 'absolute', top: 90, right: 90, color: C.d2, fontSize: 22, fontWeight: 700, letterSpacing: 2 }}>{NOME}</div>
+        <div style={{ position: 'absolute', top: 90, right: 90, color: P.d2, fontSize: 22, fontWeight: 700, letterSpacing: 2 }}>{NOME}</div>
         <Counter />
 
         {/* Aspas decorativas */}
-        <div style={{ position: 'absolute', left: 56, top: '24%', color: C.d1, fontSize: 220, lineHeight: 1, opacity: 0.3, fontFamily: "'Playfair Display', serif", userSelect: 'none' }}>"</div>
+        <div style={{ position: 'absolute', left: 56, top: '24%', color: P.d1, fontSize: 220, lineHeight: 1, opacity: 0.3, fontFamily: "'Playfair Display', serif", userSelect: 'none' }}>"</div>
 
         {/* Citação */}
         <DragWrap dragKey="content" {...dp} style={{ position: 'absolute', left: 90, right: 90, top: '33%', bottom: 160, zIndex: 5 }}>
-          <div style={{ color: C.w, fontSize: 62, fontStyle: 'italic', lineHeight: 1.38, fontFamily: "'Playfair Display', serif", fontWeight: 400, ...clamp(7) }}>
+          <div style={{ color: P.w, fontSize: 62, fontStyle: 'italic', lineHeight: 1.38, fontFamily: "'Playfair Display', serif", fontWeight: 400, ...clamp(7) }}>
             {slide.corpo.split(/\*(.*?)\*/).map((part, i) =>
               i % 2 === 1
-                ? <strong key={i} style={{ color: C.d2, fontWeight: 700 }}>{part}</strong>
+                ? <strong key={i} style={{ color: P.d2, fontWeight: 700 }}>{part}</strong>
                 : part
             )}
           </div>
@@ -332,8 +472,8 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale, dragMode
 
         <DragWrap dragKey="footer" {...dp} style={{ position: 'absolute', bottom: 64, right: 90, zIndex: 5 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
-            <div style={{ width: 56, height: 1, background: C.d1 }} />
-            <div style={{ color: C.d1, fontSize: 21, fontWeight: 700, letterSpacing: 2 }}>{NOME}</div>
+            <div style={{ width: 56, height: 1, background: P.d1 }} />
+            <div style={{ color: P.d1, fontSize: 21, fontWeight: 700, letterSpacing: 2 }}>{NOME}</div>
             {logo && <div><img src={logo} alt="" style={{ height: 110, maxWidth: 320, objectFit: 'contain', display: 'block' }} /></div>}
           </div>
         </DragWrap>
@@ -346,17 +486,17 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale, dragMode
     const items = slide.items ?? []
     return (
       <div style={base}>
-        <div style={{ position: 'absolute', inset: 0, background: C.bg }} />
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 320, background: `linear-gradient(to bottom, ${C.bgMid} 0%, transparent 100%)` }} />
+        <div style={{ position: 'absolute', inset: 0, background: P.bg }} />
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 320, background: `linear-gradient(to bottom, ${P.bgMid} 0%, transparent 100%)` }} />
 
         <DragWrap dragKey="tag" {...dp} style={{ position: 'absolute', top: 90, left: 90, zIndex: 5 }}>
-          <div style={{ color: C.wFaint, fontSize: 21, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase' as const }}>{slide.subtitulo}</div>
+          <div style={{ color: P.wFaint, fontSize: 21, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase' as const }}>{slide.subtitulo}</div>
         </DragWrap>
-        <div style={{ position: 'absolute', top: 90, right: 90, color: C.d2, fontSize: 21, fontWeight: 700, letterSpacing: 2 }}>{NOME}</div>
+        <div style={{ position: 'absolute', top: 90, right: 90, color: P.d2, fontSize: 21, fontWeight: 700, letterSpacing: 2 }}>{NOME}</div>
         <Counter />
 
         <DragWrap dragKey="content" {...dp} style={{ position: 'absolute', left: 90, right: 90, top: 116, zIndex: 5 }}>
-          <Headline text={slide.headline} fs={72} lh={1.1} cn={2} />
+          <Headline text={slide.headline} fs={72} lh={1.1} cn={2} /> pal={P} />
         </DragWrap>
 
         {/* Grid 2×2 */}
@@ -368,9 +508,9 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale, dragMode
               { titulo: 'Tópico C', descricao: 'Descrição do terceiro ponto.' },
               { titulo: 'Tópico D', descricao: 'Descrição do quarto ponto.' },
             ]).slice(0, 4).map((item, i) => (
-              <div key={i} style={{ background: C.bgCard, border: `1px solid rgba(184,151,106,0.2)`, borderRadius: 3, padding: '32px 32px', overflow: 'hidden' }}>
-                <div style={{ color: C.d2, fontSize: 34, fontWeight: 800, marginBottom: 16, ...clamp(2) }}>{item.titulo}</div>
-                <div style={{ color: C.wMid, fontSize: 28, lineHeight: 1.5, ...clamp(5) }}>{item.descricao}</div>
+              <div key={i} style={{ background: P.bgCard, border: `1px solid rgba(184,151,106,0.2)`, borderRadius: 3, padding: '32px 32px', overflow: 'hidden' }}>
+                <div style={{ color: P.d2, fontSize: 34, fontWeight: 800, marginBottom: 16, ...clamp(2) }}>{item.titulo}</div>
+                <div style={{ color: P.wMid, fontSize: 28, lineHeight: 1.5, ...clamp(5) }}>{item.descricao}</div>
               </div>
             ))}
           </div>
@@ -378,7 +518,7 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale, dragMode
 
         <DragWrap dragKey="footer" {...dp} style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 5 }}>
           <div style={{ padding: '22px 90px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ color: C.wFaint, fontSize: 20 }}>{HANDLE}</div>
+            <div style={{ color: P.wFaint, fontSize: 20 }}>{HANDLE}</div>
             {logo && <div><img src={logo} alt="" style={{ height: 110, maxWidth: 320, objectFit: 'contain', display: 'block' }} /></div>}
           </div>
         </DragWrap>
@@ -391,20 +531,20 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale, dragMode
     const stats = slide.stats ?? []
     return (
       <div style={base}>
-        <div style={{ position: 'absolute', inset: 0, background: C.bg }} />
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 360, background: `linear-gradient(135deg, ${C.bgMid} 0%, ${C.bg} 100%)` }} />
+        <div style={{ position: 'absolute', inset: 0, background: P.bg }} />
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 360, background: `linear-gradient(135deg, ${P.bgMid} 0%, ${P.bg} 100%)` }} />
 
         <DragWrap dragKey="tag" {...dp} style={{ position: 'absolute', top: 90, left: 72, zIndex: 5 }}>
           <div>
-            {slide.fonte && <SourceBadge fonte={slide.fonte} />}
-            <div style={{ color: C.wFaint, fontSize: 20, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase' as const, marginTop: 14 }}>{slide.subtitulo}</div>
+            {slide.fonte && <SourceBadge fonte={slide.fonte} pal={P} />}
+            <div style={{ color: P.wFaint, fontSize: 20, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase' as const, marginTop: 14 }}>{slide.subtitulo}</div>
           </div>
         </DragWrap>
         <Counter />
 
         <DragWrap dragKey="content" {...dp} style={{ position: 'absolute', left: 90, right: 90, top: 180, zIndex: 5 }}>
-          <Headline text={slide.headline} fs={78} lh={1.08} cn={2} />
-          <div style={{ width: 56, height: 3, background: C.d2, marginTop: 26 }} />
+          <Headline text={slide.headline} fs={78} lh={1.08} cn={2} /> pal={P} />
+          <div style={{ width: 56, height: 3, background: P.d2, marginTop: 26 }} />
         </DragWrap>
 
         {/* Corpo + stats */}
@@ -412,27 +552,27 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale, dragMode
           <div style={{ width: '100%', height: '100%', display: 'flex', gap: 0 }}>
             <div style={{ flex: 1, paddingRight: 36, paddingTop: 8, display: 'flex', flexDirection: 'column', gap: 20 }}>
               {slide.corpo && (
-                <div style={{ color: C.wMid, fontSize: 34, lineHeight: 1.6, ...clamp(5) }}>{slide.corpo}</div>
+                <div style={{ color: P.wMid, fontSize: 34, lineHeight: 1.6, ...clamp(5) }}>{slide.corpo}</div>
               )}
               {slide.fonte && (
-                <div style={{ color: C.wFaint, fontSize: 18, textTransform: 'uppercase' as const, letterSpacing: 2, marginTop: 'auto' }}>{slide.fonte}</div>
+                <div style={{ color: P.wFaint, fontSize: 18, textTransform: 'uppercase' as const, letterSpacing: 2, marginTop: 'auto' }}>{slide.fonte}</div>
               )}
             </div>
-            <div style={{ width: 2, background: `linear-gradient(to bottom, ${C.d2}, transparent)`, flexShrink: 0, marginRight: 36, alignSelf: 'stretch' }} />
+            <div style={{ width: 2, background: `linear-gradient(to bottom, ${P.d2}, transparent)`, flexShrink: 0, marginRight: 36, alignSelf: 'stretch' }} />
             <div style={{ width: 330, display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <div style={{ color: C.d1, fontSize: 17, fontWeight: 700, letterSpacing: 4, textTransform: 'uppercase' as const, marginBottom: 4 }}>DADOS DO ESTUDO</div>
+              <div style={{ color: P.d1, fontSize: 17, fontWeight: 700, letterSpacing: 4, textTransform: 'uppercase' as const, marginBottom: 4 }}>DADOS DO ESTUDO</div>
               {stats.map((stat, i) => (
-                <div key={i} style={{ background: C.bgCard, border: `1px solid rgba(184,151,106,0.18)`, borderRadius: 3, padding: '20px 22px' }}>
+                <div key={i} style={{ background: P.bgCard, border: `1px solid rgba(184,151,106,0.18)`, borderRadius: 3, padding: '20px 22px' }}>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
-                    <div style={{ color: C.d2, fontSize: 56, fontWeight: 900, lineHeight: 1 }}>{stat.valor}</div>
-                    {stat.unidade && <div style={{ color: C.d1, fontSize: 26, fontWeight: 700 }}>{stat.unidade}</div>}
+                    <div style={{ color: P.d2, fontSize: 56, fontWeight: 900, lineHeight: 1 }}>{stat.valor}</div>
+                    {stat.unidade && <div style={{ color: P.d1, fontSize: 26, fontWeight: 700 }}>{stat.unidade}</div>}
                   </div>
-                  <div style={{ color: C.wMid, fontSize: 24, lineHeight: 1.4, ...clamp(3) }}>{stat.descricao}</div>
+                  <div style={{ color: P.wMid, fontSize: 24, lineHeight: 1.4, ...clamp(3) }}>{stat.descricao}</div>
                 </div>
               ))}
               <div style={{ background: 'rgba(200,168,76,0.08)', border: `1px solid rgba(200,168,76,0.35)`, borderRadius: 3, padding: '16px 22px' }}>
-                <div style={{ color: C.wFaint, fontSize: 15, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase' as const, marginBottom: 6 }}>SIGNIFICÂNCIA</div>
-                <div style={{ color: C.d2, fontSize: 34, fontWeight: 900 }}>p &lt; 0,001</div>
+                <div style={{ color: P.wFaint, fontSize: 15, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase' as const, marginBottom: 6 }}>SIGNIFICÂNCIA</div>
+                <div style={{ color: P.d2, fontSize: 34, fontWeight: 900 }}>p &lt; 0,001</div>
               </div>
             </div>
           </div>
@@ -440,7 +580,7 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale, dragMode
 
         <DragWrap dragKey="footer" {...dp} style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 5 }}>
           <div style={{ padding: '20px 90px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: `1px solid rgba(184,151,106,0.1)` }}>
-            <div style={{ color: C.wFaint, fontSize: 17, textTransform: 'uppercase' as const, letterSpacing: 2 }}>{slide.fonte ?? ''}</div>
+            <div style={{ color: P.wFaint, fontSize: 17, textTransform: 'uppercase' as const, letterSpacing: 2 }}>{slide.fonte ?? ''}</div>
             {logo && <div><img src={logo} alt="" style={{ height: 110, maxWidth: 320, objectFit: 'contain', display: 'block' }} /></div>}
           </div>
         </DragWrap>
@@ -451,38 +591,38 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale, dragMode
   // ── LAYOUT 4 — Editorial ──────────────────────────────────────────────────
   return (
     <div style={base}>
-      <div style={{ position: 'absolute', inset: 0, background: C.bg }} />
+      <div style={{ position: 'absolute', inset: 0, background: P.bg }} />
       {foto && (
         <div style={{ position: 'absolute', top: 0, right: 0, width: '46%', height: '46%', overflow: 'hidden' }}>
           <img src={foto} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.38 }} />
-          <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(to left, transparent 0%, ${C.bg} 78%)` }} />
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '60%', background: `linear-gradient(to top, ${C.bg}, transparent)` }} />
+          <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(to left, transparent 0%, ${P.bg} 78%)` }} />
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '60%', background: `linear-gradient(to top, ${P.bg}, transparent)` }} />
         </div>
       )}
 
       {/* Tarja dourada topo */}
-      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 6, background: `linear-gradient(to right, ${C.d2} 0%, ${C.d1} 40%, transparent 72%)` }} />
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 6, background: `linear-gradient(to right, ${P.d2} 0%, ${P.d1} 40%, transparent 72%)` }} />
 
       <DragWrap dragKey="tag" {...dp} style={{ position: 'absolute', top: 90, left: 90, zIndex: 5 }}>
-        <div style={{ color: C.wFaint, fontSize: 22, fontWeight: 700, letterSpacing: 4, textTransform: 'uppercase' as const }}>{slide.subtitulo}</div>
+        <div style={{ color: P.wFaint, fontSize: 22, fontWeight: 700, letterSpacing: 4, textTransform: 'uppercase' as const }}>{slide.subtitulo}</div>
       </DragWrap>
-      <div style={{ position: 'absolute', top: 90, right: 90, color: C.d2, fontSize: 22, fontWeight: 700, letterSpacing: 2 }}>{NOME}</div>
+      <div style={{ position: 'absolute', top: 90, right: 90, color: P.d2, fontSize: 22, fontWeight: 700, letterSpacing: 2 }}>{NOME}</div>
       <Counter />
 
       <DragWrap dragKey="content" {...dp} style={{ position: 'absolute', left: 90, right: foto ? 400 : 72, top: 116, bottom: 150, zIndex: 5 }}>
-        <Headline text={slide.headline} fs={78} lh={1.1} cn={3} />
-        <div style={{ width: '100%', height: 2, background: `linear-gradient(to right, ${C.d2} 0%, rgba(200,168,76,0.08) 100%)`, margin: '42px 0' }} />
-        <div style={{ color: C.wMid, fontSize: 40, lineHeight: 1.6, ...clamp(6) }}>{slide.corpo}</div>
+        <Headline text={slide.headline} fs={78} lh={1.1} cn={3} /> pal={P} />
+        <div style={{ width: '100%', height: 2, background: `linear-gradient(to right, ${P.d2} 0%, rgba(200,168,76,0.08) 100%)`, margin: '42px 0' }} />
+        <div style={{ color: P.wMid, fontSize: 40, lineHeight: 1.6, ...clamp(6) }}>{slide.corpo}</div>
         {slide.fonte && (
           <div style={{ display: 'flex', gap: 20, marginTop: 44, alignItems: 'flex-start' }}>
-            <div style={{ width: 4, flexShrink: 0, background: `linear-gradient(to bottom, ${C.d2}, transparent)`, minHeight: 72 }} />
-            <div style={{ color: C.d1, fontSize: 24, fontStyle: 'italic', lineHeight: 1.5, fontFamily: "'Playfair Display', serif" }}>Fonte: {slide.fonte}</div>
+            <div style={{ width: 4, flexShrink: 0, background: `linear-gradient(to bottom, ${P.d2}, transparent)`, minHeight: 72 }} />
+            <div style={{ color: P.d1, fontSize: 24, fontStyle: 'italic', lineHeight: 1.5, fontFamily: "'Playfair Display', serif" }}>Fonte: {slide.fonte}</div>
           </div>
         )}
       </DragWrap>
 
       {/* Número decorativo */}
-      <div style={{ position: 'absolute', bottom: 80, right: 60, color: C.d2, fontSize: 200, fontWeight: 900, opacity: 0.05, lineHeight: 1, userSelect: 'none' }}>
+      <div style={{ position: 'absolute', bottom: 80, right: 60, color: P.d2, fontSize: 200, fontWeight: 900, opacity: 0.05, lineHeight: 1, userSelect: 'none' }}>
         {String(slide.id - 1).padStart(2, '0')}
       </div>
 
@@ -490,7 +630,7 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale, dragMode
         <div style={{ padding: '22px 90px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: `1px solid rgba(184,151,106,0.12)` }}>
           {logo
             ? <div><img src={logo} alt="" style={{ height: 110, maxWidth: 320, objectFit: 'contain', display: 'block' }} /></div>
-            : <div style={{ color: C.wFaint, fontSize: 20 }}>{HANDLE}</div>}
+            : <div style={{ color: P.wFaint, fontSize: 20 }}>{HANDLE}</div>}
         </div>
       </DragWrap>
     </div>
@@ -514,6 +654,8 @@ export default function ImagensPage() {
   const [fotoCapa, setFotoCapa]   = useState<number | null>(null)
   const [fotoCTA, setFotoCTA]     = useState<number | null>(null)
   const [showPautas,     setShowPautas]     = useState(false)
+  const [paleta,         setPaleta]         = useState<PaletaId>('dourado')
+  const [estrutura,      setEstrutura]      = useState<EstruturaId>('classico')
   const [isGenAI,        setIsGenAI]        = useState(false)
   const [genAIError,     setGenAIError]     = useState('')
   useEffect(() => { if (typeof window === 'undefined') return; const t = new URLSearchParams(window.location.search).get('tema'); if (t) setTema(decodeURIComponent(t)) }, [])
@@ -970,6 +1112,39 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
             </div>
           </div>
 
+          {/* Paleta */}
+          <div>
+            <label style={{ fontSize: 11, fontWeight: 700, color: labelClr, letterSpacing: 3, textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>Paleta de Cores</label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+              {(Object.entries(PALETAS) as [PaletaId, typeof PALETAS[PaletaId]][]).map(([id, p]) => (
+                <button key={id} onClick={() => setPaleta(id)}
+                  style={{ padding: '9px 10px', borderRadius: 8, border: `1px solid ${paleta === id ? p.cores.d2 : border}`, cursor: 'pointer', textAlign: 'left', background: paleta === id ? `${p.cores.d2}18` : sideBg, fontFamily: "'Montserrat', sans-serif", display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ display: 'flex', gap: 3, flexShrink: 0 }}>
+                    {p.preview.map((col, i) => <div key={i} style={{ width: 10, height: 10, borderRadius: 2, background: col }} />)}
+                  </div>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: paleta === id ? p.cores.d2 : labelClr }}>{p.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Estrutura */}
+          <div>
+            <label style={{ fontSize: 11, fontWeight: 700, color: labelClr, letterSpacing: 3, textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>Estrutura da Capa</label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {(Object.entries(ESTRUTURAS) as [EstruturaId, typeof ESTRUTURAS[EstruturaId]][]).map(([id, e]) => (
+                <button key={id} onClick={() => setEstrutura(id)}
+                  style={{ padding: '9px 14px', borderRadius: 8, border: 'none', cursor: 'pointer', textAlign: 'left', background: estrutura === id ? C.d2 : sideBg, color: estrutura === id ? C.bg : labelClr, fontFamily: "'Montserrat', sans-serif", display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ fontSize: 14 }}>{e.emoji}</span>
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 700 }}>{e.label}</div>
+                    <div style={{ fontSize: 10, fontWeight: 400, opacity: 0.7 }}>{e.desc}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Nº slides */}
           {tipo === 'carrossel' && (
             <div>
@@ -1105,6 +1280,8 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
                   dragMode={dragMode && !isCapturing}
                   offsets={currentOffsets}
                   onDrag={(key, x, y) => updateDragOffset(currentSlide, key, x, y)}
+                  paleta={paleta}
+                  estrutura={estrutura}
                 />
               </div>
 

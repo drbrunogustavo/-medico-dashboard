@@ -26,7 +26,8 @@ interface SlideData {
 }
 
 // ─── Paleta · Estrutura ──────────────────────────────────────────────────────
-type PaletaId   = 'dourado' | 'azul' | 'esmeralda' | 'vinho'
+type PaletaId    = 'dourado' | 'azul' | 'esmeralda' | 'vinho'
+type TipografiaId = 'montserrat' | 'poppins' | 'raleway' | 'dm-sans'
 type EstruturaId = 'classico' | 'split' | 'topo-bold' | 'minimal'
 
 interface PaletaCores {
@@ -54,8 +55,8 @@ const PALETAS: Record<PaletaId, { label: string; emoji: string; preview: string[
     cores: { bg:'#040d1a', bgCard:'#071428', bgMid:'#0a1f3d', d1:'#60a5fa', d2:'#3b82f6', w:'#EFF6FF', wMid:'rgba(239,246,255,0.68)', wFaint:'rgba(239,246,255,0.35)' } },
   esmeralda: { label: 'Esmeralda',      emoji: '🟢', preview: ['#020f0a','#10b981','#ECFDF5'],
     cores: { bg:'#020f0a', bgCard:'#041a10', bgMid:'#052b18', d1:'#34d399', d2:'#10b981', w:'#ECFDF5', wMid:'rgba(236,253,245,0.68)', wFaint:'rgba(236,253,245,0.35)' } },
-  vinho:     { label: 'Vinho Premium',  emoji: '🔴', preview: ['#120408','#e11d48','#FFF1F2'],
-    cores: { bg:'#120408', bgCard:'#1c060d', bgMid:'#2a0912', d1:'#f43f5e', d2:'#e11d48', w:'#FFF1F2', wMid:'rgba(255,241,242,0.68)', wFaint:'rgba(255,241,242,0.35)' } },
+  vinho:     { label: 'Vinho Premium',  emoji: '🍷', preview: ['#0d0105','#9f1239','#FDF2F4'],
+    cores: { bg:'#0d0105', bgCard:'#170208', bgMid:'#22030d', d1:'#9f1239', d2:'#be123c', w:'#FDF2F4', wMid:'rgba(253,242,244,0.68)', wFaint:'rgba(253,242,244,0.35)' } },
 }
 
 const ESTRUTURAS: Record<EstruturaId, { label: string; emoji: string; desc: string }> = {
@@ -63,6 +64,13 @@ const ESTRUTURAS: Record<EstruturaId, { label: string; emoji: string; desc: stri
   'split':     { label: 'Split',     emoji: '▪️▪️', desc: 'Foto à direita, texto à esquerda' },
   'topo-bold': { label: 'Topo Bold', emoji: '⬆️', desc: 'Headline grande no topo com faixa' },
   'minimal':   { label: 'Minimal',   emoji: '◻️', desc: 'Tipografia maximalista, sem foto' },
+}
+
+const TIPOGRAFIAS: Record<TipografiaId, { label: string; serif: string; sans: string; import: string }> = {
+  'montserrat': { label: 'Montserrat',  sans: "'Montserrat', sans-serif",   serif: "'Playfair Display', serif", import: "Montserrat:wght@400;600;700;800;900&family=Playfair+Display:ital,wght@0,700;1,700" },
+  'poppins':    { label: 'Poppins',     sans: "'Poppins', sans-serif",      serif: "'Cormorant Garamond', serif", import: "Poppins:wght@400;600;700;800;900&family=Cormorant+Garamond:ital,wght@0,700;1,700" },
+  'raleway':    { label: 'Raleway',     sans: "'Raleway', sans-serif",      serif: "'Libre Baskerville', serif",  import: "Raleway:wght@400;600;700;800;900&family=Libre+Baskerville:ital,wght@0,700;1,400" },
+  'dm-sans':    { label: 'DM Sans',     sans: "'DM Sans', sans-serif",      serif: "'DM Serif Display', serif",   import: "DM+Sans:wght@400;600;700;800;900&family=DM+Serif+Display:ital@0;1" },
 }
 
 const FORMATOS_CONFIG = {
@@ -219,17 +227,19 @@ interface CanvasProps {
   onDrag?:   (key: string, x: number, y: number) => void
   paleta?:   PaletaId
   estrutura?: EstruturaId
+  tipografia?: TipografiaId
 }
 
-function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale, dragMode = false, offsets = {}, onDrag = () => {}, paleta = 'dourado', estrutura = 'classico' }: CanvasProps) {
+function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale, dragMode = false, offsets = {}, onDrag = () => {}, paleta = 'dourado', estrutura = 'classico', tipografia = 'montserrat' }: CanvasProps) {
   const { w, h } = FORMATOS_CONFIG[formato]
   const foto = slide.fotoIndex !== null ? (fotos[slide.fotoIndex] ?? null) : null
   const li = ((slide.id - 2) % 4) + 1
   const P = PALETAS[paleta]?.cores ?? C  // active palette
+  const T = TIPOGRAFIAS[tipografia] ?? TIPOGRAFIAS['montserrat']  // active typography
 
   const base: React.CSSProperties = {
     width: w, height: h, position: 'relative', overflow: 'hidden',
-    fontFamily: "'Montserrat', sans-serif",
+    fontFamily: "' + T.sans + '",
     transform: `scale(${scale})`, transformOrigin: 'top left', flexShrink: 0,
   }
 
@@ -245,7 +255,7 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale, dragMode
   // ── CAPA — Split Layout ─────────────────────────────────────────────────
   if (slide.tipo === 'capa' && estrutura === 'split') {
     return (
-      <div style={{ width:w, height:h, position:'relative', overflow:'hidden', fontFamily:"'Montserrat',sans-serif", transform:`scale(${scale})`, transformOrigin:'top left', flexShrink:0 }}>
+      <div style={{ width:w, height:h, position:'relative', overflow:'hidden', fontFamily: T.sans, transform:`scale(${scale})`, transformOrigin:'top left', flexShrink:0 }}>
         <div style={{ position:'absolute', inset:0, background:P.bg }} />
         {/* Right half — foto */}
         {foto && (
@@ -265,12 +275,12 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale, dragMode
           <Headline text={slide.headline||'Título do *Post*'} fs={86} lh={1.05} cn={6} pal={P} />
           {slide.corpo && <div style={{ display:'flex', gap:20, marginTop:44, alignItems:'flex-start' }}>
             <div style={{ width:4, flexShrink:0, background:`linear-gradient(to bottom,${P.d2},transparent)`, minHeight:72 }} />
-            <div style={{ color:P.wMid, fontSize:32, fontStyle:'italic', lineHeight:1.5, fontFamily:"'Playfair Display',serif", overflow:'hidden', display:'-webkit-box', WebkitLineClamp:3, WebkitBoxOrient:'vertical' as const }}>"{slide.corpo}"</div>
+            <div style={{ color:P.wMid, fontSize:32, fontStyle:'italic', lineHeight:1.5, fontFamily: T.serif, overflow:'hidden', display:'-webkit-box', WebkitLineClamp:3, WebkitBoxOrient:'vertical' as const }}>"{slide.corpo}"</div>
           </div>}
         </DragWrap>
         <DragWrap dragKey="footer" {...{offsets, onDrag, scale, enabled:dragMode}} style={{ position:'absolute', bottom:0, left:0, right:0, zIndex:5 }}>
           <div style={{ padding:'32px 60px', background:`linear-gradient(to top,${P.bg} 60%,transparent)`, display:'flex', alignItems:'center', justifyContent:logo?'flex-end':'center' }}>
-            {logo && <img src={logo} alt="" style={{ height:90, maxWidth:280, objectFit:'contain' }} />}
+            {logo && <div style={{ background:'transparent', display:'inline-block' }}><img src={logo} alt="" style={{ height:90, maxWidth:280, objectFit:'contain' , display:'block' }} /></div>}
           </div>
         </DragWrap>
       </div>
@@ -280,7 +290,7 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale, dragMode
   // ── CAPA — Topo Bold Layout ───────────────────────────────────────────────
   if (slide.tipo === 'capa' && estrutura === 'topo-bold') {
     return (
-      <div style={{ width:w, height:h, position:'relative', overflow:'hidden', fontFamily:"'Montserrat',sans-serif", transform:`scale(${scale})`, transformOrigin:'top left', flexShrink:0 }}>
+      <div style={{ width:w, height:h, position:'relative', overflow:'hidden', fontFamily: T.sans, transform:`scale(${scale})`, transformOrigin:'top left', flexShrink:0 }}>
         <div style={{ position:'absolute', inset:0, background:P.bg }} />
         {foto && (<>
           <img src={foto} alt="" style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', objectPosition:'center', opacity:0.35 }} />
@@ -303,11 +313,11 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale, dragMode
           <div style={{ padding:'0 80px 60px', background:`linear-gradient(to top,${P.bg} 70%,transparent)` }}>
             {slide.corpo && <div style={{ display:'flex', gap:20, marginBottom:32, alignItems:'flex-start' }}>
               <div style={{ width:4, flexShrink:0, background:`linear-gradient(to bottom,${P.d2},transparent)`, minHeight:72 }} />
-              <div style={{ color:P.wMid, fontSize:36, fontStyle:'italic', lineHeight:1.5, fontFamily:"'Playfair Display',serif", overflow:'hidden', display:'-webkit-box', WebkitLineClamp:3, WebkitBoxOrient:'vertical' as const }}>"{slide.corpo}"</div>
+              <div style={{ color:P.wMid, fontSize:36, fontStyle:'italic', lineHeight:1.5, fontFamily: T.serif, overflow:'hidden', display:'-webkit-box', WebkitLineClamp:3, WebkitBoxOrient:'vertical' as const }}>"{slide.corpo}"</div>
             </div>}
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
               <div style={{ color:P.d1, fontSize:20, fontWeight:700, letterSpacing:2 }}>DR. BRUNO GUSTAVO</div>
-              {logo && <img src={logo} alt="" style={{ height:80, maxWidth:240, objectFit:'contain' }} />}
+              {logo && <div style={{ background:'transparent', display:'inline-block' }}><img src={logo} alt="" style={{ height:80, maxWidth:240, objectFit:'contain' , display:'block' }} /></div>}
             </div>
           </div>
         </DragWrap>
@@ -318,7 +328,7 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale, dragMode
   // ── CAPA — Minimal Layout ─────────────────────────────────────────────────
   if (slide.tipo === 'capa' && estrutura === 'minimal') {
     return (
-      <div style={{ width:w, height:h, position:'relative', overflow:'hidden', fontFamily:"'Montserrat',sans-serif", transform:`scale(${scale})`, transformOrigin:'top left', flexShrink:0, background:P.bg }}>
+      <div style={{ width:w, height:h, position:'relative', overflow:'hidden', fontFamily: T.sans, transform:`scale(${scale})`, transformOrigin:'top left', flexShrink:0, background:P.bg }}>
         {/* Geometric accent */}
         <div style={{ position:'absolute', top:0, right:0, width:'40%', height:'40%', background:`linear-gradient(135deg,${P.d2}18,transparent)`, borderBottom:`1px solid ${P.d2}22` }} />
         <div style={{ position:'absolute', bottom:0, left:0, width:'40%', height:'30%', background:`linear-gradient(315deg,${P.d2}12,transparent)` }} />
@@ -332,7 +342,7 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale, dragMode
         {/* Center — headline */}
         <DragWrap dragKey="content" {...{offsets, onDrag, scale, enabled:dragMode}} style={{ position:'absolute', left:80, right:80, top:'30%', zIndex:5 }}>
           <Headline text={slide.headline||'Título do *Post*'} fs={106} lh={1.0} cn={5} pal={P} />
-          {slide.corpo && <div style={{ marginTop:48, color:P.wMid, fontSize:38, fontStyle:'italic', lineHeight:1.5, fontFamily:"'Playfair Display',serif", overflow:'hidden', display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical' as const }}>"{slide.corpo}"</div>}
+          {slide.corpo && <div style={{ marginTop:48, color:P.wMid, fontSize:38, fontStyle:'italic', lineHeight:1.5, fontFamily: T.serif, overflow:'hidden', display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical' as const }}>"{slide.corpo}"</div>}
         </DragWrap>
         {/* Footer */}
         <DragWrap dragKey="footer" {...{offsets, onDrag, scale, enabled:dragMode}} style={{ position:'absolute', bottom:60, left:80, right:80, zIndex:5 }}>
@@ -341,7 +351,7 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale, dragMode
               <div style={{ color:P.d2, fontSize:22, fontWeight:900, letterSpacing:1 }}>DR. BRUNO GUSTAVO</div>
               <div style={{ color:P.wFaint, fontSize:16, letterSpacing:3, marginTop:4 }}>MEDICINA BASEADA EM EVIDÊNCIA</div>
             </div>
-            {logo && <img src={logo} alt="" style={{ height:90, maxWidth:260, objectFit:'contain' }} />}
+            {logo && <div style={{ background:'transparent', display:'inline-block' }}><img src={logo} alt="" style={{ height:90, maxWidth:260, objectFit:'contain' , display:'block' }} /></div>}
           </div>
         </DragWrap>
       </div>
@@ -374,7 +384,7 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale, dragMode
           {slide.corpo && (
             <div style={{ display: 'flex', gap: 24, marginTop: 52, alignItems: 'flex-start' }}>
               <div style={{ width: 4, flexShrink: 0, background: `linear-gradient(to bottom, ${P.d2}, transparent)`, minHeight: 88 }} />
-              <div style={{ color: P.wMid, fontSize: 36, fontStyle: 'italic', lineHeight: 1.5, fontFamily: "'Playfair Display', serif", ...clamp(3) }}>
+              <div style={{ color: P.wMid, fontSize: 36, fontStyle: 'italic', lineHeight: 1.5, fontFamily: T.serif, ...clamp(3) }}>
                 "{slide.corpo}"
               </div>
             </div>
@@ -384,7 +394,7 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale, dragMode
         {/* Rodapé */}
         <DragWrap dragKey="footer" {...dp} style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 5 }}>
           <div style={{ padding: '40px 72px', background: `linear-gradient(to top, ${P.bg} 60%, transparent)`, display: 'flex', alignItems: 'center', justifyContent: logo ? 'flex-end' : 'center' }}>
-            {logo && <div><img src={logo} alt="" style={{ height: 110, maxWidth: 320, objectFit: 'contain', display: 'block' }} /></div>}
+            {logo && <div style={{ background:'transparent' }}><img src={logo} alt="" style={{ height: 110, maxWidth: 320, objectFit: 'contain', display: 'block' }} /></div>}
           </div>
         </DragWrap>
       </div>
@@ -431,7 +441,7 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale, dragMode
           <div style={{ padding: '44px 90px', textAlign: 'center', background: `linear-gradient(to top, ${P.bg} 65%, transparent)` }}>
             <div style={{ color: P.d2, fontSize: 42, fontWeight: 900, letterSpacing: 1, marginBottom: 10 }}>{HANDLE}</div>
             <div style={{ color: P.wFaint, fontSize: 22, letterSpacing: 3 }}>{ASSIN}</div>
-            {logo && <div style={{ marginTop: 18, display: 'inline-block' }}><img src={logo} alt="" style={{ height: 110, maxWidth: 320, objectFit: 'contain', display: 'block' }} /></div>}
+            {logo && <div style={{ marginTop: 18, display: 'inline-block', background: 'transparent' }}><img src={logo} alt="" style={{ height: 110, maxWidth: 320, objectFit: 'contain', display: 'block' }} /></div>}
           </div>
         </DragWrap>
       </div>
@@ -457,11 +467,11 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale, dragMode
         <Counter />
 
         {/* Aspas decorativas */}
-        <div style={{ position: 'absolute', left: 56, top: '24%', color: P.d1, fontSize: 220, lineHeight: 1, opacity: 0.3, fontFamily: "'Playfair Display', serif", userSelect: 'none' }}>"</div>
+        <div style={{ position: 'absolute', left: 56, top: '24%', color: P.d1, fontSize: 220, lineHeight: 1, opacity: 0.3, fontFamily: T.serif, userSelect: 'none' }}>"</div>
 
         {/* Citação */}
         <DragWrap dragKey="content" {...dp} style={{ position: 'absolute', left: 90, right: 90, top: '33%', bottom: 160, zIndex: 5 }}>
-          <div style={{ color: P.w, fontSize: 62, fontStyle: 'italic', lineHeight: 1.38, fontFamily: "'Playfair Display', serif", fontWeight: 400, ...clamp(7) }}>
+          <div style={{ color: P.w, fontSize: 62, fontStyle: 'italic', lineHeight: 1.38, fontFamily: T.serif, fontWeight: 400, ...clamp(7) }}>
             {slide.corpo.split(/\*(.*?)\*/).map((part, i) =>
               i % 2 === 1
                 ? <strong key={i} style={{ color: P.d2, fontWeight: 700 }}>{part}</strong>
@@ -474,7 +484,7 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale, dragMode
           <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
             <div style={{ width: 56, height: 1, background: P.d1 }} />
             <div style={{ color: P.d1, fontSize: 21, fontWeight: 700, letterSpacing: 2 }}>{NOME}</div>
-            {logo && <div><img src={logo} alt="" style={{ height: 110, maxWidth: 320, objectFit: 'contain', display: 'block' }} /></div>}
+            {logo && <div style={{ background:'transparent' }}><img src={logo} alt="" style={{ height: 110, maxWidth: 320, objectFit: 'contain', display: 'block' }} /></div>}
           </div>
         </DragWrap>
       </div>
@@ -519,7 +529,7 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale, dragMode
         <DragWrap dragKey="footer" {...dp} style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 5 }}>
           <div style={{ padding: '22px 90px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ color: P.wFaint, fontSize: 20 }}>{HANDLE}</div>
-            {logo && <div><img src={logo} alt="" style={{ height: 110, maxWidth: 320, objectFit: 'contain', display: 'block' }} /></div>}
+            {logo && <div style={{ background:'transparent' }}><img src={logo} alt="" style={{ height: 110, maxWidth: 320, objectFit: 'contain', display: 'block' }} /></div>}
           </div>
         </DragWrap>
       </div>
@@ -581,7 +591,7 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale, dragMode
         <DragWrap dragKey="footer" {...dp} style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 5 }}>
           <div style={{ padding: '20px 90px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: `1px solid rgba(184,151,106,0.1)` }}>
             <div style={{ color: P.wFaint, fontSize: 17, textTransform: 'uppercase' as const, letterSpacing: 2 }}>{slide.fonte ?? ''}</div>
-            {logo && <div><img src={logo} alt="" style={{ height: 110, maxWidth: 320, objectFit: 'contain', display: 'block' }} /></div>}
+            {logo && <div style={{ background:'transparent' }}><img src={logo} alt="" style={{ height: 110, maxWidth: 320, objectFit: 'contain', display: 'block' }} /></div>}
           </div>
         </DragWrap>
       </div>
@@ -616,7 +626,7 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale, dragMode
         {slide.fonte && (
           <div style={{ display: 'flex', gap: 20, marginTop: 44, alignItems: 'flex-start' }}>
             <div style={{ width: 4, flexShrink: 0, background: `linear-gradient(to bottom, ${P.d2}, transparent)`, minHeight: 72 }} />
-            <div style={{ color: P.d1, fontSize: 24, fontStyle: 'italic', lineHeight: 1.5, fontFamily: "'Playfair Display', serif" }}>Fonte: {slide.fonte}</div>
+            <div style={{ color: P.d1, fontSize: 24, fontStyle: 'italic', lineHeight: 1.5, fontFamily: T.serif }}>Fonte: {slide.fonte}</div>
           </div>
         )}
       </DragWrap>
@@ -655,6 +665,7 @@ export default function ImagensPage() {
   const [fotoCTA, setFotoCTA]     = useState<number | null>(null)
   const [showPautas,     setShowPautas]     = useState(false)
   const [paleta,         setPaleta]         = useState<PaletaId>('dourado')
+  const [tipografia,     setTipografia]     = useState<TipografiaId>('montserrat')
   const [estrutura,      setEstrutura]      = useState<EstruturaId>('classico')
   const [isGenAI,        setIsGenAI]        = useState(false)
   const [genAIError,     setGenAIError]     = useState('')
@@ -1027,7 +1038,7 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
 
   return (
     <div className="min-h-screen" style={{ background: panelBg, color: C.w, fontFamily: "'Montserrat', sans-serif" }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&display=swap');`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Poppins:wght@400;600;700;800;900&family=Cormorant+Garamond:ital,wght@0,700;1,700&family=Raleway:wght@400;600;700;800;900&family=Libre+Baskerville:ital,wght@0,700;1,400&family=DM+Sans:opsz,wght@9..40,400;9..40,600;9..40,700;9..40,800;9..40,900&family=DM+Serif+Display:ital@0;1&display=swap');`}</style>
 
       {/* ── Overlay de Loading durante captura ── */}
       {isCapturing && (
@@ -1084,7 +1095,7 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
       <div style={{ display: 'flex', height: isMobile ? 'auto' : 'calc(100vh - 74px)', flexDirection: isMobile ? 'column' : 'row' }}>
 
         {/* ── Painel Esquerdo ── */}
-        <div style={{ width: isMobile ? '100%' : 356, flexShrink: 0, borderRight: isMobile ? 'none' : `1px solid ${border}`, borderBottom: isMobile ? `1px solid ${border}` : 'none', overflowY: 'auto', padding: isMobile ? '16px' : 24, display: 'flex', flexDirection: 'column', gap: isMobile ? 12 : 20 }}>
+        <div style={{ width: isMobile ? '100%' : 356, flexShrink: 0, borderRight: isMobile ? 'none' : `1px solid ${border}`, borderBottom: isMobile ? `1px solid ${border}` : 'none', overflowY: 'auto', maxHeight: isMobile ? '70vh' : 'none', padding: isMobile ? '16px' : 24, display: 'flex', flexDirection: 'column', gap: isMobile ? 12 : 20 }}>
 
           {/* Tipo */}
           <div>
@@ -1140,6 +1151,20 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
                     <div style={{ fontSize: 11, fontWeight: 700 }}>{e.label}</div>
                     <div style={{ fontSize: 10, fontWeight: 400, opacity: 0.7 }}>{e.desc}</div>
                   </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Tipografia */}
+          <div>
+            <label style={{ fontSize: 11, fontWeight: 700, color: labelClr, letterSpacing: 3, textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>Tipografia</label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+              {(Object.entries(TIPOGRAFIAS) as [TipografiaId, typeof TIPOGRAFIAS[TipografiaId]][]).map(([id, t]) => (
+                <button key={id} onClick={() => setTipografia(id)}
+                  style={{ padding: '9px 12px', borderRadius: 8, border: `1px solid ${tipografia === id ? C.d2 : border}`, cursor: 'pointer', textAlign: 'left', background: tipografia === id ? `rgba(200,168,76,0.1)` : sideBg, fontFamily: "'Montserrat', sans-serif" }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: tipografia === id ? C.d2 : labelClr }}>{t.label}</div>
+                  <div style={{ fontSize: 9, color: tipografia === id ? C.d1 : '#3a2a1a', marginTop: 2, letterSpacing: 1 }}>Aa Bb Cc</div>
                 </button>
               ))}
             </div>
@@ -1282,6 +1307,7 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
                   onDrag={(key, x, y) => updateDragOffset(currentSlide, key, x, y)}
                   paleta={paleta}
                   estrutura={estrutura}
+                  tipografia={tipografia}
                 />
               </div>
 

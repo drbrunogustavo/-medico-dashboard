@@ -370,7 +370,7 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale, dragMode
         {/* Conteúdo principal */}
         <DragWrap dragKey="content" {...dp} style={{ position: 'absolute', left: 90, right: 90, top: foto ? 240 : 200, zIndex: 5 }}>
           <div style={{ color: P.d1, fontSize: 26, fontWeight: 700, letterSpacing: 4, textTransform: 'uppercase' as const, marginBottom: 28 }}>A GRANDE QUESTÃO</div>
-          <Headline text={slide.headline || 'Título do *Post*'} fs={92} lh={1.04} cn={5} /> pal={P} />
+          <Headline text={slide.headline || 'Título do *Post*'} fs={92} lh={1.04} cn={5}  pal={P} />
           {slide.corpo && (
             <div style={{ display: 'flex', gap: 24, marginTop: 52, alignItems: 'flex-start' }}>
               <div style={{ width: 4, flexShrink: 0, background: `linear-gradient(to bottom, ${P.d2}, transparent)`, minHeight: 88 }} />
@@ -407,7 +407,7 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale, dragMode
             {slide.subtitulo}
           </div>
           <div style={{ textAlign: 'center', marginBottom: 14 }}>
-            <Headline text={slide.headline} fs={96} lh={1.05} cn={2} /> pal={P} />
+            <Headline text={slide.headline} fs={96} lh={1.05} cn={2}  pal={P} />
           </div>
           <div style={{ width: 100, height: 3, background: P.d2, margin: '36px auto' }} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
@@ -496,7 +496,7 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale, dragMode
         <Counter />
 
         <DragWrap dragKey="content" {...dp} style={{ position: 'absolute', left: 90, right: 90, top: 116, zIndex: 5 }}>
-          <Headline text={slide.headline} fs={72} lh={1.1} cn={2} /> pal={P} />
+          <Headline text={slide.headline} fs={72} lh={1.1} cn={2}  pal={P} />
         </DragWrap>
 
         {/* Grid 2×2 */}
@@ -543,7 +543,7 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale, dragMode
         <Counter />
 
         <DragWrap dragKey="content" {...dp} style={{ position: 'absolute', left: 90, right: 90, top: 180, zIndex: 5 }}>
-          <Headline text={slide.headline} fs={78} lh={1.08} cn={2} /> pal={P} />
+          <Headline text={slide.headline} fs={78} lh={1.08} cn={2}  pal={P} />
           <div style={{ width: 56, height: 3, background: P.d2, marginTop: 26 }} />
         </DragWrap>
 
@@ -610,7 +610,7 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale, dragMode
       <Counter />
 
       <DragWrap dragKey="content" {...dp} style={{ position: 'absolute', left: 90, right: foto ? 400 : 72, top: 116, bottom: 150, zIndex: 5 }}>
-        <Headline text={slide.headline} fs={78} lh={1.1} cn={3} /> pal={P} />
+        <Headline text={slide.headline} fs={78} lh={1.1} cn={3}  pal={P} />
         <div style={{ width: '100%', height: 2, background: `linear-gradient(to right, ${P.d2} 0%, rgba(200,168,76,0.08) 100%)`, margin: '42px 0' }} />
         <div style={{ color: P.wMid, fontSize: 40, lineHeight: 1.6, ...clamp(6) }}>{slide.corpo}</div>
         {slide.fonte && (

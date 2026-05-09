@@ -108,15 +108,15 @@ console.log('tema:', tema, 'topico:', topico, 'usarPauta:', usarPauta)
         }
       />
 
-      <div className="p-8 space-y-6">
-        <div className="grid grid-cols-4 gap-4">
+      <div className="p-4 md:p-8 space-y-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <StatCard label="Legendas Geradas"   value={geradas}         sub="nesta sessão" icon={Sparkles} accent="green" />
           <StatCard label="Pautas Disponíveis" value={pautas.length}   sub="no banco"     icon={FileText} accent="blue"  />
           <StatCard label="Formatos"           value={FORMATOS.length} sub="disponíveis"  icon={Instagram} accent="amber" />
           <StatCard label="Modelo IA"          value="Sonnet"          sub="Claude 4"     icon={Eye}      accent="green" />
         </div>
 
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Painel esquerdo */}
           <div className="space-y-5">
 

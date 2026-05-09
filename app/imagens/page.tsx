@@ -542,22 +542,32 @@ export default function ImagensPage() {
 
   const resetOffsets = () => setTextOffsets({})
 
-  // ── Gerar imagem com IA (Gemini Imagen 3) ──
+  // ── Gerar imagem com IA — chamada direta do browser via Pollinations ──
   const gerarImagemIA = async () => {
     if (!tema.trim()) { alert('Defina o tema do post antes de gerar a imagem.'); return }
     setIsGenAI(true)
     setGenAIError('')
     try {
-      const res  = await fetch('/api/imagegen', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ tema, formato }),
+      const { w, h } = FORMATOS_CONFIG[formato]
+      const prompt = encodeURIComponent(
+        'cinematic medical photography, professional doctor, dark moody studio, warm golden bokeh, ' +
+        'dramatic lighting, luxury aesthetic, ' + tema + ', photorealistic, no text, no watermarks, 8K quality'
+      )
+      const seed = Math.floor(Math.random() * 99999)
+      const url  = 'https://image.pollinations.ai/prompt/' + prompt +
+                   '?width=' + w + '&height=' + h + '&seed=' + seed + '&model=flux&nologo=true'
+
+      const res = await fetch(url)
+      if (!res.ok) throw new Error('Serviço indisponível (status ' + res.status + '). Tente novamente.')
+
+      const blob   = await res.blob()
+      const reader = new FileReader()
+      const dataUrl: string = await new Promise((resolve, reject) => {
+        reader.onload  = () => resolve(reader.result as string)
+        reader.onerror = reject
+        reader.readAsDataURL(blob)
       })
-      const data = await res.json()
-      if (data.error) throw new Error(data.error)
-      if (data.image) {
-        setFotos(prev => [...prev, data.image])
-      }
+      setFotos(prev => [...prev, dataUrl])
     } catch (err) {
       setGenAIError('Erro: ' + String(err))
     } finally {

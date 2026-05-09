@@ -549,10 +549,44 @@ export default function ImagensPage() {
     setGenAIError('')
     try {
       const { w, h } = FORMATOS_CONFIG[formato]
-      const prompt = encodeURIComponent(
-        'cinematic medical photography, professional doctor, dark moody studio, warm golden bokeh, ' +
-        'dramatic lighting, luxury aesthetic, ' + tema + ', photorealistic, no text, no watermarks, 8K quality'
-      )
+      // Gera prompt profissional via Claude antes de chamar Pollinations
+      let visualPrompt = tema
+      try {
+        const promptRes = await fetch('/api/roteiros', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-6',
+            max_tokens: 300,
+            messages: [{
+              role: 'user',
+              content:
+                'You are a professional AI image prompt engineer specializing in medical content photography.\n' +
+                'Create a single detailed image generation prompt in English for Flux/Stable Diffusion.\n\n' +
+                'MEDICAL THEME: ' + tema + '\n\n' +
+                'REQUIRED AESTHETIC (match exactly):\n' +
+                '- Dark moody background: deep browns #120a04 and #1c0f06, almost black\n' +
+                '- Warm golden bokeh lights in background, soft amber glows\n' +
+                '- Cinematic dramatic side lighting, chiaroscuro effect\n' +
+                '- Photorealistic professional medical photography\n' +
+                '- Subject: professional doctor or medical professional, elegant attire\n' +
+                '- Medical environment: laboratory, clinic or hospital softly out of focus\n' +
+                '- Luxury high-end editorial aesthetic\n' +
+                '- Depth of field, sharp subject, blurred background\n' +
+                '- Color palette: dark browns, warm golds, soft whites, deep shadows\n' +
+                '- Inspired by: dark luxury fashion photography meets medical documentary\n\n' +
+                'OUTPUT: Return ONLY the image prompt text, no explanation, no quotes, max 120 words.'
+            }]
+          }),
+        })
+        const promptData = await promptRes.json()
+        const generated  = promptData.content?.[0]?.text?.trim()
+        if (generated && generated.length > 20) {
+          visualPrompt = generated + ', no text, no watermarks, no logos, no captions'
+        }
+      } catch { /* usa tema direto como fallback */ }
+
+      const prompt = encodeURIComponent(visualPrompt)
       const seed = Math.floor(Math.random() * 99999)
       const url  = 'https://image.pollinations.ai/prompt/' + prompt +
                    '?width=' + w + '&height=' + h + '&seed=' + seed + '&model=flux&nologo=true'

@@ -1085,7 +1085,7 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
       )}
 
       {/* Header */}
-      <div style={className="border-b border-border bg-surface" style={{ padding: '18px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}}>
+      <div className="border-b border-border bg-surface" style={{ padding: '18px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 900, color: C.d2, letterSpacing: 1, margin: 0 }}>Gerador de Imagens</h1>
           <p style={{ fontSize: 12, color: labelClr, margin: '4px 0 0' }}>Posts e carrosséis para o Instagram</p>

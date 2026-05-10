@@ -1034,11 +1034,11 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
   const currentLayout = currentS?.tipo === 'conteudo' ? layoutOf(currentS.id) : 0
   const currentOffsets = textOffsets[currentSlide] ?? {}
 
-  const panelBg  = '#0e0804'
-  const sideBg   = '#1c0f06'
-  const border   = '#2a1a0a'
-  const labelClr = '#6a5040'
-  const inputSty: React.CSSProperties = { background: sideBg, border: `1px solid ${border}`, color: C.w, borderRadius: 8, padding: '10px 14px', fontSize: 13, width: '100%', fontFamily: "'Montserrat', sans-serif", outline: 'none' }
+  const panelBg  = '#08090e'
+  const sideBg   = '#13141d'
+  const border   = '#1c1d2a'
+  const labelClr = '#474f66'
+  const inputSty: React.CSSProperties = { background: sideBg, border: `1px solid ${border}`, color: '#e8eaf2', borderRadius: 7, padding: '9px 13px', fontSize: 13, width: '100%', fontFamily: "'Inter', system-ui, sans-serif", outline: 'none' }
 
   return (
     <div className="min-h-screen bg-background text-text-primary" style={{ fontFamily: "'Montserrat', sans-serif" }}>
@@ -1091,7 +1091,7 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
           <p style={{ fontSize: 12, color: labelClr, margin: '4px 0 0' }}>Posts e carrosséis para o Instagram</p>
         </div>
         <button onClick={generateWithAI} disabled={isGenerating || !tema.trim()}
-          style={{ background: tema.trim() ? C.d2 : '#2a1a0a', color: tema.trim() ? C.bg : labelClr, padding: '12px 24px', borderRadius: 10, border: 'none', fontWeight: 900, fontSize: 13, cursor: tema.trim() ? 'pointer' : 'not-allowed', fontFamily: "'Montserrat', sans-serif", display: 'flex', alignItems: 'center', gap: 8 }}>
+          style={{ background: tema.trim() ? '#00c07f' : 'none', color: tema.trim() ? '#08090e' : '#474f66', padding: '12px 24px', borderRadius: 10, border: 'none', fontWeight: 900, fontSize: 13, cursor: tema.trim() ? 'pointer' : 'not-allowed', fontFamily: "'Montserrat', sans-serif", display: 'flex', alignItems: 'center', gap: 8 }}>
           {isGenerating ? '⟳ Gerando...' : '✦ Gerar com IA'}
         </button>
       </div>
@@ -1190,7 +1190,7 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
               <label style={{ fontSize: 11, fontWeight: 700, color: labelClr, letterSpacing: 3, textTransform: 'uppercase' }}>Tema</label>
               <button onClick={() => setShowPautas(true)}
-                style={{ fontSize: 10, fontWeight: 700, color: C.d2, background: 'rgba(200,168,76,0.08)', border: '1px solid rgba(200,168,76,0.25)', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontFamily: "'Montserrat', sans-serif", letterSpacing: 1 }}>
+                style={{ fontSize: 10, fontWeight: 700, color: '#00e893', background: 'rgba(0,192,127,0.12)', border: '1px solid rgba(0,192,127,0.3)', borderRadius: 5, padding: '4px 10px', cursor: 'pointer', fontFamily: "'Inter', system-ui, sans-serif" }}>
                 📋 Banco de Pautas
               </button>
             </div>
@@ -1277,7 +1277,7 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
                   const icon = s.tipo === 'capa' ? '📌' : s.tipo === 'cta' ? '🎯' : li === 1 ? '💬' : li === 2 ? '⊞' : li === 3 ? '📊' : '📝'
                   return (
                     <button key={s.id} onClick={() => setCurrentSlide(i)}
-                      style={{ padding: '10px 12px', borderRadius: 8, border: 'none', cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8, background: currentSlide === i ? C.d2 : sideBg, color: currentSlide === i ? C.bg : labelClr, fontFamily: "'Montserrat', sans-serif", fontSize: 12 }}>
+                      style={{ padding: '10px 12px', borderRadius: 8, border: 'none', cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8, background: currentSlide === i ? '#00c07f' : sideBg, color: currentSlide === i ? '#08090e' : labelClr, fontFamily: "'Montserrat', sans-serif", fontSize: 12 }}>
                       <span style={{ flexShrink: 0 }}>{icon}</span>
                       <span style={{ fontWeight: 700, flexShrink: 0 }}>{s.tipo === 'capa' ? 'Capa' : s.tipo === 'cta' ? 'CTA' : layoutNames[li]}</span>
                       <span style={{ opacity: 0.6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
@@ -1329,9 +1329,9 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
             <button
               onClick={() => setDragMode(d => !d)}
               style={{
-                padding: '12px 20px', border: `1px solid ${dragMode ? C.d2 : border}`,
-                borderRadius: 10, background: dragMode ? 'rgba(200,168,76,0.12)' : 'none',
-                color: dragMode ? C.d2 : labelClr, fontWeight: 700, fontSize: 13,
+                padding: '12px 20px', border: `1px solid ${dragMode ? '#00c07f' : border}`,
+                borderRadius: 10, background: dragMode ? 'rgba(0,192,127,0.12)' : 'none',
+                color: dragMode ? '#00e893' : labelClr, fontWeight: 700, fontSize: 13,
                 cursor: 'pointer', fontFamily: "'Montserrat', sans-serif", display: 'flex', alignItems: 'center', gap: 8,
               }}
             >

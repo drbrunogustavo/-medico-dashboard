@@ -3,12 +3,13 @@
 import { useState } from 'react'
 import { PautasModal } from '@/components/PautasModal'
 
-const C = {
-  bg:'#120a04',bgCard:'#1c0f06',d1:'#b8976a',d2:'#C9A84C',
-  w:'#F5F0EB',wMid:'rgba(245,240,235,0.68)',wFaint:'rgba(245,240,235,0.38)',
-  panel:'#0e0804',border:'#2a1a0a',label:'#6a5040',side:'#1c0f06',
+const D = {
+  bg:'#08090e',surface:'#0f1018',card:'#13141d',border:'#1c1d2a',
+  text:'#e8eaf2',text2:'#7c85a0',muted:'#474f66',
+  accent:'#00c07f',adim:'rgba(0,192,127,0.12)',aborder:'rgba(0,192,127,0.3)',atext:'#00e893',
+  font:"'Inter', system-ui, sans-serif",mono:"'JetBrains Mono', monospace",
 }
-const inputSty = { background:C.side, border:`1px solid ${C.border}`, color:C.w, borderRadius:8, padding:'10px 14px', fontSize:13, width:'100%', fontFamily:"'Montserrat',sans-serif", outline:'none' } as React.CSSProperties
+const inputSty = { background:D.card, border:`1px solid ${D.border}`, color:D.text, borderRadius:8, padding:'10px 14px', fontSize:13, width:'100%', fontFamily:"'Montserrat',sans-serif", outline:'none' } as React.CSSProperties
 
 const NICHOS = ['Nutrologia','Endocrinologia','Longevidade','Metabolismo','Hormônios','Anti-aging','Emagrecimento','Diabetes','Tireoide']
 const OBJETIVOS = [
@@ -28,7 +29,7 @@ function CopyBtn({ text, label='⎘ Copiar' }: { text:string; label?:string }) {
   const [ok, setOk] = useState(false)
   return (
     <button onClick={() => { navigator.clipboard.writeText(text); setOk(true); setTimeout(()=>setOk(false),1600) }}
-      style={{ padding:'8px 16px', borderRadius:8, border:`1px solid rgba(200,168,76,0.3)`, background:ok?'rgba(200,168,76,0.12)':'none', color:ok?C.d2:C.label, fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:"'Montserrat',sans-serif" }}>
+      style={{ padding:'8px 16px', borderRadius:8, border:`1px solid rgba(200,168,76,0.3)`, background:ok?'rgba(200,168,76,0.12)':'none', color:ok?D.accent:D.muted, fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:"'Montserrat',sans-serif" }}>
       {ok ? '✓ Copiado!' : label}
     </button>
   )
@@ -80,18 +81,18 @@ export default function HashtagsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-text-primary" style={{ fontFamily:"'Montserrat',sans-serif" }}>
+    <div className="min-h-screen" style={{ fontFamily:D.font, color:D.text }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;800;900&display=swap'); *{box-sizing:border-box} @keyframes spin{to{transform:rotate(360deg)}}`}</style>
       {showPautas && <PautasModal onSelect={(t)=>{setTema(t);setShowPautas(false)}} onClose={()=>setShowPautas(false)} />}
 
       {/* Header */}
       <div className="border-b border-border bg-surface" style={{ padding:'18px 32px', display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:12 }}>
         <div>
-          <h1 style={{ fontSize:22, fontWeight:900, color:C.d2, letterSpacing:1, margin:0 }}>Análise de Hashtags</h1>
-          <p style={{ fontSize:12, color:C.label, margin:'4px 0 0' }}>5 hashtags otimizadas por post · Instagram 2025</p>
+          <h1 style={{ fontSize:22, fontWeight:900, color:D.accent, letterSpacing:1, margin:0 }}>Análise de Hashtags</h1>
+          <p style={{ fontSize:12, color:D.muted, margin:'4px 0 0' }}>5 hashtags otimizadas por post · Instagram 2025</p>
         </div>
         <button onClick={gerar} disabled={loading||!tema.trim()}
-          style={{ background:tema.trim()?C.d2:C.border, color:tema.trim()?C.bg:C.label, padding:'12px 28px', borderRadius:10, border:'none', fontWeight:900, fontSize:13, cursor:tema.trim()?'pointer':'not-allowed', fontFamily:"'Montserrat',sans-serif" }}>
+          style={{ background:tema.trim()?D.accent:D.border, color:tema.trim()?D.bg:D.muted, padding:'12px 28px', borderRadius:10, border:'none', fontWeight:900, fontSize:13, cursor:tema.trim()?'pointer':'not-allowed', fontFamily:"'Montserrat',sans-serif" }}>
           {loading ? '⟳ Analisando...' : '✦ Gerar Hashtags'}
         </button>
       </div>
@@ -101,30 +102,30 @@ export default function HashtagsPage() {
         <div className="bg-card border-r border-border md:border-b-0 border-b" style={{ width:isMobile?'100%':280, flexShrink:0, overflowY:'auto', padding:24, display:'flex', flexDirection:'column', gap:20 }}>
           <div>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
-              <label style={{ fontSize:11, fontWeight:700, color:C.label, letterSpacing:3, textTransform:'uppercase' as const }}>Tema do Post</label>
-              <button onClick={()=>setShowPautas(true)} style={{ fontSize:10, fontWeight:700, color:C.d2, background:'rgba(200,168,76,0.08)', border:'1px solid rgba(200,168,76,0.25)', borderRadius:6, padding:'4px 10px', cursor:'pointer', fontFamily:"'Montserrat',sans-serif" }}>
+              <label style={{ fontSize:11, fontWeight:700, color:D.muted, letterSpacing:3, textTransform:'uppercase' as const }}>Tema do Post</label>
+              <button onClick={()=>setShowPautas(true)} style={{ fontSize:10, fontWeight:700, color:D.accent, background:'rgba(200,168,76,0.08)', border:'1px solid rgba(200,168,76,0.25)', borderRadius:6, padding:'4px 10px', cursor:'pointer', fontFamily:"'Montserrat',sans-serif" }}>
                 📋 Banco de Pautas
               </button>
             </div>
             <textarea value={tema} onChange={e=>setTema(e.target.value)} rows={3} placeholder="Ex: Tieoide e ganho de peso" style={{ ...inputSty, resize:'none', display:'block' }} />
           </div>
           <div>
-            <label style={{ fontSize:11, fontWeight:700, color:C.label, letterSpacing:3, textTransform:'uppercase' as const, display:'block', marginBottom:8 }}>Nicho Principal</label>
+            <label style={{ fontSize:11, fontWeight:700, color:D.muted, letterSpacing:3, textTransform:'uppercase' as const, display:'block', marginBottom:8 }}>Nicho Principal</label>
             <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
               {NICHOS.map(n => (
                 <button key={n} onClick={()=>setNicho(n)}
-                  style={{ padding:'6px 12px', borderRadius:20, border:'none', cursor:'pointer', fontSize:11, fontWeight:700, background:nicho===n?C.d2:C.side, color:nicho===n?C.bg:C.label, fontFamily:"'Montserrat',sans-serif" }}>
+                  style={{ padding:'6px 12px', borderRadius:20, border:'none', cursor:'pointer', fontSize:11, fontWeight:700, background:nicho===n?D.accent:D.card, color:nicho===n?D.bg:D.muted, fontFamily:"'Montserrat',sans-serif" }}>
                   {n}
                 </button>
               ))}
             </div>
           </div>
           <div>
-            <label style={{ fontSize:11, fontWeight:700, color:C.label, letterSpacing:3, textTransform:'uppercase' as const, display:'block', marginBottom:8 }}>Objetivo</label>
+            <label style={{ fontSize:11, fontWeight:700, color:D.muted, letterSpacing:3, textTransform:'uppercase' as const, display:'block', marginBottom:8 }}>Objetivo</label>
             <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
               {OBJETIVOS.map(o => (
                 <button key={o.v} onClick={()=>setObjetivo(o.v)}
-                  style={{ padding:'10px 14px', borderRadius:8, border:'none', cursor:'pointer', textAlign:'left', background:objetivo===o.v?C.d2:C.side, color:objetivo===o.v?C.bg:C.label, fontFamily:"'Montserrat',sans-serif" }}>
+                  style={{ padding:'10px 14px', borderRadius:8, border:'none', cursor:'pointer', textAlign:'left', background:objetivo===o.v?D.accent:D.card, color:objetivo===o.v?D.bg:D.muted, fontFamily:"'Montserrat',sans-serif" }}>
                   <div style={{ fontWeight:700, fontSize:12 }}>{o.e} {o.l}</div>
                   <div style={{ fontSize:10, fontWeight:400, opacity:.75, marginTop:2 }}>{o.desc}</div>
                 </button>
@@ -135,11 +136,11 @@ export default function HashtagsPage() {
           {/* Sets salvos */}
           {salvos.length > 0 && (
             <div>
-              <label style={{ fontSize:11, fontWeight:700, color:C.label, letterSpacing:3, textTransform:'uppercase' as const, display:'block', marginBottom:10 }}>Sets Salvos</label>
+              <label style={{ fontSize:11, fontWeight:700, color:D.muted, letterSpacing:3, textTransform:'uppercase' as const, display:'block', marginBottom:10 }}>Sets Salvos</label>
               <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
                 {salvos.map((set, i) => (
-                  <div key={i} style={{ background:C.bgCard, border:`1px solid ${C.border}`, borderRadius:8, padding:'10px 12px' }}>
-                    <div style={{ color:C.wFaint, fontSize:11, lineHeight:1.7 }}>{set.join(' ')}</div>
+                  <div key={i} style={{ background:D.card, border:`1px solid ${D.border}`, borderRadius:8, padding:'10px 12px' }}>
+                    <div style={{ color:D.muted, fontSize:11, lineHeight:1.7 }}>{set.join(' ')}</div>
                     <div style={{ marginTop:6 }}>
                       <CopyBtn text={set.join(' ')} label="⎘ Copiar set" />
                     </div>
@@ -155,36 +156,36 @@ export default function HashtagsPage() {
           {/* Aviso Instagram */}
           <div style={{ marginBottom:20, padding:'12px 16px', borderRadius:8, background:'rgba(200,168,76,0.06)', border:'1px solid rgba(200,168,76,0.2)', display:'flex', gap:12, alignItems:'center' }}>
             <span style={{ fontSize:18 }}>📌</span>
-            <div style={{ fontSize:12, color:C.wMid, lineHeight:1.5 }}>
-              <strong style={{ color:C.d2 }}>Instagram 2025:</strong> O algoritmo prioriza posts com <strong style={{ color:C.w }}>até 5 hashtags</strong> relevantes. Menos é mais.
+            <div style={{ fontSize:12, color:D.text2, lineHeight:1.5 }}>
+              <strong style={{ color:D.accent }}>Instagram 2025:</strong> O algoritmo prioriza posts com <strong style={{ color:D.text }}>até 5 hashtags</strong> relevantes. Menos é mais.
             </div>
           </div>
 
           {!resultado.length && !loading && (
             <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'50vh', gap:12, opacity:.5 }}>
               <div style={{ fontSize:48 }}>#️⃣</div>
-              <div style={{ color:C.label, fontSize:13, fontWeight:700, letterSpacing:2, textTransform:'uppercase' as const, textAlign:'center' }}>Defina o tema e<br />clique em ✦ Gerar Hashtags</div>
+              <div style={{ color:D.muted, fontSize:13, fontWeight:700, letterSpacing:2, textTransform:'uppercase' as const, textAlign:'center' }}>Defina o tema e<br />clique em ✦ Gerar Hashtags</div>
             </div>
           )}
           {loading && (
             <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'50vh', gap:16 }}>
-              <div style={{ width:44, height:44, border:'3px solid rgba(200,168,76,0.2)', borderTop:`3px solid ${C.d2}`, borderRadius:'50%', animation:'spin 0.8s linear infinite' }} />
-              <div style={{ color:C.d2, fontSize:13, fontWeight:700, letterSpacing:2 }}>ANALISANDO HASHTAGS...</div>
+              <div style={{ width:44, height:44, border:'3px solid rgba(200,168,76,0.2)', borderTop:`3px solid ${D.accent}`, borderRadius:'50%', animation:'spin 0.8s linear infinite' }} />
+              <div style={{ color:D.accent, fontSize:13, fontWeight:700, letterSpacing:2 }}>ANALISANDO HASHTAGS...</div>
             </div>
           )}
           {!loading && resultado.length > 0 && (
             <>
               {/* Header resultado */}
               <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20, flexWrap:'wrap', gap:10 }}>
-                <div style={{ color:C.label, fontSize:11, fontWeight:700, letterSpacing:3, textTransform:'uppercase' as const }}>
+                <div style={{ color:D.muted, fontSize:11, fontWeight:700, letterSpacing:3, textTransform:'uppercase' as const }}>
                   {resultado.length} hashtags · {nicho}
                 </div>
                 <div style={{ display:'flex', gap:8 }}>
-                  <button onClick={salvarSet} style={{ padding:'7px 14px', borderRadius:8, border:`1px solid rgba(200,168,76,0.3)`, background:'none', color:C.d1, fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:"'Montserrat',sans-serif" }}>
+                  <button onClick={salvarSet} style={{ padding:'7px 14px', borderRadius:8, border:`1px solid rgba(200,168,76,0.3)`, background:'none', color:D.atext, fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:"'Montserrat',sans-serif" }}>
                     💾 Salvar set
                   </button>
                   <CopyBtn text={resultado.map(h=>'#'+h.hashtag).join(' ')} label="⎘ Copiar todos" />
-                  <button onClick={gerar} style={{ padding:'7px 14px', borderRadius:8, border:`1px solid ${C.border}`, background:'none', color:C.label, fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:"'Montserrat',sans-serif" }}>
+                  <button onClick={gerar} style={{ padding:'7px 14px', borderRadius:8, border:`1px solid ${D.border}`, background:'none', color:D.muted, fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:"'Montserrat',sans-serif" }}>
                     ↺ Regerar
                   </button>
                 </div>
@@ -193,16 +194,16 @@ export default function HashtagsPage() {
               {/* Hashtags */}
               <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
                 {resultado.map((h, i) => (
-                  <div key={i} style={{ background:C.bgCard, border:`1px solid ${C.border}`, borderRadius:10, padding:'20px 24px', display:'flex', alignItems:'center', gap:20 }}>
-                    <div style={{ fontSize:28, fontWeight:900, color:C.d2, minWidth:30 }}>{i+1}</div>
+                  <div key={i} style={{ background:D.card, border:`1px solid ${D.border}`, borderRadius:10, padding:'20px 24px', display:'flex', alignItems:'center', gap:20 }}>
+                    <div style={{ fontSize:28, fontWeight:900, color:D.accent, minWidth:30 }}>{i+1}</div>
                     <div style={{ flex:1 }}>
                       <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:6, flexWrap:'wrap' as const }}>
-                        <span style={{ fontSize:20, fontWeight:900, color:C.w }}>#{h.hashtag}</span>
-                        <span style={{ fontSize:10, fontWeight:700, padding:'2px 8px', borderRadius:99, color:TIPO_COLOR[h.tipo]||C.label, background:'rgba(0,0,0,0.4)', border:`1px solid ${TIPO_COLOR[h.tipo]||C.label}` }}>
+                        <span style={{ fontSize:20, fontWeight:900, color:D.text }}>#{h.hashtag}</span>
+                        <span style={{ fontSize:10, fontWeight:700, padding:'2px 8px', borderRadius:99, color:TIPO_COLOR[h.tipo]||D.muted, background:'rgba(0,0,0,0.4)', border:`1px solid ${TIPO_COLOR[h.tipo]||D.muted}` }}>
                           {h.tipo}
                         </span>
                       </div>
-                      <div style={{ color:C.wMid, fontSize:13, lineHeight:1.5 }}>{h.motivo}</div>
+                      <div style={{ color:D.text2, fontSize:13, lineHeight:1.5 }}>{h.motivo}</div>
                     </div>
                     <CopyBtn text={'#'+h.hashtag} />
                   </div>
@@ -210,9 +211,9 @@ export default function HashtagsPage() {
               </div>
 
               {/* Copy block */}
-              <div style={{ marginTop:20, padding:'16px 20px', background:C.bgCard, border:`1px solid rgba(200,168,76,0.2)`, borderRadius:10 }}>
-                <div style={{ color:C.d1, fontSize:11, fontWeight:700, letterSpacing:3, textTransform:'uppercase' as const, marginBottom:10 }}>Bloco para colar na legenda</div>
-                <div style={{ color:C.wMid, fontSize:14, letterSpacing:1, lineHeight:2 }}>
+              <div style={{ marginTop:20, padding:'16px 20px', background:D.card, border:`1px solid rgba(200,168,76,0.2)`, borderRadius:10 }}>
+                <div style={{ color:D.atext, fontSize:11, fontWeight:700, letterSpacing:3, textTransform:'uppercase' as const, marginBottom:10 }}>Bloco para colar na legenda</div>
+                <div style={{ color:D.text2, fontSize:14, letterSpacing:1, lineHeight:2 }}>
                   {resultado.map(h=>'#'+h.hashtag).join(' ')}
                 </div>
               </div>

@@ -2,7 +2,6 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
-import { useSearchParams } from 'next/navigation'
 import { PautasModal } from '@/components/PautasModal'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -106,8 +105,7 @@ export default function RoteirosPage() {
   const [regenLoad,  setRegenLoad]  = useState(false)
   const [activeTab,  setActiveTab]  = useState<'roteiro' | 'legenda' | 'hashtags'>('roteiro')
   const [showPautas, setShowPautas] = useState(false)
-  const searchParams = useSearchParams()
-  useEffect(() => { const t = searchParams.get('tema'); if (t) setTema(decodeURIComponent(t)) }, [searchParams])
+  useEffect(() => { if (typeof window === 'undefined') return; const t = new URLSearchParams(window.location.search).get('tema'); if (t) setTema(decodeURIComponent(t)) }, [])
 
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
 

@@ -1041,7 +1041,7 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
   const inputSty: React.CSSProperties = { background: sideBg, border: `1px solid ${border}`, color: C.w, borderRadius: 8, padding: '10px 14px', fontSize: 13, width: '100%', fontFamily: "'Montserrat', sans-serif", outline: 'none' }
 
   return (
-    <div className="min-h-screen" style={{ background: panelBg, color: C.w, fontFamily: "'Montserrat', sans-serif" }}>
+    <div className="min-h-screen bg-background text-text-primary" style={{ fontFamily: "'Montserrat', sans-serif" }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Poppins:wght@400;600;700;800;900&family=Cormorant+Garamond:ital,wght@0,700;1,700&family=Raleway:wght@400;600;700;800;900&family=Libre+Baskerville:ital,wght@0,700;1,400&family=DM+Sans:opsz,wght@9..40,400;9..40,600;9..40,700;9..40,800;9..40,900&family=DM+Serif+Display:ital@0;1&display=swap');`}</style>
 
       {/* ── Overlay de Loading durante captura ── */}
@@ -1085,7 +1085,7 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
       )}
 
       {/* Header */}
-      <div style={{ borderBottom: `1px solid ${border}`, padding: '18px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={className="border-b border-border bg-surface" style={{ padding: '18px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 900, color: C.d2, letterSpacing: 1, margin: 0 }}>Gerador de Imagens</h1>
           <p style={{ fontSize: 12, color: labelClr, margin: '4px 0 0' }}>Posts e carrosséis para o Instagram</p>
@@ -1099,7 +1099,7 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
       <div style={{ display: 'flex', height: isMobile ? 'auto' : 'calc(100vh - 74px)', flexDirection: isMobile ? 'column' : 'row' }}>
 
         {/* ── Painel Esquerdo ── */}
-        <div style={{ width: isMobile ? '100%' : 356, flexShrink: 0, borderRight: isMobile ? 'none' : `1px solid ${border}`, borderBottom: isMobile ? `1px solid ${border}` : 'none', overflowY: 'auto', maxHeight: isMobile ? '70vh' : 'none', padding: isMobile ? '16px' : 24, display: 'flex', flexDirection: 'column', gap: isMobile ? 12 : 20 }}>
+        <div className="bg-card border-r border-border overflow-y-auto" style={{ maxHeight: isMobile ? '70vh' : 'none', padding: isMobile ? '16px' : 24, display: 'flex', flexDirection: 'column', gap: isMobile ? 12 : 20 }}>
 
           {/* Tipo */}
           <div>
@@ -1292,7 +1292,7 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
         </div>
 
         {/* ── Centro — Preview ── */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', padding: isMobile ? '20px 16px' : '32px 16px', overflowY: 'auto', background: '#090503' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', padding: isMobile ? '20px 16px' : '32px 16px', overflowY: 'auto', background: 'transparent' }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: labelClr, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 16 }}>
             {FORMATOS_CONFIG[formato].label} · {w}×{h}px
           </div>
@@ -1374,7 +1374,7 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
         </div>
 
         {/* ── Painel Direito — Editor ── */}
-        <div style={{ width: isMobile ? '100%' : 304, flexShrink: 0, borderLeft: isMobile ? 'none' : `1px solid ${border}`, borderTop: isMobile ? `1px solid ${border}` : 'none', overflowY: 'auto', padding: isMobile ? '16px' : 24, display: 'flex', flexDirection: 'column', gap: 18 }}>
+        <div className="bg-card border-l border-border overflow-y-auto" style={{ padding: isMobile ? '16px' : 24, display: 'flex', flexDirection: 'column', gap: 18 }}>
           <div>
             <span style={{ fontSize: 11, fontWeight: 700, color: labelClr, letterSpacing: 3, textTransform: 'uppercase' }}>
               Editar slide {currentSlide + 1}

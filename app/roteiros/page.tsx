@@ -2,6 +2,7 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { PautasModal } from '@/components/PautasModal'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -105,7 +106,8 @@ export default function RoteirosPage() {
   const [regenLoad,  setRegenLoad]  = useState(false)
   const [activeTab,  setActiveTab]  = useState<'roteiro' | 'legenda' | 'hashtags'>('roteiro')
   const [showPautas, setShowPautas] = useState(false)
-  useEffect(() => { if (typeof window === 'undefined') return; const t = new URLSearchParams(window.location.search).get('tema'); if (t) setTema(decodeURIComponent(t)) }, [])
+  const searchParams = useSearchParams()
+  useEffect(() => { const t = searchParams.get('tema'); if (t) setTema(decodeURIComponent(t)) }, [searchParams])
 
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
 
@@ -194,7 +196,7 @@ export default function RoteirosPage() {
     : ''
 
   return (
-    <div style={{ minHeight: '100vh', background: C.panel, color: C.w, fontFamily: "'Montserrat', sans-serif" }}>
+    <div className="min-h-screen bg-background text-text-primary" style={{ fontFamily: "'Montserrat', sans-serif" }}>
       {showPautas && (
         <PautasModal
           onSelect={(titulo, nota) => { setTema(titulo); if (nota) setPublico(''); setShowPautas(false) }}
@@ -209,7 +211,7 @@ export default function RoteirosPage() {
       `}</style>
 
       {/* Header */}
-      <div style={{ borderBottom: `1px solid ${C.border}`, padding: '18px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+      <div className="border-b border-border bg-surface" style={{ padding: '18px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 900, color: C.d2, letterSpacing: 1, margin: 0 }}>Gerador de Roteiros</h1>
           <p style={{ fontSize: 12, color: C.label, margin: '4px 0 0' }}>Roteiros para Reels do Instagram</p>
@@ -226,7 +228,7 @@ export default function RoteirosPage() {
       <div style={{ display: 'flex', height: isMobile ? 'auto' : 'calc(100vh - 74px)', flexDirection: isMobile ? 'column' : 'row' }}>
 
         {/* ── Painel Esquerdo ── */}
-        <div style={{ width: isMobile ? '100%' : 300, flexShrink: 0, borderRight: isMobile ? 'none' : `1px solid ${C.border}`, borderBottom: isMobile ? `1px solid ${C.border}` : 'none', overflowY: 'auto', padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div className="bg-card border-r border-border" style={{ width: isMobile ? '100%' : 300, flexShrink: 0, overflowY: 'auto', padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
 
           <div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
@@ -278,7 +280,7 @@ export default function RoteirosPage() {
         </div>
 
         {/* ── Centro — Roteiro ── */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: isMobile ? 16 : 32, background: '#090503' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: isMobile ? 16 : 32, }}>
 
           {!roteiro && !loading && (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60vh', gap: 16, opacity: 0.5 }}>

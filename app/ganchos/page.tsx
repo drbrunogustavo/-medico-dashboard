@@ -92,12 +92,12 @@ export default function GanchosPage() {
   }
 
   return (
-    <div style={{ minHeight:'100vh', background:C.panel, color:C.w, fontFamily:"'Montserrat',sans-serif" }}>
+    <div className="min-h-screen bg-background text-text-primary" style={{ fontFamily:"'Montserrat',sans-serif" }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;800;900&family=Playfair+Display:ital,wght@1,700&display=swap'); *{box-sizing:border-box} @keyframes spin{to{transform:rotate(360deg)}}`}</style>
       {showPautas && <PautasModal onSelect={(t)=>{setTema(t);setShowPautas(false)}} onClose={()=>setShowPautas(false)} />}
 
       {/* Header */}
-      <div style={{ borderBottom:`1px solid ${C.border}`, padding:'18px 32px', display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:12 }}>
+      <div className="border-b border-border bg-surface" style={{ padding:'18px 32px', display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:12 }}>
         <div>
           <h1 style={{ fontSize:22, fontWeight:900, color:C.d2, letterSpacing:1, margin:0 }}>Biblioteca de Ganchos</h1>
           <p style={{ fontSize:12, color:C.label, margin:'4px 0 0' }}>Aberturas que param o scroll em 3 segundos</p>
@@ -110,7 +110,7 @@ export default function GanchosPage() {
 
       <div style={{ display:'flex', flexDirection:isMobile?'column':'row', height:isMobile?'auto':'calc(100vh - 74px)' }}>
         {/* Left */}
-        <div style={{ width:isMobile?'100%':280, flexShrink:0, borderRight:isMobile?'none':`1px solid ${C.border}`, borderBottom:isMobile?`1px solid ${C.border}`:'none', overflowY:'auto', padding:24, display:'flex', flexDirection:'column', gap:20 }}>
+        <div className="bg-card border-r border-border md:border-b-0 border-b" style={{ width:isMobile?'100%':280, flexShrink:0, overflowY:'auto', padding:24, display:'flex', flexDirection:'column', gap:20 }}>
           <div>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
               <label style={{ fontSize:11, fontWeight:700, color:C.label, letterSpacing:3, textTransform:'uppercase' as const }}>Tema</label>
@@ -157,7 +157,7 @@ export default function GanchosPage() {
         </div>
 
         {/* Center */}
-        <div style={{ flex:1, overflowY:'auto', padding:isMobile?16:32, background:'#090503' }}>
+        <div className="bg-background" style={{ flex:1, overflowY:'auto', padding:isMobile?16:32 }}>
           {/* Tabs */}
           <div style={{ display:'flex', gap:4, marginBottom:24, borderBottom:`1px solid ${C.border}`, paddingBottom:0 }}>
             {(['gerar','favoritos'] as const).map(tab => (

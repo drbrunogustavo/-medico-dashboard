@@ -62,12 +62,12 @@ export default function TitulosPage() {
   }
 
   return (
-    <div style={{ minHeight:'100vh', background:C.panel, color:C.w, fontFamily:"'Montserrat',sans-serif" }}>
+    <div className="min-h-screen bg-background text-text-primary" style={{ fontFamily:"'Montserrat',sans-serif" }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;800;900&display=swap'); *{box-sizing:border-box}`}</style>
       {showPautas && <PautasModal onSelect={(t)=>{setTema(t);setShowPautas(false)}} onClose={()=>setShowPautas(false)} />}
 
       {/* Header */}
-      <div style={{ borderBottom:`1px solid ${C.border}`, padding:'18px 32px', display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:12 }}>
+      <div className="border-b border-border bg-surface" style={{ padding:'18px 32px', display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:12 }}>
         <div>
           <h1 style={{ fontSize:22, fontWeight:900, color:C.d2, letterSpacing:1, margin:0 }}>Gerador de Títulos</h1>
           <p style={{ fontSize:12, color:C.label, margin:'4px 0 0' }}>Headlines para posts e Reels</p>
@@ -80,7 +80,7 @@ export default function TitulosPage() {
 
       <div style={{ display:'flex', flexDirection:isMobile?'column':'row', height:isMobile?'auto':'calc(100vh - 74px)' }}>
         {/* Left */}
-        <div style={{ width:isMobile?'100%':280, flexShrink:0, borderRight:isMobile?'none':`1px solid ${C.border}`, borderBottom:isMobile?`1px solid ${C.border}`:'none', overflowY:'auto', padding:24, display:'flex', flexDirection:'column', gap:20 }}>
+        <div className="bg-card border-r border-border md:border-b-0 border-b" style={{ width:isMobile?'100%':280, flexShrink:0, overflowY:'auto', padding:24, display:'flex', flexDirection:'column', gap:20 }}>
           <div>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
               <label style={{ fontSize:11, fontWeight:700, color:C.label, letterSpacing:3, textTransform:'uppercase' as const }}>Tema</label>
@@ -115,7 +115,7 @@ export default function TitulosPage() {
         </div>
 
         {/* Center */}
-        <div style={{ flex:1, overflowY:'auto', padding:isMobile?16:32, background:'#090503' }}>
+        <div className="bg-background" style={{ flex:1, overflowY:'auto', padding:isMobile?16:32 }}>
           {!titulos.length && !loading && (
             <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'60vh', gap:12, opacity:.5 }}>
               <div style={{ fontSize:48 }}>✍️</div>

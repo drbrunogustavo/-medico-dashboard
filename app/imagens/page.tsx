@@ -467,7 +467,7 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale, dragMode
         <DragWrap dragKey="tag" {...dp} style={{ position: 'absolute', top: 90, left: 90, zIndex: 5 }}>
           <div style={{ color: P.d1, fontSize: 22, fontWeight: 700, letterSpacing: 4, textTransform: 'uppercase' as const }}>{slide.subtitulo}</div>
         </DragWrap>
-        {!logo && <div style={{ position: 'absolute', top: 90, right: 90, color: P.d2, fontSize: 22, fontWeight: 700, letterSpacing: 2 }}>{NOME}</div>}
+        {!logo && {!logo && totalSlides <= 1 && <div style={{ position: 'absolute', top: 90, right: 90, color: P.d2, fontSize: 21, fontWeight: 700, letterSpacing: 2 }}>{NOME}</div>}
         <Counter />
 
         {/* Aspas decorativas */}
@@ -506,7 +506,7 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale, dragMode
         <DragWrap dragKey="tag" {...dp} style={{ position: 'absolute', top: 90, left: 90, zIndex: 5 }}>
           <div style={{ color: P.wFaint, fontSize: 21, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase' as const }}>{slide.subtitulo}</div>
         </DragWrap>
-        {!logo && <div style={{ position: 'absolute', top: 90, right: 90, color: P.d2, fontSize: 21, fontWeight: 700, letterSpacing: 2 }}>{NOME}</div>}
+        {!logo && {!logo && totalSlides <= 1 && <div style={{ position: 'absolute', top: 90, right: 90, color: P.d2, fontSize: 21, fontWeight: 700, letterSpacing: 2 }}>{NOME}</div>}
         <Counter />
 
         <DragWrap dragKey="content" {...dp} style={{ position: 'absolute', left: 90, right: 90, top: 116, zIndex: 5 }}>
@@ -620,7 +620,7 @@ function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale, dragMode
       <DragWrap dragKey="tag" {...dp} style={{ position: 'absolute', top: 90, left: 90, zIndex: 5 }}>
         <div style={{ color: P.wFaint, fontSize: 22, fontWeight: 700, letterSpacing: 4, textTransform: 'uppercase' as const }}>{slide.subtitulo}</div>
       </DragWrap>
-      {!logo && <div style={{ position: 'absolute', top: 90, right: 90, color: P.d2, fontSize: 22, fontWeight: 700, letterSpacing: 2 }}>{NOME}</div>}
+      {!logo && {!logo && totalSlides <= 1 && <div style={{ position: 'absolute', top: 90, right: 90, color: P.d2, fontSize: 21, fontWeight: 700, letterSpacing: 2 }}>{NOME}</div>}
       <Counter />
 
       <DragWrap dragKey="content" {...dp} style={{ position: 'absolute', left: 90, right: foto ? 400 : 72, top: 116, bottom: 150, zIndex: 5 }}>

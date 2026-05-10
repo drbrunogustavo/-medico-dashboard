@@ -265,6 +265,11 @@ export default function PautasPage() {
                       className="flex items-center gap-1 px-2.5 py-1.5 rounded-md border border-border text-text-muted hover:text-accent hover:border-accent-border text-[10px] font-mono transition-colors whitespace-nowrap">
                       🎬 Roteiro
                     </button>
+                    <button
+                      onClick={() => router.push('/legendas?tema=' + encodeURIComponent(p.titulo))}
+                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-md border border-border text-text-muted hover:text-accent hover:border-accent-border text-[10px] font-mono transition-colors whitespace-nowrap">
+                      ✍️ Legenda
+                    </button>
                     <button onClick={() => removePauta(p.id)}
                       className="w-7 h-7 rounded-md border border-border flex items-center justify-center text-text-muted hover:text-red-400 hover:border-red-500/40 transition-colors">
                       <Trash2 className="w-3 h-3" />

@@ -41,14 +41,20 @@ export default function LegendaPage() {
   const [legenda, setLegenda]     = useState<Legenda | null>(null)
   const [copiado, setCopiado]     = useState(false)
   const [topico, setTopico]       = useState("")
-  const [usarPauta, setUsarPauta] = useState(true)
+  const [usarPauta, setUsarPauta] = useState(false)
   const [toast, setToast]         = useState<string | null>(null)
   const [geradas, setGeradas]     = useState(0)
 
   const showToast = (msg: string) => {
-    setToast(msg)
-    setTimeout(() => setToast(null), 2600)
+    setToast(msg); setTimeout(() => setToast(null), 2600)
   }
+
+  // Lê tema da URL (vindo do Banco de Pautas)
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const t = new URLSearchParams(window.location.search).get('tema')
+    if (t) { setTopico(decodeURIComponent(t)); setUsarPauta(false) }
+  }, [])
 
   useEffect(() => {
     fetch('/api/pautas')
@@ -59,14 +65,9 @@ export default function LegendaPage() {
 
   const gerarLegenda = async () => {
     const tema = usarPauta ? pautaSel?.titulo : topico
-    if (!tema?.trim()) {
-      showToast("Selecione uma pauta ou digite um tema!")
-      return
-    }
+    if (!tema?.trim()) { showToast("Selecione uma pauta ou digite um tema!"); return }
+    setLoading(true); setLegenda(null)
 
-    setLoading(true)
-    setLegenda(null)
-console.log('tema:', tema, 'topico:', topico, 'usarPauta:', usarPauta)
     const contexto = usarPauta && pautaSel
       ? `Título: ${pautaSel.titulo}\nCategoria: ${pautaSel.categoria}\nNotas: ${pautaSel.nota || "Nenhuma"}\nFonte: ${pautaSel.fonte || "Não informada"}`
       : `Tema: ${topico}`
@@ -78,11 +79,12 @@ console.log('tema:', tema, 'topico:', topico, 'usarPauta:', usarPauta)
         body: JSON.stringify({ tema, contexto, formato, tom, emojis })
       })
       const parsed = await res.json()
+      if (parsed.error) throw new Error(parsed.error)
       setLegenda(parsed)
       setGeradas(g => g + 1)
     } catch (e) {
       console.error(e)
-      showToast("Erro ao gerar legenda. Tente novamente.")
+      showToast("Erro ao gerar legenda: " + String(e))
     }
     setLoading(false)
   }
@@ -90,9 +92,12 @@ console.log('tema:', tema, 'topico:', topico, 'usarPauta:', usarPauta)
   const copiar = () => {
     if (!legenda) return
     navigator.clipboard.writeText(legenda.completa)
-    setCopiado(true)
-    showToast("Legenda copiada!")
+    setCopiado(true); showToast("Legenda copiada!")
     setTimeout(() => setCopiado(false), 2000)
+  }
+
+  const stats = {
+    geradas, pautas: pautas.length, formatos: FORMATOS.length,
   }
 
   return (
@@ -108,63 +113,65 @@ console.log('tema:', tema, 'topico:', topico, 'usarPauta:', usarPauta)
         }
       />
 
-      <div className="p-4 md:p-8 space-y-6">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <StatCard label="Legendas Geradas"   value={geradas}         sub="nesta sessão" icon={Sparkles} accent="green" />
-          <StatCard label="Pautas Disponíveis" value={pautas.length}   sub="no banco"     icon={FileText} accent="blue"  />
-          <StatCard label="Formatos"           value={FORMATOS.length} sub="disponíveis"  icon={Instagram} accent="amber" />
-          <StatCard label="Modelo IA"          value="Sonnet"          sub="Claude 4"     icon={Eye}      accent="green" />
+      <div className="p-4 md:p-8 space-y-4 md:space-y-6">
+        {/* Stats — 2 cols mobile, 3 desktop */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
+          <StatCard label="Geradas"          value={stats.geradas}  sub="nesta sessão" icon={Sparkles} accent="green" />
+          <StatCard label="Pautas"           value={stats.pautas}   sub="no banco"     icon={FileText} accent="blue"  />
+          <StatCard label="Formatos"         value={stats.formatos} sub="disponíveis"  icon={Instagram} accent="amber" />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Painel esquerdo */}
-          <div className="space-y-5">
+        {/* Main layout — 1 col mobile, 2 col desktop */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
 
-            <div className="bg-card border border-border rounded-lg p-5">
-              <div className="text-[10px] font-mono text-text-muted tracking-widest uppercase mb-4">Tema da Legenda</div>
+          {/* ── Painel Esquerdo ── */}
+          <div className="space-y-4">
+
+            {/* Fonte do tema */}
+            <div className="bg-card border border-border rounded-lg p-4 md:p-5">
+              <div className="text-[10px] font-mono text-text-muted tracking-widest uppercase mb-3">Tema da Legenda</div>
               <div className="flex gap-2 mb-4">
-                <button onClick={() => setUsarPauta(true)}
-                  className={cn("flex-1 py-2 rounded-lg text-[12px] font-medium border transition-all",
-                    usarPauta ? "bg-accent-dim border-accent-border text-accent" : "border-border text-text-muted hover:text-text-secondary")}>
-                  Usar Pauta do Banco
-                </button>
                 <button onClick={() => setUsarPauta(false)}
                   className={cn("flex-1 py-2 rounded-lg text-[12px] font-medium border transition-all",
                     !usarPauta ? "bg-accent-dim border-accent-border text-accent" : "border-border text-text-muted hover:text-text-secondary")}>
-                  Digitar Tema Livre
+                  Digitar Tema
+                </button>
+                <button onClick={() => setUsarPauta(true)}
+                  className={cn("flex-1 py-2 rounded-lg text-[12px] font-medium border transition-all",
+                    usarPauta ? "bg-accent-dim border-accent-border text-accent" : "border-border text-text-muted hover:text-text-secondary")}>
+                  Banco de Pautas
                 </button>
               </div>
 
-              {usarPauta ? (
-                <div className="space-y-2">
-                  {pautas.length === 0 ? (
-                    <div className="text-center py-6 text-text-muted text-[12px]">Nenhuma pauta no banco ainda.</div>
-                  ) : (
-                    pautas.slice(0, 6).map(p => (
-                      <button key={p.id} onClick={() => setPautaSel(p)}
-                        className={cn("w-full text-left px-3 py-2.5 rounded-lg border transition-all",
-                          pautaSel?.id === p.id ? "bg-accent-dim border-accent-border" : "border-border hover:border-border-hover")}>
-                        <div className={cn("text-[12px] font-medium leading-snug", pautaSel?.id === p.id ? "text-accent-text" : "text-text-primary")}>
-                          {p.titulo}
-                        </div>
-                        <div className="text-[10px] text-text-muted mt-0.5">{p.categoria}</div>
-                      </button>
-                    ))
-                  )}
-                </div>
-              ) : (
+              {!usarPauta ? (
                 <textarea
                   value={topico}
                   onChange={e => setTopico(e.target.value)}
-                  placeholder="Ex: Resistência insulínica em pessoas magras e como identificar..."
-                  rows={4}
+                  placeholder="Ex: Resistência insulínica em pessoas magras..."
+                  rows={3}
                   className="w-full bg-background border border-border rounded-lg px-4 py-3 text-[13px] text-text-primary placeholder:text-text-muted outline-none focus:border-accent/40 resize-none"
                 />
+              ) : (
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {pautas.length === 0 ? (
+                    <div className="text-center py-4 text-text-muted text-[12px]">Nenhuma pauta no banco ainda.</div>
+                  ) : pautas.map(p => (
+                    <button key={p.id} onClick={() => setPautaSel(p)}
+                      className={cn("w-full text-left px-3 py-2.5 rounded-lg border transition-all",
+                        pautaSel?.id === p.id ? "bg-accent-dim border-accent-border" : "border-border hover:border-border-hover")}>
+                      <div className={cn("text-[12px] font-medium leading-snug", pautaSel?.id === p.id ? "text-accent-text" : "text-text-primary")}>
+                        {p.titulo}
+                      </div>
+                      <div className="text-[10px] text-text-muted mt-0.5">{p.categoria}</div>
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
 
-            <div className="bg-card border border-border rounded-lg p-5">
-              <div className="text-[10px] font-mono text-text-muted tracking-widest uppercase mb-4">Formato do Post</div>
+            {/* Formato */}
+            <div className="bg-card border border-border rounded-lg p-4 md:p-5">
+              <div className="text-[10px] font-mono text-text-muted tracking-widest uppercase mb-3">Formato do Post</div>
               <div className="grid grid-cols-2 gap-2">
                 {FORMATOS.map(f => (
                   <button key={f.id} onClick={() => setFormato(f.id)}
@@ -178,7 +185,8 @@ console.log('tema:', tema, 'topico:', topico, 'usarPauta:', usarPauta)
               </div>
             </div>
 
-            <div className="bg-card border border-border rounded-lg p-5 space-y-4">
+            {/* Tom + emojis */}
+            <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-4">
               <div>
                 <div className="text-[10px] font-mono text-text-muted tracking-widest uppercase mb-3">Tom de Voz</div>
                 <div className="flex flex-wrap gap-2">
@@ -208,51 +216,47 @@ console.log('tema:', tema, 'topico:', topico, 'usarPauta:', usarPauta)
             </button>
           </div>
 
-          {/* Painel direito */}
-          <div className="space-y-4">
+          {/* ── Painel Direito — Resultado ── */}
+          <div className="space-y-3">
             {!legenda && !loading && (
-              <div className="bg-card border border-border rounded-lg p-8 flex flex-col items-center justify-center h-full min-h-96 text-center gap-4">
-                <div className="w-16 h-16 rounded-2xl bg-accent-dim border border-accent-border flex items-center justify-center">
-                  <Sparkles className="w-8 h-8 text-accent" />
+              <div className="bg-card border border-border rounded-lg p-8 flex flex-col items-center justify-center min-h-64 md:min-h-96 text-center gap-4">
+                <div className="w-14 h-14 rounded-2xl bg-accent-dim border border-accent-border flex items-center justify-center">
+                  <Sparkles className="w-7 h-7 text-accent" />
                 </div>
                 <div>
                   <div className="text-[15px] font-semibold text-text-primary mb-2">Pronto para criar</div>
                   <div className="text-[12px] text-text-secondary">
-                    Selecione uma pauta ou digite um tema,<br />escolha o formato e clique em Gerar Legenda.
+                    Digite um tema ou selecione uma pauta,<br />escolha o formato e clique em Gerar Legenda.
                   </div>
                 </div>
               </div>
             )}
 
             {loading && (
-              <div className="bg-card border border-border rounded-lg p-8 flex flex-col items-center justify-center h-full min-h-96 gap-4">
+              <div className="bg-card border border-border rounded-lg p-8 flex flex-col items-center justify-center min-h-64 md:min-h-96 gap-4">
                 <RefreshCw className="w-10 h-10 text-accent animate-spin" />
-                <div className="text-[12px] font-mono text-text-muted tracking-widest">GERANDO LEGENDA COM IA...</div>
+                <div className="text-[12px] font-mono text-text-muted tracking-widest">GERANDO LEGENDA...</div>
               </div>
             )}
 
             {legenda && !loading && (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div className="bg-card border border-border rounded-lg p-4">
                   <div className="text-[9px] font-mono text-accent tracking-widest uppercase mb-2">GANCHO</div>
                   <p className="text-[13px] text-text-primary font-medium leading-relaxed">{legenda.gancho}</p>
                 </div>
-
                 <div className="bg-card border border-border rounded-lg p-4">
                   <div className="text-[9px] font-mono text-text-muted tracking-widest uppercase mb-2">DESENVOLVIMENTO</div>
                   <p className="text-[12px] text-text-secondary leading-relaxed whitespace-pre-line">{legenda.desenvolvimento}</p>
                 </div>
-
                 <div className="bg-card border border-border rounded-lg p-4">
                   <div className="text-[9px] font-mono text-amber-400 tracking-widest uppercase mb-2">CTA</div>
                   <p className="text-[13px] text-text-primary font-medium leading-relaxed">{legenda.cta}</p>
                 </div>
-
                 <div className="bg-card border border-border rounded-lg p-4">
                   <div className="text-[9px] font-mono text-text-muted tracking-widest uppercase mb-2">HASHTAGS</div>
                   <p className="text-[11px] text-text-secondary leading-relaxed">{legenda.hashtags}</p>
                 </div>
-
                 <div className="bg-card border border-accent-border rounded-lg p-4">
                   <div className="flex items-center justify-between mb-3">
                     <div className="text-[9px] font-mono text-accent tracking-widest uppercase">LEGENDA COMPLETA</div>
@@ -264,7 +268,6 @@ console.log('tema:', tema, 'topico:', topico, 'usarPauta:', usarPauta)
                   </div>
                   <p className="text-[12px] text-text-secondary leading-relaxed whitespace-pre-line">{legenda.completa}</p>
                 </div>
-
                 <button onClick={gerarLegenda}
                   className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg border border-border text-text-muted text-[12px] hover:text-text-secondary hover:border-border-hover transition-all">
                   <RefreshCw className="w-3.5 h-3.5" /> Gerar outra versão

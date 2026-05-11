@@ -143,7 +143,7 @@ export default function PautasPage() {
         }
       />
       <div className="p-8 space-y-6">
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <StatCard label="Total de Pautas" value={stats.total}      sub="no banco"          icon={FileText} accent="green" />
           <StatCard label="Prioridade Alta" value={stats.alta}       sub="requerem atenção"  icon={Star}     accent="red"   />
           <StatCard label="Em Produção"     value={stats.producao}   sub="sendo trabalhadas" icon={Pencil}   accent="blue"  />
@@ -156,7 +156,7 @@ export default function PautasPage() {
             <input value={newTitulo} onChange={e => setNewTitulo(e.target.value)}
               placeholder="Título da pauta..."
               className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-[13px] text-text-primary placeholder:text-text-muted outline-none focus:border-accent/40" />
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <select value={newCat} onChange={e => setNewCat(e.target.value)}
                 className="bg-background border border-border rounded-lg px-3 py-2 text-[12px] text-text-primary outline-none focus:border-accent/40">
                 {CATEGORIAS.filter(c => c !== "Todas").map(c => <option key={c}>{c}</option>)}

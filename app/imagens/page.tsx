@@ -686,8 +686,9 @@ export default function ImagensPage() {
   const fotoRef = useRef<HTMLInputElement>(null)
   const logoRef = useRef<HTMLInputElement>(null)
 
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
-  const PREVIEW_W = isMobile ? Math.min(window.innerWidth - 32, 380) : 400
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => { setIsMobile(window.innerWidth < 768) }, [])
+  const PREVIEW_W = isMobile ? Math.min((typeof window !== 'undefined' ? window.innerWidth : 420) - 32, 380) : 400
 
   // Atualiza offset de um elemento num slide específico
   const updateDragOffset = useCallback((slideIdx: number, key: string, x: number, y: number) => {
@@ -1041,8 +1042,8 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
   const inputSty: React.CSSProperties = { background: sideBg, border: `1px solid ${border}`, color: '#e8eaf2', borderRadius: 7, padding: '9px 13px', fontSize: 13, width: '100%', fontFamily: "'Inter', system-ui, sans-serif", outline: 'none' }
 
   return (
-    <div className="min-h-screen bg-background text-text-primary" style={{ fontFamily: "'Montserrat', sans-serif" }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Poppins:wght@400;600;700;800;900&family=Cormorant+Garamond:ital,wght@0,700;1,700&family=Raleway:wght@400;600;700;800;900&family=Libre+Baskerville:ital,wght@0,700;1,400&family=DM+Sans:opsz,wght@9..40,400;9..40,600;9..40,700;9..40,800;9..40,900&family=DM+Serif+Display:ital@0;1&display=swap');`}</style>
+    <div className="min-h-screen bg-background text-text-primary" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Inter:wght@400;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Poppins:wght@400;600;700;800;900&family=Cormorant+Garamond:ital,wght@0,700;1,700&family=Raleway:wght@400;600;700;800;900&family=Libre+Baskerville:ital,wght@0,700;1,400&family=DM+Sans:opsz,wght@9..40,400;9..40,600;9..40,700;9..40,900&family=DM+Serif+Display:ital@0;1&display=swap');`}</style>
 
       {/* ── Overlay de Loading durante captura ── */}
       {isCapturing && (
@@ -1069,7 +1070,7 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
           />
           <button
             onClick={() => setSaveModalUrl(null)}
-            style={{ marginTop: 28, padding: '12px 40px', background: '#00c07f', color: '#08090e', border: 'none', borderRadius: 10, fontWeight: 900, fontSize: 14, cursor: 'pointer', fontFamily: "'Montserrat', sans-serif" }}
+            style={{ marginTop: 28, padding: '12px 40px', background: '#00c07f', color: '#08090e', border: 'none', borderRadius: 10, fontWeight: 900, fontSize: 14, cursor: 'pointer', fontFamily: "'Inter', system-ui, sans-serif" }}
           >
             ✕ Fechar
           </button>
@@ -1149,7 +1150,7 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {(Object.entries(ESTRUTURAS) as [EstruturaId, typeof ESTRUTURAS[EstruturaId]][]).map(([id, e]) => (
                 <button key={id} onClick={() => setEstrutura(id)}
-                  style={{ padding: '9px 14px', borderRadius: 8, border: 'none', cursor: 'pointer', textAlign: 'left', background: estrutura === id ? '#00c07f' : sideBg, color: estrutura === id ? '#08090e' : labelClr, fontFamily: "'Montserrat', sans-serif", display: 'flex', alignItems: 'center', gap: 10 }}>
+                  style={{ padding: '9px 14px', borderRadius: 8, border: 'none', cursor: 'pointer', textAlign: 'left', background: estrutura === id ? '#00c07f' : sideBg, color: estrutura === id ? '#08090e' : labelClr, fontFamily: "'Inter', system-ui, sans-serif", display: 'flex', alignItems: 'center', gap: 10 }}>
                   <span style={{ fontSize: 14 }}>{e.emoji}</span>
                   <div>
                     <div style={{ fontSize: 11, fontWeight: 700 }}>{e.label}</div>
@@ -1166,7 +1167,7 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
               {(Object.entries(TIPOGRAFIAS) as [TipografiaId, typeof TIPOGRAFIAS[TipografiaId]][]).map(([id, t]) => (
                 <button key={id} onClick={() => setTipografia(id)}
-                  style={{ padding: '9px 12px', borderRadius: 8, border: `1px solid ${tipografia === id ? '#00c07f' : border}`, cursor: 'pointer', textAlign: 'left', background: tipografia === id ? 'rgba(0,192,127,0.12)' : sideBg, fontFamily: "'Montserrat', sans-serif" }}>
+                  style={{ padding: '9px 12px', borderRadius: 8, border: `1px solid ${tipografia === id ? '#00c07f' : border}`, cursor: 'pointer', textAlign: 'left', background: tipografia === id ? 'rgba(0,192,127,0.12)' : sideBg, fontFamily: "'Inter', system-ui, sans-serif" }}>
                   <div style={{ fontSize: 11, fontWeight: 700, color: tipografia === id ? '#00e893' : labelClr }}>{t.label}</div>
                   <div style={{ fontSize: 9, color: tipografia === id ? '#7c85a0' : '#474f66', marginTop: 2, letterSpacing: 1 }}>Aa Bb Cc</div>
                 </button>
@@ -1216,7 +1217,7 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
               </div>
             ) : (
               <button onClick={() => logoRef.current?.click()}
-                style={{ width: '100%', padding: '12px', borderRadius: 8, border: `1px dashed ${border}`, background: 'none', color: labelClr, fontSize: 12, cursor: 'pointer', fontFamily: "'Montserrat', sans-serif" }}>
+                style={{ width: '100%', padding: '12px', borderRadius: 8, border: `1px dashed ${border}`, background: 'none', color: labelClr, fontSize: 12, cursor: 'pointer', fontFamily: "'Inter', system-ui, sans-serif" }}>
                 + Upload Logo (PNG transparente)
               </button>
             )}
@@ -1227,7 +1228,7 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
           <div>
             <label style={{ fontSize: 11, fontWeight: 700, color: labelClr, letterSpacing: 3, textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>Fotos</label>
             <button onClick={() => fotoRef.current?.click()}
-              style={{ width: '100%', padding: '12px', borderRadius: 8, border: `1px dashed ${border}`, background: 'none', color: labelClr, fontSize: 12, cursor: 'pointer', fontFamily: "'Montserrat', sans-serif" }}>
+              style={{ width: '100%', padding: '12px', borderRadius: 8, border: `1px dashed ${border}`, background: 'none', color: labelClr, fontSize: 12, cursor: 'pointer', fontFamily: "'Inter', system-ui, sans-serif" }}>
               + Upload de Fotos (múltiplas)
             </button>
             <input ref={fotoRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={handleFotoUpload} />
@@ -1236,7 +1237,7 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
             <button
               onClick={gerarImagemIA}
               disabled={isGenAI || !tema.trim()}
-              style={{ width:'100%', marginTop:8, padding:'12px', borderRadius:8, border:`1px solid ${isGenAI || !tema.trim() ? '#1c1d2a' : 'rgba(0,192,127,0.3)'}`, background: isGenAI || !tema.trim() ? 'none' : 'rgba(0,192,127,0.08)', color: isGenAI || !tema.trim() ? labelClr : '#00e893', fontSize:12, fontWeight:700, cursor: isGenAI || !tema.trim() ? 'not-allowed' : 'pointer', fontFamily:"'Montserrat',sans-serif", display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
+              style={{ width:'100%', marginTop:8, padding:'12px', borderRadius:8, border:`1px solid ${isGenAI || !tema.trim() ? '#1c1d2a' : 'rgba(0,192,127,0.3)'}`, background: isGenAI || !tema.trim() ? 'none' : 'rgba(0,192,127,0.08)', color: isGenAI || !tema.trim() ? labelClr : '#00e893', fontSize:12, fontWeight:700, cursor: isGenAI || !tema.trim() ? 'not-allowed' : 'pointer', fontFamily:"'Inter', system-ui, sans-serif", display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
               {isGenAI ? (
                 <>
                   <span style={{ display:'inline-block', width:14, height:14, border:'2px solid rgba(200,168,76,0.3)', borderTop:`2px solid ${C.d2}`, borderRadius:'50%', animation:'spin 0.8s linear infinite' }} />
@@ -1277,7 +1278,7 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
                   const icon = s.tipo === 'capa' ? '📌' : s.tipo === 'cta' ? '🎯' : li === 1 ? '💬' : li === 2 ? '⊞' : li === 3 ? '📊' : '📝'
                   return (
                     <button key={s.id} onClick={() => setCurrentSlide(i)}
-                      style={{ padding: '10px 12px', borderRadius: 8, border: 'none', cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8, background: currentSlide === i ? '#00c07f' : sideBg, color: currentSlide === i ? '#08090e' : labelClr, fontFamily: "'Montserrat', sans-serif", fontSize: 12 }}>
+                      style={{ padding: '10px 12px', borderRadius: 8, border: 'none', cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8, background: currentSlide === i ? '#00c07f' : sideBg, color: currentSlide === i ? '#08090e' : labelClr, fontFamily: "'Inter', system-ui, sans-serif", fontSize: 12 }}>
                       <span style={{ flexShrink: 0 }}>{icon}</span>
                       <span style={{ fontWeight: 700, flexShrink: 0 }}>{s.tipo === 'capa' ? 'Capa' : s.tipo === 'cta' ? 'CTA' : layoutNames[li]}</span>
                       <span style={{ opacity: 0.6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
@@ -1332,7 +1333,7 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
                 padding: '12px 20px', border: `1px solid ${dragMode ? '#00c07f' : border}`,
                 borderRadius: 10, background: dragMode ? 'rgba(0,192,127,0.12)' : 'none',
                 color: dragMode ? '#00e893' : labelClr, fontWeight: 700, fontSize: 13,
-                cursor: 'pointer', fontFamily: "'Montserrat', sans-serif", display: 'flex', alignItems: 'center', gap: 8,
+                cursor: 'pointer', fontFamily: "'Inter', system-ui, sans-serif", display: 'flex', alignItems: 'center', gap: 8,
               }}
             >
               ✥ {dragMode ? 'Editando posições' : 'Mover textos'}
@@ -1341,7 +1342,7 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
             {/* Reset posições */}
             {Object.keys(textOffsets).length > 0 && (
               <button onClick={resetOffsets}
-                style={{ padding: '12px 16px', border: `1px solid ${border}`, borderRadius: 10, background: 'none', color: labelClr, fontWeight: 700, fontSize: 12, cursor: 'pointer', fontFamily: "'Montserrat', sans-serif" }}>
+                style={{ padding: '12px 16px', border: `1px solid ${border}`, borderRadius: 10, background: 'none', color: labelClr, fontWeight: 700, fontSize: 12, cursor: 'pointer', fontFamily: "'Inter', system-ui, sans-serif" }}>
                 ↺ Reset posições
               </button>
             )}
@@ -1464,7 +1465,7 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
                 <label style={{ fontSize: 11, fontWeight: 700, color: '#00e893', letterSpacing: 3, textTransform: 'uppercase', display: 'block', marginBottom: 10 }}>✦ Regenerar com IA</label>
                 <textarea value={editInstruction} onChange={e => setEditInstruction(e.target.value)} rows={3} placeholder="Ex: Use dados do NEJM 2023, foque em mulheres..." style={{ ...inputSty, resize: 'none', display: 'block', marginBottom: 10 }} />
                 <button onClick={() => regenerateSlide(currentSlide)} disabled={isEditGenerating || !editInstruction.trim()}
-                  style={{ width: '100%', padding: '11px', borderRadius: 8, border: `1px solid rgba(0,192,127,0.3)`, background: 'none', color: '#00e893', fontWeight: 700, fontSize: 13, cursor: editInstruction.trim() ? 'pointer' : 'not-allowed', opacity: editInstruction.trim() ? 1 : 0.4, fontFamily: "'Montserrat', sans-serif" }}>
+                  style={{ width: '100%', padding: '11px', borderRadius: 8, border: `1px solid rgba(0,192,127,0.3)`, background: 'none', color: '#00e893', fontWeight: 700, fontSize: 13, cursor: editInstruction.trim() ? 'pointer' : 'not-allowed', opacity: editInstruction.trim() ? 1 : 0.4, fontFamily: "'Inter', system-ui, sans-serif" }}>
                   {isEditGenerating ? '⟳ Regenerando...' : '⚡ Regenerar Slide'}
                 </button>
               </div>

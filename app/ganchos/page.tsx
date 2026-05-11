@@ -1,6 +1,6 @@
 // Salvar em: app/ganchos/page.tsx
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { PautasModal } from '@/components/PautasModal'
 
 const D = {
@@ -9,7 +9,7 @@ const D = {
   accent:'#00c07f',adim:'rgba(0,192,127,0.12)',aborder:'rgba(0,192,127,0.3)',atext:'#00e893',
   font:"'Inter', system-ui, sans-serif",mono:"'JetBrains Mono', monospace",
 }
-const inputSty = { background:D.card, border:`1px solid ${D.border}`, color:D.text, borderRadius:8, padding:'10px 14px', fontSize:13, width:'100%', fontFamily:"'Montserrat',sans-serif", outline:'none' } as React.CSSProperties
+const inputSty = { background:D.card, border:`1px solid ${D.border}`, color:D.text, borderRadius:8, padding:'10px 14px', fontSize:13, width:'100%', fontFamily:"'Inter'", outline:'none' } as React.CSSProperties
 
 const TIPOS = [
   { v:'dado',      l:'Dado Chocante',    e:'📊', cor:'rgba(96,165,250,0.85)',  ex:'95% das pessoas que fazem dieta...' },
@@ -28,7 +28,7 @@ function CopyBtn({ text }: { text:string }) {
   const [ok, setOk] = useState(false)
   return (
     <button onClick={()=>{ navigator.clipboard.writeText(text); setOk(true); setTimeout(()=>setOk(false),1600) }}
-      style={{ padding:'6px 12px', borderRadius:6, border:`1px solid rgba(200,168,76,0.3)`, background:ok?'rgba(200,168,76,0.12)':'none', color:ok?D.accent:D.muted, fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:"'Montserrat',sans-serif", flexShrink:0 }}>
+      style={{ padding:'6px 12px', borderRadius:6, border:`1px solid rgba(200,168,76,0.3)`, background:ok?'rgba(200,168,76,0.12)':'none', color:ok?D.accent:D.muted, fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:"'Inter'", flexShrink:0 }}>
       {ok?'✓':'⎘'}
     </button>
   )
@@ -55,7 +55,8 @@ export default function GanchosPage() {
   const [favoritos,  setFavoritos]  = useState<Gancho[]>([])
   const [showPautas, setShowPautas] = useState(false)
   const [aba,        setAba]        = useState<'gerar'|'favoritos'>('gerar')
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
+  const [isMob, setIsMob] = useState(false)
+  useEffect(() => { setIsMob(window.innerWidth < 768) }, [])
 
   const toggleTipo = (v:string) => setTipos(prev => prev.includes(v) ? prev.filter(t=>t!==v) : [...prev,v])
   const toggleFav  = (g:Gancho) => setFavoritos(prev => prev.some(f=>f.texto===g.texto) ? prev.filter(f=>f.texto!==g.texto) : [g,...prev])
@@ -94,7 +95,7 @@ export default function GanchosPage() {
 
   return (
     <div className="min-h-screen" style={{ fontFamily:D.font, color:D.text }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;800;900&family=Playfair+Display:ital,wght@1,700&display=swap'); *{box-sizing:border-box} @keyframes spin{to{transform:rotate(360deg)}}`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800;900&family=Playfair+Display:ital,wght@1,700&display=swap'); *{box-sizing:border-box} @keyframes spin{to{transform:rotate(360deg)}}`}</style>
       {showPautas && <PautasModal onSelect={(t)=>{setTema(t);setShowPautas(false)}} onClose={()=>setShowPautas(false)} />}
 
       {/* Header */}
@@ -104,7 +105,7 @@ export default function GanchosPage() {
           <p style={{ fontSize:12, color:D.muted, margin:'4px 0 0' }}>Aberturas que param o scroll em 3 segundos</p>
         </div>
         <button onClick={gerar} disabled={loading||!tema.trim()||!tipos.length}
-          style={{ background:tema.trim()&&tipos.length?D.accent:D.border, color:tema.trim()&&tipos.length?D.bg:D.muted, padding:'12px 28px', borderRadius:10, border:'none', fontWeight:900, fontSize:13, cursor:(tema.trim()&&tipos.length)?'pointer':'not-allowed', fontFamily:"'Montserrat',sans-serif" }}>
+          style={{ background:tema.trim()&&tipos.length?D.accent:D.border, color:tema.trim()&&tipos.length?D.bg:D.muted, padding:'12px 28px', borderRadius:10, border:'none', fontWeight:900, fontSize:13, cursor:(tema.trim()&&tipos.length)?'pointer':'not-allowed', fontFamily:"'Inter'" }}>
           {loading ? '⟳ Gerando...' : '✦ Gerar Ganchos'}
         </button>
       </div>
@@ -115,7 +116,7 @@ export default function GanchosPage() {
           <div>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
               <label style={{ fontSize:11, fontWeight:700, color:D.muted, letterSpacing:3, textTransform:'uppercase' as const }}>Tema</label>
-              <button onClick={()=>setShowPautas(true)} style={{ fontSize:10, fontWeight:700, color:D.accent, background:'rgba(200,168,76,0.08)', border:'1px solid rgba(200,168,76,0.25)', borderRadius:6, padding:'4px 10px', cursor:'pointer', fontFamily:"'Montserrat',sans-serif" }}>
+              <button onClick={()=>setShowPautas(true)} style={{ fontSize:10, fontWeight:700, color:D.accent, background:'rgba(200,168,76,0.08)', border:'1px solid rgba(200,168,76,0.25)', borderRadius:6, padding:'4px 10px', cursor:'pointer', fontFamily:"'Inter'" }}>
                 📋 Banco de Pautas
               </button>
             </div>
@@ -127,7 +128,7 @@ export default function GanchosPage() {
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:6 }}>
               {FORMATOS.map(f => (
                 <button key={f} onClick={()=>setFormato(f)}
-                  style={{ padding:'9px', borderRadius:8, border:'none', cursor:'pointer', fontWeight:700, fontSize:12, background:formato===f?D.accent:D.card, color:formato===f?D.bg:D.muted, fontFamily:"'Montserrat',sans-serif" }}>
+                  style={{ padding:'9px', borderRadius:8, border:'none', cursor:'pointer', fontWeight:700, fontSize:12, background:formato===f?D.accent:D.card, color:formato===f?D.bg:D.muted, fontFamily:"'Inter'" }}>
                   {f}
                 </button>
               ))}
@@ -143,7 +144,7 @@ export default function GanchosPage() {
                 const ativo = tipos.includes(t.v)
                 return (
                   <button key={t.v} onClick={()=>toggleTipo(t.v)}
-                    style={{ padding:'10px 14px', borderRadius:8, border:`1px solid ${ativo?t.cor:'transparent'}`, cursor:'pointer', textAlign:'left', display:'flex', alignItems:'center', gap:10, background:ativo?'rgba(0,0,0,0.3)':D.card, fontFamily:"'Montserrat',sans-serif" }}>
+                    style={{ padding:'10px 14px', borderRadius:8, border:`1px solid ${ativo?t.cor:'transparent'}`, cursor:'pointer', textAlign:'left', display:'flex', alignItems:'center', gap:10, background:ativo?'rgba(0,0,0,0.3)':D.card, fontFamily:"'Inter'" }}>
                     <span style={{ fontSize:16 }}>{t.e}</span>
                     <div style={{ flex:1 }}>
                       <div style={{ fontWeight:700, fontSize:12, color:ativo?t.cor:D.muted }}>{t.l}</div>
@@ -163,7 +164,7 @@ export default function GanchosPage() {
           <div style={{ display:'flex', gap:4, marginBottom:24, borderBottom:`1px solid ${D.border}`, paddingBottom:0 }}>
             {(['gerar','favoritos'] as const).map(tab => (
               <button key={tab} onClick={()=>setAba(tab)}
-                style={{ padding:'8px 20px', border:'none', borderBottom:aba===tab?`2px solid ${D.accent}`:'2px solid transparent', background:'none', color:aba===tab?D.accent:D.muted, fontWeight:700, fontSize:12, cursor:'pointer', textTransform:'uppercase' as const, letterSpacing:2, fontFamily:"'Montserrat',sans-serif", marginBottom:-1 }}>
+                style={{ padding:'8px 20px', border:'none', borderBottom:aba===tab?`2px solid ${D.accent}`:'2px solid transparent', background:'none', color:aba===tab?D.accent:D.muted, fontWeight:700, fontSize:12, cursor:'pointer', textTransform:'uppercase' as const, letterSpacing:2, fontFamily:"'Inter'", marginBottom:-1 }}>
                 {tab==='gerar' ? '⚡ Ganchos' : `★ Favoritos (${favoritos.length})`}
               </button>
             ))}
@@ -194,7 +195,7 @@ export default function GanchosPage() {
                         <div style={{ display:'flex', flexDirection:'column', gap:6, flexShrink:0 }}>
                           <CopyBtn text={g.texto} />
                           <button onClick={()=>toggleFav(g)}
-                            style={{ padding:'6px 12px', borderRadius:6, border:`1px solid ${isFav(g)?'rgba(200,168,76,0.5)':D.border}`, background:isFav(g)?'rgba(200,168,76,0.12)':'none', color:isFav(g)?D.accent:D.muted, fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:"'Montserrat',sans-serif" }}>
+                            style={{ padding:'6px 12px', borderRadius:6, border:`1px solid ${isFav(g)?'rgba(200,168,76,0.5)':D.border}`, background:isFav(g)?'rgba(200,168,76,0.12)':'none', color:isFav(g)?D.accent:D.muted, fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:"'Inter'" }}>
                             {isFav(g)?'★':'☆'}
                           </button>
                         </div>
@@ -230,7 +231,7 @@ export default function GanchosPage() {
                         <div style={{ display:'flex', gap:6, flexShrink:0 }}>
                           <CopyBtn text={g.texto} />
                           <button onClick={()=>toggleFav(g)}
-                            style={{ padding:'6px 12px', borderRadius:6, border:`1px solid rgba(200,168,76,0.5)`, background:'rgba(200,168,76,0.12)', color:D.accent, fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:"'Montserrat',sans-serif" }}>
+                            style={{ padding:'6px 12px', borderRadius:6, border:`1px solid rgba(200,168,76,0.5)`, background:'rgba(200,168,76,0.12)', color:D.accent, fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:"'Inter'" }}>
                             ★
                           </button>
                         </div>

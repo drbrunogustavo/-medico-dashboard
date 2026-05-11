@@ -37,11 +37,11 @@ const FREQ_STYLES: Record<string,string> = {
 
 // ── Análise Modal ──────────────────────────────────────────────────────────────
 function ScoreBar({ label, value }: { label:string; value:number }) {
-  const color = value >= 7 ? '#34d399' : value >= 5 ? '#C9A84C' : '#f87171'
+  const color = value >= 7 ? '#34d399' : value >= 5 ? '#00c07f' : '#f87171'
   return (
     <div>
       <div style={{ display:'flex', justifyContent:'space-between', marginBottom:5 }}>
-        <span style={{ fontSize:10, fontWeight:700, color:'#6a5040', letterSpacing:2, textTransform:'uppercase' as const }}>{label}</span>
+        <span style={{ fontSize:10, fontWeight:700, color:'#474f66', letterSpacing:2, textTransform:'uppercase' as const }}>{label}</span>
         <span style={{ fontSize:12, fontWeight:900, color }}>{value}/10</span>
       </div>
       <div style={{ height:5, borderRadius:3, background:'rgba(255,255,255,0.06)', overflow:'hidden' }}>
@@ -51,7 +51,7 @@ function ScoreBar({ label, value }: { label:string; value:number }) {
   )
 }
 
-function ATag({ text, color='#C9A84C' }: { text:string; color?:string }) {
+function ATag({ text, color='#00c07f' }: { text:string; color?:string }) {
   return (
     <span style={{ fontSize:10, fontWeight:700, padding:'3px 10px', borderRadius:99, color, background:'rgba(0,0,0,0.4)', border:`1px solid ${color}`, display:'inline-block', margin:'2px 3px 2px 0' }}>
       {text}
@@ -61,8 +61,8 @@ function ATag({ text, color='#C9A84C' }: { text:string; color?:string }) {
 
 function ASection({ title, children }: { title:string; children:React.ReactNode }) {
   return (
-    <div style={{ background:'#1c0f06', border:'1px solid #2a1a0a', borderRadius:10, padding:'16px 20px', marginBottom:12 }}>
-      <div style={{ fontSize:9, fontWeight:700, color:'#6a5040', letterSpacing:3, textTransform:'uppercase' as const, marginBottom:12 }}>{title}</div>
+    <div style={{ background:'#13141d', border:'1px solid #2a1a0a', borderRadius:10, padding:'16px 20px', marginBottom:12 }}>
+      <div style={{ fontSize:9, fontWeight:700, color:'#474f66', letterSpacing:3, textTransform:'uppercase' as const, marginBottom:12 }}>{title}</div>
       {children}
     </div>
   )
@@ -135,23 +135,23 @@ function AnaliseModal({ referencia, onClose }: { referencia: Referencia; onClose
   return (
     <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.88)', zIndex:9999, display:'flex', alignItems:'center', justifyContent:'center', padding:20 }}
       onClick={onClose}>
-      <div style={{ background:'#0e0804', border:'1px solid #2a1a0a', borderRadius:16, width:'100%', maxWidth:680, maxHeight:'88vh', display:'flex', flexDirection:'column', overflow:'hidden', boxShadow:'0 32px 80px rgba(0,0,0,0.9)' }}
+      <div style={{ background:'#08090e', border:'1px solid #2a1a0a', borderRadius:16, width:'100%', maxWidth:680, maxHeight:'88vh', display:'flex', flexDirection:'column', overflow:'hidden', boxShadow:'0 32px 80px rgba(0,0,0,0.9)' }}
         onClick={e=>e.stopPropagation()}>
 
         {/* Header */}
         <div style={{ padding:'18px 24px', borderBottom:'1px solid #2a1a0a', display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 }}>
           <div>
-            <div style={{ color:'#6a5040', fontSize:10, fontWeight:700, letterSpacing:3, textTransform:'uppercase' as const, marginBottom:4 }}>Análise Estratégica</div>
-            <div style={{ color:'#C9A84C', fontSize:17, fontWeight:900 }}>{referencia.instagram}</div>
+            <div style={{ color:'#474f66', fontSize:10, fontWeight:700, letterSpacing:3, textTransform:'uppercase' as const, marginBottom:4 }}>Análise Estratégica</div>
+            <div style={{ color:'#00c07f', fontSize:17, fontWeight:900 }}>{referencia.instagram}</div>
             <div style={{ color:'rgba(245,240,235,0.38)', fontSize:11, marginTop:2 }}>{referencia.nome} · {referencia.especialidade}</div>
           </div>
           <div style={{ display:'flex', gap:8, alignItems:'center' }}>
             {resultado && (
-              <button onClick={copy} style={{ padding:'7px 14px', borderRadius:8, border:'1px solid rgba(200,168,76,0.3)', background:copied?'rgba(200,168,76,0.12)':'none', color:copied?'#C9A84C':'#6a5040', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:"'Montserrat',sans-serif" }}>
+              <button onClick={copy} style={{ padding:'7px 14px', borderRadius:8, border:'1px solid rgba(200,168,76,0.3)', background:copied?'rgba(200,168,76,0.12)':'none', color:copied?'#00c07f':'#474f66', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:"'Inter',sans-serif" }}>
                 {copied?'✓ Copiado':'⎘ Exportar'}
               </button>
             )}
-            <button onClick={onClose} style={{ background:'none', border:'none', color:'#6a5040', fontSize:22, cursor:'pointer', padding:'4px 8px', lineHeight:1 }}>✕</button>
+            <button onClick={onClose} style={{ background:'none', border:'none', color:'#474f66', fontSize:22, cursor:'pointer', padding:'4px 8px', lineHeight:1 }}>✕</button>
           </div>
         </div>
 
@@ -161,7 +161,7 @@ function AnaliseModal({ referencia, onClose }: { referencia: Referencia; onClose
             <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:300, gap:16 }}>
               <div style={{ width:40, height:40, border:'3px solid rgba(200,168,76,0.2)', borderTop:'3px solid #C9A84C', borderRadius:'50%', animation:'spin 0.8s linear infinite' }} />
               <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-              <div style={{ color:'#C9A84C', fontSize:12, fontWeight:700, letterSpacing:2 }}>ANALISANDO {referencia.instagram.toUpperCase()}...</div>
+              <div style={{ color:'#00c07f', fontSize:12, fontWeight:700, letterSpacing:2 }}>ANALISANDO {referencia.instagram.toUpperCase()}...</div>
             </div>
           )}
           {erro && <div style={{ padding:'14px 18px', borderRadius:8, background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.3)', color:'#f87171', fontSize:13 }}>{erro}</div>}
@@ -186,12 +186,12 @@ function AnaliseModal({ referencia, onClose }: { referencia: Referencia; onClose
                     {l:'Frequência',     v:resultado.perfil.frequencia},
                   ].map(i=>(
                     <div key={i.l} style={{ padding:'8px 12px', background:'rgba(0,0,0,0.3)', borderRadius:7, border:'1px solid #2a1a0a' }}>
-                      <div style={{ fontSize:8, fontWeight:700, color:'#6a5040', letterSpacing:3, textTransform:'uppercase' as const, marginBottom:3 }}>{i.l}</div>
+                      <div style={{ fontSize:8, fontWeight:700, color:'#474f66', letterSpacing:3, textTransform:'uppercase' as const, marginBottom:3 }}>{i.l}</div>
                       <div style={{ color:'#F5F0EB', fontSize:11, lineHeight:1.4 }}>{i.v}</div>
                     </div>
                   ))}
                   <div style={{ padding:'8px 12px', background:'rgba(0,0,0,0.3)', borderRadius:7, border:'1px solid #2a1a0a' }}>
-                    <div style={{ fontSize:8, fontWeight:700, color:'#6a5040', letterSpacing:3, textTransform:'uppercase' as const, marginBottom:5 }}>Formatos</div>
+                    <div style={{ fontSize:8, fontWeight:700, color:'#474f66', letterSpacing:3, textTransform:'uppercase' as const, marginBottom:5 }}>Formatos</div>
                     <div>{resultado.perfil.formatos.map(f=><ATag key={f} text={f} color="#b8976a" />)}</div>
                   </div>
                 </div>
@@ -203,7 +203,7 @@ function AnaliseModal({ referencia, onClose }: { referencia: Referencia; onClose
                   {resultado.temas.principal}
                 </div>
                 <div style={{ marginBottom:8 }}>
-                  <div style={{ fontSize:9, fontWeight:700, color:'#6a5040', letterSpacing:3, textTransform:'uppercase' as const, marginBottom:6 }}>Secundários</div>
+                  <div style={{ fontSize:9, fontWeight:700, color:'#474f66', letterSpacing:3, textTransform:'uppercase' as const, marginBottom:6 }}>Secundários</div>
                   {resultado.temas.secundarios.map(t=><ATag key={t} text={t} />)}
                 </div>
                 <div>
@@ -236,7 +236,7 @@ function AnaliseModal({ referencia, onClose }: { referencia: Referencia; onClose
               <ASection title="🎯 Oportunidades para Dr. Bruno">
                 {resultado.oportunidades.map((o,i)=>(
                   <div key={i} style={{ display:'flex', gap:10, padding:'10px 14px', background:'rgba(200,168,76,0.05)', border:'1px solid rgba(200,168,76,0.15)', borderRadius:7, marginBottom:8 }}>
-                    <span style={{ color:'#C9A84C', fontWeight:900, flexShrink:0 }}>→</span>
+                    <span style={{ color:'#00c07f', fontWeight:900, flexShrink:0 }}>→</span>
                     <span style={{ color:'#F5F0EB', fontSize:12, lineHeight:1.5 }}>{o}</span>
                   </div>
                 ))}
@@ -249,11 +249,11 @@ function AnaliseModal({ referencia, onClose }: { referencia: Referencia; onClose
                 </div>
                 <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10 }}>
                   <div>
-                    <div style={{ fontSize:9, fontWeight:700, color:'#6a5040', letterSpacing:3, textTransform:'uppercase' as const, marginBottom:6 }}>Temas para Atacar</div>
+                    <div style={{ fontSize:9, fontWeight:700, color:'#474f66', letterSpacing:3, textTransform:'uppercase' as const, marginBottom:6 }}>Temas para Atacar</div>
                     {resultado.estrategia.temas_atacar.map(t=><ATag key={t} text={t} color="rgba(167,139,250,0.9)" />)}
                   </div>
                   <div>
-                    <div style={{ fontSize:9, fontWeight:700, color:'#6a5040', letterSpacing:3, textTransform:'uppercase' as const, marginBottom:6 }}>Formatos Rec.</div>
+                    <div style={{ fontSize:9, fontWeight:700, color:'#474f66', letterSpacing:3, textTransform:'uppercase' as const, marginBottom:6 }}>Formatos Rec.</div>
                     {resultado.estrategia.formatos_rec.map(f=><ATag key={f} text={f} color="rgba(96,165,250,0.9)" />)}
                   </div>
                 </div>
@@ -351,7 +351,7 @@ export default function ReferenciasPage() {
         }
       />
       <div className="p-8 space-y-6">
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <StatCard label="Perfis"          value={refs.length}                             sub="referencias ativas" icon={Users}      accent="green" />
           <StatCard label="Alta Relevancia" value={refs.filter(r=>r.relevancia==="Alta").length} sub="prioritarios"  icon={Star}       accent="red"   />
           <StatCard label="Especialidades"  value={new Set(refs.map(r=>r.especialidade)).size}   sub="nichos"        icon={TrendingUp} accent="blue"  />
@@ -431,7 +431,7 @@ export default function ReferenciasPage() {
         ) : filtered.length===0 ? (
           <div className="text-center py-16 text-text-muted text-[13px]">Nenhuma referencia encontrada.</div>
         ) : (
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {filtered.map(r=>(
               <div key={r.id} className="group bg-card border border-border hover:border-border-hover rounded-lg p-5 transition-all duration-150">
                 <div className="flex items-start justify-between mb-4">

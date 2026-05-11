@@ -1,6 +1,6 @@
 // Salvar em: app/hashtags/page.tsx
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { PautasModal } from '@/components/PautasModal'
 
 const D = {
@@ -9,7 +9,7 @@ const D = {
   accent:'#00c07f',adim:'rgba(0,192,127,0.12)',aborder:'rgba(0,192,127,0.3)',atext:'#00e893',
   font:"'Inter', system-ui, sans-serif",mono:"'JetBrains Mono', monospace",
 }
-const inputSty = { background:D.card, border:`1px solid ${D.border}`, color:D.text, borderRadius:8, padding:'10px 14px', fontSize:13, width:'100%', fontFamily:"'Montserrat',sans-serif", outline:'none' } as React.CSSProperties
+const inputSty = { background:D.card, border:`1px solid ${D.border}`, color:D.text, borderRadius:8, padding:'10px 14px', fontSize:13, width:'100%', fontFamily:"'Inter'", outline:'none' } as React.CSSProperties
 
 const NICHOS = ['Nutrologia','Endocrinologia','Longevidade','Metabolismo','Hormônios','Anti-aging','Emagrecimento','Diabetes','Tireoide']
 const OBJETIVOS = [
@@ -29,7 +29,7 @@ function CopyBtn({ text, label='⎘ Copiar' }: { text:string; label?:string }) {
   const [ok, setOk] = useState(false)
   return (
     <button onClick={() => { navigator.clipboard.writeText(text); setOk(true); setTimeout(()=>setOk(false),1600) }}
-      style={{ padding:'8px 16px', borderRadius:8, border:`1px solid rgba(200,168,76,0.3)`, background:ok?'rgba(200,168,76,0.12)':'none', color:ok?D.accent:D.muted, fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:"'Montserrat',sans-serif" }}>
+      style={{ padding:'8px 16px', borderRadius:8, border:`1px solid rgba(200,168,76,0.3)`, background:ok?'rgba(200,168,76,0.12)':'none', color:ok?D.accent:D.muted, fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:"'Inter'" }}>
       {ok ? '✓ Copiado!' : label}
     </button>
   )
@@ -43,7 +43,8 @@ export default function HashtagsPage() {
   const [loading,    setLoading]    = useState(false)
   const [showPautas, setShowPautas] = useState(false)
   const [salvos,     setSalvos]     = useState<string[][]>([])
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
+  const [isMob, setIsMob] = useState(false)
+  useEffect(() => { setIsMob(window.innerWidth < 768) }, [])
 
   const gerar = async () => {
     if (!tema.trim()) return
@@ -82,7 +83,7 @@ export default function HashtagsPage() {
 
   return (
     <div className="min-h-screen" style={{ fontFamily:D.font, color:D.text }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;800;900&display=swap'); *{box-sizing:border-box} @keyframes spin{to{transform:rotate(360deg)}}`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800;900&display=swap'); *{box-sizing:border-box} @keyframes spin{to{transform:rotate(360deg)}}`}</style>
       {showPautas && <PautasModal onSelect={(t)=>{setTema(t);setShowPautas(false)}} onClose={()=>setShowPautas(false)} />}
 
       {/* Header */}
@@ -92,7 +93,7 @@ export default function HashtagsPage() {
           <p style={{ fontSize:12, color:D.muted, margin:'4px 0 0' }}>5 hashtags otimizadas por post · Instagram 2025</p>
         </div>
         <button onClick={gerar} disabled={loading||!tema.trim()}
-          style={{ background:tema.trim()?D.accent:D.border, color:tema.trim()?D.bg:D.muted, padding:'12px 28px', borderRadius:10, border:'none', fontWeight:900, fontSize:13, cursor:tema.trim()?'pointer':'not-allowed', fontFamily:"'Montserrat',sans-serif" }}>
+          style={{ background:tema.trim()?D.accent:D.border, color:tema.trim()?D.bg:D.muted, padding:'12px 28px', borderRadius:10, border:'none', fontWeight:900, fontSize:13, cursor:tema.trim()?'pointer':'not-allowed', fontFamily:"'Inter'" }}>
           {loading ? '⟳ Analisando...' : '✦ Gerar Hashtags'}
         </button>
       </div>
@@ -103,7 +104,7 @@ export default function HashtagsPage() {
           <div>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
               <label style={{ fontSize:11, fontWeight:700, color:D.muted, letterSpacing:3, textTransform:'uppercase' as const }}>Tema do Post</label>
-              <button onClick={()=>setShowPautas(true)} style={{ fontSize:10, fontWeight:700, color:D.accent, background:'rgba(200,168,76,0.08)', border:'1px solid rgba(200,168,76,0.25)', borderRadius:6, padding:'4px 10px', cursor:'pointer', fontFamily:"'Montserrat',sans-serif" }}>
+              <button onClick={()=>setShowPautas(true)} style={{ fontSize:10, fontWeight:700, color:D.accent, background:'rgba(200,168,76,0.08)', border:'1px solid rgba(200,168,76,0.25)', borderRadius:6, padding:'4px 10px', cursor:'pointer', fontFamily:"'Inter'" }}>
                 📋 Banco de Pautas
               </button>
             </div>
@@ -114,7 +115,7 @@ export default function HashtagsPage() {
             <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
               {NICHOS.map(n => (
                 <button key={n} onClick={()=>setNicho(n)}
-                  style={{ padding:'6px 12px', borderRadius:20, border:'none', cursor:'pointer', fontSize:11, fontWeight:700, background:nicho===n?D.accent:D.card, color:nicho===n?D.bg:D.muted, fontFamily:"'Montserrat',sans-serif" }}>
+                  style={{ padding:'6px 12px', borderRadius:20, border:'none', cursor:'pointer', fontSize:11, fontWeight:700, background:nicho===n?D.accent:D.card, color:nicho===n?D.bg:D.muted, fontFamily:"'Inter'" }}>
                   {n}
                 </button>
               ))}
@@ -125,7 +126,7 @@ export default function HashtagsPage() {
             <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
               {OBJETIVOS.map(o => (
                 <button key={o.v} onClick={()=>setObjetivo(o.v)}
-                  style={{ padding:'10px 14px', borderRadius:8, border:'none', cursor:'pointer', textAlign:'left', background:objetivo===o.v?D.accent:D.card, color:objetivo===o.v?D.bg:D.muted, fontFamily:"'Montserrat',sans-serif" }}>
+                  style={{ padding:'10px 14px', borderRadius:8, border:'none', cursor:'pointer', textAlign:'left', background:objetivo===o.v?D.accent:D.card, color:objetivo===o.v?D.bg:D.muted, fontFamily:"'Inter'" }}>
                   <div style={{ fontWeight:700, fontSize:12 }}>{o.e} {o.l}</div>
                   <div style={{ fontSize:10, fontWeight:400, opacity:.75, marginTop:2 }}>{o.desc}</div>
                 </button>
@@ -181,11 +182,11 @@ export default function HashtagsPage() {
                   {resultado.length} hashtags · {nicho}
                 </div>
                 <div style={{ display:'flex', gap:8 }}>
-                  <button onClick={salvarSet} style={{ padding:'7px 14px', borderRadius:8, border:`1px solid rgba(200,168,76,0.3)`, background:'none', color:D.atext, fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:"'Montserrat',sans-serif" }}>
+                  <button onClick={salvarSet} style={{ padding:'7px 14px', borderRadius:8, border:`1px solid rgba(200,168,76,0.3)`, background:'none', color:D.atext, fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:"'Inter'" }}>
                     💾 Salvar set
                   </button>
                   <CopyBtn text={resultado.map(h=>'#'+h.hashtag).join(' ')} label="⎘ Copiar todos" />
-                  <button onClick={gerar} style={{ padding:'7px 14px', borderRadius:8, border:`1px solid ${D.border}`, background:'none', color:D.muted, fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:"'Montserrat',sans-serif" }}>
+                  <button onClick={gerar} style={{ padding:'7px 14px', borderRadius:8, border:`1px solid ${D.border}`, background:'none', color:D.muted, fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:"'Inter'" }}>
                     ↺ Regerar
                   </button>
                 </div>

@@ -1,6 +1,6 @@
 // Salvar em: app/titulos/page.tsx
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { PautasModal } from '@/components/PautasModal'
 
 const D = {
@@ -9,7 +9,7 @@ const D = {
   accent:'#00c07f',adim:'rgba(0,192,127,0.12)',aborder:'rgba(0,192,127,0.3)',atext:'#00e893',
   font:"'Inter', system-ui, sans-serif",mono:"'JetBrains Mono', monospace",
 }
-const inputSty = { background:D.card, border:`1px solid ${D.border}`, color:D.text, borderRadius:8, padding:'10px 14px', fontSize:13, width:'100%', fontFamily:"'Montserrat',sans-serif", outline:'none' } as React.CSSProperties
+const inputSty = { background:D.card, border:`1px solid ${D.border}`, color:D.text, borderRadius:8, padding:'10px 14px', fontSize:13, width:'100%', fontFamily:"'Inter'", outline:'none' } as React.CSSProperties
 
 const FORMATOS = ['Reel','Carrossel','Feed','Stories']
 const OBJETIVOS = [
@@ -26,7 +26,7 @@ function CopyBtn({ text }: { text: string }) {
   const [ok, setOk] = useState(false)
   return (
     <button onClick={() => { navigator.clipboard.writeText(text); setOk(true); setTimeout(()=>setOk(false),1600) }}
-      style={{ padding:'5px 12px', borderRadius:6, border:`1px solid rgba(200,168,76,0.3)`, background: ok?'rgba(200,168,76,0.12)':'none', color: ok?D.accent:D.muted, fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:"'Montserrat',sans-serif" }}>
+      style={{ padding:'5px 12px', borderRadius:6, border:`1px solid rgba(200,168,76,0.3)`, background: ok?'rgba(200,168,76,0.12)':'none', color: ok?D.accent:D.muted, fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:"'Inter'" }}>
       {ok ? '✓ Copiado' : '⎘ Copiar'}
     </button>
   )
@@ -39,7 +39,8 @@ export default function TitulosPage() {
   const [titulos,    setTitulos]    = useState<Titulo[]>([])
   const [loading,    setLoading]    = useState(false)
   const [showPautas, setShowPautas] = useState(false)
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
+  const [isMob, setIsMob] = useState(false)
+  useEffect(() => { setIsMob(window.innerWidth < 768) }, [])
 
   const gerar = async () => {
     if (!tema.trim()) return
@@ -64,7 +65,7 @@ export default function TitulosPage() {
 
   return (
     <div className="min-h-screen" style={{ fontFamily:D.font, color:D.text }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;800;900&display=swap'); *{box-sizing:border-box}`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800;900&display=swap'); *{box-sizing:border-box}`}</style>
       {showPautas && <PautasModal onSelect={(t)=>{setTema(t);setShowPautas(false)}} onClose={()=>setShowPautas(false)} />}
 
       {/* Header */}
@@ -74,7 +75,7 @@ export default function TitulosPage() {
           <p style={{ fontSize:12, color:D.muted, margin:'4px 0 0' }}>Headlines para posts e Reels</p>
         </div>
         <button onClick={gerar} disabled={loading||!tema.trim()}
-          style={{ background:tema.trim()?D.accent:D.border, color:tema.trim()?D.bg:D.muted, padding:'12px 28px', borderRadius:10, border:'none', fontWeight:900, fontSize:13, cursor:tema.trim()?'pointer':'not-allowed', fontFamily:"'Montserrat',sans-serif" }}>
+          style={{ background:tema.trim()?D.accent:D.border, color:tema.trim()?D.bg:D.muted, padding:'12px 28px', borderRadius:10, border:'none', fontWeight:900, fontSize:13, cursor:tema.trim()?'pointer':'not-allowed', fontFamily:"'Inter'" }}>
           {loading ? '⟳ Gerando...' : '✦ Gerar Títulos'}
         </button>
       </div>
@@ -85,7 +86,7 @@ export default function TitulosPage() {
           <div>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
               <label style={{ fontSize:11, fontWeight:700, color:D.muted, letterSpacing:3, textTransform:'uppercase' as const }}>Tema</label>
-              <button onClick={()=>setShowPautas(true)} style={{ fontSize:10, fontWeight:700, color:D.accent, background:'rgba(200,168,76,0.08)', border:'1px solid rgba(200,168,76,0.25)', borderRadius:6, padding:'4px 10px', cursor:'pointer', fontFamily:"'Montserrat',sans-serif" }}>
+              <button onClick={()=>setShowPautas(true)} style={{ fontSize:10, fontWeight:700, color:D.accent, background:'rgba(200,168,76,0.08)', border:'1px solid rgba(200,168,76,0.25)', borderRadius:6, padding:'4px 10px', cursor:'pointer', fontFamily:"'Inter'" }}>
                 📋 Banco de Pautas
               </button>
             </div>
@@ -96,7 +97,7 @@ export default function TitulosPage() {
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:6 }}>
               {FORMATOS.map(f => (
                 <button key={f} onClick={()=>setFormato(f)}
-                  style={{ padding:'9px', borderRadius:8, border:'none', cursor:'pointer', fontWeight:700, fontSize:12, background:formato===f?D.accent:D.card, color:formato===f?D.bg:D.muted, fontFamily:"'Montserrat',sans-serif" }}>
+                  style={{ padding:'9px', borderRadius:8, border:'none', cursor:'pointer', fontWeight:700, fontSize:12, background:formato===f?D.accent:D.card, color:formato===f?D.bg:D.muted, fontFamily:"'Inter'" }}>
                   {f}
                 </button>
               ))}
@@ -107,7 +108,7 @@ export default function TitulosPage() {
             <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
               {OBJETIVOS.map(o => (
                 <button key={o.v} onClick={()=>setObjetivo(o.v)}
-                  style={{ padding:'10px 14px', borderRadius:8, border:'none', cursor:'pointer', textAlign:'left', display:'flex', alignItems:'center', gap:10, background:objetivo===o.v?D.accent:D.card, color:objetivo===o.v?D.bg:D.muted, fontFamily:"'Montserrat',sans-serif", fontWeight:700, fontSize:12 }}>
+                  style={{ padding:'10px 14px', borderRadius:8, border:'none', cursor:'pointer', textAlign:'left', display:'flex', alignItems:'center', gap:10, background:objetivo===o.v?D.accent:D.card, color:objetivo===o.v?D.bg:D.muted, fontFamily:"'Inter'", fontWeight:700, fontSize:12 }}>
                   <span>{o.e}</span><span>{o.l}</span>
                 </button>
               ))}
@@ -134,7 +135,7 @@ export default function TitulosPage() {
             <>
               <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
                 <div style={{ color:D.muted, fontSize:11, fontWeight:700, letterSpacing:3, textTransform:'uppercase' as const }}>{titulos.length} títulos gerados · {formato}</div>
-                <button onClick={gerar} style={{ padding:'7px 16px', borderRadius:8, border:`1px solid ${D.border}`, background:'none', color:D.muted, fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:"'Montserrat',sans-serif" }}>↺ Regerar tudo</button>
+                <button onClick={gerar} style={{ padding:'7px 16px', borderRadius:8, border:`1px solid ${D.border}`, background:'none', color:D.muted, fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:"'Inter'" }}>↺ Regerar tudo</button>
               </div>
               <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'1fr 1fr', gap:12 }}>
                 {titulos.map((t, i) => (

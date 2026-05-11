@@ -1,3 +1,4 @@
+// Salvar em: app/api/referencias/route.ts
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
@@ -18,6 +19,17 @@ export async function GET() {
 export async function POST(request: Request) {
   const body = await request.json()
   const { error } = await supabase.from('referencias').insert(body)
+  if (error) return NextResponse.json({ error }, { status: 500 })
+  return NextResponse.json({ success: true })
+}
+
+export async function PUT(request: Request) {
+  const body = await request.json()
+  const { id, ...updates } = body
+  const { error } = await supabase
+    .from('referencias')
+    .update(updates)
+    .eq('id', id)
   if (error) return NextResponse.json({ error }, { status: 500 })
   return NextResponse.json({ success: true })
 }

@@ -857,7 +857,7 @@ export default function ImagensPage() {
       }
 
       // Camada 1: fundo escuro sólido
-      ctx.fillStyle = '#120a04'; ctx.fillRect(0, 0, w, h)
+      ctx.fillStyle = '#08090e'; ctx.fillRect(0, 0, w, h)
 
       // Camada 2: foto de fundo (abaixo do gradiente overlay)
       for (const s of snapshots.filter(s => s.isPhoto)) await blit(s)
@@ -1047,8 +1047,8 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
       {/* ── Overlay de Loading durante captura ── */}
       {isCapturing && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(9,5,3,0.92)', zIndex: 9990, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
-          <div style={{ width: 48, height: 48, border: '3px solid rgba(200,168,76,0.2)', borderTop: '3px solid #C9A84C', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-          <div style={{ color: '#C9A84C', fontSize: 15, fontWeight: 700, letterSpacing: 2 }}>GERANDO IMAGEM...</div>
+          <div style={{ width: 48, height: 48, border: '3px solid rgba(0,192,127,0.15)', borderTop: '3px solid #00c07f', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+          <div style={{ color: '#00c07f', fontSize: 15, fontWeight: 700, letterSpacing: 2 }}>GERANDO IMAGEM...</div>
           <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </div>
       )}
@@ -1056,11 +1056,11 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
       {/* ── Modal iOS — Salvar Imagem ── */}
       {saveModalUrl && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.93)', zIndex: 9999, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-          <div style={{ color: C.d2, fontSize: 15, fontWeight: 700, marginBottom: 6, textAlign: 'center', letterSpacing: 1 }}>
+          <div style={{ color: '#00e893', fontSize: 15, fontWeight: 700, marginBottom: 6, textAlign: 'center', letterSpacing: 1 }}>
             📱 SALVAR IMAGEM
           </div>
-          <div style={{ color: C.wMid, fontSize: 13, marginBottom: 20, textAlign: 'center', lineHeight: 1.6 }}>
-            Pressione e segure a imagem abaixo<br />→ <strong style={{ color: C.w }}>Salvar na Fototeca</strong>
+          <div style={{ color: '#7c85a0', fontSize: 13, marginBottom: 20, textAlign: 'center', lineHeight: 1.6 }}>
+            Pressione e segure a imagem abaixo<br />→ <strong style={{ color: '#e8eaf2' }}>Salvar na Fototeca</strong>
           </div>
           <img
             src={saveModalUrl}
@@ -1069,7 +1069,7 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
           />
           <button
             onClick={() => setSaveModalUrl(null)}
-            style={{ marginTop: 28, padding: '12px 40px', background: C.d2, color: C.bg, border: 'none', borderRadius: 10, fontWeight: 900, fontSize: 14, cursor: 'pointer', fontFamily: "'Montserrat', sans-serif" }}
+            style={{ marginTop: 28, padding: '12px 40px', background: '#00c07f', color: '#08090e', border: 'none', borderRadius: 10, fontWeight: 900, fontSize: 14, cursor: 'pointer', fontFamily: "'Montserrat', sans-serif" }}
           >
             ✕ Fechar
           </button>
@@ -1087,11 +1087,11 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
       {/* Header */}
       <div className="border-b border-border bg-surface" style={{ padding: '18px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 900, color: C.d2, letterSpacing: 1, margin: 0 }}>Gerador de Imagens</h1>
+          <h1 style={{ fontSize: 22, fontWeight: 900, color: '#00e893', letterSpacing: 1, margin: 0 }}>Gerador de Imagens</h1>
           <p style={{ fontSize: 12, color: labelClr, margin: '4px 0 0' }}>Posts e carrosséis para o Instagram</p>
         </div>
         <button onClick={generateWithAI} disabled={isGenerating || !tema.trim()}
-          style={{ background: tema.trim() ? '#00c07f' : 'none', color: tema.trim() ? '#08090e' : '#474f66', padding: '12px 24px', borderRadius: 10, border: 'none', fontWeight: 900, fontSize: 13, cursor: tema.trim() ? 'pointer' : 'not-allowed', fontFamily: "'Montserrat', sans-serif", display: 'flex', alignItems: 'center', gap: 8 }}>
+          style={{ background: tema.trim() ? '#00c07f' : 'none', color: tema.trim() ? '#08090e' : '#474f66', padding: '12px 24px', borderRadius: 10, border: 'none', fontWeight: 900, fontSize: 13, cursor: tema.trim() ? 'pointer' : 'not-allowed', fontFamily: "'Inter', system-ui, sans-serif", display: 'flex', alignItems: 'center', gap: 8 }}>
           {isGenerating ? '⟳ Gerando...' : '✦ Gerar com IA'}
         </button>
       </div>
@@ -1107,7 +1107,7 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               {(['unica', 'carrossel'] as Tipo[]).map(t => (
                 <button key={t} onClick={() => handleTipoChange(t)}
-                  style={{ padding: '10px', borderRadius: 8, border: 'none', fontWeight: 700, fontSize: 12, cursor: 'pointer', background: tipo === t ? C.d2 : sideBg, color: tipo === t ? C.bg : labelClr, fontFamily: "'Montserrat', sans-serif" }}>
+                  style={{ padding: '10px', borderRadius: 8, border: 'none', fontWeight: 700, fontSize: 12, cursor: 'pointer', background: tipo === t ? '#00c07f' : sideBg, color: tipo === t ? '#08090e' : labelClr, fontFamily: "'Inter', system-ui, sans-serif" }}>
                   {t === 'unica' ? 'Imagem Única' : 'Carrossel'}
                 </button>
               ))}
@@ -1120,7 +1120,7 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               {(Object.entries(FORMATOS_CONFIG) as [Formato, { label: string; desc: string }][]).map(([k, v]) => (
                 <button key={k} onClick={() => setFormato(k)}
-                  style={{ padding: '8px 12px', borderRadius: 8, border: 'none', fontWeight: 700, fontSize: 11, cursor: 'pointer', textAlign: 'left', background: formato === k ? C.d2 : sideBg, color: formato === k ? C.bg : labelClr, fontFamily: "'Montserrat', sans-serif" }}>
+                  style={{ padding: '8px 12px', borderRadius: 8, border: 'none', fontWeight: 700, fontSize: 11, cursor: 'pointer', textAlign: 'left', background: formato === k ? '#00c07f' : sideBg, color: formato === k ? '#08090e' : labelClr, fontFamily: "'Inter', system-ui, sans-serif" }}>
                   <div>{v.label}</div><div style={{ opacity: 0.6, fontWeight: 400, fontSize: 10 }}>{v.desc}</div>
                 </button>
               ))}
@@ -1133,11 +1133,11 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
               {(Object.entries(PALETAS) as [PaletaId, typeof PALETAS[PaletaId]][]).map(([id, p]) => (
                 <button key={id} onClick={() => setPaleta(id)}
-                  style={{ padding: '9px 10px', borderRadius: 8, border: `1px solid ${paleta === id ? p.cores.d2 : border}`, cursor: 'pointer', textAlign: 'left', background: paleta === id ? `${p.cores.d2}18` : sideBg, fontFamily: "'Montserrat', sans-serif", display: 'flex', alignItems: 'center', gap: 8 }}>
+                  style={{ padding: '9px 10px', borderRadius: 8, border: `1px solid ${paleta === id ? '#00c07f' : border}`, cursor: 'pointer', textAlign: 'left', background: paleta === id ? 'rgba(0,192,127,0.12)' : sideBg, fontFamily: "'Inter', system-ui, sans-serif", display: 'flex', alignItems: 'center', gap: 8 }}>
                   <div style={{ display: 'flex', gap: 3, flexShrink: 0 }}>
                     {p.preview.map((col, i) => <div key={i} style={{ width: 10, height: 10, borderRadius: 2, background: col }} />)}
                   </div>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: paleta === id ? p.cores.d2 : labelClr }}>{p.label}</span>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: paleta === id ? '#00e893' : labelClr }}>{p.label}</span>
                 </button>
               ))}
             </div>
@@ -1149,7 +1149,7 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {(Object.entries(ESTRUTURAS) as [EstruturaId, typeof ESTRUTURAS[EstruturaId]][]).map(([id, e]) => (
                 <button key={id} onClick={() => setEstrutura(id)}
-                  style={{ padding: '9px 14px', borderRadius: 8, border: 'none', cursor: 'pointer', textAlign: 'left', background: estrutura === id ? C.d2 : sideBg, color: estrutura === id ? C.bg : labelClr, fontFamily: "'Montserrat', sans-serif", display: 'flex', alignItems: 'center', gap: 10 }}>
+                  style={{ padding: '9px 14px', borderRadius: 8, border: 'none', cursor: 'pointer', textAlign: 'left', background: estrutura === id ? '#00c07f' : sideBg, color: estrutura === id ? '#08090e' : labelClr, fontFamily: "'Montserrat', sans-serif", display: 'flex', alignItems: 'center', gap: 10 }}>
                   <span style={{ fontSize: 14 }}>{e.emoji}</span>
                   <div>
                     <div style={{ fontSize: 11, fontWeight: 700 }}>{e.label}</div>
@@ -1166,9 +1166,9 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
               {(Object.entries(TIPOGRAFIAS) as [TipografiaId, typeof TIPOGRAFIAS[TipografiaId]][]).map(([id, t]) => (
                 <button key={id} onClick={() => setTipografia(id)}
-                  style={{ padding: '9px 12px', borderRadius: 8, border: `1px solid ${tipografia === id ? C.d2 : border}`, cursor: 'pointer', textAlign: 'left', background: tipografia === id ? `rgba(200,168,76,0.1)` : sideBg, fontFamily: "'Montserrat', sans-serif" }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: tipografia === id ? C.d2 : labelClr }}>{t.label}</div>
-                  <div style={{ fontSize: 9, color: tipografia === id ? C.d1 : '#3a2a1a', marginTop: 2, letterSpacing: 1 }}>Aa Bb Cc</div>
+                  style={{ padding: '9px 12px', borderRadius: 8, border: `1px solid ${tipografia === id ? '#00c07f' : border}`, cursor: 'pointer', textAlign: 'left', background: tipografia === id ? 'rgba(0,192,127,0.12)' : sideBg, fontFamily: "'Montserrat', sans-serif" }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: tipografia === id ? '#00e893' : labelClr }}>{t.label}</div>
+                  <div style={{ fontSize: 9, color: tipografia === id ? '#7c85a0' : '#474f66', marginTop: 2, letterSpacing: 1 }}>Aa Bb Cc</div>
                 </button>
               ))}
             </div>
@@ -1178,9 +1178,9 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
           {tipo === 'carrossel' && (
             <div>
               <label style={{ fontSize: 11, fontWeight: 700, color: labelClr, letterSpacing: 3, textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>
-                Slides: <span style={{ color: C.d2 }}>{numSlides}</span>
+                Slides: <span style={{ color: '#00e893' }}>{numSlides}</span>
               </label>
-              <input type="range" min={3} max={15} value={numSlides} onChange={e => handleNumSlidesChange(Number(e.target.value))} style={{ width: '100%', accentColor: C.d2 }} />
+              <input type="range" min={3} max={15} value={numSlides} onChange={e => handleNumSlidesChange(Number(e.target.value))} style={{ width: '100%', accentColor: '#00c07f' }} />
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: labelClr, marginTop: 4 }}><span>3</span><span>15</span></div>
             </div>
           )}
@@ -1236,7 +1236,7 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
             <button
               onClick={gerarImagemIA}
               disabled={isGenAI || !tema.trim()}
-              style={{ width:'100%', marginTop:8, padding:'12px', borderRadius:8, border:`1px solid ${isGenAI || !tema.trim() ? '#2a1a0a' : 'rgba(200,168,76,0.4)'}`, background: isGenAI || !tema.trim() ? 'none' : 'rgba(200,168,76,0.06)', color: isGenAI || !tema.trim() ? labelClr : C.d2, fontSize:12, fontWeight:700, cursor: isGenAI || !tema.trim() ? 'not-allowed' : 'pointer', fontFamily:"'Montserrat',sans-serif", display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
+              style={{ width:'100%', marginTop:8, padding:'12px', borderRadius:8, border:`1px solid ${isGenAI || !tema.trim() ? '#1c1d2a' : 'rgba(0,192,127,0.3)'}`, background: isGenAI || !tema.trim() ? 'none' : 'rgba(0,192,127,0.08)', color: isGenAI || !tema.trim() ? labelClr : '#00e893', fontSize:12, fontWeight:700, cursor: isGenAI || !tema.trim() ? 'not-allowed' : 'pointer', fontFamily:"'Montserrat',sans-serif", display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
               {isGenAI ? (
                 <>
                   <span style={{ display:'inline-block', width:14, height:14, border:'2px solid rgba(200,168,76,0.3)', borderTop:`2px solid ${C.d2}`, borderRadius:'50%', animation:'spin 0.8s linear infinite' }} />
@@ -1321,7 +1321,7 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
           <div style={{ marginTop: 16, display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
             {/* Salvar */}
             <button onClick={downloadCurrentSlide}
-              style={{ padding: '12px 28px', background: C.d2, border: 'none', borderRadius: 10, color: C.bg, fontWeight: 900, fontSize: 14, cursor: 'pointer', fontFamily: "'Montserrat', sans-serif", display: 'flex', alignItems: 'center', gap: 8 }}>
+              style={{ padding: '12px 28px', background: C.d2, border: 'none', borderRadius: 10, color: C.bg, fontWeight: 900, fontSize: 14, cursor: 'pointer', fontFamily: "'Inter', system-ui, sans-serif", display: 'flex', alignItems: 'center', gap: 8 }}>
               ⬇ Salvar Slide {currentSlide + 1}
             </button>
 
@@ -1349,7 +1349,7 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
 
           {/* Dica de drag mode */}
           {dragMode && (
-            <div style={{ marginTop: 10, padding: '8px 16px', borderRadius: 8, background: 'rgba(200,168,76,0.08)', border: `1px solid rgba(200,168,76,0.2)`, fontSize: 11, color: C.d1, textAlign: 'center' }}>
+            <div style={{ marginTop: 10, padding: '8px 16px', borderRadius: 8, background: 'rgba(0,192,127,0.06)', border: `1px solid rgba(0,192,127,0.2)`, fontSize: 11, color: '#7c85a0', textAlign: 'center' }}>
               Arraste os blocos com borda dourada pontilhada · Desative antes de salvar
             </div>
           )}
@@ -1366,7 +1366,7 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
               <div style={{ display: 'flex', gap: 6, marginTop: 12, flexWrap: 'wrap', justifyContent: 'center', maxWidth: 300 }}>
                 {slides.map((_, i) => (
                   <button key={i} onClick={() => setCurrentSlide(i)}
-                    style={{ borderRadius: 99, border: 'none', cursor: 'pointer', transition: 'all 0.2s', width: i === currentSlide ? 20 : 8, height: 8, background: i === currentSlide ? C.d2 : border }} />
+                    style={{ borderRadius: 99, border: 'none', cursor: 'pointer', transition: 'all 0.2s', width: i === currentSlide ? 20 : 8, height: 8, background: i === currentSlide ? '#00c07f' : border }} />
                 ))}
               </div>
             </>
@@ -1387,7 +1387,7 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
           {currentS && (
             <>
               <div style={{ fontSize: 11, padding: '8px 12px', borderRadius: 6, background: sideBg, color: labelClr }}>
-                Use <strong style={{ color: C.d2 }}>*palavra*</strong> para texto dourado itálico
+                Use <strong style={{ color: '#00e893' }}>*palavra*</strong> para texto dourado itálico
               </div>
 
               <Field label="Headline">
@@ -1420,7 +1420,7 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
                       <div key={bi} style={{ marginBottom: 10, padding: 10, borderRadius: 6, background: sideBg, border: `1px solid ${border}` }}>
                         <input type="text" value={item.titulo} placeholder={`Título ${bi + 1}`} onChange={e => {
                           const ni = [...items]; ni[bi] = {...ni[bi], titulo: e.target.value}; updateSlide(currentSlide, 'items', ni)
-                        }} style={{ ...inputSty, marginBottom: 6, color: C.d2 }} />
+                        }} style={{ ...inputSty, marginBottom: 6, color: '#00e893' }} />
                         <textarea value={item.descricao} placeholder="Descrição..." rows={2} onChange={e => {
                           const ni = [...items]; ni[bi] = {...ni[bi], descricao: e.target.value}; updateSlide(currentSlide, 'items', ni)
                         }} style={{ ...inputSty, resize: 'none', display: 'block' }} />
@@ -1441,10 +1441,10 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
                         <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
                           <input type="text" value={stat.valor} placeholder="−500" onChange={e => {
                             const ns = [...stats]; ns[si] = {...ns[si], valor: e.target.value}; updateSlide(currentSlide, 'stats', ns)
-                          }} style={{ ...inputSty, flex: 1, color: C.d2 }} />
+                          }} style={{ ...inputSty, flex: 1, color: '#00e893' }} />
                           <input type="text" value={stat.unidade ?? ''} placeholder="kcal" onChange={e => {
                             const ns = [...stats]; ns[si] = {...ns[si], unidade: e.target.value}; updateSlide(currentSlide, 'stats', ns)
-                          }} style={{ ...inputSty, width: 72, color: C.d1 }} />
+                          }} style={{ ...inputSty, width: 72, color: '#7c85a0' }} />
                         </div>
                         <input type="text" value={stat.descricao} placeholder="Descrição..." onChange={e => {
                           const ns = [...stats]; ns[si] = {...ns[si], descricao: e.target.value}; updateSlide(currentSlide, 'stats', ns)
@@ -1461,10 +1461,10 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
 
               {/* Regenerar com IA */}
               <div style={{ paddingTop: 18, borderTop: `1px solid ${border}` }}>
-                <label style={{ fontSize: 11, fontWeight: 700, color: C.d2, letterSpacing: 3, textTransform: 'uppercase', display: 'block', marginBottom: 10 }}>✦ Regenerar com IA</label>
+                <label style={{ fontSize: 11, fontWeight: 700, color: '#00e893', letterSpacing: 3, textTransform: 'uppercase', display: 'block', marginBottom: 10 }}>✦ Regenerar com IA</label>
                 <textarea value={editInstruction} onChange={e => setEditInstruction(e.target.value)} rows={3} placeholder="Ex: Use dados do NEJM 2023, foque em mulheres..." style={{ ...inputSty, resize: 'none', display: 'block', marginBottom: 10 }} />
                 <button onClick={() => regenerateSlide(currentSlide)} disabled={isEditGenerating || !editInstruction.trim()}
-                  style={{ width: '100%', padding: '11px', borderRadius: 8, border: `1px solid rgba(200,168,76,0.35)`, background: 'none', color: C.d2, fontWeight: 700, fontSize: 13, cursor: editInstruction.trim() ? 'pointer' : 'not-allowed', opacity: editInstruction.trim() ? 1 : 0.4, fontFamily: "'Montserrat', sans-serif" }}>
+                  style={{ width: '100%', padding: '11px', borderRadius: 8, border: `1px solid rgba(0,192,127,0.3)`, background: 'none', color: '#00e893', fontWeight: 700, fontSize: 13, cursor: editInstruction.trim() ? 'pointer' : 'not-allowed', opacity: editInstruction.trim() ? 1 : 0.4, fontFamily: "'Montserrat', sans-serif" }}>
                   {isEditGenerating ? '⟳ Regenerando...' : '⚡ Regenerar Slide'}
                 </button>
               </div>
@@ -1480,21 +1480,21 @@ Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headlin
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label style={{ fontSize: 11, fontWeight: 700, color: '#6a5040', letterSpacing: 3, textTransform: 'uppercase' as const, display: 'block', marginBottom: 8 }}>{label}</label>
+      <label style={{ fontSize: 11, fontWeight: 700, color: '#474f66', letterSpacing: 3, textTransform: 'uppercase' as const, display: 'block', marginBottom: 8 }}>{label}</label>
       {children}
     </div>
   )
 }
 
 function FotoSelect({ label, value, fotos, onChange }: { label: string; value: number | null; fotos: string[]; onChange: (i: number | null) => void }) {
-  const sideBg = '#1c0f06'
+  const sideBg = '#13141d'
   return (
     <div>
-      <label style={{ fontSize: 11, fontWeight: 700, color: '#6a5040', letterSpacing: 3, textTransform: 'uppercase' as const, display: 'block', marginBottom: 8 }}>{label}</label>
+      <label style={{ fontSize: 11, fontWeight: 700, color: '#474f66', letterSpacing: 3, textTransform: 'uppercase' as const, display: 'block', marginBottom: 8 }}>{label}</label>
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-        <button onClick={() => onChange(null)} style={{ padding: '4px 10px', borderRadius: 6, border: 'none', background: value === null ? '#C9A84C' : sideBg, color: value === null ? '#120a04' : '#6a5040', fontWeight: 700, fontSize: 11, cursor: 'pointer', fontFamily: "'Montserrat', sans-serif" }}>Nenhuma</button>
+        <button onClick={() => onChange(null)} style={{ padding: '4px 10px', borderRadius: 6, border: 'none', background: value === null ? '#00c07f' : sideBg, color: value === null ? '#08090e' : '#474f66', fontWeight: 700, fontSize: 11, cursor: 'pointer', fontFamily: "'Inter', system-ui, sans-serif" }}>Nenhuma</button>
         {fotos.map((_, i) => (
-          <button key={i} onClick={() => onChange(i)} style={{ padding: '4px 10px', borderRadius: 6, border: 'none', background: value === i ? '#C9A84C' : sideBg, color: value === i ? '#120a04' : '#6a5040', fontWeight: 700, fontSize: 11, cursor: 'pointer', fontFamily: "'Montserrat', sans-serif" }}>F{i+1}</button>
+          <button key={i} onClick={() => onChange(i)} style={{ padding: '4px 10px', borderRadius: 6, border: 'none', background: value === i ? '#00c07f' : sideBg, color: value === i ? '#08090e' : '#474f66', fontWeight: 700, fontSize: 11, cursor: 'pointer', fontFamily: "'Inter', system-ui, sans-serif" }}>F{i+1}</button>
         ))}
       </div>
     </div>

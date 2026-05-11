@@ -80,9 +80,9 @@ export default function TitulosPage() {
         </button>
       </div>
 
-      <div style={{ display:'flex', flexDirection:isMobile?'column':'row', height:isMobile?'auto':'calc(100vh - 74px)' }}>
+      <div style={{ display:'flex', flexDirection:isMob?'column':'row', height:isMob?'auto':'calc(100vh - 74px)' }}>
         {/* Left */}
-        <div className="bg-card border-r border-border md:border-b-0 border-b" style={{ width:isMobile?'100%':280, flexShrink:0, overflowY:'auto', padding:24, display:'flex', flexDirection:'column', gap:20 }}>
+        <div className="bg-card border-r border-border md:border-b-0 border-b" style={{ width:isMob?'100%':280, flexShrink:0, overflowY:'auto', padding:24, display:'flex', flexDirection:'column', gap:20 }}>
           <div>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
               <label style={{ fontSize:11, fontWeight:700, color:D.muted, letterSpacing:3, textTransform:'uppercase' as const }}>Tema</label>
@@ -117,7 +117,7 @@ export default function TitulosPage() {
         </div>
 
         {/* Center */}
-        <div className="bg-background" style={{ flex:1, overflowY:'auto', padding:isMobile?16:32 }}>
+        <div className="bg-background" style={{ flex:1, overflowY:'auto', padding:isMob?16:32 }}>
           {!titulos.length && !loading && (
             <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'60vh', gap:12, opacity:.5 }}>
               <div style={{ fontSize:48 }}>✍️</div>
@@ -137,7 +137,7 @@ export default function TitulosPage() {
                 <div style={{ color:D.muted, fontSize:11, fontWeight:700, letterSpacing:3, textTransform:'uppercase' as const }}>{titulos.length} títulos gerados · {formato}</div>
                 <button onClick={gerar} style={{ padding:'7px 16px', borderRadius:8, border:`1px solid ${D.border}`, background:'none', color:D.muted, fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:"'Inter'" }}>↺ Regerar tudo</button>
               </div>
-              <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'1fr 1fr', gap:12 }}>
+              <div style={{ display:'grid', gridTemplateColumns:isMob?'1fr':'1fr 1fr', gap:12 }}>
                 {titulos.map((t, i) => (
                   <div key={i} style={{ background:D.card, border:`1px solid ${D.border}`, borderRadius:10, padding:'18px 20px', display:'flex', flexDirection:'column', gap:12 }}>
                     <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:10 }}>

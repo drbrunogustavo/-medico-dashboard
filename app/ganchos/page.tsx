@@ -110,9 +110,9 @@ export default function GanchosPage() {
         </button>
       </div>
 
-      <div style={{ display:'flex', flexDirection:isMobile?'column':'row', height:isMobile?'auto':'calc(100vh - 74px)' }}>
+      <div style={{ display:'flex', flexDirection:isMob?'column':'row', height:isMob?'auto':'calc(100vh - 74px)' }}>
         {/* Left */}
-        <div className="bg-card border-r border-border md:border-b-0 border-b" style={{ width:isMobile?'100%':280, flexShrink:0, overflowY:'auto', padding:24, display:'flex', flexDirection:'column', gap:20 }}>
+        <div className="bg-card border-r border-border md:border-b-0 border-b" style={{ width:isMob?'100%':280, flexShrink:0, overflowY:'auto', padding:24, display:'flex', flexDirection:'column', gap:20 }}>
           <div>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
               <label style={{ fontSize:11, fontWeight:700, color:D.muted, letterSpacing:3, textTransform:'uppercase' as const }}>Tema</label>
@@ -159,7 +159,7 @@ export default function GanchosPage() {
         </div>
 
         {/* Center */}
-        <div className="bg-background" style={{ flex:1, overflowY:'auto', padding:isMobile?16:32 }}>
+        <div className="bg-background" style={{ flex:1, overflowY:'auto', padding:isMob?16:32 }}>
           {/* Tabs */}
           <div style={{ display:'flex', gap:4, marginBottom:24, borderBottom:`1px solid ${D.border}`, paddingBottom:0 }}>
             {(['gerar','favoritos'] as const).map(tab => (

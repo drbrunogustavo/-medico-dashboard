@@ -98,9 +98,9 @@ export default function HashtagsPage() {
         </button>
       </div>
 
-      <div style={{ display:'flex', flexDirection:isMobile?'column':'row', height:isMobile?'auto':'calc(100vh - 74px)' }}>
+      <div style={{ display:'flex', flexDirection:isMob?'column':'row', height:isMob?'auto':'calc(100vh - 74px)' }}>
         {/* Left */}
-        <div className="bg-card border-r border-border md:border-b-0 border-b" style={{ width:isMobile?'100%':280, flexShrink:0, overflowY:'auto', padding:24, display:'flex', flexDirection:'column', gap:20 }}>
+        <div className="bg-card border-r border-border md:border-b-0 border-b" style={{ width:isMob?'100%':280, flexShrink:0, overflowY:'auto', padding:24, display:'flex', flexDirection:'column', gap:20 }}>
           <div>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
               <label style={{ fontSize:11, fontWeight:700, color:D.muted, letterSpacing:3, textTransform:'uppercase' as const }}>Tema do Post</label>
@@ -153,7 +153,7 @@ export default function HashtagsPage() {
         </div>
 
         {/* Center */}
-        <div className="bg-background" style={{ flex:1, overflowY:'auto', padding:isMobile?16:32 }}>
+        <div className="bg-background" style={{ flex:1, overflowY:'auto', padding:isMob?16:32 }}>
           {/* Aviso Instagram */}
           <div style={{ marginBottom:20, padding:'12px 16px', borderRadius:8, background:'rgba(200,168,76,0.06)', border:'1px solid rgba(200,168,76,0.2)', display:'flex', gap:12, alignItems:'center' }}>
             <span style={{ fontSize:18 }}>📌</span>

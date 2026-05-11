@@ -146,8 +146,8 @@ export default function AnalisePage() {
       })
       const data = await res.json()
       const raw  = (data.content?.[0]?.text || '{}').replace(/```json/g,'').replace(/```/g,'').trim()
-      const json = JSON.parse(raw) as AnaliseResult
-      if (!json.perfil) throw new Error('Resposta inválida')
+      const startIdx = raw.indexOf('{'); const jsonStr = startIdx >= 0 ? raw.slice(startIdx) : raw; const json = JSON.parse(jsonStr) as AnaliseResult
+      if (!json.perfil){console.error('API response:',json);throw new Error('Resposta inesperada da IA. Tente novamente.')}
       setResultado(json)
     } catch(e) {
       setErro('Erro ao analisar. Verifique o handle e tente novamente.')

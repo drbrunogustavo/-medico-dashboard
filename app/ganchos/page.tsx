@@ -80,8 +80,8 @@ export default function GanchosPage() {
         body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:1200, messages:[{role:'user',content:prompt}] }) })
       const data = await res.json()
       const raw  = (data.content?.[0]?.text||'{}').replace(/```json/g,'').replace(/```/g,'').trim()
-      const json = JSON.parse(raw)
-      if (!json.ganchos) throw new Error('inválido')
+      const startIdx = raw.indexOf('{'); const jsonStr = startIdx >= 0 ? raw.slice(startIdx) : raw; const json = JSON.parse(jsonStr)
+      if (!json.ganchos){console.error('API response:',json);throw new Error('Resposta inesperada da IA. Tente novamente.')}
       const mapped: Gancho[] = json.ganchos.map((g: {texto:string; tipo:string}) => ({
         texto: g.texto,
         tipo:  g.tipo,
@@ -89,7 +89,7 @@ export default function GanchosPage() {
       }))
       setGanchos(mapped)
       setAba('gerar')
-    } catch(e) { alert('Erro: '+String(e)) }
+    } catch(e) { const m=String(e); if(m.includes('rate_limit'))alert('Limite de requisições atingido. Aguarde 1 minuto e tente novamente.'); else alert('Erro: '+m) }
     setLoading(false)
   }
 

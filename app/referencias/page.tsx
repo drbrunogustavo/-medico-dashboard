@@ -288,6 +288,7 @@ export default function ReferenciasPage() {
   const [newSite, setNewSite]         = useState("")
   const [newTemas, setNewTemas]       = useState("")
   const [toast, setToast]             = useState<string | null>(null)
+  const [editRef, setEditRef]         = useState<Referencia | null>(null)
   const [analiseRef, setAnaliseRef]   = useState<Referencia | null>(null)
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2600) }
@@ -333,6 +334,21 @@ export default function ReferenciasPage() {
       const res = await fetch('/api/referencias', { method:'DELETE', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id}) })
       if (res.ok) { showToast("Removida."); setRefs(prev=>prev.filter(r=>r.id!==id)) }
     } catch(e) { showToast("Erro ao remover.") }
+  }
+
+  const updateRef = async (ref: Referencia) => {
+    try {
+      const res = await fetch('/api/referencias', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(ref)
+      })
+      if (res.ok) {
+        showToast("Referencia atualizada!")
+        setRefs(prev => prev.map(r => r.id === ref.id ? ref : r))
+        setEditRef(null)
+      } else { showToast("Erro ao atualizar.") }
+    } catch { showToast("Erro ao atualizar.") }
   }
 
   const totalSeg = refs.map(r=>parseInt(r.seguidores.replace(/[^0-9]/g,""))||0).reduce((a,b)=>a+b,0)
@@ -506,6 +522,56 @@ export default function ReferenciasPage() {
           </div>
         )}
       </div>
+
+      {/* ── Modal Editar Referência ── */}
+      {editRef && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{background:'rgba(0,0,0,0.8)'}} onClick={()=>setEditRef(null)}>
+          <div className="bg-card border border-border rounded-xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e=>e.stopPropagation()}>
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+              <div className="text-[13px] font-semibold text-text-primary">Editar Referência</div>
+              <button onClick={()=>setEditRef(null)} className="text-text-muted hover:text-text-primary text-lg">✕</button>
+            </div>
+            <div className="p-5 space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <input value={editRef.nome} onChange={e=>setEditRef(p=>p?{...p,nome:e.target.value}:p)}
+                  placeholder="Nome" className="col-span-2 bg-background border border-border rounded-lg px-3 py-2.5 text-[13px] text-text-primary outline-none focus:border-accent/40"/>
+                <input value={editRef.instagram} onChange={e=>setEditRef(p=>p?{...p,instagram:e.target.value}:p)}
+                  placeholder="@instagram" className="bg-background border border-border rounded-lg px-3 py-2.5 text-[13px] text-text-primary outline-none focus:border-accent/40"/>
+                <input value={editRef.seguidores} onChange={e=>setEditRef(p=>p?{...p,seguidores:e.target.value}:p)}
+                  placeholder="Seguidores" className="bg-background border border-border rounded-lg px-3 py-2.5 text-[13px] text-text-primary outline-none focus:border-accent/40"/>
+                <select value={editRef.especialidade} onChange={e=>setEditRef(p=>p?{...p,especialidade:e.target.value}:p)}
+                  className="bg-background border border-border rounded-lg px-3 py-2 text-[12px] text-text-primary outline-none focus:border-accent/40">
+                  {["Nutrologia","Endocrinologia","Longevidade","Metabolismo","Geral"].map(n=><option key={n}>{n}</option>)}
+                </select>
+                <select value={editRef.frequencia} onChange={e=>setEditRef(p=>p?{...p,frequencia:e.target.value}:p)}
+                  className="bg-background border border-border rounded-lg px-3 py-2 text-[12px] text-text-primary outline-none focus:border-accent/40">
+                  {["Diaria","3x/semana","2x/semana","1x/semana","Esporadica"].map(f=><option key={f}>{f}</option>)}
+                </select>
+                <select value={editRef.relevancia} onChange={e=>setEditRef(p=>p?{...p,relevancia:e.target.value}:p)}
+                  className="bg-background border border-border rounded-lg px-3 py-2 text-[12px] text-text-primary outline-none focus:border-accent/40">
+                  {["Alta","Media","Baixa"].map(r=><option key={r}>{r}</option>)}
+                </select>
+                <input value={editRef.site||''} onChange={e=>setEditRef(p=>p?{...p,site:e.target.value}:p)}
+                  placeholder="Site (opcional)" className="bg-background border border-border rounded-lg px-3 py-2.5 text-[13px] text-text-primary outline-none focus:border-accent/40"/>
+                <input value={(editRef.temas||[]).join(', ')} onChange={e=>setEditRef(p=>p?{...p,temas:e.target.value.split(',').map(t=>t.trim()).filter(Boolean)}:p)}
+                  placeholder="Temas (separados por vírgula)" className="col-span-2 bg-background border border-border rounded-lg px-3 py-2.5 text-[13px] text-text-primary outline-none focus:border-accent/40"/>
+              </div>
+              <textarea value={editRef.nota} onChange={e=>setEditRef(p=>p?{...p,nota:e.target.value}:p)}
+                placeholder="Observações..." rows={3} className="w-full bg-background border border-border rounded-lg px-3 py-2.5 text-[13px] text-text-primary outline-none focus:border-accent/40 resize-none"/>
+              <div className="flex gap-3 pt-2">
+                <button onClick={()=>editRef&&updateRef(editRef)}
+                  className="flex-1 py-2.5 rounded-lg bg-accent border border-accent text-background text-[13px] font-semibold hover:opacity-90 transition-opacity">
+                  Salvar alterações
+                </button>
+                <button onClick={()=>setEditRef(null)}
+                  className="px-4 py-2.5 rounded-lg border border-border text-text-muted text-[12px] hover:text-text-secondary transition-colors">
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {toast && (
         <div className="fixed bottom-6 right-6 flex items-center gap-2 bg-card border border-accent-border text-accent text-[12px] px-4 py-3 rounded-lg shadow-xl animate-fade-in z-50">

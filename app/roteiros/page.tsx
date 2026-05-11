@@ -29,11 +29,21 @@ export default function RoteirosPage(){
   useEffect(()=>{if(typeof window==='undefined')return;const t=new URLSearchParams(window.location.search).get('tema');if(t)setTema(decodeURIComponent(t))},[])
   const gerar=useCallback(async()=>{
     if(!tema.trim())return;setLoading(true)
-    try{const prompt='Roteirista médico Reels Dr. Bruno Gustavo — Clínico-Geral, Endocrinologia, Nutrologia.\nTEMA: '+tema+(publico?'\nPÚBLICO: '+publico:'')+'\nDURAÇÃO: '+duracao+'\nESTILO: '+estilo+'\nTom: direto, humano. Gancho 3s. Proibido: mergulhar/jornada.\nRetorne SOMENTE JSON: {"titulo":"...","hook":"...","blocos":[{"id":1,"tempo":"0:00–0:03","tipo":"gancho","fala":"...","visual":"...","corte":"corte seco"}],"legenda":"legenda Instagram","hashtags":["tag1"]}\nTipos: gancho→problema→conteudo→insight→cta. Máx 5 hashtags.'
+    try{const prompt = [
+        'Você é roteirista médico para Reels do Dr. Bruno Gustavo — Clínico-Geral, Endocrinologia e Nutrologia.',
+        'TEMA: ' + tema + (publico ? ' | PÚBLICO: ' + publico : ''),
+        'DURAÇÃO: ' + duracao + ' | ESTILO: ' + estilo,
+        'Tom: direto, humano, sem enrolação. Gancho nos primeiros 3 segundos.',
+        '',
+        'Retorne SOMENTE JSON válido sem markdown:',
+        '{"titulo":"título do reel","hook":"gancho abertura max 2 frases","blocos":[{"id":1,"tempo":"0:00-0:03","tipo":"gancho","fala":"texto falado","visual":"o que aparece na tela","corte":"corte seco"}],"legenda":"legenda completa Instagram max 2200 chars","hashtags":["tag1","tag2"]}',
+        '',
+        'Tipos em ordem: gancho, problema, conteudo (1-3x), insight, cta. Máx 5 hashtags.',
+      ].join('\n')
     const res=await fetch('/api/roteiros',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:2000,messages:[{role:'user',content:prompt}]})})
-    const data=await res.json();const raw=(data.content?.[0]?.text||'{}').replace(/```json/g,'').replace(/```/g,'').trim();const json=JSON.parse(raw)
-    if(!json.blocos)throw new Error('inválido');setRoteiro(json as Roteiro);setActiveTab('roteiro');setEditIdx(null)
-    }catch(e){alert('Erro: '+String(e))}
+    const data=await res.json();const raw=(data.content?.[0]?.text||'{}').replace(/```json/g,'').replace(/```/g,'').trim();const startIdx=raw.indexOf('{');const jsonStr=startIdx>=0?raw.slice(startIdx):raw;const json=JSON.parse(jsonStr)
+    if(!json.blocos){console.error('API response:',json);throw new Error('Resposta inesperada da IA. Tente novamente.')};setRoteiro(json as Roteiro);setActiveTab('roteiro');setEditIdx(null)
+    }catch(e){const m=String(e);if(m.includes('rate_limit'))alert('Limite de requisições atingido. Aguarde 1 minuto e tente novamente.');else alert('Erro: '+m)}
     setLoading(false)
   },[tema,publico,duracao,estilo])
   const regenBloco=useCallback(async(idx:number)=>{
@@ -42,7 +52,7 @@ export default function RoteirosPage(){
     const res=await fetch('/api/roteiros',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:400,messages:[{role:'user',content:prompt}]})})
     const data=await res.json();const json=JSON.parse((data.content?.[0]?.text||'{}').replace(/```json/g,'').replace(/```/g,'').trim())
     setRoteiro(prev=>prev?{...prev,blocos:prev.blocos.map((bl,i)=>i===idx?{...bl,...json}:bl)}:prev);setEditInstr('');setEditIdx(null)
-    }catch(e){alert('Erro: '+String(e))}
+    }catch(e){const m=String(e);if(m.includes('rate_limit'))alert('Limite de requisições atingido. Aguarde 1 minuto e tente novamente.');else alert('Erro: '+m)}
     setRegenLoad(false)
   },[roteiro,editInstr])
   const txt=roteiro?roteiro.blocos.map(b=>'['+b.tempo+'] '+b.tipo.toUpperCase()+'\nFALA: '+b.fala+'\nVISUAL: '+b.visual+'\nCORTE: '+b.corte).join('\n\n'):''

@@ -107,16 +107,23 @@ export default function AnalisePage() {
 
     try {
       const prompt =
-        'Você é um estrategista de conteúdo médico. Analise o perfil @' + h + ' no Instagram' +
-        (n ? ' (nicho: ' + n + ')' : '') + ' do ponto de vista do Dr. Bruno Gustavo — Clínico-Geral, Endocrinologia e Nutrologia, Poços de Caldas-MG (@drbrunogustavo).\n\n' +
-        'Com base no que você sabe sobre este perfil (ou perfis similares neste nicho), gere uma análise estratégica completa.\n' +
-        'Se não conhecer o perfil específico, baseie-se em perfis típicos desta especialidade/nicho.\n\n' +
-        'Retorne SOMENTE JSON válido (sem markdown): {"perfil":{"nome":"...","handle":"@' + h + '","especialidade":"...","posicionamento":"...","tom":"...","frequencia":"...","formatos":["..."]},"temas":{"principal":"...","secundarios":["..."],"gaps":["..."]},"pontos_fortes":["...","...","..."],"pontos_fracos":["...","..."],"oportunidades":["...","...","..."],"estrategia":{"diferencial":"...","temas_atacar":["..."],"formatos_rec":["..."],"gancho":"..."},"score":{"conteudo":7,"consistencia":6,"engajamento":8,"nicho":7}}'
+        'Analise o perfil @' + h + ' no Instagram' + (n ? ' — especialidade: ' + n : '') + '.' +
+        ' Perspectiva: Dr. Bruno Gustavo, Clínico-Geral, Endocrinologia e Nutrologia, Poços de Caldas-MG.' +
+        ' Se não conhecer o perfil, baseie-se em perfis típicos do nicho.' +
+        ' Retorne JSON com os campos: perfil (nome, handle, especialidade, posicionamento, tom, frequencia, formatos[]),' +
+        ' temas (principal, secundarios[], gaps[]), pontos_fortes[], pontos_fracos[], oportunidades[],' +
+        ' estrategia (diferencial, temas_atacar[], formatos_rec[], gancho),' +
+        ' score (conteudo 0-10, consistencia 0-10, engajamento 0-10, nicho 0-10).'
 
       const res  = await fetch('/api/roteiros', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1500, messages: [{ role: 'user', content: prompt }] }),
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 1500,
+          system: 'Você é um estrategista de conteúdo médico. Responda SEMPRE e SOMENTE com JSON válido, sem texto antes ou depois, sem markdown, sem explicações.',
+          messages: [{ role: 'user', content: prompt }]
+        }),
       })
       const data = await res.json()
       const raw  = (data.content?.[0]?.text || '{}').replace(/```json/g,'').replace(/```/g,'').trim()

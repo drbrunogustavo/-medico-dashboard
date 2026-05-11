@@ -111,33 +111,7 @@ export default function AnalisePage() {
         (n ? ' (nicho: ' + n + ')' : '') + ' do ponto de vista do Dr. Bruno Gustavo — Clínico-Geral, Endocrinologia e Nutrologia, Poços de Caldas-MG (@drbrunogustavo).\n\n' +
         'Com base no que você sabe sobre este perfil (ou perfis similares neste nicho), gere uma análise estratégica completa.\n' +
         'Se não conhecer o perfil específico, baseie-se em perfis típicos desta especialidade/nicho.\n\n' +
-        'Retorne SOMENTE JSON válido:\n' +
-        '{\n' +
-        '  "perfil": {\n' +
-        '    "nome": "nome completo ou estimado",\n' +
-        '    "handle": "@' + h + '",\n' +
-        '    "especialidade": "especialidade principal",\n' +
-        '    "posicionamento": "como se posiciona",\n' +
-        '    "tom": "tom de voz predominante",\n' +
-        '    "frequencia": "frequência estimada de posts",\n' +
-        '    "formatos": ["formato1", "formato2"]\n' +
-        '  },\n' +
-        '  "temas": {\n' +
-        '    "principal": "tema dominante",\n' +
-        '    "secundarios": ["tema2", "tema3", "tema4"],\n' +
-        '    "gaps": ["gap1", "gap2"]\n' +
-        '  },\n' +
-        '  "pontos_fortes": ["ponto1", "ponto2", "ponto3"],\n' +
-        '  "pontos_fracos": ["fraco1", "fraco2"],\n' +
-        '  "oportunidades": ["oport1", "oport2", "oport3"],\n' +
-        '  "estrategia": {\n' +
-        '    "diferencial": "como Dr. Bruno pode se diferenciar em 2 frases",\n' +
-        '    "temas_atacar": ["tema1"],\n' +
-        '    "formatos_rec": ["formato1"],\n' +
-        '    "gancho": "exemplo de gancho para Dr. Bruno"\n' +
-        '  },\n' +
-        '  "score": { "conteudo": 7, "consistencia": 6, "engajamento": 8, "nicho": 7 }\n' +
-        '}'
+        'Retorne SOMENTE JSON válido (sem markdown): {"perfil":{"nome":"...","handle":"@' + h + '","especialidade":"...","posicionamento":"...","tom":"...","frequencia":"...","formatos":["..."]},"temas":{"principal":"...","secundarios":["..."],"gaps":["..."]},"pontos_fortes":["...","...","..."],"pontos_fracos":["...","..."],"oportunidades":["...","...","..."],"estrategia":{"diferencial":"...","temas_atacar":["..."],"formatos_rec":["..."],"gancho":"..."},"score":{"conteudo":7,"consistencia":6,"engajamento":8,"nicho":7}}'
 
       const res  = await fetch('/api/roteiros', {
         method: 'POST',
@@ -150,7 +124,12 @@ export default function AnalisePage() {
       if (!json.perfil){console.error('API response:',json);throw new Error('Resposta inesperada da IA. Tente novamente.')}
       setResultado(json)
     } catch(e) {
-      setErro('Erro ao analisar. Verifique o handle e tente novamente.')
+      const m = String(e)
+      if (m.includes('rate_limit')) {
+        setErro('Limite de requisições atingido. Aguarde 1 minuto e tente novamente.')
+      } else {
+        setErro('Erro: ' + m)
+      }
       console.error(e)
     }
     setLoading(false)

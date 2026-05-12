@@ -4,7 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
   Radio, FileText, Users, LayoutDashboard, ChevronRight,
-  Activity, Sparkles, Layers, Video, Hash, Zap, Type, X,
+  Activity, Sparkles, Layers, Video, Hash, Zap, Type, X, MessageSquare,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useMenu } from "@/components/MobileMenuProvider"
@@ -20,6 +20,7 @@ const NAV_ITEMS = [
   { label: "Biblioteca de Ganchos",  href: "/ganchos",     icon: Zap,             badge: null   },
   { label: "Banco de Pautas",        href: "/pautas",      icon: FileText,        badge: null   },
   { label: "Monitor de Referências", href: "/referencias", icon: Users,           badge: null   },
+  { label: "Agente WhatsApp",         href: "/whatsapp",    icon: MessageSquare,  badge: "NOVO" },
 ]
 
 export function Sidebar() {

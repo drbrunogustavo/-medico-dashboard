@@ -1,39 +1,34 @@
-// Salvar em: components/MobileNav.tsx
 "use client"
-import { usePathname, useRouter } from "next/navigation"
-import { Activity } from "lucide-react"
+import { usePathname } from "next/navigation"
+import { Activity, Menu } from "lucide-react"
+import { useMenu } from "@/components/MobileMenuProvider"
 
 const ROUTE_LABELS: Record<string, string> = {
-  "/radar":      "Radar de Tendências",
-  "/imagens":    "Gerador de Imagens",
-  "/roteiros":   "Gerador de Roteiros",
-  "/legendas":   "Gerador de Legendas",
-  "/titulos":    "Gerador de Títulos",
-  "/hashtags":   "Análise de Hashtags",
-  "/ganchos":    "Biblioteca de Ganchos",
-  "/pautas":     "Banco de Pautas",
-  "/referencias":"Monitor de Referências",
-  "/analise":    "Análise de Concorrentes",
-  "/whatsapp":   "Agente WhatsApp",
+  "/":            "Dashboard",
+  "/radar":       "Radar de Tendências",
+  "/imagens":     "Gerador de Imagens",
+  "/roteiros":    "Gerador de Roteiros",
+  "/legendas":    "Gerador de Legendas",
+  "/titulos":     "Gerador de Títulos",
+  "/hashtags":    "Análise de Hashtags",
+  "/ganchos":     "Biblioteca de Ganchos",
+  "/pautas":      "Banco de Pautas",
+  "/referencias": "Monitor de Referências",
+  "/whatsapp":    "Agente WhatsApp",
 }
 
 export function MobileNav() {
-  const pathname = usePathname()
-  const router   = useRouter()
-
-  // Só mostra em rotas que não sejam a home
-  if (pathname === "/") return null
-
+  const pathname  = usePathname()
+  const { openMenu } = useMenu()
   const label = ROUTE_LABELS[pathname] ?? "Dashboard"
 
   return (
     <div className="md:hidden flex items-center gap-3 px-4 py-3 bg-surface border-b border-border sticky top-0 z-40">
       <button
-        onClick={() => router.push("/")}
-        className="flex items-center gap-1.5 text-[12px] font-semibold text-text-secondary hover:text-accent transition-colors"
+        onClick={openMenu}
+        className="flex items-center justify-center w-8 h-8 rounded-lg text-text-secondary hover:text-accent hover:bg-white/[0.06] transition-colors"
       >
-        <span className="text-lg leading-none">←</span>
-        <span>Menu</span>
+        <Menu className="w-5 h-5" />
       </button>
       <div className="w-px h-4 bg-border" />
       <div className="flex items-center gap-2 flex-1 min-w-0">

@@ -1,0 +1,16 @@
+{
+  "name": "MedContent Dashboard",
+  "short_name": "MedContent",
+  "description": "Dashboard de gestão de conteúdo médico — Dr. Bruno Gustavo",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#08090e",
+  "theme_color": "#00c07f",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "categories": ["medical", "productivity"],
+  "lang": "pt-BR"
+}

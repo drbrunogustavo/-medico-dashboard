@@ -1,1502 +1,642 @@
-// Salvar em: app/imagens/page.tsx
-'use client'
+"use client"
 
-import { useState, useRef, useCallback, useEffect } from 'react'
-import { PautasModal } from '@/components/PautasModal'
+import { useState, useRef, useCallback } from "react"
+import { TopBar } from "@/components/TopBar"
+import {
+  Wand2, RefreshCw, Download, Copy, Check,
+  ChevronDown, ChevronUp, Sparkles, Edit3,
+  Image as ImageIcon, History, AlertCircle,
+} from "lucide-react"
+import { cn } from "@/lib/utils"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-type Formato = 'feed-retrato' | 'quadrado' | 'stories' | 'reels-capa'
-type Tipo    = 'unica' | 'carrossel'
-type OffsetMap   = Record<string, { x: number; y: number }>
-type TextOffsets = Record<number, OffsetMap>
 
-interface BoxItem  { titulo: string; descricao: string }
-interface StatItem { valor: string; unidade?: string; descricao: string }
+type Formato  = "story" | "reels" | "retrato" | "quadrado"
+type Modelo   = "gpt-image" | "gemini" | "flux"
+type EstiloId =
+  | "card-premium" | "luxo-editorial"  | "capa-reels"   | "story-impacto"
+  | "carrossel-medico" | "antes-depois" | "foto-institucional"
+  | "anuncio-premium"  | "campanha"     | "autoridade"
 
-interface SlideData {
-  id: number
-  tipo: 'capa' | 'conteudo' | 'cta'
-  headline:  string
-  subtitulo: string
-  corpo:     string
-  fotoIndex: number | null
-  fonte?:    string
-  items?:    BoxItem[]
-  stats?:    StatItem[]
+interface PromptParts {
+  conceito:    string
+  direcao:     string
+  composicao:  string
+  iluminacao:  string
+  tipografia:  string
+  elementos:   string
+  negativo:    string
+  promptFinal: string
 }
 
-// ─── Paleta · Estrutura ──────────────────────────────────────────────────────
-type PaletaId    = 'dourado' | 'azul' | 'esmeralda' | 'vinho' | 'offwhite'
-type TipografiaId = 'montserrat' | 'poppins' | 'raleway' | 'dm-sans'
-type EstruturaId = 'classico' | 'split' | 'topo-bold' | 'minimal'
-
-interface PaletaCores {
-  bg: string; bgCard: string; bgMid: string
-  d1: string; d2: string
-  w: string; wMid: string; wFaint: string
+interface HistoryItem {
+  id:        number
+  imageUrl:  string
+  prompt:    string
+  formato:   string
+  estilo:    string
+  audit:     string
+  timestamp: string
 }
 
-// ─── Paleta ───────────────────────────────────────────────────────────────────
-const C = {
-  bg:     '#120a04',
-  bgCard: '#1c0f06',
-  bgMid:  '#261408',
-  d1:     '#b8976a',
-  d2:     '#C9A84C',
-  w:      '#F5F0EB',
-  wMid:   'rgba(245,240,235,0.68)',
-  wFaint: 'rgba(245,240,235,0.38)',
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const FORMATOS: Record<Formato, { label: string; ratio: string; wR: number; hR: number; desc: string; apiRatio: string }> = {
+  story:    { label:"Story",       ratio:"9:16", wR:9,  hR:16, desc:"Vertical · Stories",   apiRatio:"9:16" },
+  reels:    { label:"Reels Cover", ratio:"9:16", wR:9,  hR:16, desc:"Capa de Reels",        apiRatio:"9:16" },
+  retrato:  { label:"Retrato",     ratio:"4:5",  wR:4,  hR:5,  desc:"Feed Retrato · 4:5",  apiRatio:"4:5"  },
+  quadrado: { label:"Quadrado",    ratio:"1:1",  wR:1,  hR:1,  desc:"Feed Quadrado · 1:1", apiRatio:"1:1"  },
 }
 
-const PALETAS: Record<PaletaId, { label: string; emoji: string; preview: string[]; cores: PaletaCores }> = {
-  dourado:   { label: 'Dourado Escuro', emoji: '🟤', preview: ['#120a04','#C9A84C','#F5F0EB'],
-    cores: { bg:'#120a04', bgCard:'#1c0f06', bgMid:'#261408', d1:'#b8976a', d2:'#C9A84C', w:'#F5F0EB', wMid:'rgba(245,240,235,0.68)', wFaint:'rgba(245,240,235,0.38)' } },
-  azul:      { label: 'Azul Médico',    emoji: '🔵', preview: ['#040d1a','#3b82f6','#EFF6FF'],
-    cores: { bg:'#040d1a', bgCard:'#071428', bgMid:'#0a1f3d', d1:'#60a5fa', d2:'#3b82f6', w:'#EFF6FF', wMid:'rgba(239,246,255,0.68)', wFaint:'rgba(239,246,255,0.35)' } },
-  esmeralda: { label: 'Esmeralda',      emoji: '🟢', preview: ['#020f0a','#10b981','#ECFDF5'],
-    cores: { bg:'#020f0a', bgCard:'#041a10', bgMid:'#052b18', d1:'#34d399', d2:'#10b981', w:'#ECFDF5', wMid:'rgba(236,253,245,0.68)', wFaint:'rgba(236,253,245,0.35)' } },
-  offwhite:  { label: 'Off-White',      emoji: '◻️', preview: ['#F8F6F1','#1a1a1a','#2d2d2d'],
-    cores: { bg:'#F8F6F1', bgCard:'#EFEFEB', bgMid:'#E8E5DE', d1:'#6b6b6b', d2:'#1a1a1a', w:'#1a1a1a', wMid:'rgba(26,26,26,0.65)', wFaint:'rgba(26,26,26,0.38)' } },
-  vinho:     { label: 'Vinho Premium',  emoji: '🍷', preview: ['#0d0105','#9f1239','#FDF2F4'],
-    cores: { bg:'#0d0105', bgCard:'#170208', bgMid:'#22030d', d1:'#9f1239', d2:'#be123c', w:'#FDF2F4', wMid:'rgba(253,242,244,0.68)', wFaint:'rgba(253,242,244,0.35)' } },
+const ESTILOS: Record<EstiloId, { label: string; desc: string; prompt: string }> = {
+  "card-premium":       { label:"Card Premium",         desc:"Editorial minimalista, headline central, muito respiro",        prompt:"minimalist editorial card, centered headline, maximum breathing space, clean luxury layout, single focal point, typography-driven" },
+  "luxo-editorial":     { label:"Card Luxo Editorial",  desc:"Texturas metálicas sutis, iluminação dramática lateral",       prompt:"luxury editorial, subtle metallic textures, dramatic side lighting, chiaroscuro shadows, high-end magazine aesthetic" },
+  "capa-reels":         { label:"Capa de Reels",        desc:"Impacto máximo em 1 segundo, headline enorme",                prompt:"maximum social media visual impact, oversized bold headline, dark vibrant background, instant attention-grabbing composition" },
+  "story-impacto":      { label:"Story Impacto",        desc:"Vertical 9:16, composição centralizada, CTA implícito",       prompt:"vertical 9:16 social story, centered power composition, strong visual hierarchy, implicit call-to-action energy" },
+  "carrossel-medico":   { label:"Carrossel Médico",     desc:"Slide conceitual com hierarquia visual clara",                prompt:"conceptual medical carousel slide, clear visual hierarchy, educational layout, clean information architecture" },
+  "antes-depois":       { label:"Antes e Depois",       desc:"Divisão visual simbólica, sem fotos reais",                   prompt:"symbolic visual split composition, before/after concept without real photos, abstract representation, conceptual duality" },
+  "foto-institucional": { label:"Foto Institucional",   desc:"Médico/autoridade, iluminação de estúdio premium",            prompt:"professional medical authority portrait, premium studio lighting, institutional gravitas, expert positioning" },
+  "anuncio-premium":    { label:"Anúncio Premium",      desc:"Composição de campanha publicitária médica",                  prompt:"high-end medical advertising campaign, luxury product placement, premium brand communication, editorial ad aesthetic" },
+  "campanha":           { label:"Campanha Conversão",   desc:"Urgência visual, headline de impacto, CTA visual",            prompt:"conversion campaign visual urgency, impactful headline composition, strong visual call-to-action, direct response design" },
+  "autoridade":         { label:"Autoridade Médica",    desc:"Credibilidade, sofisticação, posicionamento de especialista", prompt:"medical expertise and authority, sophisticated positioning, specialist credibility, professional excellence" },
 }
 
-const ESTRUTURAS: Record<EstruturaId, { label: string; emoji: string; desc: string }> = {
-  'classico':  { label: 'Clássico',  emoji: '🖼️', desc: 'Foto full-screen, texto inferior' },
-  'split':     { label: 'Split',     emoji: '▪️▪️', desc: 'Foto à direita, texto à esquerda' },
-  'topo-bold': { label: 'Topo Bold', emoji: '⬆️', desc: 'Headline grande no topo com faixa' },
-  'minimal':   { label: 'Minimal',   emoji: '◻️', desc: 'Tipografia maximalista, sem foto' },
+const MODELOS: Record<Modelo, { label: string; sub: string; note: string }> = {
+  "gpt-image": { label:"GPT Image",     sub:"OpenAI · gpt-image-1",         note:"Melhor qualidade geral"           },
+  "gemini":    { label:"Gemini Imagen", sub:"Google · imagen-3.0-generate",  note:"Ótimo para composições complexas" },
+  "flux":      { label:"Flux Schnell",  sub:"HuggingFace · FLUX.1-schnell",  note:"Rápido e eficiente"               },
 }
 
-const TIPOGRAFIAS: Record<TipografiaId, { label: string; serif: string; sans: string; import: string }> = {
-  'montserrat': { label: 'Montserrat',  sans: "'Montserrat', sans-serif",   serif: "'Playfair Display', serif", import: "Montserrat:wght@400;600;700;800;900&family=Playfair+Display:ital,wght@0,700;1,700" },
-  'poppins':    { label: 'Poppins',     sans: "'Poppins', sans-serif",      serif: "'Cormorant Garamond', serif", import: "Poppins:wght@400;600;700;800;900&family=Cormorant+Garamond:ital,wght@0,700;1,700" },
-  'raleway':    { label: 'Raleway',     sans: "'Raleway', sans-serif",      serif: "'Libre Baskerville', serif",  import: "Raleway:wght@400;600;700;800;900&family=Libre+Baskerville:ital,wght@0,700;1,400" },
-  'dm-sans':    { label: 'DM Sans',     sans: "'DM Sans', sans-serif",      serif: "'DM Serif Display', serif",   import: "DM+Sans:wght@400;600;700;800;900&family=DM+Serif+Display:ital@0;1" },
+const PART_KEYS: (keyof Omit<PromptParts, "promptFinal">)[] = [
+  "conceito","direcao","composicao","iluminacao","tipografia","elementos","negativo",
+]
+const PART_LABEL: Record<typeof PART_KEYS[number], string> = {
+  conceito:"Conceito Visual", direcao:"Direção Artística", composicao:"Composição e Formato",
+  iluminacao:"Iluminação e Textura", tipografia:"Tipografia", elementos:"Elementos Visuais", negativo:"Prompt Negativo",
+}
+const PART_ICON: Record<typeof PART_KEYS[number], string> = {
+  conceito:"🎨", direcao:"🎬", composicao:"📐", iluminacao:"💡",
+  tipografia:"✍️", elementos:"🖼️", negativo:"🚫",
 }
 
-const FORMATOS_CONFIG = {
-  'feed-retrato': { label: 'Feed Retrato',   w: 1080, h: 1350, desc: '4:5'  },
-  quadrado:       { label: 'Quadrado',        w: 1080, h: 1080, desc: '1:1'  },
-  stories:        { label: 'Stories',         w: 1080, h: 1920, desc: '9:16' },
-  'reels-capa':   { label: 'Capa de Reels',   w: 1080, h: 1920, desc: '9:16' },
-}
+const MSG_PROMPT = [
+  "Analisando o tema...",
+  "Elaborando conceito visual...",
+  "Escrevendo direção artística...",
+  "Compondo iluminação e textura...",
+  "Finalizando prompt criativo...",
+]
+const MSG_IMAGE = [
+  "Enviando para geração...",
+  "Processando imagem...",
+  "Renderizando detalhes...",
+  "Quase pronto...",
+]
 
-const HANDLE = '@drbrunogustavo'
-const NOME   = 'DR. BRUNO GUSTAVO'
-const ASSIN  = 'MEDICINA BASEADA EM EVIDÊNCIA'
+const VISUAL_IDENTITY = `FIXED VISUAL IDENTITY (mandatory for every prompt):
+- Background: sophisticated black graphite with texture (#08090e)
+- Color palette: black graphite + emerald green (#00c07f) + ice white ONLY
+- Lighting: cinematic lateral/dramatic, high contrast, 3D depth, chiaroscuro
+- Style: ultra-premium editorial — Forbes, Bloomberg, Apple, luxury brand campaign
+- Typography feeling: elegant, modern, luxury brand-grade
+- Composition: ample breathing space, soft shadows, ultra-premium finish
+- STRICT EXCLUSIONS: no Canva look, no generic templates, no clinical/hospital aesthetics, no excess elements, no multiple colors, no amateur composition`
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-const clamp = (n: number): React.CSSProperties => ({
-  display: '-webkit-box' as React.CSSProperties['display'],
-  WebkitLineClamp: n,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  WebkitBoxOrient: 'vertical' as any,
-  overflow: 'hidden',
-})
+// ─── Sub-components ───────────────────────────────────────────────────────────
 
-function Headline({ text, fs, lh, cn, pal, sans, serif }: { text: string; fs: number; lh: number; cn: number; pal?: PaletaCores; sans?: string; serif?: string }) {
-  const activeP  = pal ?? C
-  const sansFont = sans  ?? "'Montserrat', sans-serif"
-  const serifFont = serif ?? "'Playfair Display', serif"
-  const parts = text.split(/\*([^*]+)\*/)
+function FormatoCard({ id, active, onClick }: { id: Formato; active: boolean; onClick: () => void }) {
+  const f   = FORMATOS[id]
+  const MAX = 44
+  const w   = Math.round(MAX * (f.wR / Math.max(f.wR, f.hR)))
+  const h   = Math.round(MAX * (f.hR / Math.max(f.wR, f.hR)))
   return (
-    <div style={{ fontSize: fs, lineHeight: lh, fontWeight: 900, color: activeP.w, fontFamily: sansFont, ...clamp(cn) }}>
-      {parts.map((p, i) =>
-        i % 2 === 1
-          ? <span key={i} style={{ color: activeP.d2, fontStyle: 'italic', fontFamily: serifFont, fontWeight: 700 }}>{p}</span>
-          : <span key={i}>{p}</span>
-      )}
-    </div>
+    <button onClick={onClick} className={cn(
+      "flex flex-col items-center gap-2 p-3 rounded-lg border transition-all",
+      active ? "bg-accent-dim border-accent-border" : "border-border hover:border-border-hover"
+    )}>
+      <div className="flex items-center justify-center" style={{ width:44, height:50 }}>
+        <div className={cn(
+          "rounded-sm border-2 flex-shrink-0 transition-all",
+          active ? "border-accent bg-accent/10" : "border-text-muted/40 bg-white/[0.04]"
+        )} style={{ width:w, height:h }} />
+      </div>
+      <div className="text-center">
+        <div className={cn("text-[11px] font-semibold leading-tight", active ? "text-accent" : "text-text-secondary")}>{f.label}</div>
+        <div className="text-[9px] font-mono text-text-muted">{f.ratio}</div>
+      </div>
+    </button>
   )
 }
 
-function SourceBadge({ fonte, pal }: { fonte: string; pal?: PaletaCores }) {
-  const activeP = pal ?? C
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 14, fontFamily: "'Montserrat', sans-serif" }}>
-      <div style={{ width: 36, height: 36, background: activeP.d2, color: activeP.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, fontWeight: 900, flexShrink: 0 }}>
-        {fonte.charAt(0)}
-      </div>
-      <div style={{ color: activeP.d2, fontSize: 18, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase' as const }}>
-        {fonte}
-      </div>
-    </div>
-  )
-}
+// ─── Main Page ────────────────────────────────────────────────────────────────
 
-// ─── DragWrap ─────────────────────────────────────────────────────────────────
-// Torna qualquer bloco arrastável. Usa ref para evitar closures desatualizadas.
-function DragWrap({
-  dragKey, offsets, onDrag, scale, enabled, children, style,
-}: {
-  dragKey: string
-  offsets: OffsetMap
-  onDrag:  (key: string, x: number, y: number) => void
-  scale:   number
-  enabled: boolean
-  children: React.ReactNode
-  style?: React.CSSProperties
-}) {
-  const off = offsets[dragKey] ?? { x: 0, y: 0 }
-  // ref para nunca ter closure desatualizada dentro dos event listeners globais
-  const live = useRef({ off, onDrag, scale, dragKey })
-  live.current = { off, onDrag, scale, dragKey }
+export default function DiretorCriativoPage() {
+  const [formato,       setFormato]       = useState<Formato>("story")
+  const [estilo,        setEstilo]        = useState<EstiloId>("card-premium")
+  const [ideia,         setIdeia]         = useState("")
+  const [modelo,        setModelo]        = useState<Modelo>("gpt-image")
+  const [promptParts,   setPromptParts]   = useState<PromptParts | null>(null)
+  const [editedPrompt,  setEditedPrompt]  = useState("")
+  const [editMode,      setEditMode]      = useState(false)
+  const [imageUrl,      setImageUrl]      = useState<string | null>(null)
+  const [audit,         setAudit]         = useState<string | null>(null)
+  const [history,       setHistory]       = useState<HistoryItem[]>([])
+  const [selectedHist,  setSelectedHist]  = useState<HistoryItem | null>(null)
+  const [loadingPrompt, setLoadingPrompt] = useState(false)
+  const [loadingImage,  setLoadingImage]  = useState(false)
+  const [loadingAudit,  setLoadingAudit]  = useState(false)
+  const [loadingMsg,    setLoadingMsg]    = useState("")
+  const [error,         setError]         = useState<string | null>(null)
+  const [copied,        setCopied]        = useState(false)
+  const [expanded,      setExpanded]      = useState<string | null>(null)
 
-  const beginDrag = (startX: number, startY: number) => {
-    const origin = { ...live.current.off }
-    const onMove = (e: MouseEvent | TouchEvent) => {
-      const cx = 'touches' in e ? e.touches[0].clientX : (e as MouseEvent).clientX
-      const cy = 'touches' in e ? e.touches[0].clientY : (e as MouseEvent).clientY
-      const { scale: s, onDrag: cb, dragKey: k } = live.current
-      cb(k, origin.x + (cx - startX) / s, origin.y + (cy - startY) / s)
+  const msgTimer = useRef<ReturnType<typeof setInterval>>()
+
+  const startMsgs = (msgs: string[], ms = 2200) => {
+    let i = 0; setLoadingMsg(msgs[0])
+    clearInterval(msgTimer.current)
+    msgTimer.current = setInterval(() => { i = (i + 1) % msgs.length; setLoadingMsg(msgs[i]) }, ms)
+  }
+  const stopMsgs = () => { clearInterval(msgTimer.current); setLoadingMsg("") }
+
+  // ── Step 1: Generate creative direction via Claude ──────────────────────────
+
+  const gerarPrompt = async () => {
+    if (!ideia.trim()) { setError("Digite o tema da sua arte antes de continuar."); return }
+    setError(null); setLoadingPrompt(true); setPromptParts(null)
+    setImageUrl(null); setAudit(null); setEditMode(false); setSelectedHist(null)
+    startMsgs(MSG_PROMPT)
+
+    try {
+      const es = ESTILOS[estilo]
+      const ft = FORMATOS[formato]
+
+      const systemPrompt = `You are a world-class creative director specializing in ultra-premium luxury medical content for social media. Transform simple ideas into cinematic, editorial-grade visual prompts.
+
+${VISUAL_IDENTITY}
+
+Return ONLY valid JSON. No markdown. No code blocks. No explanation.`
+
+      const userMsg = `Creative direction request:
+THEME: ${ideia}
+FORMAT: ${ft.label} (${ft.ratio} — ${ft.desc})
+STYLE: ${es.label} — ${es.prompt}
+
+Generate structured creative direction as JSON with exactly these fields:
+{
+  "conceito": "Visual concept — what the image represents and communicates (2-3 sentences in Portuguese)",
+  "direcao": "Artistic direction — mood, tone, feeling, visual atmosphere (2-3 sentences in Portuguese)",
+  "composicao": "Composition — specific layout for this format, element placement (2-3 sentences in Portuguese)",
+  "iluminacao": "Lighting and texture — specific technical lighting (2-3 sentences in Portuguese)",
+  "tipografia": "Typography — headline suggestion in Portuguese + font style description (2-3 sentences)",
+  "elementos": "Visual elements — specific objects, symbols, materials to include (2-3 sentences in Portuguese)",
+  "negativo": "Negative prompt — what to strictly avoid in this image (1-2 sentences in Portuguese)",
+  "promptFinal": "The complete unified prompt IN ENGLISH for image generation — detailed, cinematographic, technical, 150-200 words combining all the above with the fixed visual identity"
+}`
+
+      const res  = await fetch("/api/roteiros", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6", max_tokens: 1400,
+          system: systemPrompt,
+          messages: [{ role: "user", content: userMsg }],
+        }),
+      })
+
+      const data = await res.json()
+      const raw  = (data.content?.[0]?.text ?? "{}").replace(/```json|```/g, "").trim()
+      const idx  = raw.indexOf("{")
+      const parsed = JSON.parse(idx >= 0 ? raw.slice(idx) : raw) as PromptParts
+      setPromptParts(parsed)
+      setEditedPrompt(parsed.promptFinal)
+    } catch (e) {
+      setError("Erro ao gerar direção criativa: " + String(e))
+    } finally {
+      stopMsgs(); setLoadingPrompt(false)
     }
-    const onUp = () => {
-      window.removeEventListener('mousemove', onMove)
-      window.removeEventListener('mouseup',   onUp)
-      window.removeEventListener('touchmove', onMove)
-      window.removeEventListener('touchend',  onUp)
-    }
-    window.addEventListener('mousemove', onMove)
-    window.addEventListener('mouseup',   onUp)
-    window.addEventListener('touchmove', onMove, { passive: false })
-    window.addEventListener('touchend',  onUp)
   }
 
-  return (
-    <div
-      style={{
-        ...style,
-        transform: `translate(${off.x}px, ${off.y}px)`,
-        cursor:      enabled ? 'move'   : undefined,
-        outline:     enabled ? '1.5px dashed rgba(200,168,76,0.55)' : 'none',
-        userSelect:  enabled ? 'none'   : undefined,
-        touchAction: enabled ? 'none'   : undefined,
-      } as React.CSSProperties}
-      onMouseDown={enabled ? (e) => { e.preventDefault(); e.stopPropagation(); beginDrag(e.clientX, e.clientY) } : undefined}
-      onTouchStart={enabled ? (e) => { e.stopPropagation(); beginDrag(e.touches[0].clientX, e.touches[0].clientY) } : undefined}
-    >
-      {children}
-    </div>
-  )
-}
+  // ── Step 2: Send to image generation API ───────────────────────────────────
 
-// ─── Default slides ───────────────────────────────────────────────────────────
-function createDefaultSlides(tipo: Tipo, n: number): SlideData[] {
-  if (tipo === 'unica') return [{ id: 1, tipo: 'capa', headline: 'Título do *Post*', subtitulo: 'INFORMAÇÃO', corpo: '', fotoIndex: null }]
+  const gerarImagem = async () => {
+    const prompt = editMode ? editedPrompt : (promptParts?.promptFinal ?? "")
+    if (!prompt) return
+    setError(null); setLoadingImage(true); setImageUrl(null); setAudit(null)
+    startMsgs(MSG_IMAGE, 2500)
 
-  const slides: SlideData[] = []
-  slides.push({ id: 1, tipo: 'capa', headline: 'Título do *Carrossel*', subtitulo: 'INFORMAÇÃO', corpo: '', fotoIndex: null })
+    try {
+      const res  = await fetch("/api/gerar-imagem", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt, formato: FORMATOS[formato].apiRatio, modelo }),
+      })
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
+      if (!data.image) throw new Error("Nenhuma imagem retornada pela API.")
 
-  for (let i = 2; i <= n - 1; i++) {
-    const li = ((i - 2) % 4) + 1
-    const num = String(i - 1).padStart(2, '0')
-    if (li === 1) {
-      slides.push({ id: i, tipo: 'conteudo', fotoIndex: null, headline: '', subtitulo: `${num} — A CIÊNCIA`, corpo: 'Se fosse só força de vontade, os medicamentos não funcionariam. Mas eles funcionam — e *muito bem*.' })
-    } else if (li === 2) {
-      slides.push({ id: i, tipo: 'conteudo', fotoIndex: null, headline: `Os *mecanismos* por trás`, subtitulo: `${num} — OS FATOS`, corpo: '', items: [
-        { titulo: 'Tópico A', descricao: 'Descrição concisa do primeiro ponto relevante ao tema.' },
-        { titulo: 'Tópico B', descricao: 'Descrição concisa do segundo ponto relevante ao tema.' },
-        { titulo: 'Tópico C', descricao: 'Descrição concisa do terceiro ponto relevante ao tema.' },
-        { titulo: 'Tópico D', descricao: 'Descrição concisa do quarto ponto relevante ao tema.' },
-      ]})
-    } else if (li === 3) {
-      slides.push({ id: i, tipo: 'conteudo', fotoIndex: null, headline: `*Adaptação* Metabólica`, subtitulo: `${num} — A EVIDÊNCIA`, corpo: '', fonte: 'New England Journal of Medicine', stats: [
-        { valor: '−500', unidade: 'kcal', descricao: 'Redução do gasto energético diário após perda de peso' },
-        { valor: '6×',   unidade: 'mais', descricao: 'Aumento da fome após 6 meses de restrição calórica' },
-        { valor: '95',   unidade: '%',    descricao: 'Reganham o peso perdido em até 5 anos' },
-      ]})
-    } else {
-      slides.push({ id: i, tipo: 'conteudo', fotoIndex: null, headline: `Ponto *${i - 1}*`, subtitulo: `${num} — ENTENDA`, corpo: 'O corpo tem mecanismos de defesa contra a perda de peso. Entender isso muda a forma de tratar.' })
+      setImageUrl(data.image)
+      setSelectedHist(null)
+
+      const newItem: HistoryItem = {
+        id: Date.now(), imageUrl: data.image, prompt,
+        formato: FORMATOS[formato].label, estilo: ESTILOS[estilo].label,
+        audit: "", timestamp: new Date().toLocaleTimeString("pt-BR", { hour:"2-digit", minute:"2-digit" }),
+      }
+      setHistory(prev => [newItem, ...prev].slice(0, 5))
+      auditarImagem(prompt, newItem.id)
+    } catch (e) {
+      setError("Erro ao gerar imagem: " + String(e))
+    } finally {
+      stopMsgs(); setLoadingImage(false)
     }
   }
 
-  slides.push({
-    id: n, tipo: 'cta',
-    headline: 'SALVE *ESTE POST*',
-    subtitulo: 'GOSTOU DESTE CONTEÚDO?',
-    corpo: '📌 Salve para ter esta informação sempre à mão|📤 Compartilhe com quem precisa ler isso agora|💬 Comente: o que mais te surpreendeu?',
-    fotoIndex: null,
-  })
+  // ── Step 3: Visual audit ────────────────────────────────────────────────────
 
-  return slides
-}
+  const auditarImagem = useCallback(async (prompt: string, histId: number) => {
+    setLoadingAudit(true)
+    try {
+      const res  = await fetch("/api/roteiros", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6", max_tokens: 300,
+          messages: [{
+            role: "user",
+            content: `You are a creative director reviewing an AI-generated medical image. Prompt used: "${prompt.slice(0, 500)}".
 
-// ─── SlideCanvas ──────────────────────────────────────────────────────────────
-interface CanvasProps {
-  slide: SlideData; formato: Formato; fotos: string[]
-  logo: string | null; totalSlides: number; scale: number
-  dragMode?: boolean
-  offsets?:  OffsetMap
-  onDrag?:   (key: string, x: number, y: number) => void
-  paleta?:   PaletaId
-  estrutura?: EstruturaId
-  tipografia?: TipografiaId
-}
-
-function SlideCanvas({ slide, formato, fotos, logo, totalSlides, scale, dragMode = false, offsets = {}, onDrag = () => {}, paleta = 'dourado', estrutura = 'classico', tipografia = 'montserrat' }: CanvasProps) {
-  const { w, h } = FORMATOS_CONFIG[formato]
-  const foto = slide.fotoIndex !== null ? (fotos[slide.fotoIndex] ?? null) : null
-  const li = ((slide.id - 2) % 4) + 1
-  const P = PALETAS[paleta]?.cores ?? C  // active palette
-  const T = TIPOGRAFIAS[tipografia] ?? TIPOGRAFIAS['montserrat']  // active typography
-
-  const base: React.CSSProperties = {
-    width: w, height: h, position: 'relative', overflow: 'hidden',
-    fontFamily: T.sans,
-    transform: `scale(${scale})`, transformOrigin: 'top left', flexShrink: 0,
-  }
-
-  // Shared drag props for DragWrap
-  const dp = { offsets, onDrag, scale, enabled: dragMode }
-
-  const Counter = () => totalSlides > 1 ? (
-    <div style={{ position: 'absolute', top: 90, right: 52, background: 'rgba(0,0,0,0.55)', borderRadius: 40, padding: '10px 22px', color: P.w, fontSize: 22, fontWeight: 700, zIndex: 10 }}>
-      {slide.id}/{totalSlides}
-    </div>
-  ) : null
-
-  // ── CAPA — Split Layout ─────────────────────────────────────────────────
-  if (slide.tipo === 'capa' && estrutura === 'split') {
-    return (
-      <div style={{ width:w, height:h, position:'relative', overflow:'hidden', fontFamily: T.sans, transform:`scale(${scale})`, transformOrigin:'top left', flexShrink:0 }}>
-        <div style={{ position:'absolute', inset:0, background:P.bg }} />
-        {/* Right half — foto */}
-        {foto && (
-          <div style={{ position:'absolute', top:0, right:0, width:'52%', height:'100%', overflow:'hidden' }}>
-            <img src={foto} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'center top', opacity:0.85 }} />
-            <div style={{ position:'absolute', inset:0, background:`linear-gradient(to right, ${P.bg} 0%, rgba(0,0,0,0) 50%)` }} />
-          </div>
-        )}
-        {/* Vertical divider line */}
-        <div style={{ position:'absolute', left:'48%', top:'10%', bottom:'10%', width:2, background:`linear-gradient(to bottom, transparent, ${P.d2}, transparent)` }} />
-        {/* Left half — text */}
-        <DragWrap dragKey="tag" {...{offsets, onDrag, scale, enabled:dragMode}} style={{ position:'absolute', top:90, left:60, zIndex:5 }}>
-          <div style={{ display:'inline-block', padding:'8px 18px', border:`1px solid rgba(${P.d2.replace('#','').match(/.{2}/g)?.map(x=>parseInt(x,16)).join(',')},0.5)`, background:'rgba(0,0,0,0.5)', color:P.w, fontSize:18, fontWeight:700, letterSpacing:4, textTransform:'uppercase' as const }}>{slide.subtitulo||'INFORMAÇÃO'}</div>
-        </DragWrap>
-        <DragWrap dragKey="content" {...{offsets, onDrag, scale, enabled:dragMode}} style={{ position:'absolute', left:60, right:'54%', top:200, zIndex:5 }}>
-          <div style={{ color:P.d1, fontSize:22, fontWeight:700, letterSpacing:4, textTransform:'uppercase' as const, marginBottom:24 }}>A GRANDE QUESTÃO</div>
-          <Headline text={slide.headline||'Título do *Post*'} fs={86} lh={1.05} cn={6} pal={P} sans={T.sans} serif={T.serif} />
-          {slide.corpo && <div style={{ display:'flex', gap:20, marginTop:44, alignItems:'flex-start' }}>
-            <div style={{ width:4, flexShrink:0, background:`linear-gradient(to bottom,${P.d2},transparent)`, minHeight:72 }} />
-            <div style={{ color:P.wMid, fontSize:32, fontStyle:'italic', lineHeight:1.5, fontFamily: T.serif, overflow:'hidden', display:'-webkit-box', WebkitLineClamp:3, WebkitBoxOrient:'vertical' as const }}>"{slide.corpo}"</div>
-          </div>}
-        </DragWrap>
-        <DragWrap dragKey="footer" {...{offsets, onDrag, scale, enabled:dragMode}} style={{ position:'absolute', bottom:0, left:0, right:0, zIndex:5 }}>
-          <div style={{ padding:'32px 60px', background:`linear-gradient(to top,${P.bg} 60%,transparent)`, display:'flex', alignItems:'center', justifyContent:logo?'flex-end':'center' }}>
-            {logo && <div style={{ background:'transparent', display:'inline-block' }}><img src={logo} alt="" style={{ height:90, maxWidth:280, objectFit:'contain' , display:'block' }} /></div>}
-          </div>
-        </DragWrap>
-      </div>
-    )
-  }
-
-  // ── CAPA — Topo Bold Layout ───────────────────────────────────────────────
-  if (slide.tipo === 'capa' && estrutura === 'topo-bold') {
-    return (
-      <div style={{ width:w, height:h, position:'relative', overflow:'hidden', fontFamily: T.sans, transform:`scale(${scale})`, transformOrigin:'top left', flexShrink:0 }}>
-        <div style={{ position:'absolute', inset:0, background:P.bg }} />
-        {foto && (<>
-          <img src={foto} alt="" style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', objectPosition:'center', opacity:0.35 }} />
-          <div style={{ position:'absolute', inset:0, background:`linear-gradient(to bottom,${P.bg} 0%,rgba(0,0,0,0) 40%,${P.bg} 80%)` }} />
-        </>)}
-        {/* Top color bar */}
-        <div style={{ position:'absolute', top:0, left:0, right:0, height:8, background:`linear-gradient(to right,${P.d2},${P.d1},transparent)` }} />
-        {/* Top section — headline */}
-        <DragWrap dragKey="content" {...{offsets, onDrag, scale, enabled:dragMode}} style={{ position:'absolute', top:60, left:80, right:80, zIndex:5 }}>
-          <div style={{ display:'flex', alignItems:'center', gap:16, marginBottom:32 }}>
-            <div style={{ width:44, height:44, background:P.d2, display:'flex', alignItems:'center', justifyContent:'center' }}>
-              <div style={{ color:P.bg, fontSize:20, fontWeight:900 }}>+</div>
-            </div>
-            <div style={{ color:P.d2, fontSize:18, fontWeight:700, letterSpacing:4, textTransform:'uppercase' as const }}>{slide.subtitulo||'INFORMAÇÃO'}</div>
-          </div>
-          <Headline text={slide.headline||'Título do *Post*'} fs={100} lh={1.0} cn={4} pal={P} sans={T.sans} serif={T.serif} />
-        </DragWrap>
-        {/* Bottom section */}
-        <DragWrap dragKey="footer" {...{offsets, onDrag, scale, enabled:dragMode}} style={{ position:'absolute', bottom:0, left:0, right:0, zIndex:5 }}>
-          <div style={{ padding:'0 80px 60px', background:`linear-gradient(to top,${P.bg} 70%,transparent)` }}>
-            {slide.corpo && <div style={{ display:'flex', gap:20, marginBottom:32, alignItems:'flex-start' }}>
-              <div style={{ width:4, flexShrink:0, background:`linear-gradient(to bottom,${P.d2},transparent)`, minHeight:72 }} />
-              <div style={{ color:P.wMid, fontSize:36, fontStyle:'italic', lineHeight:1.5, fontFamily: T.serif, overflow:'hidden', display:'-webkit-box', WebkitLineClamp:3, WebkitBoxOrient:'vertical' as const }}>"{slide.corpo}"</div>
-            </div>}
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-              <div style={{ color:P.d1, fontSize:20, fontWeight:700, letterSpacing:2 }}>DR. BRUNO GUSTAVO</div>
-              {logo && <div style={{ background:'transparent', display:'inline-block' }}><img src={logo} alt="" style={{ height:80, maxWidth:240, objectFit:'contain' , display:'block' }} /></div>}
-            </div>
-          </div>
-        </DragWrap>
-      </div>
-    )
-  }
-
-  // ── CAPA — Minimal Layout ─────────────────────────────────────────────────
-  if (slide.tipo === 'capa' && estrutura === 'minimal') {
-    return (
-      <div style={{ width:w, height:h, position:'relative', overflow:'hidden', fontFamily: T.sans, transform:`scale(${scale})`, transformOrigin:'top left', flexShrink:0, background:P.bg }}>
-        {/* Geometric accent */}
-        <div style={{ position:'absolute', top:0, right:0, width:'40%', height:'40%', background:`linear-gradient(135deg,${P.d2}18,transparent)`, borderBottom:`1px solid ${P.d2}22` }} />
-        <div style={{ position:'absolute', bottom:0, left:0, width:'40%', height:'30%', background:`linear-gradient(315deg,${P.d2}12,transparent)` }} />
-        {/* Horizontal lines */}
-        <div style={{ position:'absolute', top:'28%', left:80, right:80, height:1, background:`linear-gradient(to right,${P.d2},${P.d1}44,transparent)` }} />
-        <div style={{ position:'absolute', top:'72%', left:80, right:80, height:1, background:`linear-gradient(to right,transparent,${P.d1}44,${P.d2})` }} />
-        {/* Tag */}
-        <DragWrap dragKey="tag" {...{offsets, onDrag, scale, enabled:dragMode}} style={{ position:'absolute', top:80, left:80, zIndex:5 }}>
-          <div style={{ color:P.d2, fontSize:18, fontWeight:700, letterSpacing:6, textTransform:'uppercase' as const }}>● {slide.subtitulo||'INFORMAÇÃO'}</div>
-        </DragWrap>
-        {/* Center — headline */}
-        <DragWrap dragKey="content" {...{offsets, onDrag, scale, enabled:dragMode}} style={{ position:'absolute', left:80, right:80, top:'30%', zIndex:5 }}>
-          <Headline text={slide.headline||'Título do *Post*'} fs={106} lh={1.0} cn={5} pal={P} sans={T.sans} serif={T.serif} />
-          {slide.corpo && <div style={{ marginTop:48, color:P.wMid, fontSize:38, fontStyle:'italic', lineHeight:1.5, fontFamily: T.serif, overflow:'hidden', display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical' as const }}>"{slide.corpo}"</div>}
-        </DragWrap>
-        {/* Footer */}
-        <DragWrap dragKey="footer" {...{offsets, onDrag, scale, enabled:dragMode}} style={{ position:'absolute', bottom:60, left:80, right:80, zIndex:5 }}>
-          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-            <div>
-              <div style={{ color:P.d2, fontSize:22, fontWeight:900, letterSpacing:1 }}>DR. BRUNO GUSTAVO</div>
-              <div style={{ color:P.wFaint, fontSize:16, letterSpacing:3, marginTop:4 }}>MEDICINA BASEADA EM EVIDÊNCIA</div>
-            </div>
-            {logo && <div style={{ background:'transparent', display:'inline-block' }}><img src={logo} alt="" style={{ height:90, maxWidth:260, objectFit:'contain' , display:'block' }} /></div>}
-          </div>
-        </DragWrap>
-      </div>
-    )
-  }
-
-  // ── CAPA — Clássico (estrutura padrão) ────────────────────────────────────
-  // ── CAPA ──────────────────────────────────────────────────────────────────
-  if (slide.tipo === 'capa') {
-    return (
-      <div style={base}>
-        <div style={{ position: 'absolute', inset: 0, background: P.bg }} />
-        {foto && (<>
-          <img src={foto} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', opacity: 0.75 }} />
-          <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(to bottom, rgba(18,10,4,0.15) 0%, rgba(18,10,4,0.35) 55%, ${P.bg} 88%)` }} />
-        </>)}
-
-        {/* Tag */}
-        <DragWrap dragKey="tag" {...dp} style={{ position: 'absolute', top: 90, left: 72, zIndex: 5 }}>
-          <div style={{ display: 'inline-block', padding: '10px 22px', border: `1px solid rgba(184,151,106,0.55)`, background: 'rgba(0,0,0,0.5)', color: P.w, fontSize: 20, fontWeight: 700, letterSpacing: 4, textTransform: 'uppercase' as const }}>
-            {slide.subtitulo || 'INFORMAÇÃO'}
-          </div>
-        </DragWrap>
-        <Counter />
-
-        {/* Conteúdo principal */}
-        <DragWrap dragKey="content" {...dp} style={{ position: 'absolute', left: 90, right: 90, top: foto ? 240 : 200, zIndex: 5 }}>
-          <div style={{ color: P.d1, fontSize: 26, fontWeight: 700, letterSpacing: 4, textTransform: 'uppercase' as const, marginBottom: 28 }}>A GRANDE QUESTÃO</div>
-          <Headline text={slide.headline || 'Título do *Post*'} fs={92} lh={1.04} cn={5}  pal={P} sans={T.sans} serif={T.serif} />
-          {slide.corpo && (
-            <div style={{ display: 'flex', gap: 24, marginTop: 52, alignItems: 'flex-start' }}>
-              <div style={{ width: 4, flexShrink: 0, background: `linear-gradient(to bottom, ${P.d2}, transparent)`, minHeight: 88 }} />
-              <div style={{ color: P.wMid, fontSize: 36, fontStyle: 'italic', lineHeight: 1.5, fontFamily: T.serif, ...clamp(3) }}>
-                "{slide.corpo}"
-              </div>
-            </div>
-          )}
-        </DragWrap>
-
-        {/* Rodapé */}
-        <DragWrap dragKey="footer" {...dp} style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 5 }}>
-          <div style={{ padding: '40px 72px', background: `linear-gradient(to top, ${P.bg} 60%, transparent)`, display: 'flex', alignItems: 'center', justifyContent: logo ? 'flex-end' : 'center' }}>
-            {logo && <div style={{ background:'transparent' }}><img src={logo} alt="" style={{ height: 110, maxWidth: 320, objectFit: 'contain', display: 'block' }} /></div>}
-          </div>
-        </DragWrap>
-      </div>
-    )
-  }
-
-  // ── CTA ───────────────────────────────────────────────────────────────────
-  if (slide.tipo === 'cta') {
-    const actions = slide.corpo.split('|').filter(Boolean)
-    return (
-      <div style={base}>
-        <div style={{ position: 'absolute', inset: 0, background: P.bg }} />
-        {foto && (<>
-          <img src={foto} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', opacity: 0.88 }} />
-          <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(to bottom, rgba(18,10,4,0.25) 0%, ${P.bg} 65%)` }} />
-        </>)}
-
-        <DragWrap dragKey="content" {...dp} style={{ position: 'absolute', left: 90, right: 90, top: 140, zIndex: 5 }}>
-          <div style={{ color: P.d1, fontSize: 24, fontWeight: 700, letterSpacing: 5, textTransform: 'uppercase' as const, marginBottom: 36, textAlign: 'center' }}>
-            {slide.subtitulo}
-          </div>
-          <div style={{ textAlign: 'center', marginBottom: 14 }}>
-            <Headline text={slide.headline} fs={96} lh={1.05} cn={2}  pal={P} sans={T.sans} serif={T.serif} />
-          </div>
-          <div style={{ width: 100, height: 3, background: P.d2, margin: '36px auto' }} />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-            {actions.map((action, i) => {
-              const [emoji, ...rest] = action.split(' ')
-              const restText = rest.join(' ')
-              const parts = restText.split(':')
-              return (
-                <div key={i} style={{ padding: '22px 30px', background: 'rgba(0,0,0,0.45)', border: `1px solid rgba(184,151,106,0.18)`, display: 'flex', alignItems: 'center', gap: 20 }}>
-                  <span style={{ fontSize: 36, flexShrink: 0 }}>{emoji}</span>
-                  <span style={{ color: P.w, fontSize: 34, lineHeight: 1.4, flex: 1 }}>
-                    {parts[0]}{parts.length > 1 && <><span>: </span><strong style={{ color: P.d2 }}>{parts.slice(1).join(':')}</strong></>}
-                  </span>
-                </div>
-              )
-            })}
-          </div>
-        </DragWrap>
-
-        <DragWrap dragKey="footer" {...dp} style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 5 }}>
-          <div style={{ padding: '44px 90px', textAlign: 'center', background: `linear-gradient(to top, ${P.bg} 65%, transparent)` }}>
-            <div style={{ color: P.d2, fontSize: 42, fontWeight: 900, letterSpacing: 1, marginBottom: 10 }}>{HANDLE}</div>
-            <div style={{ color: P.wFaint, fontSize: 22, letterSpacing: 3 }}>{ASSIN}</div>
-            {logo && <div style={{ marginTop: 18, display: 'inline-block', background: 'transparent' }}><img src={logo} alt="" style={{ height: 110, maxWidth: 320, objectFit: 'contain', display: 'block' }} /></div>}
-          </div>
-        </DragWrap>
-      </div>
-    )
-  }
-
-  // ── LAYOUT 1 — Citação ────────────────────────────────────────────────────
-  if (li === 1) {
-    return (
-      <div style={base}>
-        <div style={{ position: 'absolute', inset: 0, background: P.bg }} />
-        {foto ? (<>
-          <img src={foto} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', opacity: 0.75 }} />
-          <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(180deg, rgba(18,10,4,0.5) 0%, rgba(18,10,4,0.15) 35%, ${P.bg} 82%)` }} />
-        </>) : (
-          <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse at 65% 25%, ${P.bgMid} 0%, ${P.bg} 68%)` }} />
-        )}
-
-        <DragWrap dragKey="tag" {...dp} style={{ position: 'absolute', top: 90, left: 90, zIndex: 5 }}>
-          <div style={{ color: P.d1, fontSize: 22, fontWeight: 700, letterSpacing: 4, textTransform: 'uppercase' as const }}>{slide.subtitulo}</div>
-        </DragWrap>
-        {!logo && totalSlides <= 1 && <div style={{ position: 'absolute', top: 90, right: 90, color: P.d2, fontSize: 21, fontWeight: 700, letterSpacing: 2 }}>{NOME}</div>}
-        <Counter />
-
-        {/* Aspas decorativas */}
-        <div style={{ position: 'absolute', left: 56, top: '24%', color: P.d1, fontSize: 220, lineHeight: 1, opacity: 0.3, fontFamily: T.serif, userSelect: 'none' }}>"</div>
-
-        {/* Citação */}
-        <DragWrap dragKey="content" {...dp} style={{ position: 'absolute', left: 90, right: 90, top: '33%', bottom: 160, zIndex: 5 }}>
-          <div style={{ color: P.w, fontSize: 62, fontStyle: 'italic', lineHeight: 1.38, fontFamily: T.serif, fontWeight: 400, ...clamp(7) }}>
-            {slide.corpo.split(/\*(.*?)\*/).map((part, i) =>
-              i % 2 === 1
-                ? <strong key={i} style={{ color: P.d2, fontWeight: 700 }}>{part}</strong>
-                : part
-            )}
-          </div>
-        </DragWrap>
-
-        <DragWrap dragKey="footer" {...dp} style={{ position: 'absolute', bottom: 64, right: 90, zIndex: 5 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
-            <div style={{ width: 56, height: 1, background: P.d1 }} />
-            {!logo && <div style={{ color: P.d1, fontSize: 21, fontWeight: 700, letterSpacing: 2 }}>{NOME}</div>}
-            {logo && <div style={{ background:'transparent' }}><img src={logo} alt="" style={{ height: 110, maxWidth: 320, objectFit: 'contain', display: 'block' }} /></div>}
-          </div>
-        </DragWrap>
-      </div>
-    )
-  }
-
-  // ── LAYOUT 2 — Boxes 2×2 ─────────────────────────────────────────────────
-  if (li === 2) {
-    const items = slide.items ?? []
-    return (
-      <div style={base}>
-        <div style={{ position: 'absolute', inset: 0, background: P.bg }} />
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 320, background: `linear-gradient(to bottom, ${P.bgMid} 0%, transparent 100%)` }} />
-
-        <DragWrap dragKey="tag" {...dp} style={{ position: 'absolute', top: 90, left: 90, zIndex: 5 }}>
-          <div style={{ color: P.wFaint, fontSize: 21, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase' as const }}>{slide.subtitulo}</div>
-        </DragWrap>
-        {!logo && totalSlides <= 1 && <div style={{ position: 'absolute', top: 90, right: 90, color: P.d2, fontSize: 21, fontWeight: 700, letterSpacing: 2 }}>{NOME}</div>}
-        <Counter />
-
-        <DragWrap dragKey="content" {...dp} style={{ position: 'absolute', left: 90, right: 90, top: 116, zIndex: 5 }}>
-          <Headline text={slide.headline} fs={72} lh={1.1} cn={2}  pal={P} sans={T.sans} serif={T.serif} />
-        </DragWrap>
-
-            {/* Grid 2×2 — cada box arrastável individualmente */}
-        <div style={{ position: 'absolute', left: 60, right: 60, top: 310, bottom: 110, zIndex: 5, display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', gap: 20 }}>
-          {(items.length > 0 ? items : [
-            { titulo: 'Tópico A', descricao: 'Descrição do primeiro ponto.' },
-            { titulo: 'Tópico B', descricao: 'Descrição do segundo ponto.' },
-            { titulo: 'Tópico C', descricao: 'Descrição do terceiro ponto.' },
-            { titulo: 'Tópico D', descricao: 'Descrição do quarto ponto.' },
-          ]).slice(0, 4).map((item, i) => (
-            <DragWrap key={i} dragKey={`box-${i}`} {...dp} style={{ overflow: 'hidden' }}>
-              <div style={{ height: '100%', background: P.bgCard, border: `1px solid rgba(184,151,106,0.2)`, borderRadius: 3, padding: '32px 32px' }}>
-                <div style={{ color: P.d2, fontSize: 34, fontWeight: 800, marginBottom: 16, ...clamp(2) }}>{item.titulo}</div>
-                <div style={{ color: P.wMid, fontSize: 28, lineHeight: 1.5, ...clamp(5) }}>{item.descricao}</div>
-              </div>
-            </DragWrap>
-          ))}
-        </div>
-
-        <DragWrap dragKey="footer" {...dp} style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 5 }}>
-          <div style={{ padding: '22px 90px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ color: P.wFaint, fontSize: 20 }}>{HANDLE}</div>
-            {logo && <div style={{ background:'transparent' }}><img src={logo} alt="" style={{ height: 110, maxWidth: 320, objectFit: 'contain', display: 'block' }} /></div>}
-          </div>
-        </DragWrap>
-      </div>
-    )
-  }
-
-  // ── LAYOUT 3 — Dados Científicos ──────────────────────────────────────────
-  if (li === 3) {
-    const stats = slide.stats ?? []
-    return (
-      <div style={base}>
-        <div style={{ position: 'absolute', inset: 0, background: P.bg }} />
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 360, background: `linear-gradient(135deg, ${P.bgMid} 0%, ${P.bg} 100%)` }} />
-
-        <DragWrap dragKey="tag" {...dp} style={{ position: 'absolute', top: 90, left: 72, zIndex: 5 }}>
-          <div>
-            {slide.fonte && <SourceBadge fonte={slide.fonte} pal={P} />}
-            <div style={{ color: P.wFaint, fontSize: 20, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase' as const, marginTop: 14 }}>{slide.subtitulo}</div>
-          </div>
-        </DragWrap>
-        <Counter />
-
-        <DragWrap dragKey="content" {...dp} style={{ position: 'absolute', left: 90, right: 90, top: 180, zIndex: 5 }}>
-          <Headline text={slide.headline} fs={78} lh={1.08} cn={2}  pal={P} sans={T.sans} serif={T.serif} />
-          <div style={{ width: 56, height: 3, background: P.d2, marginTop: 26 }} />
-        </DragWrap>
-
-        {/* Corpo + stats */}
-        <DragWrap dragKey="body" {...dp} style={{ position: 'absolute', left: 60, right: 60, top: 390, bottom: 120, zIndex: 5 }}>
-          <div style={{ width: '100%', height: '100%', display: 'flex', gap: 0 }}>
-            <div style={{ flex: 1, paddingRight: 36, paddingTop: 8, display: 'flex', flexDirection: 'column', gap: 20 }}>
-              {slide.corpo && (
-                <div style={{ color: P.wMid, fontSize: 34, lineHeight: 1.6, ...clamp(5) }}>{slide.corpo}</div>
-              )}
-              {slide.fonte && (
-                <div style={{ color: P.wFaint, fontSize: 18, textTransform: 'uppercase' as const, letterSpacing: 2, marginTop: 'auto' }}>{slide.fonte}</div>
-              )}
-            </div>
-            <div style={{ width: 2, background: `linear-gradient(to bottom, ${P.d2}, transparent)`, flexShrink: 0, marginRight: 36, alignSelf: 'stretch' }} />
-            <div style={{ width: 330, display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <div style={{ color: P.d1, fontSize: 17, fontWeight: 700, letterSpacing: 4, textTransform: 'uppercase' as const, marginBottom: 4 }}>DADOS DO ESTUDO</div>
-              {stats.map((stat, i) => (
-                <div key={i} style={{ background: P.bgCard, border: `1px solid rgba(184,151,106,0.18)`, borderRadius: 3, padding: '20px 22px' }}>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
-                    <div style={{ color: P.d2, fontSize: 56, fontWeight: 900, lineHeight: 1 }}>{stat.valor}</div>
-                    {stat.unidade && <div style={{ color: P.d1, fontSize: 26, fontWeight: 700 }}>{stat.unidade}</div>}
-                  </div>
-                  <div style={{ color: P.wMid, fontSize: 24, lineHeight: 1.4, ...clamp(3) }}>{stat.descricao}</div>
-                </div>
-              ))}
-              <div style={{ background: 'rgba(200,168,76,0.08)', border: `1px solid rgba(200,168,76,0.35)`, borderRadius: 3, padding: '16px 22px' }}>
-                <div style={{ color: P.wFaint, fontSize: 15, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase' as const, marginBottom: 6 }}>SIGNIFICÂNCIA</div>
-                <div style={{ color: P.d2, fontSize: 34, fontWeight: 900 }}>p &lt; 0,001</div>
-              </div>
-            </div>
-          </div>
-        </DragWrap>
-
-        <DragWrap dragKey="footer" {...dp} style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 5 }}>
-          <div style={{ padding: '20px 90px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: `1px solid rgba(184,151,106,0.1)` }}>
-            <div style={{ color: P.wFaint, fontSize: 17, textTransform: 'uppercase' as const, letterSpacing: 2 }}>{slide.fonte ?? ''}</div>
-            {logo && <div style={{ background:'transparent' }}><img src={logo} alt="" style={{ height: 110, maxWidth: 320, objectFit: 'contain', display: 'block' }} /></div>}
-          </div>
-        </DragWrap>
-      </div>
-    )
-  }
-
-  // ── LAYOUT 4 — Editorial ──────────────────────────────────────────────────
-  return (
-    <div style={base}>
-      <div style={{ position: 'absolute', inset: 0, background: P.bg }} />
-      {foto && (
-        <div style={{ position: 'absolute', top: 0, right: 0, width: '46%', height: '46%', overflow: 'hidden' }}>
-          <img src={foto} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.38 }} />
-          <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(to left, transparent 0%, ${P.bg} 78%)` }} />
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '60%', background: `linear-gradient(to top, ${P.bg}, transparent)` }} />
-        </div>
-      )}
-
-      {/* Tarja dourada topo */}
-      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 6, background: `linear-gradient(to right, ${P.d2} 0%, ${P.d1} 40%, transparent 72%)` }} />
-
-      <DragWrap dragKey="tag" {...dp} style={{ position: 'absolute', top: 90, left: 90, zIndex: 5 }}>
-        <div style={{ color: P.wFaint, fontSize: 22, fontWeight: 700, letterSpacing: 4, textTransform: 'uppercase' as const }}>{slide.subtitulo}</div>
-      </DragWrap>
-      {!logo && totalSlides <= 1 && <div style={{ position: 'absolute', top: 90, right: 90, color: P.d2, fontSize: 21, fontWeight: 700, letterSpacing: 2 }}>{NOME}</div>}
-      <Counter />
-
-      <DragWrap dragKey="content" {...dp} style={{ position: 'absolute', left: 90, right: foto ? 400 : 72, top: 116, bottom: 150, zIndex: 5 }}>
-        <Headline text={slide.headline} fs={78} lh={1.1} cn={3}  pal={P} sans={T.sans} serif={T.serif} />
-        <div style={{ width: '100%', height: 2, background: `linear-gradient(to right, ${P.d2} 0%, rgba(200,168,76,0.08) 100%)`, margin: '42px 0' }} />
-        <div style={{ color: P.wMid, fontSize: 40, lineHeight: 1.6, ...clamp(6) }}>{slide.corpo}</div>
-        {slide.fonte && (
-          <div style={{ display: 'flex', gap: 20, marginTop: 44, alignItems: 'flex-start' }}>
-            <div style={{ width: 4, flexShrink: 0, background: `linear-gradient(to bottom, ${P.d2}, transparent)`, minHeight: 72 }} />
-            <div style={{ color: P.d1, fontSize: 24, fontStyle: 'italic', lineHeight: 1.5, fontFamily: T.serif }}>Fonte: {slide.fonte}</div>
-          </div>
-        )}
-      </DragWrap>
-
-      {/* Número decorativo */}
-      <div style={{ position: 'absolute', bottom: 80, right: 60, color: P.d2, fontSize: 200, fontWeight: 900, opacity: 0.05, lineHeight: 1, userSelect: 'none' }}>
-        {String(slide.id - 1).padStart(2, '0')}
-      </div>
-
-      <DragWrap dragKey="footer" {...dp} style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 5 }}>
-        <div style={{ padding: '22px 90px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: `1px solid rgba(184,151,106,0.12)` }}>
-          {logo
-            ? <div><img src={logo} alt="" style={{ height: 110, maxWidth: 320, objectFit: 'contain', display: 'block' }} /></div>
-            : <div style={{ color: P.wFaint, fontSize: 20 }}>{HANDLE}</div>}
-        </div>
-      </DragWrap>
-    </div>
-  )
-}
-
-// ─── Página Principal ─────────────────────────────────────────────────────────
-export default function ImagensPage() {
-  const [tipo, setTipo]           = useState<Tipo>('carrossel')
-  const [formato, setFormato]     = useState<Formato>('feed-retrato')
-  const [numSlides, setNumSlides] = useState(6)
-  const [tema, setTema]           = useState('')
-  const [publico, setPublico]     = useState('')
-  const [slides, setSlides]       = useState<SlideData[]>(() => createDefaultSlides('carrossel', 6))
-  const [fotos, setFotos]         = useState<string[]>([])
-  const [logo, setLogo]           = useState<string | null>(null)
-  const [currentSlide, setCurrentSlide] = useState(0)
-  const [isGenerating, setIsGenerating] = useState(false)
-  const [editInstruction, setEditInstruction] = useState('')
-  const [isEditGenerating, setIsEditGenerating] = useState(false)
-  const [fotoCapa, setFotoCapa]   = useState<number | null>(null)
-  const [fotoCTA, setFotoCTA]     = useState<number | null>(null)
-  const [showPautas,     setShowPautas]     = useState(false)
-  const [paleta,         setPaleta]         = useState<PaletaId>('dourado')
-  const [tipografia,     setTipografia]     = useState<TipografiaId>('montserrat')
-  const [estrutura,      setEstrutura]      = useState<EstruturaId>('classico')
-  const [isGenAI,        setIsGenAI]        = useState(false)
-  const [genAIError,     setGenAIError]     = useState('')
-  useEffect(() => { if (typeof window === 'undefined') return; const t = new URLSearchParams(window.location.search).get('tema'); if (t) setTema(decodeURIComponent(t)) }, [])
-
-  // ── Drag state ──
-  const [dragMode, setDragMode]       = useState(false)
-  const [textOffsets, setTextOffsets] = useState<TextOffsets>({})
-  const [isCapturing, setIsCapturing] = useState(false)
-
-  // ── iOS save modal ──
-  const [saveModalUrl, setSaveModalUrl] = useState<string | null>(null)
-
-  const fotoRef = useRef<HTMLInputElement>(null)
-  const logoRef = useRef<HTMLInputElement>(null)
-
-  const [isMobile, setIsMobile] = useState(false)
-  useEffect(() => { setIsMobile(window.innerWidth < 768) }, [])
-  const PREVIEW_W = isMobile ? Math.min((typeof window !== 'undefined' ? window.innerWidth : 420) - 32, 380) : 400
-
-  // Atualiza offset de um elemento num slide específico
-  const updateDragOffset = useCallback((slideIdx: number, key: string, x: number, y: number) => {
-    setTextOffsets(prev => ({
-      ...prev,
-      [slideIdx]: { ...(prev[slideIdx] ?? {}), [key]: { x, y } },
-    }))
+Provide a brief visual audit in Brazilian Portuguese (3-4 sentences). Start with ✅ if likely successful or ⚠️ if issues expected. Evaluate: overall aesthetic quality expected, alignment with premium medical content brief, and one specific improvement suggestion.`,
+          }],
+        }),
+      })
+      const data = await res.json()
+      const text = data.content?.[0]?.text ?? "Auditoria não disponível."
+      setAudit(text)
+      setHistory(prev => prev.map(h => h.id === histId ? { ...h, audit: text } : h))
+    } catch {
+      setAudit("Auditoria não disponível.")
+    } finally {
+      setLoadingAudit(false)
+    }
   }, [])
 
-  const resetOffsets = () => setTextOffsets({})
+  // ── Utilities ───────────────────────────────────────────────────────────────
 
-  // ── Gerar imagem com IA — chamada direta do browser via Pollinations ──
-  const gerarImagemIA = async () => {
-    if (!tema.trim()) { alert('Defina o tema do post antes de gerar a imagem.'); return }
-    setIsGenAI(true)
-    setGenAIError('')
-    try {
-      const { w, h } = FORMATOS_CONFIG[formato]
-      // Gera prompt profissional via Claude antes de chamar Pollinations
-      let visualPrompt = tema
-      try {
-        const promptRes = await fetch('/api/roteiros', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            model: 'claude-sonnet-4-6',
-            max_tokens: 300,
-            messages: [{
-              role: 'user',
-              content:
-                'You are a professional AI image prompt engineer specializing in medical content photography.\n' +
-                'Create a single detailed image generation prompt in English for Flux/Stable Diffusion.\n\n' +
-                'MEDICAL THEME: ' + tema + '\n\n' +
-                'REQUIRED AESTHETIC (match exactly):\n' +
-                '- Dark moody background: deep browns #120a04 and #1c0f06, almost black\n' +
-                '- Warm golden bokeh lights in background, soft amber glows\n' +
-                '- Cinematic dramatic side lighting, chiaroscuro effect\n' +
-                '- Photorealistic professional medical photography\n' +
-                '- Subject: professional doctor or medical professional, elegant attire\n' +
-                '- Medical environment: laboratory, clinic or hospital softly out of focus\n' +
-                '- Luxury high-end editorial aesthetic\n' +
-                '- Depth of field, sharp subject, blurred background\n' +
-                '- Color palette: dark browns, warm golds, soft whites, deep shadows\n' +
-                '- Inspired by: dark luxury fashion photography meets medical documentary\n\n' +
-                'OUTPUT: Return ONLY the image prompt text, no explanation, no quotes, max 120 words.'
-            }]
-          }),
-        })
-        const promptData = await promptRes.json()
-        const generated  = promptData.content?.[0]?.text?.trim()
-        if (generated && generated.length > 20) {
-          visualPrompt = generated + ', no text, no watermarks, no logos, no captions'
-        }
-      } catch { /* usa tema direto como fallback */ }
-
-      const prompt = encodeURIComponent(visualPrompt)
-      const seed = Math.floor(Math.random() * 99999)
-      const url  = 'https://image.pollinations.ai/prompt/' + prompt +
-                   '?width=' + w + '&height=' + h + '&seed=' + seed + '&model=flux&nologo=true'
-
-      const res = await fetch(url)
-      if (!res.ok) throw new Error('Serviço indisponível (status ' + res.status + '). Tente novamente.')
-
-      const blob   = await res.blob()
-      const reader = new FileReader()
-      const dataUrl: string = await new Promise((resolve, reject) => {
-        reader.onload  = () => resolve(reader.result as string)
-        reader.onerror = reject
-        reader.readAsDataURL(blob)
-      })
-      setFotos(prev => [...prev, dataUrl])
-    } catch (err) {
-      setGenAIError('Erro: ' + String(err))
-    } finally {
-      setIsGenAI(false)
-    }
+  const downloadImage = () => {
+    const url = selectedHist?.imageUrl ?? imageUrl
+    if (!url) return
+    const a = document.createElement("a")
+    a.href = url; a.download = `diretor-criativo-${Date.now()}.png`; a.click()
   }
 
-  // ── Download / Save ──
-  // Abordagem de composição manual em canvas:
-  // 1. Esconde imgs + div de fundo escuro → html-to-image captura gradientes/texto com bg transparente
-  // 2. Compõe canvas: fundo escuro → foto (cover) → overlay html-to-image → logo (topo)
-  const downloadCurrentSlide = useCallback(async () => {
-    const slide = slides[currentSlide]
-    if (!slide) return
-    const { w, h } = FORMATOS_CONFIG[formato]
-    setIsCapturing(true)
-    await new Promise<void>(r => requestAnimationFrame(() => requestAnimationFrame(() => r())))
-
-    const wrapper = document.getElementById('slide-canvas-wrapper')
-    const inner   = wrapper?.firstElementChild as HTMLElement | null
-    if (!inner || !wrapper) { setIsCapturing(false); return }
-
-    const origTransform       = inner.style.transform
-    const origWrapperOverflow = wrapper.style.overflow
-    inner.style.transform     = 'none'
-    wrapper.style.overflow    = 'visible'
-    await new Promise<void>(r => requestAnimationFrame(() => requestAnimationFrame(() => r())))
-
-    // Determina qual src é a foto de fundo (vs. logo)
-    const photoSrc = (slide.fotoIndex !== null && slide.fotoIndex !== undefined)
-      ? (fotos[slide.fotoIndex] ?? null)
-      : null
-
-    // Captura geometria de cada <img> ANTES de escondê-las
-    const innerRect = inner.getBoundingClientRect()
-    const allImgs   = Array.from(inner.querySelectorAll('img')) as HTMLImageElement[]
-    const snapshots = allImgs.map(img => {
-      const r = img.getBoundingClientRect()
-      return {
-        src:            img.src,
-        x:              r.left - innerRect.left,
-        y:              r.top  - innerRect.top,
-        dw:             r.width,
-        dh:             r.height,
-        fit:            img.style.objectFit || 'cover',
-        pos:            img.style.objectPosition || 'center top',
-        alpha:          parseFloat(img.style.opacity || '1'),
-        isPhoto:        !!photoSrc && img.src === photoSrc,
-      }
-    })
-
-    // Esconde imgs + primeiro filho (div fundo escuro) para captura transparente
-    const darkBg = inner.firstElementChild as HTMLElement | null
-    allImgs.forEach(img => { img.style.visibility = 'hidden' })
-    if (darkBg) darkBg.style.visibility = 'hidden'
-
-    const restore = () => {
-      inner.style.transform    = origTransform
-      wrapper.style.overflow   = origWrapperOverflow
-      allImgs.forEach(img => { img.style.visibility = '' })
-      if (darkBg) darkBg.style.visibility = ''
-    }
-
-    try {
-      const { toCanvas } = await import('html-to-image')
-      // overlayCanvas: gradientes + texto + boxes — fundo transparente onde havia imgs/darkBg
-      const overlayCanvas = await toCanvas(inner, { width: w, height: h, pixelRatio: 1 })
-
-      const canvas = document.createElement('canvas')
-      canvas.width = w; canvas.height = h
-      const ctx = canvas.getContext('2d')!
-
-      const loadImg = (src: string) => new Promise<HTMLImageElement>((res, rej) => {
-        const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src
-      })
-
-      const blit = async (snap: typeof snapshots[number]) => {
-        if (!snap.src || snap.dw <= 0 || snap.dh <= 0) return
-        try {
-          const img = await loadImg(snap.src)
-          ctx.save(); ctx.globalAlpha = snap.alpha
-          if (snap.fit === 'cover') {
-            const sc = Math.max(snap.dw / img.width, snap.dh / img.height)
-            const sw = img.width * sc, sh = img.height * sc
-            const dx = snap.x + (snap.dw - sw) / 2
-            const dy = snap.pos.includes('top') ? snap.y : snap.y + (snap.dh - sh) / 2
-            ctx.beginPath(); ctx.rect(snap.x, snap.y, snap.dw, snap.dh); ctx.clip()
-            ctx.drawImage(img, dx, dy, sw, sh)
-          } else {
-            const sc = Math.min(snap.dw / img.width, snap.dh / img.height)
-            const sw = img.width * sc, sh = img.height * sc
-            ctx.drawImage(img, snap.x + (snap.dw - sw) / 2, snap.y + (snap.dh - sh) / 2, sw, sh)
-          }
-          ctx.restore()
-        } catch { ctx.restore() }
-      }
-
-      // Camada 1: fundo escuro sólido
-      ctx.fillStyle = '#08090e'; ctx.fillRect(0, 0, w, h)
-
-      // Camada 2: foto de fundo (abaixo do gradiente overlay)
-      for (const s of snapshots.filter(s => s.isPhoto)) await blit(s)
-
-      // Camada 3: gradientes + texto capturados (bg transparente)
-      ctx.drawImage(overlayCanvas, 0, 0)
-
-      // Camada 4: logo (acima de tudo, incluindo gradiente do rodapé)
-      for (const s of snapshots.filter(s => !s.isPhoto)) await blit(s)
-
-      restore()
-      setIsCapturing(false)
-
-      const dataUrl = canvas.toDataURL('image/png')
-      if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
-        setSaveModalUrl(dataUrl)
-      } else {
-        const link = document.createElement('a')
-        link.download = 'drbrunogustavo-slide-' + (currentSlide + 1) + '.png'
-        link.href = dataUrl
-        link.click()
-      }
-    } catch (err) {
-      restore()
-      setIsCapturing(false)
-      alert('Erro: ' + String(err))
-    }
-  }, [currentSlide, slides, formato, fotos])
-
-  const { w, h } = FORMATOS_CONFIG[formato]
-  const scale   = PREVIEW_W / w
-  const previewH = h * scale
-
-  const syncFotos = (s: SlideData[], cap: number | null, cta: number | null) =>
-    s.map(sl => ({ ...sl, fotoIndex: sl.tipo === 'capa' ? cap : sl.tipo === 'cta' ? cta : sl.fotoIndex }))
-
-  const handleTipoChange = (t: Tipo) => {
-    setTipo(t)
-    const n = t === 'unica' ? 1 : numSlides
-    setSlides(syncFotos(createDefaultSlides(t, n), fotoCapa, fotoCTA))
-    setCurrentSlide(0)
-  }
-  const handleNumSlidesChange = (n: number) => {
-    setNumSlides(n)
-    setSlides(syncFotos(createDefaultSlides('carrossel', n), fotoCapa, fotoCTA))
-    setCurrentSlide(prev => Math.min(prev, n - 1))
+  const copyPrompt = async () => {
+    const p = editMode ? editedPrompt : (promptParts?.promptFinal ?? "")
+    if (!p) return
+    await navigator.clipboard.writeText(p)
+    setCopied(true); setTimeout(() => setCopied(false), 2000)
   }
 
-  const handleFotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    Array.from(e.target.files || []).forEach(file => {
-      const r = new FileReader()
-      r.onload = ev => setFotos(prev => [...prev, ev.target?.result as string])
-      r.readAsDataURL(file)
-    })
-    e.target.value = ''
-  }
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]; if (!file) return
-    const r = new FileReader()
-    r.onload = ev => setLogo(ev.target?.result as string)
-    r.readAsDataURL(file)
-    e.target.value = ''
-  }
-
-  const handleFotoCapaChange  = (i: number | null) => { setFotoCapa(i); setSlides(prev => prev.map(s => s.tipo === 'capa' ? { ...s, fotoIndex: i } : s)) }
-  const handleFotoCTAChange   = (i: number | null) => { setFotoCTA(i);  setSlides(prev => prev.map(s => s.tipo === 'cta'  ? { ...s, fotoIndex: i } : s)) }
-  const handleFotoSlideChange = (si: number, fi: number | null) => setSlides(prev => prev.map((s, idx) => idx === si ? { ...s, fotoIndex: fi } : s))
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const updateSlide = (idx: number, field: keyof SlideData, value: any) =>
-    setSlides(prev => prev.map((s, i) => i === idx ? { ...s, [field]: value } : s))
-
-  const layoutOf    = (id: number) => ((id - 2) % 4) + 1
-  const layoutNames = ['', 'Citação', 'Boxes 2×2', 'Dados Científicos', 'Editorial']
-
-  // ── Geração com IA ──
-  const generateWithAI = async () => {
-    if (!tema.trim()) return
-    setIsGenerating(true)
-    try {
-      const contentSlides = slides.filter(s => s.tipo === 'conteudo').map(s => ({ id: s.id, layout: layoutOf(s.id) }))
-
-      const slideInstructions = contentSlides.map(({ id, layout }) => {
-        const num = String(id - 1).padStart(2, '0')
-        const lbl = layout===1?'A CIÊNCIA':layout===2?'OS FATOS':layout===3?'A EVIDÊNCIA':'ENTENDA'
-        const detail = layout===1
-          ? ', headline vazio, corpo frase impacto max 120 chars com *destaque*'
-          : layout===2
-          ? ', headline com *dourado*, items:[{titulo,descricao}] 4 itens do tema'
-          : layout===3
-          ? ', headline com *dourado*, fonte:"journal real", stats:[{valor,unidade,descricao}] 3 dados'
-          : ', headline com *dourado*, corpo explicação max 180 chars'
-        return id + '. conteudo — subtitulo "' + num + ' — ' + lbl + '"' + detail
-      }).join('\n')
-      const ctaCorpo = '📌 Salve para ter esta informação sempre à mão|📤 Compartilhe com quem precisa ler isso agora|💬 Comente: ' + (publico ? 'pergunta para ' + publico : 'o que mais te surpreendeu?')
-      const prompt = 'Redator médico Instagram — Dr. Bruno Gustavo, Clínico-Geral, Endocrinologia/Nutrologia, Poços de Caldas-MG.\n'
-        + 'TEMA: ' + tema + (publico ? '. PÚBLICO: ' + publico : '') + '\n'
-        + 'Tom: direto, humano. Proibido: mergulhar/transformador/jornada/empoderar. Use *palavra* para dourado itálico.\n\n'
-        + 'Retorne SOMENTE JSON válido: {"slides":[...]}\n\n'
-        + 'Slides necessários:\n'
-        + '1. capa — headline impactante com *itálico dourado*, subtitulo "INFORMAÇÃO", corpo citação curta max 90 chars\n'
-        + slideInstructions + '\n'
-        + slides.length + '. cta — headline "SALVE *ESTE POST*", subtitulo "GOSTOU DESTE CONTEÚDO?", corpo "' + ctaCorpo + '"\n\n'
-        + 'Campos obrigatórios: id, tipo, headline, subtitulo, corpo, fonte (null se vazio), items (null se vazio), stats (null se vazio)'
-
-      const res = await fetch('/api/imagens', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 3500, messages: [{ role: 'user', content: prompt }] }),
-      })
-      const data = await res.json()
-      const _raw = (data.content?.[0]?.text || '{}').replace(/```json/g,'').replace(/```/g,'').trim()
-      const json = JSON.parse(_raw)
-      if (!json.slides || !Array.isArray(json.slides)) {
-        throw new Error('API retornou: ' + JSON.stringify(data).slice(0, 300))
-      }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const newSlides: SlideData[] = json.slides.map((s: any) => ({
-        ...s,
-        fotoIndex: s.tipo === 'capa' ? fotoCapa : s.tipo === 'cta' ? fotoCTA : null,
-        items: s.items  || undefined,
-        stats: s.stats  || undefined,
-        fonte: s.fonte  || undefined,
-      }))
-      setSlides(newSlides)
-      setTextOffsets({}) // reset posições ao gerar novo conteúdo
-      setCurrentSlide(0)
-    } catch (err) {
-      console.error(err)
-      const msg = String(err)
-      if (msg.includes('rate_limit')) {
-        alert('Limite de requisições atingido.\nAguarde 1 minuto e tente novamente.')
-      } else {
-        alert('Erro ao gerar: ' + msg)
-      }
-    } finally {
-      setIsGenerating(false)
-    }
-  }
-
-  // ── Regenerar slide individual ──
-  const regenerateSlide = async (idx: number) => {
-    if (!editInstruction.trim()) return
-    setIsEditGenerating(true)
-    try {
-      const s  = slides[idx]
-      const li = s.tipo === 'conteudo' ? layoutOf(s.id) : 0
-      const prompt = `Reescreva este slide para o Dr. Bruno Gustavo (Clínico-Geral, Endocrinologia e Nutrologia). Tom: humano, direto, sem jargões de IA.
-
-Slide: tipo="${s.tipo}" | headline="${s.headline}" | corpo="${s.corpo}"${s.items ? ` | items=${JSON.stringify(s.items)}` : ''}${s.stats ? ` | stats=${JSON.stringify(s.stats)}` : ''}
-
-INSTRUÇÃO: "${editInstruction}"
-
-Use *palavra* para dourado itálico. Retorne SOMENTE JSON com os campos: headline, subtitulo, corpo${li === 2 ? ', items (4 itens {titulo,descricao})' : ''}${li === 3 ? ', stats (3 itens {valor,unidade,descricao}), fonte' : ''}`
-
-      const res = await fetch('/api/imagens', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 700, messages: [{ role: 'user', content: prompt }] }),
-      })
-      const data = await res.json()
-      const _raw2 = (data.content?.[0]?.text || '{}').replace(/```json/g,'').replace(/```/g,'').trim()
-      const json  = JSON.parse(_raw2)
-      setSlides(prev => prev.map((sl, i) => i === idx ? { ...sl, ...json } : sl))
-      setEditInstruction('')
-    } catch (err) {
-      console.error(err); alert('Erro ao regenerar: ' + String(err))
-    } finally {
-      setIsEditGenerating(false)
-    }
-  }
-
-  const currentS      = slides[currentSlide]
-  const currentLayout = currentS?.tipo === 'conteudo' ? layoutOf(currentS.id) : 0
-  const currentOffsets = textOffsets[currentSlide] ?? {}
-
-  const panelBg  = '#08090e'
-  const sideBg   = '#13141d'
-  const border   = '#1c1d2a'
-  const labelClr = '#474f66'
-  const inputSty: React.CSSProperties = { background: sideBg, border: `1px solid ${border}`, color: '#e8eaf2', borderRadius: 7, padding: '9px 13px', fontSize: 13, width: '100%', fontFamily: "'Inter', system-ui, sans-serif", outline: 'none' }
+  const displayImage = selectedHist?.imageUrl ?? imageUrl
+  const displayAudit = selectedHist?.audit     ?? audit
+  const anyLoading   = loadingPrompt || loadingImage
 
   return (
-    <div className="min-h-screen bg-background text-text-primary" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Inter:wght@400;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Poppins:wght@400;600;700;800;900&family=Cormorant+Garamond:ital,wght@0,700;1,700&family=Raleway:wght@400;600;700;800;900&family=Libre+Baskerville:ital,wght@0,700;1,400&family=DM+Sans:opsz,wght@9..40,400;9..40,600;9..40,700;9..40,900&family=DM+Serif+Display:ital@0;1&display=swap');`}</style>
-
-      {/* ── Overlay de Loading durante captura ── */}
-      {isCapturing && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(9,5,3,0.92)', zIndex: 9990, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
-          <div style={{ width: 48, height: 48, border: '3px solid rgba(0,192,127,0.15)', borderTop: '3px solid #00c07f', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-          <div style={{ color: '#00c07f', fontSize: 15, fontWeight: 700, letterSpacing: 2 }}>GERANDO IMAGEM...</div>
-          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-        </div>
-      )}
-
-      {/* ── Modal iOS — Salvar Imagem ── */}
-      {saveModalUrl && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.93)', zIndex: 9999, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-          <div style={{ color: '#00e893', fontSize: 15, fontWeight: 700, marginBottom: 6, textAlign: 'center', letterSpacing: 1 }}>
-            📱 SALVAR IMAGEM
-          </div>
-          <div style={{ color: '#7c85a0', fontSize: 13, marginBottom: 20, textAlign: 'center', lineHeight: 1.6 }}>
-            Pressione e segure a imagem abaixo<br />→ <strong style={{ color: '#e8eaf2' }}>Salvar na Fototeca</strong>
-          </div>
-          <img
-            src={saveModalUrl}
-            alt="Slide para salvar"
-            style={{ maxWidth: '100%', maxHeight: '65vh', objectFit: 'contain', borderRadius: 8, boxShadow: '0 16px 48px rgba(0,0,0,0.7)' }}
-          />
-          <button
-            onClick={() => setSaveModalUrl(null)}
-            style={{ marginTop: 28, padding: '12px 40px', background: '#00c07f', color: '#08090e', border: 'none', borderRadius: 10, fontWeight: 900, fontSize: 14, cursor: 'pointer', fontFamily: "'Inter', system-ui, sans-serif" }}
-          >
-            ✕ Fechar
-          </button>
-        </div>
-      )}
-
-      {/* Modal Banco de Pautas */}
-      {showPautas && (
-        <PautasModal
-          onSelect={(titulo) => { setTema(titulo); setShowPautas(false) }}
-          onClose={() => setShowPautas(false)}
-        />
-      )}
-
-      {/* Header */}
-      <div className="border-b border-border bg-surface" style={{ padding: '18px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div>
-          <h1 style={{ fontSize: 22, fontWeight: 900, color: '#00e893', letterSpacing: 1, margin: 0 }}>Gerador de Imagens</h1>
-          <p style={{ fontSize: 12, color: labelClr, margin: '4px 0 0' }}>Posts e carrosséis para o Instagram</p>
-        </div>
-        <button onClick={generateWithAI} disabled={isGenerating || !tema.trim()}
-          style={{ background: tema.trim() ? '#00c07f' : 'none', color: tema.trim() ? '#08090e' : '#474f66', padding: '12px 24px', borderRadius: 10, border: 'none', fontWeight: 900, fontSize: 13, cursor: tema.trim() ? 'pointer' : 'not-allowed', fontFamily: "'Inter', system-ui, sans-serif", display: 'flex', alignItems: 'center', gap: 8 }}>
-          {isGenerating ? '⟳ Gerando...' : '✦ Gerar com IA'}
-        </button>
-      </div>
-
-      <div style={{ display: 'flex', height: isMobile ? 'auto' : 'calc(100vh - 74px)', flexDirection: isMobile ? 'column' : 'row' }}>
-
-        {/* ── Painel Esquerdo ── */}
-        <div className="bg-card border-r border-border overflow-y-auto" style={{ maxHeight: isMobile ? '70vh' : 'none', padding: isMobile ? '16px' : 24, display: 'flex', flexDirection: 'column', gap: isMobile ? 12 : 20 }}>
-
-          {/* Tipo */}
-          <div>
-            <label style={{ fontSize: 11, fontWeight: 700, color: labelClr, letterSpacing: 3, textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>Tipo</label>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-              {(['unica', 'carrossel'] as Tipo[]).map(t => (
-                <button key={t} onClick={() => handleTipoChange(t)}
-                  style={{ padding: '10px', borderRadius: 8, border: 'none', fontWeight: 700, fontSize: 12, cursor: 'pointer', background: tipo === t ? '#00c07f' : sideBg, color: tipo === t ? '#08090e' : labelClr, fontFamily: "'Inter', system-ui, sans-serif" }}>
-                  {t === 'unica' ? 'Imagem Única' : 'Carrossel'}
-                </button>
-              ))}
+    <div className="animate-fade-in">
+      <TopBar
+        title="Diretor Criativo IA"
+        subtitle="DIREÇÃO CRIATIVA · GERAÇÃO DE IMAGENS · IDENTIDADE VISUAL"
+        actions={
+          anyLoading ? (
+            <div className="flex items-center gap-2 text-accent text-[11px] font-mono tracking-wider">
+              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+              {loadingMsg}
             </div>
-          </div>
+          ) : undefined
+        }
+      />
 
-          {/* Formato */}
-          <div>
-            <label style={{ fontSize: 11, fontWeight: 700, color: labelClr, letterSpacing: 3, textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>Formato</label>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-              {(Object.entries(FORMATOS_CONFIG) as [Formato, { label: string; desc: string }][]).map(([k, v]) => (
-                <button key={k} onClick={() => setFormato(k)}
-                  style={{ padding: '8px 12px', borderRadius: 8, border: 'none', fontWeight: 700, fontSize: 11, cursor: 'pointer', textAlign: 'left', background: formato === k ? '#00c07f' : sideBg, color: formato === k ? '#08090e' : labelClr, fontFamily: "'Inter', system-ui, sans-serif" }}>
-                  <div>{v.label}</div><div style={{ opacity: 0.6, fontWeight: 400, fontSize: 10 }}>{v.desc}</div>
-                </button>
-              ))}
-            </div>
-          </div>
+      <div className="p-8">
+        <div className="grid gap-6 items-start" style={{ gridTemplateColumns:"300px 1fr" }}>
 
-          {/* Paleta */}
-          <div>
-            <label style={{ fontSize: 11, fontWeight: 700, color: labelClr, letterSpacing: 3, textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>Paleta de Cores</label>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-              {(Object.entries(PALETAS) as [PaletaId, typeof PALETAS[PaletaId]][]).map(([id, p]) => (
-                <button key={id} onClick={() => setPaleta(id)}
-                  style={{ padding: '9px 10px', borderRadius: 8, border: `1px solid ${paleta === id ? '#00c07f' : border}`, cursor: 'pointer', textAlign: 'left', background: paleta === id ? 'rgba(0,192,127,0.12)' : sideBg, fontFamily: "'Inter', system-ui, sans-serif", display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{ display: 'flex', gap: 3, flexShrink: 0 }}>
-                    {p.preview.map((col, i) => <div key={i} style={{ width: 10, height: 10, borderRadius: 2, background: col }} />)}
-                  </div>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: paleta === id ? '#00e893' : labelClr }}>{p.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
+          {/* ════════════════════════════════
+              LEFT — CONFIG PANEL
+          ════════════════════════════════ */}
+          <div className="space-y-4 sticky top-8">
 
-          {/* Estrutura */}
-          <div>
-            <label style={{ fontSize: 11, fontWeight: 700, color: labelClr, letterSpacing: 3, textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>Estrutura da Capa</label>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {(Object.entries(ESTRUTURAS) as [EstruturaId, typeof ESTRUTURAS[EstruturaId]][]).map(([id, e]) => (
-                <button key={id} onClick={() => setEstrutura(id)}
-                  style={{ padding: '9px 14px', borderRadius: 8, border: 'none', cursor: 'pointer', textAlign: 'left', background: estrutura === id ? '#00c07f' : sideBg, color: estrutura === id ? '#08090e' : labelClr, fontFamily: "'Inter', system-ui, sans-serif", display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{ fontSize: 14 }}>{e.emoji}</span>
-                  <div>
-                    <div style={{ fontSize: 11, fontWeight: 700 }}>{e.label}</div>
-                    <div style={{ fontSize: 10, fontWeight: 400, opacity: 0.7 }}>{e.desc}</div>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Tipografia */}
-          <div>
-            <label style={{ fontSize: 11, fontWeight: 700, color: labelClr, letterSpacing: 3, textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>Tipografia</label>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-              {(Object.entries(TIPOGRAFIAS) as [TipografiaId, typeof TIPOGRAFIAS[TipografiaId]][]).map(([id, t]) => (
-                <button key={id} onClick={() => setTipografia(id)}
-                  style={{ padding: '9px 12px', borderRadius: 8, border: `1px solid ${tipografia === id ? '#00c07f' : border}`, cursor: 'pointer', textAlign: 'left', background: tipografia === id ? 'rgba(0,192,127,0.12)' : sideBg, fontFamily: "'Inter', system-ui, sans-serif" }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: tipografia === id ? '#00e893' : labelClr }}>{t.label}</div>
-                  <div style={{ fontSize: 9, color: tipografia === id ? '#7c85a0' : '#474f66', marginTop: 2, letterSpacing: 1 }}>Aa Bb Cc</div>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Nº slides */}
-          {tipo === 'carrossel' && (
-            <div>
-              <label style={{ fontSize: 11, fontWeight: 700, color: labelClr, letterSpacing: 3, textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>
-                Slides: <span style={{ color: '#00e893' }}>{numSlides}</span>
-              </label>
-              <input type="range" min={3} max={15} value={numSlides} onChange={e => handleNumSlidesChange(Number(e.target.value))} style={{ width: '100%', accentColor: '#00c07f' }} />
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: labelClr, marginTop: 4 }}><span>3</span><span>15</span></div>
-            </div>
-          )}
-
-          {/* Tema */}
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-              <label style={{ fontSize: 11, fontWeight: 700, color: labelClr, letterSpacing: 3, textTransform: 'uppercase' }}>Tema</label>
-              <button onClick={() => setShowPautas(true)}
-                style={{ fontSize: 10, fontWeight: 700, color: '#00e893', background: 'rgba(0,192,127,0.12)', border: '1px solid rgba(0,192,127,0.3)', borderRadius: 5, padding: '4px 10px', cursor: 'pointer', fontFamily: "'Inter', system-ui, sans-serif" }}>
-                📋 Banco de Pautas
-              </button>
-            </div>
-            <input type="text" value={tema} onChange={e => setTema(e.target.value)} placeholder="Ex: Resistência à insulina" style={inputSty} />
-          </div>
-
-          {/* Público */}
-          <div>
-            <label style={{ fontSize: 11, fontWeight: 700, color: labelClr, letterSpacing: 3, textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>Público <span style={{ textTransform: 'none', fontWeight: 400 }}>(opcional)</span></label>
-            <input type="text" value={publico} onChange={e => setPublico(e.target.value)} placeholder="Ex: Mulheres acima de 35 anos" style={inputSty} />
-          </div>
-
-          {/* Logo */}
-          <div>
-            <label style={{ fontSize: 11, fontWeight: 700, color: labelClr, letterSpacing: 3, textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>Logomarca</label>
-            {logo ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, background: sideBg, borderRadius: 8, border: `1px solid rgba(200,168,76,0.3)` }}>
-                <div style={{ width: 44, height: 44, background: 'rgba(0,0,0,0.6)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <img src={logo} alt="" style={{ maxWidth: 40, maxHeight: 40, objectFit: 'contain' }} />
-                </div>
-                <span style={{ color: C.d2, fontSize: 12, flex: 1 }}>Logo carregado ✓</span>
-                <button onClick={() => setLogo(null)} style={{ background: 'none', border: 'none', color: labelClr, cursor: 'pointer', fontSize: 12 }}>✕</button>
+            {/* 1 — Formato */}
+            <div className="bg-card border border-border rounded-lg p-4">
+              <div className="text-[9px] font-mono text-text-muted tracking-widest uppercase mb-3">1 — Formato</div>
+              <div className="grid grid-cols-4 gap-1.5">
+                {(Object.keys(FORMATOS) as Formato[]).map(f => (
+                  <FormatoCard key={f} id={f} active={formato===f} onClick={() => setFormato(f)} />
+                ))}
               </div>
-            ) : (
-              <button onClick={() => logoRef.current?.click()}
-                style={{ width: '100%', padding: '12px', borderRadius: 8, border: `1px dashed ${border}`, background: 'none', color: labelClr, fontSize: 12, cursor: 'pointer', fontFamily: "'Inter', system-ui, sans-serif" }}>
-                + Upload Logo (PNG transparente)
-              </button>
+            </div>
+
+            {/* 2 — Estilo */}
+            <div className="bg-card border border-border rounded-lg p-4">
+              <div className="text-[9px] font-mono text-text-muted tracking-widest uppercase mb-3">2 — Estilo da Biblioteca</div>
+              <div className="space-y-1 max-h-72 overflow-y-auto pr-1 -mr-1">
+                {(Object.entries(ESTILOS) as [EstiloId, typeof ESTILOS[EstiloId]][]).map(([id, s]) => (
+                  <button key={id} onClick={() => setEstilo(id)}
+                    className={cn(
+                      "w-full text-left px-3 py-2 rounded-md border transition-all",
+                      estilo===id ? "bg-accent-dim border-accent-border" : "border-transparent hover:bg-white/[0.03]"
+                    )}>
+                    <div className={cn("text-[12px] font-semibold leading-tight", estilo===id ? "text-accent" : "text-text-primary")}>{s.label}</div>
+                    <div className="text-[10px] text-text-muted mt-0.5 leading-snug">{s.desc}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 3 — Tema */}
+            <div className="bg-card border border-border rounded-lg p-4">
+              <div className="text-[9px] font-mono text-text-muted tracking-widest uppercase mb-3">3 — Tema da Arte</div>
+              <textarea
+                value={ideia}
+                onChange={e => setIdeia(e.target.value)}
+                placeholder="Ex: resistência à insulina, menopausa e hormônios, jejum intermitente..."
+                className="w-full bg-background border border-border rounded-lg px-3 py-2.5 text-[13px] text-text-primary placeholder:text-text-muted outline-none focus:border-accent/40 transition-colors resize-none"
+                rows={3}
+              />
+            </div>
+
+            {/* 4 — Modelo */}
+            <div className="bg-card border border-border rounded-lg p-4">
+              <div className="text-[9px] font-mono text-text-muted tracking-widest uppercase mb-3">4 — Modelo de Geração</div>
+              <div className="space-y-1.5">
+                {(Object.entries(MODELOS) as [Modelo, typeof MODELOS[Modelo]][]).map(([id, m]) => (
+                  <button key={id} onClick={() => setModelo(id)}
+                    className={cn(
+                      "w-full text-left px-3 py-2.5 rounded-md border transition-all flex items-start gap-3",
+                      modelo===id ? "bg-accent-dim border-accent-border" : "border-transparent hover:bg-white/[0.03]"
+                    )}>
+                    <div className={cn("w-2 h-2 rounded-full flex-shrink-0 mt-[5px]", modelo===id ? "bg-accent" : "bg-text-muted/30")} />
+                    <div>
+                      <div className={cn("text-[12px] font-semibold", modelo===id ? "text-accent" : "text-text-primary")}>{m.label}</div>
+                      <div className="text-[9px] font-mono text-text-muted">{m.sub}</div>
+                      <div className="text-[9px] text-text-muted mt-0.5">{m.note}</div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Elaborate Button */}
+            <button
+              onClick={gerarPrompt}
+              disabled={anyLoading || !ideia.trim()}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-accent text-background text-[13px] font-bold hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loadingPrompt ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
+              {loadingPrompt ? "Elaborando direção..." : "Elaborar Direção Criativa"}
+            </button>
+
+            {/* History */}
+            {history.length > 0 && (
+              <div className="bg-card border border-border rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <History className="w-3 h-3 text-text-muted" />
+                  <span className="text-[9px] font-mono text-text-muted tracking-widest uppercase">Histórico da Sessão</span>
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                  {history.map(h => (
+                    <button key={h.id}
+                      onClick={() => setSelectedHist(selectedHist?.id===h.id ? null : h)}
+                      title={`${h.estilo} · ${h.formato} · ${h.timestamp}`}
+                      className={cn(
+                        "relative rounded-md overflow-hidden border-2 transition-all flex-shrink-0",
+                        selectedHist?.id===h.id ? "border-accent" : "border-transparent hover:border-border-hover"
+                      )}
+                      style={{ width:52, height:52 }}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={h.imageUrl} alt="" className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+                {selectedHist && (
+                  <p className="mt-2 text-[9px] text-text-muted font-mono">
+                    {selectedHist.estilo} · {selectedHist.formato} · {selectedHist.timestamp}
+                  </p>
+                )}
+              </div>
             )}
-            <input ref={logoRef} type="file" accept="image/png" style={{ display: 'none' }} onChange={handleLogoUpload} />
           </div>
 
-          {/* Fotos */}
-          <div>
-            <label style={{ fontSize: 11, fontWeight: 700, color: labelClr, letterSpacing: 3, textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>Fotos</label>
-            <button onClick={() => fotoRef.current?.click()}
-              style={{ width: '100%', padding: '12px', borderRadius: 8, border: `1px dashed ${border}`, background: 'none', color: labelClr, fontSize: 12, cursor: 'pointer', fontFamily: "'Inter', system-ui, sans-serif" }}>
-              + Upload de Fotos (múltiplas)
-            </button>
-            <input ref={fotoRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={handleFotoUpload} />
+          {/* ════════════════════════════════
+              RIGHT — RESULTS PANEL
+          ════════════════════════════════ */}
+          <div className="space-y-5 min-w-0">
 
-            {/* Gerar imagem por I.A */}
-            <button
-              onClick={gerarImagemIA}
-              disabled={isGenAI || !tema.trim()}
-              style={{ width:'100%', marginTop:8, padding:'12px', borderRadius:8, border:`1px solid ${isGenAI || !tema.trim() ? '#1c1d2a' : 'rgba(0,192,127,0.3)'}`, background: isGenAI || !tema.trim() ? 'none' : 'rgba(0,192,127,0.08)', color: isGenAI || !tema.trim() ? labelClr : '#00e893', fontSize:12, fontWeight:700, cursor: isGenAI || !tema.trim() ? 'not-allowed' : 'pointer', fontFamily:"'Inter', system-ui, sans-serif", display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
-              {isGenAI ? (
-                <>
-                  <span style={{ display:'inline-block', width:14, height:14, border:'2px solid rgba(200,168,76,0.3)', borderTop:`2px solid ${C.d2}`, borderRadius:'50%', animation:'spin 0.8s linear infinite' }} />
-                  Gerando imagem...
-                </>
-              ) : (
-                <>✨ Gerar Imagem por I.A</>
-              )}
-            </button>
-            {genAIError && <div style={{ fontSize:11, color:'#f87171', marginTop:6, lineHeight:1.5 }}>{genAIError}</div>}
-            <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+            {/* Error banner */}
+            {error && (
+              <div className="flex items-start gap-3 bg-red-950/40 border border-red-500/30 rounded-lg p-4">
+                <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+                <p className="text-[12px] text-red-300 leading-relaxed">{error}</p>
+              </div>
+            )}
 
-            {fotos.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12 }}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
-                  {fotos.map((f, i) => (
-                    <div key={i} style={{ position: 'relative', aspectRatio: '1', borderRadius: 6, overflow: 'hidden' }}>
-                      <img src={f} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      <button onClick={() => setFotos(prev => prev.filter((_, fi) => fi !== i))}
-                        style={{ position: 'absolute', top: 3, right: 3, width: 18, height: 18, borderRadius: '50%', background: 'rgba(0,0,0,0.8)', border: 'none', color: '#fff', fontSize: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
-                      <div style={{ position: 'absolute', bottom: 0, right: 0, background: 'rgba(0,0,0,0.7)', color: C.d2, fontSize: 9, fontWeight: 700, padding: '2px 5px', borderTopLeftRadius: 4 }}>F{i + 1}</div>
+            {/* ── Empty state ── */}
+            {!promptParts && !loadingPrompt && !loadingImage && (
+              <div className="bg-card border border-border rounded-lg p-14 flex flex-col items-center justify-center gap-5 min-h-[480px]">
+                <div className="w-16 h-16 rounded-2xl bg-accent-dim border border-accent-border flex items-center justify-center">
+                  <Wand2 className="w-8 h-8 text-accent" />
+                </div>
+                <div className="text-center max-w-md">
+                  <h3 className="text-[15px] font-semibold text-text-primary mb-2">Diretor Criativo IA</h3>
+                  <p className="text-[12px] text-text-muted leading-relaxed">
+                    Configure o formato, estilo e tema à esquerda. O Claude elaborará uma direção criativa cinematográfica com 7 componentes antes de enviar para geração de imagem.
+                  </p>
+                </div>
+                <div className="grid grid-cols-4 gap-2 w-full max-w-md mt-1">
+                  {["Conceito Visual","Direção Artística","Iluminação","Prompt Final"].map(l => (
+                    <div key={l} className="bg-background rounded-lg p-3 text-center">
+                      <div className="text-[9px] text-text-muted leading-tight">{l}</div>
                     </div>
                   ))}
                 </div>
-                <FotoSelect label="Foto da Capa" value={fotoCapa} fotos={fotos} onChange={handleFotoCapaChange} />
-                {tipo === 'carrossel' && <FotoSelect label="Foto do CTA" value={fotoCTA} fotos={fotos} onChange={handleFotoCTAChange} />}
               </div>
             )}
-          </div>
 
-          {/* Lista de slides */}
-          {tipo === 'carrossel' && (
-            <div>
-              <label style={{ fontSize: 11, fontWeight: 700, color: labelClr, letterSpacing: 3, textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>Slides</label>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                {slides.map((s, i) => {
-                  const li = s.tipo === 'conteudo' ? layoutOf(s.id) : 0
-                  const icon = s.tipo === 'capa' ? '📌' : s.tipo === 'cta' ? '🎯' : li === 1 ? '💬' : li === 2 ? '⊞' : li === 3 ? '📊' : '📝'
-                  return (
-                    <button key={s.id} onClick={() => setCurrentSlide(i)}
-                      style={{ padding: '10px 12px', borderRadius: 8, border: 'none', cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8, background: currentSlide === i ? '#00c07f' : sideBg, color: currentSlide === i ? '#08090e' : labelClr, fontFamily: "'Inter', system-ui, sans-serif", fontSize: 12 }}>
-                      <span style={{ flexShrink: 0 }}>{icon}</span>
-                      <span style={{ fontWeight: 700, flexShrink: 0 }}>{s.tipo === 'capa' ? 'Capa' : s.tipo === 'cta' ? 'CTA' : layoutNames[li]}</span>
-                      <span style={{ opacity: 0.6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
-                        {(s.headline || s.corpo || '—').replace(/\*/g, '').slice(0, 28)}
-                      </span>
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* ── Centro — Preview ── */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', padding: isMobile ? '20px 16px' : '32px 16px', overflowY: 'auto', background: 'transparent' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: labelClr, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 16 }}>
-            {FORMATOS_CONFIG[formato].label} · {w}×{h}px
-          </div>
-
-          {currentS && (
-            <div id='slide-canvas-wrapper' style={{ width: PREVIEW_W, height: previewH, flexShrink: 0, position: 'relative', borderRadius: 8, overflow: 'hidden', boxShadow: '0 24px 60px rgba(0,0,0,0.85)', outline: `1px solid ${border}` }}>
-                <SlideCanvas
-                  slide={currentS}
-                  formato={formato}
-                  fotos={fotos}
-                  logo={logo}
-                  totalSlides={slides.length}
-                  scale={scale}
-                  dragMode={dragMode && !isCapturing}
-                  offsets={currentOffsets}
-                  onDrag={(key, x, y) => updateDragOffset(currentSlide, key, x, y)}
-                  paleta={paleta}
-                  estrutura={estrutura}
-                  tipografia={tipografia}
-                />
-              </div>
-
-          )}
-
-          {/* Botões de ação abaixo do preview */}
-          <div style={{ marginTop: 16, display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
-            {/* Salvar */}
-            <button onClick={downloadCurrentSlide}
-              style={{ padding: '12px 28px', background: C.d2, border: 'none', borderRadius: 10, color: C.bg, fontWeight: 900, fontSize: 14, cursor: 'pointer', fontFamily: "'Inter', system-ui, sans-serif", display: 'flex', alignItems: 'center', gap: 8 }}>
-              ⬇ Salvar Slide {currentSlide + 1}
-            </button>
-
-            {/* Toggle Mover Textos */}
-            <button
-              onClick={() => setDragMode(d => !d)}
-              style={{
-                padding: '12px 20px', border: `1px solid ${dragMode ? '#00c07f' : border}`,
-                borderRadius: 10, background: dragMode ? 'rgba(0,192,127,0.12)' : 'none',
-                color: dragMode ? '#00e893' : labelClr, fontWeight: 700, fontSize: 13,
-                cursor: 'pointer', fontFamily: "'Inter', system-ui, sans-serif", display: 'flex', alignItems: 'center', gap: 8,
-              }}
-            >
-              ✥ {dragMode ? 'Editando posições' : 'Mover textos'}
-            </button>
-
-            {/* Reset posições */}
-            {Object.keys(textOffsets).length > 0 && (
-              <button onClick={resetOffsets}
-                style={{ padding: '12px 16px', border: `1px solid ${border}`, borderRadius: 10, background: 'none', color: labelClr, fontWeight: 700, fontSize: 12, cursor: 'pointer', fontFamily: "'Inter', system-ui, sans-serif" }}>
-                ↺ Reset posições
-              </button>
-            )}
-          </div>
-
-          {/* Dica de drag mode */}
-          {dragMode && (
-            <div style={{ marginTop: 10, padding: '8px 16px', borderRadius: 8, background: 'rgba(0,192,127,0.06)', border: `1px solid rgba(0,192,127,0.2)`, fontSize: 11, color: '#7c85a0', textAlign: 'center' }}>
-              Arraste os blocos com borda dourada pontilhada · Desative antes de salvar
-            </div>
-          )}
-
-          {slides.length > 1 && (
-            <>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 20 }}>
-                <button onClick={() => setCurrentSlide(Math.max(0, currentSlide - 1))} disabled={currentSlide === 0}
-                  style={{ width: 36, height: 36, borderRadius: '50%', background: sideBg, border: 'none', color: labelClr, cursor: currentSlide > 0 ? 'pointer' : 'not-allowed', opacity: currentSlide > 0 ? 1 : 0.3, fontSize: 16, fontWeight: 700 }}>←</button>
-                <span style={{ fontSize: 13, color: labelClr, fontWeight: 700, minWidth: 56, textAlign: 'center' }}>{currentSlide + 1} / {slides.length}</span>
-                <button onClick={() => setCurrentSlide(Math.min(slides.length - 1, currentSlide + 1))} disabled={currentSlide === slides.length - 1}
-                  style={{ width: 36, height: 36, borderRadius: '50%', background: sideBg, border: 'none', color: labelClr, cursor: currentSlide < slides.length - 1 ? 'pointer' : 'not-allowed', opacity: currentSlide < slides.length - 1 ? 1 : 0.3, fontSize: 16, fontWeight: 700 }}>→</button>
-              </div>
-              <div style={{ display: 'flex', gap: 6, marginTop: 12, flexWrap: 'wrap', justifyContent: 'center', maxWidth: 300 }}>
-                {slides.map((_, i) => (
-                  <button key={i} onClick={() => setCurrentSlide(i)}
-                    style={{ borderRadius: 99, border: 'none', cursor: 'pointer', transition: 'all 0.2s', width: i === currentSlide ? 20 : 8, height: 8, background: i === currentSlide ? '#00c07f' : border }} />
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* ── Painel Direito — Editor ── */}
-        <div className="bg-card border-l border-border overflow-y-auto" style={{ padding: isMobile ? '16px' : 24, display: 'flex', flexDirection: 'column', gap: 18 }}>
-          <div>
-            <span style={{ fontSize: 11, fontWeight: 700, color: labelClr, letterSpacing: 3, textTransform: 'uppercase' }}>
-              Editar slide {currentSlide + 1}
-            </span>
-            {currentS?.tipo === 'conteudo' && (
-              <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, color: C.d2 }}>· {layoutNames[currentLayout]}</span>
-            )}
-          </div>
-
-          {currentS && (
-            <>
-              <div style={{ fontSize: 11, padding: '8px 12px', borderRadius: 6, background: sideBg, color: labelClr }}>
-                Use <strong style={{ color: '#00e893' }}>*palavra*</strong> para texto dourado itálico
-              </div>
-
-              <Field label="Headline">
-                <textarea value={currentS.headline} onChange={e => updateSlide(currentSlide, 'headline', e.target.value)} rows={3} style={{ ...inputSty, resize: 'none', display: 'block' }} />
-              </Field>
-
-              <Field label="Label / Categoria">
-                <input type="text" value={currentS.subtitulo} onChange={e => updateSlide(currentSlide, 'subtitulo', e.target.value)} style={inputSty} />
-              </Field>
-
-              {(currentS.tipo !== 'conteudo' || currentLayout !== 2) && (
-                <Field label={currentLayout === 1 ? 'Citação (use *destaque*)' : currentS.tipo === 'cta' ? 'Ações (separe com |)' : 'Corpo'}>
-                  <textarea value={currentS.corpo} onChange={e => updateSlide(currentSlide, 'corpo', e.target.value)} rows={4} style={{ ...inputSty, resize: 'none', display: 'block' }} />
-                </Field>
-              )}
-
-              {currentS.tipo === 'conteudo' && (currentLayout === 3 || currentLayout === 4) && (
-                <Field label="Fonte Científica">
-                  <input type="text" value={currentS.fonte ?? ''} onChange={e => updateSlide(currentSlide, 'fonte', e.target.value)} placeholder="Ex: New England Journal of Medicine" style={inputSty} />
-                </Field>
-              )}
-
-              {currentS.tipo === 'conteudo' && currentLayout === 2 && (
-                <div>
-                  <label style={{ fontSize: 11, fontWeight: 700, color: labelClr, letterSpacing: 3, textTransform: 'uppercase', display: 'block', marginBottom: 10 }}>Boxes (4 itens)</label>
-                  {[0,1,2,3].map(bi => {
-                    const items = currentS.items ?? [{titulo:'',descricao:''},{titulo:'',descricao:''},{titulo:'',descricao:''},{titulo:'',descricao:''}]
-                    const item  = items[bi] ?? {titulo:'',descricao:''}
-                    return (
-                      <div key={bi} style={{ marginBottom: 10, padding: 10, borderRadius: 6, background: sideBg, border: `1px solid ${border}` }}>
-                        <input type="text" value={item.titulo} placeholder={`Título ${bi + 1}`} onChange={e => {
-                          const ni = [...items]; ni[bi] = {...ni[bi], titulo: e.target.value}; updateSlide(currentSlide, 'items', ni)
-                        }} style={{ ...inputSty, marginBottom: 6, color: '#00e893' }} />
-                        <textarea value={item.descricao} placeholder="Descrição..." rows={2} onChange={e => {
-                          const ni = [...items]; ni[bi] = {...ni[bi], descricao: e.target.value}; updateSlide(currentSlide, 'items', ni)
-                        }} style={{ ...inputSty, resize: 'none', display: 'block' }} />
-                      </div>
-                    )
-                  })}
+            {/* ── Loading: generating prompt ── */}
+            {loadingPrompt && (
+              <div className="bg-card border border-border rounded-lg p-14 flex flex-col items-center justify-center gap-5 min-h-[480px]">
+                <Sparkles className="w-12 h-12 text-accent animate-pulse" />
+                <div className="text-center">
+                  <div className="text-[15px] font-semibold text-text-primary mb-1">{loadingMsg}</div>
+                  <div className="text-[10px] font-mono text-text-muted tracking-widest">CLAUDE ELABORANDO DIREÇÃO CRIATIVA</div>
                 </div>
-              )}
+              </div>
+            )}
 
-              {currentS.tipo === 'conteudo' && currentLayout === 3 && (
-                <div>
-                  <label style={{ fontSize: 11, fontWeight: 700, color: labelClr, letterSpacing: 3, textTransform: 'uppercase', display: 'block', marginBottom: 10 }}>Stats (3 dados)</label>
-                  {[0,1,2].map(si => {
-                    const stats = currentS.stats ?? [{valor:'',unidade:'',descricao:''},{valor:'',unidade:'',descricao:''},{valor:'',unidade:'',descricao:''}]
-                    const stat  = stats[si] ?? {valor:'',unidade:'',descricao:''}
-                    return (
-                      <div key={si} style={{ marginBottom: 10, padding: 10, borderRadius: 6, background: sideBg, border: `1px solid ${border}` }}>
-                        <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
-                          <input type="text" value={stat.valor} placeholder="−500" onChange={e => {
-                            const ns = [...stats]; ns[si] = {...ns[si], valor: e.target.value}; updateSlide(currentSlide, 'stats', ns)
-                          }} style={{ ...inputSty, flex: 1, color: '#00e893' }} />
-                          <input type="text" value={stat.unidade ?? ''} placeholder="kcal" onChange={e => {
-                            const ns = [...stats]; ns[si] = {...ns[si], unidade: e.target.value}; updateSlide(currentSlide, 'stats', ns)
-                          }} style={{ ...inputSty, width: 72, color: '#7c85a0' }} />
+            {/* ── Prompt Components ── */}
+            {promptParts && !loadingPrompt && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-[14px] font-semibold text-text-primary">Direção Criativa Elaborada</h3>
+                    <p className="text-[11px] text-text-muted mt-0.5">{ESTILOS[estilo].label} · {FORMATOS[formato].label} · {FORMATOS[formato].ratio}</p>
+                  </div>
+                  <button onClick={gerarPrompt} disabled={anyLoading}
+                    className="flex items-center gap-1.5 text-[11px] text-text-muted hover:text-accent transition-colors disabled:opacity-40">
+                    <RefreshCw className="w-3 h-3" /> Regenerar direção
+                  </button>
+                </div>
+
+                {/* 7 components */}
+                <div className="grid grid-cols-2 gap-2">
+                  {PART_KEYS.map(key => (
+                    <button key={key}
+                      onClick={() => setExpanded(expanded===key ? null : key)}
+                      className={cn(
+                        "bg-card border border-border rounded-lg p-3 text-left hover:border-border-hover transition-all",
+                        key==="negativo" && "col-span-2"
+                      )}>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <div className="flex items-center gap-2">
+                          <span>{PART_ICON[key]}</span>
+                          <span className="text-[9px] font-mono text-text-muted uppercase tracking-wider">{PART_LABEL[key]}</span>
                         </div>
-                        <input type="text" value={stat.descricao} placeholder="Descrição..." onChange={e => {
-                          const ns = [...stats]; ns[si] = {...ns[si], descricao: e.target.value}; updateSlide(currentSlide, 'stats', ns)
-                        }} style={inputSty} />
+                        {expanded===key
+                          ? <ChevronUp   className="w-3 h-3 text-text-muted flex-shrink-0" />
+                          : <ChevronDown className="w-3 h-3 text-text-muted flex-shrink-0" />}
                       </div>
-                    )
-                  })}
+                      <p className={cn("text-[11px] text-text-secondary leading-relaxed", expanded!==key && "line-clamp-2")}>
+                        {promptParts[key]}
+                      </p>
+                    </button>
+                  ))}
                 </div>
-              )}
 
-              {currentS.tipo === 'conteudo' && fotos.length > 0 && (
-                <FotoSelect label="Foto neste slide" value={currentS.fotoIndex} fotos={fotos} onChange={i => handleFotoSlideChange(currentSlide, i)} />
-              )}
+                {/* Unified final prompt */}
+                <div className="bg-card border border-accent-border/40 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-3.5 h-3.5 text-accent" />
+                      <span className="text-[10px] font-mono text-accent uppercase tracking-wider">Prompt Final Unificado</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => { setEditMode(!editMode); if (!editMode) setEditedPrompt(promptParts.promptFinal) }}
+                        className={cn(
+                          "flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-md border transition-all",
+                          editMode ? "bg-accent-dim border-accent-border text-accent" : "border-border text-text-muted hover:text-text-secondary"
+                        )}>
+                        <Edit3 className="w-3 h-3" />{editMode ? "Editando" : "Editar"}
+                      </button>
+                      <button onClick={copyPrompt}
+                        className="flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-md border border-border text-text-muted hover:text-text-secondary transition-all">
+                        {copied ? <Check className="w-3 h-3 text-accent" /> : <Copy className="w-3 h-3" />}
+                        {copied ? "Copiado" : "Copiar"}
+                      </button>
+                    </div>
+                  </div>
+                  {editMode ? (
+                    <textarea
+                      value={editedPrompt}
+                      onChange={e => setEditedPrompt(e.target.value)}
+                      className="w-full bg-background border border-border rounded-lg px-3 py-2.5 text-[11px] text-text-primary font-mono outline-none focus:border-accent/40 transition-colors resize-none leading-relaxed"
+                      rows={7}
+                    />
+                  ) : (
+                    <p className="text-[11px] text-text-secondary font-mono leading-relaxed whitespace-pre-wrap">
+                      {promptParts.promptFinal}
+                    </p>
+                  )}
+                </div>
 
-              {/* Regenerar com IA */}
-              <div style={{ paddingTop: 18, borderTop: `1px solid ${border}` }}>
-                <label style={{ fontSize: 11, fontWeight: 700, color: '#00e893', letterSpacing: 3, textTransform: 'uppercase', display: 'block', marginBottom: 10 }}>✦ Regenerar com IA</label>
-                <textarea value={editInstruction} onChange={e => setEditInstruction(e.target.value)} rows={3} placeholder="Ex: Use dados do NEJM 2023, foque em mulheres..." style={{ ...inputSty, resize: 'none', display: 'block', marginBottom: 10 }} />
-                <button onClick={() => regenerateSlide(currentSlide)} disabled={isEditGenerating || !editInstruction.trim()}
-                  style={{ width: '100%', padding: '11px', borderRadius: 8, border: `1px solid rgba(0,192,127,0.3)`, background: 'none', color: '#00e893', fontWeight: 700, fontSize: 13, cursor: editInstruction.trim() ? 'pointer' : 'not-allowed', opacity: editInstruction.trim() ? 1 : 0.4, fontFamily: "'Inter', system-ui, sans-serif" }}>
-                  {isEditGenerating ? '⟳ Regenerando...' : '⚡ Regenerar Slide'}
+                {/* Generate Image Button */}
+                <button
+                  onClick={gerarImagem}
+                  disabled={loadingImage}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-4 rounded-lg bg-accent text-background text-[14px] font-bold hover:bg-accent/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-accent/20"
+                >
+                  {loadingImage ? <RefreshCw className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
+                  {loadingImage ? loadingMsg : `Gerar Imagem · ${MODELOS[modelo].label}`}
                 </button>
               </div>
-            </>
-          )}
+            )}
+
+            {/* ── Loading: generating image ── */}
+            {loadingImage && (
+              <div className="bg-card border border-border rounded-lg p-14 flex flex-col items-center justify-center gap-5">
+                <div className="relative">
+                  <div className="w-16 h-16 rounded-2xl bg-accent-dim border border-accent-border flex items-center justify-center">
+                    <ImageIcon className="w-8 h-8 text-accent" />
+                  </div>
+                  <RefreshCw className="w-5 h-5 text-accent animate-spin absolute -top-1.5 -right-1.5" />
+                </div>
+                <div className="text-center">
+                  <div className="text-[14px] font-semibold text-text-primary mb-1">{loadingMsg}</div>
+                  <div className="text-[9px] font-mono text-text-muted tracking-widest">PROCESSANDO VIA {MODELOS[modelo].label.toUpperCase()}</div>
+                </div>
+              </div>
+            )}
+
+            {/* ── Image Result ── */}
+            {displayImage && !loadingImage && (
+              <div className="space-y-4">
+                <div className="bg-card border border-border rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-[13px] font-semibold text-text-primary">Imagem Gerada</span>
+                      {selectedHist && (
+                        <span className="text-[9px] font-mono text-text-muted px-2 py-0.5 rounded bg-white/[0.04] border border-border">
+                          Histórico · {selectedHist.timestamp}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button onClick={copyPrompt}
+                        className="flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg border border-border text-text-muted hover:text-text-secondary transition-all">
+                        {copied ? <Check className="w-3 h-3 text-accent" /> : <Copy className="w-3 h-3" />}
+                        Copiar Prompt
+                      </button>
+                      {!selectedHist && promptParts && (
+                        <button onClick={gerarImagem} disabled={loadingImage}
+                          className="flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg border border-border text-text-muted hover:text-text-secondary transition-all disabled:opacity-40">
+                          <RefreshCw className="w-3 h-3" /> Regenerar
+                        </button>
+                      )}
+                      <button onClick={downloadImage}
+                        className="flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg bg-accent-dim border border-accent-border text-accent hover:bg-accent/20 transition-all font-medium">
+                        <Download className="w-3 h-3" /> Download
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex justify-center bg-background rounded-lg overflow-hidden">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={displayImage}
+                      alt="Imagem gerada pelo Diretor Criativo IA"
+                      className="max-w-full max-h-[640px] object-contain rounded"
+                    />
+                  </div>
+                </div>
+
+                {/* Visual Audit */}
+                <div className="bg-card border border-border rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-2 h-2 rounded-full bg-accent flex-shrink-0" />
+                    <span className="text-[9px] font-mono text-text-muted tracking-widest uppercase">Auditoria Visual Automática</span>
+                    {loadingAudit && <RefreshCw className="w-3 h-3 text-text-muted animate-spin ml-auto" />}
+                  </div>
+                  {displayAudit ? (
+                    <p className="text-[12px] text-text-secondary leading-relaxed">{displayAudit}</p>
+                  ) : loadingAudit ? (
+                    <p className="text-[11px] text-text-muted font-mono">Analisando resultado...</p>
+                  ) : (
+                    <p className="text-[11px] text-text-muted">Auditoria não disponível para este item do histórico.</p>
+                  )}
+                </div>
+              </div>
+            )}
+
+          </div>
         </div>
-      </div>
-    </div>
-  )
-}
-
-// ─── Componentes auxiliares ───────────────────────────────────────────────────
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <label style={{ fontSize: 11, fontWeight: 700, color: '#474f66', letterSpacing: 3, textTransform: 'uppercase' as const, display: 'block', marginBottom: 8 }}>{label}</label>
-      {children}
-    </div>
-  )
-}
-
-function FotoSelect({ label, value, fotos, onChange }: { label: string; value: number | null; fotos: string[]; onChange: (i: number | null) => void }) {
-  const sideBg = '#13141d'
-  return (
-    <div>
-      <label style={{ fontSize: 11, fontWeight: 700, color: '#474f66', letterSpacing: 3, textTransform: 'uppercase' as const, display: 'block', marginBottom: 8 }}>{label}</label>
-      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-        <button onClick={() => onChange(null)} style={{ padding: '4px 10px', borderRadius: 6, border: 'none', background: value === null ? '#00c07f' : sideBg, color: value === null ? '#08090e' : '#474f66', fontWeight: 700, fontSize: 11, cursor: 'pointer', fontFamily: "'Inter', system-ui, sans-serif" }}>Nenhuma</button>
-        {fotos.map((_, i) => (
-          <button key={i} onClick={() => onChange(i)} style={{ padding: '4px 10px', borderRadius: 6, border: 'none', background: value === i ? '#00c07f' : sideBg, color: value === i ? '#08090e' : '#474f66', fontWeight: 700, fontSize: 11, cursor: 'pointer', fontFamily: "'Inter', system-ui, sans-serif" }}>F{i+1}</button>
-        ))}
       </div>
     </div>
   )

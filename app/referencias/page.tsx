@@ -94,7 +94,7 @@ function AnaliseModal({ referencia, onClose }: { referencia: Referencia; onClose
 
         const res  = await fetch('/api/roteiros', {
           method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:1500, messages:[{role:'user',content:prompt}] }),
+          body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:2000, messages:[{role:'user',content:prompt}] }),
         })
         const data = await res.json()
         const raw  = (data.content?.[0]?.text||'{}').replace(/```json/g,'').replace(/```/g,'').trim()

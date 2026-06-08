@@ -375,7 +375,7 @@ export default function RaioXPage() {
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
           style={{ background: "rgba(8,9,14,0.88)", backdropFilter: "blur(4px)" }}
         >
-          <div className="w-full max-w-lg rounded-xl border flex flex-col" style={{ background: "#0f1018", borderColor: "#1c1d2a", maxHeight: "80vh" }}>
+          <div className="w-full max-w-lg rounded-xl border flex flex-col" style={{ background: "var(--surface)", borderColor: "var(--border)", maxHeight: "80vh" }}>
             <div className="flex items-center justify-between px-5 py-4 border-b border-border">
               <div className="flex items-center gap-2">
                 <BookOpen className="w-4 h-4 text-accent" />

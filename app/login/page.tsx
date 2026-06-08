@@ -39,11 +39,11 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="fixed inset-0 z-[200] flex animate-fade-in" style={{ background: "#080808" }}>
+    <div className="fixed inset-0 z-[200] flex animate-fade-in" style={{ background: "var(--background)" }}>
 
       {/* ── LEFT PANEL (60%) — brand ────────────────────────────────────── */}
       <div className="hidden lg:flex lg:w-[60%] flex-col items-center justify-center relative overflow-hidden"
-        style={{ background: "linear-gradient(145deg, #080808 0%, #0a0f0a 60%, #080808 100%)" }}>
+        style={{ background: "linear-gradient(145deg, var(--surface) 0%, var(--surface-2) 60%, var(--surface) 100%)" }}>
 
         {/* Animated particles */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -95,7 +95,7 @@ export default function LoginPage() {
 
       {/* ── RIGHT PANEL (40%) — form ────────────────────────────────────── */}
       <div className="w-full lg:w-[40%] flex flex-col items-center justify-center px-6 relative"
-        style={{ background: "#0f0f0f", borderLeft: "1px solid #1f1f1f" }}>
+        style={{ background: "var(--surface)", borderLeft: "1px solid var(--border)" }}>
 
         {/* Mobile logo */}
         <div className="lg:hidden mb-10 flex flex-col items-center">

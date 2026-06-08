@@ -8,31 +8,7 @@
    Default = dark. Anti-flash script in layout.tsx sets data-theme before paint.
 ══════════════════════════════════════════════════════════════════════════════ */
 
-:root,
-[data-theme="dark"] {
-  --background:     #080808;
-  --surface:        #0f0f0f;
-  --surface-2:      #161616;
-  --card:           #161616;
-  --border:         #1f1f1f;
-  --border-hover:   #2a2a2a;
-
-  --text-primary:   #f5f5f7;
-  --text-secondary: #a1a1a6;
-  --text-muted:     #48484f;
-
-  --accent-rgb:     0 192 127;
-  --accent:         #00c07f;
-  --accent-text:    #00d98f;
-  --accent-dim:     rgba(0, 192, 127, 0.08);
-  --accent-border:  rgba(0, 192, 127, 0.20);
-
-  --topbar-bg:      rgba(8, 8, 8, 0.85);
-  --scrollbar:      #2a2a2a;
-  --selection-bg:   rgba(0, 192, 127, 0.18);
-}
-
-[data-theme="light"] {
+:root {
   --background:     #f5f5f0;
   --surface:        #ffffff;
   --surface-2:      #f0f0eb;
@@ -50,7 +26,8 @@
   --accent-dim:     rgba(0, 168, 107, 0.08);
   --accent-border:  rgba(0, 168, 107, 0.20);
 
-  --topbar-bg:      rgba(245, 245, 240, 0.90);
+  --gold:           #d4af37;
+  --topbar-bg:      rgba(245, 245, 240, 0.92);
   --scrollbar:      #c8c8c0;
   --selection-bg:   rgba(0, 168, 107, 0.15);
 }

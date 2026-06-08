@@ -4,9 +4,9 @@ import { useState, useEffect } from 'react'
 import { PautasModal } from '@/components/PautasModal'
 
 const D = {
-  bg:'#08090e',surface:'#0f1018',card:'#13141d',border:'#1c1d2a',
-  text:'#e8eaf2',text2:'#7c85a0',muted:'#474f66',
-  accent:'#00c07f',adim:'rgba(0,192,127,0.12)',aborder:'rgba(0,192,127,0.3)',atext:'#00e893',
+  bg:'var(--background)',surface:'var(--surface)',card:'var(--surface-2)',border:'var(--border)',
+  text:'var(--text-primary)',text2:'var(--text-secondary)',muted:'var(--text-muted)',
+  accent:'var(--accent)',adim:'var(--accent-dim)',aborder:'var(--accent-border)',atext:'var(--accent-text)',
   font:"'Inter', system-ui, sans-serif",mono:"'JetBrains Mono', monospace",
 }
 const inputSty = { background:D.card, border:`1px solid ${D.border}`, color:D.text, borderRadius:8, padding:'10px 14px', fontSize:16, width:'100%', fontFamily:"'Inter'", outline:'none' } as React.CSSProperties

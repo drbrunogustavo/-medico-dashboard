@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react'
 
 const D = {
-  bg:'#08090e', surface:'#0f1018', card:'#13141d', border:'#1c1d2a', bdHov:'#2a2c3e',
-  text:'#e8eaf2', text2:'#7c85a0', muted:'#474f66',
-  accent:'#00c07f', adim:'rgba(0,192,127,0.12)', aborder:'rgba(0,192,127,0.3)', atext:'#00e893',
+  bg:'var(--background)', surface:'var(--surface)', card:'var(--surface-2)', border:'var(--border)', bdHov:'var(--border-hover)',
+  text:'var(--text-primary)', text2:'var(--text-secondary)', muted:'var(--text-muted)',
+  accent:'var(--accent)', adim:'var(--accent-dim)', aborder:'var(--accent-border)', atext:'var(--accent-text)',
   warn:'#f59e0b', wdim:'rgba(245,158,11,0.12)', wborder:'rgba(245,158,11,0.3)',
   blue:'#3b7fff', bdim:'rgba(59,127,255,0.12)', bborder:'rgba(59,127,255,0.3)',
   red:'#ef4444', rdim:'rgba(239,68,68,0.12)', rborder:'rgba(239,68,68,0.3)',
@@ -298,7 +298,7 @@ export default function WhatsAppPage() {
                 <div style={{ fontSize:11, color:D.muted, marginTop:8 }}>Mensagens fora do horário recebem resposta automática informando o horário de atendimento.</div>
               </Card>
               <button onClick={salvarConfig}
-                style={{ padding:'12px', borderRadius:9, background:saved?D.adim:D.accent, border:`1px solid ${saved?D.aborder:D.accent}`, color:saved?D.atext:'#08090e', fontWeight:700, fontSize:14, cursor:'pointer', fontFamily:D.font, transition:'all 0.2s' }}>
+                style={{ padding:'12px', borderRadius:9, background:saved?D.adim:D.accent, border:`1px solid ${saved?D.aborder:D.accent}`, color:saved?D.atext:'var(--background)', fontWeight:700, fontSize:14, cursor:'pointer', fontFamily:D.font, transition:'all 0.2s' }}>
                 {saved ? '✓ Configuração salva!' : '💾 Salvar Configuração'}
               </button>
             </div>
@@ -330,7 +330,7 @@ export default function WhatsAppPage() {
               ))}
             </div>
             <button onClick={salvarConfig}
-              style={{ padding:'12px', borderRadius:9, background:saved?D.adim:D.accent, border:`1px solid ${saved?D.aborder:D.accent}`, color:saved?D.atext:'#08090e', fontWeight:700, fontSize:14, cursor:'pointer', fontFamily:D.font }}>
+              style={{ padding:'12px', borderRadius:9, background:saved?D.adim:D.accent, border:`1px solid ${saved?D.aborder:D.accent}`, color:saved?D.atext:'var(--background)', fontWeight:700, fontSize:14, cursor:'pointer', fontFamily:D.font }}>
               {saved ? '✓ Salvo!' : '💾 Salvar Fluxos'}
             </button>
           </div>
@@ -368,7 +368,7 @@ export default function WhatsAppPage() {
                         setNovaResposta({ gatilho:'', resposta:'' })
                         setShowNovaResposta(false)
                       }
-                    }} style={{ flex:1, padding:'9px', borderRadius:7, background:D.accent, border:'none', color:'#08090e', fontWeight:700, fontSize:13, cursor:'pointer', fontFamily:D.font }}>
+                    }} style={{ flex:1, padding:'9px', borderRadius:7, background:D.accent, border:'none', color:'var(--background)', fontWeight:700, fontSize:13, cursor:'pointer', fontFamily:D.font }}>
                       Adicionar
                     </button>
                     <button onClick={() => setShowNovaResposta(false)}
@@ -499,7 +499,7 @@ export default function WhatsAppPage() {
               </Card>
             </div>
 
-            <button onClick={salvarConfig} style={{ gridColumn:isMob?'1':'1 / -1', padding:'12px', borderRadius:9, background:saved?D.adim:D.accent, border:`1px solid ${saved?D.aborder:D.accent}`, color:saved?D.atext:'#08090e', fontWeight:700, fontSize:14, cursor:'pointer', fontFamily:D.font }}>
+            <button onClick={salvarConfig} style={{ gridColumn:isMob?'1':'1 / -1', padding:'12px', borderRadius:9, background:saved?D.adim:D.accent, border:`1px solid ${saved?D.aborder:D.accent}`, color:saved?D.atext:'var(--background)', fontWeight:700, fontSize:14, cursor:'pointer', fontFamily:D.font }}>
               {saved ? '✓ Configuração salva!' : '💾 Salvar Integrações'}
             </button>
           </div>

@@ -504,7 +504,7 @@ export default function OfertasPage() {
           </div>
           <div className="bg-card border border-border rounded-xl overflow-hidden animate-pulse" style={{ height: 560 }}>
             {/* Hero skeleton */}
-            <div className="flex flex-col items-center justify-center gap-4 p-12" style={{ height: 220, background: "#13141d" }}>
+            <div className="flex flex-col items-center justify-center gap-4 p-12" style={{ height: 220, background: "var(--surface-2)" }}>
               <div className="h-7 rounded-lg w-2/3" style={{ background: "rgba(255,255,255,0.08)" }} />
               <div className="h-4 rounded-lg w-1/2" style={{ background: "rgba(255,255,255,0.04)" }} />
               <div className="h-10 rounded-lg w-36 mt-2" style={{ background: "rgba(0,192,127,0.15)" }} />

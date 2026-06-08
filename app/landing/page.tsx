@@ -225,7 +225,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── SOCIAL PROOF BAR ────────────────────────────────────────────────── */}
-      <section className="py-8 px-6 border-y border-border" style={{ background: "#0f0f0f" }}>
+      <section className="py-8 px-6 border-y border-border" style={{ background: "var(--surface-2)" }}>
         <div className="max-w-5xl mx-auto text-center">
           <p className="text-[11px] font-mono text-text-muted tracking-[3px] uppercase mb-6">
             Usado por profissionais de saúde em todo o Brasil
@@ -261,7 +261,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── MÓDULOS ─────────────────────────────────────────────────────────── */}
-      <section className="py-24 px-6 md:px-12" style={{ background: "#0f0f0f" }}>
+      <section className="py-24 px-6 md:px-12" style={{ background: "var(--surface-2)" }}>
         <div className="max-w-5xl mx-auto">
           <SectionHeader
             label="A solução"
@@ -316,7 +316,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── DEPOIMENTOS ─────────────────────────────────────────────────────── */}
-      <section className="py-24 px-6 md:px-12" style={{ background: "#0f0f0f" }}>
+      <section className="py-24 px-6 md:px-12" style={{ background: "var(--surface-2)" }}>
         <div className="max-w-5xl mx-auto">
           <SectionHeader label="Resultados reais" title="Médicos que transformaram sua presença digital." />
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -412,7 +412,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── FAQ ─────────────────────────────────────────────────────────────── */}
-      <section className="py-24 px-6 md:px-12" style={{ background: "#0f0f0f" }}>
+      <section className="py-24 px-6 md:px-12" style={{ background: "var(--surface-2)" }}>
         <div className="max-w-2xl mx-auto">
           <SectionHeader label="Dúvidas frequentes" title="Tudo que você precisa saber." />
           <div>
@@ -443,7 +443,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── FOOTER ──────────────────────────────────────────────────────────── */}
-      <footer className="border-t border-border py-10 px-6 md:px-12" style={{ background: "#080808" }}>
+      <footer className="border-t border-border py-10 px-6 md:px-12" style={{ background: "var(--surface)" }}>
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <PraxisLogo />
           <div className="flex items-center gap-6">

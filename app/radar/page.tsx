@@ -927,10 +927,10 @@ Retorne um objeto JSON com:
         >
           <div
             className="w-full max-w-2xl rounded-xl border flex flex-col"
-            style={{ background: "#0f1018", borderColor: "#1c1d2a", maxHeight: "90vh" }}
+            style={{ background: "var(--surface)", borderColor: "var(--border)", maxHeight: "90vh" }}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: "#1c1d2a" }}>
+            <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: "var(--border)" }}>
               <div className="flex items-center gap-2 flex-wrap">
                 <Microscope className="w-4 h-4 text-accent flex-shrink-0" />
                 <span className="text-[13px] font-semibold text-text-primary">Engenharia Reversa</span>
@@ -948,7 +948,7 @@ Retorne um objeto JSON com:
             </div>
 
             {/* Reel info */}
-            <div className="px-5 py-3 border-b" style={{ borderColor: "#1c1d2a" }}>
+            <div className="px-5 py-3 border-b" style={{ borderColor: "var(--border)" }}>
               <p className="text-[13px] font-medium text-text-primary leading-snug">{reverseReel.title}</p>
               <div className="flex items-center gap-4 mt-1.5">
                 <span className="text-[10px] font-mono text-accent">{reverseReel.views} views</span>

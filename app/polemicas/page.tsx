@@ -422,9 +422,9 @@ export default function PolemicasPage() {
         >
           <div
             className="w-full max-w-lg rounded-xl border flex flex-col"
-            style={{ background: "#0f1018", borderColor: "#2a1a0a", maxHeight: "80vh" }}
+            style={{ background: "var(--surface)", borderColor: "var(--border)", maxHeight: "80vh" }}
           >
-            <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: "#2a1a0a" }}>
+            <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: "var(--border)" }}>
               <div className="flex items-center gap-2">
                 <BookOpen className="w-4 h-4 text-accent" />
                 <span className="text-[13px] font-semibold text-text-primary">Importar do Banco de Pautas</span>
@@ -435,7 +435,7 @@ export default function PolemicasPage() {
               </button>
             </div>
 
-            <div className="px-5 py-3 border-b" style={{ borderColor: "#2a1a0a" }}>
+            <div className="px-5 py-3 border-b" style={{ borderColor: "var(--border)" }}>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted" />
                 <input

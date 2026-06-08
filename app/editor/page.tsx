@@ -74,9 +74,9 @@ function StepDot({ n, active, done }: { n: number; active: boolean; done: boolea
   return (
     <div className={cn(
       "w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold border-2 transition-all flex-shrink-0",
-      done   ? "bg-[#00c07f] border-[#00c07f] text-[#08090e]" :
-      active ? "bg-[rgba(0,192,127,0.12)] border-[#00c07f] text-[#00c07f]" :
-               "bg-transparent border-[#1c1d2a] text-[#474f66]"
+      done   ? "bg-accent border-accent text-background" :
+      active ? "bg-accent-dim border-accent text-accent" :
+               "bg-transparent border-border text-text-muted"
     )}>
       {done ? "✓" : n}
     </div>
@@ -600,7 +600,7 @@ export default function EditorPage() {
                   <button
                     onClick={analisarRoteiro}
                     disabled={isAnalyzing || !roteiro.trim()}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#00c07f] text-[#08090e] text-[13px] font-bold hover:bg-[#00c07f]/90 transition-colors disabled:opacity-50"
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-accent text-white text-[13px] font-bold hover:bg-[#00c07f]/90 transition-colors disabled:opacity-50"
                   >
                     {isAnalyzing
                       ? <><Loader2 className="w-4 h-4 animate-spin" /> Analisando...</>
@@ -634,7 +634,7 @@ export default function EditorPage() {
               {videoUrl ? (
                 <div className="space-y-3">
                   <div className="flex items-center gap-3 bg-background rounded-lg p-3">
-                    <div className="w-10 h-16 bg-[#1c1d2a] rounded overflow-hidden flex-shrink-0">
+                    <div className="w-10 h-16 bg-border rounded overflow-hidden flex-shrink-0">
                       <video src={videoUrl} className="w-full h-full object-cover" muted />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -737,7 +737,7 @@ export default function EditorPage() {
               </button>
               <button
                 onClick={() => setStep(3)}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#00c07f] text-[#08090e] text-[13px] font-bold hover:bg-[#00c07f]/90 transition-colors"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-accent text-white text-[13px] font-bold hover:bg-[#00c07f]/90 transition-colors"
               >
                 Ir para Timeline <ChevronRight className="w-4 h-4" />
               </button>
@@ -988,7 +988,7 @@ export default function EditorPage() {
                 {/* Canvas container */}
                 <div className="flex justify-center">
                   <div
-                    className="relative rounded-2xl overflow-hidden border-4 border-[#1c1d2a] shadow-2xl"
+                    className="relative rounded-2xl overflow-hidden border-4 border-border shadow-2xl"
                     style={{ width: 252, height: 448 }}
                   >
                     <canvas
@@ -998,7 +998,7 @@ export default function EditorPage() {
                       className="w-full h-full block"
                     />
                     {!videoUrl && (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#08090e]/90 gap-2">
+                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-surface-2/90 gap-2">
                         <Video className="w-8 h-8 text-text-muted/30" />
                         <p className="text-[10px] font-mono text-text-muted text-center px-4 leading-relaxed">
                           Faça upload do vídeo<br />na etapa anterior
@@ -1048,7 +1048,7 @@ export default function EditorPage() {
               <button
                 onClick={handleExport}
                 disabled={isExporting || !videoFile}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-[#00c07f] text-[#08090e] text-[13px] font-bold hover:bg-[#00c07f]/90 transition-colors disabled:opacity-40"
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-accent text-white text-[13px] font-bold hover:bg-[#00c07f]/90 transition-colors disabled:opacity-40"
               >
                 {isExporting
                   ? <><Loader2 className="w-4 h-4 animate-spin" /> Exportando {exportProgress}%</>
@@ -1092,9 +1092,9 @@ export default function EditorPage() {
         >
           <div
             className="w-full max-w-lg rounded-xl border flex flex-col"
-            style={{ background: "#0f1018", borderColor: "#2a1a0a", maxHeight: "80vh" }}
+            style={{ background: "var(--surface)", borderColor: "var(--border)", maxHeight: "80vh" }}
           >
-            <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: "#2a1a0a" }}>
+            <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: "var(--border)" }}>
               <div className="flex items-center gap-2">
                 <BookOpen className="w-4 h-4 text-[#00c07f]" />
                 <span className="text-[13px] font-semibold text-text-primary">Importar do Banco de Pautas</span>
@@ -1107,7 +1107,7 @@ export default function EditorPage() {
               </button>
             </div>
 
-            <div className="px-5 py-3 border-b" style={{ borderColor: "#2a1a0a" }}>
+            <div className="px-5 py-3 border-b" style={{ borderColor: "var(--border)" }}>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted" />
                 <input

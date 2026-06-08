@@ -1,7 +1,7 @@
 "use client"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Radio, FileText, Users, LayoutDashboard, ChevronRight, Activity, Sparkles, Layers, Video, Zap, X, MessageSquare, Clapperboard, Flame } from "lucide-react"
+import { Radio, FileText, Users, LayoutDashboard, ChevronRight, Activity, Sparkles, Layers, Video, Zap, X, MessageSquare, Clapperboard, Flame, ScanFace, ShieldQuestion, CircleDollarSign } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useMenu } from "@/components/MobileMenuProvider"
 
@@ -17,6 +17,11 @@ const NAV = [
     { label: "Polêmicas Controladas",  href: "/polemicas",   icon: Flame,        badge: "NOVO" },
     { label: "Banco de Pautas",        href: "/pautas",      icon: FileText,     badge: null   },
     { label: "Monitor de Referências", href: "/referencias", icon: Users,        badge: null   },
+  ]},
+  { category: "Consultório", items: [
+    { label: "Raio-X de Pacientes",    href: "/raio-x",        icon: ScanFace,         badge: "NOVO" },
+    { label: "Mapa de Objeções",       href: "/objecoes",      icon: ShieldQuestion,   badge: "NOVO" },
+    { label: "Oportunidades",          href: "/oportunidades", icon: CircleDollarSign, badge: "NOVO" },
   ]},
   { category: "Produtividade", items: [
     { label: "Agente WhatsApp", href: "/whatsapp", icon: MessageSquare, badge: "NOVO" },

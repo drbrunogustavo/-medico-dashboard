@@ -6,6 +6,7 @@ import {
   Wand2, RefreshCw, Download, Copy, Check,
   ChevronDown, ChevronUp, Sparkles, Edit3,
   Image as ImageIcon, History, AlertCircle,
+  BookOpen, X, Search, Loader2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -37,6 +38,15 @@ interface HistoryItem {
   estilo:    string
   audit:     string
   timestamp: string
+}
+
+interface Pauta {
+  id:         number | string
+  titulo:     string
+  categoria:  string
+  prioridade: string
+  nota?:      string
+  estagio?:   string
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -92,6 +102,38 @@ const MSG_IMAGE = [
   "Renderizando detalhes...",
   "Quase pronto...",
 ]
+
+// Mapeamento categoria da pauta → estilo mais adequado
+const CATEGORIA_PARA_ESTILO: Record<string, EstiloId> = {
+  "Emagrecimento":         "card-premium",
+  "Hormônios":             "autoridade",
+  "Andropausa":            "autoridade",
+  "Menopausa":             "autoridade",
+  "Terapia Hormonal":      "autoridade",
+  "Endocrinologia":        "autoridade",
+  "Longevidade":           "luxo-editorial",
+  "Anti-aging":            "luxo-editorial",
+  "Envelhecimento":        "luxo-editorial",
+  "Nutrologia":            "carrossel-medico",
+  "Nutrição Clínica":      "carrossel-medico",
+  "Metabolismo":           "carrossel-medico",
+  "Microbioma":            "carrossel-medico",
+  "Genômica":              "carrossel-medico",
+  "Obesidade":             "anuncio-premium",
+  "Cardiometabolismo":     "anuncio-premium",
+  "Medicina do Esporte":   "campanha",
+  "Suplementação":         "campanha",
+  "Saúde Mental":          "card-premium",
+  "Imunologia":            "card-premium",
+  "Sono e Cronobiologia":  "card-premium",
+  "Oportunidade de Conteúdo": "capa-reels",
+}
+
+const PRIORIDADE_STYLE: Record<string, string> = {
+  "Alta":  "bg-red-950/60 border-red-500/40 text-red-400",
+  "Média": "bg-amber-950/60 border-amber-500/40 text-amber-400",
+  "Baixa": "bg-slate-900/60 border-slate-600/40 text-slate-400",
+}
 
 const VISUAL_IDENTITY = `FIXED VISUAL IDENTITY (mandatory for every prompt):
 - Background: sophisticated black graphite with texture (#08090e)
@@ -149,6 +191,10 @@ export default function DiretorCriativoPage() {
   const [error,         setError]         = useState<string | null>(null)
   const [copied,        setCopied]        = useState(false)
   const [expanded,      setExpanded]      = useState<string | null>(null)
+  const [modalOpen,     setModalOpen]     = useState(false)
+  const [pautas,        setPautas]        = useState<Pauta[]>([])
+  const [loadingPautas, setLoadingPautas] = useState(false)
+  const [pautaSearch,   setPautaSearch]   = useState("")
 
   const msgTimer = useRef<ReturnType<typeof setInterval>>()
 
@@ -158,6 +204,31 @@ export default function DiretorCriativoPage() {
     msgTimer.current = setInterval(() => { i = (i + 1) % msgs.length; setLoadingMsg(msgs[i]) }, ms)
   }
   const stopMsgs = () => { clearInterval(msgTimer.current); setLoadingMsg("") }
+
+  // ── Modal: importar do banco de pautas ─────────────────────────────────────
+
+  const abrirModalPautas = async () => {
+    setModalOpen(true)
+    setPautaSearch("")
+    if (pautas.length > 0) return
+    setLoadingPautas(true)
+    try {
+      const res  = await fetch("/api/pautas")
+      const data = await res.json()
+      setPautas(Array.isArray(data) ? data : [])
+    } catch {
+      setPautas([])
+    } finally {
+      setLoadingPautas(false)
+    }
+  }
+
+  const selecionarPauta = (pauta: Pauta) => {
+    setIdeia(pauta.titulo)
+    const estiloMapeado = CATEGORIA_PARA_ESTILO[pauta.categoria] ?? "card-premium"
+    setEstilo(estiloMapeado)
+    setModalOpen(false)
+  }
 
   // ── Step 1: Generate creative direction via Claude ──────────────────────────
 
@@ -353,7 +424,16 @@ Provide a brief visual audit in Brazilian Portuguese (3-4 sentences). Start with
 
             {/* 3 — Tema */}
             <div className="bg-card border border-border rounded-lg p-4">
-              <div className="text-[9px] font-mono text-text-muted tracking-widest uppercase mb-3">3 — Tema da Arte</div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="text-[9px] font-mono text-text-muted tracking-widest uppercase">3 — Tema da Arte</div>
+                <button
+                  onClick={abrirModalPautas}
+                  className="flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-md border border-border text-text-muted hover:border-accent-border hover:text-accent transition-all"
+                >
+                  <BookOpen className="w-3 h-3" />
+                  Banco de Pautas
+                </button>
+              </div>
               <textarea
                 value={ideia}
                 onChange={e => setIdeia(e.target.value)}
@@ -638,6 +718,114 @@ Provide a brief visual audit in Brazilian Portuguese (3-4 sentences). Start with
           </div>
         </div>
       </div>
+      {/* ════════════════════════════════
+          MODAL — Banco de Pautas
+      ════════════════════════════════ */}
+      {modalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: "rgba(8,9,14,0.85)", backdropFilter: "blur(4px)" }}
+        >
+          <div
+            className="w-full max-w-lg rounded-xl border flex flex-col"
+            style={{
+              background: "#08090e",
+              borderColor: "#2a1a0a",
+              maxHeight: "80vh",
+            }}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: "#2a1a0a" }}>
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-4 h-4 text-accent" />
+                <span className="text-[13px] font-semibold text-text-primary">Banco de Pautas</span>
+              </div>
+              <button
+                onClick={() => setModalOpen(false)}
+                className="w-7 h-7 flex items-center justify-center rounded-md border border-border text-text-muted hover:text-text-primary hover:border-border-hover transition-all"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {/* Search */}
+            <div className="px-5 py-3 border-b" style={{ borderColor: "#2a1a0a" }}>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted" />
+                <input
+                  autoFocus
+                  value={pautaSearch}
+                  onChange={e => setPautaSearch(e.target.value)}
+                  placeholder="Buscar pauta..."
+                  className="w-full bg-background border border-border rounded-lg pl-8 pr-3 py-2 text-[12px] text-text-primary placeholder:text-text-muted outline-none focus:border-accent/40 transition-colors"
+                />
+              </div>
+            </div>
+
+            {/* Body */}
+            <div className="flex-1 overflow-y-auto px-3 py-3">
+              {loadingPautas ? (
+                <div className="flex items-center justify-center py-12 gap-2 text-text-muted">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span className="text-[12px] font-mono">Carregando pautas...</span>
+                </div>
+              ) : pautas.length === 0 ? (
+                <div className="text-center py-12 text-text-muted text-[12px]">
+                  Nenhuma pauta encontrada no banco.
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  {pautas
+                    .filter(p =>
+                      !pautaSearch ||
+                      p.titulo.toLowerCase().includes(pautaSearch.toLowerCase()) ||
+                      p.categoria.toLowerCase().includes(pautaSearch.toLowerCase())
+                    )
+                    .map(pauta => {
+                      const estiloSugerido = CATEGORIA_PARA_ESTILO[pauta.categoria] ?? "card-premium"
+                      const prioStyle = PRIORIDADE_STYLE[pauta.prioridade] ?? PRIORIDADE_STYLE["Baixa"]
+                      return (
+                        <button
+                          key={pauta.id}
+                          onClick={() => selecionarPauta(pauta)}
+                          className="w-full text-left px-4 py-3 rounded-lg border border-transparent hover:border-accent-border hover:bg-accent-dim/30 transition-all group"
+                        >
+                          <div className="flex items-start justify-between gap-3 mb-1.5">
+                            <p className="text-[12px] font-medium text-text-primary leading-snug group-hover:text-accent transition-colors">
+                              {pauta.titulo}
+                            </p>
+                            <span className={cn(
+                              "flex-shrink-0 text-[8px] font-mono font-semibold px-2 py-0.5 rounded-full border",
+                              prioStyle
+                            )}>
+                              {pauta.prioridade}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[9px] font-medium px-2 py-0.5 rounded bg-white/[0.04] border border-border text-text-muted">
+                              {pauta.categoria}
+                            </span>
+                            <span className="text-[9px] text-text-muted/60">→</span>
+                            <span className="text-[9px] text-accent/70">
+                              {ESTILOS[estiloSugerido].label}
+                            </span>
+                          </div>
+                        </button>
+                      )
+                    })}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-5 py-3 border-t" style={{ borderColor: "#2a1a0a" }}>
+              <p className="text-[9px] font-mono text-text-muted text-center tracking-wider">
+                {pautas.length} PAUTA{pautas.length !== 1 ? "S" : ""} NO BANCO · CLIQUE PARA IMPORTAR
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

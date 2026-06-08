@@ -7,7 +7,7 @@ import {
   // Inteligência
   Radio, CircleDollarSign, BarChart, Users,
   // Criação
-  Bot, Video, Layers, Clapperboard, Sparkles, Flame,
+  Bot, Video, Layers, Clapperboard, Sparkles, Flame, Megaphone,
   // Estratégia
   ScanFace, ShieldQuestion, Microscope, Zap, FileText,
   // Produtividade
@@ -43,6 +43,7 @@ const NAV = [
       { label: "Editor de Vídeo",           href: "/editor",         icon: Clapperboard,     badge: null   },
       { label: "Gerador de Legendas",       href: "/legendas",       icon: Sparkles,         badge: null   },
       { label: "Gerador de Polêmicas",      href: "/polemicas",      icon: Flame,            badge: null   },
+      { label: "Gerador de Ofertas",         href: "/ofertas",        icon: Megaphone,        badge: null   },
     ],
   },
   {

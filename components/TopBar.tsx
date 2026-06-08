@@ -2,6 +2,7 @@
 
 import { Menu } from "lucide-react"
 import { useMenu } from "@/components/MobileMenuProvider"
+import { ThemeToggle } from "@/components/ThemeToggle"
 
 interface TopBarProps {
   title:     string
@@ -16,10 +17,10 @@ export function TopBar({ title, subtitle, actions }: TopBarProps) {
     <header
       className="flex items-center gap-3 px-4 md:px-8 border-b border-border sticky top-0 z-30"
       style={{
-        height: 60,
-        background: "rgba(8,8,8,0.80)",
-        backdropFilter: "blur(20px) saturate(180%)",
-        WebkitBackdropFilter: "blur(20px) saturate(180%)",
+        height:              60,
+        background:          "var(--topbar-bg)",
+        backdropFilter:      "blur(20px) saturate(180%)",
+        WebkitBackdropFilter:"blur(20px) saturate(180%)",
       }}
     >
       {/* Mobile hamburger */}
@@ -43,10 +44,11 @@ export function TopBar({ title, subtitle, actions }: TopBarProps) {
         )}
       </div>
 
-      {/* Actions */}
-      {actions && (
-        <div className="flex items-center gap-2 flex-shrink-0">{actions}</div>
-      )}
+      {/* Theme toggle + actions */}
+      <div className="flex items-center gap-2 flex-shrink-0">
+        <ThemeToggle />
+        {actions && <>{actions}</>}
+      </div>
     </header>
   )
 }

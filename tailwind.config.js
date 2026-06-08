@@ -15,35 +15,35 @@ module.exports = {
     },
     extend: {
       colors: {
-        /* Base — PRAXIS dark premium */
-        background:     "#080808",
-        surface:        "#0f0f0f",
-        "surface-2":    "#161616",
-        card:           "#161616",
-        border:         "#1f1f1f",
-        "border-hover": "#2a2a2a",
+        /* ── Core layout tokens → CSS custom properties (theme-aware) ──── */
+        background:     "var(--background)",
+        surface:        "var(--surface)",
+        "surface-2":    "var(--surface-2)",
+        card:           "var(--card)",
+        border:         "var(--border)",
+        "border-hover": "var(--border-hover)",
 
-        /* Text — Apple palette */
-        "text-primary":   "#f5f5f7",
-        "text-secondary": "#a1a1a6",
-        "text-muted":     "#48484f",
+        /* ── Text tokens ─────────────────────────────────────────────── */
+        "text-primary":   "var(--text-primary)",
+        "text-secondary": "var(--text-secondary)",
+        "text-muted":     "var(--text-muted)",
 
-        /* Accent — Emerald green */
+        /* ── Accent — supports Tailwind opacity modifier (bg-accent/10) ─ */
         accent: {
-          DEFAULT: "#00c07f",
-          dim:     "rgba(0,192,127,0.08)",
-          border:  "rgba(0,192,127,0.2)",
-          text:    "#00d98f",
+          DEFAULT: "rgb(var(--accent-rgb) / <alpha-value>)",
+          dim:     "var(--accent-dim)",
+          border:  "var(--accent-border)",
+          text:    "var(--accent-text)",
         },
 
-        /* Gold — Elite tier */
+        /* ── Gold — Elite tier (intentionally theme-independent) ──────── */
         gold: {
           DEFAULT: "#d4af37",
           dim:     "rgba(212,175,55,0.08)",
           border:  "rgba(212,175,55,0.25)",
         },
 
-        /* Blue alternate */
+        /* ── Blue accent (theme-independent) ─────────────────────────── */
         blue: {
           DEFAULT: "#3b7fff",
           dim:     "rgba(59,127,255,0.10)",
@@ -51,10 +51,10 @@ module.exports = {
           text:    "#6fa3ff",
         },
 
-        /* Status */
-        danger:  { DEFAULT: "#ef4444", dim: "rgba(239,68,68,0.10)", border: "rgba(239,68,68,0.25)" },
-        warning: { DEFAULT: "#f59e0b", dim: "rgba(245,158,11,0.10)", border: "rgba(245,158,11,0.25)" },
-        success: { DEFAULT: "#00c07f", dim: "rgba(0,192,127,0.10)", border: "rgba(0,192,127,0.25)" },
+        /* ── Status (theme-independent) ──────────────────────────────── */
+        danger:  { DEFAULT: "#ef4444", dim: "rgba(239,68,68,0.10)",   border: "rgba(239,68,68,0.25)"   },
+        warning: { DEFAULT: "#f59e0b", dim: "rgba(245,158,11,0.10)",  border: "rgba(245,158,11,0.25)"  },
+        success: { DEFAULT: "#00c07f", dim: "rgba(0,192,127,0.10)",   border: "rgba(0,192,127,0.25)"   },
       },
       fontFamily: {
         sans:  ["var(--font-inter)", "system-ui", "sans-serif"],
@@ -69,13 +69,12 @@ module.exports = {
       keyframes: {
         "accordion-down": { from: { height: "0" }, to: { height: "var(--radix-accordion-content-height)" } },
         "accordion-up":   { from: { height: "var(--radix-accordion-content-height)" }, to: { height: "0" } },
-        blink:      { "0%,100%": { opacity: "1" }, "50%": { opacity: "0.2" } },
-        "fade-in":  { from: { opacity: "0", transform: "translateY(8px)" }, to: { opacity: "1", transform: "translateY(0)" } },
-        shimmer:    { from: { backgroundPosition: "-200% 0" }, to: { backgroundPosition: "200% 0" } },
-        softPulse:  { "0%,100%": { opacity: "1" }, "50%": { opacity: "0.6" } },
-        "slide-in-left": { from: { opacity: "0", transform: "translateX(-100%)" }, to: { opacity: "1", transform: "none" } },
-        "counter":  { from: { opacity: "0", transform: "translateY(12px)" }, to: { opacity: "1", transform: "none" } },
-        "particle": { "0%": { transform: "translateY(0) translateX(0)", opacity: "0" }, "10%": { opacity: "1" }, "90%": { opacity: "0.3" }, "100%": { transform: "translateY(-100vh) translateX(20px)", opacity: "0" } },
+        blink:            { "0%,100%": { opacity: "1" }, "50%": { opacity: "0.2" } },
+        "fade-in":        { from: { opacity: "0", transform: "translateY(8px)" }, to: { opacity: "1", transform: "translateY(0)" } },
+        shimmer:          { from: { backgroundPosition: "-200% 0" }, to: { backgroundPosition: "200% 0" } },
+        softPulse:        { "0%,100%": { opacity: "1" }, "50%": { opacity: "0.6" } },
+        "slide-in-left":  { from: { opacity: "0", transform: "translateX(-100%)" }, to: { opacity: "1", transform: "none" } },
+        "theme-switch":   { "0%": { opacity: "0", transform: "rotate(-90deg) scale(0.7)" }, "100%": { opacity: "1", transform: "rotate(0deg) scale(1)" } },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -85,8 +84,7 @@ module.exports = {
         shimmer:          "shimmer 2s linear infinite",
         "soft-pulse":     "softPulse 2s ease-in-out infinite",
         "slide-in-left":  "slide-in-left 250ms cubic-bezier(0.4,0,0.2,1)",
-        counter:          "counter 500ms ease-out",
-        particle:         "particle linear infinite",
+        "theme-switch":   "theme-switch 300ms ease-out",
       },
     },
   },

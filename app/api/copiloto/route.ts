@@ -1,89 +1,58 @@
 import { NextRequest, NextResponse } from "next/server"
 import Anthropic from "@anthropic-ai/sdk"
 import { checkAuth } from "@/lib/auth-check"
-import { inserirProntuario } from "@/lib/medx"
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
-const SYSTEM = `Você é o Copiloto de Consulta do PRAXIS — um assistente clínico de alto padrão para médicos especialistas em Endocrinologia, Nutrologia e Longevidade.
-
-Seu papel é estruturar os dados de uma consulta e gerar materiais clínicos e de comunicação profissionais, éticos e personalizados.
-
-Retorne SEMPRE JSON válido puro, sem markdown, sem texto antes ou depois do JSON.`
+const SYSTEM = `Você é o Copiloto de Consulta do PRAXIS — assistente clínico para médicos especialistas em Endocrinologia, Nutrologia e Longevidade.
+Retorne APENAS JSON válido, sem markdown, sem texto antes ou depois.`
 
 export async function POST(req: NextRequest) {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
 
-  const { searchParams } = req.nextUrl
-  const action = searchParams.get("action") ?? "gerar"
-
   try {
     const body = await req.json() as {
-      descricao:    string
+      descricao:     string
       nomePaciente?: string
-      idCliente?:   string
     }
 
-    if (action === "prontuario") {
-      const { descricao, idCliente = "" } = body
-      const data = await inserirProntuario(descricao, idCliente)
-      return NextResponse.json(data)
-    }
-
-    // ── Gerar copiloto completo ──────────────────────────────────────────────
     const nome = body.nomePaciente ?? "paciente"
 
     const resp = await client.messages.create({
       model:      "claude-sonnet-4-6",
-      max_tokens: 6000,
+      max_tokens: 4000,
       system:     SYSTEM,
       messages: [{
         role:    "user",
-        content: `Dados da consulta do(a) ${nome}:\n${body.descricao}\n\n` +
-`Gere o copiloto completo em JSON com exatamente estas 6 seções:
+        content:
+`Dados da consulta do(a) ${nome}:
+${body.descricao}
+
+Retorne um JSON com exatamente estas 4 chaves:
 {
-  "resumo": {
-    "resumo": "Resumo clínico estruturado da consulta (3-5 parágrafos)",
-    "hipoteses": ["Hipótese 1", "Hipótese 2"],
-    "exames": [{"exame": "Nome", "justificativa": "Por que solicitar"}]
-  },
-  "planoAlimentar": {
-    "orientacoes": "Orientações nutricionais gerais personalizadas (3-4 parágrafos)",
-    "recomendados": ["Alimento 1", "Alimento 2"],
-    "restritos": ["Alimento 1", "Alimento 2"],
-    "horarios": "Sugestão de cronograma alimentar"
-  },
-  "orientacoesPaciente": {
-    "texto": "Orientações em linguagem simples e empática para o paciente (3 parágrafos)",
-    "pontosChave": ["Ponto 1", "Ponto 2", "Ponto 3"],
-    "expectativas": "O que esperar do tratamento"
-  },
-  "mensagensAdesao": [
-    {"dia": "Dia 1 pós-consulta", "texto": "Mensagem WhatsApp completa empática"},
-    {"dia": "Dia 3",              "texto": "Mensagem WhatsApp"},
-    {"dia": "Dia 7",              "texto": "Mensagem WhatsApp"},
-    {"dia": "Dia 15",             "texto": "Mensagem WhatsApp"},
-    {"dia": "Dia 30",             "texto": "Mensagem WhatsApp"}
-  ],
-  "conteudoEducativo": [
-    {"tipo": "Reel", "titulo": "Título do post", "briefing": "Briefing completo para criar o conteúdo"},
-    {"tipo": "Carrossel", "titulo": "Título", "briefing": "Briefing"},
-    {"tipo": "Story", "titulo": "Título", "briefing": "Briefing"}
-  ],
-  "prontuario": "Texto do prontuário estruturado completo, pronto para inserir no sistema, incluindo: queixa principal, história da doença atual, antecedentes, exame físico resumido, hipóteses diagnósticas, conduta e retorno."
+  "resumo": "Resumo clínico estruturado da consulta em 2-3 parágrafos",
+  "hipoteses": ["Hipótese diagnóstica 1", "Hipótese 2", "Hipótese 3"],
+  "conduta": "Conduta sugerida: orientações, exames solicitados, medicações, retorno — em texto corrido",
+  "prontuario": "QUEIXA PRINCIPAL:\\n...\\n\\nHISTÓRIA DA DOENÇA ATUAL:\\n...\\n\\nANTECEDENTES:\\n...\\n\\nEXAME FÍSICO:\\n...\\n\\nHIPÓTESES DIAGNÓSTICAS:\\n...\\n\\nCONDUTA:\\n...\\n\\nRETORNO:\\n..."
 }`,
       }],
     })
 
-    const raw    = (resp.content.find(b => b.type === "text") as { text: string } | undefined)?.text ?? "{}"
-    const clean  = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim()
-    const idx    = clean.indexOf("{")
-    const parsed = JSON.parse(idx >= 0 ? clean.slice(idx) : clean)
+    const raw   = (resp.content.find(b => b.type === "text") as { text: string } | undefined)?.text ?? ""
+    const clean = raw.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim()
+    const start = clean.indexOf("{")
+    const end   = clean.lastIndexOf("}")
 
+    if (start === -1 || end === -1) {
+      console.error("[api/copiloto] JSON não encontrado:", clean.slice(0, 200))
+      return NextResponse.json({ error: "Claude não retornou JSON válido. Tente novamente." }, { status: 502 })
+    }
+
+    const parsed = JSON.parse(clean.slice(start, end + 1))
     return NextResponse.json(parsed)
   } catch (e) {
     console.error("[api/copiloto]", e)
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 500 })
   }
 }

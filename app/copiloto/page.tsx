@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import { TopBar } from "@/components/TopBar"
 import { cn } from "@/lib/utils"
 import {
-  Search, Mic, Square, Send, Copy, Check,
+  Search, Mic, Square, Copy, Check,
   ChevronDown, ChevronUp, Loader2, X,
   User, Phone, FileText, Stethoscope, ClipboardList, Sparkles,
 } from "lucide-react"
@@ -58,21 +58,9 @@ interface Paciente {
 }
 
 interface AnalysisResult {
-  resumo?: {
-    resumo?: string
-    hipoteses?: string[]
-    exames?: { exame: string; justificativa: string }[]
-  }
-  planoAlimentar?: {
-    orientacoes?: string
-    recomendados?: string[]
-    restritos?: string[]
-  }
-  orientacoesPaciente?: {
-    texto?: string
-    pontosChave?: string[]
-  }
-  mensagensAdesao?: { dia: string; texto: string }[]
+  resumo?:    string
+  hipoteses?: string[]
+  conduta?:   string
   prontuario?: string
   error?: string
 }
@@ -176,9 +164,8 @@ export default function CopilotoPage() {
   const [analysis, setAnalysis]   = useState<AnalysisResult | null>(null)
   const [analysisErr, setAnalysisErr] = useState("")
 
-  // MedX send
-  const [sending, setSending]     = useState(false)
-  const [sent, setSent]           = useState(false)
+  // Toast
+  const [toast, setToast]         = useState("")
 
   // Keep refs in sync with state
   useEffect(() => { transcriptRef.current = transcript }, [transcript])
@@ -210,7 +197,7 @@ export default function CopilotoPage() {
     setShowDrop(false)
     setTranscript(""); transcriptRef.current = ""
     setInterim("");    interimRef.current    = ""
-    setAnalysis(null); setPhase("idle"); setSent(false)
+    setAnalysis(null); setPhase("idle")
   }
 
   const clearPatient = () => {
@@ -274,7 +261,7 @@ export default function CopilotoPage() {
     setPhase("recording")
     setTranscript(""); transcriptRef.current = ""
     setInterim("");    interimRef.current    = ""
-    setAnalysis(null); setSent(false)
+    setAnalysis(null)
   }
 
   const stopRecognition = () => {
@@ -292,7 +279,6 @@ export default function CopilotoPage() {
     setPhase("analyzing")
     setAnalysisErr("")
     setAnalysis(null)
-    setSent(false)
 
     try {
       const res = await fetch("/api/copiloto", {
@@ -301,11 +287,18 @@ export default function CopilotoPage() {
         body: JSON.stringify({
           descricao:    text,
           nomePaciente: patient ? getNome(patient) : undefined,
-          idCliente:    patient ? getId(patient)   : undefined,
         }),
       })
+
+      // Guard against HTML/text responses (e.g. auth redirects)
+      const ct = res.headers.get("content-type") ?? ""
+      if (!ct.includes("application/json")) {
+        const txt = await res.text()
+        throw new Error(`Resposta inesperada (${res.status}): ${txt.slice(0, 120)}`)
+      }
+
       const data = await res.json() as AnalysisResult
-      if (data.error) throw new Error(data.error)
+      if (!res.ok || data.error) throw new Error(data.error ?? `HTTP ${res.status}`)
       setAnalysis(data)
       setPhase("done")
     } catch (e) {
@@ -315,7 +308,6 @@ export default function CopilotoPage() {
   }, [patient])
 
   const finalizarConsulta = () => {
-    // Capture refs before stopping (avoids stale state closure)
     const finalText = (transcriptRef.current + " " + interimRef.current).trim()
     stopRecognition()
     if (finalText) {
@@ -325,19 +317,12 @@ export default function CopilotoPage() {
     runAnalysis(finalText)
   }
 
-  // ── Send to MedX ─────────────────────────────────────────────────────────────
-  const sendToMedx = async () => {
-    if (!analysis?.prontuario || !patient) return
-    setSending(true)
-    try {
-      const res = await fetch("/api/copiloto?action=prontuario", {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ descricao: analysis.prontuario, idCliente: getId(patient) }),
-      })
-      if (res.ok) setSent(true)
-    } catch { /* button remains enabled */ }
-    setSending(false)
+  // ── Copy prontuário ───────────────────────────────────────────────────────────
+  const copyProntuario = () => {
+    if (!analysis?.prontuario) return
+    navigator.clipboard.writeText(analysis.prontuario)
+    setToast("Copiado! Cole no MedX.")
+    setTimeout(() => setToast(""), 3000)
   }
 
   // ── Render ────────────────────────────────────────────────────────────────────
@@ -525,155 +510,62 @@ export default function CopilotoPage() {
 
             {/* Resumo clínico */}
             {analysis.resumo && (
-              <Card title="Resumo Clínico e Hipóteses" icon={FileText} accent>
-                {analysis.resumo.resumo && (
-                  <p className="text-[13px] text-text-secondary leading-relaxed mb-4">
-                    {analysis.resumo.resumo}
-                  </p>
-                )}
-                {(analysis.resumo.hipoteses ?? []).length > 0 && (
-                  <div className="mb-4">
-                    <div className="text-[9px] font-mono text-text-muted tracking-widest uppercase mb-2.5">Hipóteses Diagnósticas</div>
-                    <ol className="space-y-1.5">
-                      {(analysis.resumo.hipoteses ?? []).map((h, i) => (
-                        <li key={i} className="flex items-start gap-2 text-[12px] text-text-secondary">
-                          <span className="text-accent font-bold tabular-nums flex-shrink-0">{i + 1}.</span>
-                          {h}
-                        </li>
-                      ))}
-                    </ol>
-                  </div>
-                )}
-                {(analysis.resumo.exames ?? []).length > 0 && (
-                  <div>
-                    <div className="text-[9px] font-mono text-text-muted tracking-widest uppercase mb-2.5">Exames Sugeridos</div>
-                    <div className="space-y-2">
-                      {(analysis.resumo.exames ?? []).map((ex, i) => (
-                        <div key={i} className="bg-background border border-border rounded-lg px-3 py-2.5">
-                          <div className="text-[12px] font-semibold text-text-primary">{ex.exame}</div>
-                          <div className="text-[11px] text-text-muted mt-0.5">{ex.justificativa}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+              <Card title="Resumo da Consulta" icon={FileText} accent>
+                <p className="text-[13px] text-text-secondary leading-relaxed">{analysis.resumo}</p>
+              </Card>
+            )}
+
+            {/* Hipóteses diagnósticas */}
+            {(analysis.hipoteses ?? []).length > 0 && (
+              <Card title="Hipóteses Diagnósticas" icon={Sparkles}>
+                <ol className="space-y-2">
+                  {(analysis.hipoteses ?? []).map((h, i) => (
+                    <li key={i} className="flex items-start gap-2.5 text-[12px] text-text-secondary">
+                      <span className="text-accent font-bold tabular-nums flex-shrink-0 mt-0.5">{i + 1}.</span>
+                      {h}
+                    </li>
+                  ))}
+                </ol>
               </Card>
             )}
 
             {/* Conduta */}
-            {analysis.planoAlimentar && (
-              <Card title="Conduta e Orientações Nutricionais" icon={Stethoscope} defaultOpen={false}>
-                {analysis.planoAlimentar.orientacoes && (
-                  <p className="text-[13px] text-text-secondary leading-relaxed mb-4">
-                    {analysis.planoAlimentar.orientacoes}
-                  </p>
-                )}
-                <div className="grid grid-cols-2 gap-3">
-                  {(analysis.planoAlimentar.recomendados ?? []).length > 0 && (
-                    <div>
-                      <div className="text-[9px] font-mono text-emerald-400 tracking-widest uppercase mb-2">Recomendados</div>
-                      <ul className="space-y-1">
-                        {(analysis.planoAlimentar.recomendados ?? []).map((r, i) => (
-                          <li key={i} className="text-[11px] text-text-secondary flex items-start gap-1.5">
-                            <span className="text-emerald-400 flex-shrink-0">+</span> {r}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  {(analysis.planoAlimentar.restritos ?? []).length > 0 && (
-                    <div>
-                      <div className="text-[9px] font-mono text-red-400 tracking-widest uppercase mb-2">Restritos</div>
-                      <ul className="space-y-1">
-                        {(analysis.planoAlimentar.restritos ?? []).map((r, i) => (
-                          <li key={i} className="text-[11px] text-text-secondary flex items-start gap-1.5">
-                            <span className="text-red-400 flex-shrink-0">−</span> {r}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
+            {analysis.conduta && (
+              <Card title="Conduta Sugerida" icon={Stethoscope} defaultOpen={false}>
+                <p className="text-[13px] text-text-secondary leading-relaxed whitespace-pre-line">{analysis.conduta}</p>
               </Card>
             )}
 
-            {/* Orientações ao paciente */}
-            {analysis.orientacoesPaciente && (
-              <Card title="Orientações ao Paciente" icon={User} defaultOpen={false}>
-                {analysis.orientacoesPaciente.texto && (
-                  <p className="text-[13px] text-text-secondary leading-relaxed mb-4">
-                    {analysis.orientacoesPaciente.texto}
-                  </p>
-                )}
-                {(analysis.orientacoesPaciente.pontosChave ?? []).length > 0 && (
-                  <ul className="space-y-2">
-                    {(analysis.orientacoesPaciente.pontosChave ?? []).map((p, i) => (
-                      <li key={i} className="flex items-start gap-2 text-[12px] text-text-secondary">
-                        <span className="text-accent flex-shrink-0 font-bold">→</span> {p}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </Card>
-            )}
-
-            {/* Mensagens de adesão */}
-            {(analysis.mensagensAdesao ?? []).length > 0 && (
-              <Card title="Mensagens de Adesão (WhatsApp)" icon={Sparkles} defaultOpen={false}>
-                <div className="space-y-3">
-                  {(analysis.mensagensAdesao ?? []).map((m, i) => (
-                    <div key={i} className="bg-background border border-border rounded-lg p-3.5">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-[9px] font-mono text-accent tracking-widest uppercase">{m.dia}</span>
-                        <CopyBtn text={m.texto} />
-                      </div>
-                      <p className="text-[12px] text-text-secondary leading-relaxed">{m.texto}</p>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            )}
-
-            {/* Prontuário MedX */}
+            {/* Prontuário — destaque principal */}
             {analysis.prontuario && (
-              <Card title="Texto para Prontuário MedX" icon={ClipboardList} accent>
+              <Card title="Texto para Prontuário" icon={ClipboardList} accent>
                 <div className="space-y-3">
-                  <div className="flex items-center justify-end">
-                    <CopyBtn text={analysis.prontuario} />
-                  </div>
-                  <div className="bg-background border border-border rounded-lg p-4 text-[12px] text-text-secondary leading-loose whitespace-pre-wrap font-mono max-h-72 overflow-y-auto">
-                    {analysis.prontuario}
-                  </div>
-                  <div className="flex items-center gap-3 pt-1">
-                    <button
-                      onClick={sendToMedx}
-                      disabled={sending || sent || !patient}
-                      className={cn(
-                        "flex items-center gap-2 px-4 py-2.5 rounded-lg text-[12px] font-semibold transition-colors",
-                        sent
-                          ? "bg-emerald-500/10 border border-emerald-500/30 text-emerald-400"
-                          : "bg-accent-dim border border-accent-border text-accent hover:bg-accent/20 disabled:opacity-40 disabled:cursor-not-allowed"
-                      )}
-                    >
-                      {sending
-                        ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Enviando...</>
-                        : sent
-                          ? <><Check className="w-3.5 h-3.5" /> Enviado ao MedX</>
-                          : <><Send className="w-3.5 h-3.5" /> Enviar para MedX</>}
-                    </button>
-                    {!patient && (
-                      <span className="text-[11px] text-text-muted">Selecione um paciente para enviar</span>
-                    )}
-                    {sent && (
-                      <span className="text-[11px] text-emerald-400">Prontuário registrado com sucesso.</span>
-                    )}
-                  </div>
+                  <textarea
+                    readOnly
+                    value={analysis.prontuario}
+                    rows={14}
+                    className="w-full bg-background border border-border rounded-lg px-4 py-3 text-[12px] text-text-secondary leading-relaxed font-mono resize-y outline-none"
+                    onClick={e => (e.target as HTMLTextAreaElement).select()}
+                  />
+                  <button
+                    onClick={copyProntuario}
+                    className="w-full flex items-center justify-center gap-2 py-3 bg-accent-dim border border-accent-border text-accent rounded-xl text-[13px] font-semibold hover:bg-accent/20 transition-colors"
+                  >
+                    <Copy className="w-4 h-4" /> Copiar Prontuário
+                  </button>
                 </div>
               </Card>
             )}
           </div>
         )}
       </div>
+
+      {/* ── Toast ────────────────────────────────────────────────────────────── */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 flex items-center gap-2 bg-card border border-accent-border text-accent text-[12px] font-medium px-4 py-3 rounded-xl shadow-2xl animate-fade-in z-50">
+          <Check className="w-4 h-4" /> {toast}
+        </div>
+      )}
     </div>
   )
 }

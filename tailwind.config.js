@@ -64,7 +64,8 @@ module.exports = {
         blink: { "0%,100%": { opacity: "1" }, "50%": { opacity: "0.2" } },
         "ring-pulse": { "0%,100%": { opacity: "0.15", transform: "scale(1)" }, "50%": { opacity: "0.5", transform: "scale(1.05)" } },
         spin: { to: { transform: "rotate(360deg)" } },
-        "fade-in": { from: { opacity: "0", transform: "translateY(6px)" }, to: { opacity: "1", transform: "none" } },
+        "fade-in":        { from: { opacity: "0", transform: "translateY(6px)" }, to: { opacity: "1", transform: "none" } },
+        "slide-in-left":  { from: { opacity: "0", transform: "translateX(-100%)" }, to: { opacity: "1", transform: "none" } },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -73,6 +74,7 @@ module.exports = {
         "ring-pulse":     "ring-pulse 2.4s ease-in-out infinite",
         spin:             "spin 0.8s linear infinite",
         "fade-in":        "fade-in 0.25s ease",
+        "slide-in-left":  "slide-in-left 0.22s ease",
       },
     },
   },

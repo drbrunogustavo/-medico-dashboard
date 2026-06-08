@@ -226,7 +226,7 @@ export default function PolemicasPage() {
         }
       />
 
-      <div className="p-8 space-y-6">
+      <div className="p-4 md:p-8 space-y-6">
 
         {/* Input */}
         <div className="bg-card border border-border rounded-lg p-5">
@@ -293,7 +293,7 @@ export default function PolemicasPage() {
                 Digite qualquer tema médico e receba 4 abordagens calibradas — da mais conservadora à mais viral — com gancho, estrutura de roteiro e score de viralização. Tudo com responsabilidade ética.
               </p>
             </div>
-            <div className="grid grid-cols-4 gap-2 w-full max-w-lg">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 w-full max-w-lg">
               {(["conservadora", "equilibrada", "polemica", "viral"] as const).map(t => {
                 const c = TIPO_CONFIG[t]
                 return (
@@ -308,7 +308,7 @@ export default function PolemicasPage() {
 
         {/* Cards */}
         {!loading && abordagens.length > 0 && (
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
             {abordagens.map((ab, idx) => {
               const c    = TIPO_CONFIG[ab.tipo] ?? TIPO_CONFIG.conservadora
               const sent = savedCards.includes(idx)

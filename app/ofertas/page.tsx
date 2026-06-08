@@ -360,7 +360,7 @@ export default function OfertasPage() {
 
   // ── Input class ─────────────────────────────────────────────────────────────
 
-  const INPUT = "w-full bg-card border border-border text-text-primary text-[13px] rounded-lg px-3 py-2.5 focus:outline-none focus:border-accent-border transition-colors placeholder:text-text-muted"
+  const INPUT = "w-full bg-card border border-border text-text-primary text-base md:text-[13px] rounded-lg px-3 py-2.5 focus:outline-none focus:border-accent-border transition-colors placeholder:text-text-muted"
   const SELECT = "bg-card border border-border text-text-primary text-[12px] rounded-lg px-3 py-2.5 focus:outline-none focus:border-accent-border transition-colors cursor-pointer"
 
   // ── Tab content renderers ────────────────────────────────────────────────────

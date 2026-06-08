@@ -19,7 +19,7 @@ const TIPO={gancho:{label:'GANCHO',color:'#00c07f',icon:'⚡'},problema:{label:'
 const DURACOES=[{v:'15s',l:'15s',d:'Viral curto'},{v:'30s',l:'30s',d:'Stories'},{v:'60s',l:'60s',d:'Educativo'},{v:'90s',l:'90s',d:'Detalhado'}]
 const ESTILOS=[{v:'talking-head',l:'Talking Head',d:'Médico direto para câmera'},{v:'texto-tela',l:'Texto na Tela',d:'Palavras + fala'},{v:'broll',l:'B-Roll',d:'Imagens + voz over'},{v:'misto',l:'Misto',d:'Combinação'}]
 
-const inp:React.CSSProperties={background:D.card,border:`1px solid ${D.border}`,color:D.text,borderRadius:7,padding:'9px 13px',fontSize:13,width:'100%',fontFamily:D.font,outline:'none'}
+const inp:React.CSSProperties={background:D.card,border:`1px solid ${D.border}`,color:D.text,borderRadius:7,padding:'9px 13px',fontSize:16,width:'100%',fontFamily:D.font,outline:'none'}
 function CopyBtn({text,label='⎘ Copiar'}:{text:string;label?:string}){const[ok,setOk]=useState(false);return<button onClick={()=>{navigator.clipboard.writeText(text);setOk(true);setTimeout(()=>setOk(false),1600)}} style={{padding:'6px 14px',borderRadius:6,border:`1px solid ${ok?D.aborder:D.border}`,background:ok?D.adim:'none',color:ok?D.atext:D.muted,fontSize:11,fontWeight:700,cursor:'pointer',fontFamily:D.font}}>{ok?'✓ Copiado':label}</button>}
 
 export default function RoteirosPage(){

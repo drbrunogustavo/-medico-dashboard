@@ -211,7 +211,7 @@ export default function RaioXPage() {
         }
       />
 
-      <div className="p-8 space-y-6">
+      <div className="p-4 md:p-8 space-y-6">
 
         {/* Input */}
         <div className="bg-card border border-border rounded-lg p-5 space-y-4">
@@ -228,7 +228,7 @@ export default function RaioXPage() {
             </button>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-[10px] font-mono text-text-muted uppercase tracking-wider block mb-1.5">Perfil do Paciente</label>
               <input
@@ -306,7 +306,7 @@ export default function RaioXPage() {
         {/* Result */}
         {!loading && resultado && (
           <>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {SECTIONS.map(s => {
                 const items = resultado[s.key] ?? []
                 return (
@@ -334,7 +334,7 @@ export default function RaioXPage() {
             </div>
 
             {/* Calendar CTA */}
-            <div className="bg-card border border-accent-border rounded-lg p-5 flex items-center justify-between gap-6">
+            <div className="bg-card border border-accent-border rounded-lg p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
                 <h3 className="text-[13px] font-semibold text-text-primary">Gerar Calendário de Conteúdo para Este Perfil</h3>
                 <p className="text-[11px] text-text-muted mt-0.5">
@@ -345,7 +345,7 @@ export default function RaioXPage() {
                 onClick={gerarCalendario}
                 disabled={savingCal || calSaved}
                 className={cn(
-                  "flex items-center gap-2 px-5 py-2.5 rounded-lg text-[12px] font-bold flex-shrink-0 transition-all",
+                  "flex items-center gap-2 px-5 py-2.5 rounded-lg text-[12px] font-bold flex-shrink-0 transition-all w-full sm:w-auto justify-center",
                   calSaved
                     ? "bg-accent-dim border border-accent-border text-accent cursor-default"
                     : "bg-accent text-background hover:bg-accent/90 disabled:opacity-50"

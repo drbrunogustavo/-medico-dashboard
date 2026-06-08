@@ -480,7 +480,7 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
       />
 
       {/* ── Section tabs ── */}
-      <div className="px-8 pt-5 flex items-center border-b border-border">
+      <div className="px-4 md:px-8 pt-5 flex items-center border-b border-border">
         {(["imagens", "headlines"] as const).map(sec => (
           <button key={sec} onClick={() => setActiveSection(sec)}
             className={cn(
@@ -495,8 +495,8 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
       </div>
 
       {activeSection === "imagens" && (
-      <div className="p-8">
-        <div className="grid gap-6 items-start" style={{ gridTemplateColumns:"300px 1fr" }}>
+      <div className="p-4 md:p-8">
+        <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-6 items-start">
 
           {/* ════════════════════════════════
               LEFT — CONFIG PANEL
@@ -506,7 +506,7 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
             {/* 1 — Formato */}
             <div className="bg-card border border-border rounded-lg p-4">
               <div className="text-[9px] font-mono text-text-muted tracking-widest uppercase mb-3">1 — Formato</div>
-              <div className="grid grid-cols-4 gap-1.5">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5">
                 {(Object.keys(FORMATOS) as Formato[]).map(f => (
                   <FormatoCard key={f} id={f} active={formato===f} onClick={() => setFormato(f)} />
                 ))}
@@ -546,7 +546,7 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
                 value={ideia}
                 onChange={e => setIdeia(e.target.value)}
                 placeholder="Ex: resistência à insulina, menopausa e hormônios, jejum intermitente..."
-                className="w-full bg-background border border-border rounded-lg px-3 py-2.5 text-[13px] text-text-primary placeholder:text-text-muted outline-none focus:border-accent/40 transition-colors resize-none"
+                className="w-full bg-background border border-border rounded-lg px-3 py-2.5 text-base md:text-[13px] text-text-primary placeholder:text-text-muted outline-none focus:border-accent/40 transition-colors resize-none"
                 rows={3}
               />
             </div>
@@ -675,7 +675,7 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
                 </div>
 
                 {/* 7 components */}
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {PART_KEYS.map(key => (
                     <button key={key}
                       onClick={() => setExpanded(expanded===key ? null : key)}

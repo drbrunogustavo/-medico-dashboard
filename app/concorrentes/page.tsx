@@ -11,7 +11,7 @@ export default function ConcorrentesPage() {
         title="Análise de Concorrentes"
         subtitle="EM BREVE · MONITORAMENTO COMPETITIVO · GAPS DE CONTEÚDO"
       />
-      <div className="p-8 flex flex-col items-center justify-center py-24 gap-6">
+      <div className="p-4 md:p-8 flex flex-col items-center justify-center py-16 md:py-24 gap-6">
         <div className="w-16 h-16 rounded-2xl bg-card border border-border flex items-center justify-center">
           <BarChart className="w-8 h-8 text-text-muted" />
         </div>

@@ -282,7 +282,7 @@ export default function ObecoesPage() {
         }
       />
 
-      <div className="p-8 space-y-6">
+      <div className="p-4 md:p-8 space-y-6">
 
         {/* Input */}
         <div className="bg-card border border-border rounded-lg p-5">
@@ -361,10 +361,10 @@ export default function ObecoesPage() {
 
         {/* Objeções list + panel */}
         {!loading && objecoes.length > 0 && (
-          <div className="flex gap-4 items-start">
+          <div className="flex flex-col lg:flex-row gap-4 items-start">
 
             {/* Left: list */}
-            <div className={cn("flex-1 min-w-0 space-y-4 transition-all", activeObjecao ? "max-w-[calc(100%-520px)]" : "")}>
+            <div className={cn("flex-1 min-w-0 space-y-4 transition-all", activeObjecao ? "lg:max-w-[calc(100%-520px)]" : "")}>
 
               {/* Toolbar */}
               <div className="flex items-center justify-between">
@@ -425,7 +425,7 @@ export default function ObecoesPage() {
                             ) : (
                               <button
                                 onClick={() => transformarObjecao(ob)}
-                                className="flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-md border border-border text-text-muted hover:border-accent-border hover:text-accent opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
+                                className="flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-md border border-border text-text-muted hover:border-accent-border hover:text-accent opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all flex-shrink-0"
                               >
                                 <MessageSquare className="w-3 h-3" /> Transformar
                               </button>
@@ -441,7 +441,7 @@ export default function ObecoesPage() {
 
             {/* Right: transform panel */}
             {activeObjecao && (
-              <div className="w-[500px] flex-shrink-0 bg-card border border-border rounded-xl flex flex-col sticky top-8" style={{ maxHeight: "calc(100vh - 120px)" }}>
+              <div className="w-full lg:w-[500px] flex-shrink-0 bg-card border border-border rounded-xl flex flex-col lg:sticky lg:top-8" style={{ maxHeight: "calc(90vh - 80px)" }}>
 
                 {/* Panel header */}
                 <div className="flex items-start justify-between px-4 py-3 border-b border-border flex-shrink-0">

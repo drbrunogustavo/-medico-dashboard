@@ -9,7 +9,7 @@ const D = {
   accent:'#00c07f',adim:'rgba(0,192,127,0.12)',aborder:'rgba(0,192,127,0.3)',atext:'#00e893',
   font:"'Inter', system-ui, sans-serif",mono:"'JetBrains Mono', monospace",
 }
-const inputSty = { background:D.card, border:`1px solid ${D.border}`, color:D.text, borderRadius:8, padding:'10px 14px', fontSize:13, width:'100%', fontFamily:"'Inter'", outline:'none' } as React.CSSProperties
+const inputSty = { background:D.card, border:`1px solid ${D.border}`, color:D.text, borderRadius:8, padding:'10px 14px', fontSize:16, width:'100%', fontFamily:"'Inter'", outline:'none' } as React.CSSProperties
 
 const TIPOS = [
   { v:'dado',      l:'Dado Chocante',    e:'📊', cor:'rgba(96,165,250,0.85)',  ex:'95% das pessoas que fazem dieta...' },

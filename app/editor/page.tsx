@@ -583,7 +583,7 @@ export default function EditorPage() {
                 value={roteiro}
                 onChange={e => setRoteiro(e.target.value)}
                 placeholder={"Cole o roteiro aqui...\n\nEx:\n[0-3s] Você sabia que resistência à insulina afeta 1 em cada 3 pessoas?\n[3-8s] Hoje vou te explicar os 3 sinais principais...\n[8-15s] Primeiro sinal: cansaço logo após as refeições..."}
-                className="w-full bg-background border border-border rounded-lg px-4 py-3 text-[13px] text-text-primary placeholder:text-text-muted outline-none focus:border-[#00c07f]/40 transition-colors resize-none font-mono leading-relaxed"
+                className="w-full bg-background border border-border rounded-lg px-4 py-3 text-base md:text-[13px] text-text-primary placeholder:text-text-muted outline-none focus:border-[#00c07f]/40 transition-colors resize-none font-mono leading-relaxed"
                 rows={12}
               />
               <div className="flex items-center justify-between mt-3">
@@ -706,7 +706,7 @@ export default function EditorPage() {
               </label>
 
               {assets.length > 0 ? (
-                <div className="grid grid-cols-3 gap-2 max-h-[160px] overflow-y-auto">
+                <div className="grid grid-cols-4 sm:grid-cols-3 gap-2 max-h-[160px] overflow-y-auto">
                   {assets.map(asset => (
                     <div key={asset.id} className="relative group">
                       <div className="aspect-square bg-background rounded overflow-hidden border border-border">
@@ -718,7 +718,7 @@ export default function EditorPage() {
                           setAssets(prev => prev.filter(a => a.id !== asset.id))
                           assetImgMap.current.delete(asset.id)
                         }}
-                        className="absolute top-0.5 right-0.5 w-4 h-4 rounded bg-black/70 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute top-0.5 right-0.5 w-4 h-4 rounded bg-black/70 flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
                       >
                         <X className="w-2.5 h-2.5 text-white" />
                       </button>

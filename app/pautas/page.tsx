@@ -142,7 +142,7 @@ export default function PautasPage() {
           </button>
         }
       />
-      <div className="p-8 space-y-6">
+      <div className="p-4 md:p-8 space-y-6">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <StatCard label="Total de Pautas" value={stats.total}      sub="no banco"          icon={FileText} accent="green" />
           <StatCard label="Prioridade Alta" value={stats.alta}       sub="requerem atenção"  icon={Star}     accent="red"   />
@@ -254,7 +254,7 @@ export default function PautasPage() {
                       </div>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                  <div className="flex items-center gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex-shrink-0">
                     <button
                       onClick={() => router.push('/imagens?tema=' + encodeURIComponent(p.titulo))}
                       className="flex items-center gap-1 px-2.5 py-1.5 rounded-md border border-border text-text-muted hover:text-accent hover:border-accent-border text-[10px] font-mono transition-colors whitespace-nowrap">

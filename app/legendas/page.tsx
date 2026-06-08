@@ -149,7 +149,7 @@ export default function LegendaPage() {
                   onChange={e => setTopico(e.target.value)}
                   placeholder="Ex: Resistência insulínica em pessoas magras..."
                   rows={3}
-                  className="w-full bg-background border border-border rounded-lg px-4 py-3 text-[13px] text-text-primary placeholder:text-text-muted outline-none focus:border-accent/40 resize-none"
+                  className="w-full bg-background border border-border rounded-lg px-4 py-3 text-base md:text-[13px] text-text-primary placeholder:text-text-muted outline-none focus:border-accent/40 resize-none"
                 />
               ) : (
                 <div className="space-y-2 max-h-48 overflow-y-auto">

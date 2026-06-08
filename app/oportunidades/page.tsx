@@ -184,7 +184,7 @@ export default function OportunidadesPage() {
         }
       />
 
-      <div className="p-8 space-y-6">
+      <div className="p-4 md:p-8 space-y-6">
 
         {/* Input */}
         <div className="bg-card border border-border rounded-lg p-5 space-y-4">
@@ -192,7 +192,7 @@ export default function OportunidadesPage() {
             <h3 className="text-[13px] font-semibold text-text-primary">Configurar Análise</h3>
             <p className="text-[11px] text-text-muted mt-0.5">Identifique as melhores oportunidades de conteúdo e faturamento para o seu perfil</p>
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="text-[10px] font-mono text-text-muted uppercase tracking-wider block mb-1.5">Especialidade</label>
               <input
@@ -296,7 +296,7 @@ export default function OportunidadesPage() {
                   <p className="text-[10px] text-text-muted">Datas e eventos relevantes nos próximos {janela} dias</p>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {(resultado.calendario ?? []).map((ev, i) => {
                   const key = `cal-${i}`
                   const saved = savedItems.includes(key)
@@ -350,7 +350,7 @@ export default function OportunidadesPage() {
                   <p className="text-[10px] text-text-muted">Temas em alta com baixa saturação — aproveite agora</p>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {(resultado.tendencias ?? []).map((t, i) => {
                   const key = `tend-${i}`
                   const saved = savedItems.includes(key)
@@ -413,7 +413,7 @@ export default function OportunidadesPage() {
                   <p className="text-[10px] text-text-muted">Oportunidades de serviço e consulta com alta demanda</p>
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {(resultado.alertas ?? []).map((al, i) => (
                   <div key={i} className="bg-card border border-accent-border/40 rounded-xl p-4 flex flex-col gap-3 hover:-translate-y-0.5 transition-transform">
                     <div>

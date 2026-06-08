@@ -528,7 +528,7 @@ Retorne um objeto JSON com:
         }
       />
 
-      <div className="p-8 space-y-5">
+      <div className="p-4 md:p-8 space-y-5">
 
         {/* ── TABS ── */}
         <div className="flex items-center gap-1 bg-card border border-border rounded-lg p-1">
@@ -625,7 +625,7 @@ Retorne um objeto JSON com:
         ══════════════════════════════════════════ */}
         {activeTab === "radar" && (
           <>
-            <div className="grid grid-cols-4 gap-3 text-center">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
               {[
                 {label:"Tendências",    value:articles.length},
                 {label:"Urgência Alta", value:articles.filter(a=>a.relevance==="Alto").length},
@@ -647,7 +647,7 @@ Retorne um objeto JSON com:
             ) : filteredArticles.length === 0 ? (
               <div className="text-center py-16 text-text-muted text-[13px]">Nenhuma tendência encontrada.</div>
             ) : (
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {filteredArticles.map(item => (
                   <div key={item.id} className={cn(
                     "bg-card border rounded-lg p-5 transition-all duration-200 hover:-translate-y-0.5",
@@ -855,7 +855,7 @@ Retorne um objeto JSON com:
                 <span className="text-[11px] font-mono text-text-muted tracking-widest">ANALISANDO OPORTUNIDADES...</span>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {[...opportunities].sort((a,b)=>b.score-a.score).map(opp => (
                   <div key={opp.id} className={cn(
                     "bg-card border rounded-lg p-5 transition-all hover:-translate-y-0.5",

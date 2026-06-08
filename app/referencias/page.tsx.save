@@ -1,3 +1,10 @@
+
+sed -i '' "s/model:'claude-sonnet-4-6', 
+max_tokens:1500/model:'claude-sonnet-4-20250514', max_tokens:2000/" 
+./app/referencias/page.tsx
+sed -i '' "s/model:'claude-sonnet-4-6', 
+max_tokens:1500/model:'claude-sonnet-4-20250514', max_tokens:2000/" 
+./app/referencias/page.tsx
 "use client"
 
 import { useState, useEffect } from "react"
@@ -94,7 +101,7 @@ function AnaliseModal({ referencia, onClose }: { referencia: Referencia; onClose
 
         const res  = await fetch('/api/roteiros', {
           method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:2000, messages:[{role:'user',content:prompt}] }),
+          body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:1500, messages:[{role:'user',content:prompt}] }),
         })
         const data = await res.json()
         const raw  = (data.content?.[0]?.text||'{}').replace(/```json/g,'').replace(/```/g,'').trim()
@@ -135,7 +142,7 @@ function AnaliseModal({ referencia, onClose }: { referencia: Referencia; onClose
   return (
     <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.88)', zIndex:9999, display:'flex', alignItems:'center', justifyContent:'center', padding:20 }}
       onClick={onClose}>
-      <div style={{ background:'#08090e', border:'1px solid #2a1a0a', borderRadius:16, width:'calc(100% - 32px)', maxWidth:680, maxHeight:'88vh', display:'flex', flexDirection:'column', overflow:'hidden', boxShadow:'0 32px 80px rgba(0,0,0,0.9)' }}
+      <div style={{ background:'#08090e', border:'1px solid #2a1a0a', borderRadius:16, width:'100%', maxWidth:680, maxHeight:'88vh', display:'flex', flexDirection:'column', overflow:'hidden', boxShadow:'0 32px 80px rgba(0,0,0,0.9)' }}
         onClick={e=>e.stopPropagation()}>
 
         {/* Header */}
@@ -213,7 +220,7 @@ function AnaliseModal({ referencia, onClose }: { referencia: Referencia; onClose
               </ASection>
 
               {/* Fortes / Fracos */}
-              <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(200px, 1fr))', gap:12, marginBottom:12 }}>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:12 }}>
                 <ASection title="✅ Pontos Fortes">
                   {resultado.pontos_fortes.map((p,i)=>(
                     <div key={i} style={{ display:'flex', gap:8, marginBottom:6 }}>
@@ -366,7 +373,7 @@ export default function ReferenciasPage() {
           </button>
         }
       />
-      <div className="p-4 md:p-8 space-y-6">
+      <div className="p-8 space-y-6">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <StatCard label="Perfis"          value={refs.length}                             sub="referencias ativas" icon={Users}      accent="green" />
           <StatCard label="Alta Relevancia" value={refs.filter(r=>r.relevancia==="Alta").length} sub="prioritarios"  icon={Star}       accent="red"   />
@@ -377,7 +384,7 @@ export default function ReferenciasPage() {
         {showForm && (
           <div className="bg-card border border-accent-border rounded-lg p-6 space-y-4 animate-fade-in">
             <div className="text-[11px] font-mono text-accent tracking-widest uppercase">Nova Referencia</div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <input value={newNome} onChange={e=>setNewNome(e.target.value)} placeholder="Nome do medico..."
                 className="bg-background border border-border rounded-lg px-4 py-2.5 text-[13px] text-text-primary placeholder:text-text-muted outline-none focus:border-accent/40 col-span-2" />
               <input value={newInsta} onChange={e=>setNewInsta(e.target.value)} placeholder="@instagram"
@@ -511,7 +518,7 @@ export default function ReferenciasPage() {
                   <div className="ml-auto flex items-center gap-2">
                     <button
                       onClick={() => setAnaliseRef(r)}
-                      className="opacity-100 md:opacity-0 md:group-hover:opacity-100 flex items-center gap-1 px-2.5 py-1 rounded-md border border-border text-text-muted hover:text-accent hover:border-accent-border text-[10px] font-mono transition-all whitespace-nowrap">
+                      className="opacity-0 group-hover:opacity-100 flex items-center gap-1 px-2.5 py-1 rounded-md border border-border text-text-muted hover:text-accent hover:border-accent-border text-[10px] font-mono transition-all whitespace-nowrap">
                       🔍 Análise
                     </button>
                     <ExternalLink className="w-3 h-3 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity" />

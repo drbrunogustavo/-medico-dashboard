@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 
 const OPENAI_SIZE: Record<string, string> = {
   "9:16": "1024x1536",
-  "4:5":  "1024x1280",
+  "4:5":  "1024x1536",
   "1:1":  "1024x1024",
 }
 

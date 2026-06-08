@@ -359,6 +359,7 @@ Generate structured creative direction as JSON with exactly these fields:
   const gerarImagem = async () => {
     const prompt = editMode ? editedPrompt : (promptParts?.promptFinal ?? "")
     if (!prompt) return
+    console.log("[gerarImagem] modelo:", modelo, "formato:", FORMATOS[formato].apiRatio)
     setError(null); setLoadingImage(true); setImageUrl(null); setAudit(null)
     setVariacoes([]); setVariacaoSel(null); setVariacaoAudit(null)
     startMsgs(MSG_IMAGE, 2500)
@@ -406,6 +407,7 @@ Generate structured creative direction as JSON with exactly these fields:
     ]
 
     try {
+      console.log("[gerarVariacoes] 3 chamadas paralelas via", modelo, "formato:", FORMATOS[formato].apiRatio)
       const results = await Promise.all(
         promptVariants.map(p =>
           fetch("/api/gerar-imagem", {
@@ -416,9 +418,17 @@ Generate structured creative direction as JSON with exactly these fields:
         )
       )
 
-      const geradas: Variacao[] = results
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const firstError = (results as any[]).find(d => d.error)?.error as string | undefined
+      const geradas: Variacao[] = (results as { image?: string }[])
         .map((data, i) => ({ url: data.image ?? "", prompt: promptVariants[i], label: `Variação ${i + 1}` }))
         .filter(v => v.url)
+
+      console.log("[gerarVariacoes] geradas:", geradas.length, "/ primeiro erro:", firstError ?? "nenhum")
+
+      if (geradas.length === 0) {
+        throw new Error(firstError ?? "Nenhuma variação foi gerada. Verifique o modelo e a chave de API.")
+      }
 
       setVariacoes(geradas)
 

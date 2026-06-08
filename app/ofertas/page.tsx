@@ -8,6 +8,7 @@ import {
   Megaphone, Video, Globe, Film, MessageSquare,
   Copy, BookmarkPlus, RotateCcw, Loader2, Sparkles,
   ChevronDown, ChevronRight, Check, Phone,
+  Download, Maximize2, Code2, Eye, RefreshCw,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -248,6 +249,14 @@ export default function OfertasPage() {
   const [toastType,  setToastType]  = useState<ToastType>("success")
   const [copiedKey,  setCopiedKey]  = useState<string | null>(null)
 
+  // Landing page HTML
+  const [landingHtml,    setLandingHtml]    = useState<string | null>(null)
+  const [originalHtml,   setOriginalHtml]   = useState<string | null>(null)
+  const [editedHtml,     setEditedHtml]     = useState("")
+  const [loadingLanding, setLoadingLanding] = useState(false)
+  const [showHtmlEditor, setShowHtmlEditor] = useState(false)
+  const landingGenRef = useRef(0)
+
   // Pauta import modal
   const [showImport,     setShowImport]     = useState(false)
   const [pautasList,     setPautasList]     = useState<{ id: number | string; titulo: string }[]>([])
@@ -317,21 +326,29 @@ export default function OfertasPage() {
       const r2   = await fetch("/api/ofertas", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...payload, parte: 2 }) })
       const data2 = await r2.json()
 
-      setCampanha({
+      const camp: Campanha = {
         roteiros:    data1.roteiros    ?? MOCK_P1.roteiros,
         landingPage: data1.landingPage ?? MOCK_P1.landingPage,
         anuncios:    data2.anuncios    ?? MOCK_P2.anuncios,
         stories:     data2.stories     ?? MOCK_P2.stories,
         whatsapp:    data2.whatsapp    ?? MOCK_P2.whatsapp,
-      })
+      }
+      setCampanha(camp)
       setStage("resultado")
       setActiveTab("roteiros")
       setExpanded([0])
+      setShowHtmlEditor(false)
+      landingGenRef.current += 1
+      gerarLandingHtml(camp.landingPage, landingGenRef.current)
     } catch {
-      setCampanha({ ...MOCK_P1, ...MOCK_P2 })
+      const mockCamp: Campanha = { ...MOCK_P1, ...MOCK_P2 }
+      setCampanha(mockCamp)
       setStage("resultado")
       setActiveTab("roteiros")
       setExpanded([0])
+      setShowHtmlEditor(false)
+      landingGenRef.current += 1
+      gerarLandingHtml(mockCamp.landingPage, landingGenRef.current)
       showToast("Erro na API — exibindo campanha de exemplo", "warning")
     } finally {
       setLoading(false)
@@ -353,9 +370,74 @@ export default function OfertasPage() {
 
   async function copiarAba() {
     if (!campanha) return
+    if (activeTab === "landing" && landingHtml) {
+      await copiarTexto(landingHtml, "aba-landing")
+      showToast("HTML da landing page copiado!", "success")
+      return
+    }
     const text = buildTabText(activeTab, campanha)
     await copiarTexto(text, `aba-${activeTab}`)
     showToast("Aba copiada para a área de transferência!", "success")
+  }
+
+  function exportarHtml() {
+    if (!landingHtml) return
+    const blob = new Blob([landingHtml], { type: "text/html;charset=utf-8" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    const slug = tema.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 30).replace(/-$/, "")
+    const date = new Date().toISOString().slice(0, 10)
+    a.href = url
+    a.download = `landing-${slug}-${date}.html`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+    showToast("Landing page exportada com sucesso!", "success")
+  }
+
+  function abrirTelaCheia() {
+    if (!landingHtml) return
+    const blob = new Blob([landingHtml], { type: "text/html;charset=utf-8" })
+    const url = URL.createObjectURL(blob)
+    window.open(url, "_blank")
+  }
+
+  async function copiarLink() {
+    if (!landingHtml) return
+    const blob = new Blob([landingHtml], { type: "text/html;charset=utf-8" })
+    const url = URL.createObjectURL(blob)
+    try {
+      await navigator.clipboard.writeText(url)
+      showToast("Link copiado! Válido nesta sessão do navegador.", "success")
+    } catch {
+      showToast("Erro ao copiar link", "error")
+    }
+  }
+
+  async function gerarLandingHtml(lp: LandingPage, genId: number) {
+    setLoadingLanding(true)
+    setLandingHtml(null)
+    setOriginalHtml(null)
+    setEditedHtml("")
+    try {
+      const r = await fetch("/api/ofertas/landing", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tema, publico, objetivo, tom, landingPage: lp }),
+      })
+      if (!r.ok) throw new Error("HTTP error")
+      const data = await r.json()
+      if (landingGenRef.current !== genId) return
+      const html: string = data.html ?? ""
+      setLandingHtml(html)
+      setOriginalHtml(html)
+      setEditedHtml(html)
+    } catch {
+      // silent — user still has roteiros / anúncios
+    } finally {
+      if (landingGenRef.current === genId) setLoadingLanding(false)
+    }
   }
 
   // ── Input class ─────────────────────────────────────────────────────────────
@@ -412,78 +494,145 @@ export default function OfertasPage() {
   }
 
   function renderLanding(c: Campanha) {
-    const lp = c.landingPage
+    // Loading skeleton
+    if (loadingLanding) {
+      return (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 text-[12px] font-mono text-text-muted">
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            Construindo sua landing page...
+          </div>
+          <div className="bg-card border border-border rounded-xl overflow-hidden animate-pulse" style={{ height: 560 }}>
+            {/* Hero skeleton */}
+            <div className="flex flex-col items-center justify-center gap-4 p-12" style={{ height: 220, background: "#13141d" }}>
+              <div className="h-7 rounded-lg w-2/3" style={{ background: "rgba(255,255,255,0.08)" }} />
+              <div className="h-4 rounded-lg w-1/2" style={{ background: "rgba(255,255,255,0.04)" }} />
+              <div className="h-10 rounded-lg w-36 mt-2" style={{ background: "rgba(0,192,127,0.15)" }} />
+            </div>
+            {/* Body skeleton */}
+            <div className="p-8 space-y-6">
+              <div className="space-y-2.5">
+                {[100, 83, 91, 75].map((w, i) => (
+                  <div key={i} className="h-3 rounded" style={{ width: `${w}%`, background: "rgba(255,255,255,0.04)" }} />
+                ))}
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="h-24 rounded-lg" style={{ background: "rgba(255,255,255,0.04)" }} />
+                ))}
+              </div>
+              <div className="space-y-2">
+                {[80, 65, 72].map((w, i) => (
+                  <div key={i} className="h-3 rounded" style={{ width: `${w}%`, background: "rgba(255,255,255,0.04)" }} />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )
+    }
+
+    // No HTML generated (error or not triggered)
+    if (!landingHtml) {
+      return (
+        <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
+          <Globe className="w-8 h-8 text-text-muted" />
+          <p className="text-[13px] text-text-muted">
+            Não foi possível gerar a landing page para esta campanha.
+          </p>
+          <p className="text-[11px] text-text-muted opacity-60">{c.landingPage.headline}</p>
+        </div>
+      )
+    }
+
     return (
       <div className="space-y-3">
-        {/* Headline + Subtítulo */}
-        <div className="bg-card border border-border rounded-xl p-5">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-[9px] font-mono text-text-muted tracking-widest uppercase">Headline</span>
-            <CopyBtn text={`${lp.headline}\n${lp.subtitulo}`} k="lp-headline" />
-          </div>
-          <p className="text-[18px] font-bold text-text-primary leading-snug">{lp.headline}</p>
-          <p className="text-[13px] text-text-secondary mt-2 leading-relaxed">{lp.subtitulo}</p>
+        {/* Toolbar */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={abrirTelaCheia}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border text-text-secondary text-[11px] font-medium hover:border-border-hover hover:text-text-primary transition-all min-h-[36px]"
+          >
+            <Maximize2 className="w-3.5 h-3.5" />
+            Tela cheia
+          </button>
+          <button
+            onClick={() => setShowHtmlEditor(v => !v)}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-2 rounded-lg border text-[11px] font-medium transition-all min-h-[36px]",
+              showHtmlEditor
+                ? "bg-accent-dim border-accent-border text-accent"
+                : "border-border text-text-secondary hover:border-border-hover hover:text-text-primary"
+            )}
+          >
+            {showHtmlEditor
+              ? <><Eye className="w-3.5 h-3.5" />Ver Preview</>
+              : <><Code2 className="w-3.5 h-3.5" />Editar HTML</>
+            }
+          </button>
+          <button
+            onClick={exportarHtml}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-accent-dim border border-accent-border text-accent text-[11px] font-medium hover:bg-accent/20 transition-all min-h-[36px]"
+          >
+            <Download className="w-3.5 h-3.5" />
+            Exportar HTML
+          </button>
+          <button
+            onClick={copiarLink}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border text-text-secondary text-[11px] font-medium hover:border-border-hover hover:text-text-primary transition-all min-h-[36px]"
+          >
+            <Copy className="w-3.5 h-3.5" />
+            Copiar Link
+          </button>
         </div>
 
-        {/* Benefícios */}
-        <div className="bg-card border border-border rounded-xl p-5">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-[9px] font-mono text-text-muted tracking-widest uppercase">Benefícios (3 blocos)</span>
-            <CopyBtn text={lp.beneficios.map(b => `${b.titulo}\n${b.descricao}`).join("\n\n")} k="lp-beneficios" />
+        {/* Preview */}
+        {!showHtmlEditor && (
+          <div className="bg-card border border-border rounded-xl overflow-hidden" style={{ height: 620 }}>
+            <iframe
+              key={landingHtml.length}
+              srcDoc={landingHtml}
+              className="w-full h-full border-0"
+              sandbox="allow-scripts allow-same-origin"
+              title="Landing Page Preview"
+            />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {lp.beneficios.map((b, i) => (
-              <div key={i} className="bg-background/60 border border-border rounded-lg p-3">
-                <div className="w-1.5 h-1.5 rounded-full bg-accent mb-2" />
-                <p className="text-[12px] font-semibold text-text-primary mb-1">{b.titulo}</p>
-                <p className="text-[11px] text-text-muted leading-relaxed">{b.descricao}</p>
-              </div>
-            ))}
-          </div>
-        </div>
+        )}
 
-        {/* Prova social */}
-        <div className="bg-card border border-border rounded-xl p-5">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-[9px] font-mono text-text-muted tracking-widest uppercase">Prova Social (modelo)</span>
-            <CopyBtn text={lp.provaSocial} k="lp-prova" />
-          </div>
-          <blockquote className="text-[13px] text-text-secondary leading-relaxed italic border-l-2 border-accent pl-4">{lp.provaSocial}</blockquote>
-        </div>
-
-        {/* CTA */}
-        <div className="bg-card border border-border rounded-xl p-5">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-[9px] font-mono text-text-muted tracking-widest uppercase">CTA Principal</span>
-            <CopyBtn text={`${lp.ctaTexto}\n${lp.ctaUrgencia}`} k="lp-cta" />
-          </div>
-          <div className="flex flex-col items-start gap-2">
-            <div className="px-5 py-2.5 bg-accent-dim border border-accent-border text-accent text-[13px] font-bold rounded-lg">{lp.ctaTexto}</div>
-            <p className="text-[11px] text-text-muted">{lp.ctaUrgencia}</p>
-          </div>
-        </div>
-
-        {/* FAQ */}
-        <div className="bg-card border border-border rounded-xl p-5">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-[9px] font-mono text-text-muted tracking-widest uppercase">FAQ (5 perguntas)</span>
-            <CopyBtn text={lp.faq.map(f => `P: ${f.pergunta}\nR: ${f.resposta}`).join("\n\n")} k="lp-faq" />
-          </div>
+        {/* HTML Editor */}
+        {showHtmlEditor && (
           <div className="space-y-3">
-            {lp.faq.map((f, i) => (
-              <div key={i} className="bg-background/60 border border-border rounded-lg p-3">
-                <p className="text-[12px] font-semibold text-text-primary mb-1">P: {f.pergunta}</p>
-                <p className="text-[11px] text-text-muted leading-relaxed">R: {f.resposta}</p>
+            <div className="bg-card border border-border rounded-xl overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-2.5 border-b border-border">
+                <span className="text-[9px] font-mono text-text-muted tracking-widest uppercase">Editor HTML</span>
+                <span className="text-[9px] font-mono text-text-muted">{editedHtml.length.toLocaleString()} chars</span>
               </div>
-            ))}
+              <textarea
+                value={editedHtml}
+                onChange={e => setEditedHtml(e.target.value)}
+                className="w-full bg-background px-4 py-4 text-[12px] font-mono leading-relaxed resize-none outline-none"
+                style={{ height: 500, color: "#4ade80", caretColor: "#e8eaf2" }}
+                spellCheck={false}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setLandingHtml(editedHtml)}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-accent-dim border border-accent-border text-accent text-[11px] font-medium hover:bg-accent/20 transition-all min-h-[36px]"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                Atualizar Preview
+              </button>
+              <button
+                onClick={() => { setEditedHtml(originalHtml ?? ""); setLandingHtml(originalHtml) }}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg border border-border text-text-secondary text-[11px] font-medium hover:border-border-hover hover:text-text-primary transition-all min-h-[36px]"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                Resetar
+              </button>
+            </div>
           </div>
-        </div>
-
-        {/* CTA Secundário */}
-        <div className="bg-card border border-border rounded-xl p-4 flex items-center justify-between gap-4">
-          <p className="text-[12px] text-text-secondary">{lp.ctaSecundario}</p>
-          <CopyBtn text={lp.ctaSecundario} k="lp-cta2" />
-        </div>
+        )}
       </div>
     )
   }
@@ -611,7 +760,16 @@ export default function OfertasPage() {
         <span className="hidden sm:inline">Copiar Aba</span>
       </button>
       <button
-        onClick={() => { setStage("briefing"); setCampanha(null) }}
+        onClick={() => {
+            landingGenRef.current += 1
+            setStage("briefing")
+            setCampanha(null)
+            setLandingHtml(null)
+            setOriginalHtml(null)
+            setEditedHtml("")
+            setLoadingLanding(false)
+            setShowHtmlEditor(false)
+          }}
         className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-accent-dim border border-accent-border text-accent text-[11px] font-semibold hover:bg-accent/20 transition-all min-h-[36px]"
       >
         <RotateCcw className="w-3.5 h-3.5" />

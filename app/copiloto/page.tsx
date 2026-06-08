@@ -164,8 +164,7 @@ export default function CopilotoPage() {
   const [analysis, setAnalysis]   = useState<AnalysisResult | null>(null)
   const [analysisErr, setAnalysisErr] = useState("")
 
-  // Toast
-  const [toast, setToast]         = useState("")
+  const [copied, setCopied]       = useState(false)
 
   // Keep refs in sync with state
   useEffect(() => { transcriptRef.current = transcript }, [transcript])
@@ -321,8 +320,8 @@ export default function CopilotoPage() {
   const copyProntuario = () => {
     if (!analysis?.prontuario) return
     navigator.clipboard.writeText(analysis.prontuario)
-    setToast("Copiado! Cole no MedX.")
-    setTimeout(() => setToast(""), 3000)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
   }
 
   // ── Render ────────────────────────────────────────────────────────────────────
@@ -549,9 +548,16 @@ export default function CopilotoPage() {
                   />
                   <button
                     onClick={copyProntuario}
-                    className="w-full flex items-center justify-center gap-2 py-3 bg-accent-dim border border-accent-border text-accent rounded-xl text-[13px] font-semibold hover:bg-accent/20 transition-colors"
+                    className={cn(
+                      "w-full flex items-center justify-center gap-2 py-3 rounded-xl text-[13px] font-semibold transition-all duration-200",
+                      copied
+                        ? "bg-emerald-500/10 border border-emerald-500/30 text-emerald-400"
+                        : "bg-accent-dim border border-accent-border text-accent hover:bg-accent/20"
+                    )}
                   >
-                    <Copy className="w-4 h-4" /> Copiar Prontuário
+                    {copied
+                      ? <><Check className="w-4 h-4" /> Copiado!</>
+                      : <><Copy className="w-4 h-4" /> Copiar Prontuário</>}
                   </button>
                 </div>
               </Card>
@@ -560,12 +566,6 @@ export default function CopilotoPage() {
         )}
       </div>
 
-      {/* ── Toast ────────────────────────────────────────────────────────────── */}
-      {toast && (
-        <div className="fixed bottom-6 right-6 flex items-center gap-2 bg-card border border-accent-border text-accent text-[12px] font-medium px-4 py-3 rounded-xl shadow-2xl animate-fade-in z-50">
-          <Check className="w-4 h-4" /> {toast}
-        </div>
-      )}
     </div>
   )
 }

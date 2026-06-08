@@ -111,7 +111,7 @@ Retorne apenas JSON válido, sem markdown:
 }`
 
     const resp = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-sonnet-4-6",
       max_tokens: 4000,
       system: SYSTEM,
       messages: [{ role: "user", content: prompt }],

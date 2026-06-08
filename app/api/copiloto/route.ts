@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
     const nome = body.nomePaciente ?? "paciente"
 
     const resp = await client.messages.create({
-      model:      "claude-sonnet-4-20250514",
+      model:      "claude-sonnet-4-6",
       max_tokens: 6000,
       system:     SYSTEM,
       messages: [{

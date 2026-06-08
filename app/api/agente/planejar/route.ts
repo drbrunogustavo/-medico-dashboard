@@ -16,7 +16,7 @@ export async function POST(request: Request) {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
         max_tokens: 3000,
         system: `Você é um estrategista de conteúdo médico sênior especializado em planejamento editorial para médicos no Instagram. Você cria planos editoriais que equilibram educação, autoridade e conversão.
 

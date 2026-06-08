@@ -96,10 +96,13 @@ function AnaliseModal({ referencia, onClose }: { referencia: Referencia; onClose
           method:'POST', headers:{'Content-Type':'application/json'},
           body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:2000, messages:[{role:'user',content:prompt}] }),
         })
+        if (!res.ok) throw new Error(`Erro HTTP ${res.status} — verifique se está autenticado.`)
         const data = await res.json()
-        const raw  = (data.content?.[0]?.text||'{}').replace(/```json/g,'').replace(/```/g,'').trim()
-        const json = JSON.parse(raw) as AnaliseResult
-        if (!json.perfil) throw new Error('inválido')
+        if (data.error) throw new Error(String(data.error))
+        const raw   = (data.content?.[0]?.text ?? '{}').replace(/```json\n?/g,'').replace(/```\n?/g,'').trim()
+        const idx   = raw.indexOf('{')
+        const json  = JSON.parse(idx >= 0 ? raw.slice(idx) : raw) as AnaliseResult
+        if (!json.perfil) throw new Error('Resposta inválida da IA — tente novamente.')
         setResultado(json)
       } catch(e) {
         setErro('Erro ao analisar. Tente novamente.'); console.error(e)

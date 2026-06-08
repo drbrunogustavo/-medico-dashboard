@@ -6,7 +6,7 @@ import {
   Wand2, RefreshCw, Download, Copy, Check,
   ChevronDown, ChevronUp, Sparkles, Edit3,
   Image as ImageIcon, History, AlertCircle,
-  BookOpen, X, Search, Loader2,
+  BookOpen, X, Search, Loader2, TrendingUp,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -47,6 +47,12 @@ interface Pauta {
   prioridade: string
   nota?:      string
   estagio?:   string
+}
+
+interface Headline {
+  titulo:  string
+  gatilho: "Medo" | "Curiosidade" | "Autoridade" | "Escassez" | "Dor" | "Benefício"
+  score:   number
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -135,6 +141,30 @@ const PRIORIDADE_STYLE: Record<string, string> = {
   "Baixa": "bg-slate-900/60 border-slate-600/40 text-slate-400",
 }
 
+const GATILHO_COLORS: Record<string, string> = {
+  "Medo":        "bg-red-950/60 border-red-500/40 text-red-400",
+  "Curiosidade": "bg-blue-950/60 border-blue-500/40 text-blue-400",
+  "Autoridade":  "bg-violet-950/60 border-violet-500/40 text-violet-400",
+  "Escassez":    "bg-amber-950/60 border-amber-500/40 text-amber-400",
+  "Dor":         "bg-orange-950/60 border-orange-500/40 text-orange-400",
+  "Benefício":   "bg-green-950/60 border-green-600/40 text-green-400",
+}
+
+const MOCK_HEADLINES: Headline[] = [
+  { titulo: "O sintoma de resistência à insulina que 80% das pessoas ignoram silenciosamente", gatilho: "Medo", score: 95 },
+  { titulo: "Por que seu médico nunca te explicou isso sobre testosterona — e como muda tudo", gatilho: "Curiosidade", score: 93 },
+  { titulo: "Como endocrinologista, vejo esses 3 erros todos os dias no consultório", gatilho: "Autoridade", score: 91 },
+  { titulo: "Últimas vagas para entender o protocolo GLP-1 que mudou minha prática clínica", gatilho: "Escassez", score: 88 },
+  { titulo: "A fadiga que você sente todo dia pode ser um sinal hormonal — veja o que fazer", gatilho: "Dor", score: 86 },
+  { titulo: "Os 3 marcadores laboratoriais que transformam a saúde metabólica em 90 dias", gatilho: "Benefício", score: 84 },
+  { titulo: "Tirzepatida vs. Semaglutida: o que os estudos não dizem nas headlines", gatilho: "Curiosidade", score: 83 },
+  { titulo: "Andropausa silenciosa: o diagnóstico que está sendo perdido em homens de 35 anos", gatilho: "Medo", score: 82 },
+  { titulo: "Depois de 15 anos atendendo menopausa, esse é o protocolo que mais funciona", gatilho: "Autoridade", score: 80 },
+  { titulo: "Jejum intermitente para mulheres: a resposta que você não encontra no Google", gatilho: "Dor", score: 78 },
+  { titulo: "Sarcopenia começa nos 30 — e a ciência já tem o protocolo para prevenir", gatilho: "Benefício", score: 77 },
+  { titulo: "O exame que eu peço em 100% dos meus pacientes e que quase ninguém solicita", gatilho: "Curiosidade", score: 76 },
+]
+
 const VISUAL_IDENTITY = `FIXED VISUAL IDENTITY (mandatory for every prompt):
 - Background: sophisticated black graphite with texture (#08090e)
 - Color palette: black graphite + emerald green (#00c07f) + ice white ONLY
@@ -196,6 +226,14 @@ export default function DiretorCriativoPage() {
   const [loadingPautas, setLoadingPautas] = useState(false)
   const [pautaSearch,   setPautaSearch]   = useState("")
 
+  // Headlines section
+  const [activeSection,    setActiveSection]    = useState<"imagens" | "headlines">("imagens")
+  const [headlineTema,     setHeadlineTema]     = useState("")
+  const [headlines,        setHeadlines]        = useState<Headline[]>([])
+  const [loadingHeadlines, setLoadingHeadlines] = useState(false)
+  const [headlineFilter,   setHeadlineFilter]   = useState("Todos")
+  const [modalTarget,      setModalTarget]      = useState<"imagens" | "headlines">("imagens")
+
   const msgTimer = useRef<ReturnType<typeof setInterval>>()
 
   const startMsgs = (msgs: string[], ms = 2200) => {
@@ -207,7 +245,8 @@ export default function DiretorCriativoPage() {
 
   // ── Modal: importar do banco de pautas ─────────────────────────────────────
 
-  const abrirModalPautas = async () => {
+  const abrirModalPautas = async (target: "imagens" | "headlines" = "imagens") => {
+    setModalTarget(target)
     setModalOpen(true)
     setPautaSearch("")
     if (pautas.length > 0) return
@@ -224,9 +263,13 @@ export default function DiretorCriativoPage() {
   }
 
   const selecionarPauta = (pauta: Pauta) => {
-    setIdeia(pauta.titulo)
-    const estiloMapeado = CATEGORIA_PARA_ESTILO[pauta.categoria] ?? "card-premium"
-    setEstilo(estiloMapeado)
+    if (modalTarget === "headlines") {
+      setHeadlineTema(pauta.titulo)
+    } else {
+      setIdeia(pauta.titulo)
+      const estiloMapeado = CATEGORIA_PARA_ESTILO[pauta.categoria] ?? "card-premium"
+      setEstilo(estiloMapeado)
+    }
     setModalOpen(false)
   }
 
@@ -352,6 +395,55 @@ Provide a brief visual audit in Brazilian Portuguese (3-4 sentences). Start with
     }
   }, [])
 
+  // ── Headlines ────────────────────────────────────────────────────────────────
+
+  const gerarHeadlines = async () => {
+    if (!headlineTema.trim()) { setError("Digite o tema antes de gerar as headlines."); return }
+    setError(null); setLoadingHeadlines(true); setHeadlines([]); setHeadlineFilter("Todos")
+
+    try {
+      const res  = await fetch("/api/roteiros", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6",
+          max_tokens: 8000,
+          system: `Você é o maior especialista em copywriting médico viral do Brasil, especializado em Endocrinologia, Nutrologia e Longevidade. Crie headlines que combinam autoridade científica com gatilhos emocionais para médicos no Instagram. Retorne SOMENTE JSON array, sem markdown.`,
+          messages: [{
+            role: "user",
+            content: `Tema médico: ${headlineTema}
+
+Gere exatamente 100 headlines virais para posts médicos sobre este tema.
+
+Gatilhos emocionais:
+- Medo: provoca urgência ou preocupação legítima com saúde
+- Curiosidade: desperta o interesse de saber mais
+- Autoridade: posiciona o médico como especialista único
+- Escassez: cria senso de exclusividade ou urgência temporal
+- Dor: fala diretamente com o problema ou sofrimento do paciente
+- Benefício: foca na transformação ou resultado positivo esperado
+
+Score de viralidade 0-100 baseado em clareza + impacto emocional + potencial de compartilhamento.
+
+Retorne JSON array: [{"titulo": "...", "gatilho": "Medo|Curiosidade|Autoridade|Escassez|Dor|Benefício", "score": 85}, ...]
+
+Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, ordenadas do maior para menor score.`,
+          }],
+        }),
+      })
+      const data = await res.json()
+      const raw  = (data.content?.[0]?.text ?? "[]").replace(/```json\n?/g, "").replace(/```\n?/g, "").trim()
+      const idx  = raw.indexOf("[")
+      const parsed = JSON.parse(idx >= 0 ? raw.slice(idx) : raw) as Headline[]
+      setHeadlines(parsed.length > 0 ? parsed : MOCK_HEADLINES)
+    } catch (e) {
+      setError("Erro ao gerar headlines: " + String(e))
+      setHeadlines(MOCK_HEADLINES)
+    } finally {
+      setLoadingHeadlines(false)
+    }
+  }
+
   // ── Utilities ───────────────────────────────────────────────────────────────
 
   const downloadImage = () => {
@@ -387,6 +479,22 @@ Provide a brief visual audit in Brazilian Portuguese (3-4 sentences). Start with
         }
       />
 
+      {/* ── Section tabs ── */}
+      <div className="px-8 pt-5 flex items-center border-b border-border">
+        {(["imagens", "headlines"] as const).map(sec => (
+          <button key={sec} onClick={() => setActiveSection(sec)}
+            className={cn(
+              "px-4 py-2.5 text-[12.5px] font-medium border-b-2 -mb-px transition-all",
+              activeSection === sec
+                ? "border-accent text-accent"
+                : "border-transparent text-text-muted hover:text-text-secondary"
+            )}>
+            {sec === "imagens" ? "Diretor Criativo" : "✦ Headlines"}
+          </button>
+        ))}
+      </div>
+
+      {activeSection === "imagens" && (
       <div className="p-8">
         <div className="grid gap-6 items-start" style={{ gridTemplateColumns:"300px 1fr" }}>
 
@@ -427,7 +535,7 @@ Provide a brief visual audit in Brazilian Portuguese (3-4 sentences). Start with
               <div className="flex items-center justify-between mb-3">
                 <div className="text-[9px] font-mono text-text-muted tracking-widest uppercase">3 — Tema da Arte</div>
                 <button
-                  onClick={abrirModalPautas}
+                  onClick={() => abrirModalPautas("imagens")}
                   className="flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-md border border-border text-text-muted hover:border-accent-border hover:text-accent transition-all"
                 >
                   <BookOpen className="w-3 h-3" />
@@ -718,6 +826,161 @@ Provide a brief visual audit in Brazilian Portuguese (3-4 sentences). Start with
           </div>
         </div>
       </div>
+      )} {/* end activeSection === "imagens" */}
+
+      {/* ════════════════════════════════
+          HEADLINES SECTION
+      ════════════════════════════════ */}
+      {activeSection === "headlines" && (
+        <div className="p-8 space-y-5">
+
+          {/* Input */}
+          <div className="bg-card border border-border rounded-lg p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <h3 className="text-[13px] font-semibold text-text-primary">100 Headlines com IA</h3>
+                <p className="text-[11px] text-text-muted mt-0.5">Classificadas por gatilho emocional · Ordenadas do mais viral ao menos viral</p>
+              </div>
+              <button
+                onClick={() => abrirModalPautas("headlines")}
+                className="flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-md border border-border text-text-muted hover:border-accent-border hover:text-accent transition-all flex-shrink-0"
+              >
+                <BookOpen className="w-3 h-3" /> Banco de Pautas
+              </button>
+            </div>
+            <div className="flex gap-3">
+              <input
+                value={headlineTema}
+                onChange={e => setHeadlineTema(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && gerarHeadlines()}
+                placeholder="Ex: resistência à insulina, testosterona e andropausa, menopausa e TRH..."
+                className="flex-1 bg-background border border-border rounded-lg px-4 py-2.5 text-[13px] text-text-primary placeholder:text-text-muted outline-none focus:border-accent/40 transition-colors"
+              />
+              <button
+                onClick={gerarHeadlines}
+                disabled={loadingHeadlines || !headlineTema.trim()}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-accent text-background text-[13px] font-bold hover:bg-accent/90 transition-colors disabled:opacity-50 flex-shrink-0"
+              >
+                {loadingHeadlines
+                  ? <><RefreshCw className="w-4 h-4 animate-spin" /> Gerando...</>
+                  : <><TrendingUp className="w-4 h-4" /> Gerar 100 Headlines</>}
+              </button>
+            </div>
+          </div>
+
+          {/* Error */}
+          {error && (
+            <div className="flex items-start gap-3 bg-red-950/40 border border-red-500/30 rounded-lg p-4">
+              <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+              <p className="text-[12px] text-red-300 leading-relaxed">{error}</p>
+            </div>
+          )}
+
+          {/* Filter pills */}
+          {headlines.length > 0 && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[9px] font-mono text-text-muted uppercase tracking-wider">Gatilho:</span>
+              {["Todos", "Medo", "Curiosidade", "Autoridade", "Escassez", "Dor", "Benefício"].map(g => (
+                <button key={g} onClick={() => setHeadlineFilter(g)}
+                  className={cn(
+                    "text-[10px] px-3 py-1 rounded-full border transition-all",
+                    headlineFilter === g
+                      ? g === "Todos" ? "bg-accent-dim border-accent-border text-accent font-medium" : cn("font-medium", GATILHO_COLORS[g] || "bg-accent-dim border-accent-border text-accent")
+                      : "border-border text-text-muted hover:text-text-secondary"
+                  )}>
+                  {g}
+                  {g !== "Todos" && (
+                    <span className="ml-1 text-[9px] opacity-60">
+                      {headlines.filter(h => h.gatilho === g).length}
+                    </span>
+                  )}
+                </button>
+              ))}
+              <span className="ml-auto text-[10px] font-mono text-text-muted">
+                {headlines.filter(h => headlineFilter === "Todos" || h.gatilho === headlineFilter).length} headlines
+              </span>
+            </div>
+          )}
+
+          {/* Loading */}
+          {loadingHeadlines && (
+            <div className="flex flex-col items-center justify-center py-20 gap-4">
+              <Sparkles className="w-10 h-10 text-accent animate-pulse" />
+              <div className="text-center">
+                <div className="text-[14px] font-semibold text-text-primary">Gerando 100 headlines...</div>
+                <div className="text-[10px] font-mono text-text-muted tracking-widest mt-1">CLAUDE ELABORANDO COPYWRITING VIRAL</div>
+              </div>
+            </div>
+          )}
+
+          {/* Empty state */}
+          {!loadingHeadlines && headlines.length === 0 && (
+            <div className="bg-card border border-border rounded-lg py-16 flex flex-col items-center justify-center gap-5">
+              <div className="w-14 h-14 rounded-2xl bg-accent-dim border border-accent-border flex items-center justify-center">
+                <TrendingUp className="w-7 h-7 text-accent" />
+              </div>
+              <div className="text-center max-w-md">
+                <h3 className="text-[14px] font-semibold text-text-primary mb-2">Gerador de Headlines Virais</h3>
+                <p className="text-[12px] text-text-muted leading-relaxed">
+                  Digite um tema médico e receba 100 headlines classificadas por gatilho emocional e score viral. Clique em qualquer headline para usá-la como tema no Diretor Criativo.
+                </p>
+              </div>
+              <div className="flex gap-2 flex-wrap justify-center">
+                {Object.keys(GATILHO_COLORS).map(g => (
+                  <span key={g} className={cn("text-[9px] font-mono font-semibold px-2.5 py-1 rounded-full border", GATILHO_COLORS[g])}>
+                    {g}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Headlines table */}
+          {!loadingHeadlines && headlines.length > 0 && (
+            <div className="bg-card border border-border rounded-lg overflow-hidden">
+              <div className="px-5 py-2 border-b border-border flex items-center gap-4">
+                <span className="text-[9px] font-mono text-text-muted uppercase tracking-wider w-7">#</span>
+                <span className="text-[9px] font-mono text-text-muted uppercase tracking-wider w-24 flex-shrink-0">Gatilho</span>
+                <span className="text-[9px] font-mono text-text-muted uppercase tracking-wider flex-1">Headline</span>
+                <span className="text-[9px] font-mono text-text-muted uppercase tracking-wider w-12 text-right">Score</span>
+                <span className="w-28" />
+              </div>
+              <div className="divide-y divide-border">
+                {headlines
+                  .filter(h => headlineFilter === "Todos" || h.gatilho === headlineFilter)
+                  .map((h, idx) => (
+                    <div key={idx}
+                      className="px-5 py-3 flex items-center gap-4 hover:bg-white/[0.02] group transition-colors">
+                      <span className="text-[11px] font-mono text-text-muted w-7 flex-shrink-0 tabular-nums">{idx + 1}</span>
+                      <span className={cn(
+                        "text-[9px] font-mono font-semibold px-2.5 py-1 rounded-full border w-24 text-center flex-shrink-0",
+                        GATILHO_COLORS[h.gatilho] || "bg-slate-900 border-slate-700 text-slate-400"
+                      )}>
+                        {h.gatilho}
+                      </span>
+                      <p className="text-[13px] text-text-primary flex-1 leading-snug">{h.titulo}</p>
+                      <div className="flex items-center gap-2.5 flex-shrink-0">
+                        <span className={cn(
+                          "text-[13px] font-bold font-mono tabular-nums w-8 text-right",
+                          h.score >= 90 ? "text-accent" : h.score >= 75 ? "text-amber-400" : "text-text-secondary"
+                        )}>
+                          {h.score}
+                        </span>
+                        <button
+                          onClick={() => { setIdeia(h.titulo); setActiveSection("imagens") }}
+                          className="text-[10px] px-3 py-1.5 rounded-lg border border-border text-text-muted hover:border-accent-border hover:text-accent transition-all opacity-0 group-hover:opacity-100 whitespace-nowrap w-28"
+                        >
+                          Usar na Arte →
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* ════════════════════════════════
           MODAL — Banco de Pautas
       ════════════════════════════════ */}

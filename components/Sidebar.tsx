@@ -1,7 +1,7 @@
 "use client"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Radio, FileText, Users, LayoutDashboard, ChevronRight, Activity, Sparkles, Layers, Video, Hash, Zap, Type, X, MessageSquare, Clapperboard } from "lucide-react"
+import { Radio, FileText, Users, LayoutDashboard, ChevronRight, Activity, Sparkles, Layers, Video, Zap, X, MessageSquare, Clapperboard, Flame } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useMenu } from "@/components/MobileMenuProvider"
 
@@ -13,9 +13,8 @@ const NAV = [
     { label: "Gerador de Roteiros",    href: "/roteiros",    icon: Video,        badge: null   },
     { label: "Editor de Vídeo",        href: "/editor",      icon: Clapperboard, badge: "NOVO" },
     { label: "Gerador de Legendas",    href: "/legendas",    icon: Sparkles,     badge: null   },
-    { label: "Gerador de Títulos",     href: "/titulos",     icon: Type,         badge: null   },
-    { label: "Análise de Hashtags",    href: "/hashtags",    icon: Hash,         badge: null   },
     { label: "Biblioteca de Ganchos",  href: "/ganchos",     icon: Zap,          badge: null   },
+    { label: "Polêmicas Controladas",  href: "/polemicas",   icon: Flame,        badge: "NOVO" },
     { label: "Banco de Pautas",        href: "/pautas",      icon: FileText,     badge: null   },
     { label: "Monitor de Referências", href: "/referencias", icon: Users,        badge: null   },
   ]},

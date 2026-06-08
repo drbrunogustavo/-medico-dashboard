@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import { TopBar } from "@/components/TopBar"
-import { RefreshCw, Plus, Check, TrendingUp, Target, Play, ExternalLink, Sparkles, Radio, Zap } from "lucide-react"
+import { RefreshCw, Plus, Check, TrendingUp, Target, Play, ExternalLink, Sparkles, Radio, Zap, Microscope, X, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 // ─── SOURCES ────────────────────────────────────────────────────────────────
@@ -181,6 +181,22 @@ interface Opportunity {
   keywords: string[]; platforms: string[]
 }
 
+interface ReverseResult {
+  gancho:           string
+  estrutura:        string
+  retencao:         string
+  gatilhos:         string[]
+  cta:              string
+  autoridade:       number
+  polemica:         number
+  compartilhamento: "Baixo" | "Médio" | "Alto" | "Viral"
+  versao_adaptada: {
+    titulo:    string
+    gancho:    string
+    estrutura: string[]
+  }
+}
+
 type Tab = "radar" | "reels" | "velocity" | "opportunities"
 
 // ─── BADGE COMPONENTS ────────────────────────────────────────────────────────
@@ -236,6 +252,11 @@ export default function RadarPage() {
   const [toast,        setToast]          = useState<string | null>(null)
   const [reelSort,     setReelSort]       = useState<"views"|"engagement">("views")
   const [filters, setFilters] = useState({ source:"Todos", category:"Todos", topic:"Todos", period:"7d" })
+  const [reverseReel,    setReverseReel]    = useState<Reel | null>(null)
+  const [reverseResult,  setReverseResult]  = useState<ReverseResult | null>(null)
+  const [loadingReverse, setLoadingReverse] = useState(false)
+  const [reverseSent,    setReverseSent]    = useState(false)
+
   const toastRef = useRef<ReturnType<typeof setTimeout>>()
 
   const showToast = (msg: string) => {
@@ -397,6 +418,84 @@ export default function RadarPage() {
       if (!res.ok) throw new Error()
       showToast("Oportunidade salva no banco de pautas!")
     } catch { showToast("Erro ao salvar pauta.") }
+  }
+
+  const openReverseModal = (reel: Reel) => {
+    setReverseReel(reel); setReverseResult(null); setReverseSent(false); setLoadingReverse(true)
+    fetch("/api/roteiros", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 2000,
+        system: `Você é um analista de conteúdo médico viral especializado em engenharia reversa de Reels. Retorne SOMENTE JSON, sem markdown.`,
+        messages: [{
+          role: "user",
+          content: `Analise este Reel médico viral:
+
+Título: "${reel.title}"
+Plataforma: ${reel.platform}
+Visualizações: ${reel.views}
+Taxa de engajamento: ${reel.engagement}
+Categoria: ${reel.category}
+
+Retorne um objeto JSON com:
+{
+  "gancho": "o que prende nos primeiros 3 segundos — técnica específica usada",
+  "estrutura": "sequência narrativa do conteúdo — como o vídeo progride",
+  "retencao": "estimativa de retenção % com justificativa",
+  "gatilhos": ["gatilho 1", "gatilho 2", "gatilho 3"],
+  "cta": "direto|indireto|implícito",
+  "autoridade": número inteiro 0-10,
+  "polemica": número inteiro 0-10,
+  "compartilhamento": "Baixo|Médio|Alto|Viral",
+  "versao_adaptada": {
+    "titulo": "título adaptado para Dr. Bruno — Endocrinologia/Nutrologia/Longevidade",
+    "gancho": "abertura adaptada para o estilo clínico e científico do Dr. Bruno",
+    "estrutura": ["ponto 1", "ponto 2", "ponto 3", "ponto 4", "ponto 5"]
+  }
+}`,
+        }],
+      }),
+    })
+    .then(r => r.json())
+    .then(data => {
+      const raw   = (data.content?.[0]?.text ?? "{}").replace(/```json\n?/g, "").replace(/```\n?/g, "").trim()
+      const start = raw.indexOf("{")
+      const result = JSON.parse(start >= 0 ? raw.slice(start) : raw) as ReverseResult
+      setReverseResult(result)
+    })
+    .catch(() => setReverseResult(null))
+    .finally(() => setLoadingReverse(false))
+  }
+
+  const sendAdaptedToPautas = async () => {
+    if (!reverseResult || !reverseReel) return
+    try {
+      const res = await fetch("/api/pautas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          titulo:     reverseResult.versao_adaptada.titulo,
+          nota:       `[ENGENHARIA REVERSA DE: "${reverseReel.title}" — ${reverseReel.views} views]\n\nGancho: ${reverseResult.versao_adaptada.gancho}\n\nEstrutura:\n${reverseResult.versao_adaptada.estrutura.join('\n')}`,
+          categoria:  reverseReel.category,
+          prioridade: "Alta",
+          estagio:    "Ideia",
+          tags:       ["engenharia-reversa", reverseReel.platform.toLowerCase()],
+        }),
+      })
+      if (!res.ok) throw new Error()
+      setReverseSent(true)
+      showToast("Pauta salva no Banco de Pautas!")
+    } catch { showToast("Erro ao salvar pauta.") }
+  }
+
+  const copyAdaptedToRoteiros = () => {
+    if (!reverseResult) return
+    const v    = reverseResult.versao_adaptada
+    const text = `${v.titulo}\n\n${v.gancho}\n\n${v.estrutura.join('\n')}`
+    navigator.clipboard.writeText(text)
+    showToast("Estrutura copiada! Cole no Gerador de Roteiros.")
   }
 
   const fmtTime = (d: Date | null) => d ? d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}) : "--:--"
@@ -631,7 +730,7 @@ export default function RadarPage() {
                         <span className="text-[9px] font-medium px-2 py-0.5 rounded bg-white/[0.04] border border-border text-text-muted">{reel.category}</span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-6 flex-shrink-0">
+                    <div className="flex items-center gap-4 flex-shrink-0">
                       <div className="text-right">
                         <div className="text-[13px] font-bold text-text-primary tabular-nums">{reel.views}</div>
                         <div className="text-[8px] font-mono text-text-muted uppercase tracking-wider">views</div>
@@ -640,6 +739,13 @@ export default function RadarPage() {
                         <div className={cn("text-[13px] font-bold tabular-nums", parseFloat(reel.engagement)>15?"text-accent":"text-text-primary")}>{reel.engagement}</div>
                         <div className="text-[8px] font-mono text-text-muted uppercase tracking-wider">engaj.</div>
                       </div>
+                      <button
+                        onClick={() => openReverseModal(reel)}
+                        title="Engenharia Reversa"
+                        className="flex items-center gap-1.5 text-[10px] px-2.5 py-1.5 rounded-lg border border-border text-text-muted hover:border-accent-border hover:text-accent transition-all opacity-0 group-hover:opacity-100 whitespace-nowrap"
+                      >
+                        <Microscope className="w-3 h-3" /> Engenharia Reversa
+                      </button>
                       {reel.link && reel.link !== "#" ? (
                         <a href={reel.link} target="_blank" rel="noopener noreferrer">
                           <ExternalLink className="w-3.5 h-3.5 text-text-muted hover:text-accent transition-colors"/>
@@ -810,6 +916,191 @@ export default function RadarPage() {
       {toast && (
         <div className="fixed bottom-6 right-6 flex items-center gap-2 bg-card border border-accent-border text-accent text-[12px] px-4 py-3 rounded-lg shadow-xl animate-fade-in z-50">
           <Check className="w-3.5 h-3.5"/> {toast}
+        </div>
+      )}
+
+      {/* ══ ENGENHARIA REVERSA MODAL ══ */}
+      {reverseReel && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: "rgba(8,9,14,0.90)", backdropFilter: "blur(6px)" }}
+        >
+          <div
+            className="w-full max-w-2xl rounded-xl border flex flex-col"
+            style={{ background: "#0f1018", borderColor: "#1c1d2a", maxHeight: "90vh" }}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: "#1c1d2a" }}>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Microscope className="w-4 h-4 text-accent flex-shrink-0" />
+                <span className="text-[13px] font-semibold text-text-primary">Engenharia Reversa</span>
+                <PlatformBadge platform={reverseReel.platform} />
+                <span className="text-[9px] font-medium px-2 py-0.5 rounded bg-white/[0.04] border border-border text-text-muted">
+                  {reverseReel.category}
+                </span>
+              </div>
+              <button
+                onClick={() => { setReverseReel(null); setReverseResult(null) }}
+                className="w-7 h-7 flex items-center justify-center rounded-md border border-border text-text-muted hover:text-text-primary transition-all flex-shrink-0"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {/* Reel info */}
+            <div className="px-5 py-3 border-b" style={{ borderColor: "#1c1d2a" }}>
+              <p className="text-[13px] font-medium text-text-primary leading-snug">{reverseReel.title}</p>
+              <div className="flex items-center gap-4 mt-1.5">
+                <span className="text-[10px] font-mono text-accent">{reverseReel.views} views</span>
+                <span className="text-[10px] font-mono text-text-muted">{reverseReel.engagement} engajamento</span>
+                <span className="text-[9px] text-text-muted">#{reverseReel.rank}</span>
+              </div>
+            </div>
+
+            {/* Body */}
+            <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5">
+
+              {/* Loading */}
+              {loadingReverse && (
+                <div className="flex flex-col items-center justify-center py-16 gap-4">
+                  <Microscope className="w-10 h-10 text-accent animate-pulse" />
+                  <div className="text-center">
+                    <div className="text-[13px] font-semibold text-text-primary">Analisando estrutura viral...</div>
+                    <div className="text-[9px] font-mono text-text-muted tracking-widest mt-1">LABORATÓRIO DE VIRALIZAÇÃO</div>
+                  </div>
+                </div>
+              )}
+
+              {/* Error fallback */}
+              {!loadingReverse && !reverseResult && (
+                <div className="text-center py-10 text-text-muted text-[12px]">
+                  Não foi possível analisar este reel. Tente novamente.
+                </div>
+              )}
+
+              {/* Analysis */}
+              {reverseResult && !loadingReverse && (
+                <>
+                  {/* Technical analysis */}
+                  <div>
+                    <div className="text-[9px] font-mono text-text-muted uppercase tracking-wider mb-3">Análise Técnica</div>
+                    <div className="grid grid-cols-2 gap-3">
+
+                      <div className="bg-background rounded-lg p-3 col-span-2">
+                        <div className="text-[9px] font-mono text-text-muted mb-1.5">GANCHO INICIAL</div>
+                        <p className="text-[12px] text-text-primary leading-relaxed">{reverseResult.gancho}</p>
+                      </div>
+
+                      <div className="bg-background rounded-lg p-3 col-span-2">
+                        <div className="text-[9px] font-mono text-text-muted mb-1.5">ESTRUTURA NARRATIVA</div>
+                        <p className="text-[12px] text-text-secondary leading-relaxed">{reverseResult.estrutura}</p>
+                      </div>
+
+                      <div className="bg-background rounded-lg p-3">
+                        <div className="text-[9px] font-mono text-text-muted mb-1.5">RETENÇÃO ESTIMADA</div>
+                        <p className="text-[12px] text-text-primary">{reverseResult.retencao}</p>
+                      </div>
+
+                      <div className="bg-background rounded-lg p-3">
+                        <div className="text-[9px] font-mono text-text-muted mb-1.5">TIPO DE CTA</div>
+                        <p className="text-[13px] font-semibold text-text-primary capitalize">{reverseResult.cta}</p>
+                      </div>
+
+                      <div className="bg-background rounded-lg p-3">
+                        <div className="text-[9px] font-mono text-text-muted mb-2">GATILHOS EMOCIONAIS</div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {(reverseResult.gatilhos ?? []).map((g, i) => (
+                            <span key={i} className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-accent-dim border border-accent-border text-accent">
+                              {g}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="bg-background rounded-lg p-3 grid grid-cols-3 gap-3">
+                        <div className="text-center">
+                          <div className="text-[8px] font-mono text-text-muted uppercase tracking-wider mb-1">Autoridade</div>
+                          <div className="text-[20px] font-bold text-violet-400 tabular-nums">{reverseResult.autoridade}<span className="text-[11px] text-text-muted">/10</span></div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-[8px] font-mono text-text-muted uppercase tracking-wider mb-1">Polêmica</div>
+                          <div className="text-[20px] font-bold text-orange-400 tabular-nums">{reverseResult.polemica}<span className="text-[11px] text-text-muted">/10</span></div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-[8px] font-mono text-text-muted uppercase tracking-wider mb-1">Viral</div>
+                          <div className={cn(
+                            "text-[13px] font-bold leading-tight mt-1",
+                            reverseResult.compartilhamento === "Viral" ? "text-red-400" :
+                            reverseResult.compartilhamento === "Alto"  ? "text-accent" :
+                            reverseResult.compartilhamento === "Médio" ? "text-amber-400" : "text-text-secondary"
+                          )}>
+                            {reverseResult.compartilhamento}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Adapted version */}
+                  <div className="border border-accent-border/50 rounded-lg overflow-hidden">
+                    <div className="px-4 py-2.5 bg-accent-dim/20 border-b border-accent-border/30">
+                      <span className="text-[9px] font-mono font-bold text-accent uppercase tracking-widest">
+                        VERSÃO ADAPTADA PARA DR. BRUNO
+                      </span>
+                      <span className="text-[9px] font-mono text-text-muted ml-2">Endocrinologia · Nutrologia · Longevidade</span>
+                    </div>
+                    <div className="p-4 space-y-3">
+                      <div>
+                        <div className="text-[9px] font-mono text-text-muted mb-1">TÍTULO ADAPTADO</div>
+                        <p className="text-[13px] font-semibold text-text-primary leading-snug">
+                          {reverseResult.versao_adaptada?.titulo}
+                        </p>
+                      </div>
+                      <div>
+                        <div className="text-[9px] font-mono text-text-muted mb-1">GANCHO ADAPTADO</div>
+                        <p className="text-[12px] text-text-secondary italic leading-relaxed">
+                          {reverseResult.versao_adaptada?.gancho}
+                        </p>
+                      </div>
+                      <div>
+                        <div className="text-[9px] font-mono text-text-muted mb-2">ESTRUTURA ADAPTADA</div>
+                        <div className="space-y-1.5">
+                          {(reverseResult.versao_adaptada?.estrutura ?? []).map((p, i) => (
+                            <div key={i} className="flex items-start gap-2">
+                              <span className="text-[9px] font-bold font-mono text-accent flex-shrink-0 mt-0.5">{i + 1}</span>
+                              <p className="text-[11px] text-text-secondary leading-snug">{p.replace(/^\d+\.\s*/, "")}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 pt-3 border-t border-border">
+                        <button
+                          onClick={sendAdaptedToPautas}
+                          disabled={reverseSent}
+                          className={cn(
+                            "flex items-center gap-1.5 text-[11px] font-medium px-3 py-2 rounded-lg border transition-all",
+                            reverseSent
+                              ? "bg-accent-dim border-accent-border text-accent"
+                              : "border-border text-text-muted hover:border-accent-border hover:text-accent"
+                          )}
+                        >
+                          {reverseSent ? <Check className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
+                          {reverseSent ? "Salvo na Pauta" : "Enviar para Banco de Pautas"}
+                        </button>
+                        <button
+                          onClick={copyAdaptedToRoteiros}
+                          className="flex items-center gap-1.5 text-[11px] font-medium px-3 py-2 rounded-lg border border-border text-text-muted hover:border-accent-border hover:text-accent transition-all"
+                        >
+                          <Zap className="w-3.5 h-3.5" /> Enviar para Gerador de Roteiros
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>

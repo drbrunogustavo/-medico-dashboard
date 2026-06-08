@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useCallback } from "react"
+import { useState, useRef, useCallback, useEffect } from "react"
 import { TopBar } from "@/components/TopBar"
 import {
   Wand2, RefreshCw, Download, Copy, Check,
@@ -109,7 +109,6 @@ const MSG_IMAGE = [
   "Quase pronto...",
 ]
 
-// Mapeamento categoria da pauta → estilo mais adequado
 const CATEGORIA_PARA_ESTILO: Record<string, EstiloId> = {
   "Emagrecimento":         "card-premium",
   "Hormônios":             "autoridade",
@@ -220,7 +219,7 @@ export default function DiretorCriativoPage() {
   const [loadingMsg,    setLoadingMsg]    = useState("")
   const [error,         setError]         = useState<string | null>(null)
   const [copied,        setCopied]        = useState(false)
-  const [expanded,      setExpanded]      = useState<string | null>(null)
+  const [expanded,      setExpanded]      = useState<string[]>([])
   const [modalOpen,     setModalOpen]     = useState(false)
   const [pautas,        setPautas]        = useState<Pauta[]>([])
   const [loadingPautas, setLoadingPautas] = useState(false)
@@ -236,12 +235,22 @@ export default function DiretorCriativoPage() {
 
   const msgTimer = useRef<ReturnType<typeof setInterval>>()
 
+  // Open all accordion items on desktop by default
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.innerWidth >= 768) {
+      setExpanded([...PART_KEYS])
+    }
+  }, [])
+
   const startMsgs = (msgs: string[], ms = 2200) => {
     let i = 0; setLoadingMsg(msgs[0])
     clearInterval(msgTimer.current)
     msgTimer.current = setInterval(() => { i = (i + 1) % msgs.length; setLoadingMsg(msgs[i]) }, ms)
   }
   const stopMsgs = () => { clearInterval(msgTimer.current); setLoadingMsg("") }
+
+  const toggleExpanded = (key: string) =>
+    setExpanded(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key])
 
   // ── Modal: importar do banco de pautas ─────────────────────────────────────
 
@@ -324,6 +333,8 @@ Generate structured creative direction as JSON with exactly these fields:
       const parsed = JSON.parse(idx >= 0 ? raw.slice(idx) : raw) as PromptParts
       setPromptParts(parsed)
       setEditedPrompt(parsed.promptFinal)
+      // Open all accordions after generation
+      setExpanded([...PART_KEYS])
     } catch (e) {
       setError("Erro ao gerar direção criativa: " + String(e))
     } finally {
@@ -494,21 +505,21 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
         ))}
       </div>
 
+      {/* ══════════════════════════════════════════════════════════════════════
+          SEÇÃO IMAGENS — layout coluna única, fluxo top-to-bottom
+      ══════════════════════════════════════════════════════════════════════ */}
       {activeSection === "imagens" && (
-      <div className="p-4 md:p-8">
-        <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-6 items-start">
+        <div className="p-4 md:p-8 space-y-6">
 
-          {/* ════════════════════════════════
-              LEFT — CONFIG PANEL
-          ════════════════════════════════ */}
-          <div className="space-y-4 sticky top-8">
+          {/* ── BLOCO 1: CONFIGURAÇÕES ─────────────────────────────────────── */}
+          <div className="space-y-4">
 
             {/* 1 — Formato */}
             <div className="bg-card border border-border rounded-lg p-4">
               <div className="text-[9px] font-mono text-text-muted tracking-widest uppercase mb-3">1 — Formato</div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                 {(Object.keys(FORMATOS) as Formato[]).map(f => (
-                  <FormatoCard key={f} id={f} active={formato===f} onClick={() => setFormato(f)} />
+                  <FormatoCard key={f} id={f} active={formato === f} onClick={() => setFormato(f)} />
                 ))}
               </div>
             </div>
@@ -516,14 +527,14 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
             {/* 2 — Estilo */}
             <div className="bg-card border border-border rounded-lg p-4">
               <div className="text-[9px] font-mono text-text-muted tracking-widest uppercase mb-3">2 — Estilo da Biblioteca</div>
-              <div className="space-y-1 max-h-72 overflow-y-auto pr-1 -mr-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-1.5">
                 {(Object.entries(ESTILOS) as [EstiloId, typeof ESTILOS[EstiloId]][]).map(([id, s]) => (
                   <button key={id} onClick={() => setEstilo(id)}
                     className={cn(
-                      "w-full text-left px-3 py-2 rounded-md border transition-all",
-                      estilo===id ? "bg-accent-dim border-accent-border" : "border-transparent hover:bg-white/[0.03]"
+                      "text-left px-3 py-2 rounded-md border transition-all",
+                      estilo === id ? "bg-accent-dim border-accent-border" : "border-transparent hover:bg-white/[0.03]"
                     )}>
-                    <div className={cn("text-[12px] font-semibold leading-tight", estilo===id ? "text-accent" : "text-text-primary")}>{s.label}</div>
+                    <div className={cn("text-[12px] font-semibold leading-tight", estilo === id ? "text-accent" : "text-text-primary")}>{s.label}</div>
                     <div className="text-[10px] text-text-muted mt-0.5 leading-snug">{s.desc}</div>
                   </button>
                 ))}
@@ -554,16 +565,16 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
             {/* 4 — Modelo */}
             <div className="bg-card border border-border rounded-lg p-4">
               <div className="text-[9px] font-mono text-text-muted tracking-widest uppercase mb-3">4 — Modelo de Geração</div>
-              <div className="space-y-1.5">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 {(Object.entries(MODELOS) as [Modelo, typeof MODELOS[Modelo]][]).map(([id, m]) => (
                   <button key={id} onClick={() => setModelo(id)}
                     className={cn(
-                      "w-full text-left px-3 py-2.5 rounded-md border transition-all flex items-start gap-3",
-                      modelo===id ? "bg-accent-dim border-accent-border" : "border-transparent hover:bg-white/[0.03]"
+                      "text-left px-3 py-2.5 rounded-md border transition-all flex items-start gap-3",
+                      modelo === id ? "bg-accent-dim border-accent-border" : "border-border hover:bg-white/[0.03]"
                     )}>
-                    <div className={cn("w-2 h-2 rounded-full flex-shrink-0 mt-[5px]", modelo===id ? "bg-accent" : "bg-text-muted/30")} />
+                    <div className={cn("w-2 h-2 rounded-full flex-shrink-0 mt-[5px]", modelo === id ? "bg-accent" : "bg-text-muted/30")} />
                     <div>
-                      <div className={cn("text-[12px] font-semibold", modelo===id ? "text-accent" : "text-text-primary")}>{m.label}</div>
+                      <div className={cn("text-[12px] font-semibold", modelo === id ? "text-accent" : "text-text-primary")}>{m.label}</div>
                       <div className="text-[9px] font-mono text-text-muted">{m.sub}</div>
                       <div className="text-[9px] text-text-muted mt-0.5">{m.note}</div>
                     </div>
@@ -572,267 +583,262 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
               </div>
             </div>
 
-            {/* Elaborate Button */}
+            {/* Botão Gerar */}
             <button
               onClick={gerarPrompt}
               disabled={anyLoading || !ideia.trim()}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-accent text-background text-[13px] font-bold hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-accent text-background text-[13px] font-bold hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[48px]"
             >
               {loadingPrompt ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
               {loadingPrompt ? "Elaborando direção..." : "Elaborar Direção Criativa"}
             </button>
+          </div>
 
-            {/* History */}
-            {history.length > 0 && (
-              <div className="bg-card border border-border rounded-lg p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <History className="w-3 h-3 text-text-muted" />
-                  <span className="text-[9px] font-mono text-text-muted tracking-widest uppercase">Histórico da Sessão</span>
+          {/* Error banner */}
+          {error && (
+            <div className="flex items-start gap-3 bg-red-950/40 border border-red-500/30 rounded-lg p-4">
+              <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+              <p className="text-[12px] text-red-300 leading-relaxed">{error}</p>
+            </div>
+          )}
+
+          {/* Empty state */}
+          {!promptParts && !loadingPrompt && !loadingImage && (
+            <div className="bg-card border border-border rounded-lg p-10 md:p-14 flex flex-col items-center justify-center gap-5">
+              <div className="w-16 h-16 rounded-2xl bg-accent-dim border border-accent-border flex items-center justify-center">
+                <Wand2 className="w-8 h-8 text-accent" />
+              </div>
+              <div className="text-center max-w-md">
+                <h3 className="text-[15px] font-semibold text-text-primary mb-2">Diretor Criativo IA</h3>
+                <p className="text-[12px] text-text-muted leading-relaxed">
+                  Configure o formato, estilo e tema acima. O Claude elaborará uma direção criativa cinematográfica com 7 componentes antes de enviar para geração de imagem.
+                </p>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 w-full max-w-md mt-1">
+                {["Conceito Visual", "Direção Artística", "Iluminação", "Prompt Final"].map(l => (
+                  <div key={l} className="bg-background rounded-lg p-3 text-center">
+                    <div className="text-[9px] text-text-muted leading-tight">{l}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Loading: gerando prompt */}
+          {loadingPrompt && (
+            <div className="bg-card border border-border rounded-lg p-14 flex flex-col items-center justify-center gap-5">
+              <Sparkles className="w-12 h-12 text-accent animate-pulse" />
+              <div className="text-center">
+                <div className="text-[15px] font-semibold text-text-primary mb-1">{loadingMsg}</div>
+                <div className="text-[10px] font-mono text-text-muted tracking-widest">CLAUDE ELABORANDO DIREÇÃO CRIATIVA</div>
+              </div>
+            </div>
+          )}
+
+          {/* ── BLOCO 2: PROMPT GERADO ─────────────────────────────────────── */}
+          {promptParts && !loadingPrompt && (
+            <div className="space-y-4">
+
+              {/* Header */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-[14px] font-semibold text-text-primary">Direção Criativa Elaborada</h3>
+                  <p className="text-[11px] text-text-muted mt-0.5">{ESTILOS[estilo].label} · {FORMATOS[formato].label} · {FORMATOS[formato].ratio}</p>
                 </div>
-                <div className="flex gap-2 flex-wrap">
-                  {history.map(h => (
-                    <button key={h.id}
-                      onClick={() => setSelectedHist(selectedHist?.id===h.id ? null : h)}
-                      title={`${h.estilo} · ${h.formato} · ${h.timestamp}`}
+                <button onClick={gerarPrompt} disabled={anyLoading}
+                  className="flex items-center gap-1.5 text-[11px] text-text-muted hover:text-accent transition-colors disabled:opacity-40">
+                  <RefreshCw className="w-3 h-3" /> Regenerar direção
+                </button>
+              </div>
+
+              {/* 7 componentes — acordeão */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {PART_KEYS.map(key => (
+                  <button key={key}
+                    onClick={() => toggleExpanded(key)}
+                    className={cn(
+                      "bg-card border border-border rounded-lg p-3 text-left hover:border-border-hover transition-all",
+                      key === "negativo" && "sm:col-span-2"
+                    )}>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <div className="flex items-center gap-2">
+                        <span>{PART_ICON[key]}</span>
+                        <span className="text-[9px] font-mono text-text-muted uppercase tracking-wider">{PART_LABEL[key]}</span>
+                      </div>
+                      {expanded.includes(key)
+                        ? <ChevronUp   className="w-3 h-3 text-text-muted flex-shrink-0" />
+                        : <ChevronDown className="w-3 h-3 text-text-muted flex-shrink-0" />}
+                    </div>
+                    <p className={cn("text-[11px] text-text-secondary leading-relaxed text-left", !expanded.includes(key) && "line-clamp-2")}>
+                      {promptParts[key]}
+                    </p>
+                  </button>
+                ))}
+              </div>
+
+              {/* Prompt final unificado */}
+              <div className="bg-card border border-accent-border/40 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-3.5 h-3.5 text-accent" />
+                    <span className="text-[10px] font-mono text-accent uppercase tracking-wider">Prompt Final Unificado</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => { setEditMode(!editMode); if (!editMode) setEditedPrompt(promptParts.promptFinal) }}
                       className={cn(
-                        "relative rounded-md overflow-hidden border-2 transition-all flex-shrink-0",
-                        selectedHist?.id===h.id ? "border-accent" : "border-transparent hover:border-border-hover"
-                      )}
-                      style={{ width:52, height:52 }}
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={h.imageUrl} alt="" className="w-full h-full object-cover" />
+                        "flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-md border transition-all",
+                        editMode ? "bg-accent-dim border-accent-border text-accent" : "border-border text-text-muted hover:text-text-secondary"
+                      )}>
+                      <Edit3 className="w-3 h-3" />{editMode ? "Editando" : "Editar"}
                     </button>
-                  ))}
+                    <button onClick={copyPrompt}
+                      className="flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-md border border-border text-text-muted hover:text-text-secondary transition-all">
+                      {copied ? <Check className="w-3 h-3 text-accent" /> : <Copy className="w-3 h-3" />}
+                      {copied ? "Copiado" : "Copiar"}
+                    </button>
+                  </div>
                 </div>
-                {selectedHist && (
-                  <p className="mt-2 text-[9px] text-text-muted font-mono">
-                    {selectedHist.estilo} · {selectedHist.formato} · {selectedHist.timestamp}
+                {editMode ? (
+                  <textarea
+                    value={editedPrompt}
+                    onChange={e => setEditedPrompt(e.target.value)}
+                    className="w-full bg-background border border-border rounded-lg px-3 py-2.5 text-base md:text-[11px] text-text-primary font-mono outline-none focus:border-accent/40 transition-colors resize-y leading-relaxed"
+                    style={{ minHeight: 120 }}
+                  />
+                ) : (
+                  <p className="text-[11px] text-text-secondary font-mono leading-relaxed whitespace-pre-wrap">
+                    {promptParts.promptFinal}
                   </p>
                 )}
               </div>
-            )}
-          </div>
 
-          {/* ════════════════════════════════
-              RIGHT — RESULTS PANEL
-          ════════════════════════════════ */}
-          <div className="space-y-5 min-w-0">
+              {/* Botão Gerar Imagem */}
+              <button
+                onClick={gerarImagem}
+                disabled={loadingImage}
+                className="w-full flex items-center justify-center gap-2 px-4 py-4 rounded-lg bg-accent text-background text-[14px] font-bold hover:bg-accent/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-accent/20 min-h-[56px]"
+              >
+                {loadingImage ? <RefreshCw className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
+                {loadingImage ? loadingMsg : `Gerar Imagem · ${MODELOS[modelo].label}`}
+              </button>
+            </div>
+          )}
 
-            {/* Error banner */}
-            {error && (
-              <div className="flex items-start gap-3 bg-red-950/40 border border-red-500/30 rounded-lg p-4">
-                <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
-                <p className="text-[12px] text-red-300 leading-relaxed">{error}</p>
-              </div>
-            )}
-
-            {/* ── Empty state ── */}
-            {!promptParts && !loadingPrompt && !loadingImage && (
-              <div className="bg-card border border-border rounded-lg p-14 flex flex-col items-center justify-center gap-5 min-h-[480px]">
+          {/* Loading: gerando imagem */}
+          {loadingImage && (
+            <div className="bg-card border border-border rounded-lg p-14 flex flex-col items-center justify-center gap-5">
+              <div className="relative">
                 <div className="w-16 h-16 rounded-2xl bg-accent-dim border border-accent-border flex items-center justify-center">
-                  <Wand2 className="w-8 h-8 text-accent" />
+                  <ImageIcon className="w-8 h-8 text-accent" />
                 </div>
-                <div className="text-center max-w-md">
-                  <h3 className="text-[15px] font-semibold text-text-primary mb-2">Diretor Criativo IA</h3>
-                  <p className="text-[12px] text-text-muted leading-relaxed">
-                    Configure o formato, estilo e tema à esquerda. O Claude elaborará uma direção criativa cinematográfica com 7 componentes antes de enviar para geração de imagem.
-                  </p>
-                </div>
-                <div className="grid grid-cols-4 gap-2 w-full max-w-md mt-1">
-                  {["Conceito Visual","Direção Artística","Iluminação","Prompt Final"].map(l => (
-                    <div key={l} className="bg-background rounded-lg p-3 text-center">
-                      <div className="text-[9px] text-text-muted leading-tight">{l}</div>
-                    </div>
-                  ))}
-                </div>
+                <RefreshCw className="w-5 h-5 text-accent animate-spin absolute -top-1.5 -right-1.5" />
               </div>
-            )}
-
-            {/* ── Loading: generating prompt ── */}
-            {loadingPrompt && (
-              <div className="bg-card border border-border rounded-lg p-14 flex flex-col items-center justify-center gap-5 min-h-[480px]">
-                <Sparkles className="w-12 h-12 text-accent animate-pulse" />
-                <div className="text-center">
-                  <div className="text-[15px] font-semibold text-text-primary mb-1">{loadingMsg}</div>
-                  <div className="text-[10px] font-mono text-text-muted tracking-widest">CLAUDE ELABORANDO DIREÇÃO CRIATIVA</div>
-                </div>
+              <div className="text-center">
+                <div className="text-[14px] font-semibold text-text-primary mb-1">{loadingMsg}</div>
+                <div className="text-[9px] font-mono text-text-muted tracking-widest">PROCESSANDO VIA {MODELOS[modelo].label.toUpperCase()}</div>
               </div>
-            )}
+            </div>
+          )}
 
-            {/* ── Prompt Components ── */}
-            {promptParts && !loadingPrompt && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-[14px] font-semibold text-text-primary">Direção Criativa Elaborada</h3>
-                    <p className="text-[11px] text-text-muted mt-0.5">{ESTILOS[estilo].label} · {FORMATOS[formato].label} · {FORMATOS[formato].ratio}</p>
+          {/* ── BLOCO 3: IMAGEM GERADA ─────────────────────────────────────── */}
+          {displayImage && !loadingImage && (
+            <div className="space-y-4">
+              <div className="bg-card border border-border rounded-lg p-4">
+                <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[13px] font-semibold text-text-primary">Imagem Gerada</span>
+                    {selectedHist && (
+                      <span className="text-[9px] font-mono text-text-muted px-2 py-0.5 rounded bg-white/[0.04] border border-border">
+                        Histórico · {selectedHist.timestamp}
+                      </span>
+                    )}
                   </div>
-                  <button onClick={gerarPrompt} disabled={anyLoading}
-                    className="flex items-center gap-1.5 text-[11px] text-text-muted hover:text-accent transition-colors disabled:opacity-40">
-                    <RefreshCw className="w-3 h-3" /> Regenerar direção
-                  </button>
-                </div>
-
-                {/* 7 components */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {PART_KEYS.map(key => (
-                    <button key={key}
-                      onClick={() => setExpanded(expanded===key ? null : key)}
-                      className={cn(
-                        "bg-card border border-border rounded-lg p-3 text-left hover:border-border-hover transition-all",
-                        key==="negativo" && "col-span-2"
-                      )}>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <div className="flex items-center gap-2">
-                          <span>{PART_ICON[key]}</span>
-                          <span className="text-[9px] font-mono text-text-muted uppercase tracking-wider">{PART_LABEL[key]}</span>
-                        </div>
-                        {expanded===key
-                          ? <ChevronUp   className="w-3 h-3 text-text-muted flex-shrink-0" />
-                          : <ChevronDown className="w-3 h-3 text-text-muted flex-shrink-0" />}
-                      </div>
-                      <p className={cn("text-[11px] text-text-secondary leading-relaxed", expanded!==key && "line-clamp-2")}>
-                        {promptParts[key]}
-                      </p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button onClick={copyPrompt}
+                      className="flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg border border-border text-text-muted hover:text-text-secondary transition-all min-h-[36px]">
+                      {copied ? <Check className="w-3 h-3 text-accent" /> : <Copy className="w-3 h-3" />}
+                      Copiar Prompt
                     </button>
-                  ))}
-                </div>
-
-                {/* Unified final prompt */}
-                <div className="bg-card border border-accent-border/40 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="w-3.5 h-3.5 text-accent" />
-                      <span className="text-[10px] font-mono text-accent uppercase tracking-wider">Prompt Final Unificado</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => { setEditMode(!editMode); if (!editMode) setEditedPrompt(promptParts.promptFinal) }}
-                        className={cn(
-                          "flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-md border transition-all",
-                          editMode ? "bg-accent-dim border-accent-border text-accent" : "border-border text-text-muted hover:text-text-secondary"
-                        )}>
-                        <Edit3 className="w-3 h-3" />{editMode ? "Editando" : "Editar"}
+                    {!selectedHist && promptParts && (
+                      <button onClick={gerarImagem} disabled={loadingImage}
+                        className="flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg border border-border text-text-muted hover:text-text-secondary transition-all disabled:opacity-40 min-h-[36px]">
+                        <RefreshCw className="w-3 h-3" /> Regenerar
                       </button>
-                      <button onClick={copyPrompt}
-                        className="flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-md border border-border text-text-muted hover:text-text-secondary transition-all">
-                        {copied ? <Check className="w-3 h-3 text-accent" /> : <Copy className="w-3 h-3" />}
-                        {copied ? "Copiado" : "Copiar"}
-                      </button>
-                    </div>
+                    )}
+                    <button onClick={downloadImage}
+                      className="flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg bg-accent-dim border border-accent-border text-accent hover:bg-accent/20 transition-all font-medium min-h-[36px]">
+                      <Download className="w-3 h-3" /> Download
+                    </button>
                   </div>
-                  {editMode ? (
-                    <textarea
-                      value={editedPrompt}
-                      onChange={e => setEditedPrompt(e.target.value)}
-                      className="w-full bg-background border border-border rounded-lg px-3 py-2.5 text-[11px] text-text-primary font-mono outline-none focus:border-accent/40 transition-colors resize-none leading-relaxed"
-                      rows={7}
-                    />
-                  ) : (
-                    <p className="text-[11px] text-text-secondary font-mono leading-relaxed whitespace-pre-wrap">
-                      {promptParts.promptFinal}
-                    </p>
-                  )}
                 </div>
-
-                {/* Generate Image Button */}
-                <button
-                  onClick={gerarImagem}
-                  disabled={loadingImage}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-4 rounded-lg bg-accent text-background text-[14px] font-bold hover:bg-accent/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-accent/20"
-                >
-                  {loadingImage ? <RefreshCw className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
-                  {loadingImage ? loadingMsg : `Gerar Imagem · ${MODELOS[modelo].label}`}
-                </button>
-              </div>
-            )}
-
-            {/* ── Loading: generating image ── */}
-            {loadingImage && (
-              <div className="bg-card border border-border rounded-lg p-14 flex flex-col items-center justify-center gap-5">
-                <div className="relative">
-                  <div className="w-16 h-16 rounded-2xl bg-accent-dim border border-accent-border flex items-center justify-center">
-                    <ImageIcon className="w-8 h-8 text-accent" />
-                  </div>
-                  <RefreshCw className="w-5 h-5 text-accent animate-spin absolute -top-1.5 -right-1.5" />
-                </div>
-                <div className="text-center">
-                  <div className="text-[14px] font-semibold text-text-primary mb-1">{loadingMsg}</div>
-                  <div className="text-[9px] font-mono text-text-muted tracking-widest">PROCESSANDO VIA {MODELOS[modelo].label.toUpperCase()}</div>
+                <div className="flex justify-center bg-background rounded-lg overflow-hidden">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={displayImage}
+                    alt="Imagem gerada pelo Diretor Criativo IA"
+                    className="max-w-full max-h-[640px] object-contain rounded"
+                  />
                 </div>
               </div>
-            )}
 
-            {/* ── Image Result ── */}
-            {displayImage && !loadingImage && (
-              <div className="space-y-4">
-                <div className="bg-card border border-border rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-[13px] font-semibold text-text-primary">Imagem Gerada</span>
-                      {selectedHist && (
-                        <span className="text-[9px] font-mono text-text-muted px-2 py-0.5 rounded bg-white/[0.04] border border-border">
-                          Histórico · {selectedHist.timestamp}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button onClick={copyPrompt}
-                        className="flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg border border-border text-text-muted hover:text-text-secondary transition-all">
-                        {copied ? <Check className="w-3 h-3 text-accent" /> : <Copy className="w-3 h-3" />}
-                        Copiar Prompt
-                      </button>
-                      {!selectedHist && promptParts && (
-                        <button onClick={gerarImagem} disabled={loadingImage}
-                          className="flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg border border-border text-text-muted hover:text-text-secondary transition-all disabled:opacity-40">
-                          <RefreshCw className="w-3 h-3" /> Regenerar
-                        </button>
-                      )}
-                      <button onClick={downloadImage}
-                        className="flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg bg-accent-dim border border-accent-border text-accent hover:bg-accent/20 transition-all font-medium">
-                        <Download className="w-3 h-3" /> Download
-                      </button>
-                    </div>
-                  </div>
-                  <div className="flex justify-center bg-background rounded-lg overflow-hidden">
+              {/* Auditoria Visual */}
+              <div className="bg-card border border-border rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2 h-2 rounded-full bg-accent flex-shrink-0" />
+                  <span className="text-[9px] font-mono text-text-muted tracking-widest uppercase">Auditoria Visual Automática</span>
+                  {loadingAudit && <RefreshCw className="w-3 h-3 text-text-muted animate-spin ml-auto" />}
+                </div>
+                {displayAudit ? (
+                  <p className="text-[12px] text-text-secondary leading-relaxed">{displayAudit}</p>
+                ) : loadingAudit ? (
+                  <p className="text-[11px] text-text-muted font-mono">Analisando resultado...</p>
+                ) : (
+                  <p className="text-[11px] text-text-muted">Auditoria não disponível para este item do histórico.</p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ── BLOCO 4: HISTÓRICO ─────────────────────────────────────────── */}
+          {history.length > 0 && (
+            <div className="bg-card border border-border rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <History className="w-3 h-3 text-text-muted" />
+                <span className="text-[9px] font-mono text-text-muted tracking-widest uppercase">Histórico da Sessão</span>
+              </div>
+              <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1">
+                {history.map(h => (
+                  <button key={h.id}
+                    onClick={() => setSelectedHist(selectedHist?.id === h.id ? null : h)}
+                    title={`${h.estilo} · ${h.formato} · ${h.timestamp}`}
+                    className={cn(
+                      "relative rounded-md overflow-hidden border-2 transition-all flex-shrink-0",
+                      selectedHist?.id === h.id ? "border-accent" : "border-transparent hover:border-border-hover"
+                    )}
+                    style={{ width: 56, height: 56 }}
+                  >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={displayImage}
-                      alt="Imagem gerada pelo Diretor Criativo IA"
-                      className="max-w-full max-h-[640px] object-contain rounded"
-                    />
-                  </div>
-                </div>
-
-                {/* Visual Audit */}
-                <div className="bg-card border border-border rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-2 h-2 rounded-full bg-accent flex-shrink-0" />
-                    <span className="text-[9px] font-mono text-text-muted tracking-widest uppercase">Auditoria Visual Automática</span>
-                    {loadingAudit && <RefreshCw className="w-3 h-3 text-text-muted animate-spin ml-auto" />}
-                  </div>
-                  {displayAudit ? (
-                    <p className="text-[12px] text-text-secondary leading-relaxed">{displayAudit}</p>
-                  ) : loadingAudit ? (
-                    <p className="text-[11px] text-text-muted font-mono">Analisando resultado...</p>
-                  ) : (
-                    <p className="text-[11px] text-text-muted">Auditoria não disponível para este item do histórico.</p>
-                  )}
-                </div>
+                    <img src={h.imageUrl} alt="" className="w-full h-full object-cover" />
+                  </button>
+                ))}
               </div>
-            )}
+              {selectedHist && (
+                <p className="mt-2 text-[9px] text-text-muted font-mono">
+                  {selectedHist.estilo} · {selectedHist.formato} · {selectedHist.timestamp}
+                </p>
+              )}
+            </div>
+          )}
 
-          </div>
         </div>
-      </div>
-      )} {/* end activeSection === "imagens" */}
+      )}
 
-      {/* ════════════════════════════════
+      {/* ══════════════════════════════════════════════════════════════════════
           HEADLINES SECTION
-      ════════════════════════════════ */}
+      ══════════════════════════════════════════════════════════════════════ */}
       {activeSection === "headlines" && (
-        <div className="p-8 space-y-5">
+        <div className="p-4 md:p-8 space-y-5">
 
           {/* Input */}
           <div className="bg-card border border-border rounded-lg p-5">
@@ -848,18 +854,18 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
                 <BookOpen className="w-3 h-3" /> Banco de Pautas
               </button>
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
               <input
                 value={headlineTema}
                 onChange={e => setHeadlineTema(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && gerarHeadlines()}
                 placeholder="Ex: resistência à insulina, testosterona e andropausa, menopausa e TRH..."
-                className="flex-1 bg-background border border-border rounded-lg px-4 py-2.5 text-[13px] text-text-primary placeholder:text-text-muted outline-none focus:border-accent/40 transition-colors"
+                className="flex-1 bg-background border border-border rounded-lg px-4 py-2.5 text-base md:text-[13px] text-text-primary placeholder:text-text-muted outline-none focus:border-accent/40 transition-colors"
               />
               <button
                 onClick={gerarHeadlines}
                 disabled={loadingHeadlines || !headlineTema.trim()}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-accent text-background text-[13px] font-bold hover:bg-accent/90 transition-colors disabled:opacity-50 flex-shrink-0"
+                className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-accent text-background text-[13px] font-bold hover:bg-accent/90 transition-colors disabled:opacity-50 min-h-[44px]"
               >
                 {loadingHeadlines
                   ? <><RefreshCw className="w-4 h-4 animate-spin" /> Gerando...</>
@@ -968,7 +974,7 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
                         </span>
                         <button
                           onClick={() => { setIdeia(h.titulo); setActiveSection("imagens") }}
-                          className="text-[10px] px-3 py-1.5 rounded-lg border border-border text-text-muted hover:border-accent-border hover:text-accent transition-all opacity-0 group-hover:opacity-100 whitespace-nowrap w-28"
+                          className="text-[10px] px-3 py-1.5 rounded-lg border border-border text-text-muted hover:border-accent-border hover:text-accent transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100 whitespace-nowrap w-28 min-h-[36px]"
                         >
                           Usar na Arte →
                         </button>
@@ -981,9 +987,9 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
         </div>
       )}
 
-      {/* ════════════════════════════════
+      {/* ══════════════════════════════════════════════════════════════════════
           MODAL — Banco de Pautas
-      ════════════════════════════════ */}
+      ══════════════════════════════════════════════════════════════════════ */}
       {modalOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -991,11 +997,7 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
         >
           <div
             className="w-full max-w-lg rounded-xl border flex flex-col"
-            style={{
-              background: "#08090e",
-              borderColor: "#2a1a0a",
-              maxHeight: "80vh",
-            }}
+            style={{ background: "#08090e", borderColor: "#2a1a0a", maxHeight: "80vh" }}
           >
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: "#2a1a0a" }}>

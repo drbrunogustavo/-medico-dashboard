@@ -12,9 +12,12 @@ import {
   ScanFace, ShieldQuestion, Microscope, Zap, FileText,
   // Produtividade
   MessageSquare,
+  // Auth
+  LogOut,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useMenu } from "@/components/MobileMenuProvider"
+import { useAuth } from "@/hooks/useAuth"
 
 // ─── Nav definition ───────────────────────────────────────────────────────────
 
@@ -75,6 +78,7 @@ const BADGE_STYLE: Record<string, string> = {
 function SidebarContent() {
   const pathname = usePathname()
   const { closeMenu } = useMenu()
+  const { user, signOut } = useAuth()
 
   return (
     <aside className="h-full w-60 flex flex-col bg-surface border-r border-border">
@@ -148,12 +152,32 @@ function SidebarContent() {
       </nav>
 
       {/* Footer */}
-      <div className="px-5 py-3 border-t border-border">
+      <div className="px-4 py-3 border-t border-border space-y-3">
+        {/* User row */}
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-full bg-accent-dim border border-accent-border flex items-center justify-center flex-shrink-0">
+            <span className="text-[11px] font-bold text-accent">BG</span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-[12px] font-semibold text-text-primary truncate leading-none">Dr. Bruno Gustavo</div>
+            <div className="text-[10px] text-text-muted truncate mt-0.5 leading-none">
+              {user?.email ?? "brunogustavosa@gmail.com"}
+            </div>
+          </div>
+          <button
+            onClick={signOut}
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-text-muted hover:text-red-400 hover:bg-red-950/40 transition-colors flex-shrink-0"
+            title="Sair"
+            aria-label="Sair do dashboard"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+          </button>
+        </div>
+        {/* Version */}
         <div className="flex items-center gap-2">
           <span className="w-1.5 h-1.5 rounded-full bg-accent animate-blink flex-shrink-0" />
           <span className="text-[10px] font-mono text-text-muted truncate">MedContent v2.0</span>
         </div>
-        <div className="text-[9px] font-mono text-text-muted/60 mt-0.5">Sistema operacional</div>
       </div>
     </aside>
   )

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { checkAuth } from '@/lib/auth-check'
 
 const supabase = createClient(
   'https://dnieitrfrjboswlfxzjw.supabase.co',
@@ -7,6 +8,8 @@ const supabase = createClient(
 )
 
 export async function GET() {
+  const auth = await checkAuth()
+  if (!auth.authenticated) return auth.response
   const { data, error } = await supabase
     .from('pautas')
     .select('*')
@@ -16,6 +19,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const auth = await checkAuth()
+  if (!auth.authenticated) return auth.response
   const body = await request.json()
   const { error } = await supabase.from('pautas').insert(body)
   if (error) return NextResponse.json({ error }, { status: 500 })
@@ -23,6 +28,8 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  const auth = await checkAuth()
+  if (!auth.authenticated) return auth.response
   const { id } = await request.json()
   const { error } = await supabase.from('pautas').delete().eq('id', id)
   if (error) return NextResponse.json({ error }, { status: 500 })

@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
+import { checkAuth } from '@/lib/auth-check'
 
 export async function POST(request: Request) {
+  const auth = await checkAuth()
+  if (!auth.authenticated) return auth.response
   const body = await request.json()
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {

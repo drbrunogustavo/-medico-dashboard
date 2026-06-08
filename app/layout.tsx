@@ -1,40 +1,54 @@
-// Salvar em: app/layout.tsx
 import type { Metadata } from "next"
+import { Inter, Playfair_Display } from "next/font/google"
 import "./globals.css"
 import { Sidebar }            from "@/components/Sidebar"
 import { MobileNav }          from "@/components/MobileNav"
 import { MobileMenuProvider } from "@/components/MobileMenuProvider"
 
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+})
+
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-playfair",
+  display: "swap",
+  weight: ["400", "500", "600", "700"],
+})
+
 export const metadata: Metadata = {
-  title: "MedContent Dashboard",
-  description: "Dashboard de gestão de conteúdo médico",
+  title: "PRAXIS — Marketing Médico de Alto Padrão",
+  description: "Plataforma de inteligência e criação de conteúdo para profissionais de saúde.",
+  openGraph: {
+    title: "PRAXIS — Marketing Médico de Alto Padrão",
+    description: "Plataforma de inteligência e criação de conteúdo para profissionais de saúde.",
+    type: "website",
+  },
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "MedContent",
+    title: "PRAXIS",
   },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" className="dark">
+    <html lang="pt-BR" className={`dark ${inter.variable} ${playfair.variable}`}>
       <head>
-        <meta name="theme-color" content="#00c07f" />
+        <meta name="theme-color" content="#080808" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <link rel="apple-touch-icon" href="/icon-192.png" />
         <link rel="manifest" href="/manifest.json" />
       </head>
       <body className="bg-background text-text-primary antialiased">
         <MobileMenuProvider>
           <div className="flex min-h-screen">
-            {/* Sidebar — fixed desktop / overlay mobile */}
             <Sidebar />
-
-            {/* Main content */}
-            <main className="flex-1 min-h-screen bg-background grid-bg flex flex-col md:ml-60">
-              {/* Mobile top bar com hamburger */}
+            <main className="flex-1 min-h-screen bg-background flex flex-col md:ml-60">
               <MobileNav />
-              {/* Conteúdo da página */}
               <div className="flex-1">
                 {children}
               </div>

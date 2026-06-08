@@ -78,12 +78,14 @@ function AnaliseModal({ referencia, onClose }: { referencia: Referencia; onClose
     const run = async () => {
       try {
         const handle = referencia.instagram.replace('@','')
+        console.log('[AnaliseModal] iniciando análise para:', handle)
+
         const prompt =
           'Você é estrategista de conteúdo médico. Analise o perfil @' + handle +
           ' (especialidade: ' + referencia.especialidade + (referencia.temas?.length ? ', temas conhecidos: ' + referencia.temas.join(', ') : '') + ')' +
           ' do ponto de vista do Dr. Bruno Gustavo — Clínico-Geral, Endocrinologia e Nutrologia, Poços de Caldas-MG (@drbrunogustavo).\n\n' +
           'Gere análise estratégica completa. Se não conhecer o perfil, baseie-se em perfis típicos desta especialidade.\n\n' +
-          'Retorne SOMENTE JSON:\n' +
+          'Retorne SOMENTE JSON válido, sem nenhum texto antes ou depois:\n' +
           '{"perfil":{"nome":"nome ou estimado","handle":"@' + handle + '","especialidade":"' + referencia.especialidade + '","posicionamento":"como se posiciona","tom":"tom de voz","frequencia":"frequência estimada","formatos":["Reels","Carrossel"]},' +
           '"temas":{"principal":"tema dominante","secundarios":["tema2","tema3"],"gaps":["gap1","gap2"]},' +
           '"pontos_fortes":["forte1","forte2","forte3"],' +
@@ -92,20 +94,47 @@ function AnaliseModal({ referencia, onClose }: { referencia: Referencia; onClose
           '"estrategia":{"diferencial":"como Dr. Bruno se diferencia em 2 frases","temas_atacar":["tema1"],"formatos_rec":["formato1"],"gancho":"exemplo de gancho para competir"},' +
           '"score":{"conteudo":7,"consistencia":6,"engajamento":7,"nicho":7}}'
 
-        const res  = await fetch('/api/roteiros', {
-          method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:2000, messages:[{role:'user',content:prompt}] }),
+        console.log('[AnaliseModal] chamando /api/roteiros...')
+        const res = await fetch('/api/roteiros', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model:      'claude-sonnet-4-20250514',
+            max_tokens: 2000,
+            messages:   [{ role: 'user', content: prompt }],
+          }),
         })
-        if (!res.ok) throw new Error(`Erro HTTP ${res.status} — verifique se está autenticado.`)
+
+        console.log('[AnaliseModal] status HTTP:', res.status)
+        if (!res.ok) throw new Error(`HTTP ${res.status} — verifique autenticação e ANTHROPIC_API_KEY.`)
+
         const data = await res.json()
-        if (data.error) throw new Error(String(data.error))
-        const raw   = (data.content?.[0]?.text ?? '{}').replace(/```json\n?/g,'').replace(/```\n?/g,'').trim()
-        const idx   = raw.indexOf('{')
-        const json  = JSON.parse(idx >= 0 ? raw.slice(idx) : raw) as AnaliseResult
-        if (!json.perfil) throw new Error('Resposta inválida da IA — tente novamente.')
+        console.log('[AnaliseModal] data.type:', data.type, '| content[0].type:', data.content?.[0]?.type)
+
+        if (data.error) throw new Error(`API error: ${JSON.stringify(data.error)}`)
+        if (data.type === 'error') throw new Error(`Anthropic error: ${data.error?.message ?? JSON.stringify(data)}`)
+
+        const text  = data.content?.[0]?.text
+        if (!text) throw new Error(`Resposta sem texto. content: ${JSON.stringify(data.content)}`)
+
+        console.log('[AnaliseModal] texto recebido (primeiros 200 chars):', text.slice(0, 200))
+
+        const clean = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
+        const idx   = clean.indexOf('{')
+        const end   = clean.lastIndexOf('}')
+        if (idx === -1 || end === -1) throw new Error(`JSON não encontrado na resposta: ${clean.slice(0, 100)}`)
+
+        const jsonStr = clean.slice(idx, end + 1)
+        const json    = JSON.parse(jsonStr) as AnaliseResult
+
+        if (!json.perfil) throw new Error(`Campo "perfil" ausente. Chaves: ${Object.keys(json).join(', ')}`)
+
+        console.log('[AnaliseModal] análise concluída com sucesso')
         setResultado(json)
       } catch(e) {
-        setErro('Erro ao analisar. Tente novamente.'); console.error(e)
+        const msg = e instanceof Error ? e.message : String(e)
+        console.error('[AnaliseModal] ERRO:', e)
+        setErro(msg)
       }
       setLoading(false)
     }

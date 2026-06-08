@@ -4,12 +4,11 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 import {
-  LayoutDashboard, X, Zap, Stethoscope,
+  LayoutDashboard, X, Stethoscope,
   Radio, CircleDollarSign, Users,
   Bot, Video, Layers, Clapperboard, Sparkles, Flame, Megaphone,
   ScanFace, ShieldQuestion, Microscope, FileText,
-  Calendar, UserSearch, Brain, Apple,
-  TrendingUp, MessageSquare, GitBranch,
+  Calendar, Heart, TrendingUp, MessageCircle,
   LogOut, CreditCard, Settings,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -74,22 +73,22 @@ const NAV_CLINICA: NavGroup[] = [
   {
     category: "Pacientes",
     items: [
-      { label: "Gestão de Pacientes",  href: "/pacientes", icon: UserSearch },
-      { label: "Copiloto de Consulta", href: "/copiloto",  icon: Brain      },
+      { label: "Gestão de Pacientes",  href: "/pacientes", icon: Users },
+      { label: "Copiloto de Consulta", href: "/copiloto",  icon: Bot   },
     ],
   },
   {
     category: "Financeiro",
     items: [
-      { label: "Financeiro", href: "/financeiro", icon: TrendingUp },
+      { label: "Financeiro", href: "/financeiro", icon: CircleDollarSign },
     ],
   },
   {
     category: "Automação",
     items: [
-      { label: "Nutrição de Pacientes", href: "/nutricao-pacientes", icon: Apple                          },
-      { label: "Nutrição de Leads",     href: "/nutricao-leads",     icon: GitBranch                      },
-      { label: "Agente WhatsApp",       href: "/whatsapp",           icon: MessageSquare, badge: "EM BREVE" },
+      { label: "Nutrição de Pacientes", href: "/nutricao-pacientes", icon: Heart,          },
+      { label: "Nutrição de Leads",     href: "/nutricao-leads",     icon: TrendingUp,     },
+      { label: "Agente WhatsApp",       href: "/whatsapp",           icon: MessageCircle, badge: "EM BREVE" },
     ],
   },
 ]
@@ -148,7 +147,7 @@ function SidebarContent() {
               : "text-text-muted hover:text-text-secondary hover:bg-surface-2"
           )}
         >
-          <Zap className="w-3 h-3" /> Social
+          <Sparkles className="w-3 h-3" /> Social
         </button>
         <button
           onClick={() => switchAla("clinica")}

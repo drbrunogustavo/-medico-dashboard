@@ -1,13 +1,14 @@
 "use client"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Radio, FileText, Users, LayoutDashboard, ChevronRight, Activity, Sparkles, Layers, Video, Zap, X, MessageSquare, Clapperboard, Flame, ScanFace, ShieldQuestion, CircleDollarSign } from "lucide-react"
+import { Radio, FileText, Users, LayoutDashboard, ChevronRight, Activity, Sparkles, Layers, Video, Zap, X, MessageSquare, Clapperboard, Flame, ScanFace, ShieldQuestion, CircleDollarSign, Bot } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useMenu } from "@/components/MobileMenuProvider"
 
 const NAV = [
   { category: null, items: [{ label: "Dashboard", href: "/", icon: LayoutDashboard, badge: null }] },
   { category: "Redes Sociais", items: [
+    { label: "Agente Executivo",       href: "/agente",      icon: Bot,          badge: "PRO"  },
     { label: "Radar de Tendências",    href: "/radar",       icon: Radio,        badge: "LIVE" },
     { label: "Gerador de Imagens",     href: "/imagens",     icon: Layers,       badge: null   },
     { label: "Gerador de Roteiros",    href: "/roteiros",    icon: Video,        badge: null   },
@@ -73,6 +74,7 @@ export function Sidebar() {
                     {item.badge && (
                       <span className={cn(
                         "text-[8px] font-mono font-bold px-1.5 py-0.5 rounded tracking-wider flex-shrink-0",
+                        item.badge === "PRO"  ? "bg-amber-950/60 text-amber-400 border border-amber-500/40" :
                         item.badge === "NOVO" ? "bg-accent-dim text-accent border border-accent-border" :
                         item.badge === "LIVE" ? "bg-red-500/10 text-red-400 border border-red-500/30" :
                         "bg-accent-dim text-accent border border-accent-border"

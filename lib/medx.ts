@@ -87,7 +87,7 @@ export const getPacienteById = (id: string) =>
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const buscarPaciente = (nome: string) =>
-  medxGet<any[]>("GetContatosGridBySearch", { nome })
+  medxGet<any[]>("GetContatosGridBySearch", { Name: nome })
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const inserirAgendamento = (dados: unknown) =>

@@ -9,29 +9,39 @@ import { useRouter } from "next/navigation"
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface Paciente {
-  id?:          string | number
-  idContato?:   string | number
-  nome?:        string
+  // MedX retorna PascalCase
+  Id?:           string | number
+  IdContato?:    string | number
+  Nome?:         string
+  Celular?:      string
+  Email?:        string
+  CPF_CGC?:      string
+  Nascimento?:   string
+  Cidade?:       string
+  // fallback camelCase
+  id?:           string | number
+  idContato?:    string | number
+  nome?:         string
   nomeCompleto?: string
-  telefone?:    string
-  celular?:     string
-  email?:       string
-  cidade?:      string
+  telefone?:     string
+  celular?:      string
+  email?:        string
+  cidade?:       string
   dataNascimento?: string
-  cpf?:         string
+  cpf?:          string
   [key: string]: unknown
 }
 
 function getPacienteId(p: Paciente): string {
-  return String(p.id ?? p.idContato ?? "")
+  return String(p.Id ?? p.id ?? p.IdContato ?? p.idContato ?? "")
 }
 
 function getPacienteNome(p: Paciente): string {
-  return p.nome ?? p.nomeCompleto ?? "—"
+  return p.Nome ?? p.nome ?? p.nomeCompleto ?? "—"
 }
 
 function getPacienteTelefone(p: Paciente): string {
-  return p.celular ?? p.telefone ?? "—"
+  return p.Celular ?? p.celular ?? p.telefone ?? "—"
 }
 
 function getInitials(nome: string): string {
@@ -97,8 +107,11 @@ export default function PacientesPage() {
     router.push(`/copiloto?${params.toString()}`)
   }
 
-  // Fields to hide in detail
-  const SKIP = new Set(["id","idContato","nome","nomeCompleto","telefone","celular","email","cidade","dataNascimento","cpf"])
+  // Fields to hide in detail (both PascalCase and camelCase)
+  const SKIP = new Set([
+    "Id","IdContato","Nome","Celular","Email","CPF_CGC","Nascimento","Cidade",
+    "id","idContato","nome","nomeCompleto","telefone","celular","email","cidade","dataNascimento","cpf",
+  ])
 
   return (
     <div className="animate-fade-in">
@@ -172,9 +185,9 @@ export default function PacientesPage() {
                                 <Phone className="w-3 h-3" /> {getPacienteTelefone(p)}
                               </span>
                             )}
-                            {p.cidade && (
+                            {(p.Cidade ?? p.cidade) && (
                               <span className="text-[11px] text-text-muted flex items-center gap-1">
-                                <MapPin className="w-3 h-3" /> {String(p.cidade)}
+                                <MapPin className="w-3 h-3" /> {String(p.Cidade ?? p.cidade)}
                               </span>
                             )}
                           </div>
@@ -243,9 +256,10 @@ export default function PacientesPage() {
                 <div className="p-6 space-y-3 max-h-80 overflow-y-auto">
                   {[
                     { icon: Phone,  label: "Telefone", value: getPacienteTelefone(selected) },
-                    { icon: Mail,   label: "Email",    value: selected.email    ? String(selected.email)    : null },
-                    { icon: MapPin, label: "Cidade",   value: selected.cidade   ? String(selected.cidade)   : null },
-                    { icon: User,   label: "Nasc.",    value: selected.dataNascimento ? String(selected.dataNascimento).slice(0,10) : null },
+                    { icon: Mail,   label: "Email",    value: (selected.Email ?? selected.email)    ? String(selected.Email ?? selected.email)    : null },
+                    { icon: MapPin, label: "Cidade",   value: (selected.Cidade ?? selected.cidade)  ? String(selected.Cidade ?? selected.cidade)  : null },
+                    { icon: User,   label: "CPF",      value: selected.CPF_CGC ? String(selected.CPF_CGC) : null },
+                    { icon: User,   label: "Nasc.",    value: (selected.Nascimento ?? selected.dataNascimento) ? String(selected.Nascimento ?? selected.dataNascimento).slice(0,10) : null },
                   ].filter(r => r.value && r.value !== "—").map(row => (
                     <div key={row.label} className="flex items-center gap-3 text-[12px]">
                       <row.icon className="w-3.5 h-3.5 text-text-muted flex-shrink-0" />

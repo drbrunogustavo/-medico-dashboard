@@ -6,7 +6,7 @@ import {
   Wand2, RefreshCw, Download, Copy, Check,
   ChevronDown, ChevronUp, Sparkles, Edit3,
   Image as ImageIcon, History, AlertCircle,
-  BookOpen, X, Search, Loader2, TrendingUp,
+  BookOpen, X, Search, Loader2, TrendingUp, Layers2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -38,6 +38,12 @@ interface HistoryItem {
   estilo:    string
   audit:     string
   timestamp: string
+}
+
+interface Variacao {
+  url:    string
+  prompt: string
+  label:  string
 }
 
 interface Pauta {
@@ -202,28 +208,34 @@ function FormatoCard({ id, active, onClick }: { id: Formato; active: boolean; on
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function DiretorCriativoPage() {
-  const [formato,       setFormato]       = useState<Formato>("story")
-  const [estilo,        setEstilo]        = useState<EstiloId>("card-premium")
-  const [ideia,         setIdeia]         = useState("")
-  const [modelo,        setModelo]        = useState<Modelo>("gpt-image")
-  const [promptParts,   setPromptParts]   = useState<PromptParts | null>(null)
-  const [editedPrompt,  setEditedPrompt]  = useState("")
-  const [editMode,      setEditMode]      = useState(false)
-  const [imageUrl,      setImageUrl]      = useState<string | null>(null)
-  const [audit,         setAudit]         = useState<string | null>(null)
-  const [history,       setHistory]       = useState<HistoryItem[]>([])
-  const [selectedHist,  setSelectedHist]  = useState<HistoryItem | null>(null)
-  const [loadingPrompt, setLoadingPrompt] = useState(false)
-  const [loadingImage,  setLoadingImage]  = useState(false)
-  const [loadingAudit,  setLoadingAudit]  = useState(false)
-  const [loadingMsg,    setLoadingMsg]    = useState("")
-  const [error,         setError]         = useState<string | null>(null)
-  const [copied,        setCopied]        = useState(false)
-  const [expanded,      setExpanded]      = useState<string[]>([])
-  const [modalOpen,     setModalOpen]     = useState(false)
-  const [pautas,        setPautas]        = useState<Pauta[]>([])
-  const [loadingPautas, setLoadingPautas] = useState(false)
-  const [pautaSearch,   setPautaSearch]   = useState("")
+  const [formato,         setFormato]         = useState<Formato>("story")
+  const [estilo,          setEstilo]          = useState<EstiloId>("card-premium")
+  const [ideia,           setIdeia]           = useState("")
+  const [modelo,          setModelo]          = useState<Modelo>("gpt-image")
+  const [promptParts,     setPromptParts]     = useState<PromptParts | null>(null)
+  const [editedPrompt,    setEditedPrompt]    = useState("")
+  const [editMode,        setEditMode]        = useState(false)
+  const [imageUrl,        setImageUrl]        = useState<string | null>(null)
+  const [audit,           setAudit]           = useState<string | null>(null)
+  const [history,         setHistory]         = useState<HistoryItem[]>([])
+  const [selectedHist,    setSelectedHist]    = useState<HistoryItem | null>(null)
+  const [loadingPrompt,   setLoadingPrompt]   = useState(false)
+  const [loadingImage,    setLoadingImage]    = useState(false)
+  const [loadingAudit,    setLoadingAudit]    = useState(false)
+  const [loadingMsg,      setLoadingMsg]      = useState("")
+  const [error,           setError]           = useState<string | null>(null)
+  const [copied,          setCopied]          = useState(false)
+  const [expanded,        setExpanded]        = useState<string[]>([])
+  const [modalOpen,       setModalOpen]       = useState(false)
+  const [pautas,          setPautas]          = useState<Pauta[]>([])
+  const [loadingPautas,   setLoadingPautas]   = useState(false)
+  const [pautaSearch,     setPautaSearch]     = useState("")
+
+  // Variações state
+  const [variacoes,        setVariacoes]        = useState<Variacao[]>([])
+  const [loadingVariacoes, setLoadingVariacoes] = useState(false)
+  const [variacaoSel,      setVariacaoSel]      = useState<number | null>(null)
+  const [variacaoAudit,    setVariacaoAudit]    = useState<string | null>(null)
 
   // Headlines section
   const [activeSection,    setActiveSection]    = useState<"imagens" | "headlines">("imagens")
@@ -288,6 +300,7 @@ export default function DiretorCriativoPage() {
     if (!ideia.trim()) { setError("Digite o tema da sua arte antes de continuar."); return }
     setError(null); setLoadingPrompt(true); setPromptParts(null)
     setImageUrl(null); setAudit(null); setEditMode(false); setSelectedHist(null)
+    setVariacoes([]); setVariacaoSel(null); setVariacaoAudit(null)
     startMsgs(MSG_PROMPT)
 
     try {
@@ -327,13 +340,12 @@ Generate structured creative direction as JSON with exactly these fields:
         }),
       })
 
-      const data = await res.json()
-      const raw  = (data.content?.[0]?.text ?? "{}").replace(/```json|```/g, "").trim()
-      const idx  = raw.indexOf("{")
+      const data   = await res.json()
+      const raw    = (data.content?.[0]?.text ?? "{}").replace(/```json|```/g, "").trim()
+      const idx    = raw.indexOf("{")
       const parsed = JSON.parse(idx >= 0 ? raw.slice(idx) : raw) as PromptParts
       setPromptParts(parsed)
       setEditedPrompt(parsed.promptFinal)
-      // Open all accordions after generation
       setExpanded([...PART_KEYS])
     } catch (e) {
       setError("Erro ao gerar direção criativa: " + String(e))
@@ -342,12 +354,13 @@ Generate structured creative direction as JSON with exactly these fields:
     }
   }
 
-  // ── Step 2: Send to image generation API ───────────────────────────────────
+  // ── Step 2a: Single image ───────────────────────────────────────────────────
 
   const gerarImagem = async () => {
     const prompt = editMode ? editedPrompt : (promptParts?.promptFinal ?? "")
     if (!prompt) return
     setError(null); setLoadingImage(true); setImageUrl(null); setAudit(null)
+    setVariacoes([]); setVariacaoSel(null); setVariacaoAudit(null)
     startMsgs(MSG_IMAGE, 2500)
 
     try {
@@ -375,6 +388,107 @@ Generate structured creative direction as JSON with exactly these fields:
     } finally {
       stopMsgs(); setLoadingImage(false)
     }
+  }
+
+  // ── Step 2b: Generate 3 variations ─────────────────────────────────────────
+
+  const gerarVariacoes = async () => {
+    const basePrompt = editMode ? editedPrompt : (promptParts?.promptFinal ?? "")
+    if (!basePrompt) return
+    setError(null); setLoadingVariacoes(true)
+    setVariacoes([]); setVariacaoSel(null); setVariacaoAudit(null)
+    setImageUrl(null); setAudit(null)
+
+    const promptVariants = [
+      basePrompt,
+      basePrompt + ", alternative composition, different angle, more minimalist approach",
+      basePrompt + ", bolder typography, stronger contrast, more dramatic lighting",
+    ]
+
+    try {
+      const results = await Promise.all(
+        promptVariants.map(p =>
+          fetch("/api/gerar-imagem", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ prompt: p, formato: FORMATOS[formato].apiRatio, modelo }),
+          }).then(r => r.json())
+        )
+      )
+
+      const geradas: Variacao[] = results
+        .map((data, i) => ({ url: data.image ?? "", prompt: promptVariants[i], label: `Variação ${i + 1}` }))
+        .filter(v => v.url)
+
+      setVariacoes(geradas)
+
+      if (geradas.length >= 2) {
+        gerarAuditoriaVariacoes(promptVariants.slice(0, geradas.length))
+      }
+    } catch (e) {
+      setError("Erro ao gerar variações: " + String(e))
+    } finally {
+      setLoadingVariacoes(false)
+    }
+  }
+
+  const gerarAuditoriaVariacoes = async (prompts: string[]) => {
+    try {
+      const res  = await fetch("/api/roteiros", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6", max_tokens: 120,
+          messages: [{
+            role: "user",
+            content: `You are a creative director comparing ${prompts.length} AI-generated medical image variations.
+Prompt 1 (base): "${prompts[0].slice(0, 150)}"
+Prompt 2 (minimal): "${prompts[1]?.slice(0, 150) ?? ""}"
+Prompt 3 (dramatic): "${prompts[2]?.slice(0, 150) ?? ""}"
+
+In 1-2 sentences in Brazilian Portuguese, recommend which variation is typically best and why. Start with "Recomendamos a Variação X —".`,
+          }],
+        }),
+      })
+      const data = await res.json()
+      setVariacaoAudit(data.content?.[0]?.text ?? null)
+    } catch {
+      /* ignore */
+    }
+  }
+
+  const confirmarVariacao = () => {
+    if (variacaoSel === null || !variacoes[variacaoSel]) return
+    const chosen = variacoes[variacaoSel]
+
+    setImageUrl(chosen.url)
+    setSelectedHist(null)
+
+    const ts = new Date().toLocaleTimeString("pt-BR", { hour:"2-digit", minute:"2-digit" })
+
+    const newItem: HistoryItem = {
+      id: Date.now(), imageUrl: chosen.url, prompt: chosen.prompt,
+      formato: FORMATOS[formato].label, estilo: ESTILOS[estilo].label,
+      audit: "", timestamp: ts,
+    }
+    setHistory(prev => [newItem, ...prev].slice(0, 5))
+    auditarImagem(chosen.prompt, newItem.id)
+
+    // Add non-selected to history too
+    variacoes.forEach((v, i) => {
+      if (i !== variacaoSel) {
+        const histItem: HistoryItem = {
+          id: Date.now() + i + 1, imageUrl: v.url, prompt: v.prompt,
+          formato: FORMATOS[formato].label, estilo: ESTILOS[estilo].label,
+          audit: "", timestamp: ts,
+        }
+        setHistory(prev => [histItem, ...prev].slice(0, 5))
+      }
+    })
+
+    setVariacoes([])
+    setVariacaoSel(null)
+    setVariacaoAudit(null)
   }
 
   // ── Step 3: Visual audit ────────────────────────────────────────────────────
@@ -442,9 +556,9 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
           }],
         }),
       })
-      const data = await res.json()
-      const raw  = (data.content?.[0]?.text ?? "[]").replace(/```json\n?/g, "").replace(/```\n?/g, "").trim()
-      const idx  = raw.indexOf("[")
+      const data   = await res.json()
+      const raw    = (data.content?.[0]?.text ?? "[]").replace(/```json\n?/g, "").replace(/```\n?/g, "").trim()
+      const idx    = raw.indexOf("[")
       const parsed = JSON.parse(idx >= 0 ? raw.slice(idx) : raw) as Headline[]
       setHeadlines(parsed.length > 0 ? parsed : MOCK_HEADLINES)
     } catch (e) {
@@ -457,11 +571,11 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
 
   // ── Utilities ───────────────────────────────────────────────────────────────
 
-  const downloadImage = () => {
-    const url = selectedHist?.imageUrl ?? imageUrl
-    if (!url) return
+  const downloadImage = (url?: string) => {
+    const target = url ?? selectedHist?.imageUrl ?? imageUrl
+    if (!target) return
     const a = document.createElement("a")
-    a.href = url; a.download = `diretor-criativo-${Date.now()}.png`; a.click()
+    a.href = target; a.download = `diretor-criativo-${Date.now()}.png`; a.click()
   }
 
   const copyPrompt = async () => {
@@ -471,9 +585,9 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
     setCopied(true); setTimeout(() => setCopied(false), 2000)
   }
 
-  const displayImage = selectedHist?.imageUrl ?? imageUrl
-  const displayAudit = selectedHist?.audit     ?? audit
-  const anyLoading   = loadingPrompt || loadingImage
+  const displayImage = variacoes.length === 0 ? (selectedHist?.imageUrl ?? imageUrl) : null
+  const displayAudit = selectedHist?.audit ?? audit
+  const anyLoading   = loadingPrompt || loadingImage || loadingVariacoes
 
   return (
     <div className="animate-fade-in">
@@ -484,7 +598,7 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
           anyLoading ? (
             <div className="flex items-center gap-2 text-accent text-[11px] font-mono tracking-wider">
               <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-              {loadingMsg}
+              {loadingMsg || (loadingVariacoes ? "Gerando 3 variações..." : "")}
             </div>
           ) : undefined
         }
@@ -506,7 +620,7 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
       </div>
 
       {/* ══════════════════════════════════════════════════════════════════════
-          SEÇÃO IMAGENS — layout coluna única, fluxo top-to-bottom
+          SEÇÃO IMAGENS
       ══════════════════════════════════════════════════════════════════════ */}
       {activeSection === "imagens" && (
         <div className="p-4 md:p-8 space-y-6">
@@ -583,7 +697,7 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
               </div>
             </div>
 
-            {/* Botão Gerar */}
+            {/* Botão Gerar Direção */}
             <button
               onClick={gerarPrompt}
               disabled={anyLoading || !ideia.trim()}
@@ -603,7 +717,7 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
           )}
 
           {/* Empty state */}
-          {!promptParts && !loadingPrompt && !loadingImage && (
+          {!promptParts && !loadingPrompt && !loadingImage && !loadingVariacoes && (
             <div className="bg-card border border-border rounded-lg p-10 md:p-14 flex flex-col items-center justify-center gap-5">
               <div className="w-16 h-16 rounded-2xl bg-accent-dim border border-accent-border flex items-center justify-center">
                 <Wand2 className="w-8 h-8 text-accent" />
@@ -647,11 +761,11 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
                 </div>
                 <button onClick={gerarPrompt} disabled={anyLoading}
                   className="flex items-center gap-1.5 text-[11px] text-text-muted hover:text-accent transition-colors disabled:opacity-40">
-                  <RefreshCw className="w-3 h-3" /> Regenerar direção
+                  <RefreshCw className="w-3 h-3" /> Regenerar
                 </button>
               </div>
 
-              {/* 7 componentes — acordeão */}
+              {/* 7 componentes */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {PART_KEYS.map(key => (
                   <button key={key}
@@ -713,19 +827,29 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
                 )}
               </div>
 
-              {/* Botão Gerar Imagem */}
-              <button
-                onClick={gerarImagem}
-                disabled={loadingImage}
-                className="w-full flex items-center justify-center gap-2 px-4 py-4 rounded-lg bg-accent text-background text-[14px] font-bold hover:bg-accent/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-accent/20 min-h-[56px]"
-              >
-                {loadingImage ? <RefreshCw className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
-                {loadingImage ? loadingMsg : `Gerar Imagem · ${MODELOS[modelo].label}`}
-              </button>
+              {/* Botões: Gerar Imagem + Gerar 3 Variações */}
+              <div className="flex gap-3">
+                <button
+                  onClick={gerarImagem}
+                  disabled={loadingImage || loadingVariacoes}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-4 rounded-lg bg-accent text-background text-[14px] font-bold hover:bg-accent/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-accent/20 min-h-[56px]"
+                >
+                  {loadingImage ? <RefreshCw className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
+                  {loadingImage ? loadingMsg : `Gerar Imagem · ${MODELOS[modelo].label}`}
+                </button>
+                <button
+                  onClick={gerarVariacoes}
+                  disabled={loadingImage || loadingVariacoes}
+                  className="flex items-center justify-center gap-2 px-5 py-4 rounded-lg border border-border text-text-secondary text-[13px] font-semibold hover:border-accent-border hover:text-accent transition-all disabled:opacity-50 disabled:cursor-not-allowed min-h-[56px] whitespace-nowrap"
+                >
+                  {loadingVariacoes ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Layers2 className="w-4 h-4" />}
+                  {loadingVariacoes ? "Gerando..." : "3 Variações"}
+                </button>
+              </div>
             </div>
           )}
 
-          {/* Loading: gerando imagem */}
+          {/* Loading: gerando imagem única */}
           {loadingImage && (
             <div className="bg-card border border-border rounded-lg p-14 flex flex-col items-center justify-center gap-5">
               <div className="relative">
@@ -741,8 +865,128 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
             </div>
           )}
 
+          {/* Loading: gerando 3 variações (skeletons) */}
+          {loadingVariacoes && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Layers2 className="w-4 h-4 text-accent animate-pulse" />
+                <span className="text-[13px] font-semibold text-text-primary">Gerando 3 variações em paralelo...</span>
+                <span className="text-[10px] font-mono text-text-muted">Via {MODELOS[modelo].label}</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="bg-card border border-border rounded-lg overflow-hidden animate-pulse">
+                    <div className="bg-background/60" style={{ aspectRatio: "3/4" }} />
+                    <div className="p-3 space-y-2">
+                      <div className="h-2 bg-white/[0.06] rounded w-1/3" />
+                      <div className="h-8 bg-white/[0.04] rounded" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── BLOCO 2.5: VARIAÇÕES ───────────────────────────────────────── */}
+          {variacoes.length > 0 && !loadingVariacoes && (
+            <div className="space-y-4">
+
+              {/* AI recommendation */}
+              {variacaoAudit && (
+                <div className="flex items-start gap-3 bg-accent-dim border border-accent-border rounded-lg px-4 py-3">
+                  <Sparkles className="w-3.5 h-3.5 text-accent flex-shrink-0 mt-0.5" />
+                  <p className="text-[12px] text-accent/90 leading-snug">{variacaoAudit}</p>
+                </div>
+              )}
+
+              {/* Header */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-[14px] font-semibold text-text-primary">3 Variações Geradas</h3>
+                  <p className="text-[11px] text-text-muted mt-0.5">Escolha uma para confirmar · As demais vão para o histórico</p>
+                </div>
+                <button onClick={gerarVariacoes} disabled={loadingVariacoes}
+                  className="flex items-center gap-1.5 text-[11px] text-text-muted hover:text-accent transition-colors disabled:opacity-40">
+                  <RefreshCw className="w-3 h-3" /> Regenerar
+                </button>
+              </div>
+
+              {/* 3-card grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {variacoes.map((v, i) => (
+                  <div key={i} className={cn(
+                    "bg-card border rounded-xl overflow-hidden transition-all",
+                    variacaoSel === i
+                      ? "border-accent shadow-lg shadow-accent/10 ring-1 ring-accent/30"
+                      : "border-border"
+                  )}>
+                    {/* Image */}
+                    <div className="relative">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={v.url} alt={v.label} className="w-full object-cover" style={{ aspectRatio: "3/4" }} />
+                      {variacaoSel === i && (
+                        <div className="absolute top-2 right-2">
+                          <span className="text-[8px] font-mono font-bold px-2 py-1 rounded-full bg-accent text-background">
+                            SELECIONADA
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Card footer */}
+                    <div className="p-3 space-y-2">
+                      <div className="flex items-center gap-1.5">
+                        <span className={cn(
+                          "text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full border",
+                          i === 0 ? "bg-accent-dim border-accent-border text-accent"
+                            : i === 1 ? "bg-blue-950/60 border-blue-500/40 text-blue-400"
+                              : "bg-purple-950/60 border-purple-500/40 text-purple-400"
+                        )}>
+                          {v.label}
+                        </span>
+                        {i === 1 && <span className="text-[8px] text-text-muted">+ minimalista</span>}
+                        {i === 2 && <span className="text-[8px] text-text-muted">+ dramática</span>}
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setVariacaoSel(variacaoSel === i ? null : i)}
+                          className={cn(
+                            "flex-1 text-[11px] py-1.5 rounded-lg border transition-all font-semibold",
+                            variacaoSel === i
+                              ? "bg-accent-dim border-accent text-accent"
+                              : "border-border text-text-muted hover:border-accent-border hover:text-accent"
+                          )}
+                        >
+                          {variacaoSel === i ? "✓ Selecionada" : "Escolher Esta"}
+                        </button>
+                        <button
+                          onClick={() => downloadImage(v.url)}
+                          className="px-2.5 py-1.5 rounded-lg border border-border text-text-muted hover:text-text-secondary transition-all"
+                          title="Download"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Confirm selection */}
+              {variacaoSel !== null && (
+                <button
+                  onClick={confirmarVariacao}
+                  className="w-full flex items-center justify-center gap-2 py-3.5 rounded-lg bg-accent text-background text-[14px] font-bold hover:bg-accent/90 transition-all shadow-lg shadow-accent/20"
+                >
+                  <Check className="w-4 h-4" />
+                  Confirmar Seleção — {variacoes[variacaoSel]?.label}
+                </button>
+              )}
+            </div>
+          )}
+
           {/* ── BLOCO 3: IMAGEM GERADA ─────────────────────────────────────── */}
-          {displayImage && !loadingImage && (
+          {displayImage && !loadingImage && !loadingVariacoes && (
             <div className="space-y-4">
               <div className="bg-card border border-border rounded-lg p-4">
                 <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
@@ -766,7 +1010,7 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
                         <RefreshCw className="w-3 h-3" /> Regenerar
                       </button>
                     )}
-                    <button onClick={downloadImage}
+                    <button onClick={() => downloadImage()}
                       className="flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg bg-accent-dim border border-accent-border text-accent hover:bg-accent/20 transition-all font-medium min-h-[36px]">
                       <Download className="w-3 h-3" /> Download
                     </button>
@@ -840,7 +1084,6 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
       {activeSection === "headlines" && (
         <div className="p-4 md:p-8 space-y-5">
 
-          {/* Input */}
           <div className="bg-card border border-border rounded-lg p-5">
             <div className="flex items-center justify-between mb-3">
               <div>
@@ -874,7 +1117,6 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
             </div>
           </div>
 
-          {/* Error */}
           {error && (
             <div className="flex items-start gap-3 bg-red-950/40 border border-red-500/30 rounded-lg p-4">
               <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
@@ -882,7 +1124,6 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
             </div>
           )}
 
-          {/* Filter pills */}
           {headlines.length > 0 && (
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-[9px] font-mono text-text-muted uppercase tracking-wider">Gatilho:</span>
@@ -908,7 +1149,6 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
             </div>
           )}
 
-          {/* Loading */}
           {loadingHeadlines && (
             <div className="flex flex-col items-center justify-center py-20 gap-4">
               <Sparkles className="w-10 h-10 text-accent animate-pulse" />
@@ -919,7 +1159,6 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
             </div>
           )}
 
-          {/* Empty state */}
           {!loadingHeadlines && headlines.length === 0 && (
             <div className="bg-card border border-border rounded-lg py-16 flex flex-col items-center justify-center gap-5">
               <div className="w-14 h-14 rounded-2xl bg-accent-dim border border-accent-border flex items-center justify-center">
@@ -928,7 +1167,7 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
               <div className="text-center max-w-md">
                 <h3 className="text-[14px] font-semibold text-text-primary mb-2">Gerador de Headlines Virais</h3>
                 <p className="text-[12px] text-text-muted leading-relaxed">
-                  Digite um tema médico e receba 100 headlines classificadas por gatilho emocional e score viral. Clique em qualquer headline para usá-la como tema no Diretor Criativo.
+                  Digite um tema médico e receba 100 headlines classificadas por gatilho emocional e score viral.
                 </p>
               </div>
               <div className="flex gap-2 flex-wrap justify-center">
@@ -941,7 +1180,6 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
             </div>
           )}
 
-          {/* Headlines table */}
           {!loadingHeadlines && headlines.length > 0 && (
             <div className="bg-card border border-border rounded-lg overflow-hidden">
               <div className="px-5 py-2 border-b border-border flex items-center gap-4">
@@ -955,8 +1193,7 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
                 {headlines
                   .filter(h => headlineFilter === "Todos" || h.gatilho === headlineFilter)
                   .map((h, idx) => (
-                    <div key={idx}
-                      className="px-5 py-3 flex items-center gap-4 hover:bg-white/[0.02] group transition-colors">
+                    <div key={idx} className="px-5 py-3 flex items-center gap-4 hover:bg-white/[0.02] group transition-colors">
                       <span className="text-[11px] font-mono text-text-muted w-7 flex-shrink-0 tabular-nums">{idx + 1}</span>
                       <span className={cn(
                         "text-[9px] font-mono font-semibold px-2.5 py-1 rounded-full border w-24 text-center flex-shrink-0",
@@ -999,7 +1236,6 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
             className="w-full max-w-lg rounded-xl border flex flex-col"
             style={{ background: "#08090e", borderColor: "#2a1a0a", maxHeight: "80vh" }}
           >
-            {/* Header */}
             <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: "#2a1a0a" }}>
               <div className="flex items-center gap-2">
                 <BookOpen className="w-4 h-4 text-accent" />
@@ -1012,8 +1248,6 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
                 <X className="w-3.5 h-3.5" />
               </button>
             </div>
-
-            {/* Search */}
             <div className="px-5 py-3 border-b" style={{ borderColor: "#2a1a0a" }}>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted" />
@@ -1026,8 +1260,6 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
                 />
               </div>
             </div>
-
-            {/* Body */}
             <div className="flex-1 overflow-y-auto px-3 py-3">
               {loadingPautas ? (
                 <div className="flex items-center justify-center py-12 gap-2 text-text-muted">
@@ -1035,45 +1267,25 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
                   <span className="text-[12px] font-mono">Carregando pautas...</span>
                 </div>
               ) : pautas.length === 0 ? (
-                <div className="text-center py-12 text-text-muted text-[12px]">
-                  Nenhuma pauta encontrada no banco.
-                </div>
+                <div className="text-center py-12 text-text-muted text-[12px]">Nenhuma pauta encontrada no banco.</div>
               ) : (
                 <div className="space-y-1.5">
                   {pautas
-                    .filter(p =>
-                      !pautaSearch ||
-                      p.titulo.toLowerCase().includes(pautaSearch.toLowerCase()) ||
-                      p.categoria.toLowerCase().includes(pautaSearch.toLowerCase())
-                    )
+                    .filter(p => !pautaSearch || p.titulo.toLowerCase().includes(pautaSearch.toLowerCase()) || p.categoria.toLowerCase().includes(pautaSearch.toLowerCase()))
                     .map(pauta => {
                       const estiloSugerido = CATEGORIA_PARA_ESTILO[pauta.categoria] ?? "card-premium"
                       const prioStyle = PRIORIDADE_STYLE[pauta.prioridade] ?? PRIORIDADE_STYLE["Baixa"]
                       return (
-                        <button
-                          key={pauta.id}
-                          onClick={() => selecionarPauta(pauta)}
-                          className="w-full text-left px-4 py-3 rounded-lg border border-transparent hover:border-accent-border hover:bg-accent-dim/30 transition-all group"
-                        >
+                        <button key={pauta.id} onClick={() => selecionarPauta(pauta)}
+                          className="w-full text-left px-4 py-3 rounded-lg border border-transparent hover:border-accent-border hover:bg-accent-dim/30 transition-all group">
                           <div className="flex items-start justify-between gap-3 mb-1.5">
-                            <p className="text-[12px] font-medium text-text-primary leading-snug group-hover:text-accent transition-colors">
-                              {pauta.titulo}
-                            </p>
-                            <span className={cn(
-                              "flex-shrink-0 text-[8px] font-mono font-semibold px-2 py-0.5 rounded-full border",
-                              prioStyle
-                            )}>
-                              {pauta.prioridade}
-                            </span>
+                            <p className="text-[12px] font-medium text-text-primary leading-snug group-hover:text-accent transition-colors">{pauta.titulo}</p>
+                            <span className={cn("flex-shrink-0 text-[8px] font-mono font-semibold px-2 py-0.5 rounded-full border", prioStyle)}>{pauta.prioridade}</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="text-[9px] font-medium px-2 py-0.5 rounded bg-white/[0.04] border border-border text-text-muted">
-                              {pauta.categoria}
-                            </span>
+                            <span className="text-[9px] font-medium px-2 py-0.5 rounded bg-white/[0.04] border border-border text-text-muted">{pauta.categoria}</span>
                             <span className="text-[9px] text-text-muted/60">→</span>
-                            <span className="text-[9px] text-accent/70">
-                              {ESTILOS[estiloSugerido].label}
-                            </span>
+                            <span className="text-[9px] text-accent/70">{ESTILOS[estiloSugerido].label}</span>
                           </div>
                         </button>
                       )
@@ -1081,8 +1293,6 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
                 </div>
               )}
             </div>
-
-            {/* Footer */}
             <div className="px-5 py-3 border-t" style={{ borderColor: "#2a1a0a" }}>
               <p className="text-[9px] font-mono text-text-muted text-center tracking-wider">
                 {pautas.length} PAUTA{pautas.length !== 1 ? "S" : ""} NO BANCO · CLIQUE PARA IMPORTAR

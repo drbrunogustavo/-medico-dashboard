@@ -15,7 +15,6 @@ import { cn } from "@/lib/utils"
 import { useMenu } from "@/components/MobileMenuProvider"
 import { useAuth } from "@/hooks/useAuth"
 import { PraxisLogo } from "@/components/PraxisLogo"
-import { ThemeToggle } from "@/components/ThemeToggle"
 
 // ─── Nav definition ───────────────────────────────────────────────────────────
 
@@ -73,8 +72,7 @@ const NAV_CLINICA: NavGroup[] = [
   {
     category: "Pacientes",
     items: [
-      { label: "Gestão de Pacientes",  href: "/pacientes", icon: Users },
-      { label: "Copiloto de Consulta", href: "/copiloto",  icon: Bot   },
+      { label: "Copiloto de Consulta", href: "/copiloto", icon: Bot },
     ],
   },
   {
@@ -251,7 +249,7 @@ function SidebarContent() {
           </div>
         </div>
 
-        {/* Settings + ThemeToggle + Sign out row */}
+        {/* Settings + Sign out row */}
         <div className="flex items-center gap-1.5 px-4 pb-3">
           <Link
             href="/configuracoes"
@@ -262,7 +260,6 @@ function SidebarContent() {
           >
             <Settings className="w-3.5 h-3.5" />
           </Link>
-          <ThemeToggle size="sm" />
           <div className="flex-1" />
           <button
             onClick={signOut}

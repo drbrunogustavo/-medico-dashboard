@@ -66,10 +66,9 @@
   }
 
   html {
-    color-scheme: dark;
+    color-scheme: light;
     scroll-behavior: smooth;
   }
-  [data-theme="light"] { color-scheme: light; }
 
   body {
     background-color: var(--background);

@@ -81,6 +81,7 @@ export default function NutricaoPacientesPage() {
   const [idMedx,       setIdMedx]       = useState("")
   const [tipoTrilha,   setTipoTrilha]   = useState<"pre_consulta" | "pos_consulta">("pos_consulta")
   const [contexto,     setContexto]     = useState("")
+  const [linkAnamnese, setLinkAnamnese] = useState("")
   const [loading,      setLoading]      = useState(false)
   const [saving,       setSaving]       = useState(false)
   const [error,        setError]        = useState("")
@@ -136,7 +137,7 @@ export default function NutricaoPacientesPage() {
       const res  = await fetch("/api/nutricao-pacientes?action=gerar", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ nomePaciente, idPacienteMedx: idMedx, tipoTrilha, contexto }),
+        body:    JSON.stringify({ nomePaciente, idPacienteMedx: idMedx, tipoTrilha, contexto, linkAnamnese }),
       })
       const data = await res.json()
       if (data.error) throw new Error(data.error)
@@ -279,10 +280,31 @@ export default function NutricaoPacientesPage() {
                 </div>
               </div>
 
+              {/* Link Anamnese — apenas pré-consulta */}
+              {tipoTrilha === "pre_consulta" && (
+                <div>
+                  <div className="text-[9px] font-mono text-text-muted uppercase tracking-widest mb-3 flex items-center gap-2">
+                    <span className="w-4 h-4 rounded-full bg-accent-dim border border-accent-border text-accent text-[8px] flex items-center justify-center font-bold">3</span>
+                    Link de Anamnese <span className="normal-case font-sans">(MedX)</span>
+                  </div>
+                  <input
+                    value={linkAnamnese}
+                    onChange={e => setLinkAnamnese(e.target.value)}
+                    placeholder="Cole o link do MedX para anamnese (ex: https://app.medx.com.br/...)"
+                    className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2.5 text-[12px] text-text-primary placeholder:text-text-muted focus:border-accent/40 outline-none"
+                  />
+                  <div className="text-[10px] text-text-muted mt-1">
+                    Se deixar em branco, será inserido &quot;[link gerado pelo MedX]&quot; como placeholder.
+                  </div>
+                </div>
+              )}
+
               {/* Contexto */}
               <div>
                 <div className="text-[9px] font-mono text-text-muted uppercase tracking-widest mb-3 flex items-center gap-2">
-                  <span className="w-4 h-4 rounded-full bg-accent-dim border border-accent-border text-accent text-[8px] flex items-center justify-center font-bold">3</span>
+                  <span className="w-4 h-4 rounded-full bg-accent-dim border border-accent-border text-accent text-[8px] flex items-center justify-center font-bold">
+                    {tipoTrilha === "pre_consulta" ? "4" : "3"}
+                  </span>
                   Contexto <span className="normal-case font-sans">(opcional)</span>
                 </div>
                 <textarea

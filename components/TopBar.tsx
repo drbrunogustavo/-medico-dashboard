@@ -2,7 +2,6 @@
 
 import { Menu } from "lucide-react"
 import { useMenu } from "@/components/MobileMenuProvider"
-import { ThemeToggle } from "@/components/ThemeToggle"
 
 interface TopBarProps {
   title:     string
@@ -44,11 +43,12 @@ export function TopBar({ title, subtitle, actions }: TopBarProps) {
         )}
       </div>
 
-      {/* Theme toggle + actions */}
-      <div className="flex items-center gap-2 flex-shrink-0">
-        <ThemeToggle />
-        {actions && <>{actions}</>}
-      </div>
+      {/* Actions */}
+      {actions && (
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {actions}
+        </div>
+      )}
     </header>
   )
 }

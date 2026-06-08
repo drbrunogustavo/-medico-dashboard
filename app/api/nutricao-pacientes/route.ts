@@ -5,6 +5,17 @@ import { createSupabaseServerClient } from "@/lib/supabase-server"
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
+const ASSINATURA = `Dr. Bruno Gustavo
+Médico Clínico-Geral
+Pós-graduado em Endocrinologia & Nutrologia
+CRM-MG XXXXX`
+
+const MAPS = {
+  pocas:    "https://maps.google.com/?q=Dr+Bruno+Gustavo+Pocos+de+Caldas+MG",
+  alfenas:  "https://maps.google.com/?q=Dr+Bruno+Gustavo+Alfenas+MG",
+  camboriu: "https://maps.google.com/?q=Dr+Bruno+Gustavo+Balneario+Camboriu+SC",
+}
+
 export async function POST(req: NextRequest) {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
@@ -14,11 +25,12 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json() as {
-      nomePaciente:   string
+      nomePaciente:    string
       idPacienteMedx?: string
-      tipoTrilha:     "pre_consulta" | "pos_consulta"
-      contexto?:      string
-      trilha?:        unknown
+      tipoTrilha:      "pre_consulta" | "pos_consulta"
+      contexto?:       string
+      linkAnamnese?:   string
+      trilha?:         unknown
     }
 
     // ── Salvar trilha no Supabase ────────────────────────────────────────────
@@ -36,52 +48,83 @@ export async function POST(req: NextRequest) {
         })
         .select()
         .single()
-      if (error) throw error
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
       return NextResponse.json(data)
     }
 
     // ── Gerar mensagens com Claude ───────────────────────────────────────────
     const isPre = body.tipoTrilha === "pre_consulta"
+    const linkAnamnese = body.linkAnamnese?.trim() || "[link gerado pelo MedX]"
 
     const trilhaSpec = isPre
       ? `TRILHA PRÉ-CONSULTA para ${body.nomePaciente}:
-- D-1 (dia anterior): mensagem enviando PDF de exames + link anamnese + orientações para bioimpedância
-- D-0 (dia da consulta, manhã): localização do consultório + horário + pedir para chegar 15 minutos antes + orientações bioimpedância`
-      : `TRILHA PÓS-CONSULTA para ${body.nomePaciente}:
-- H+2 (2 horas após consulta): mensagem empática de boas-vindas ao tratamento + link Google Review
-- D+1: reforço empático das 3 orientações principais da consulta
-- D+15: check-in de adesão ao tratamento — como está se sentindo?
-- D-15 (15 dias antes do retorno): lembrete para refazer os exames de controle`
 
-    const contexto = body.contexto ? `\nContexto da consulta: ${body.contexto}` : ""
+D-1 (dia anterior à consulta):
+- Enviar o pedido de exames com assinatura digital: "Em breve você receberá seu pedido de exames com assinatura digital. Por favor, envie os resultados em PDF por este mesmo WhatsApp ou anexe diretamente na plataforma antes da consulta."
+- Link de anamnese pré-consulta: "Preencha sua anamnese antes da consulta: ${linkAnamnese}"
+- Orientações para bioimpedância: hidratação, não praticar exercícios no dia, não fazer refeição pesada nas 4h anteriores, não usar cremes hidratantes.
+
+D-0 (manhã do dia da consulta):
+- Localização do consultório com links do Google Maps:
+  Poços de Caldas: ${MAPS.pocas}
+  Alfenas: ${MAPS.alfenas}
+  Balneário Camboriú: ${MAPS.camboriu}
+- Horário da consulta e pedido para chegar 15 minutos antes
+- Lembrete das orientações de bioimpedância`
+      : `TRILHA PÓS-CONSULTA para ${body.nomePaciente}:
+
+H+2 (2 horas após a consulta):
+- Mensagem empática de boas-vindas ao tratamento
+- Link para avaliação Google Review: peça gentilmente que deixe uma avaliação
+
+D+1 (dia seguinte):
+- Reforço empático das 3 orientações principais da consulta
+- Incentivo à adesão ao tratamento
+
+D+15 (15 dias após a consulta):
+- Check-in de adesão ao tratamento — como está se sentindo?
+- Reforço motivacional
+
+D-15 (15 dias antes do retorno):
+- Lembrete para refazer os exames de controle com antecedência
+- Instruções de preparo se necessário`
+
+    const contexto = body.contexto ? `\nContexto clínico: ${body.contexto}` : ""
 
     const resp = await client.messages.create({
       model:      "claude-sonnet-4-6",
       max_tokens: 3000,
       messages: [{
         role:    "user",
-        content: `Você é o assistente de comunicação clínica do Dr. Bruno Gustavo, endocrinologista e nutrólogo em Poços de Caldas.
+        content: `Você é o assistente de comunicação clínica do Dr. Bruno Gustavo.
 
 Crie as mensagens de WhatsApp para a seguinte trilha:
 
 ${trilhaSpec}${contexto}
 
-Tom: empático, profissional, humano. Use o primeiro nome do paciente. Não seja genérico.
-Médico: Dr. Bruno Gustavo — Endocrinologia, Nutrologia e Longevidade.
+INSTRUÇÕES OBRIGATÓRIAS:
+- Tom: empático, profissional, humano. Use o primeiro nome do paciente.
+- Não seja genérico. Personalize ao máximo.
+- Cada mensagem deve terminar com a seguinte assinatura (exatamente como está):
 
-Retorne JSON: [{"timing": "D-1", "titulo": "Título", "texto": "Mensagem completa de WhatsApp"}]
+${ASSINATURA}
+
+- Para a trilha pré-consulta, inclua os links e instruções exatamente como especificado.
+- Para a trilha pós-consulta D+1, mencione orientações gerais de Endocrinologia/Nutrologia.
+
+Retorne JSON: [{"timing": "D-1", "titulo": "Título curto", "texto": "Mensagem completa de WhatsApp com a assinatura ao final"}]
 Retorne APENAS o JSON array, sem markdown.`,
       }],
     })
 
     const raw  = (resp.content.find(b => b.type === "text") as { text: string } | undefined)?.text ?? "[]"
-    const clean= raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim()
-    const idx  = clean.indexOf("[")
-    const msgs = JSON.parse(idx >= 0 ? clean.slice(idx) : clean)
+    const clean = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim()
+    const idx   = clean.indexOf("[")
+    const msgs  = JSON.parse(idx >= 0 ? clean.slice(idx) : clean)
     return NextResponse.json({ mensagens: msgs })
   } catch (e) {
     console.error("[api/nutricao-pacientes]", e)
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 500 })
   }
 }
 
@@ -96,9 +139,9 @@ export async function GET(req: NextRequest) {
       .select("*")
       .eq("user_id", auth.userId)
       .order("criado_em", { ascending: false })
-    if (error) throw error
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     return NextResponse.json(data ?? [])
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 500 })
   }
 }

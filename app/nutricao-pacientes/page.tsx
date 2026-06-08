@@ -6,19 +6,29 @@ import { cn } from "@/lib/utils"
 import {
   Apple, Search, MessageSquare, Plus, Copy,
   Check, Loader2, ChevronDown, Bookmark, X,
+  Clock, Send,
 } from "lucide-react"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-interface Mensagem  { timing: string; titulo: string; texto: string }
-interface Trilha    {
-  id?:              string
-  nome_paciente:    string
+interface PacienteResult {
+  Id?:           string | number
+  id?:           string | number
+  Nome?:         string
+  nome?:         string
+  nomeCompleto?: string
+  [key: string]: unknown
+}
+
+interface Mensagem { timing: string; titulo: string; texto: string }
+interface Trilha {
+  id?:               string
+  nome_paciente:     string
   id_paciente_medx?: string
-  tipo_trilha:      "pre_consulta" | "pos_consulta"
-  mensagens:        Mensagem[]
-  status:           string
-  criado_em?:       string
+  tipo_trilha:       "pre_consulta" | "pos_consulta"
+  mensagens:         Mensagem[]
+  status:            string
+  criado_em?:        string
 }
 
 const TIPO_LABELS = {
@@ -26,10 +36,23 @@ const TIPO_LABELS = {
   pos_consulta: "Pós-Consulta",
 }
 
+const TIPO_DESC = {
+  pre_consulta: "D-1 (antevéspera) + D-0 (manhã da consulta)",
+  pos_consulta: "H+2 · D+1 · D+15 · D-15 (antes do retorno)",
+}
+
 const STATUS_COLOR: Record<string, string> = {
-  ativa:    "bg-accent-dim     text-accent  border-accent-border",
-  pausada:  "bg-amber-500/10   text-amber-400  border-amber-500/25",
-  concluida:"bg-blue-500/10    text-blue-400   border-blue-500/25",
+  ativa:     "bg-accent-dim   text-accent    border-accent-border",
+  pausada:   "bg-amber-500/10 text-amber-400 border-amber-500/25",
+  concluida: "bg-blue-500/10  text-blue-400  border-blue-500/25",
+}
+
+function getPacNome(p: PacienteResult): string {
+  return p.Nome ?? p.nome ?? p.nomeCompleto ?? ""
+}
+
+function getPacId(p: PacienteResult): string {
+  return String(p.Id ?? p.id ?? "")
 }
 
 // ── Copy button ───────────────────────────────────────────────────────────────
@@ -40,6 +63,7 @@ function CopyBtn({ text }: { text: string }) {
     <button
       onClick={() => { navigator.clipboard.writeText(text); setDone(true); setTimeout(() => setDone(false), 2000) }}
       className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors"
+      title="Copiar mensagem"
     >
       {done ? <Check className="w-3.5 h-3.5 text-accent" /> : <Copy className="w-3.5 h-3.5" />}
     </button>
@@ -53,26 +77,25 @@ export default function NutricaoPacientesPage() {
   const [loadingList,   setLoadingList]   = useState(true)
 
   // Form
-  const [nomePaciente,   setNomePaciente]   = useState("")
-  const [idMedx,         setIdMedx]         = useState("")
-  const [tipoTrilha,     setTipoTrilha]     = useState<"pre_consulta" | "pos_consulta">("pos_consulta")
-  const [contexto,       setContexto]       = useState("")
-  const [loading,        setLoading]        = useState(false)
-  const [saving,         setSaving]         = useState(false)
-  const [error,          setError]          = useState("")
-  const [gerado,         setGerado]         = useState<Mensagem[] | null>(null)
-  const [formOpen,       setFormOpen]       = useState(true)
-  const [viewTrilha,     setViewTrilha]     = useState<Trilha | null>(null)
-  const [savedOk,        setSavedOk]        = useState(false)
+  const [nomePaciente, setNomePaciente] = useState("")
+  const [idMedx,       setIdMedx]       = useState("")
+  const [tipoTrilha,   setTipoTrilha]   = useState<"pre_consulta" | "pos_consulta">("pos_consulta")
+  const [contexto,     setContexto]     = useState("")
+  const [loading,      setLoading]      = useState(false)
+  const [saving,       setSaving]       = useState(false)
+  const [error,        setError]        = useState("")
+  const [gerado,       setGerado]       = useState<Mensagem[] | null>(null)
+  const [formOpen,     setFormOpen]     = useState(true)
+  const [viewTrilha,   setViewTrilha]   = useState<Trilha | null>(null)
+  const [savedOk,      setSavedOk]      = useState(false)
+  const [enviadas,     setEnviadas]     = useState<Set<number>>(new Set())
 
   // Patient search
-  const [searchQ,        setSearchQ]        = useState("")
-  const [searchResults,  setSearchResults]  = useState<{id?: string|number; nome?: string; nomeCompleto?: string}[]>([])
-  const [searchLoading,  setSearchLoading]  = useState(false)
+  const [searchQ,       setSearchQ]       = useState("")
+  const [searchResults, setSearchResults] = useState<PacienteResult[]>([])
+  const [searchLoading, setSearchLoading] = useState(false)
 
-  useEffect(() => {
-    fetchList()
-  }, [])
+  useEffect(() => { fetchList() }, [])
 
   const fetchList = async () => {
     setLoadingList(true)
@@ -96,9 +119,9 @@ export default function NutricaoPacientesPage() {
     finally { setSearchLoading(false) }
   }
 
-  const selecionarPaciente = (p: {id?: string|number; nome?: string; nomeCompleto?: string}) => {
-    setNomePaciente(p.nome ?? p.nomeCompleto ?? "")
-    setIdMedx(String(p.id ?? ""))
+  const selecionarPaciente = (p: PacienteResult) => {
+    setNomePaciente(getPacNome(p))
+    setIdMedx(getPacId(p))
     setSearchQ("")
     setSearchResults([])
   }
@@ -108,6 +131,7 @@ export default function NutricaoPacientesPage() {
     setLoading(true)
     setError("")
     setGerado(null)
+    setEnviadas(new Set())
     try {
       const res  = await fetch("/api/nutricao-pacientes?action=gerar", {
         method:  "POST",
@@ -138,6 +162,15 @@ export default function NutricaoPacientesPage() {
     finally { setSaving(false) }
   }
 
+  const toggleEnviada = (i: number) => {
+    setEnviadas(prev => {
+      const next = new Set(prev)
+      if (next.has(i)) next.delete(i)
+      else next.add(i)
+      return next
+    })
+  }
+
   return (
     <div className="animate-fade-in">
       <TopBar title="Nutrição de Pacientes" subtitle="ALA CLÍNICA · TRILHAS DE MENSAGENS" />
@@ -150,7 +183,7 @@ export default function NutricaoPacientesPage() {
           </div>
         )}
 
-        {/* Formulário */}
+        {/* Formulário (accordion) */}
         <div className="bg-surface border border-border rounded-xl overflow-hidden">
           <button
             onClick={() => setFormOpen(o => !o)}
@@ -164,83 +197,94 @@ export default function NutricaoPacientesPage() {
           </button>
 
           {formOpen && (
-            <div className="px-5 pb-5 space-y-4 border-t border-border pt-4">
+            <div className="px-5 pb-5 space-y-5 border-t border-border pt-4">
 
-              {/* Busca de paciente */}
-              <div className="relative">
-                <label className="text-[10px] font-mono text-text-muted uppercase tracking-widest block mb-1.5">Paciente</label>
+              {/* Step 1: Busca de paciente */}
+              <div>
+                <div className="text-[9px] font-mono text-text-muted uppercase tracking-widest mb-3 flex items-center gap-2">
+                  <span className="w-4 h-4 rounded-full bg-accent-dim border border-accent-border text-accent text-[8px] flex items-center justify-center font-bold">1</span>
+                  Paciente
+                </div>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted pointer-events-none" />
-                  {searchLoading && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted animate-spin" />}
-                  <input
-                    value={nomePaciente || searchQ}
-                    onChange={e => {
-                      setNomePaciente(e.target.value)
-                      buscarPaciente(e.target.value)
-                    }}
-                    placeholder="Nome ou busca MedX..."
-                    className="w-full bg-surface-2 border border-border rounded-lg pl-9 pr-9 py-2.5 text-[12px] text-text-primary placeholder:text-text-muted focus:border-accent/40 outline-none"
-                  />
-                  {nomePaciente && (
-                    <button
-                      onClick={() => { setNomePaciente(""); setIdMedx(""); setSearchResults([]) }}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted pointer-events-none" />
+                    {searchLoading && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted animate-spin" />}
+                    <input
+                      value={nomePaciente || searchQ}
+                      onChange={e => {
+                        setNomePaciente(e.target.value)
+                        buscarPaciente(e.target.value)
+                      }}
+                      placeholder="Nome ou busca MedX..."
+                      className="w-full bg-surface-2 border border-border rounded-lg pl-9 pr-9 py-2.5 text-[12px] text-text-primary placeholder:text-text-muted focus:border-accent/40 outline-none"
+                    />
+                    {nomePaciente && (
+                      <button
+                        onClick={() => { setNomePaciente(""); setIdMedx(""); setSearchResults([]) }}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                  {searchResults.length > 0 && (
+                    <div className="absolute top-full left-0 right-0 z-20 bg-surface border border-border rounded-xl mt-1 shadow-xl overflow-hidden">
+                      {searchResults.map((p, i) => (
+                        <button
+                          key={i}
+                          onClick={() => selecionarPaciente(p)}
+                          className="w-full text-left px-4 py-2.5 text-[12px] text-text-secondary hover:bg-surface-2 transition-colors border-b border-border last:border-b-0"
+                        >
+                          <span className="font-medium">{getPacNome(p)}</span>
+                          {getPacId(p) && <span className="ml-2 text-[10px] text-text-muted font-mono">#{getPacId(p)}</span>}
+                        </button>
+                      ))}
+                    </div>
                   )}
                 </div>
-                {searchResults.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 z-20 bg-surface border border-border rounded-xl mt-1 shadow-xl overflow-hidden">
-                    {searchResults.map((p, i) => (
-                      <button
-                        key={i}
-                        onClick={() => selecionarPaciente(p)}
-                        className="w-full text-left px-4 py-2.5 text-[12px] text-text-secondary hover:bg-surface-2 transition-colors border-b border-border last:border-b-0"
-                      >
-                        {p.nome ?? p.nomeCompleto}
-                        {p.id && <span className="ml-2 text-[10px] text-text-muted">ID: {p.id}</span>}
-                      </button>
-                    ))}
+                {idMedx && (
+                  <div className="text-[10px] text-text-muted mt-1.5">
+                    ID MedX: <span className="text-accent font-mono">{idMedx}</span>
                   </div>
                 )}
               </div>
 
-              {idMedx && (
-                <div className="text-[10px] text-text-muted">ID MedX: <span className="text-accent font-mono">{idMedx}</span></div>
-              )}
-
-              {/* Tipo de trilha */}
+              {/* Step 2: Tipo de trilha */}
               <div>
-                <label className="text-[10px] font-mono text-text-muted uppercase tracking-widest block mb-1.5">Tipo de Trilha</label>
-                <div className="flex gap-2">
+                <div className="text-[9px] font-mono text-text-muted uppercase tracking-widest mb-3 flex items-center gap-2">
+                  <span className="w-4 h-4 rounded-full bg-accent-dim border border-accent-border text-accent text-[8px] flex items-center justify-center font-bold">2</span>
+                  Trilha
+                </div>
+                <div className="grid grid-cols-2 gap-3">
                   {(["pre_consulta", "pos_consulta"] as const).map(t => (
                     <button
                       key={t}
                       onClick={() => setTipoTrilha(t)}
                       className={cn(
-                        "flex-1 py-2 rounded-lg text-[11px] font-medium border transition-all",
+                        "p-4 rounded-xl border text-left transition-all",
                         tipoTrilha === t
-                          ? "bg-accent-dim border-accent-border text-accent"
-                          : "border-border text-text-muted hover:border-border-hover"
+                          ? "bg-accent-dim border-accent-border"
+                          : "border-border hover:border-border-hover"
                       )}
                     >
-                      {TIPO_LABELS[t]}
+                      <div className={cn(
+                        "text-[12px] font-semibold mb-1",
+                        tipoTrilha === t ? "text-accent" : "text-text-primary"
+                      )}>
+                        {TIPO_LABELS[t]}
+                      </div>
+                      <div className="text-[10px] text-text-muted leading-relaxed">{TIPO_DESC[t]}</div>
                     </button>
                   ))}
-                </div>
-                <div className="mt-2 text-[10px] text-text-muted px-1">
-                  {tipoTrilha === "pre_consulta"
-                    ? "D-1 (antevéspera) · D-0 (manhã da consulta)"
-                    : "H+2 · D+1 · D+15 · D-15 (antes do retorno)"}
                 </div>
               </div>
 
               {/* Contexto */}
               <div>
-                <label className="text-[10px] font-mono text-text-muted uppercase tracking-widest block mb-1.5">
-                  Contexto da Consulta <span className="normal-case">(opcional)</span>
-                </label>
+                <div className="text-[9px] font-mono text-text-muted uppercase tracking-widest mb-3 flex items-center gap-2">
+                  <span className="w-4 h-4 rounded-full bg-accent-dim border border-accent-border text-accent text-[8px] flex items-center justify-center font-bold">3</span>
+                  Contexto <span className="normal-case font-sans">(opcional)</span>
+                </div>
                 <textarea
                   value={contexto}
                   onChange={e => setContexto(e.target.value)}
@@ -283,53 +327,98 @@ export default function NutricaoPacientesPage() {
               </button>
             </div>
             {gerado.map((m, i) => (
-              <div key={i} className="bg-surface border border-border rounded-xl p-4">
+              <div
+                key={i}
+                className={cn(
+                  "bg-surface border rounded-xl p-4 transition-all",
+                  enviadas.has(i)
+                    ? "border-accent-border/40 opacity-70"
+                    : "border-border"
+                )}
+              >
                 <div className="flex items-center justify-between mb-2">
-                  <div>
+                  <div className="flex items-center gap-2">
                     <span className="text-[10px] font-mono font-semibold text-accent px-2 py-0.5 rounded-full bg-accent-dim border border-accent-border">
                       {m.timing}
                     </span>
-                    <span className="ml-2 text-[12px] font-medium text-text-primary">{m.titulo}</span>
+                    <span className="text-[12px] font-medium text-text-primary">{m.titulo}</span>
+                    {enviadas.has(i) && (
+                      <span className="text-[9px] font-mono text-accent bg-accent-dim px-1.5 py-0.5 rounded-full border border-accent-border flex items-center gap-1">
+                        <Check className="w-2.5 h-2.5" /> Enviada
+                      </span>
+                    )}
                   </div>
-                  <CopyBtn text={m.texto} />
+                  <div className="flex items-center gap-1">
+                    <CopyBtn text={m.texto} />
+                    <button
+                      onClick={() => toggleEnviada(i)}
+                      title={enviadas.has(i) ? "Desmarcar" : "Marcar como enviada"}
+                      className={cn(
+                        "p-1.5 rounded-lg transition-colors",
+                        enviadas.has(i)
+                          ? "text-accent bg-accent-dim"
+                          : "text-text-muted hover:text-accent hover:bg-accent-dim"
+                      )}
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
                 <p className="text-[12px] text-text-secondary leading-relaxed whitespace-pre-wrap">{m.texto}</p>
               </div>
             ))}
+            <div className="text-[10px] text-text-muted text-center pt-1">
+              {enviadas.size}/{gerado.length} mensagens marcadas como enviadas
+            </div>
           </div>
         )}
 
         {/* Saved trilhas */}
         {loadingList ? (
           <div className="space-y-2">
-            {[1,2].map(i => <div key={i} className="h-16 bg-surface border border-border rounded-xl animate-pulse" />)}
+            {[1, 2].map(i => <div key={i} className="h-16 bg-surface border border-border rounded-xl animate-pulse" />)}
           </div>
         ) : trilhasSalvas.length > 0 && (
           <div>
             <div className="text-[10px] font-mono text-text-muted uppercase tracking-widest mb-3">Trilhas Ativas</div>
+
+            {/* Table header */}
+            <div className="hidden md:grid grid-cols-4 px-4 pb-2 text-[9px] font-mono text-text-muted uppercase tracking-widest">
+              <span>Paciente</span>
+              <span>Trilha</span>
+              <span>Próxima mensagem</span>
+              <span>Status</span>
+            </div>
+
             <div className="space-y-2">
-              {trilhasSalvas.map((t, i) => (
-                <button
-                  key={t.id ?? i}
-                  onClick={() => setViewTrilha(t)}
-                  className="w-full bg-surface border border-border hover:border-border-hover rounded-xl px-4 py-3.5 flex items-center gap-3 text-left transition-colors group"
-                >
-                  <div className="w-8 h-8 rounded-full bg-apple-500/10 flex items-center justify-center flex-shrink-0"
-                    style={{ background: "rgba(0,192,127,0.08)", border: "1px solid rgba(0,192,127,0.2)" }}>
-                    <Apple className="w-3.5 h-3.5 text-accent" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[13px] font-medium text-text-primary truncate">{t.nome_paciente}</div>
-                    <div className="text-[10px] text-text-muted mt-0.5">
-                      {TIPO_LABELS[t.tipo_trilha]}
-                      {t.criado_em && ` · ${t.criado_em.slice(0,10).split("-").reverse().join("/")}`}
+              {trilhasSalvas.map((t, i) => {
+                const msgs = Array.isArray(t.mensagens) ? t.mensagens : []
+                const proxima = msgs[0]?.timing ?? "—"
+                return (
+                  <button
+                    key={t.id ?? i}
+                    onClick={() => setViewTrilha(t)}
+                    className="w-full bg-surface border border-border hover:border-border-hover rounded-xl px-4 py-3.5 flex items-center gap-3 text-left transition-colors group"
+                  >
+                    <div
+                      className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+                      style={{ background: "rgba(0,192,127,0.08)", border: "1px solid rgba(0,192,127,0.2)" }}
+                    >
+                      <Apple className="w-3.5 h-3.5 text-accent" />
                     </div>
-                  </div>
-                  <span className={cn("text-[9px] font-mono px-2 py-0.5 rounded-full border flex-shrink-0", STATUS_COLOR[t.status] ?? STATUS_COLOR.ativa)}>
-                    {t.status}
-                  </span>
-                </button>
-              ))}
+                    <div className="flex-1 min-w-0 grid md:grid-cols-4 gap-1 md:gap-0 items-center">
+                      <div className="text-[13px] font-medium text-text-primary truncate">{t.nome_paciente}</div>
+                      <div className="text-[10px] text-text-muted">{TIPO_LABELS[t.tipo_trilha]}</div>
+                      <div className="text-[10px] text-text-muted flex items-center gap-1">
+                        <Clock className="w-3 h-3" /> {proxima}
+                      </div>
+                      <span className={cn("text-[9px] font-mono px-2 py-0.5 rounded-full border w-fit", STATUS_COLOR[t.status] ?? STATUS_COLOR.ativa)}>
+                        {t.status}
+                      </span>
+                    </div>
+                  </button>
+                )
+              })}
             </div>
           </div>
         )}
@@ -363,6 +452,7 @@ export default function NutricaoPacientesPage() {
                     </span>
                     <CopyBtn text={m.texto} />
                   </div>
+                  <div className="text-[11px] font-medium text-text-primary mb-1">{m.titulo}</div>
                   <p className="text-[11px] text-text-secondary leading-relaxed whitespace-pre-wrap">{m.texto}</p>
                 </div>
               ))}

@@ -6,7 +6,7 @@ import { StatCard } from "@/components/StatCard"
 import { cn } from "@/lib/utils"
 import {
   TrendingUp, TrendingDown, DollarSign, PlusCircle,
-  Trash2, Filter, X, Loader2, ChevronDown,
+  Trash2, Filter, X, Loader2,
 } from "lucide-react"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -24,14 +24,19 @@ interface Lancamento {
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
-const UNIDADES = [
-  "Todas",
-  "Poços de Caldas",
-  "Alfenas",
-  "São Paulo",
-  "Balneário Camboriú",
-  "Itapema",
-]
+const GRUPOS = {
+  consolidado: ["Poços de Caldas", "Alfenas", "São Paulo", "Balneário Camboriú", "Itapema"],
+  g1:          ["Poços de Caldas", "Alfenas", "São Paulo"],
+  g2:          ["Balneário Camboriú", "Itapema"],
+} as const
+
+type Grupo = keyof typeof GRUPOS
+
+const GRUPO_LABELS: Record<Grupo, string> = {
+  consolidado: "Consolidado",
+  g1:          "Grupo 1",
+  g2:          "Grupo 2",
+}
 
 const FORMAS = ["Dinheiro", "PIX", "Cartão de Débito", "Cartão de Crédito", "Transferência", "Convênio"]
 
@@ -46,17 +51,17 @@ function fmtDate(s: string) {
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function FinanceiroPage() {
-  const today = new Date().toISOString().slice(0, 10)
+  const today    = new Date().toISOString().slice(0, 10)
   const firstDay = today.slice(0, 7) + "-01"
 
-  const [unidade,  setUnidade]  = useState("Todas")
-  const [inicio,   setInicio]   = useState(firstDay)
-  const [fim,      setFim]      = useState(today)
-  const [data,     setData]     = useState<Lancamento[]>([])
-  const [loading,  setLoading]  = useState(false)
-  const [error,    setError]    = useState("")
+  const [grupo,   setGrupo]   = useState<Grupo>("consolidado")
+  const [unidade, setUnidade] = useState("Todas")
+  const [inicio,  setInicio]  = useState(firstDay)
+  const [fim,     setFim]     = useState(today)
+  const [rawData, setRawData] = useState<Lancamento[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error,   setError]   = useState("")
 
-  // New lancamento form
   const [formOpen, setFormOpen] = useState(false)
   const [saving,   setSaving]   = useState(false)
   const [form,     setForm]     = useState({
@@ -69,42 +74,54 @@ export default function FinanceiroPage() {
     data:            today,
   })
 
+  const unidadesGrupo = GRUPOS[grupo] as readonly string[]
+
+  const switchGrupo = (g: Grupo) => {
+    setGrupo(g)
+    setUnidade("Todas")
+  }
+
   const fetchData = useCallback(async () => {
     setLoading(true)
     setError("")
     try {
       const params = new URLSearchParams()
-      if (unidade !== "Todas") params.set("unidade", unidade)
       params.set("inicio", inicio)
       params.set("fim",    fim)
-      const res = await fetch(`/api/financeiro?${params}`)
+      const res  = await fetch(`/api/financeiro?${params}`)
       const json = await res.json()
       if (json.error) throw new Error(json.error)
-      setData(Array.isArray(json) ? json : [])
+      setRawData(Array.isArray(json) ? json : [])
     } catch (e) {
-      setError(String(e))
+      setError(e instanceof Error ? e.message : String(e))
     } finally {
       setLoading(false)
     }
-  }, [unidade, inicio, fim])
+  }, [inicio, fim])
 
   useEffect(() => { fetchData() }, [fetchData])
+
+  // Client-side filter: group → unidade
+  const data = rawData
+    .filter(l => (unidadesGrupo as string[]).includes(l.unidade))
+    .filter(l => unidade === "Todas" || l.unidade === unidade)
 
   const salvar = async () => {
     if (!form.descricao || !form.valor) return
     setSaving(true)
     try {
-      const res = await fetch("/api/financeiro", {
+      const res  = await fetch("/api/financeiro", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({ ...form, valor: parseFloat(form.valor) }),
       })
-      if (!res.ok) throw new Error(await res.text())
+      const json = await res.json()
+      if (json.error) throw new Error(json.error)
       setFormOpen(false)
       setForm(f => ({ ...f, descricao: "", valor: "", observacao: "" }))
       fetchData()
     } catch (e) {
-      setError(String(e))
+      setError(e instanceof Error ? e.message : String(e))
     } finally {
       setSaving(false)
     }
@@ -113,21 +130,21 @@ export default function FinanceiroPage() {
   const excluir = async (id: string) => {
     if (!confirm("Excluir este lançamento?")) return
     try {
-      await fetch(`/api/financeiro?id=${id}`, { method: "DELETE" })
+      const res  = await fetch(`/api/financeiro?id=${id}`, { method: "DELETE" })
+      const json = await res.json()
+      if (json.error) throw new Error(json.error)
       fetchData()
     } catch (e) {
-      setError(String(e))
+      setError(e instanceof Error ? e.message : String(e))
     }
   }
 
-  // Summary
-  const receitas  = data.filter(l => l.tipo === "receita").reduce((s, l) => s + l.valor, 0)
-  const despesas  = data.filter(l => l.tipo === "despesa").reduce((s, l) => s + l.valor, 0)
-  const saldo     = receitas - despesas
+  const receitas = data.filter(l => l.tipo === "receita").reduce((s, l) => s + l.valor, 0)
+  const despesas = data.filter(l => l.tipo === "despesa").reduce((s, l) => s + l.valor, 0)
+  const saldo    = receitas - despesas
 
-  // Group by unidade for bar chart
-  const porUnidade = UNIDADES.filter(u => u !== "Todas").map(u => {
-    const rec = data.filter(l => l.unidade === u && l.tipo === "receita").reduce((s, l) => s + l.valor, 0)
+  const porUnidade = unidadesGrupo.map(u => {
+    const rec  = data.filter(l => l.unidade === u && l.tipo === "receita").reduce((s, l) => s + l.valor, 0)
     const desp = data.filter(l => l.unidade === u && l.tipo === "despesa").reduce((s, l) => s + l.valor, 0)
     return { unidade: u, rec, desp }
   }).filter(u => u.rec > 0 || u.desp > 0)
@@ -154,24 +171,52 @@ export default function FinanceiroPage() {
 
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          <StatCard label="Receitas"  value={fmt(receitas)}  sub="no período" icon={TrendingUp}   accent="green" />
-          <StatCard label="Despesas"  value={fmt(despesas)}  sub="no período" icon={TrendingDown}  accent="red"   />
-          <StatCard label="Saldo"     value={fmt(saldo)}     sub="líquido"    icon={DollarSign}    accent={saldo >= 0 ? "green" : "red"} />
+          <StatCard label="Receitas" value={fmt(receitas)} sub="no período" icon={TrendingUp}  accent="green" />
+          <StatCard label="Despesas" value={fmt(despesas)} sub="no período" icon={TrendingDown} accent="red"   />
+          <StatCard label="Saldo"    value={fmt(saldo)}    sub="líquido"   icon={DollarSign}   accent={saldo >= 0 ? "green" : "red"} />
         </div>
 
-        {/* Filters */}
+        {/* Group toggle + unit pills + date range */}
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-1.5">
-            <Filter className="w-3.5 h-3.5 text-text-muted" />
-            <select
-              value={unidade}
-              onChange={e => setUnidade(e.target.value)}
-              className="bg-surface border border-border rounded-lg px-3 py-1.5 text-[12px] text-text-primary outline-none focus:border-accent/40 transition-colors"
-            >
-              {UNIDADES.map(u => <option key={u}>{u}</option>)}
-            </select>
+          {/* Group toggle */}
+          <div className="flex gap-1 bg-surface border border-border rounded-xl p-1">
+            {(Object.keys(GRUPOS) as Grupo[]).map(g => (
+              <button
+                key={g}
+                onClick={() => switchGrupo(g)}
+                className={cn(
+                  "px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all",
+                  grupo === g
+                    ? "bg-accent-dim border border-accent-border text-accent"
+                    : "text-text-muted hover:text-text-secondary"
+                )}
+              >
+                {GRUPO_LABELS[g]}
+              </button>
+            ))}
           </div>
-          <div className="flex items-center gap-2">
+
+          {/* Unit pills */}
+          <div className="flex items-center gap-1 flex-wrap">
+            <Filter className="w-3.5 h-3.5 text-text-muted flex-shrink-0" />
+            {["Todas", ...unidadesGrupo].map(u => (
+              <button
+                key={u}
+                onClick={() => setUnidade(u)}
+                className={cn(
+                  "text-[10px] px-2.5 py-1 rounded-full border transition-all",
+                  unidade === u
+                    ? "bg-accent-dim border-accent-border text-accent font-medium"
+                    : "border-border text-text-muted hover:text-text-secondary"
+                )}
+              >
+                {u}
+              </button>
+            ))}
+          </div>
+
+          {/* Date range */}
+          <div className="flex items-center gap-2 ml-auto">
             <input
               type="date"
               value={inicio}
@@ -192,10 +237,12 @@ export default function FinanceiroPage() {
           <div className="bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl px-4 py-3 text-[12px]">{error}</div>
         )}
 
-        {/* Mini bar chart por unidade */}
+        {/* Bar chart por unidade */}
         {porUnidade.length > 0 && (
           <div className="bg-surface border border-border rounded-xl p-5">
-            <div className="text-[10px] font-mono text-text-muted uppercase tracking-widest mb-4">Por Unidade</div>
+            <div className="text-[10px] font-mono text-text-muted uppercase tracking-widest mb-4">
+              Por Unidade — {GRUPO_LABELS[grupo]}
+            </div>
             <div className="space-y-4">
               {porUnidade.map(u => (
                 <div key={u.unidade}>
@@ -206,14 +253,8 @@ export default function FinanceiroPage() {
                     </span>
                   </div>
                   <div className="flex gap-1 h-2">
-                    <div
-                      className="bg-accent rounded-full transition-all"
-                      style={{ width: `${(u.rec / maxVal) * 100}%` }}
-                    />
-                    <div
-                      className="bg-red-400/60 rounded-full transition-all"
-                      style={{ width: `${(u.desp / maxVal) * 100}%` }}
-                    />
+                    <div className="bg-accent rounded-full transition-all" style={{ width: `${(u.rec / maxVal) * 100}%` }} />
+                    <div className="bg-red-400/60 rounded-full transition-all" style={{ width: `${(u.desp / maxVal) * 100}%` }} />
                   </div>
                 </div>
               ))}
@@ -244,7 +285,7 @@ export default function FinanceiroPage() {
                   onChange={e => setForm(f => ({ ...f, unidade: e.target.value }))}
                   className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2 text-[12px] text-text-primary outline-none focus:border-accent/40"
                 >
-                  {UNIDADES.filter(u => u !== "Todas").map(u => <option key={u}>{u}</option>)}
+                  {GRUPOS.consolidado.map(u => <option key={u}>{u}</option>)}
                 </select>
               </div>
               <div>
@@ -334,6 +375,7 @@ export default function FinanceiroPage() {
           <div className="px-5 py-3 border-b border-border flex items-center justify-between">
             <span className="text-[10px] font-mono text-text-muted uppercase tracking-widest">
               {data.length} lançamento{data.length !== 1 ? "s" : ""}
+              {unidade !== "Todas" && ` · ${unidade}`}
             </span>
             {loading && <Loader2 className="w-3.5 h-3.5 text-text-muted animate-spin" />}
           </div>

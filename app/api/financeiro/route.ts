@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
 
+function errMsg(e: unknown): string {
+  if (e instanceof Error) return e.message
+  if (e && typeof e === "object" && "message" in e) return String((e as { message: unknown }).message)
+  return String(e)
+}
+
 export async function GET(req: NextRequest) {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
@@ -23,10 +29,10 @@ export async function GET(req: NextRequest) {
     if (fim)     query = query.lte("data", fim)
 
     const { data, error } = await query
-    if (error) throw error
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     return NextResponse.json(data ?? [])
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    return NextResponse.json({ error: errMsg(e) }, { status: 500 })
   }
 }
 
@@ -43,10 +49,10 @@ export async function POST(req: NextRequest) {
       .select()
       .single()
 
-    if (error) throw error
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     return NextResponse.json(data)
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    return NextResponse.json({ error: errMsg(e) }, { status: 500 })
   }
 }
 
@@ -65,9 +71,9 @@ export async function DELETE(req: NextRequest) {
       .eq("id", id)
       .eq("user_id", auth.userId)
 
-    if (error) throw error
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     return NextResponse.json({ ok: true })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    return NextResponse.json({ error: errMsg(e) }, { status: 500 })
   }
 }

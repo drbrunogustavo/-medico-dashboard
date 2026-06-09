@@ -55,7 +55,7 @@ export default function TitulosPage() {
         'TEMA: ' + tema + '\nOBJETIVO: ' + obj?.l + '\n' +
         'REGRAS: diretos, sem enrolação, máx 12 palavras cada, sem clichês de IA.\n' +
         'Retorne SOMENTE JSON: {"titulos":[{"texto":"...","tipo":"' + obj?.l + '"}]}'
-      const res  = await fetch('/api/roteiros', { method:'POST', headers:{'Content-Type':'application/json'},
+      const res  = await fetch('/api/titulos', { method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:1000, messages:[{role:'user',content:prompt}] }) })
       const data = await res.json()
       const raw  = (data.content?.[0]?.text||'{}').replace(/```json/g,'').replace(/```/g,'').trim()

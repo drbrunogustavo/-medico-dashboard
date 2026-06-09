@@ -79,7 +79,7 @@ export default function GanchosPage() {
         '- Proibido: "Você sabia que", "Neste vídeo", "Hoje vou falar"\n' +
         '- Distribua os tipos solicitados entre os 8 ganchos\n\n' +
         'Retorne SOMENTE JSON: {"ganchos":[{"texto":"...","tipo":"nome do tipo"}]}'
-      const res  = await fetch('/api/roteiros', { method:'POST', headers:{'Content-Type':'application/json'},
+      const res  = await fetch('/api/ganchos', { method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:1200, messages:[{role:'user',content:prompt}] }) })
       const data = await res.json()
       const raw  = (data.content?.[0]?.text||'{}').replace(/```json/g,'').replace(/```/g,'').trim()

@@ -122,7 +122,14 @@ export default function LoginPage() {
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 required
-                className="login-input w-full border border-border rounded-lg px-4 py-3 text-text-primary placeholder:text-text-muted outline-none focus:border-[rgba(0,192,127,0.4)] transition-colors"
+                style={{
+                  background: "var(--surface)",
+                  color: "var(--text-primary)",
+                  WebkitTextFillColor: "var(--text-primary)",
+                  caretColor: "var(--text-primary)",
+                  fontSize: 15,
+                }}
+                className="w-full border border-border rounded-lg px-4 py-3 placeholder:text-text-muted outline-none focus:border-[rgba(0,192,127,0.4)] transition-colors"
               />
             </div>
 
@@ -136,7 +143,14 @@ export default function LoginPage() {
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   required
-                  className="login-input w-full border border-border rounded-lg px-4 py-3 pr-11 text-text-primary placeholder:text-text-muted outline-none focus:border-[rgba(0,192,127,0.4)] transition-colors"
+                  style={{
+                    background: "var(--surface)",
+                    color: "var(--text-primary)",
+                    WebkitTextFillColor: "var(--text-primary)",
+                    caretColor: "var(--text-primary)",
+                    fontSize: 15,
+                  }}
+                  className="w-full border border-border rounded-lg px-4 py-3 pr-11 placeholder:text-text-muted outline-none focus:border-[rgba(0,192,127,0.4)] transition-colors"
                 />
                 <button
                   type="button"

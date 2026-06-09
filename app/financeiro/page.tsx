@@ -90,6 +90,7 @@ export default function FinanceiroPage() {
   const [rawData,     setRawData]     = useState<Lancamento[]>([])
   const [loading,     setLoading]     = useState(false)
   const [deletingId,  setDeletingId]  = useState<string | null>(null)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [error,       setError]       = useState("")
   const [modalOpen,   setModalOpen]   = useState(false)
   const [saving,      setSaving]      = useState(false)
@@ -161,8 +162,8 @@ export default function FinanceiroPage() {
   }
 
   const excluir = async (id: string) => {
-    if (!confirm("Excluir este lançamento?")) return
     setDeletingId(id)
+    setConfirmDeleteId(null)
     try {
       const res  = await fetch(`/api/financeiro?id=${id}`, { method: "DELETE" })
       const json = await res.json()
@@ -381,7 +382,7 @@ export default function FinanceiroPage() {
                   key={l.id}
                   className={cn(
                     "group px-5 py-3.5 hover:bg-surface-2 transition-colors",
-                    "flex flex-col gap-1 md:grid md:grid-cols-[100px_160px_80px_1fr_140px_120px_40px] md:items-center md:gap-4"
+                    "flex flex-col gap-1 md:grid md:grid-cols-[100px_160px_80px_1fr_140px_120px_auto] md:items-center md:gap-4"
                   )}
                 >
                   {/* Data */}
@@ -424,15 +425,32 @@ export default function FinanceiroPage() {
 
                   {/* Delete */}
                   <div className="flex justify-end">
-                    <button
-                      onClick={() => excluir(l.id)}
-                      disabled={deletingId === l.id}
-                      className="opacity-0 group-hover:opacity-100 w-7 h-7 rounded-lg flex items-center justify-center text-text-muted hover:text-red-400 hover:bg-red-500/10 disabled:opacity-40 transition-all"
-                    >
-                      {deletingId === l.id
-                        ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        : <Trash2  className="w-3.5 h-3.5" />}
-                    </button>
+                    {confirmDeleteId === l.id ? (
+                      <div className="flex gap-1 items-center">
+                        <button
+                          onClick={() => excluir(l.id)}
+                          className="text-[10px] px-2 py-1 bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg font-semibold hover:bg-red-500/20 transition-colors"
+                        >
+                          Excluir
+                        </button>
+                        <button
+                          onClick={() => setConfirmDeleteId(null)}
+                          className="text-[10px] px-2 py-1 border border-border text-text-muted rounded-lg hover:text-text-secondary transition-colors"
+                        >
+                          Não
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setConfirmDeleteId(l.id)}
+                        disabled={deletingId === l.id}
+                        className="opacity-0 group-hover:opacity-100 w-7 h-7 rounded-lg flex items-center justify-center text-text-muted hover:text-red-400 hover:bg-red-500/10 disabled:opacity-40 transition-all"
+                      >
+                        {deletingId === l.id
+                          ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          : <Trash2  className="w-3.5 h-3.5" />}
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}

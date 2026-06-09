@@ -2,6 +2,7 @@
 'use client'
 import { useState, useCallback, useEffect } from 'react'
 import { PautasModal } from '@/components/PautasModal'
+import { Toast } from '@/components/Toast'
 
 const D = {
   bg:'var(--background)',surface:'var(--surface)',card:'var(--surface-2)',border:'var(--border)',
@@ -25,6 +26,8 @@ function CopyBtn({text,label='⎘ Copiar'}:{text:string;label?:string}){const[ok
 export default function RoteirosPage(){
   const[tema,setTema]=useState('');const[publico,setPublico]=useState('');const[duracao,setDuracao]=useState<Duracao>('60s');const[estilo,setEstilo]=useState<Estilo>('talking-head')
   const[roteiro,setRoteiro]=useState<Roteiro|null>(null);const[loading,setLoading]=useState(false);const[editIdx,setEditIdx]=useState<number|null>(null);const[editInstr,setEditInstr]=useState('');const[regenLoad,setRegenLoad]=useState(false);const[activeTab,setActiveTab]=useState<'roteiro'|'legenda'|'hashtags'>('roteiro');const[showPautas,setShowPautas]=useState(false)
+  const[errMsg,setErrMsg]=useState<string|null>(null)
+  const showErr=(msg:string)=>{setErrMsg(msg);setTimeout(()=>setErrMsg(null),4000)}
   const isMob=typeof window!=='undefined'&&window.innerWidth<768
   useEffect(()=>{if(typeof window==='undefined')return;const t=new URLSearchParams(window.location.search).get('tema');if(t)setTema(decodeURIComponent(t))},[])
   const gerar=useCallback(async()=>{
@@ -43,7 +46,7 @@ export default function RoteirosPage(){
     const res=await fetch('/api/roteiros',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:2000,messages:[{role:'user',content:prompt}]})})
     const data=await res.json();const raw=(data.content?.[0]?.text||'{}').replace(/```json/g,'').replace(/```/g,'').trim();const startIdx=raw.indexOf('{');const jsonStr=startIdx>=0?raw.slice(startIdx):raw;const json=JSON.parse(jsonStr)
     if(!json.blocos){console.error('API response:',json);throw new Error('Resposta inesperada da IA. Tente novamente.')};setRoteiro(json as Roteiro);setActiveTab('roteiro');setEditIdx(null)
-    }catch(e){const m=String(e);if(m.includes('rate_limit'))alert('Limite de requisições atingido. Aguarde 1 minuto e tente novamente.');else alert('Erro: '+m)}
+    }catch(e){const m=String(e);showErr(m.includes('rate_limit')?'Limite de requisições atingido. Aguarde 1 minuto e tente novamente.':'Erro ao gerar roteiro. Tente novamente.')}
     setLoading(false)
   },[tema,publico,duracao,estilo])
   const regenBloco=useCallback(async(idx:number)=>{
@@ -52,7 +55,7 @@ export default function RoteirosPage(){
     const res=await fetch('/api/roteiros',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:400,messages:[{role:'user',content:prompt}]})})
     const data=await res.json();const json=JSON.parse((data.content?.[0]?.text||'{}').replace(/```json/g,'').replace(/```/g,'').trim())
     setRoteiro(prev=>prev?{...prev,blocos:prev.blocos.map((bl,i)=>i===idx?{...bl,...json}:bl)}:prev);setEditInstr('');setEditIdx(null)
-    }catch(e){const m=String(e);if(m.includes('rate_limit'))alert('Limite de requisições atingido. Aguarde 1 minuto e tente novamente.');else alert('Erro: '+m)}
+    }catch(e){const m=String(e);showErr(m.includes('rate_limit')?'Limite de requisições atingido. Aguarde 1 minuto e tente novamente.':'Erro ao gerar roteiro. Tente novamente.')}
     setRegenLoad(false)
   },[roteiro,editInstr])
   const txt=roteiro?roteiro.blocos.map(b=>'['+b.tempo+'] '+b.tipo.toUpperCase()+'\nFALA: '+b.fala+'\nVISUAL: '+b.visual+'\nCORTE: '+b.corte).join('\n\n'):''
@@ -113,6 +116,7 @@ export default function RoteirosPage(){
           </>}
         </div>
       </div>
+      <Toast message={errMsg} type="error" />
     </div>
   )
 }

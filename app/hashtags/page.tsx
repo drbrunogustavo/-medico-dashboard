@@ -2,6 +2,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { PautasModal } from '@/components/PautasModal'
+import { Toast } from '@/components/Toast'
 
 const D = {
   bg:'var(--background)',surface:'var(--surface)',card:'var(--surface-2)',border:'var(--border)',
@@ -43,8 +44,10 @@ export default function HashtagsPage() {
   const [loading,    setLoading]    = useState(false)
   const [showPautas, setShowPautas] = useState(false)
   const [salvos,     setSalvos]     = useState<string[][]>([])
-  const [isMob, setIsMob] = useState(false)
+  const [isMob,   setIsMob]   = useState(false)
+  const [errMsg,  setErrMsg]  = useState<string | null>(null)
   useEffect(() => { setIsMob(window.innerWidth < 768) }, [])
+  const showErr = (msg: string) => { setErrMsg(msg); setTimeout(() => setErrMsg(null), 4000) }
 
   const gerar = async () => {
     if (!tema.trim()) return
@@ -67,7 +70,7 @@ export default function HashtagsPage() {
       const startIdx = raw.indexOf('{'); const jsonStr = startIdx >= 0 ? raw.slice(startIdx) : raw; const json = JSON.parse(jsonStr)
       if (!json.hashtags){console.error('API response:',json);throw new Error('Resposta inesperada da IA. Tente novamente.')}
       setResultado(json.hashtags.slice(0,5))
-    } catch(e) { const m=String(e); if(m.includes('rate_limit'))alert('Limite de requisições atingido. Aguarde 1 minuto e tente novamente.'); else alert('Erro: '+m) }
+    } catch(e) { const m=String(e); showErr(m.includes('rate_limit') ? 'Limite de requisições atingido. Aguarde 1 minuto e tente novamente.' : 'Erro ao gerar hashtags. Tente novamente.') }
     setLoading(false)
   }
 
@@ -222,6 +225,7 @@ export default function HashtagsPage() {
           )}
         </div>
       </div>
+      <Toast message={errMsg} type="error" />
     </div>
   )
 }

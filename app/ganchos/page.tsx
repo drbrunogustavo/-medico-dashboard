@@ -2,6 +2,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { PautasModal } from '@/components/PautasModal'
+import { Toast } from '@/components/Toast'
 
 const D = {
   bg:'var(--background)',surface:'var(--surface)',card:'var(--surface-2)',border:'var(--border)',
@@ -55,8 +56,10 @@ export default function GanchosPage() {
   const [favoritos,  setFavoritos]  = useState<Gancho[]>([])
   const [showPautas, setShowPautas] = useState(false)
   const [aba,        setAba]        = useState<'gerar'|'favoritos'>('gerar')
-  const [isMob, setIsMob] = useState(false)
+  const [isMob,   setIsMob]   = useState(false)
+  const [errMsg,  setErrMsg]  = useState<string | null>(null)
   useEffect(() => { setIsMob(window.innerWidth < 768) }, [])
+  const showErr = (msg: string) => { setErrMsg(msg); setTimeout(() => setErrMsg(null), 4000) }
 
   const toggleTipo = (v:string) => setTipos(prev => prev.includes(v) ? prev.filter(t=>t!==v) : [...prev,v])
   const toggleFav  = (g:Gancho) => setFavoritos(prev => prev.some(f=>f.texto===g.texto) ? prev.filter(f=>f.texto!==g.texto) : [g,...prev])
@@ -89,7 +92,7 @@ export default function GanchosPage() {
       }))
       setGanchos(mapped)
       setAba('gerar')
-    } catch(e) { const m=String(e); if(m.includes('rate_limit'))alert('Limite de requisições atingido. Aguarde 1 minuto e tente novamente.'); else alert('Erro: '+m) }
+    } catch(e) { const m=String(e); showErr(m.includes('rate_limit') ? 'Limite de requisições atingido. Aguarde 1 minuto e tente novamente.' : 'Erro ao gerar ganchos. Tente novamente.') }
     setLoading(false)
   }
 
@@ -244,6 +247,7 @@ export default function GanchosPage() {
           )}
         </div>
       </div>
+      <Toast message={errMsg} type="error" />
     </div>
   )
 }

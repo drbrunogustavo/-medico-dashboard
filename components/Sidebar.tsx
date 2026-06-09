@@ -53,7 +53,7 @@ const NAV_SOCIAL: NavGroup[] = [
     items: [
       { label: "Raio-X de Pacientes",   href: "/raio-x",   icon: ScanFace      },
       { label: "Mapa de Objeções",      href: "/objecoes",  icon: ShieldQuestion },
-      { label: "Lab. de Viralização",   href: "/radar",    icon: Microscope    },
+      { label: "Lab. de Viralização",   href: "/titulos",  icon: Microscope    },
       { label: "Biblioteca de Ganchos", href: "/ganchos",  icon: Sparkles      },
       { label: "Banco de Pautas",       href: "/pautas",   icon: FileText      },
     ],

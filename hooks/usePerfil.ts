@@ -14,6 +14,14 @@ export interface Perfil {
   avatar_url:          string | null
   onboarding_completo: boolean
   criado_em:           string
+  // Kit de Marca
+  marca_logo_url:       string | null
+  marca_cor_primaria:   string | null
+  marca_cor_secundaria: string | null
+  marca_cor_fundo:      string | null
+  marca_tipografia:     string | null
+  marca_slogan:         string | null
+  marca_tom_voz:        string | null
 }
 
 export function usePerfil(): { perfil: Perfil | null; loading: boolean; refetch: () => void } {

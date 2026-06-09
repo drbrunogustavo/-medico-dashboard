@@ -43,7 +43,7 @@ export default function RoteirosPage(){
         '',
         'Tipos em ordem: gancho, problema, conteudo (1-3x), insight, cta. Máx 5 hashtags.',
       ].join('\n')
-    const res=await fetch('/api/roteiros',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:2000,messages:[{role:'user',content:prompt}]})})
+    const res=await fetch('/api/roteiros',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2000,messages:[{role:'user',content:prompt}]})})
     const data=await res.json();const raw=(data.content?.[0]?.text||'{}').replace(/```json/g,'').replace(/```/g,'').trim();const startIdx=raw.indexOf('{');const jsonStr=startIdx>=0?raw.slice(startIdx):raw;const json=JSON.parse(jsonStr)
     if(!json.blocos){console.error('API response:',json);throw new Error('Resposta inesperada da IA. Tente novamente.')};setRoteiro(json as Roteiro);setActiveTab('roteiro');setEditIdx(null)
     }catch(e){const m=String(e);showErr(m.includes('rate_limit')?'Limite de requisições atingido. Aguarde 1 minuto e tente novamente.':'Erro ao gerar roteiro. Tente novamente.')}
@@ -52,7 +52,7 @@ export default function RoteirosPage(){
   const regenBloco=useCallback(async(idx:number)=>{
     if(!roteiro||!editInstr.trim())return;setRegenLoad(true)
     try{const b=roteiro.blocos[idx];const prompt='Reescreva bloco para Dr. Bruno Gustavo. Tom: humano.\ntipo="'+b.tipo+'" | fala="'+b.fala+'"\nINSTRUÇÃO: '+editInstr+'\nRetorne SOMENTE JSON: {"fala":"...","visual":"...","corte":"..."}'
-    const res=await fetch('/api/roteiros',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:400,messages:[{role:'user',content:prompt}]})})
+    const res=await fetch('/api/roteiros',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:400,messages:[{role:'user',content:prompt}]})})
     const data=await res.json();const json=JSON.parse((data.content?.[0]?.text||'{}').replace(/```json/g,'').replace(/```/g,'').trim())
     setRoteiro(prev=>prev?{...prev,blocos:prev.blocos.map((bl,i)=>i===idx?{...bl,...json}:bl)}:prev);setEditInstr('');setEditIdx(null)
     }catch(e){const m=String(e);showErr(m.includes('rate_limit')?'Limite de requisições atingido. Aguarde 1 minuto e tente novamente.':'Erro ao gerar roteiro. Tente novamente.')}

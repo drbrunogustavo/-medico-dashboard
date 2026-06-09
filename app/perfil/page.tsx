@@ -1,13 +1,15 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { TopBar } from "@/components/TopBar"
 import {
   User, Save, RefreshCw, CheckCircle, AlertCircle,
   Instagram, MapPin, Stethoscope, Hash, Target, Sparkles,
+  Palette, Type, MessageSquare, Upload, ImageIcon, Loader2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { getSupabaseBrowserClient } from "@/lib/supabase-browser"
 
 const ESPECIALIDADES = [
   "Cardiologia", "Dermatologia", "Endocrinologia", "Gastroenterologia",
@@ -16,6 +18,16 @@ const ESPECIALIDADES = [
   "Oftalmologia", "Oncologia", "Ortopedia", "Otorrinolaringologia",
   "Pediatria", "Pneumologia", "Psiquiatria", "Reumatologia",
   "Urologia", "Cirurgia Plástica", "Outra",
+]
+
+const TIPOGRAFIAS = ["Montserrat", "Playfair Display", "Inter", "Poppins", "Lato"]
+
+const TONS_VOZ = [
+  { v: "profissional", l: "Profissional" },
+  { v: "empatico",     l: "Empático"     },
+  { v: "cientifico",   l: "Científico"   },
+  { v: "motivacional", l: "Motivacional" },
+  { v: "educativo",    l: "Educativo"    },
 ]
 
 interface PerfilForm {
@@ -27,13 +39,28 @@ interface PerfilForm {
   publico_alvo: string
   diferencial: string
   avatar_url: string
+  marca_logo_url: string
+  marca_cor_primaria: string
+  marca_cor_secundaria: string
+  marca_cor_fundo: string
+  marca_tipografia: string
+  marca_slogan: string
+  marca_tom_voz: string
 }
 
 const EMPTY: PerfilForm = {
   nome: "", especialidade: "", crm: "", cidade: "",
   instagram: "", publico_alvo: "", diferencial: "", avatar_url: "",
+  marca_logo_url: "",
+  marca_cor_primaria:   "#b8976a",
+  marca_cor_secundaria: "#0D1B2A",
+  marca_cor_fundo:      "#1a1a2e",
+  marca_tipografia: "Montserrat",
+  marca_slogan:     "",
+  marca_tom_voz:    "profissional",
 }
 
+type ActiveTab = "perfil" | "marca"
 type Status = "idle" | "saving" | "saved" | "error"
 
 function Field({ label, icon: Icon, children }: { label: string; icon: React.ElementType; children: React.ReactNode }) {
@@ -51,11 +78,42 @@ function Field({ label, icon: Icon, children }: { label: string; icon: React.Ele
 const inputCls = "w-full bg-background border border-border rounded-lg px-3 py-2.5 text-[13px] text-text-primary placeholder-text-muted focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-colors"
 const textareaCls = cn(inputCls, "resize-none")
 
+function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <div className="space-y-1.5">
+      <label className="flex items-center gap-1.5 text-[11px] font-mono text-text-muted uppercase tracking-wider">
+        <Palette className="w-3 h-3" />
+        {label}
+      </label>
+      <div className="flex items-center gap-2">
+        <div className="relative flex-shrink-0">
+          <input
+            type="color"
+            value={value}
+            onChange={e => onChange(e.target.value)}
+            className="w-10 h-10 rounded-lg border border-border cursor-pointer p-0.5 bg-background"
+          />
+        </div>
+        <input
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          placeholder="#000000"
+          maxLength={7}
+          className={cn(inputCls, "flex-1 font-mono text-[12px]")}
+        />
+      </div>
+    </div>
+  )
+}
+
 export default function PerfilPage() {
   const router = useRouter()
-  const [form,   setForm]   = useState<PerfilForm>(EMPTY)
-  const [status, setStatus] = useState<Status>("idle")
-  const [loading, setLoading] = useState(true)
+  const [form,         setForm]         = useState<PerfilForm>(EMPTY)
+  const [status,       setStatus]       = useState<Status>("idle")
+  const [loading,      setLoading]      = useState(true)
+  const [activeTab,    setActiveTab]    = useState<ActiveTab>("perfil")
+  const [uploadingLogo, setUploadingLogo] = useState(false)
+  const logoRef = useRef<HTMLInputElement>(null)
 
   const load = useCallback(async () => {
     try {
@@ -64,14 +122,21 @@ export default function PerfilPage() {
         const data = await r.json() as Partial<PerfilForm> | null
         if (data) {
           setForm({
-            nome:          data.nome          ?? "",
-            especialidade: data.especialidade ?? "",
-            crm:           data.crm           ?? "",
-            cidade:        data.cidade        ?? "",
-            instagram:     data.instagram     ?? "",
-            publico_alvo:  data.publico_alvo  ?? "",
-            diferencial:   data.diferencial   ?? "",
-            avatar_url:    data.avatar_url    ?? "",
+            nome:                 data.nome                 ?? "",
+            especialidade:        data.especialidade        ?? "",
+            crm:                  data.crm                  ?? "",
+            cidade:               data.cidade               ?? "",
+            instagram:            data.instagram            ?? "",
+            publico_alvo:         data.publico_alvo         ?? "",
+            diferencial:          data.diferencial          ?? "",
+            avatar_url:           data.avatar_url           ?? "",
+            marca_logo_url:       data.marca_logo_url       ?? "",
+            marca_cor_primaria:   data.marca_cor_primaria   ?? "#b8976a",
+            marca_cor_secundaria: data.marca_cor_secundaria ?? "#0D1B2A",
+            marca_cor_fundo:      data.marca_cor_fundo      ?? "#1a1a2e",
+            marca_tipografia:     data.marca_tipografia     ?? "Montserrat",
+            marca_slogan:         data.marca_slogan         ?? "",
+            marca_tom_voz:        data.marca_tom_voz        ?? "profissional",
           })
         }
       }
@@ -82,8 +147,9 @@ export default function PerfilPage() {
 
   useEffect(() => { load() }, [load])
 
-  const set = (k: keyof PerfilForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
-    setForm(f => ({ ...f, [k]: e.target.value }))
+  const set = (k: keyof PerfilForm) => (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => setForm(f => ({ ...f, [k]: e.target.value }))
 
   const save = async () => {
     setStatus("saving")
@@ -107,6 +173,29 @@ export default function PerfilPage() {
       body: JSON.stringify({ onboarding_completo: false }),
     })
     router.push("/onboarding")
+  }
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadingLogo(true)
+    try {
+      const supabase = getSupabaseBrowserClient()
+      const ext  = file.name.split(".").pop() ?? "png"
+      const path = `logos/${Date.now()}.${ext}`
+      const { data, error } = await supabase.storage
+        .from("perfil-assets")
+        .upload(path, file, { upsert: true, contentType: file.type })
+      if (error) throw error
+      const { data: { publicUrl } } = supabase.storage
+        .from("perfil-assets")
+        .getPublicUrl(data.path)
+      setForm(f => ({ ...f, marca_logo_url: publicUrl }))
+    } catch (err) {
+      console.error("[logo upload]", err)
+    } finally {
+      setUploadingLogo(false)
+    }
   }
 
   const initials = form.nome
@@ -155,137 +244,345 @@ export default function PerfilPage() {
 
       <div className="p-4 md:p-8 max-w-3xl mx-auto space-y-6">
 
-        {/* Avatar + name preview */}
-        <div className="bg-surface border border-border rounded-xl p-6 flex items-center gap-5">
-          <div
-            className="w-16 h-16 rounded-full flex items-center justify-center flex-shrink-0 text-[22px] font-bold text-accent"
-            style={{ background: "linear-gradient(135deg, rgba(0,192,127,0.25), rgba(0,192,127,0.08))", border: "2px solid rgba(0,192,127,0.25)" }}
-          >
-            {form.avatar_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={form.avatar_url} alt="Avatar" className="w-full h-full rounded-full object-cover" />
-            ) : initials}
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-[16px] font-semibold text-text-primary truncate">
-              {form.nome || "Seu nome aparecerá aqui"}
-            </div>
-            <div className="text-[12px] text-text-muted mt-0.5">
-              {form.especialidade || "Especialidade"}{form.cidade ? ` · ${form.cidade}` : ""}
-            </div>
-          </div>
-          <User className="w-5 h-5 text-text-muted/30 flex-shrink-0 hidden sm:block" />
-        </div>
-
-        {/* Professional info */}
-        <div className="bg-surface border border-border rounded-xl p-6 space-y-5">
-          <h2 className="text-[11px] font-mono text-text-muted tracking-[3px] uppercase">Dados Profissionais</h2>
-
-          <Field label="Nome completo" icon={User}>
-            <input
-              value={form.nome}
-              onChange={set("nome")}
-              placeholder="Dr. João Silva"
-              className={inputCls}
-            />
-          </Field>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <Field label="Especialidade" icon={Stethoscope}>
-              <select value={form.especialidade} onChange={set("especialidade")} className={inputCls}>
-                <option value="">Selecionar...</option>
-                {ESPECIALIDADES.map(e => <option key={e} value={e}>{e}</option>)}
-              </select>
-            </Field>
-
-            <Field label="CRM" icon={Hash}>
-              <input
-                value={form.crm}
-                onChange={set("crm")}
-                placeholder="CRM/SP 123456"
-                className={inputCls}
-              />
-            </Field>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <Field label="Cidade" icon={MapPin}>
-              <input
-                value={form.cidade}
-                onChange={set("cidade")}
-                placeholder="São Paulo, SP"
-                className={inputCls}
-              />
-            </Field>
-
-            <Field label="Instagram" icon={Instagram}>
-              <input
-                value={form.instagram}
-                onChange={set("instagram")}
-                placeholder="@drjoaosilva"
-                className={inputCls}
-              />
-            </Field>
-          </div>
-        </div>
-
-        {/* Content strategy */}
-        <div className="bg-surface border border-border rounded-xl p-6 space-y-5">
-          <h2 className="text-[11px] font-mono text-text-muted tracking-[3px] uppercase">Estratégia de Conteúdo</h2>
-
-          <Field label="Público-alvo" icon={Target}>
-            <textarea
-              value={form.publico_alvo}
-              onChange={set("publico_alvo")}
-              rows={3}
-              placeholder="Ex: Mulheres de 30–50 anos interessadas em saúde hormonal e qualidade de vida..."
-              className={textareaCls}
-            />
-          </Field>
-
-          <Field label="Diferencial / Posicionamento" icon={Sparkles}>
-            <textarea
-              value={form.diferencial}
-              onChange={set("diferencial")}
-              rows={3}
-              placeholder="Ex: Especialista em medicina integrativa com foco em prevenção e longevidade..."
-              className={textareaCls}
-            />
-          </Field>
-        </div>
-
-        {/* Avatar URL */}
-        <div className="bg-surface border border-border rounded-xl p-6 space-y-5">
-          <h2 className="text-[11px] font-mono text-text-muted tracking-[3px] uppercase">Foto de Perfil</h2>
-          <Field label="URL da foto" icon={User}>
-            <input
-              value={form.avatar_url}
-              onChange={set("avatar_url")}
-              placeholder="https://..."
-              className={inputCls}
-              type="url"
-            />
-          </Field>
-          <p className="text-[10px] text-text-muted">Cole a URL de uma imagem pública (ex: do Google Drive, Notion ou Dropbox).</p>
-        </div>
-
-        {/* Danger zone */}
-        <div className="bg-surface border border-red-500/10 rounded-xl p-6">
-          <h2 className="text-[11px] font-mono text-red-400/70 tracking-[3px] uppercase mb-4">Zona de Risco</h2>
-          <div className="flex items-center justify-between gap-4 flex-wrap">
-            <div>
-              <p className="text-[13px] text-text-secondary font-medium">Refazer Onboarding</p>
-              <p className="text-[11px] text-text-muted mt-0.5">Redefine as configurações iniciais e reinicia o assistente de configuração.</p>
-            </div>
+        {/* Tab navigation */}
+        <div className="flex gap-1 bg-surface border border-border rounded-xl p-1">
+          {(["perfil", "marca"] as ActiveTab[]).map(tab => (
             <button
-              onClick={refazerOnboarding}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-red-500/20 text-red-400 text-[12px] font-semibold hover:bg-red-950/30 transition-all flex-shrink-0"
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={cn(
+                "flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[12px] font-semibold transition-all",
+                activeTab === tab
+                  ? "bg-accent-dim border border-accent-border text-accent"
+                  : "text-text-muted hover:text-text-secondary hover:bg-surface-2"
+              )}
             >
-              <RefreshCw className="w-3.5 h-3.5" />
-              Refazer Onboarding
+              {tab === "perfil" ? (
+                <><User className="w-3.5 h-3.5" /> Perfil</>
+              ) : (
+                <><Palette className="w-3.5 h-3.5" /> Kit de Marca</>
+              )}
             </button>
-          </div>
+          ))}
         </div>
+
+        {/* ── TAB: PERFIL ──────────────────────────────────────────────────── */}
+        {activeTab === "perfil" && (
+          <>
+            {/* Avatar + name preview */}
+            <div className="bg-surface border border-border rounded-xl p-6 flex items-center gap-5">
+              <div
+                className="w-16 h-16 rounded-full flex items-center justify-center flex-shrink-0 text-[22px] font-bold text-accent"
+                style={{ background: "linear-gradient(135deg, rgba(0,192,127,0.25), rgba(0,192,127,0.08))", border: "2px solid rgba(0,192,127,0.25)" }}
+              >
+                {form.avatar_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={form.avatar_url} alt="Avatar" className="w-full h-full rounded-full object-cover" />
+                ) : initials}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-[16px] font-semibold text-text-primary truncate">
+                  {form.nome || "Seu nome aparecerá aqui"}
+                </div>
+                <div className="text-[12px] text-text-muted mt-0.5">
+                  {form.especialidade || "Especialidade"}{form.cidade ? ` · ${form.cidade}` : ""}
+                </div>
+              </div>
+              <User className="w-5 h-5 text-text-muted/30 flex-shrink-0 hidden sm:block" />
+            </div>
+
+            {/* Professional info */}
+            <div className="bg-surface border border-border rounded-xl p-6 space-y-5">
+              <h2 className="text-[11px] font-mono text-text-muted tracking-[3px] uppercase">Dados Profissionais</h2>
+
+              <Field label="Nome completo" icon={User}>
+                <input
+                  value={form.nome}
+                  onChange={set("nome")}
+                  placeholder="Dr. João Silva"
+                  className={inputCls}
+                />
+              </Field>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <Field label="Especialidade" icon={Stethoscope}>
+                  <select value={form.especialidade} onChange={set("especialidade")} className={inputCls}>
+                    <option value="">Selecionar...</option>
+                    {ESPECIALIDADES.map(e => <option key={e} value={e}>{e}</option>)}
+                  </select>
+                </Field>
+
+                <Field label="CRM" icon={Hash}>
+                  <input
+                    value={form.crm}
+                    onChange={set("crm")}
+                    placeholder="CRM/SP 123456"
+                    className={inputCls}
+                  />
+                </Field>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <Field label="Cidade" icon={MapPin}>
+                  <input
+                    value={form.cidade}
+                    onChange={set("cidade")}
+                    placeholder="São Paulo, SP"
+                    className={inputCls}
+                  />
+                </Field>
+
+                <Field label="Instagram" icon={Instagram}>
+                  <input
+                    value={form.instagram}
+                    onChange={set("instagram")}
+                    placeholder="@drjoaosilva"
+                    className={inputCls}
+                  />
+                </Field>
+              </div>
+            </div>
+
+            {/* Content strategy */}
+            <div className="bg-surface border border-border rounded-xl p-6 space-y-5">
+              <h2 className="text-[11px] font-mono text-text-muted tracking-[3px] uppercase">Estratégia de Conteúdo</h2>
+
+              <Field label="Público-alvo" icon={Target}>
+                <textarea
+                  value={form.publico_alvo}
+                  onChange={set("publico_alvo")}
+                  rows={3}
+                  placeholder="Ex: Mulheres de 30–50 anos interessadas em saúde hormonal e qualidade de vida..."
+                  className={textareaCls}
+                />
+              </Field>
+
+              <Field label="Diferencial / Posicionamento" icon={Sparkles}>
+                <textarea
+                  value={form.diferencial}
+                  onChange={set("diferencial")}
+                  rows={3}
+                  placeholder="Ex: Especialista em medicina integrativa com foco em prevenção e longevidade..."
+                  className={textareaCls}
+                />
+              </Field>
+            </div>
+
+            {/* Avatar URL */}
+            <div className="bg-surface border border-border rounded-xl p-6 space-y-5">
+              <h2 className="text-[11px] font-mono text-text-muted tracking-[3px] uppercase">Foto de Perfil</h2>
+              <Field label="URL da foto" icon={User}>
+                <input
+                  value={form.avatar_url}
+                  onChange={set("avatar_url")}
+                  placeholder="https://..."
+                  className={inputCls}
+                  type="url"
+                />
+              </Field>
+              <p className="text-[10px] text-text-muted">Cole a URL de uma imagem pública (ex: do Google Drive, Notion ou Dropbox).</p>
+            </div>
+
+            {/* Danger zone */}
+            <div className="bg-surface border border-red-500/10 rounded-xl p-6">
+              <h2 className="text-[11px] font-mono text-red-400/70 tracking-[3px] uppercase mb-4">Zona de Risco</h2>
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                <div>
+                  <p className="text-[13px] text-text-secondary font-medium">Refazer Onboarding</p>
+                  <p className="text-[11px] text-text-muted mt-0.5">Redefine as configurações iniciais e reinicia o assistente de configuração.</p>
+                </div>
+                <button
+                  onClick={refazerOnboarding}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg border border-red-500/20 text-red-400 text-[12px] font-semibold hover:bg-red-950/30 transition-all flex-shrink-0"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  Refazer Onboarding
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* ── TAB: KIT DE MARCA ────────────────────────────────────────────── */}
+        {activeTab === "marca" && (
+          <>
+            {/* Logo */}
+            <div className="bg-surface border border-border rounded-xl p-6 space-y-4">
+              <h2 className="text-[11px] font-mono text-text-muted tracking-[3px] uppercase">Logo da Marca</h2>
+
+              {form.marca_logo_url ? (
+                <div className="grid grid-cols-2 gap-3">
+                  <div
+                    className="rounded-xl border border-border p-5 flex items-center justify-center min-h-[96px]"
+                    style={{ background: form.marca_cor_fundo || "#1a1a2e" }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={form.marca_logo_url} alt="Logo — fundo escuro" className="max-h-14 max-w-full object-contain" />
+                  </div>
+                  <div className="rounded-xl border border-border p-5 flex items-center justify-center min-h-[96px] bg-white">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={form.marca_logo_url} alt="Logo — fundo claro" className="max-h-14 max-w-full object-contain" />
+                  </div>
+                </div>
+              ) : (
+                <div className="border-2 border-dashed border-border rounded-xl p-10 flex flex-col items-center gap-2 text-center">
+                  <ImageIcon className="w-8 h-8 text-text-muted/30" />
+                  <p className="text-[12px] text-text-muted">Nenhum logo carregado ainda</p>
+                </div>
+              )}
+
+              <input
+                ref={logoRef}
+                type="file"
+                accept="image/png,image/svg+xml,image/jpeg,image/webp"
+                className="hidden"
+                onChange={handleLogoUpload}
+              />
+              <button
+                onClick={() => logoRef.current?.click()}
+                disabled={uploadingLogo}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-border text-[12px] font-semibold text-text-secondary hover:text-text-primary hover:border-border-hover transition-all disabled:opacity-50"
+              >
+                {uploadingLogo
+                  ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Enviando...</>
+                  : <><Upload className="w-3.5 h-3.5" /> {form.marca_logo_url ? "Trocar logo" : "Fazer upload do logo"}</>
+                }
+              </button>
+              {form.marca_logo_url && (
+                <button
+                  onClick={() => setForm(f => ({ ...f, marca_logo_url: "" }))}
+                  className="text-[11px] text-text-muted hover:text-red-400 transition-colors"
+                >
+                  Remover logo
+                </button>
+              )}
+            </div>
+
+            {/* Palette */}
+            <div className="bg-surface border border-border rounded-xl p-6 space-y-5">
+              <h2 className="text-[11px] font-mono text-text-muted tracking-[3px] uppercase">Paleta de Cores</h2>
+
+              <ColorField
+                label="Cor Primária"
+                value={form.marca_cor_primaria}
+                onChange={v => setForm(f => ({ ...f, marca_cor_primaria: v }))}
+              />
+              <ColorField
+                label="Cor Secundária"
+                value={form.marca_cor_secundaria}
+                onChange={v => setForm(f => ({ ...f, marca_cor_secundaria: v }))}
+              />
+              <ColorField
+                label="Cor de Fundo"
+                value={form.marca_cor_fundo}
+                onChange={v => setForm(f => ({ ...f, marca_cor_fundo: v }))}
+              />
+
+              {/* Preview strip */}
+              <div className="flex gap-2 pt-1">
+                <div
+                  className="flex-1 h-12 rounded-lg border border-border/50 flex items-end p-1.5"
+                  style={{ background: form.marca_cor_fundo }}
+                >
+                  <span className="text-[9px] font-mono text-white/50">Fundo</span>
+                </div>
+                <div
+                  className="w-12 h-12 rounded-lg border border-border/50 flex items-end p-1.5"
+                  style={{ background: form.marca_cor_primaria }}
+                >
+                  <span className="text-[9px] font-mono text-white/70">1°</span>
+                </div>
+                <div
+                  className="w-12 h-12 rounded-lg border border-border/50 flex items-end p-1.5"
+                  style={{ background: form.marca_cor_secundaria }}
+                >
+                  <span className="text-[9px] font-mono text-white/70">2°</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Typography + Slogan + Tom de Voz */}
+            <div className="bg-surface border border-border rounded-xl p-6 space-y-5">
+              <h2 className="text-[11px] font-mono text-text-muted tracking-[3px] uppercase">Tipografia e Comunicação</h2>
+
+              <Field label="Fonte principal" icon={Type}>
+                <select value={form.marca_tipografia} onChange={set("marca_tipografia")} className={inputCls}>
+                  {TIPOGRAFIAS.map(t => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+              </Field>
+
+              <Field label="Slogan" icon={MessageSquare}>
+                <input
+                  value={form.marca_slogan}
+                  onChange={set("marca_slogan")}
+                  placeholder="Sua frase de posicionamento..."
+                  maxLength={120}
+                  className={inputCls}
+                />
+              </Field>
+
+              <div className="space-y-1.5">
+                <label className="flex items-center gap-1.5 text-[11px] font-mono text-text-muted uppercase tracking-wider">
+                  <MessageSquare className="w-3 h-3" />
+                  Tom de Voz
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {TONS_VOZ.map(t => (
+                    <button
+                      key={t.v}
+                      onClick={() => setForm(f => ({ ...f, marca_tom_voz: t.v }))}
+                      className={cn(
+                        "px-3 py-1.5 rounded-full border text-[11px] font-semibold transition-all",
+                        form.marca_tom_voz === t.v
+                          ? "bg-accent-dim border-accent-border text-accent"
+                          : "border-border text-text-muted hover:text-text-secondary hover:border-border-hover"
+                      )}
+                    >
+                      {t.l}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Brand card preview */}
+            <div className="bg-surface border border-border rounded-xl p-6 space-y-3">
+              <h2 className="text-[11px] font-mono text-text-muted tracking-[3px] uppercase">Prévia do Cartão de Marca</h2>
+              <div
+                className="rounded-xl p-6 flex flex-col gap-3 min-h-[120px]"
+                style={{ background: form.marca_cor_fundo || "#1a1a2e" }}
+              >
+                {form.marca_logo_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={form.marca_logo_url} alt="Logo" className="h-10 object-contain object-left" />
+                ) : (
+                  <div
+                    className="text-[18px] font-bold tracking-tight"
+                    style={{ color: form.marca_cor_primaria, fontFamily: form.marca_tipografia }}
+                  >
+                    {form.nome || "Seu Nome"}
+                  </div>
+                )}
+                {form.marca_slogan && (
+                  <p
+                    className="text-[12px] opacity-70"
+                    style={{ color: form.marca_cor_primaria, fontFamily: form.marca_tipografia }}
+                  >
+                    {form.marca_slogan}
+                  </p>
+                )}
+                <div className="flex items-center gap-2 mt-auto">
+                  <div className="w-2 h-2 rounded-full" style={{ background: form.marca_cor_primaria }} />
+                  <span className="text-[10px] font-mono" style={{ color: form.marca_cor_primaria }}>
+                    {form.marca_tom_voz.toUpperCase()}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
 
       </div>
     </div>

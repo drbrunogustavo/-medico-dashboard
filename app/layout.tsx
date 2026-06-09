@@ -1,9 +1,7 @@
 import type { Metadata } from "next"
 import { Inter, Playfair_Display } from "next/font/google"
 import "./globals.css"
-import { Sidebar }            from "@/components/Sidebar"
-import { MobileNav }          from "@/components/MobileNav"
-import { MobileMenuProvider } from "@/components/MobileMenuProvider"
+import { ConditionalLayout } from "@/components/ConditionalLayout"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -43,17 +41,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="manifest" href="/manifest.json" />
       </head>
       <body className="bg-background text-text-primary antialiased">
-        <MobileMenuProvider>
-          <div className="flex min-h-screen">
-            <Sidebar />
-            <main className="flex-1 min-h-screen bg-background flex flex-col md:ml-60">
-              <MobileNav />
-              <div className="flex-1">
-                {children}
-              </div>
-            </main>
-          </div>
-        </MobileMenuProvider>
+        <ConditionalLayout>{children}</ConditionalLayout>
       </body>
     </html>
   )

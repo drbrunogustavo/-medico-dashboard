@@ -139,28 +139,32 @@ export default function LoginPage() {
 
             {/* Email */}
             <div className="space-y-1.5">
-              <label className="block text-[11px] font-mono text-text-muted tracking-[2px] uppercase">Email</label>
+              <label className="block text-[11px] font-mono tracking-[2px] uppercase" style={{ color: "#888" }}>Email</label>
               <input
                 type="email"
                 autoComplete="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 required
-                className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all placeholder:text-text-muted focus:ring-1 focus:ring-[rgba(0,192,127,0.4)]"
+                placeholder="seu@email.com"
                 style={{
-                  background: "var(--surface)",
-                  color: "var(--text-primary)",
-                  WebkitTextFillColor: "var(--text-primary)",
-                  caretColor: "var(--text-primary)",
-                  border: "1px solid var(--border)",
-                  colorScheme: "light",
+                  width: "100%",
+                  padding: "12px 16px",
+                  borderRadius: "12px",
+                  border: "1px solid #333",
+                  background: "#1e1e1e",
+                  color: "#ffffff",
+                  fontSize: "14px",
+                  outline: "none",
+                  WebkitTextFillColor: "#ffffff",
+                  caretColor: "#ffffff",
                 }}
               />
             </div>
 
             {/* Senha */}
             <div className="space-y-1.5">
-              <label className="block text-[11px] font-mono text-text-muted tracking-[2px] uppercase">Senha</label>
+              <label className="block text-[11px] font-mono tracking-[2px] uppercase" style={{ color: "#888" }}>Senha</label>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
@@ -168,14 +172,19 @@ export default function LoginPage() {
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   required
-                  className="w-full px-4 py-3 pr-11 rounded-xl text-sm outline-none transition-all placeholder:text-text-muted focus:ring-1 focus:ring-[rgba(0,192,127,0.4)]"
+                  placeholder="••••••••"
                   style={{
-                    background: "var(--surface)",
-                    color: "var(--text-primary)",
-                    WebkitTextFillColor: "var(--text-primary)",
-                    caretColor: "var(--text-primary)",
-                    border: "1px solid var(--border)",
-                    colorScheme: "light",
+                    width: "100%",
+                    padding: "12px 46px 12px 16px",
+                    borderRadius: "12px",
+                    border: "1px solid #333",
+                    background: "#1e1e1e",
+                    color: "#ffffff",
+                    fontSize: "14px",
+                    outline: "none",
+                    WebkitTextFillColor: "#ffffff",
+                    caretColor: "#ffffff",
+                    colorScheme: "dark",
                   }}
                 />
                 <button

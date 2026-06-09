@@ -10,8 +10,8 @@ import {
   GitBranch, Sparkles, Loader2, Check,
   Copy, MessageSquare, Video, LayoutGrid, BookOpen,
   ChevronDown, ChevronUp, RefreshCw, Save,
-  Users, TrendingUp, CheckCircle2, Pause,
-  AlertCircle, Smartphone, FileText,
+  Users, TrendingUp, CheckCircle2,
+  AlertCircle, Smartphone, FileText, Send, Phone,
 } from "lucide-react"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -29,6 +29,7 @@ interface Lead {
   perfil:       string
   interesse:    string
   duracao_dias: number
+  telefone?:    string | null
   status:       string
   trilha:       ItemTrilha[] | null
   criado_em?:   string
@@ -95,6 +96,39 @@ function CopyBtn({ text, className }: { text: string; className?: string }) {
   )
 }
 
+function EnviarBtn({
+  text, phone, sendKey, sendingKey, onSend, className,
+}: {
+  text: string; phone: string; sendKey: string
+  sendingKey: string | null
+  onSend: (phone: string, message: string, key: string) => void
+  className?: string
+}) {
+  const isLoading = sendingKey === sendKey
+  const hasPhone  = phone.trim().length > 0
+  return (
+    <button
+      disabled={isLoading || !hasPhone}
+      onClick={() => onSend(phone, text, sendKey)}
+      title={!hasPhone ? "Informe o WhatsApp antes de enviar" : "Enviar via WhatsApp"}
+      className={cn(
+        "flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg border transition-all",
+        isLoading
+          ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400 cursor-wait"
+          : !hasPhone
+            ? "border-border text-text-muted/40 cursor-not-allowed"
+            : "border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10",
+        className,
+      )}
+    >
+      {isLoading
+        ? <Loader2 className="w-3 h-3 animate-spin" />
+        : <Send    className="w-3 h-3" />}
+      {isLoading ? "Enviando…" : "Enviar"}
+    </button>
+  )
+}
+
 function DayBadge({ dia }: { dia: number }) {
   return (
     <span className="text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/25 text-blue-400">
@@ -126,6 +160,7 @@ export default function NutricaoLeadsPage() {
   // Form
   const [nome,      setNome]      = useState("")
   const [perfil,    setPerfil]    = useState("")
+  const [telefone,  setTelefone]  = useState("")
   const [interesse, setInteresse] = useState<Interesse>("Emagrecimento")
   const [duracao,   setDuracao]   = useState<7 | 15 | 30>(15)
 
@@ -137,6 +172,10 @@ export default function NutricaoLeadsPage() {
   // Saving
   const [saving,  setSaving]  = useState(false)
   const [toast,   setToast]   = useState<{ msg: string; type: "success" | "error" } | null>(null)
+
+  // WhatsApp send
+  const [sendingKey,  setSendingKey]  = useState<string | null>(null)
+  const [leadPhones,  setLeadPhones]  = useState<Record<string, string>>({}) // phone overrides per lead
 
   const showToast = (msg: string, type: "success" | "error" = "success") => {
     setToast({ msg, type })
@@ -181,6 +220,31 @@ export default function NutricaoLeadsPage() {
     }
   }
 
+  // ── Enviar mensagem via Z-API ─────────────────────────────────────────────────
+
+  const enviarMensagem = async (phone: string, message: string, key: string) => {
+    const phoneClean = phone.replace(/\D/g, "")
+    if (!phoneClean) {
+      showToast("Informe o número do WhatsApp (com DDI, ex: 5535999999999).", "error")
+      return
+    }
+    setSendingKey(key)
+    try {
+      const res = await fetch("/api/zapi/send", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ phone: phoneClean, message }),
+      })
+      const data = await res.json() as { success?: boolean; error?: string }
+      if (data.error) throw new Error(data.error)
+      showToast("✓ Mensagem enviada pelo WhatsApp!")
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : "Erro ao enviar", "error")
+    } finally {
+      setSendingKey(null)
+    }
+  }
+
   // ── Save trilha ───────────────────────────────────────────────────────────────
 
   const salvar = async () => {
@@ -191,13 +255,13 @@ export default function NutricaoLeadsPage() {
       const res = await fetch("/api/nutricao-leads?action=salvar", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ perfil: perfilCompleto, interesse, duracaoDias: duracao, trilha }),
+        body:    JSON.stringify({ perfil: perfilCompleto, interesse, duracaoDias: duracao, telefone: telefone.trim() || null, trilha }),
       })
       const data = await res.json() as { error?: string }
       if (data.error) throw new Error(data.error)
       showToast("Trilha salva com sucesso! Lead ativo.")
       setTrilha(null)
-      setNome(""); setPerfil("")
+      setNome(""); setPerfil(""); setTelefone("")
       fetchLeads()
     } catch (e) {
       showToast(e instanceof Error ? e.message : "Erro ao salvar", "error")
@@ -291,6 +355,22 @@ export default function NutricaoLeadsPage() {
                   placeholder="Ex: Ana Souza"
                   className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2.5 text-[12px] text-text-primary placeholder:text-text-muted focus:border-blue-500/40 outline-none transition-colors"
                 />
+              </div>
+
+              {/* Telefone */}
+              <div>
+                <label className="text-[10px] font-mono text-text-muted uppercase tracking-widest block mb-1.5">
+                  WhatsApp <span className="normal-case text-text-muted/60">(com DDI, ex: 5535999999999)</span>
+                </label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-text-muted pointer-events-none" />
+                  <input
+                    value={telefone}
+                    onChange={e => setTelefone(e.target.value)}
+                    placeholder="5535999999999"
+                    className="w-full bg-surface-2 border border-border rounded-lg pl-8 pr-3 py-2.5 text-[12px] text-text-primary placeholder:text-text-muted focus:border-emerald-500/40 outline-none transition-colors"
+                  />
+                </div>
               </div>
 
               {/* Interesse */}
@@ -443,7 +523,18 @@ export default function NutricaoLeadsPage() {
                               {canal}
                             </span>
                           </div>
-                          {item.ehMensagem && <CopyBtn text={item.texto} />}
+                          {item.ehMensagem && (
+                            <div className="flex items-center gap-1.5">
+                              <CopyBtn text={item.texto} />
+                              <EnviarBtn
+                                text={item.texto}
+                                phone={telefone}
+                                sendKey={`preview-${i}`}
+                                sendingKey={sendingKey}
+                                onSend={enviarMensagem}
+                              />
+                            </div>
+                          )}
                         </div>
                         {/* Title */}
                         <div className="text-[11px] font-semibold text-text-primary">{item.titulo}</div>
@@ -567,10 +658,25 @@ export default function NutricaoLeadsPage() {
                           <div className="text-[9px] font-mono text-text-muted uppercase tracking-widest mb-2">
                             Trilha · {trilhaItems.length} pontos
                           </div>
+
+                          {/* Phone override — shown only when lead has no stored phone */}
+                          {!lead.telefone && (
+                            <div className="flex items-center gap-2 mb-3">
+                              <Phone className="w-3 h-3 text-text-muted flex-shrink-0" />
+                              <input
+                                value={leadPhones[lead.id] ?? ""}
+                                onChange={e => setLeadPhones(prev => ({ ...prev, [lead.id]: e.target.value }))}
+                                placeholder="WhatsApp para envio (5535999999999)"
+                                className="flex-1 bg-surface border border-border rounded-lg px-2.5 py-1.5 text-[11px] text-text-primary placeholder:text-text-muted focus:border-emerald-500/40 outline-none"
+                              />
+                            </div>
+                          )}
+
                           {trilhaItems.map((item, i) => {
-                            const meta = getMeta(item.tipo)
-                            const Icon = meta.icon
+                            const meta  = getMeta(item.tipo)
+                            const Icon  = meta.icon
                             const canal = meta.canal
+                            const phone = lead.telefone || leadPhones[lead.id] || ""
                             return (
                               <div key={i} className="bg-surface border border-border rounded-lg p-3 space-y-1.5">
                                 <div className="flex items-center justify-between gap-2">
@@ -595,7 +701,18 @@ export default function NutricaoLeadsPage() {
                                       {canal}
                                     </span>
                                   </div>
-                                  {item.ehMensagem && <CopyBtn text={item.texto} />}
+                                  {item.ehMensagem && (
+                                    <div className="flex items-center gap-1.5">
+                                      <CopyBtn text={item.texto} />
+                                      <EnviarBtn
+                                        text={item.texto}
+                                        phone={phone}
+                                        sendKey={`lead-${lead.id}-${i}`}
+                                        sendingKey={sendingKey}
+                                        onSend={enviarMensagem}
+                                      />
+                                    </div>
+                                  )}
                                 </div>
                                 <div className="text-[11px] font-medium text-text-primary">{item.titulo}</div>
                                 <p className="text-[10px] text-text-secondary leading-relaxed line-clamp-3">

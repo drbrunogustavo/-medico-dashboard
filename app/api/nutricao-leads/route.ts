@@ -28,6 +28,7 @@ export async function POST(req: NextRequest) {
       perfil:      string
       interesse:   string
       duracaoDias: number
+      telefone?:   string | null
       trilha?:     unknown
       id?:         string
     }
@@ -41,6 +42,7 @@ export async function POST(req: NextRequest) {
           perfil:       body.perfil,
           interesse:    body.interesse,
           duracao_dias: body.duracaoDias,
+          telefone:     body.telefone ?? null,
           trilha:       body.trilha,
           status:       "ativa",
           user_id:      auth.userId,

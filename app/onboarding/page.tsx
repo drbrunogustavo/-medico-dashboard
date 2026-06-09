@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils"
 import {
   ArrowRight, Zap, Star, Crown, Check, X,
   User, MapPin, Stethoscope, Hash, AtSign,
-  Users, Sparkles, Loader2,
+  Users, Sparkles, Loader2, AlertCircle,
 } from "lucide-react"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -148,8 +148,9 @@ const inputCls = "w-full bg-background border border-border rounded-lg px-4 py-3
 
 export default function OnboardingPage() {
   const router  = useRouter()
-  const [step,  setStep]  = useState(1)
-  const [saving, setSaving] = useState(false)
+  const [step,      setStep]      = useState(1)
+  const [saving,    setSaving]    = useState(false)
+  const [erroFinal, setErroFinal] = useState("")
 
   const [form, setForm] = useState<FormData>({
     nome: "", especialidade: "", crm: "", cidade: "",
@@ -181,12 +182,41 @@ export default function OnboardingPage() {
   }
 
   const finish = async (planId: string) => {
-    const ok = await patch({ onboarding_completo: true })
-    if (!ok) {
-      console.error("[onboarding] Falha ao salvar onboarding_completo")
+    setSaving(true)
+    setErroFinal("")
+    try {
+      // Non-critical: save profile fields accumulated in steps 2–3.
+      // May fail if some columns don't exist yet — silently ignored.
+      await fetch("/api/perfil", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      }).catch(() => null)
+
+      // CRITICAL: only send onboarding_completo — minimal payload avoids
+      // any column-mismatch failures that would block the user.
+      const res = await fetch("/api/perfil", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ onboarding_completo: true }),
+      })
+
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({})) as { error?: string }
+        // Log but do NOT block navigation — middleware now exempts /dashboard,
+        // and the dashboard page redirects to onboarding if still incomplete.
+        console.error("[onboarding] Falha ao marcar onboarding_completo:", json.error ?? res.status)
+        setErroFinal(json.error ?? `Erro ${res.status} — tente novamente`)
+        setSaving(false)
+        return  // Let user retry instead of silently cycling back to step 1
+      }
+
+      router.push("/dashboard")
+    } catch (e) {
+      console.error("[onboarding] Exceção:", e)
+      setErroFinal("Erro de conexão. Verifique sua internet e tente novamente.")
+      setSaving(false)
     }
-    // Always go to dashboard — paid plan checkout is handled from inside the app
-    router.push("/dashboard")
   }
 
   return (
@@ -391,6 +421,17 @@ export default function OnboardingPage() {
                 Você pode mudar a qualquer momento. Sem fidelidade.
               </p>
             </div>
+
+            {/* Erro visível ao tentar finalizar */}
+            {erroFinal && (
+              <div className="flex items-start gap-3 bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3">
+                <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-[12px] text-red-400 font-medium">Não foi possível concluir o onboarding</p>
+                  <p className="text-[11px] text-red-400/70 mt-0.5">{erroFinal}</p>
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {PLANS.map(plan => {

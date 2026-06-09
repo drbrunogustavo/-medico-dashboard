@@ -5,7 +5,9 @@ import { NextResponse, type NextRequest } from "next/server"
 const PUBLIC_ROUTES = new Set(["/", "/planos", "/landing"])
 
 // Authenticated users may access without completing onboarding
-const ONBOARDING_EXEMPT = new Set(["/onboarding"])
+// /dashboard is exempt so router.push("/dashboard") always lands —
+// the page itself handles the onboarding redirect client-side.
+const ONBOARDING_EXEMPT = new Set(["/onboarding", "/dashboard"])
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl

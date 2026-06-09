@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { TopBar } from "@/components/TopBar"
 import { StatCard } from "@/components/StatCard"
 import {
@@ -155,7 +156,16 @@ export default function DashboardPage() {
   const [lastAccess,   setLastAccess]   = useState<string | null>(null)
   const [greet]                         = useState(greeting)
   const [dateStr]                       = useState(fmtDate)
-  const { perfil } = usePerfil()
+  const { perfil, loading: perfilLoading } = usePerfil()
+  const router = useRouter()
+
+  // Guard: if profile loaded and onboarding not complete, send back to onboarding.
+  // This fires even when middleware let /dashboard through (ONBOARDING_EXEMPT).
+  useEffect(() => {
+    if (!perfilLoading && perfil !== null && !perfil.onboarding_completo) {
+      router.replace("/onboarding")
+    }
+  }, [perfil, perfilLoading, router])
 
   const dica = DICAS[new Date().getDay()]
 

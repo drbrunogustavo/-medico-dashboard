@@ -5,32 +5,58 @@ import { useMenu } from "@/components/MobileMenuProvider"
 
 const ROUTE_LABELS: Record<string, string> = {
   "/dashboard":          "Dashboard",
+  // PRAXIS Social
+  "/posicionamento":     "Estratégia de Conteúdo",
+  "/reels":              "Reels e Vídeos",
+  "/stories":            "Stories",
+  "/carrossel":          "Carrosséis",
+  "/calendario":         "Calendário Editorial",
   "/radar":              "Radar de Tendências",
-  "/oportunidades":      "Detector de Oportunidades",
-  "/referencias":        "Monitor de Referências",
-  "/agente":             "Agente Executivo",
-  "/imagens":            "Diretor Criativo",
-  "/editor":             "Editor de Vídeo",
-  "/roteiros":           "Gerador de Roteiros",
+  "/concorrentes":       "Análise de Concorrentes",
   "/legendas":           "Gerador de Legendas",
-  "/polemicas":          "Gerador de Polêmicas",
-  "/ofertas":            "Gerador de Ofertas",
-  "/raio-x":             "Raio-X de Pacientes",
-  "/objecoes":           "Mapa de Objeções",
-  "/titulos":            "Gerador de Títulos",
-  "/hashtags":           "Análise de Hashtags",
-  "/ganchos":            "Biblioteca de Ganchos",
+  "/roteiros":           "Gerador de Roteiros",
   "/pautas":             "Banco de Pautas",
+  "/ganchos":            "Biblioteca de Ganchos",
+  "/cta":                "Gerador de CTAs",
+  "/repurposing":        "Repurposing",
+  "/titulos":            "Lab. de Títulos",
+  "/raio-x":             "Raio-X de Pacientes",
+  // PRAXIS Consultório
   "/crm":                "CRM de Leads",
+  "/nutricao-leads":     "Nutrição de Leads",
   "/regua":              "Régua de Relacionamento",
-  "/nps":                "NPS & Satisfação",
-  "/indicacoes":         "Programa de Indicações",
-  "/captacao":           "Captação de Leads",
   "/agenda":             "Agenda Inteligente",
   "/copiloto":           "Copiloto de Consulta",
+  "/pacientes":          "Gestão de Pacientes",
+  "/nps":                "Pesquisa NPS",
+  "/indicacoes":         "Programa de Indicações",
+  "/scripts":            "Scripts de Atendimento",
+  "/objecoes":           "Central de Objeções",
+  "/sops":               "SOPs da Clínica",
+  // PRAXIS Executivo
+  "/executivo":          "Painel Executivo",
   "/financeiro":         "Financeiro",
-  "/nutricao-pacientes": "Nutrição de Pacientes",
-  "/nutricao-leads":     "Nutrição de Leads",
+  "/precificacao":       "Precificação",
+  "/indicadores":        "Indicadores da Clínica",
+  "/consultor":          "Consultor Estratégico",
+  "/diagnostico":        "Diagnóstico 360°",
+  "/metas":              "Metas e Planejamento",
+  "/reativacao":         "Reativação de Pacientes",
+  "/jornada":            "Jornada do Paciente",
+  // PRAXIS IA
+  "/diretor-criativo":   "Diretor Criativo",
+  "/agente-executivo":   "Agente Executivo",
+  "/nutricao-pacientes": "Nutrição de Leads Clínica",
+  // PRAXIS Academy
+  "/academy":            "PRAXIS Academy",
+  // Others
+  "/imagens":            "Diretor Criativo",
+  "/agente":             "Agente Executivo",
+  "/oportunidades":      "Detector de Oportunidades",
+  "/referencias":        "Monitor de Referências",
+  "/editor":             "Editor de Vídeo",
+  "/polemicas":          "Gerador de Polêmicas",
+  "/ofertas":            "Gerador de Ofertas",
   "/whatsapp":           "Agente WhatsApp",
   "/perfil":             "Perfil",
   "/configuracoes":      "Configurações",
@@ -40,7 +66,7 @@ const ROUTE_LABELS: Record<string, string> = {
 export function MobileNav() {
   const pathname  = usePathname()
   const { openMenu } = useMenu()
-  const label = ROUTE_LABELS[pathname] ?? "Dashboard"
+  const label = ROUTE_LABELS[pathname] ?? "PRAXIS"
 
   return (
     <div className="md:hidden flex items-center gap-3 px-4 py-3 bg-surface border-b border-border sticky top-0 z-40">

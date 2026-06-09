@@ -10,6 +10,7 @@ import {
   Video, Layers, FileText, Zap, ArrowRight,
   Activity, BarChart, Lightbulb, TrendingUp,
   Users, Calendar, Stethoscope,
+  Megaphone, BarChart3, Sparkles, GraduationCap,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { usePerfil } from "@/hooks/usePerfil"
@@ -52,66 +53,63 @@ function useCounter(target: number, duration = 800) {
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const SHORTCUTS = [
+const ALA_SECTIONS = [
   {
-    href: "/agente",        icon: Bot,             label: "Agente Executivo",
-    desc: "Conteúdo completo em lote",             badge: "ELITE",
-    color: "text-[#d4af37]", bg: "bg-[rgba(212,175,55,0.06)]", border: "border-[rgba(212,175,55,0.15)] hover:border-[rgba(212,175,55,0.35)]",
+    id: "social", icon: Megaphone, title: "PRAXIS Social",
+    desc: "Atraia mais pacientes com conteúdo estratégico",
+    color: "text-accent", bg: "bg-accent-dim", border: "border-accent-border",
+    indicatorColor: "#00c07f",
+    links: [
+      { label: "Posicionamento", href: "/posicionamento" },
+      { label: "Reels",          href: "/reels"          },
+      { label: "Calendário",     href: "/calendario"     },
+      { label: "Radar",          href: "/radar"          },
+    ],
   },
   {
-    href: "/radar",         icon: Radio,           label: "Radar de Tendências",
-    desc: "Temas em alta em tempo real",           badge: "LIVE",
-    color: "text-red-400",   bg: "bg-red-950/20",  border: "border-red-500/15 hover:border-red-500/35",
+    id: "consultorio", icon: Stethoscope, title: "PRAXIS Consultório",
+    desc: "Converta leads em pacientes fiéis",
+    color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/25",
+    indicatorColor: "#60a5fa",
+    links: [
+      { label: "CRM",     href: "/crm"     },
+      { label: "Copiloto",href: "/copiloto"},
+      { label: "Agenda",  href: "/agenda"  },
+      { label: "Scripts", href: "/scripts" },
+    ],
   },
   {
-    href: "/raio-x",        icon: ScanFace,        label: "Raio-X de Pacientes",
-    desc: "Psicologia e gatilhos do paciente",     badge: null,
-    color: "text-purple-400",bg: "bg-purple-950/20",border: "border-purple-500/15 hover:border-purple-500/35",
+    id: "executivo", icon: BarChart3, title: "PRAXIS Executivo",
+    desc: "Gerencie e escale sua clínica",
+    color: "text-purple-400", bg: "bg-purple-500/10", border: "border-purple-500/25",
+    indicatorColor: "#c084fc",
+    links: [
+      { label: "Financeiro",   href: "/financeiro"   },
+      { label: "Precificação", href: "/precificacao" },
+      { label: "Indicadores",  href: "/indicadores"  },
+      { label: "Consultor",    href: "/consultor"    },
+    ],
   },
   {
-    href: "/objecoes",      icon: ShieldQuestion,  label: "Mapa de Objeções",
-    desc: "Transforme dúvidas em conteúdo",        badge: null,
-    color: "text-amber-400", bg: "bg-amber-950/20",border: "border-amber-500/15 hover:border-amber-500/35",
+    id: "ia", icon: Sparkles, title: "PRAXIS IA",
+    desc: "Inteligência estratégica para crescer mais rápido",
+    color: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/25",
+    indicatorColor: "#fbbf24",
+    links: [
+      { label: "Posicionamento", href: "/posicionamento"    },
+      { label: "Dir. Criativo",  href: "/diretor-criativo"  },
+      { label: "Agente",         href: "/agente-executivo"  },
+      { label: "Nutrição",       href: "/nutricao-pacientes"},
+    ],
   },
   {
-    href: "/oportunidades", icon: CircleDollarSign,label: "Oportunidades",
-    desc: "Detecte momentos de faturamento",       badge: null,
-    color: "text-accent",    bg: "bg-accent-dim",  border: "border-accent-border hover:border-accent/40",
-  },
-  {
-    href: "/roteiros",      icon: Video,           label: "Gerador de Roteiros",
-    desc: "Roteiros completos para Reels",         badge: null,
-    color: "text-blue-400",  bg: "bg-blue-950/20", border: "border-blue-500/15 hover:border-blue-500/35",
-  },
-  {
-    href: "/imagens",       icon: Layers,          label: "Diretor Criativo",
-    desc: "Artes e headlines com IA",              badge: null,
-    color: "text-pink-400",  bg: "bg-pink-950/20", border: "border-pink-500/15 hover:border-pink-500/35",
-  },
-  {
-    href: "/pautas",        icon: FileText,        label: "Banco de Pautas",
-    desc: "Gerencie suas ideias de conteúdo",      badge: null,
-    color: "text-orange-400",bg: "bg-orange-950/20",border: "border-orange-500/15 hover:border-orange-500/35",
-  },
-  {
-    href: "/concorrentes",  icon: Users,           label: "Análise de Concorrentes",
-    desc: "Monitore e aprenda com a concorrência", badge: null,
-    color: "text-teal-400",  bg: "bg-teal-950/20",  border: "border-teal-500/15 hover:border-teal-500/35",
-  },
-  {
-    href: "/financeiro",    icon: TrendingUp,      label: "Financeiro",
-    desc: "Gestão de faturamento e metas",         badge: null,
-    color: "text-emerald-400",bg:"bg-emerald-950/20",border:"border-emerald-500/15 hover:border-emerald-500/35",
-  },
-  {
-    href: "/agenda",        icon: Calendar,        label: "Agenda Inteligente",
-    desc: "Organize consultas e estratégias",      badge: null,
-    color: "text-cyan-400",  bg: "bg-cyan-950/20",  border: "border-cyan-500/15 hover:border-cyan-500/35",
-  },
-  {
-    href: "/copiloto",      icon: Stethoscope,     label: "Copiloto de Consulta",
-    desc: "IA no prontuário em tempo real",        badge: null,
-    color: "text-violet-400",bg:"bg-violet-950/20", border:"border-violet-500/15 hover:border-violet-500/35",
+    id: "academy", icon: GraduationCap, title: "PRAXIS Academy",
+    desc: "Aprenda a construir uma clínica de sucesso",
+    color: "text-pink-400", bg: "bg-pink-500/10", border: "border-pink-500/25",
+    indicatorColor: "#f472b6",
+    links: [
+      { label: "Academy", href: "/academy" },
+    ],
   },
 ]
 
@@ -212,7 +210,7 @@ export default function DashboardPage() {
               )}
               Você tem{" "}
               <span className="text-text-primary font-medium">{pautasCount} pauta{pautasCount !== 1 ? "s" : ""}</span>{" "}
-              salvas e 15 módulos prontos para criar.
+              salvas e 36+ módulos prontos para criar.
             </p>
           </div>
           <div className="mt-4 flex items-center gap-2">
@@ -229,45 +227,53 @@ export default function DashboardPage() {
           <MetricCard label="IA Conectada"     value="Claude"      sub="Sonnet 4 · Online"      accent />
         </div>
 
-        {/* ── Quick access ───────────────────────────────────────────────── */}
+        {/* ── 5 Alas ─────────────────────────────────────────────────────── */}
         <div>
           <div className="flex items-center gap-3 mb-4">
-            <span className="text-[9px] font-mono text-text-muted tracking-[3px] uppercase">Acesso Rápido</span>
+            <span className="text-[9px] font-mono text-text-muted tracking-[3px] uppercase">Módulos da Plataforma</span>
             <div className="h-px flex-1 bg-border" />
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {SHORTCUTS.map(s => {
-              const Icon = s.icon
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3">
+            {ALA_SECTIONS.map(ala => {
+              const AlaIcon = ala.icon
               return (
-                <Link
-                  key={s.href + s.label}
-                  href={s.href}
+                <div
+                  key={ala.id}
                   className={cn(
-                    "group block bg-surface border rounded-xl p-4 transition-all duration-200 hover:-translate-y-0.5",
-                    s.border
+                    "bg-surface border rounded-xl p-4 transition-all duration-200 hover:-translate-y-0.5",
+                    ala.border,
                   )}
                 >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center border", s.bg, s.border.split(" ")[0])}>
-                      <Icon className={cn("w-4 h-4", s.color)} />
+                  <div className="flex items-center gap-2.5 mb-3">
+                    <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center border flex-shrink-0", ala.bg, ala.border)}>
+                      <AlaIcon className={cn("w-4 h-4", ala.color)} />
                     </div>
-                    {s.badge && (
-                      <span className={cn(
-                        "text-[8px] font-mono font-bold px-1.5 py-0.5 rounded border tracking-wider",
-                        s.badge === "ELITE" ? "bg-[rgba(212,175,55,0.08)] text-[#d4af37] border-[rgba(212,175,55,0.25)]" :
-                        s.badge === "LIVE"  ? "bg-red-500/10 text-red-400 border-red-500/30" :
-                        "bg-accent-dim text-accent border-accent-border"
-                      )}>
-                        {s.badge}
-                      </span>
-                    )}
+                    <div className="min-w-0">
+                      <h3 className={cn("text-[11px] font-bold truncate", ala.color)}>{ala.title}</h3>
+                    </div>
                   </div>
-                  <h3 className="text-[12px] md:text-[13px] font-semibold text-text-primary mb-1 leading-snug">{s.label}</h3>
-                  <p className="text-[10px] md:text-[11px] text-text-muted leading-relaxed">{s.desc}</p>
+                  <p className="text-[10px] text-text-muted leading-relaxed mb-3">{ala.desc}</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {ala.links.map(link => (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        className={cn(
+                          "text-[9px] font-mono px-2 py-0.5 rounded-full border transition-colors",
+                          ala.bg, ala.border, ala.color,
+                          "hover:opacity-80"
+                        )}
+                      >
+                        {link.label}
+                      </Link>
+                    ))}
+                  </div>
                   <div className="mt-3 flex justify-end">
-                    <ArrowRight className={cn("w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity", s.color)} />
+                    <Link href={ala.links[0].href}>
+                      <ArrowRight className={cn("w-3.5 h-3.5", ala.color)} />
+                    </Link>
                   </div>
-                </Link>
+                </div>
               )
             })}
           </div>

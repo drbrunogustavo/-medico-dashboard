@@ -338,89 +338,108 @@ export default function LandingPage() {
             fontSize: "clamp(22px, 4vw, 42px)",
             fontWeight: 600, color: "#f0f0f0", lineHeight: 1.15,
           }}>
-            Dois mundos. Uma plataforma.
+            Uma plataforma. Cinco frentes de crescimento.
           </h2>
+          <p style={{ fontSize: 15, color: "#555", marginTop: 16, maxWidth: 560, margin: "16px auto 0" }}>
+            Do conteúdo ao consultório, do financeiro à estratégia — tudo em um único lugar.
+          </p>
         </FadeUp>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-
-          {/* Ala Social */}
-          <FadeUp delay={80}>
-            <div className="h-full rounded-2xl p-8" style={{
-              background: "rgba(0,192,127,0.03)",
-              border: "1px solid rgba(0,192,127,0.14)",
-            }}>
-              <div className="flex items-center gap-3 mb-7">
-                <div style={{
-                  width: 46, height: 46, borderRadius: 12, flexShrink: 0,
-                  background: "rgba(0,192,127,0.10)",
-                  border: "1px solid rgba(0,192,127,0.22)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 22,
-                }}>
-                  🎯
-                </div>
-                <div>
+        {/* Row 1: Social + Consultório */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+          {[
+            {
+              emoji: "📱", color: "#00c07f", bg: "rgba(0,192,127,0.03)", border: "rgba(0,192,127,0.14)",
+              iconBg: "rgba(0,192,127,0.10)", iconBorder: "rgba(0,192,127,0.22)",
+              name: "PRAXIS Social", sub: "Atraia mais pacientes com conteúdo estratégico",
+              features: SOCIAL_FEATURES, delay: 80,
+            },
+            {
+              emoji: "🏥", color: "#3b82f6", bg: "rgba(59,130,246,0.03)", border: "rgba(59,130,246,0.14)",
+              iconBg: "rgba(59,130,246,0.10)", iconBorder: "rgba(59,130,246,0.22)",
+              name: "PRAXIS Consultório", sub: "Converta leads em pacientes fiéis",
+              features: CLINICA_FEATURES, delay: 180,
+            },
+          ].map((m, i) => (
+            <FadeUp key={i} delay={m.delay}>
+              <div className="h-full rounded-2xl p-8" style={{ background: m.bg, border: `1px solid ${m.border}` }}>
+                <div className="flex items-center gap-3 mb-7">
                   <div style={{
-                    fontFamily: "var(--font-playfair), Georgia, serif",
-                    fontSize: 18, fontWeight: 700, color: "#f0f0f0",
-                  }}>
-                    Ala Social
-                  </div>
-                  <div style={{ fontSize: 12, color: "#00c07f", marginTop: 2 }}>
-                    Do roteiro ao post. Em minutos.
+                    width: 46, height: 46, borderRadius: 12, flexShrink: 0,
+                    background: m.iconBg, border: `1px solid ${m.iconBorder}`,
+                    display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22,
+                  }}>{m.emoji}</div>
+                  <div>
+                    <div style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: 18, fontWeight: 700, color: "#f0f0f0" }}>
+                      {m.name}
+                    </div>
+                    <div style={{ fontSize: 12, color: m.color, marginTop: 2 }}>{m.sub}</div>
                   </div>
                 </div>
+                <ul className="space-y-3.5">
+                  {m.features.map((f, j) => (
+                    <li key={j} className="flex items-start gap-3">
+                      <Check style={{ width: 15, height: 15, color: m.color, flexShrink: 0, marginTop: 1 }} />
+                      <span style={{ fontSize: 14, color: "#999", lineHeight: 1.6 }}>{f}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <ul className="space-y-3.5">
-                {SOCIAL_FEATURES.map((f, i) => (
-                  <li key={i} className="flex items-start gap-3">
-                    <Check style={{ width: 15, height: 15, color: "#00c07f", flexShrink: 0, marginTop: 1 }} />
-                    <span style={{ fontSize: 14, color: "#999", lineHeight: 1.6 }}>{f}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </FadeUp>
+            </FadeUp>
+          ))}
+        </div>
 
-          {/* Ala Clínica */}
-          <FadeUp delay={180}>
-            <div className="h-full rounded-2xl p-8" style={{
-              background: "rgba(59,130,246,0.03)",
-              border: "1px solid rgba(59,130,246,0.14)",
-            }}>
-              <div className="flex items-center gap-3 mb-7">
-                <div style={{
-                  width: 46, height: 46, borderRadius: 12, flexShrink: 0,
-                  background: "rgba(59,130,246,0.10)",
-                  border: "1px solid rgba(59,130,246,0.22)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 22,
-                }}>
-                  🏥
-                </div>
-                <div>
+        {/* Row 2: Executivo + IA + Academy */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {[
+            {
+              emoji: "📊", color: "#a78bfa", bg: "rgba(167,139,250,0.03)", border: "rgba(167,139,250,0.14)",
+              iconBg: "rgba(167,139,250,0.10)", iconBorder: "rgba(167,139,250,0.22)",
+              name: "PRAXIS Executivo", sub: "Gerencie e escale sua clínica",
+              features: ["Painel financeiro com métricas", "Precificação inteligente de consultas", "KPIs e indicadores da clínica"],
+              delay: 100,
+            },
+            {
+              emoji: "✨", color: "#fbbf24", bg: "rgba(251,191,36,0.03)", border: "rgba(251,191,36,0.14)",
+              iconBg: "rgba(251,191,36,0.10)", iconBorder: "rgba(251,191,36,0.22)",
+              name: "PRAXIS IA", sub: "Inteligência estratégica para crescer mais rápido",
+              features: ["Posicionamento médico com IA", "Diretor criativo automatizado", "Agente executivo multimodal"],
+              delay: 200,
+            },
+            {
+              emoji: "🎓", color: "#f472b6", bg: "rgba(244,114,182,0.03)", border: "rgba(244,114,182,0.14)",
+              iconBg: "rgba(244,114,182,0.10)", iconBorder: "rgba(244,114,182,0.22)",
+              name: "PRAXIS Academy", sub: "Aprenda a construir uma clínica de sucesso",
+              features: ["Conteúdo exclusivo para médicos", "Estratégias de crescimento clínico", "Comunidade de médicos de alto padrão"],
+              delay: 300,
+            },
+          ].map((m, i) => (
+            <FadeUp key={i} delay={m.delay}>
+              <div className="h-full rounded-2xl p-6" style={{ background: m.bg, border: `1px solid ${m.border}` }}>
+                <div className="flex items-center gap-3 mb-5">
                   <div style={{
-                    fontFamily: "var(--font-playfair), Georgia, serif",
-                    fontSize: 18, fontWeight: 700, color: "#f0f0f0",
-                  }}>
-                    Ala Clínica
-                  </div>
-                  <div style={{ fontSize: 12, color: "#3b82f6", marginTop: 2 }}>
-                    Sua clínica, automatizada.
+                    width: 40, height: 40, borderRadius: 10, flexShrink: 0,
+                    background: m.iconBg, border: `1px solid ${m.iconBorder}`,
+                    display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18,
+                  }}>{m.emoji}</div>
+                  <div>
+                    <div style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: 15, fontWeight: 700, color: "#f0f0f0" }}>
+                      {m.name}
+                    </div>
+                    <div style={{ fontSize: 11, color: m.color, marginTop: 2 }}>{m.sub}</div>
                   </div>
                 </div>
+                <ul className="space-y-2.5">
+                  {m.features.map((f, j) => (
+                    <li key={j} className="flex items-start gap-2.5">
+                      <Check style={{ width: 13, height: 13, color: m.color, flexShrink: 0, marginTop: 2 }} />
+                      <span style={{ fontSize: 12, color: "#999", lineHeight: 1.6 }}>{f}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <ul className="space-y-3.5">
-                {CLINICA_FEATURES.map((f, i) => (
-                  <li key={i} className="flex items-start gap-3">
-                    <Check style={{ width: 15, height: 15, color: "#3b82f6", flexShrink: 0, marginTop: 1 }} />
-                    <span style={{ fontSize: 14, color: "#999", lineHeight: 1.6 }}>{f}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </FadeUp>
+            </FadeUp>
+          ))}
         </div>
       </section>
 

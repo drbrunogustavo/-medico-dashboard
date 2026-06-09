@@ -4,13 +4,15 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 import {
-  LayoutDashboard, X, Stethoscope,
-  Radio, CircleDollarSign, Users, Users2,
-  Bot, Video, Layers, Clapperboard, Sparkles, Flame, Megaphone,
-  ScanFace, ShieldQuestion, Microscope, FileText,
-  Calendar, Heart, TrendingUp, MessageCircle,
-  Star, UserPlus,
+  LayoutDashboard, X,
+  Megaphone, Stethoscope, BarChart3, Sparkles, GraduationCap,
+  Target, Play, Smartphone, LayoutGrid, CalendarDays, Radio, Users2,
+  Video, FileText, Zap, MousePointerClick, Repeat2, Microscope, ScanFace,
+  TrendingUp, Heart, Calendar, Bot, Users, Star, UserPlus,
+  MessageSquare, ShieldQuestion, ClipboardList, CircleDollarSign,
+  Tag, Activity, Lightbulb, Layers, Layers2,
   LogOut, CreditCard, Settings,
+  RefreshCw, Map, BarChart2, Rocket,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useMenu } from "@/components/MobileMenuProvider"
@@ -19,84 +21,105 @@ import { usePlano } from "@/hooks/usePlano"
 import { usePerfil } from "@/hooks/usePerfil"
 import { PraxisLogo } from "@/components/PraxisLogo"
 
-// ─── Nav definition ───────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
 
-type NavItem  = { label: string; href: string; icon: React.ElementType; badge?: string | null }
-type NavGroup = { category: string | null; items: NavItem[] }
+type AlaId   = "social" | "consultorio" | "executivo" | "ia" | "academy"
+type NavItem = { label: string; href: string; icon: React.ElementType; badge?: string | null }
 
-const NAV_SOCIAL: NavGroup[] = [
-  {
-    category: null,
-    items: [{ label: "Dashboard", href: "/dashboard", icon: LayoutDashboard }],
-  },
-  {
-    category: "Inteligência",
-    items: [
-      { label: "Radar de Tendências",       href: "/radar",         icon: Radio,            badge: "LIVE" },
-      { label: "Detector de Oportunidades", href: "/oportunidades", icon: CircleDollarSign               },
-      { label: "Monitor de Referências",    href: "/referencias",   icon: Users                          },
-    ],
-  },
-  {
-    category: "Criação",
-    items: [
-      { label: "Agente Executivo",     href: "/agente",    icon: Bot,         badge: "PRO" },
-      { label: "Diretor Criativo",     href: "/imagens",   icon: Layers                    },
-      { label: "Editor de Vídeo",      href: "/editor",    icon: Clapperboard              },
-      { label: "Gerador de Roteiros",  href: "/roteiros",  icon: Video                     },
-      { label: "Gerador de Legendas",  href: "/legendas",  icon: Sparkles                  },
-      { label: "Gerador de Polêmicas", href: "/polemicas", icon: Flame                     },
-      { label: "Gerador de Ofertas",   href: "/ofertas",   icon: Megaphone                 },
-    ],
-  },
-  {
-    category: "Estratégia",
-    items: [
-      { label: "Raio-X de Pacientes",   href: "/raio-x",   icon: ScanFace      },
-      { label: "Mapa de Objeções",      href: "/objecoes",  icon: ShieldQuestion },
-      { label: "Lab. de Viralização",   href: "/titulos",  icon: Microscope    },
-      { label: "Biblioteca de Ganchos", href: "/ganchos",  icon: Sparkles      },
-      { label: "Banco de Pautas",       href: "/pautas",   icon: FileText      },
-    ],
-  },
-]
+// ─── Ala definitions ──────────────────────────────────────────────────────────
 
-const NAV_CLINICA: NavGroup[] = [
-  {
-    category: null,
-    items: [{ label: "Dashboard", href: "/dashboard", icon: LayoutDashboard }],
+const ALAS: Record<AlaId, {
+  label:           string
+  short:           string
+  icon:            React.ElementType
+  activeTxt:       string
+  activeBg:        string
+  activeBorder:    string
+  activeIndicator: string
+}> = {
+  social:      {
+    label: "PRAXIS Social",      short: "Social",   icon: Megaphone,
+    activeTxt: "text-accent",    activeBg: "bg-accent-dim",       activeBorder: "border-accent-border",     activeIndicator: "bg-accent",
   },
-  {
-    category: "Agenda",
-    items: [
-      { label: "Agenda Inteligente", href: "/agenda", icon: Calendar },
-    ],
+  consultorio: {
+    label: "PRAXIS Consultório", short: "Consult.", icon: Stethoscope,
+    activeTxt: "text-blue-400",  activeBg: "bg-blue-500/10",      activeBorder: "border-blue-500/25",       activeIndicator: "bg-blue-400",
   },
-  {
-    category: "Pacientes",
-    items: [
-      { label: "Copiloto de Consulta", href: "/copiloto",    icon: Bot      },
-      { label: "CRM de Leads",         href: "/crm",         icon: Users2   },
-      { label: "Indicações",           href: "/indicacoes",  icon: UserPlus },
-      { label: "NPS & Satisfação",     href: "/nps",         icon: Star     },
-    ],
+  executivo:   {
+    label: "PRAXIS Executivo",   short: "Exec.",    icon: BarChart3,
+    activeTxt: "text-purple-400",activeBg: "bg-purple-500/10",    activeBorder: "border-purple-500/25",     activeIndicator: "bg-purple-400",
   },
-  {
-    category: "Financeiro",
-    items: [
-      { label: "Financeiro", href: "/financeiro", icon: CircleDollarSign },
-    ],
+  ia:          {
+    label: "PRAXIS IA",          short: "IA",       icon: Sparkles,
+    activeTxt: "text-amber-400", activeBg: "bg-amber-500/10",     activeBorder: "border-amber-500/25",      activeIndicator: "bg-amber-400",
   },
-  {
-    category: "Automação",
-    items: [
-      { label: "Nutrição de Pacientes",    href: "/nutricao-pacientes", icon: Heart,         },
-      { label: "Nutrição de Leads",        href: "/nutricao-leads",     icon: TrendingUp,    },
-      { label: "Régua de Relacionamento",  href: "/regua",              icon: Heart,         },
-      { label: "Agente WhatsApp",          href: "/whatsapp",           icon: MessageCircle, badge: "EM BREVE" },
-    ],
+  academy:     {
+    label: "PRAXIS Academy",     short: "Academy",  icon: GraduationCap,
+    activeTxt: "text-pink-400",  activeBg: "bg-pink-500/10",      activeBorder: "border-pink-500/25",       activeIndicator: "bg-pink-400",
   },
-]
+}
+
+// ─── Nav items per ala ────────────────────────────────────────────────────────
+
+const NAV: Record<AlaId, NavItem[]> = {
+  social: [
+    { label: "Estratégia de Conteúdo", href: "/posicionamento",   icon: Target            },
+    { label: "Reels e Vídeos",         href: "/reels",            icon: Play              },
+    { label: "Stories",                href: "/stories",          icon: Smartphone        },
+    { label: "Carrosséis",             href: "/carrossel",        icon: LayoutGrid        },
+    { label: "Calendário Editorial",   href: "/calendario",       icon: CalendarDays      },
+    { label: "Radar de Tendências",    href: "/radar",            icon: Radio,   badge: "LIVE" },
+    { label: "Análise de Concorrentes",href: "/concorrentes",     icon: Users2            },
+    { label: "Gerador de Legendas",    href: "/legendas",         icon: Sparkles          },
+    { label: "Gerador de Roteiros",    href: "/roteiros",         icon: Video             },
+    { label: "Banco de Pautas",        href: "/pautas",           icon: FileText          },
+    { label: "Biblioteca de Ganchos",  href: "/ganchos",          icon: Zap               },
+    { label: "Gerador de CTAs",        href: "/cta",              icon: MousePointerClick },
+    { label: "Repurposing",            href: "/repurposing",      icon: Repeat2           },
+    { label: "Lab. de Títulos",        href: "/titulos",          icon: Microscope        },
+    { label: "Raio-X de Pacientes",    href: "/raio-x",           icon: ScanFace          },
+  ],
+  consultorio: [
+    { label: "CRM de Leads",            href: "/crm",              icon: Users2        },
+    { label: "Nutrição de Leads",       href: "/nutricao-leads",   icon: TrendingUp    },
+    { label: "Régua de Relacionamento", href: "/regua",            icon: Heart         },
+    { label: "Agenda Inteligente",      href: "/agenda",           icon: Calendar      },
+    { label: "Copiloto de Consulta",    href: "/copiloto",         icon: Bot           },
+    { label: "Gestão de Pacientes",     href: "/pacientes",        icon: Users         },
+    { label: "Pesquisa NPS",            href: "/nps",              icon: Star          },
+    { label: "Programa de Indicações",  href: "/indicacoes",       icon: UserPlus      },
+    { label: "Scripts de Atendimento",  href: "/scripts",          icon: MessageSquare },
+    { label: "Central de Objeções",     href: "/objecoes",         icon: ShieldQuestion},
+    { label: "SOPs da Clínica",         href: "/sops",             icon: ClipboardList },
+    { label: "Reativação de Pacientes", href: "/reativacao",       icon: RefreshCw     },
+    { label: "Jornada do Paciente",     href: "/jornada",          icon: Map           },
+  ],
+  executivo: [
+    { label: "Painel Executivo",       href: "/executivo",    icon: BarChart3        },
+    { label: "Financeiro",             href: "/financeiro",   icon: CircleDollarSign },
+    { label: "Precificação",           href: "/precificacao", icon: Tag              },
+    { label: "Indicadores da Clínica", href: "/indicadores",  icon: BarChart2        },
+    { label: "Consultor Estratégico",  href: "/consultor",    icon: Lightbulb        },
+    { label: "Diagnóstico 360°",       href: "/diagnostico",  icon: Activity         },
+    { label: "Metas e Planejamento",   href: "/metas",        icon: Target           },
+    { label: "Mapa de Objeções",       href: "/objecoes",     icon: ShieldQuestion   },
+  ],
+  ia: [
+    { label: "Posicionamento Médico",     href: "/posicionamento",    icon: Target  },
+    { label: "Diretor Criativo",          href: "/diretor-criativo",  icon: Layers  },
+    { label: "Agente Executivo",          href: "/agente-executivo",  icon: Bot,   badge: "PRO" },
+    { label: "Nutrição de Leads Clínica", href: "/nutricao-pacientes",icon: Layers2 },
+  ],
+  academy: [
+    { label: "PRAXIS Academy",    href: "/academy",  icon: GraduationCap                   },
+    { label: "Trilha Marketing",  href: "/academy",  icon: Megaphone,  badge: "EM BREVE"   },
+    { label: "Trilha Gestão",     href: "/academy",  icon: BarChart3,  badge: "EM BREVE"   },
+    { label: "Trilha Comercial",  href: "/academy",  icon: TrendingUp, badge: "EM BREVE"   },
+    { label: "Trilha Escala",     href: "/academy",  icon: Rocket,     badge: "EM BREVE"   },
+  ],
+}
+
+// ─── Badge styles ─────────────────────────────────────────────────────────────
 
 const BADGE_STYLE: Record<string, string> = {
   "ELITE":    "bg-[rgba(212,175,55,0.08)] text-[#d4af37] border border-[rgba(212,175,55,0.25)]",
@@ -132,32 +155,36 @@ const PLAN_UI = {
 // ─── Sidebar content ──────────────────────────────────────────────────────────
 
 function SidebarContent() {
-  const pathname = usePathname()
+  const pathname      = usePathname()
   const { closeMenu } = useMenu()
   const { user, signOut } = useAuth()
+  const { plano }     = usePlano()
+  const { perfil }    = usePerfil()
 
-  const [ala, setAla] = useState<"social" | "clinica">("social")
-  const { plano }  = usePlano()
-  const { perfil } = usePerfil()
+  const [ala, setAla] = useState<AlaId>("social")
 
   useEffect(() => {
-    const saved = localStorage.getItem("praxis_ala") as "social" | "clinica" | null
-    if (saved === "social" || saved === "clinica") setAla(saved)
+    const saved = localStorage.getItem("praxis_ala_v2") as AlaId | null
+    const valid: AlaId[] = ["social","consultorio","executivo","ia","academy"]
+    if (saved && valid.includes(saved)) setAla(saved)
   }, [])
 
-  const switchAla = (next: "social" | "clinica") => {
+  const switchAla = (next: AlaId) => {
     setAla(next)
-    localStorage.setItem("praxis_ala", next)
+    localStorage.setItem("praxis_ala_v2", next)
   }
 
-  const nav = ala === "social" ? NAV_SOCIAL : NAV_CLINICA
+  const alaConfig = ALAS[ala]
+  const navItems  = NAV[ala]
 
   return (
     <aside className="h-full w-60 flex flex-col bg-surface border-r border-border">
 
-      {/* Logo */}
+      {/* ── Logo ── */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-        <PraxisLogo />
+        <Link href="/dashboard" onClick={closeMenu}>
+          <PraxisLogo />
+        </Link>
         <button
           onClick={closeMenu}
           className="md:hidden w-7 h-7 rounded-md flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors flex-shrink-0"
@@ -167,94 +194,100 @@ function SidebarContent() {
         </button>
       </div>
 
-      {/* Ala toggle */}
-      <div className="flex gap-1 px-3 py-2.5 border-b border-border">
-        <button
-          onClick={() => switchAla("social")}
-          className={cn(
-            "flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-[11px] font-semibold transition-colors",
-            ala === "social"
-              ? "bg-accent-dim border border-accent-border text-accent"
-              : "text-text-muted hover:text-text-secondary hover:bg-surface-2"
-          )}
-        >
-          <Sparkles className="w-3 h-3" /> Social
-        </button>
-        <button
-          onClick={() => switchAla("clinica")}
-          className={cn(
-            "flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-[11px] font-semibold transition-colors",
-            ala === "clinica"
-              ? "bg-blue-500/10 border border-blue-500/25 text-blue-400"
-              : "text-text-muted hover:text-text-secondary hover:bg-surface-2"
-          )}
-        >
-          <Stethoscope className="w-3 h-3" /> Clínica
-        </button>
+      {/* ── Ala selector — 5 icon pills ── */}
+      <div className="flex items-center gap-1 px-2 pt-2 pb-1 border-b border-border">
+        {(Object.entries(ALAS) as [AlaId, typeof ALAS[AlaId]][]).map(([id, cfg]) => {
+          const AlaIcon = cfg.icon
+          const isActive = ala === id
+          return (
+            <button
+              key={id}
+              type="button"
+              onClick={() => switchAla(id)}
+              title={cfg.label}
+              className={cn(
+                "flex-1 flex flex-col items-center justify-center py-1.5 rounded-lg text-[7.5px] font-bold gap-0.5 transition-colors leading-none",
+                isActive
+                  ? `${cfg.activeBg} border ${cfg.activeBorder} ${cfg.activeTxt}`
+                  : "text-text-muted hover:text-text-secondary hover:bg-surface-2"
+              )}
+            >
+              <AlaIcon className="w-3.5 h-3.5" />
+              <span className="truncate max-w-[34px] text-center">{cfg.short}</span>
+            </button>
+          )
+        })}
       </div>
 
-      {/* Nav */}
-      <nav className="flex-1 px-3 py-3 overflow-y-auto space-y-0.5 scrollbar-none">
-        {nav.map((group, gi) => (
-          <div key={gi} className={gi > 0 ? "mt-1" : ""}>
-            {group.category && (
-              <div className="px-3 py-2 mt-3 mb-1">
-                <span className="text-[9px] font-sans text-text-muted tracking-[3px] uppercase font-medium">
-                  {group.category}
-                </span>
-              </div>
-            )}
-            <div className="space-y-0.5">
-              {group.items.map(item => {
-                const Icon     = item.icon
-                const isActive = pathname === item.href
-                return (
-                  <Link
-                    key={`${item.href}-${item.label}`}
-                    href={item.href}
-                    onClick={closeMenu}
-                    className={cn(
-                      "relative flex items-center gap-2.5 px-3 py-[7px] rounded-lg text-[12.5px] font-medium transition-colors group",
-                      isActive
-                        ? ala === "clinica"
-                          ? "bg-blue-500/10 text-blue-400"
-                          : "bg-accent-dim text-accent"
-                        : "text-text-muted hover:text-text-primary hover:bg-surface-2"
-                    )}
-                  >
-                    {isActive && (
-                      <span className={cn(
-                        "absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-[60%] rounded-r-full",
-                        ala === "clinica" ? "bg-blue-400" : "bg-accent"
-                      )} />
-                    )}
-                    <Icon className={cn(
-                      "w-3.5 h-3.5 flex-shrink-0 transition-colors",
-                      isActive
-                        ? ala === "clinica" ? "text-blue-400" : "text-accent"
-                        : "text-text-muted group-hover:text-text-secondary"
-                    )} />
-                    <span className="flex-1 truncate">{item.label}</span>
-                    {item.badge && (
-                      <span className={cn(
-                        "text-[8px] font-mono font-bold px-1.5 py-0.5 rounded tracking-wider flex-shrink-0",
-                        BADGE_STYLE[item.badge] ?? BADGE_STYLE["PRO"]
-                      )}>
-                        {item.badge}
-                      </span>
-                    )}
-                  </Link>
-                )
-              })}
-            </div>
-          </div>
-        ))}
+      {/* ── Active ala label ── */}
+      <div className="px-4 pt-2.5 pb-1.5">
+        <span className={cn("text-[9px] font-mono font-semibold tracking-[2px] uppercase", alaConfig.activeTxt)}>
+          {alaConfig.label}
+        </span>
+      </div>
+
+      {/* ── Nav items ── */}
+      <nav className="flex-1 px-3 pb-3 overflow-y-auto scrollbar-none">
+        <div className="space-y-0.5">
+          {navItems.map(item => {
+            const Icon     = item.icon
+            const isActive = pathname === item.href
+            return (
+              <Link
+                key={`${item.href}-${item.label}`}
+                href={item.href}
+                onClick={closeMenu}
+                className={cn(
+                  "relative flex items-center gap-2.5 px-3 py-[7px] rounded-lg text-[12.5px] font-medium transition-colors group",
+                  isActive
+                    ? `${alaConfig.activeBg} ${alaConfig.activeTxt}`
+                    : "text-text-muted hover:text-text-primary hover:bg-surface-2"
+                )}
+              >
+                {isActive && (
+                  <span className={cn(
+                    "absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-[60%] rounded-r-full",
+                    alaConfig.activeIndicator
+                  )} />
+                )}
+                <Icon className={cn(
+                  "w-3.5 h-3.5 flex-shrink-0 transition-colors",
+                  isActive ? alaConfig.activeTxt : "text-text-muted group-hover:text-text-secondary"
+                )} />
+                <span className="flex-1 truncate">{item.label}</span>
+                {item.badge && (
+                  <span className={cn(
+                    "text-[8px] font-mono font-bold px-1.5 py-0.5 rounded tracking-wider flex-shrink-0",
+                    BADGE_STYLE[item.badge] ?? BADGE_STYLE["PRO"]
+                  )}>
+                    {item.badge}
+                  </span>
+                )}
+              </Link>
+            )
+          })}
+        </div>
       </nav>
 
-      {/* Footer */}
+      {/* ── Footer ── */}
       <div className="border-t border-border">
+        {/* Dashboard quick link */}
+        <Link
+          href="/dashboard"
+          onClick={closeMenu}
+          className={cn(
+            "flex items-center gap-2 mx-3 mt-2 mb-1 px-3 py-1.5 rounded-lg text-[11px] transition-colors",
+            pathname === "/dashboard"
+              ? "bg-surface-2 text-text-primary font-medium"
+              : "text-text-muted hover:text-text-secondary hover:bg-surface-2"
+          )}
+        >
+          <LayoutDashboard className="w-3.5 h-3.5 flex-shrink-0" />
+          <span>Dashboard</span>
+        </Link>
+
         {/* Plan badge */}
-        <div className="px-4 pt-3 pb-1">
+        <div className="px-4 pb-1">
           <Link
             href="/planos"
             onClick={closeMenu}
@@ -298,7 +331,7 @@ function SidebarContent() {
           </div>
         </Link>
 
-        {/* Settings + Sign out row */}
+        {/* Settings + Sign out */}
         <div className="flex items-center gap-1.5 px-4 pb-3">
           <Link
             href="/configuracoes"

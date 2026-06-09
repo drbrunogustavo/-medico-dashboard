@@ -371,7 +371,27 @@ export default function FinanceiroPage() {
             ))}
           </div>
 
-          {data.length === 0 && !loading ? (
+          {loading && rawData.length === 0 ? (
+            <div className="divide-y divide-border">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="px-5 py-4 animate-pulse">
+                  <div className="hidden md:flex items-center gap-4">
+                    <div className="h-3 w-20 rounded bg-surface" />
+                    <div className="h-3 w-24 rounded bg-surface" />
+                    <div className="h-5 w-16 rounded-full bg-surface" />
+                    <div className="h-3 flex-1 rounded bg-surface" />
+                    <div className="h-3 w-28 rounded bg-surface" />
+                    <div className="h-4 w-20 rounded bg-surface" />
+                  </div>
+                  <div className="flex items-center gap-3 md:hidden">
+                    <div className="h-5 w-16 rounded-full bg-surface" />
+                    <div className="h-3 flex-1 rounded bg-surface" />
+                    <div className="h-4 w-16 rounded bg-surface" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : data.length === 0 && !loading ? (
             <div className="py-12 text-center text-[13px] text-text-muted">
               Nenhum lançamento no período selecionado.
             </div>
@@ -386,7 +406,7 @@ export default function FinanceiroPage() {
                   )}
                 >
                   {/* Data */}
-                  <span className="text-[11px] font-mono text-text-secondary">{fmtDate(l.data)}</span>
+                  <span className="hidden md:block text-[11px] font-mono text-text-secondary">{fmtDate(l.data)}</span>
 
                   {/* Unidade */}
                   <div className="flex items-center gap-1.5">
@@ -413,7 +433,7 @@ export default function FinanceiroPage() {
                   <span className="text-[12px] text-text-primary truncate">{l.descricao}</span>
 
                   {/* Forma de pagamento */}
-                  <span className="text-[11px] text-text-muted">{l.forma_pagamento ?? "—"}</span>
+                  <span className="hidden md:block text-[11px] text-text-muted">{l.forma_pagamento ?? "—"}</span>
 
                   {/* Valor */}
                   <span className={cn(

@@ -242,7 +242,8 @@ export default function AgendaPage() {
   const [novoSaving, setNovoSaving] = useState(false)
   const [novoError,  setNovoError]  = useState("")
   const [novoOk,     setNovoOk]     = useState(false)
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const debounceRef    = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [mobileCalIdx, setMobileCalIdx] = useState(0)
 
   const dias    = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
   const weekEnd = addDays(weekStart, 6)
@@ -309,6 +310,14 @@ export default function AgendaPage() {
   }, [weekStart, weekEnd, usuarioFiltro])
 
   useEffect(() => { fetchAgenda() }, [fetchAgenda])
+
+  // Sync mobile day index to today when the week changes
+  useEffect(() => {
+    const todayISO = toISO(new Date())
+    const idx = dias.findIndex(d => toISO(d) === todayISO)
+    setMobileCalIdx(idx >= 0 ? idx : 0)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [weekStart])
 
   // Patient search
   const buscarPaciente = (q: string) => {
@@ -655,8 +664,97 @@ export default function AgendaPage() {
         {/* ── CALENDÁRIO VIEW ──────────────────────────────────────────────── */}
         {viewMode === "calendario" && (
           <div className="bg-surface border border-border rounded-xl overflow-hidden">
-            {/* Day headers */}
-            <div className="grid grid-cols-[48px_repeat(7,1fr)] border-b border-border">
+            {/* Mobile: single-day navigation */}
+            <div className="md:hidden">
+              <div className="flex items-center justify-between px-3 py-2.5 border-b border-border">
+                <button
+                  onClick={() => setMobileCalIdx(i => Math.max(0, i - 1))}
+                  disabled={mobileCalIdx === 0}
+                  className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-text-primary disabled:opacity-30 hover:bg-surface-2 transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <div className="text-center flex-1">
+                  <div className={cn(
+                    "text-[12px] font-semibold",
+                    toISO(dias[mobileCalIdx]) === toISO(new Date()) ? "text-blue-400" : "text-text-primary"
+                  )}>
+                    {DIAS_SEMANA[dias[mobileCalIdx].getDay()]}, {fmtDateLong(dias[mobileCalIdx])}
+                  </div>
+                  {toISO(dias[mobileCalIdx]) === toISO(new Date()) && (
+                    <span className="text-[9px] font-mono text-blue-400 tracking-widest">HOJE</span>
+                  )}
+                </div>
+                <button
+                  onClick={() => setMobileCalIdx(i => Math.min(6, i + 1))}
+                  disabled={mobileCalIdx === 6}
+                  className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-text-primary disabled:opacity-30 hover:bg-surface-2 transition-colors"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+
+              {loading ? (
+                <div className="p-3 space-y-2">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="h-14 rounded-xl bg-surface border border-border animate-pulse" />
+                  ))}
+                </div>
+              ) : (() => {
+                const mobileItems = byDay(dias[mobileCalIdx])
+                return mobileItems.length === 0 ? (
+                  <div className="flex items-center justify-between px-4 py-5 text-[12px] text-text-muted">
+                    <span>Sem agendamentos</span>
+                    <button
+                      onClick={() => openNovo(toISO(dias[mobileCalIdx]))}
+                      className="flex items-center gap-1 text-[11px] text-blue-400 hover:text-blue-300 transition-colors"
+                    >
+                      <Plus className="w-3.5 h-3.5" /> Adicionar
+                    </button>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-border">
+                    {mobileItems.map((apt, j) => (
+                      <button
+                        key={j}
+                        onClick={() => { setSelected(apt); setNewStatusId("") }}
+                        className="w-full text-left flex items-center gap-3 px-4 py-3 hover:bg-surface-2 transition-colors"
+                      >
+                        <div className="w-1 self-stretch rounded-full flex-shrink-0" style={{ background: statusBarColor(getApptStatus(apt)) }} />
+                        <div className="w-12 text-center flex-shrink-0">
+                          <div className="text-[13px] font-mono font-bold text-text-primary">
+                            {getApptHora(apt).slice(0, 5) || "—"}
+                          </div>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[13px] font-medium text-text-primary truncate">{getApptNome(apt)}</div>
+                          {getApptProc(apt) && (
+                            <div className="text-[11px] text-text-muted truncate">{getApptProc(apt)}</div>
+                          )}
+                        </div>
+                        <span className={cn(
+                          "text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full border flex-shrink-0",
+                          statusStyle(getApptStatus(apt))
+                        )}>
+                          {getApptStatus(apt) || "—"}
+                        </span>
+                      </button>
+                    ))}
+                    <div className="flex justify-center p-2 border-t border-border">
+                      <button
+                        onClick={() => openNovo(toISO(dias[mobileCalIdx]))}
+                        className="flex items-center gap-1 text-[11px] text-blue-400 hover:text-blue-300 px-3 py-1.5 transition-colors"
+                      >
+                        <Plus className="w-3.5 h-3.5" /> Adicionar
+                      </button>
+                    </div>
+                  </div>
+                )
+              })()}
+            </div>
+
+            {/* Day headers — desktop */}
+            <div className="hidden md:grid grid-cols-[48px_repeat(7,1fr)] border-b border-border">
               <div /> {/* spacer for time axis */}
               {dias.map((dia, i) => {
                 const isHoje = toISO(dia) === toISO(new Date())
@@ -691,11 +789,18 @@ export default function AgendaPage() {
               })}
             </div>
 
-            {/* Scrollable time grid */}
-            <div className="overflow-y-auto" style={{ maxHeight: 640 }}>
+            {/* Scrollable time grid — desktop only */}
+            <div className="hidden md:block overflow-y-auto" style={{ maxHeight: 640 }}>
               {loading ? (
-                <div className="flex items-center justify-center py-16">
-                  <Loader2 className="w-5 h-5 text-text-muted animate-spin" />
+                <div className="p-4 space-y-3">
+                  {[1, 2, 3, 4].map(i => (
+                    <div key={i} className="animate-pulse flex gap-3 items-start">
+                      <div className="w-10 h-3 rounded bg-surface flex-shrink-0 mt-1" />
+                      {[...Array(7)].map((_, j) => (
+                        <div key={j} className="flex-1 h-10 rounded-lg bg-surface" style={{ opacity: Math.random() > 0.7 ? 1 : 0.3 }} />
+                      ))}
+                    </div>
+                  ))}
                 </div>
               ) : (
                 <div

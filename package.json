@@ -12,6 +12,7 @@
     "@anthropic-ai/sdk": "^0.93.0",
     "@ffmpeg/ffmpeg": "^0.12.15",
     "@ffmpeg/util": "^0.12.2",
+    "@stripe/stripe-js": "^9.8.0",
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.105.1",
     "class-variance-authority": "^0.7.0",
@@ -21,6 +22,7 @@
     "next": "14.2.5",
     "react": "^18",
     "react-dom": "^18",
+    "stripe": "^22.2.0",
     "tailwind-merge": "^2.4.0",
     "tailwindcss-animate": "^1.0.7"
   },

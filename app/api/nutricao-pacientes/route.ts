@@ -33,6 +33,21 @@ export async function POST(req: NextRequest) {
       trilha?:         unknown
     }
 
+    // ── Atualizar status ────────────────────────────────────────────────────
+    if (action === "status") {
+      const { id, status } = body as unknown as { id: string; status: string }
+      const supabase = createSupabaseServerClient()
+      const { data, error } = await supabase
+        .from("nutricao_pacientes_trilhas")
+        .update({ status })
+        .eq("id", id)
+        .eq("user_id", auth.userId)
+        .select()
+        .single()
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json(data)
+    }
+
     // ── Salvar trilha no Supabase ────────────────────────────────────────────
     if (action === "salvar") {
       const supabase = createSupabaseServerClient()
@@ -92,7 +107,7 @@ D-15 (15 dias antes do retorno):
     const contexto = body.contexto ? `\nContexto clínico: ${body.contexto}` : ""
 
     const resp = await client.messages.create({
-      model:      "claude-sonnet-4-6",
+      model:      "claude-sonnet-4-20250514",
       max_tokens: 3000,
       messages: [{
         role:    "user",

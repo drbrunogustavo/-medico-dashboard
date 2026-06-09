@@ -8,8 +8,10 @@ import {
   Bot, Radio, ScanFace, ShieldQuestion, CircleDollarSign,
   Video, Layers, FileText, Zap, ArrowRight,
   Activity, BarChart, Lightbulb, TrendingUp,
+  Users, Calendar, Stethoscope,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { usePerfil } from "@/hooks/usePerfil"
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -90,6 +92,26 @@ const SHORTCUTS = [
     desc: "Gerencie suas ideias de conteúdo",    badge: null,
     color: "text-orange-400",bg: "bg-orange-950/20",border: "border-orange-500/15 hover:border-orange-500/35",
   },
+  {
+    href: "/concorrentes",  icon: Users,           label: "Análise de Concorrentes",
+    desc: "Monitore e aprenda com a concorrência", badge: null,
+    color: "text-teal-400",  bg: "bg-teal-950/20",  border: "border-teal-500/15 hover:border-teal-500/35",
+  },
+  {
+    href: "/financeiro",    icon: TrendingUp,      label: "Financeiro",
+    desc: "Gestão de faturamento e metas",        badge: null,
+    color: "text-emerald-400",bg:"bg-emerald-950/20",border:"border-emerald-500/15 hover:border-emerald-500/35",
+  },
+  {
+    href: "/agenda",        icon: Calendar,        label: "Agenda Inteligente",
+    desc: "Organize consultas e estratégias",     badge: null,
+    color: "text-cyan-400",  bg: "bg-cyan-950/20",  border: "border-cyan-500/15 hover:border-cyan-500/35",
+  },
+  {
+    href: "/copiloto",      icon: Stethoscope,     label: "Copiloto de Consulta",
+    desc: "IA no prontuário em tempo real",       badge: null,
+    color: "text-violet-400",bg:"bg-violet-950/20", border:"border-violet-500/15 hover:border-violet-500/35",
+  },
 ]
 
 const DICAS = [
@@ -133,6 +155,7 @@ export default function HomePage() {
   const [lastAccess,   setLastAccess]   = useState<string | null>(null)
   const [greet]                         = useState(greeting)
   const [dateStr]                       = useState(fmtDate)
+  const { perfil } = usePerfil()
 
   const dica = DICAS[new Date().getDay()]
 
@@ -170,9 +193,14 @@ export default function HomePage() {
               className="text-[24px] md:text-[32px] font-semibold text-text-primary leading-tight mb-2"
               style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}
             >
-              {greet}, Dr. Bruno.
+              {greet}, {perfil?.nome ? perfil.nome.replace(/^Dr\.?\s*/i, "Dr. ") : "Dr. Bruno"}.
             </h2>
             <p className="text-[13px] md:text-[14px] text-text-secondary">
+              {perfil?.especialidade && (
+                <span className="text-text-muted font-mono text-[11px] uppercase tracking-wider mr-2">
+                  {perfil.especialidade} ·
+                </span>
+              )}
               Você tem{" "}
               <span className="text-text-primary font-medium">{pautasCount} pauta{pautasCount !== 1 ? "s" : ""}</span>{" "}
               salvas e 15 módulos prontos para criar.

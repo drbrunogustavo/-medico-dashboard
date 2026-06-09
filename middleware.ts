@@ -1,6 +1,9 @@
 import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 
+// Routes that bypass the onboarding check
+const ONBOARDING_EXEMPT = new Set(["/onboarding", "/login", "/landing", "/planos"])
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
@@ -37,7 +40,8 @@ export async function middleware(request: NextRequest) {
   // Verify session — does NOT make a network call, just reads the cookie JWT
   const { data: { user } } = await supabase.auth.getUser()
 
-  // API routes: auth is handled inside each route handler via checkAuth()
+  // API routes: auth is handled per-route via checkAuth().
+  // /api/stripe/webhook must remain public (Stripe calls it without auth headers).
   if (pathname.startsWith("/api/")) {
     return supabaseResponse
   }
@@ -55,6 +59,19 @@ export async function middleware(request: NextRequest) {
     const loginUrl = request.nextUrl.clone()
     loginUrl.pathname = "/login"
     return NextResponse.redirect(loginUrl)
+  }
+
+  // Onboarding guard: for authenticated users on non-exempt routes
+  if (!ONBOARDING_EXEMPT.has(pathname)) {
+    const { data: perfil } = await supabase
+      .from("perfis")
+      .select("onboarding_completo")
+      .eq("user_id", user.id)
+      .single()
+
+    if (!perfil?.onboarding_completo) {
+      return NextResponse.redirect(new URL("/onboarding", request.url))
+    }
   }
 
   return supabaseResponse

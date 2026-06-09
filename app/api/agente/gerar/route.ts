@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { checkAuth } from '@/lib/auth-check'
 
 interface CalendarioItem {
   dia:     number
@@ -13,7 +14,10 @@ interface Plano {
   calendario:   CalendarioItem[]
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const auth = await checkAuth()
+  if (!auth.authenticated) return auth.response
+
   const { plano, dias, publico, briefing } = await request.json() as {
     plano:    Plano
     dias:     number[]
@@ -32,7 +36,7 @@ export async function POST(request: Request) {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
+        model: 'claude-sonnet-4-20250514',
         max_tokens: 8000,
         system: `Você é o Agente Executivo de Conteúdo Médico do Dr. Bruno Gustavo, especialista em Endocrinologia e Nutrologia em Poços de Caldas - MG. Você cria conteúdo médico de alta qualidade, baseado em evidências, que educa e converte no Instagram.
 

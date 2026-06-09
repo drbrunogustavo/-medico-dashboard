@@ -1,6 +1,10 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { checkAuth } from '@/lib/auth-check'
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const auth = await checkAuth()
+  if (!auth.authenticated) return auth.response
+
   const { briefing, volume, publico } = await request.json() as {
     briefing: string
     volume: number
@@ -16,7 +20,7 @@ export async function POST(request: Request) {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
+        model: 'claude-sonnet-4-20250514',
         max_tokens: 3000,
         system: `Você é um estrategista de conteúdo médico sênior especializado em planejamento editorial para médicos no Instagram. Você cria planos editoriais que equilibram educação, autoridade e conversão.
 

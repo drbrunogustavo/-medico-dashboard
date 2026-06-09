@@ -14,6 +14,8 @@ import {
 import { cn } from "@/lib/utils"
 import { useMenu } from "@/components/MobileMenuProvider"
 import { useAuth } from "@/hooks/useAuth"
+import { usePlano } from "@/hooks/usePlano"
+import { usePerfil } from "@/hooks/usePerfil"
 import { PraxisLogo } from "@/components/PraxisLogo"
 
 // ─── Nav definition ───────────────────────────────────────────────────────────
@@ -98,6 +100,30 @@ const BADGE_STYLE: Record<string, string> = {
   "EM BREVE": "bg-surface-2 text-text-muted border border-border",
 }
 
+const PLAN_UI = {
+  starter: {
+    label:  "STARTER",
+    textCls: "text-text-muted",
+    bg:      "bg-surface-2",
+    border:  "border-border hover:border-border-hover",
+    iconCls: "text-text-muted",
+  },
+  pro: {
+    label:   "PRO",
+    textCls: "text-accent",
+    bg:      "bg-accent-dim",
+    border:  "border-accent-border hover:border-accent/40",
+    iconCls: "text-accent",
+  },
+  elite: {
+    label:   "ELITE",
+    textCls: "text-[#d4af37]",
+    bg:      "bg-[rgba(212,175,55,0.06)]",
+    border:  "border-[rgba(212,175,55,0.15)] hover:border-[rgba(212,175,55,0.3)]",
+    iconCls: "text-[#d4af37]",
+  },
+} as const
+
 // ─── Sidebar content ──────────────────────────────────────────────────────────
 
 function SidebarContent() {
@@ -106,6 +132,8 @@ function SidebarContent() {
   const { user, signOut } = useAuth()
 
   const [ala, setAla] = useState<"social" | "clinica">("social")
+  const { plano }  = usePlano()
+  const { perfil } = usePerfil()
 
   useEffect(() => {
     const saved = localStorage.getItem("praxis_ala") as "social" | "clinica" | null
@@ -225,29 +253,45 @@ function SidebarContent() {
           <Link
             href="/planos"
             onClick={closeMenu}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[rgba(212,175,55,0.06)] border border-[rgba(212,175,55,0.15)] hover:border-[rgba(212,175,55,0.3)] transition-colors group"
+            className={cn(
+              "flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors group",
+              PLAN_UI[plano].bg,
+              PLAN_UI[plano].border,
+            )}
           >
-            <CreditCard className="w-3 h-3 text-[#d4af37] flex-shrink-0" />
-            <span className="text-[10px] font-mono font-semibold text-[#d4af37] tracking-wider flex-1">ELITE</span>
+            <CreditCard className={cn("w-3 h-3 flex-shrink-0", PLAN_UI[plano].iconCls)} />
+            <span className={cn("text-[10px] font-mono font-semibold tracking-wider flex-1", PLAN_UI[plano].textCls)}>
+              {PLAN_UI[plano].label}
+            </span>
             <span className="text-[9px] text-text-muted group-hover:text-text-secondary">Ver planos →</span>
           </Link>
         </div>
 
         {/* User row */}
-        <div className="flex items-center gap-2.5 px-4 pt-2 pb-2">
+        <Link
+          href="/perfil"
+          onClick={closeMenu}
+          className="flex items-center gap-2.5 px-4 pt-2 pb-2 hover:bg-surface-2 transition-colors rounded-lg mx-1 group"
+        >
           <div
             className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
             style={{ background: "linear-gradient(135deg, rgba(0,192,127,0.3), rgba(0,192,127,0.1))", border: "1px solid rgba(0,192,127,0.2)" }}
           >
-            <span className="text-[11px] font-bold text-accent">BG</span>
+            <span className="text-[11px] font-bold text-accent">
+              {perfil?.nome
+                ? perfil.nome.replace(/^Dr\.?\s*/i, "").slice(0, 2).toUpperCase()
+                : "BG"}
+            </span>
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-[12px] font-semibold text-text-primary truncate leading-none">Dr. Bruno Gustavo</div>
+            <div className="text-[12px] font-semibold text-text-primary truncate leading-none group-hover:text-accent transition-colors">
+              {perfil?.nome ?? "Dr. Bruno Gustavo"}
+            </div>
             <div className="text-[10px] text-text-muted truncate mt-0.5 leading-none">
-              {user?.email ?? "brunogustavosa@gmail.com"}
+              {perfil?.especialidade ?? user?.email ?? "brunogustavosa@gmail.com"}
             </div>
           </div>
-        </div>
+        </Link>
 
         {/* Settings + Sign out row */}
         <div className="flex items-center gap-1.5 px-4 pb-3">

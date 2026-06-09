@@ -1,6 +1,10 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { checkAuth } from '@/lib/auth-check'
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const auth = await checkAuth()
+  if (!auth.authenticated) return auth.response
+
   const { especialidade, localizacao, janela } = await request.json() as {
     especialidade: string
     localizacao: string
@@ -16,7 +20,7 @@ export async function POST(request: Request) {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
+        model: 'claude-sonnet-4-20250514',
         max_tokens: 5000,
         tools: [{ type: 'web_search_20250305', name: 'web_search' }],
         system: `Você é um consultor de marketing médico especialista em sazonalidade, tendências de saúde e oportunidades de faturamento para médicos no Brasil. Combine análise de sazonalidade, tendências de redes sociais e comportamento de pacientes para identificar oportunidades concretas.

@@ -395,7 +395,10 @@ Generate structured creative direction as JSON with exactly these fields:
 
   const gerarVariacoes = async () => {
     const basePrompt = editMode ? editedPrompt : (promptParts?.promptFinal ?? "")
-    if (!basePrompt) return
+    if (!basePrompt) {
+      setError("Prompt não disponível. Gere a direção criativa primeiro.")
+      return
+    }
     setError(null); setLoadingVariacoes(true)
     setVariacoes([]); setVariacaoSel(null); setVariacaoAudit(null)
     setImageUrl(null); setAudit(null)
@@ -408,26 +411,33 @@ Generate structured creative direction as JSON with exactly these fields:
 
     try {
       console.log("[gerarVariacoes] 3 chamadas paralelas via", modelo, "formato:", FORMATOS[formato].apiRatio)
-      const results = await Promise.all(
+
+      // Promise.allSettled ensures one failure never blocks the others
+      const settled = await Promise.allSettled(
         promptVariants.map(p =>
           fetch("/api/gerar-imagem", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ prompt: p, formato: FORMATOS[formato].apiRatio, modelo }),
-          }).then(r => r.json())
+          }).then(r => r.json() as Promise<{ image?: string; error?: string }>)
         )
       )
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const firstError = (results as any[]).find(d => d.error)?.error as string | undefined
-      const geradas: Variacao[] = (results as { image?: string }[])
-        .map((data, i) => ({ url: data.image ?? "", prompt: promptVariants[i], label: `Variação ${i + 1}` }))
-        .filter(v => v.url)
+      const geradas: Variacao[] = settled
+        .map((result, i) => {
+          if (result.status === "rejected" || !result.value.image) return null
+          return { url: result.value.image, prompt: promptVariants[i], label: `Variação ${i + 1}` }
+        })
+        .filter((v): v is Variacao => v !== null)
 
-      console.log("[gerarVariacoes] geradas:", geradas.length, "/ primeiro erro:", firstError ?? "nenhum")
+      const firstErrorMsg = settled
+        .map(r => r.status === "fulfilled" ? r.value.error : String((r as PromiseRejectedResult).reason))
+        .find(Boolean)
+
+      console.log("[gerarVariacoes] geradas:", geradas.length, "/ primeiro erro:", firstErrorMsg ?? "nenhum")
 
       if (geradas.length === 0) {
-        throw new Error(firstError ?? "Nenhuma variação foi gerada. Verifique o modelo e a chave de API.")
+        throw new Error(firstErrorMsg ?? "Nenhuma variação foi gerada. Verifique o modelo e a chave de API.")
       }
 
       setVariacoes(geradas)
@@ -915,7 +925,7 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
                   <h3 className="text-[14px] font-semibold text-text-primary">3 Variações Geradas</h3>
                   <p className="text-[11px] text-text-muted mt-0.5">Escolha uma para confirmar · As demais vão para o histórico</p>
                 </div>
-                <button onClick={gerarVariacoes} disabled={loadingVariacoes}
+                <button type="button" onClick={gerarVariacoes} disabled={loadingVariacoes}
                   className="flex items-center gap-1.5 text-[11px] text-text-muted hover:text-accent transition-colors disabled:opacity-40">
                   <RefreshCw className="w-3 h-3" /> Regenerar
                 </button>
@@ -959,7 +969,8 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
                       </div>
                       <div className="flex gap-2">
                         <button
-                          onClick={() => setVariacaoSel(variacaoSel === i ? null : i)}
+                          type="button"
+                          onClick={() => setVariacaoSel(prev => prev === i ? null : i)}
                           className={cn(
                             "flex-1 text-[11px] py-1.5 rounded-lg border transition-all font-semibold",
                             variacaoSel === i
@@ -970,6 +981,7 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
                           {variacaoSel === i ? "✓ Selecionada" : "Escolher Esta"}
                         </button>
                         <button
+                          type="button"
                           onClick={() => downloadImage(v.url)}
                           className="px-2.5 py-1.5 rounded-lg border border-border text-text-muted hover:text-text-secondary transition-all"
                           title="Download"
@@ -985,6 +997,7 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
               {/* Confirm selection */}
               {variacaoSel !== null && (
                 <button
+                  type="button"
                   onClick={confirmarVariacao}
                   className="w-full flex items-center justify-center gap-2 py-3.5 rounded-lg bg-accent text-background text-[14px] font-bold hover:bg-accent/90 transition-all shadow-lg shadow-accent/20"
                 >

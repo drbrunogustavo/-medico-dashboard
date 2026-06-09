@@ -1,8 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { Suspense, useState } from "react"
+import { useSearchParams } from "next/navigation"
 import { TopBar } from "@/components/TopBar"
-import { Check, X, Zap, Star, Crown } from "lucide-react"
+import { Check, X, Zap, Star, Crown, Loader2, PartyPopper } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -82,18 +83,25 @@ const PLANS = [
   },
 ]
 
-// ─── Toast ────────────────────────────────────────────────────────────────────
+// ─── Success banner (needs Suspense because of useSearchParams) ───────────────
 
-function Toast({ msg, onClose }: { msg: string; onClose: () => void }) {
+function SuccessBanner() {
+  const params  = useSearchParams()
+  const success = params.get("success") === "true"
+
+  if (!success) return null
+
   return (
-    <div
-      className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-3 rounded-xl border border-border bg-surface shadow-2xl animate-fade-in"
-      style={{ minWidth: 320 }}
-    >
-      <span className="text-[13px] text-text-primary">{msg}</span>
-      <button onClick={onClose} className="ml-auto text-text-muted hover:text-text-primary transition-colors">
-        <X className="w-4 h-4" />
-      </button>
+    <div className="max-w-5xl mx-auto mb-6 flex items-center gap-3 px-5 py-4 rounded-xl bg-accent-dim border border-accent-border animate-fade-in">
+      <div className="w-9 h-9 rounded-xl bg-accent/20 border border-accent-border flex items-center justify-center flex-shrink-0">
+        <PartyPopper className="w-4.5 h-4.5 text-accent" />
+      </div>
+      <div>
+        <div className="text-[14px] font-semibold text-accent">Assinatura ativada com sucesso!</div>
+        <div className="text-[12px] text-text-secondary mt-0.5">
+          Seus módulos já estão disponíveis. Bem-vindo ao PRAXIS.
+        </div>
+      </div>
     </div>
   )
 }
@@ -101,11 +109,31 @@ function Toast({ msg, onClose }: { msg: string; onClose: () => void }) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function PlanosPage() {
-  const [toast, setToast] = useState<string | null>(null)
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null)
+  const [error,       setError]       = useState<string | null>(null)
 
-  const showToast = () => {
-    setToast("Em breve — entre em contato pelo WhatsApp para assinar.")
-    setTimeout(() => setToast(null), 4000)
+  const assinar = async (planId: string) => {
+    setError(null)
+    setLoadingPlan(planId)
+    try {
+      const res  = await fetch("/api/stripe/checkout", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ plano: planId }),
+      })
+      const data = await res.json() as { url?: string; error?: string }
+
+      if (data.error || !data.url) {
+        setError(data.error ?? "Não foi possível iniciar o checkout. Tente novamente.")
+        return
+      }
+
+      window.location.href = data.url
+    } catch {
+      setError("Erro de conexão. Verifique sua internet e tente novamente.")
+    } finally {
+      setLoadingPlan(null)
+    }
   }
 
   return (
@@ -113,6 +141,25 @@ export default function PlanosPage() {
       <TopBar title="Planos PRAXIS" subtitle="ESCOLHA SEU NÍVEL DE ACESSO" />
 
       <div className="p-4 md:p-8 space-y-8">
+
+        {/* Success banner */}
+        <Suspense fallback={null}>
+          <SuccessBanner />
+        </Suspense>
+
+        {/* Error banner */}
+        {error && (
+          <div className="max-w-5xl mx-auto flex items-center gap-3 px-5 py-3.5 rounded-xl bg-red-950/40 border border-red-500/30 animate-fade-in">
+            <X className="w-4 h-4 text-red-400 flex-shrink-0" />
+            <span className="text-[13px] text-red-300">{error}</span>
+            <button
+              onClick={() => setError(null)}
+              className="ml-auto text-red-400/60 hover:text-red-400 transition-colors flex-shrink-0"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
 
         {/* Header */}
         <div className="text-center max-w-xl mx-auto">
@@ -130,7 +177,10 @@ export default function PlanosPage() {
         {/* Plans grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-5xl mx-auto">
           {PLANS.map(plan => {
-            const Icon = plan.icon
+            const Icon      = plan.icon
+            const isLoading = loadingPlan === plan.id
+            const isDisabled = loadingPlan !== null
+
             return (
               <div
                 key={plan.id}
@@ -139,17 +189,17 @@ export default function PlanosPage() {
                   plan.cardBg,
                   plan.border,
                   plan.borderHover,
-                  plan.id === "pro" && "shadow-lg shadow-accent/5"
+                  plan.id === "pro" && "shadow-lg shadow-accent/5",
                 )}
               >
-                {/* Recommended badge */}
+                {/* Badge */}
                 {plan.badge && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                     <span className={cn(
                       "text-[9px] font-mono font-bold px-3 py-1 rounded-full border tracking-widest",
                       plan.id === "pro"
                         ? "bg-accent text-background border-accent"
-                        : "bg-[#d4af37] text-[#080808] border-[#d4af37]"
+                        : "bg-[#d4af37] text-[#080808] border-[#d4af37]",
                     )}>
                       {plan.badge}
                     </span>
@@ -162,14 +212,12 @@ export default function PlanosPage() {
                     <div className={cn(
                       "w-9 h-9 rounded-lg flex items-center justify-center border",
                       plan.id === "starter" ? "border-border bg-white/[0.04]"
-                        : plan.id === "pro"    ? "border-accent-border bg-accent-dim"
-                        : "bg-[rgba(212,175,55,0.08)] border-[rgba(212,175,55,0.2)]"
+                        : plan.id === "pro"  ? "border-accent-border bg-accent-dim"
+                        : "bg-[rgba(212,175,55,0.08)] border-[rgba(212,175,55,0.2)]",
                     )}>
                       <Icon className={cn("w-4 h-4", plan.color)} />
                     </div>
-                    <div>
-                      <div className={cn("text-[16px] font-semibold", plan.color)}>{plan.name}</div>
-                    </div>
+                    <div className={cn("text-[16px] font-semibold", plan.color)}>{plan.name}</div>
                   </div>
 
                   {/* Price */}
@@ -206,10 +254,11 @@ export default function PlanosPage() {
                         <div key={i} className="flex items-center gap-2.5">
                           {included
                             ? <Check className="w-3.5 h-3.5 text-accent flex-shrink-0" />
-                            : <X     className="w-3.5 h-3.5 text-text-muted/40 flex-shrink-0" />}
+                            : <X     className="w-3.5 h-3.5 text-text-muted/40 flex-shrink-0" />
+                          }
                           <span className={cn(
                             "text-[12px] leading-snug",
-                            included ? "text-text-secondary" : "text-text-muted/50"
+                            included ? "text-text-secondary" : "text-text-muted/50",
                           )}>
                             {f.text}
                           </span>
@@ -220,14 +269,20 @@ export default function PlanosPage() {
 
                   {/* CTA */}
                   <button
-                    onClick={showToast}
+                    onClick={() => assinar(plan.id)}
+                    disabled={isDisabled}
                     className={cn(
                       "w-full py-3 rounded-lg text-[13px] transition-all active:scale-[0.98] min-h-[48px]",
+                      "flex items-center justify-center gap-2",
+                      "disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100",
                       plan.ctaBg,
-                      plan.ctaText
+                      plan.ctaText,
                     )}
                   >
-                    Assinar {plan.name}
+                    {isLoading
+                      ? <><Loader2 className="w-4 h-4 animate-spin" /> Aguarde...</>
+                      : `Assinar ${plan.name}`
+                    }
                   </button>
                 </div>
               </div>
@@ -235,16 +290,13 @@ export default function PlanosPage() {
           })}
         </div>
 
-        {/* Comparison note */}
+        {/* Footer note */}
         <p className="text-center text-[11px] text-text-muted max-w-md mx-auto">
           Todos os planos incluem acesso imediato após confirmação do pagamento.
-          Suporte disponível em português. Dados seguros e privados.
+          Pagamento processado com segurança pelo Stripe. Dados privados e protegidos.
         </p>
 
       </div>
-
-      {/* Toast */}
-      {toast && <Toast msg={toast} onClose={() => setToast(null)} />}
     </div>
   )
 }

@@ -265,90 +265,67 @@ export default function RadarPage() {
     toastRef.current = setTimeout(() => setToast(null), 2600)
   }
 
-  const periodLabel = (v: string) => {
-    const m: Record<string,string> = {"24h":"last 24 hours","7d":"last 7 days","30d":"last 30 days","90d":"last 90 days","180d":"last 180 days"}
-    return m[v] || "last 7 days"
-  }
-
-  const callAI = useCallback(async (userPrompt: string, systemPrompt: string) => {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json",
-        "x-api-key": process.env.NEXT_PUBLIC_ANTHROPIC_API_KEY || "",
-        "anthropic-version":"2023-06-01",
-        "anthropic-dangerous-direct-browser-access":"true",
-      },
-      body: JSON.stringify({
-        model:"claude-sonnet-4-6",
-        max_tokens:4000,
-        tools:[{type:"web_search_20250305",name:"web_search"}],
-        system: systemPrompt,
-        messages:[{role:"user",content:userPrompt}],
+  const callRadarAPI = useCallback(async (
+    type: "radar" | "reels" | "velocity" | "opportunities",
+    extraFilters?: Record<string, string>,
+  ) => {
+    const res = await fetch("/api/radar", {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify({
+        type,
+        filters: {
+          fonte:     filters.source,
+          categoria: filters.category,
+          topico:    filters.topic,
+          periodo:   filters.period,
+          ...extraFilters,
+        },
       }),
     })
-    const data = await res.json()
-    let text = ""
-    for (const block of (data.content || [])) { if (block.type==="text") text += block.text }
-    const clean = text.replace(/```json|```/g,"").trim()
-    const idx = clean.indexOf("[")
-    return JSON.parse(idx >= 0 ? clean.slice(idx) : clean)
-  }, [])
+    const json = await res.json() as { data?: unknown[]; error?: string }
+    if (json.error) throw new Error(json.error)
+    return json.data ?? []
+  }, [filters])
 
   const fetchRadar = useCallback(async () => {
     setLoadingRadar(true)
-    const pl  = periodLabel(filters.period)
-    const sf  = filters.source   !== "Todos" ? ` focusing on ${filters.source}`      : ""
-    const cf  = filters.category !== "Todos" ? ` in the area of ${filters.category}` : ""
-    const tf  = filters.topic    !== "Todos" ? ` related to "${filters.topic}"`       : ""
     try {
-      const r = await callAI(
-        `Search top 12 trending medical topics${cf}${tf} from ${pl}${sf} relevant to Brazilian medical content creators in nutrologia, endocrinologia, longevidade, metabolismo, hormônios, obesidade, saúde mental, menopausa, andropausa, emagrecimento, suplementação. Sources: PubMed, The Lancet, NEJM, Nature Medicine, MedScape, JAMA, BMJ, Instagram Trending, TikTok Trending, Reddit Health, STAT News, medRxiv. Return JSON array: title (Portuguese max 120 chars), source, category (Nutrologia|Endocrinologia|Longevidade|Metabolismo|Microbioma|Hormônios|Anti-aging|Genômica|Obesidade|Nutrição Clínica|Saúde Mental|Cardiometabolismo|Medicina do Esporte|Suplementação|Sono e Cronobiologia|Imunologia|Menopausa|Andropausa|Envelhecimento|Terapia Hormonal|Emagrecimento), date (DD/MM/YYYY), relevance (Alto|Médio|Baixo), summary (2 sentences Portuguese).`,
-        "You are a medical intelligence aggregator for a Brazilian dashboard. Return ONLY a valid JSON array, no markdown, no backticks. Respond in Brazilian Portuguese."
-      )
-      setArticles(r.map((a: Article, i: number) => ({...a, id: Date.now()+i})))
+      const r = await callRadarAPI("radar")
+      setArticles((r as Article[]).map((a, i) => ({ ...a, id: Date.now() + i })))
       setLastUpdate(new Date())
     } catch {
       setArticles(MOCK_TRENDS); setLastUpdate(new Date())
     }
     setLoadingRadar(false)
-  }, [filters, callAI])
+  }, [filters, callRadarAPI])
 
   const fetchReels = useCallback(async () => {
     setLoadingReels(true)
     try {
-      const r = await callAI(
-        `Find top 50 viral medical/health reels and videos from Instagram, TikTok, YouTube in ${periodLabel(filters.period)}. Topics: GLP-1, tirzepatida, retatrutida, testosterona, menopausa, jejum, longevidade, sarcopenia, hormônios, emagrecimento, saúde mental, andropausa, biohacking. Return JSON array: rank (1-50), title (Portuguese), platform (Instagram|TikTok|YouTube), views (e.g. "4.2M"), engagement (e.g. "18.4%"), link (URL or "#"), category.`,
-        "You are a social media intelligence analyst for Brazilian medical content. Return ONLY valid JSON array, no markdown."
-      )
-      setReels(r.map((x: Reel, i: number) => ({...x, id: Date.now()+i})))
+      const r = await callRadarAPI("reels")
+      setReels((r as Reel[]).map((x, i) => ({ ...x, id: Date.now() + i })))
     } catch { setReels(MOCK_REELS) }
     setLoadingReels(false)
-  }, [filters.period, callAI])
+  }, [filters.period, callRadarAPI])
 
   const fetchVelocity = useCallback(async () => {
     setLoadingVel(true)
     try {
-      const r = await callAI(
-        `Analyze Trend Velocity Score for medical topics in Brazil for ${periodLabel(filters.period)}. Evaluate search growth, mentions volume, and scientific publications. Return JSON array (15+ topics): topic, score (0-100), growth (e.g. "+280%"), mentions (integer estimated monthly), publications (integer recent), trend (🔥 if score>90, ⚡ if 70-90, 📈 if 50-70, 📊 if <50), category.`,
-        "You are a trend velocity analyst. Return ONLY valid JSON array, no markdown."
-      )
-      setVelocity(r.map((x: VelocityItem, i: number) => ({...x, id: Date.now()+i})))
+      const r = await callRadarAPI("velocity")
+      setVelocity((r as VelocityItem[]).map((x, i) => ({ ...x, id: Date.now() + i })))
     } catch { setVelocity(MOCK_VELOCITY) }
     setLoadingVel(false)
-  }, [filters.period, callAI])
+  }, [filters.period, callRadarAPI])
 
   const fetchOpportunities = useCallback(async () => {
     setLoadingOpp(true)
     try {
-      const r = await callAI(
-        `Identify content opportunities for a Brazilian medical doctor creating health content. Find topics with high growth trend + low competition among medical creators + high sharing potential. Return JSON array (8+ items): topic, growth (e.g. "+280%"), competition (Muito Baixa|Baixa|Média|Alta), sharing (Muito Alto|Alto|Médio|Baixo), score (0-100), trending_since (e.g. "2 semanas"), why (2-3 sentences Portuguese), keywords (array 3-5), platforms (array).`,
-        "You are a content strategy analyst for Brazilian medical influencers. Return ONLY valid JSON array, no markdown. Respond in Brazilian Portuguese."
-      )
-      setOpportunities(r.map((x: Opportunity, i: number) => ({...x, id: Date.now()+i})))
+      const r = await callRadarAPI("opportunities")
+      setOpportunities((r as Opportunity[]).map((x, i) => ({ ...x, id: Date.now() + i })))
     } catch { setOpportunities(MOCK_OPPORTUNITIES) }
     setLoadingOpp(false)
-  }, [filters.period, callAI])
+  }, [filters.period, callRadarAPI])
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchRadar() }, [])

@@ -1,6 +1,10 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { checkAuth } from '@/lib/auth-check'
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const auth = await checkAuth()
+  if (!auth.authenticated) return auth.response
+
   const { objecao, tema } = await request.json() as { objecao: string; tema: string }
 
   try {
@@ -12,7 +16,7 @@ export async function POST(request: Request) {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
+        model: 'claude-sonnet-4-20250514',
         max_tokens: 3500,
         system: `Você é um estrategista de conteúdo médico especialista em transformar objeções de pacientes em conteúdo educativo e viral para Instagram. Você cria conteúdo empático, baseado em evidências, que educa sem diminuir o paciente.
 

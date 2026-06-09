@@ -1,6 +1,10 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { checkAuth } from '@/lib/auth-check'
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const auth = await checkAuth()
+  if (!auth.authenticated) return auth.response
+
   const { perfil, tema } = await request.json() as { perfil: string; tema: string }
 
   try {
@@ -12,7 +16,7 @@ export async function POST(request: Request) {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
+        model: 'claude-sonnet-4-20250514',
         max_tokens: 4000,
         system: `Você é um psicólogo comportamental especialista em marketing médico e comportamento do paciente. Você entende profundamente as motivações, medos, desejos e padrões de linguagem de diferentes perfis de pacientes médicos no Brasil. Analise com precisão clínica e psicológica o perfil fornecido.
 

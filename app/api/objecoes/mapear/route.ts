@@ -1,6 +1,10 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { checkAuth } from '@/lib/auth-check'
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const auth = await checkAuth()
+  if (!auth.authenticated) return auth.response
+
   const { tema } = await request.json() as { tema: string }
 
   try {
@@ -12,7 +16,7 @@ export async function POST(request: Request) {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
+        model: 'claude-sonnet-4-20250514',
         max_tokens: 4000,
         system: `Você é um especialista em comportamento do paciente e marketing médico no Brasil. Você conhece profundamente as objeções reais que pacientes têm em relação a tratamentos médicos, baseado em anos de consultório e pesquisa de comportamento.
 

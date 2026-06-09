@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 import {
   LayoutDashboard, X, Stethoscope,
-  Radio, CircleDollarSign, Users,
+  Radio, CircleDollarSign, Users, Users2,
   Bot, Video, Layers, Clapperboard, Sparkles, Flame, Megaphone,
   ScanFace, ShieldQuestion, Microscope, FileText,
   Calendar, Heart, TrendingUp, MessageCircle,
@@ -75,6 +75,7 @@ const NAV_CLINICA: NavGroup[] = [
     category: "Pacientes",
     items: [
       { label: "Copiloto de Consulta", href: "/copiloto", icon: Bot },
+      { label: "CRM de Leads",         href: "/crm",      icon: Users2 },
     ],
   },
   {

@@ -21,6 +21,7 @@ const ROUTE_LABELS: Record<string, string> = {
   "/hashtags":           "Análise de Hashtags",
   "/ganchos":            "Biblioteca de Ganchos",
   "/pautas":             "Banco de Pautas",
+  "/crm":                "CRM de Leads",
   "/agenda":             "Agenda Inteligente",
   "/copiloto":           "Copiloto de Consulta",
   "/financeiro":         "Financeiro",

@@ -1,12 +1,65 @@
 import { NextRequest, NextResponse } from "next/server"
 import Anthropic from "@anthropic-ai/sdk"
 import { checkAuth } from "@/lib/auth-check"
+import { createSupabaseServerClient } from "@/lib/supabase-server"
 import { inserirProntuario } from "@/lib/medx"
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 const SYSTEM = `Você é o Copiloto de Consulta do PRAXIS — assistente clínico especialista em Endocrinologia, Nutrologia e Longevidade.
 Retorne APENAS JSON válido, sem markdown, sem texto antes ou depois do JSON.`
+
+function errMsg(e: unknown): string {
+  if (e instanceof Error) return e.message
+  return String(e)
+}
+
+// ── GET: fetch history ────────────────────────────────────────────────────────
+
+export async function GET(_req: NextRequest) {
+  const auth = await checkAuth()
+  if (!auth.authenticated) return auth.response
+
+  try {
+    const supabase = createSupabaseServerClient()
+    const { data, error } = await supabase
+      .from("copiloto_historico")
+      .select("id, paciente_nome, tipo_consulta, relato, resultado, created_at")
+      .order("created_at", { ascending: false })
+      .limit(10)
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json(data ?? [])
+  } catch (e) {
+    return NextResponse.json({ error: errMsg(e) }, { status: 500 })
+  }
+}
+
+// ── DELETE: remove history entry ──────────────────────────────────────────────
+
+export async function DELETE(req: NextRequest) {
+  const auth = await checkAuth()
+  if (!auth.authenticated) return auth.response
+
+  const id = req.nextUrl.searchParams.get("id")
+  if (!id) return NextResponse.json({ error: "id obrigatório" }, { status: 400 })
+
+  try {
+    const supabase = createSupabaseServerClient()
+    const { error } = await supabase
+      .from("copiloto_historico")
+      .delete()
+      .eq("id", id)
+      .eq("user_id", auth.userId)
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ ok: true })
+  } catch (e) {
+    return NextResponse.json({ error: errMsg(e) }, { status: 500 })
+  }
+}
+
+// ── POST: generate or send to MedX ───────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
   const auth = await checkAuth()
@@ -27,7 +80,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true, data })
     }
 
-    // action === "gerar" (default)
+    // action === "gerar"
     const body = await req.json() as {
       relato:         string
       dados?:         string
@@ -40,7 +93,7 @@ export async function POST(req: NextRequest) {
 
     const resp = await client.messages.create({
       model:      "claude-sonnet-4-20250514",
-      max_tokens: 6000,
+      max_tokens: 7500,
       system:     SYSTEM,
       messages: [{
         role:    "user",
@@ -52,12 +105,17 @@ RELATO DA CONSULTA:
 ${body.relato}
 ${body.dados ? `\nDADOS OBJETIVOS:\n${body.dados}` : ""}
 
-Retorne um JSON com exatamente estas 6 chaves:
+Retorne um JSON com exatamente estas 7 chaves:
 {
   "resumo": "Resumo clínico estruturado em 2-3 parágrafos, incluindo quadro clínico, hipóteses diagnósticas e contexto",
-  "plano": "Plano terapêutico detalhado: orientações não-farmacológicas, exames solicitados, medicações com dose/posologia, retorno",
+  "plano": "Plano terapêutico narrativo: orientações não-farmacológicas, medicações com dose/posologia, data de retorno. Não listar exames aqui.",
+  "exames_solicitados": ["Nome do exame 1", "Nome do exame 2"],
   "orientacoes": "Orientações claras e em linguagem acessível para o paciente seguir em casa",
-  "followup": "3 mensagens de follow-up prontas para enviar via WhatsApp ou e-mail nos dias D+1, D+7 e D+30 após a consulta",
+  "followup": {
+    "d1": "Mensagem completa e pronta para enviar via WhatsApp no dia seguinte à consulta (D+1)",
+    "d7": "Mensagem completa e pronta para enviar via WhatsApp 7 dias após a consulta (D+7)",
+    "d30": "Mensagem completa e pronta para enviar via WhatsApp 30 dias após a consulta (D+30)"
+  },
   "conteudo": "2-3 ideias de conteúdo para redes sociais baseadas no tema clínico desta consulta, sem identificar o paciente",
   "prontuario": "QUEIXA PRINCIPAL:\\n...\\n\\nHISTÓRIA DA DOENÇA ATUAL:\\n...\\n\\nANTECEDENTES:\\n...\\n\\nEXAME FÍSICO:\\n...\\n\\nHIPÓTESES DIAGNÓSTICAS:\\n...\\n\\nCONDUTA:\\n...\\n\\nRETORNO:\\n..."
 }`,
@@ -75,9 +133,25 @@ Retorne um JSON com exatamente estas 6 chaves:
     }
 
     const parsed = JSON.parse(clean.slice(start, end + 1))
+
+    // Save to history — non-blocking, never fails the response
+    try {
+      const supabase = createSupabaseServerClient()
+      await supabase.from("copiloto_historico").insert({
+        user_id:         auth.userId,
+        paciente_nome:   body.nomePaciente ?? null,
+        tipo_consulta:   body.tipoConsulta ?? null,
+        relato:          body.relato,
+        dados_objetivos: body.dados ?? null,
+        resultado:       parsed,
+      })
+    } catch (saveErr) {
+      console.error("[api/copiloto] Falha ao salvar histórico:", saveErr)
+    }
+
     return NextResponse.json(parsed)
   } catch (e) {
     console.error("[api/copiloto]", e)
-    return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 500 })
+    return NextResponse.json({ error: errMsg(e) }, { status: 500 })
   }
 }

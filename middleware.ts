@@ -1,42 +1,32 @@
 import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 
-// Fully public — no auth check whatsoever
-const PUBLIC_ROUTES = new Set(["/", "/landing", "/planos"])
+// Fully public — no auth check at all
+const PUBLIC_ROUTES = new Set(["/", "/planos", "/landing"])
 
-// Authenticated users may access these without completing onboarding
+// Authenticated users may access without completing onboarding
 const ONBOARDING_EXEMPT = new Set(["/onboarding"])
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Static assets — never intercepted
-  if (
-    pathname.startsWith("/_next") ||
-    pathname.startsWith("/favicon") ||
-    /\.(svg|png|jpg|jpeg|gif|webp|ico|json|txt|xml|woff2?)$/.test(pathname)
-  ) {
-    return NextResponse.next()
-  }
-
-  // API routes — auth handled inside each handler via checkAuth()
-  // /api/stripe/webhook is intentionally public (Stripe calls it without a session)
+  // API routes — auth handled per-handler via checkAuth()
   if (pathname.startsWith("/api/")) {
     return NextResponse.next()
   }
 
-  // Fully public pages — serve without touching auth cookies
+  // Fully public pages — no Supabase needed
   if (PUBLIC_ROUTES.has(pathname)) {
     return NextResponse.next()
   }
 
-  // Supabase not configured — redirect everything to /login to avoid crashes
+  // Guard: missing env vars → everything except /login redirects to /login
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
     if (pathname === "/login") return NextResponse.next()
     return NextResponse.redirect(new URL("/login", request.url))
   }
 
-  // ── Set up Supabase SSR client (reads/refreshes JWT from cookies) ─────────
+  // ── Supabase SSR client ────────────────────────────────────────────────────
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
@@ -58,31 +48,29 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { session } } = await supabase.auth.getSession()
 
-  // ── /login: public page, but redirect authenticated users away ────────────
+  // ── /login: public, but send authenticated users to /dashboard ────────────
   if (pathname === "/login") {
-    if (user) return NextResponse.redirect(new URL("/dashboard", request.url))
+    if (session) return NextResponse.redirect(new URL("/dashboard", request.url))
     return supabaseResponse
   }
 
-  // ── All other routes require authentication ───────────────────────────────
-  if (!user) {
-    const url = request.nextUrl.clone()
-    url.pathname = "/login"
-    return NextResponse.redirect(url)
+  // ── All other routes are protected — require a valid session ──────────────
+  if (!session) {
+    return NextResponse.redirect(new URL("/login", request.url))
   }
 
-  // ── Onboarding guard for authenticated users ──────────────────────────────
+  // ── Onboarding guard (skip for /onboarding itself) ────────────────────────
   if (!ONBOARDING_EXEMPT.has(pathname)) {
     const { data: perfil, error: perfilError } = await supabase
       .from("perfis")
       .select("onboarding_completo")
-      .eq("user_id", user.id)
+      .eq("user_id", session.user.id)
       .maybeSingle()
 
     // Only redirect on a clear "not completed" signal.
-    // DB errors (table not migrated yet) → let through to avoid infinite loops.
+    // DB errors (e.g. table not yet migrated) → let through to avoid loops.
     if (!perfilError && !perfil?.onboarding_completo) {
       return NextResponse.redirect(new URL("/onboarding", request.url))
     }
@@ -92,5 +80,7 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.png|.*\\.jpg|.*\\.svg|.*\\.ico).*)",
+  ],
 }

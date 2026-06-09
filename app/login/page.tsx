@@ -56,6 +56,15 @@ export default function LoginPage() {
   return (
     <div className="fixed inset-0 z-[200] flex animate-fade-in" style={{ background: "var(--background)" }}>
 
+      {/* Back link — top-left corner, outside both panels */}
+      <Link
+        href="/"
+        className="absolute top-5 left-5 z-20 inline-flex items-center gap-1.5 text-[11px] text-text-muted hover:text-text-secondary transition-colors"
+      >
+        <ArrowLeft className="w-3 h-3" />
+        Voltar para o início
+      </Link>
+
       {/* ── LEFT PANEL (60%) — brand ────────────────────────────────────── */}
       <div className="hidden lg:flex lg:w-[60%] flex-col items-center justify-center relative overflow-hidden"
         style={{ background: "linear-gradient(145deg, var(--surface) 0%, var(--surface-2) 60%, var(--surface) 100%)" }}>
@@ -118,12 +127,6 @@ export default function LoginPage() {
         </div>
 
         <div className="w-full max-w-[360px]">
-
-          {/* Back link */}
-          <Link href="/" className="inline-flex items-center gap-1.5 text-[11px] text-text-muted hover:text-text-secondary transition-colors mb-8">
-            <ArrowLeft className="w-3 h-3" />
-            Voltar para o início
-          </Link>
 
           {/* Heading */}
           <div className="mb-8">

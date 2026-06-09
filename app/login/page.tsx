@@ -122,14 +122,15 @@ export default function LoginPage() {
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 required
+                className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all placeholder:text-text-muted focus:ring-1 focus:ring-[rgba(0,192,127,0.4)]"
                 style={{
                   background: "var(--surface)",
                   color: "var(--text-primary)",
                   WebkitTextFillColor: "var(--text-primary)",
                   caretColor: "var(--text-primary)",
-                  fontSize: 15,
+                  border: "1px solid var(--border)",
+                  colorScheme: "light",
                 }}
-                className="w-full border border-border rounded-lg px-4 py-3 placeholder:text-text-muted outline-none focus:border-[rgba(0,192,127,0.4)] transition-colors"
               />
             </div>
 
@@ -143,14 +144,15 @@ export default function LoginPage() {
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   required
+                  className="w-full px-4 py-3 pr-11 rounded-xl text-sm outline-none transition-all placeholder:text-text-muted focus:ring-1 focus:ring-[rgba(0,192,127,0.4)]"
                   style={{
                     background: "var(--surface)",
                     color: "var(--text-primary)",
                     WebkitTextFillColor: "var(--text-primary)",
                     caretColor: "var(--text-primary)",
-                    fontSize: 15,
+                    border: "1px solid var(--border)",
+                    colorScheme: "light",
                   }}
-                  className="w-full border border-border rounded-lg px-4 py-3 pr-11 placeholder:text-text-muted outline-none focus:border-[rgba(0,192,127,0.4)] transition-colors"
                 />
                 <button
                   type="button"

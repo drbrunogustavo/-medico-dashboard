@@ -159,14 +159,17 @@ export default function OnboardingPage() {
   const set = (k: keyof FormData) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
     setForm(f => ({ ...f, [k]: e.target.value }))
 
-  const patch = async (extra?: Record<string, unknown>) => {
+  const patch = async (extra?: Record<string, unknown>): Promise<boolean> => {
     setSaving(true)
     try {
-      await fetch("/api/perfil", {
+      const r = await fetch("/api/perfil", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...form, ...extra }),
       })
+      return r.ok
+    } catch {
+      return false
     } finally {
       setSaving(false)
     }
@@ -178,13 +181,13 @@ export default function OnboardingPage() {
   }
 
   const finish = async (planId: string) => {
-    if (planId !== "starter") {
-      await patch({ onboarding_completo: true })
-      router.push("/planos")
-      return
+    const ok = await patch({ onboarding_completo: true })
+    if (!ok) {
+      // PATCH failed (e.g. DB not migrated yet) — still navigate, middleware
+      // will gracefully degrade rather than loop when it can't read perfis.
+      console.error("[onboarding] Falha ao salvar onboarding_completo")
     }
-    await patch({ onboarding_completo: true })
-    router.push("/")
+    router.push(planId !== "starter" ? "/planos" : "/")
   }
 
   return (

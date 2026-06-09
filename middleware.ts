@@ -63,13 +63,16 @@ export async function middleware(request: NextRequest) {
 
   // Onboarding guard: for authenticated users on non-exempt routes
   if (!ONBOARDING_EXEMPT.has(pathname)) {
-    const { data: perfil } = await supabase
+    const { data: perfil, error: perfilError } = await supabase
       .from("perfis")
       .select("onboarding_completo")
       .eq("user_id", user.id)
-      .single()
+      .maybeSingle()  // returns null (no error) when no row exists, unlike single() which throws PGRST116
 
-    if (!perfil?.onboarding_completo) {
+    // Only redirect when we have a clear signal: no DB error + onboarding is not done.
+    // A DB error (e.g. table not yet migrated) means we can't tell — let the user through
+    // to avoid an infinite redirect loop while migrations are pending.
+    if (!perfilError && !perfil?.onboarding_completo) {
       return NextResponse.redirect(new URL("/onboarding", request.url))
     }
   }

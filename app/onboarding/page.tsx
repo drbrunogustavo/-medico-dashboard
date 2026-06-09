@@ -183,11 +183,10 @@ export default function OnboardingPage() {
   const finish = async (planId: string) => {
     const ok = await patch({ onboarding_completo: true })
     if (!ok) {
-      // PATCH failed (e.g. DB not migrated yet) — still navigate, middleware
-      // will gracefully degrade rather than loop when it can't read perfis.
       console.error("[onboarding] Falha ao salvar onboarding_completo")
     }
-    router.push(planId !== "starter" ? "/planos" : "/")
+    // Always go to dashboard — paid plan checkout is handled from inside the app
+    router.push("/dashboard")
   }
 
   return (

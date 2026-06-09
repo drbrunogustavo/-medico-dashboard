@@ -45,6 +45,21 @@ export async function POST(req: NextRequest) {
       .single()
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+    // Trigger nurturing non-blocking after lead creation
+    if (data?.id) {
+      const leadId = data.id
+      const userId = auth.userId
+      ;(async () => {
+        try {
+          const { gerarNurturingInline } = await import("@/lib/nurturing")
+          await gerarNurturingInline(userId, leadId)
+        } catch (e) {
+          console.error("[crm/post] nurturing:", e)
+        }
+      })()
+    }
+
     return NextResponse.json(data)
   } catch (e) {
     return NextResponse.json({ error: errMsg(e) }, { status: 500 })

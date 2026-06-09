@@ -9,6 +9,7 @@ import {
   Bot, Video, Layers, Clapperboard, Sparkles, Flame, Megaphone,
   ScanFace, ShieldQuestion, Microscope, FileText,
   Calendar, Heart, TrendingUp, MessageCircle,
+  Star, UserPlus,
   LogOut, CreditCard, Settings,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -74,8 +75,10 @@ const NAV_CLINICA: NavGroup[] = [
   {
     category: "Pacientes",
     items: [
-      { label: "Copiloto de Consulta", href: "/copiloto", icon: Bot },
-      { label: "CRM de Leads",         href: "/crm",      icon: Users2 },
+      { label: "Copiloto de Consulta", href: "/copiloto",    icon: Bot      },
+      { label: "CRM de Leads",         href: "/crm",         icon: Users2   },
+      { label: "Indicações",           href: "/indicacoes",  icon: UserPlus },
+      { label: "NPS & Satisfação",     href: "/nps",         icon: Star     },
     ],
   },
   {
@@ -87,9 +90,10 @@ const NAV_CLINICA: NavGroup[] = [
   {
     category: "Automação",
     items: [
-      { label: "Nutrição de Pacientes", href: "/nutricao-pacientes", icon: Heart,          },
-      { label: "Nutrição de Leads",     href: "/nutricao-leads",     icon: TrendingUp,     },
-      { label: "Agente WhatsApp",       href: "/whatsapp",           icon: MessageCircle, badge: "EM BREVE" },
+      { label: "Nutrição de Pacientes",    href: "/nutricao-pacientes", icon: Heart,         },
+      { label: "Nutrição de Leads",        href: "/nutricao-leads",     icon: TrendingUp,    },
+      { label: "Régua de Relacionamento",  href: "/regua",              icon: Heart,         },
+      { label: "Agente WhatsApp",          href: "/whatsapp",           icon: MessageCircle, badge: "EM BREVE" },
     ],
   },
 ]

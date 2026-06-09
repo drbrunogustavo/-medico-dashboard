@@ -15,7 +15,7 @@ import {
   Plus, X, Loader2, Users2, TrendingUp, DollarSign,
   Sparkles, Phone, Instagram, CalendarDays, MessageSquare,
   Edit2, Trash2, GripVertical, ChevronDown, Check,
-  Link2, ExternalLink,
+  Link2, ExternalLink, Zap, CheckCircle, Clock, Edit3,
 } from "lucide-react"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -32,6 +32,15 @@ interface Lead {
   valor_potencial: number
   created_at:      string
   updated_at:      string
+}
+
+interface NurturingSeq {
+  id:           string
+  dia:          number
+  mensagem:     string
+  status:       string
+  agendado_para: string
+  enviado_em:   string | null
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -135,10 +144,12 @@ function LeadCard({
   lead,
   onExpand,
   isDragOverlay = false,
+  hasNurturing  = false,
 }: {
   lead: Lead
   onExpand: (l: Lead) => void
   isDragOverlay?: boolean
+  hasNurturing?: boolean
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: lead.id })
 
@@ -199,7 +210,14 @@ function LeadCard({
           </div>
 
           <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-border">
-            <span className="text-[10px] font-mono text-text-muted">{fmtDate(lead.created_at)}</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] font-mono text-text-muted">{fmtDate(lead.created_at)}</span>
+              {hasNurturing && (
+                <span className="flex items-center gap-0.5 text-[8px] font-mono font-bold px-1 py-0.5 rounded bg-accent-dim border border-accent-border text-accent">
+                  <Zap className="w-2.5 h-2.5" /> NUR
+                </span>
+              )}
+            </div>
             {lead.valor_potencial > 0 && (
               <span className="text-[10px] font-mono text-emerald-400">
                 {fmtCurrency(lead.valor_potencial)}
@@ -225,11 +243,13 @@ function KanbanColumn({
   leads,
   onExpand,
   onAddLead,
+  nurturingMap,
 }: {
   col: typeof COLUMNS[number]
   leads: Lead[]
   onExpand: (l: Lead) => void
   onAddLead: (estagio: string) => void
+  nurturingMap: Record<string, boolean>
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: col.id })
 
@@ -272,7 +292,7 @@ function KanbanColumn({
           </div>
         )}
         {leads.map(lead => (
-          <LeadCard key={lead.id} lead={lead} onExpand={onExpand} />
+          <LeadCard key={lead.id} lead={lead} onExpand={onExpand} hasNurturing={nurturingMap[lead.id] === true} />
         ))}
       </div>
     </div>
@@ -449,13 +469,17 @@ function LeadDetailModal({
   onEdit,
   onDelete,
   onClose,
+  onNurturing,
   deleting,
+  hasNurturing,
 }: {
   lead: Lead
   onEdit: () => void
   onDelete: () => void
   onClose: () => void
+  onNurturing: () => void
   deleting: boolean
+  hasNurturing: boolean
 }) {
   const [confirmDel, setConfirmDel] = useState(false)
   const col = COLUMNS.find(c => c.id === lead.estagio)
@@ -572,6 +596,18 @@ function LeadDetailModal({
               <Sparkles className="w-3.5 h-3.5" />
               Nutrição
             </a>
+            <button
+              onClick={onNurturing}
+              className={cn(
+                "flex items-center justify-center gap-1.5 py-2 rounded-lg border text-[12px] font-medium transition-colors",
+                hasNurturing
+                  ? "bg-accent-dim border-accent-border text-accent hover:bg-accent/15"
+                  : "bg-surface-2 border-border text-text-muted hover:text-text-primary"
+              )}
+            >
+              <Zap className="w-3.5 h-3.5" />
+              Nurturing
+            </button>
             <button
               onClick={onEdit}
               className="flex items-center justify-center gap-1.5 py-2 rounded-lg bg-surface-2 border border-border text-text-secondary text-[12px] font-medium hover:text-text-primary transition-colors"
@@ -693,6 +729,126 @@ function MotivoModal({
   )
 }
 
+// ── Nurturing Modal ───────────────────────────────────────────────────────────
+
+function NurturingModal({
+  leadId,
+  leadNome,
+  onClose,
+}: {
+  leadId:   string
+  leadNome: string
+  onClose:  () => void
+}) {
+  const [seqs,    setSeqs]    = useState<NurturingSeq[]>([])
+  const [loading, setLoading] = useState(true)
+  const [editId,  setEditId]  = useState<string | null>(null)
+  const [editTxt, setEditTxt] = useState("")
+  const [saving,  setSaving]  = useState(false)
+
+  useEffect(() => {
+    fetch(`/api/nurturing?lead_id=${leadId}`)
+      .then(r => r.ok ? r.json() as Promise<NurturingSeq[]> : [])
+      .then(data => setSeqs(data))
+      .catch(() => setSeqs([]))
+      .finally(() => setLoading(false))
+  }, [leadId])
+
+  async function saveEdit(id: string) {
+    setSaving(true)
+    const r = await fetch(`/api/nurturing/${id}`, {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mensagem: editTxt }),
+    })
+    if (r.ok) {
+      setSeqs(prev => prev.map(s => s.id === id ? { ...s, mensagem: editTxt } : s))
+      setEditId(null)
+    }
+    setSaving(false)
+  }
+
+  function fmtDate(s: string) {
+    return new Date(s).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })
+  }
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-lg bg-surface border border-border rounded-xl shadow-2xl">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+          <div>
+            <h2 className="text-[15px] font-semibold text-text-primary flex items-center gap-2">
+              <Zap className="w-4 h-4 text-accent" /> Nurturing — {leadNome}
+            </h2>
+            <p className="text-[11px] text-text-muted mt-0.5">Sequência automática de 4 mensagens</p>
+          </div>
+          <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="p-5 space-y-3 max-h-[60vh] overflow-y-auto">
+          {loading ? (
+            <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-accent" /></div>
+          ) : seqs.length === 0 ? (
+            <div className="text-center py-8 text-text-muted text-[13px]">
+              <Zap className="w-8 h-8 text-text-muted/30 mx-auto mb-2" />
+              Nenhuma sequência gerada ainda.
+            </div>
+          ) : (
+            seqs.map(s => (
+              <div key={s.id} className="bg-background border border-border rounded-xl p-3.5 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-mono font-bold text-accent bg-accent-dim border border-accent-border px-1.5 py-0.5 rounded">DIA {s.dia}</span>
+                    <span className="text-[10px] text-text-muted">{fmtDate(s.agendado_para)}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {s.status === "enviado" ? (
+                      <CheckCircle className="w-4 h-4 text-accent" />
+                    ) : (
+                      <div className="flex items-center gap-1 text-[10px] text-text-muted">
+                        <Clock className="w-3 h-3" /> Pendente
+                      </div>
+                    )}
+                    {s.status !== "enviado" && (
+                      <button
+                        onClick={() => { setEditId(s.id === editId ? null : s.id); setEditTxt(s.mensagem) }}
+                        className="w-6 h-6 rounded flex items-center justify-center text-text-muted hover:text-accent hover:bg-accent-dim transition-colors"
+                      >
+                        <Edit3 className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {editId === s.id ? (
+                  <div className="space-y-2">
+                    <textarea
+                      value={editTxt}
+                      onChange={e => setEditTxt(e.target.value)}
+                      rows={4}
+                      className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-[12px] text-text-primary resize-none focus:outline-none focus:border-accent/50"
+                    />
+                    <div className="flex gap-2">
+                      <button onClick={() => setEditId(null)} className="flex-1 py-1.5 rounded-lg border border-border text-[11px] text-text-muted">Cancelar</button>
+                      <button onClick={() => saveEdit(s.id)} disabled={saving} className="flex-1 py-1.5 rounded-lg bg-accent text-[11px] font-semibold text-background disabled:opacity-60 flex items-center justify-center gap-1">
+                        {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />} Salvar
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-[12px] text-text-secondary leading-relaxed line-clamp-3">{s.mensagem}</p>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function CRMPage() {
@@ -708,6 +864,11 @@ export default function CRMPage() {
   const [expanded, setExpanded]         = useState<Lead | null>(null)
   const [editing, setEditing]           = useState<Lead | null>(null)
   const [deleting, setDeleting]         = useState(false)
+
+  // Nurturing
+  const [nurturingMap,    setNurturingMap]    = useState<Record<string, boolean>>({})
+  const [showNurturing,   setShowNurturing]   = useState<string | null>(null)
+  const nurturingLeadNome = leads.find(l => l.id === showNurturing)?.nome ?? ""
 
   // DnD
   const [activeId, setActiveId]         = useState<string | null>(null)
@@ -736,7 +897,17 @@ export default function CRMPage() {
     }
   }, [])
 
-  useEffect(() => { fetchLeads() }, [fetchLeads])
+  useEffect(() => {
+    fetchLeads()
+    fetch("/api/nurturing")
+      .then(r => r.ok ? r.json() as Promise<{ lead_id: string }[]> : [])
+      .then(data => {
+        const map: Record<string, boolean> = {}
+        data.forEach(d => { map[d.lead_id] = true })
+        setNurturingMap(map)
+      })
+      .catch(() => {/* silent */})
+  }, [fetchLeads])
 
   // ── CRUD ────────────────────────────────────────────────────────────────────
 
@@ -753,6 +924,8 @@ export default function CRMPage() {
       setLeads(prev => [novo, ...prev])
       setShowNew(false)
       showToast("Lead criado com sucesso")
+      // Mark nurturing as active optimistically (backend generates it async)
+      if (novo?.id) setNurturingMap(m => ({ ...m, [novo.id]: true }))
     } catch {
       showToast("Erro ao criar lead", "error")
     } finally {
@@ -921,6 +1094,7 @@ export default function CRMPage() {
                   leads={leads.filter(l => l.estagio === col.id)}
                   onExpand={setExpanded}
                   onAddLead={stage => { setNewEstagio(stage); setShowNew(true) }}
+                  nurturingMap={nurturingMap}
                 />
               ))}
             </div>
@@ -963,7 +1137,9 @@ export default function CRMPage() {
           onEdit={() => { setEditing(expanded); setExpanded(null) }}
           onDelete={() => deleteLead(expanded.id)}
           onClose={() => setExpanded(null)}
+          onNurturing={() => { setShowNurturing(expanded.id); setExpanded(null) }}
           deleting={deleting}
+          hasNurturing={nurturingMap[expanded.id] === true}
         />
       )}
 
@@ -976,6 +1152,15 @@ export default function CRMPage() {
           }}
           onCancel={() => setPendingMove(null)}
           saving={movingSaving}
+        />
+      )}
+
+      {/* Nurturing Modal */}
+      {showNurturing && (
+        <NurturingModal
+          leadId={showNurturing}
+          leadNome={nurturingLeadNome}
+          onClose={() => setShowNurturing(null)}
         />
       )}
 

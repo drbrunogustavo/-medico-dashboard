@@ -6,14 +6,14 @@ import { MobileNav }          from "@/components/MobileNav"
 import { MobileMenuProvider } from "@/components/MobileMenuProvider"
 
 // Routes that must NOT render the Sidebar or trigger any auth hooks.
-// These pages use fixed inset-0 overlays and are fully public.
-const PUBLIC_PATHS = new Set(["/", "/login", "/planos", "/landing", "/onboarding"])
+const PUBLIC_PATHS = new Set(["/", "/login", "/planos", "/landing", "/onboarding", "/captacao"])
+const PUBLIC_PREFIXES = ["/nps/", "/indicar/"]
 
 export function ConditionalLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
 
-  if (PUBLIC_PATHS.has(pathname)) {
-    // Public page — render children directly, no Sidebar, no auth hooks fire
+  const isPublic = PUBLIC_PATHS.has(pathname) || PUBLIC_PREFIXES.some(p => pathname.startsWith(p))
+  if (isPublic) {
     return <>{children}</>
   }
 

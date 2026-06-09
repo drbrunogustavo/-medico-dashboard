@@ -122,8 +122,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 required
-                style={{ fontSize: 15, background: "#161616" }}
-                className="w-full border border-border rounded-lg px-4 py-3 text-text-primary placeholder:text-text-muted outline-none focus:border-[rgba(0,192,127,0.4)] transition-colors"
+                className="login-input w-full border border-border rounded-lg px-4 py-3 text-text-primary placeholder:text-text-muted outline-none focus:border-[rgba(0,192,127,0.4)] transition-colors"
               />
             </div>
 
@@ -137,8 +136,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   required
-                  style={{ fontSize: 15, background: "#161616" }}
-                  className="w-full border border-border rounded-lg px-4 py-3 pr-11 text-text-primary placeholder:text-text-muted outline-none focus:border-[rgba(0,192,127,0.4)] transition-colors"
+                  className="login-input w-full border border-border rounded-lg px-4 py-3 pr-11 text-text-primary placeholder:text-text-muted outline-none focus:border-[rgba(0,192,127,0.4)] transition-colors"
                 />
                 <button
                   type="button"

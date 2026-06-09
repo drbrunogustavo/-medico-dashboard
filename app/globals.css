@@ -201,4 +201,22 @@ button, a, input, select, textarea, [role="button"] {
     border-radius: 50%;
     background: var(--accent-dim);
   }
+
+  /* Login form inputs — explicit colors so password dots and autofill stay visible */
+  .login-input {
+    font-size: 15px;
+    background-color: var(--surface-2);
+    color: var(--text-primary);
+    -webkit-text-fill-color: var(--text-primary);
+    caret-color: var(--text-primary);
+  }
+
+  .login-input:-webkit-autofill,
+  .login-input:-webkit-autofill:hover,
+  .login-input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px var(--surface-2) inset;
+    -webkit-text-fill-color: var(--text-primary);
+    caret-color: var(--text-primary);
+    transition: background-color 9999s ease-in-out;
+  }
 }

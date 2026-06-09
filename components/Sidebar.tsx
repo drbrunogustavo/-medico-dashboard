@@ -26,7 +26,7 @@ type NavGroup = { category: string | null; items: NavItem[] }
 const NAV_SOCIAL: NavGroup[] = [
   {
     category: null,
-    items: [{ label: "Dashboard", href: "/", icon: LayoutDashboard }],
+    items: [{ label: "Dashboard", href: "/dashboard", icon: LayoutDashboard }],
   },
   {
     category: "Inteligência",
@@ -63,7 +63,7 @@ const NAV_SOCIAL: NavGroup[] = [
 const NAV_CLINICA: NavGroup[] = [
   {
     category: null,
-    items: [{ label: "Dashboard", href: "/", icon: LayoutDashboard }],
+    items: [{ label: "Dashboard", href: "/dashboard", icon: LayoutDashboard }],
   },
   {
     category: "Agenda",

@@ -1,13 +1,16 @@
 import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 
-// Routes exempt from the onboarding guard (but NOT from auth, except /login)
-const ONBOARDING_EXEMPT = new Set(["/onboarding", "/login", "/landing", "/planos"])
+// Fully public — no auth check whatsoever
+const PUBLIC_ROUTES = new Set(["/", "/landing", "/planos"])
+
+// Authenticated users may access these without completing onboarding
+const ONBOARDING_EXEMPT = new Set(["/onboarding"])
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Pass through Next.js internals and static assets — never touch these
+  // Static assets — never intercepted
   if (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/favicon") ||
@@ -16,21 +19,24 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // API routes bypass middleware auth — each handler calls checkAuth() internally.
-  // /api/stripe/webhook is public by design (Stripe sends no user session).
+  // API routes — auth handled inside each handler via checkAuth()
+  // /api/stripe/webhook is intentionally public (Stripe calls it without a session)
   if (pathname.startsWith("/api/")) {
     return NextResponse.next()
   }
 
-  // If Supabase env vars are missing, send everyone to /login so the app
-  // doesn't crash with invalid client initialization.
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    if (pathname !== "/login") {
-      return NextResponse.redirect(new URL("/login", request.url))
-    }
+  // Fully public pages — serve without touching auth cookies
+  if (PUBLIC_ROUTES.has(pathname)) {
     return NextResponse.next()
   }
 
+  // Supabase not configured — redirect everything to /login to avoid crashes
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    if (pathname === "/login") return NextResponse.next()
+    return NextResponse.redirect(new URL("/login", request.url))
+  }
+
+  // ── Set up Supabase SSR client (reads/refreshes JWT from cookies) ─────────
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
@@ -52,25 +58,22 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // Validates JWT from cookie — no network call, reads locally
   const { data: { user } } = await supabase.auth.getUser()
 
-  // ── Unauthenticated user ──────────────────────────────────────────────────
+  // ── /login: public page, but redirect authenticated users away ────────────
+  if (pathname === "/login") {
+    if (user) return NextResponse.redirect(new URL("/dashboard", request.url))
+    return supabaseResponse
+  }
+
+  // ── All other routes require authentication ───────────────────────────────
   if (!user) {
-    // Allow /login through; redirect everything else to /login
-    if (pathname === "/login") return supabaseResponse
     const url = request.nextUrl.clone()
     url.pathname = "/login"
     return NextResponse.redirect(url)
   }
 
-  // ── Authenticated user ────────────────────────────────────────────────────
-  // Don't let logged-in users linger on /login
-  if (pathname === "/login") {
-    return NextResponse.redirect(new URL("/", request.url))
-  }
-
-  // Onboarding guard: skip for exempt routes
+  // ── Onboarding guard for authenticated users ──────────────────────────────
   if (!ONBOARDING_EXEMPT.has(pathname)) {
     const { data: perfil, error: perfilError } = await supabase
       .from("perfis")
@@ -78,8 +81,8 @@ export async function middleware(request: NextRequest) {
       .eq("user_id", user.id)
       .maybeSingle()
 
-    // Only redirect when there's a clear "incomplete" signal.
-    // A DB error (table not yet migrated) → let through rather than loop.
+    // Only redirect on a clear "not completed" signal.
+    // DB errors (table not migrated yet) → let through to avoid infinite loops.
     if (!perfilError && !perfil?.onboarding_completo) {
       return NextResponse.redirect(new URL("/onboarding", request.url))
     }

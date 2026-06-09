@@ -1,7 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { Eye, EyeOff, Loader2, Check } from "lucide-react"
+import Link from "next/link"
+import { Eye, EyeOff, Loader2, Check, ArrowLeft } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser"
 import { PraxisLogo } from "@/components/PraxisLogo"
@@ -34,7 +35,21 @@ export default function LoginPage() {
       return
     }
 
-    router.push("/")
+    // Check onboarding status to decide where to redirect
+    try {
+      const r = await fetch("/api/perfil")
+      if (r.ok) {
+        const perfil = await r.json() as { onboarding_completo?: boolean } | null
+        if (!perfil?.onboarding_completo) {
+          router.push("/onboarding")
+          return
+        }
+      }
+    } catch {
+      // If we can't check, go to dashboard — middleware will handle it
+    }
+
+    router.push("/dashboard")
     router.refresh()
   }
 
@@ -103,6 +118,12 @@ export default function LoginPage() {
         </div>
 
         <div className="w-full max-w-[360px]">
+
+          {/* Back link */}
+          <Link href="/" className="inline-flex items-center gap-1.5 text-[11px] text-text-muted hover:text-text-secondary transition-colors mb-8">
+            <ArrowLeft className="w-3 h-3" />
+            Voltar para o início
+          </Link>
 
           {/* Heading */}
           <div className="mb-8">

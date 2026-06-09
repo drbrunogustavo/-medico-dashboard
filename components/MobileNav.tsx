@@ -4,7 +4,7 @@ import { Activity, Menu } from "lucide-react"
 import { useMenu } from "@/components/MobileMenuProvider"
 
 const ROUTE_LABELS: Record<string, string> = {
-  "/":            "Dashboard",
+  "/dashboard":   "Dashboard",
   "/radar":       "Radar de Tendências",
   "/imagens":     "Gerador de Imagens",
   "/roteiros":    "Gerador de Roteiros",

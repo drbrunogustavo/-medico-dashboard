@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, ArrowRight, Check, X, Zap, Star, Crown, Loader2, CalendarDays } from "lucide-react"
+import { useAuth } from "@/hooks/useAuth"
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -14,18 +15,18 @@ interface UserPlan {
 }
 
 interface PlanDef {
-  id:       string
-  name:     string
+  id:           string
+  name:         string
   priceDisplay: string
-  priceSub: string
-  badge:    string | null
-  highlight: boolean
-  icon:     React.ElementType
-  color:    string
-  border:   string
-  limits:   string
-  support:  string
-  priceKey: string
+  priceSub:     string
+  badge:        string | null
+  highlight:    boolean
+  icon:         React.ElementType
+  color:        string
+  border:       string
+  limits:       string
+  support:      string
+  priceKey:     string
 }
 
 // ─── Features ──────────────────────────────────────────────────────────────────
@@ -53,31 +54,28 @@ const FEATURES = [
 
 const PLANS: PlanDef[] = [
   {
-    id: "starter",   name: "Starter",
-    priceDisplay: "R$ 97",  priceSub: "/mês",
-    badge: null,   highlight: false,
-    icon: Zap,
-    color: "#aaaaaa", border: "rgba(255,255,255,0.10)",
+    id: "starter",      name: "Starter",
+    priceDisplay: "R$ 97",   priceSub: "/mês",
+    badge: null,  highlight: false,
+    icon: Zap,   color: "#aaaaaa", border: "rgba(255,255,255,0.10)",
     limits:  "30 gerações/mês",
     support: "Suporte por email",
     priceKey: "starter",
   },
   {
-    id: "pro",       name: "Pro",
-    priceDisplay: "R$ 197", priceSub: "/mês",
-    badge: null,   highlight: false,
-    icon: Star,
-    color: "#00c07f", border: "rgba(0,192,127,0.20)",
+    id: "pro",          name: "Pro",
+    priceDisplay: "R$ 197",  priceSub: "/mês",
+    badge: null,  highlight: false,
+    icon: Star,  color: "#00c07f", border: "rgba(0,192,127,0.20)",
     limits:  "200 gerações/mês",
     support: "Suporte por WhatsApp",
     priceKey: "pro",
   },
   {
-    id: "elite",     name: "Elite",
-    priceDisplay: "R$ 397", priceSub: "/mês",
+    id: "elite",        name: "Elite",
+    priceDisplay: "R$ 397",  priceSub: "/mês",
     badge: "MAIS POPULAR", highlight: true,
-    icon: Crown,
-    color: "#d4af37", border: "rgba(212,175,55,0.30)",
+    icon: Crown, color: "#d4af37", border: "rgba(212,175,55,0.30)",
     limits:  "Gerações ilimitadas",
     support: "WhatsApp prioritário + onboarding 1:1",
     priceKey: "elite_monthly",
@@ -86,8 +84,7 @@ const PLANS: PlanDef[] = [
     id: "elite_annual", name: "Elite Anual",
     priceDisplay: "R$ 2.997", priceSub: "/ano",
     badge: "ECONOMIZE 37%", highlight: false,
-    icon: CalendarDays,
-    color: "#a78bfa", border: "rgba(167,139,250,0.25)",
+    icon: CalendarDays, color: "#a78bfa", border: "rgba(167,139,250,0.25)",
     limits:  "Gerações ilimitadas · 12 meses",
     support: "WhatsApp prioritário + onboarding 1:1",
     priceKey: "elite_annual",
@@ -105,12 +102,16 @@ function isPlanActive(plan: PlanDef, userPlan: UserPlan | null) {
 }
 
 // ─── Plan CTA ──────────────────────────────────────────────────────────────────
+// authed: true  = logged in
+// authed: false = not logged in
+// authed: null  = still checking auth
 
 function PlanCTA({
-  plan, userPlan, loading, onCheckout, onPortal,
+  plan, userPlan, authed, loading, onCheckout, onPortal,
 }: {
   plan:      PlanDef
   userPlan:  UserPlan | null
+  authed:    boolean | null
   loading:   string | null
   onCheckout: (key: string) => void
   onPortal:  () => void
@@ -118,6 +119,16 @@ function PlanCTA({
   const isCurrent = isPlanActive(plan, userPlan)
   const isLoading = loading === plan.priceKey || (isCurrent && loading === "portal")
 
+  // Still checking auth — show spinner
+  if (authed === null) {
+    return (
+      <div className="flex justify-center py-3">
+        <Loader2 className="w-4 h-4 animate-spin" style={{ color: plan.color }} />
+      </div>
+    )
+  }
+
+  // Subscribed via Stripe — show portal button
   if (isCurrent && userPlan?.hasStripe) {
     return (
       <button onClick={onPortal} disabled={!!loading}
@@ -128,6 +139,7 @@ function PlanCTA({
     )
   }
 
+  // Active plan without Stripe (trial/manual)
   if (isCurrent) {
     return (
       <div className="block w-full text-center py-3.5 rounded-xl text-[13px] font-semibold"
@@ -137,7 +149,8 @@ function PlanCTA({
     )
   }
 
-  if (!userPlan) {
+  // Not logged in — redirect to login
+  if (!authed) {
     return (
       <Link href="/login"
         className="block text-center py-3.5 rounded-xl text-[13px] font-bold transition-all hover:opacity-90"
@@ -151,8 +164,11 @@ function PlanCTA({
     )
   }
 
+  // Logged in — call Stripe checkout
   return (
-    <button onClick={() => onCheckout(plan.priceKey)} disabled={!!loading}
+    <button
+      onClick={() => onCheckout(plan.priceKey)}
+      disabled={!!loading}
       className="block w-full text-center py-3.5 rounded-xl text-[13px] font-bold disabled:opacity-50 transition-all hover:opacity-90 active:scale-[0.98]"
       style={{
         background: plan.highlight ? plan.color : `${plan.color}18`,
@@ -171,46 +187,78 @@ function PlanCTA({
 
 export default function PlanosPage() {
   const router = useRouter()
+
+  // Auth state — independent of plan data
+  const { user, loading: authLoading } = useAuth()
+
   const [userPlan,    setUserPlan]    = useState<UserPlan | null>(null)
+  const [planLoading, setPlanLoading] = useState(false)
   const [loading,     setLoading]     = useState<string | null>(null)
-  const [loadingPlan, setLoadingPlan] = useState(true)
+  const [stripeError, setStripeError] = useState<string | null>(null)
 
   const isSuccess = typeof window !== "undefined"
     ? new URLSearchParams(window.location.search).has("pagamento")
     : false
 
+  // Derive authentication state from useAuth
+  // null = still determining, true/false = resolved
+  const authed: boolean | null = authLoading ? null : !!user
+
+  // Only fetch plan details if authenticated
   useEffect(() => {
+    if (!user) return
+    setPlanLoading(true)
     fetch("/api/planos")
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d) setUserPlan(d) })
       .catch(() => {})
-      .finally(() => setLoadingPlan(false))
-  }, [])
+      .finally(() => setPlanLoading(false))
+  }, [user])
 
   async function handleCheckout(priceKey: string) {
+    setStripeError(null)
     setLoading(priceKey)
     try {
       const res  = await fetch("/api/stripe/checkout", {
-        method: "POST", headers: { "Content-Type": "application/json" },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ plano: priceKey }),
       })
       const data = await res.json()
-      if (data.url) window.location.href = data.url
-      else if (data.error) alert(data.error)
-    } catch { alert("Erro ao iniciar pagamento.") }
-    finally { setLoading(null) }
+      if (data.url) {
+        window.location.href = data.url
+        return
+      }
+      setStripeError(data.error ?? "Erro ao iniciar pagamento. Tente novamente.")
+    } catch {
+      setStripeError("Erro de conexão. Verifique sua internet e tente novamente.")
+    } finally {
+      setLoading(null)
+    }
   }
 
   async function handlePortal() {
+    setStripeError(null)
     setLoading("portal")
     try {
       const res  = await fetch("/api/stripe/portal", { method: "POST" })
       const data = await res.json()
-      if (data.url) window.location.href = data.url
-      else if (data.error) alert(data.error)
-    } catch { alert("Erro ao abrir portal.") }
-    finally { setLoading(null) }
+      if (data.url) {
+        window.location.href = data.url
+        return
+      }
+      setStripeError(data.error ?? "Erro ao abrir portal.")
+    } catch {
+      setStripeError("Erro de conexão.")
+    } finally {
+      setLoading(null)
+    }
   }
+
+  // Show spinner on CTA while plan details are loading (but auth is known)
+  const ctaAuthed: boolean | null = authed === null ? null
+    : authed && planLoading ? null
+    : authed
 
   return (
     <div className="fixed inset-0 z-[200] overflow-y-auto" style={{ background: "#0a0a0a" }}>
@@ -228,7 +276,7 @@ export default function PlanosPage() {
           borderBottom: "1px solid rgba(255,255,255,0.06)",
           backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
         }}>
-        <Link href="/dashboard" className="flex items-center gap-3">
+        <Link href={user ? "/dashboard" : "/"} className="flex items-center gap-3">
           <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
             <circle cx="16" cy="16" r="14" stroke="#00c07f" strokeWidth="1.5"
               strokeLinecap="round" strokeDasharray="70 18" strokeDashoffset="12" opacity="0.6" />
@@ -237,23 +285,26 @@ export default function PlanosPage() {
           </svg>
           <span style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: 15, fontWeight: 600, letterSpacing: "4px", color: "#f0f0f0" }}>PRAXIS</span>
         </Link>
-        {userPlan ? (
-          <button onClick={() => router.push("/dashboard")}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-[12px] font-semibold"
-            style={{ background: "#00c07f", color: "#080808" }}>
-            Ir para o App <ArrowRight className="w-3 h-3" />
-          </button>
-        ) : (
-          <Link href="/login"
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-[12px] font-semibold"
-            style={{ background: "#00c07f", color: "#080808" }}>
-            Entrar <ArrowRight className="w-3 h-3" />
-          </Link>
-        )}
+        <div className="flex items-center gap-3">
+          {user ? (
+            <button onClick={() => router.push("/dashboard")}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-[12px] font-semibold"
+              style={{ background: "#00c07f", color: "#080808" }}>
+              Ir para o App <ArrowRight className="w-3 h-3" />
+            </button>
+          ) : (
+            <Link href="/login"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-[12px] font-semibold"
+              style={{ background: "#00c07f", color: "#080808" }}>
+              Entrar <ArrowRight className="w-3 h-3" />
+            </Link>
+          )}
+        </div>
       </nav>
 
       <div className="relative max-w-6xl mx-auto px-4 md:px-8 pt-10 pb-20 space-y-12">
-        <Link href="/dashboard" className="inline-flex items-center gap-1.5 text-[11px]"
+        <Link href={user ? "/dashboard" : "/"}
+          className="inline-flex items-center gap-1.5 text-[11px]"
           style={{ color: "#555" }}
           onMouseEnter={e => (e.currentTarget.style.color = "#888")}
           onMouseLeave={e => (e.currentTarget.style.color = "#555")}>
@@ -268,6 +319,18 @@ export default function PlanosPage() {
             <p style={{ fontSize: 13, color: "#00c07f", fontWeight: 600 }}>
               Assinatura ativada com sucesso! Aproveite seus 7 dias grátis.
             </p>
+          </div>
+        )}
+
+        {/* Stripe error banner */}
+        {stripeError && (
+          <div className="rounded-xl p-4 flex items-start gap-3"
+            style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)" }}>
+            <span style={{ width: 16, height: 16, color: "#f87171", flexShrink: 0, marginTop: 1 }}>⚠</span>
+            <div>
+              <p style={{ fontSize: 13, color: "#f87171", fontWeight: 600 }}>Não foi possível abrir o checkout</p>
+              <p style={{ fontSize: 12, color: "#f87171", opacity: 0.8, marginTop: 2 }}>{stripeError}</p>
+            </div>
           </div>
         )}
 
@@ -305,8 +368,7 @@ export default function PlanosPage() {
                     <span style={{
                       display: "block", fontSize: 9, fontFamily: "monospace", fontWeight: 700,
                       padding: "3px 14px", borderRadius: 999, letterSpacing: "2px",
-                      background: isCurrent ? plan.color : plan.color,
-                      color: "#080808", whiteSpace: "nowrap",
+                      background: plan.color, color: "#080808", whiteSpace: "nowrap",
                     }}>
                       {isCurrent ? "PLANO ATUAL" : plan.badge}
                     </span>
@@ -362,14 +424,14 @@ export default function PlanosPage() {
                     })}
                   </div>
 
-                  {loadingPlan ? (
-                    <div className="flex justify-center py-3">
-                      <Loader2 className="w-4 h-4 animate-spin" style={{ color: plan.color }} />
-                    </div>
-                  ) : (
-                    <PlanCTA plan={plan} userPlan={userPlan} loading={loading}
-                      onCheckout={handleCheckout} onPortal={handlePortal} />
-                  )}
+                  <PlanCTA
+                    plan={plan}
+                    userPlan={userPlan}
+                    authed={ctaAuthed}
+                    loading={loading}
+                    onCheckout={handleCheckout}
+                    onPortal={handlePortal}
+                  />
                 </div>
               </div>
             )
@@ -386,10 +448,10 @@ export default function PlanosPage() {
           <p style={{ fontSize: 11, fontFamily: "monospace", color: "#333", letterSpacing: "1px" }}>
             © PRAXIS 2026 — Marketing Médico de Alto Padrão
           </p>
-          <Link href="/dashboard" style={{ fontSize: 12, color: "#444" }}
+          <Link href={user ? "/dashboard" : "/"} style={{ fontSize: 12, color: "#444" }}
             onMouseEnter={e => (e.currentTarget.style.color = "#00c07f")}
             onMouseLeave={e => (e.currentTarget.style.color = "#444")}>
-            ← Voltar para o app
+            ← Voltar
           </Link>
         </div>
       </footer>

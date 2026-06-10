@@ -6,7 +6,7 @@ export async function GET() {
   if (!auth.authenticated) return auth.response
 
   const appId      = process.env.META_APP_ID
-  const baseUrl    = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.praxis.med.br"
+  const baseUrl    = process.env.NEXT_PUBLIC_APP_URL ?? "https://praxisplatforma.com.br"
   const redirectUri = `${baseUrl}/api/instagram/callback`
 
   if (!appId) {

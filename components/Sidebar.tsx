@@ -13,6 +13,7 @@ import {
   Tag, Activity, Lightbulb, Layers, Layers2,
   LogOut, CreditCard, Settings,
   RefreshCw, Map, BarChart2, Rocket,
+  Instagram, Calculator, FileBarChart,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useMenu } from "@/components/MobileMenuProvider"
@@ -72,6 +73,7 @@ const NAV: Record<AlaId, NavItem[]> = {
     { label: "Análise de Concorrentes",href: "/concorrentes",     icon: Users2            },
     { label: "Gerador de Legendas",    href: "/legendas",         icon: Sparkles          },
     { label: "Gerador de Roteiros",    href: "/roteiros",         icon: Video             },
+    { label: "Instagram Analytics",     href: "/instagram",        icon: Instagram         },
     { label: "Banco de Pautas",        href: "/pautas",           icon: FileText          },
     { label: "Biblioteca de Ganchos",  href: "/ganchos",          icon: Zap               },
     { label: "Gerador de CTAs",        href: "/cta",              icon: MousePointerClick },
@@ -91,6 +93,7 @@ const NAV: Record<AlaId, NavItem[]> = {
     { label: "Scripts de Atendimento",  href: "/scripts",          icon: MessageSquare },
     { label: "Central de Objeções",     href: "/objecoes",         icon: ShieldQuestion},
     { label: "SOPs da Clínica",         href: "/sops",             icon: ClipboardList },
+    { label: "Calculadoras Clínicas",   href: "/calculadoras",     icon: Calculator    },
     { label: "Reativação de Pacientes", href: "/reativacao",       icon: RefreshCw     },
     { label: "Jornada do Paciente",     href: "/jornada",          icon: Map           },
   ],
@@ -102,6 +105,7 @@ const NAV: Record<AlaId, NavItem[]> = {
     { label: "Consultor Estratégico",  href: "/consultor",    icon: Lightbulb        },
     { label: "Diagnóstico 360°",       href: "/diagnostico",  icon: Activity         },
     { label: "Metas e Planejamento",   href: "/metas",        icon: Target           },
+    { label: "Relatório Mensal",        href: "/relatorio",    icon: FileBarChart     },
     { label: "Mapa de Objeções",       href: "/objecoes",     icon: ShieldQuestion   },
   ],
   ia: [

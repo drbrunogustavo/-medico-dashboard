@@ -5,6 +5,7 @@ import {
   Instagram, RefreshCw, ExternalLink, Heart, MessageCircle,
   Users, Image, Eye, TrendingUp, Zap, Copy, Check,
   AlertCircle, Loader2, Film, LayoutGrid, CheckCircle2,
+  ChevronDown, ChevronUp, Key, Wifi, ShieldAlert,
 } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
@@ -31,6 +32,15 @@ interface Post {
   timestamp:      string
   like_count:     number
   comments_count: number
+}
+
+interface ErrorDetail {
+  message:      string
+  errorCode?:   number
+  errorType?:   string
+  tokenExpired?: boolean
+  notConnected?: boolean
+  debug?:        Record<string, unknown>
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -194,19 +204,19 @@ function InsightBar({ label, value, max, color }: { label: string; value: number
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function InstagramPage() {
-  const [metrics,    setMetrics]    = useState<Metrics | null>(null)
-  const [posts,      setPosts]      = useState<Post[]>([])
-  const [loading,    setLoading]    = useState(true)
-  const [syncing,    setSyncing]    = useState(false)
-  const [error,      setError]      = useState<string | null>(null)
-  const [notConn,    setNotConn]    = useState(false)
-  const [lastSync,   setLastSync]   = useState<Date | null>(null)
-  const [toast,      setToast]      = useState<string | null>(null)
+  const [metrics,     setMetrics]     = useState<Metrics | null>(null)
+  const [posts,       setPosts]       = useState<Post[]>([])
+  const [loading,     setLoading]     = useState(true)
+  const [syncing,     setSyncing]     = useState(false)
+  const [errorDetail, setErrorDetail] = useState<ErrorDetail | null>(null)
+  const [lastSync,    setLastSync]    = useState<Date | null>(null)
+  const [toast,       setToast]       = useState<string | null>(null)
+  const [showDebug,   setShowDebug]   = useState(false)
 
   const fetchData = useCallback(async (isSyncing = false) => {
     if (isSyncing) setSyncing(true)
     else setLoading(true)
-    setError(null)
+    setErrorDetail(null)
 
     try {
       const [mRes, pRes] = await Promise.all([
@@ -215,15 +225,23 @@ export default function InstagramPage() {
       ])
       const [mData, pData] = await Promise.all([mRes.json(), pRes.json()])
 
-      if (mData.notConnected) { setNotConn(true); return }
-      if (mData.error)        { setError(mData.error); return }
+      if (mData.error) {
+        setErrorDetail({
+          message:      mData.error,
+          errorCode:    mData.errorCode,
+          errorType:    mData.errorType,
+          tokenExpired: mData.tokenExpired ?? false,
+          notConnected: mData.notConnected ?? false,
+          debug:        mData.debug,
+        })
+        return
+      }
 
       setMetrics(mData)
       setPosts(pData.posts ?? [])
       setLastSync(new Date())
-      setNotConn(false)
     } catch {
-      setError("Erro de conexão. Tente novamente.")
+      setErrorDetail({ message: "Erro de conexão com o servidor. Verifique sua internet.", errorType: "network" })
     } finally {
       setLoading(false)
       setSyncing(false)
@@ -298,50 +316,179 @@ export default function InstagramPage() {
     )
   }
 
-  // ── Not Connected ──────────────────────────────────────────────────────────
+  // ── Error / Not Connected ─────────────────────────────────────────────────
 
-  if (notConn || error) {
+  if (errorDetail) {
+    const isExpired   = errorDetail.tokenExpired
+    const isNoConfig  = errorDetail.notConnected
+    const isNetwork   = errorDetail.errorType === "network"
+
+    const iconEl = isExpired  ? <Key     style={{ width: 28, height: 28, color: "#f59e0b" }} />
+                 : isNoConfig ? <ShieldAlert style={{ width: 28, height: 28, color: "#e1306c" }} />
+                 : isNetwork  ? <Wifi    style={{ width: 28, height: 28, color: "#3b7fff" }} />
+                              : <AlertCircle style={{ width: 28, height: 28, color: "#ef4444" }} />
+
+    const iconBg = isExpired  ? { background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)" }
+                 : isNoConfig ? { background: "rgba(225,48,108,0.08)", border: "1px solid rgba(225,48,108,0.2)" }
+                 : isNetwork  ? { background: "rgba(59,127,255,0.08)", border: "1px solid rgba(59,127,255,0.2)" }
+                              : { background: "rgba(239,68,68,0.08)",  border: "1px solid rgba(239,68,68,0.2)" }
+
+    const title = isExpired  ? "Token do Instagram expirado"
+                : isNoConfig ? "Instagram não configurado"
+                : isNetwork  ? "Erro de conexão"
+                             : "Erro ao acessar Instagram"
+
     return (
-      <div className="p-8 animate-fade-in">
-        <div className="flex items-center gap-3 mb-8">
+      <div className="p-8 space-y-6 animate-fade-in">
+        {/* Header */}
+        <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-xl flex items-center justify-center"
             style={{ background: "rgba(225,48,108,0.12)", border: "1px solid rgba(225,48,108,0.25)" }}>
             <Instagram style={{ width: 16, height: 16, color: "#e1306c" }} />
           </div>
           <div>
             <h1 className="text-[17px] font-bold" style={{ color: "var(--text-primary)" }}>Instagram</h1>
-            <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>PRAXIS SOCIAL · ANALYTICS</p>
+            <p className="text-[11px] font-mono tracking-wider uppercase" style={{ color: "var(--text-muted)" }}>
+              PRAXIS SOCIAL · ANALYTICS
+            </p>
           </div>
         </div>
 
-        <div className="max-w-md mx-auto text-center py-16">
-          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5"
-            style={{ background: "rgba(225,48,108,0.08)", border: "1px solid rgba(225,48,108,0.2)" }}>
-            <Instagram style={{ width: 28, height: 28, color: "#e1306c" }} />
+        {/* Main error card */}
+        <div className="rounded-2xl border p-6 max-w-lg"
+          style={{ background: "var(--card)", borderColor: "var(--border)" }}>
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style={iconBg}>
+              {iconEl}
+            </div>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-[16px] font-bold mb-1" style={{ color: "var(--text-primary)" }}>{title}</h2>
+              <p className="text-[13px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                {errorDetail.message}
+              </p>
+            </div>
           </div>
-          <h2 className="text-[18px] font-bold mb-2" style={{ color: "var(--text-primary)" }}>
-            {error ? "Erro ao conectar" : "Instagram não conectado"}
-          </h2>
-          <p className="text-[13px] mb-6" style={{ color: "var(--text-muted)" }}>
-            {error ?? "Configure META_ACCESS_TOKEN e META_IG_USER_ID nas variáveis de ambiente para acessar suas métricas."}
-          </p>
-          {notConn && (
-            <Link href="/api/instagram/connect"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-bold"
-              style={{ background: "#e1306c", color: "#fff" }}>
-              <Instagram style={{ width: 14, height: 14 }} />
-              Conectar Instagram
-            </Link>
-          )}
-          {error && (
-            <button onClick={() => fetchData()}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-bold"
-              style={{ background: "rgba(225,48,108,0.12)", color: "#e1306c", border: "1px solid rgba(225,48,108,0.25)" }}>
-              <RefreshCw style={{ width: 14, height: 14 }} />
+
+          {/* Actions */}
+          <div className="mt-5 flex flex-wrap gap-2">
+            <button
+              onClick={() => fetchData(true)}
+              disabled={syncing}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-semibold disabled:opacity-50 transition-all hover:opacity-80"
+              style={{ background: "rgba(0,192,127,0.10)", border: "1px solid rgba(0,192,127,0.25)", color: "#00c07f" }}>
+              <RefreshCw style={{ width: 13, height: 13 }} className={syncing ? "animate-spin" : ""} />
               Tentar novamente
             </button>
+            <button
+              onClick={() => setShowDebug(v => !v)}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-semibold transition-all hover:opacity-80"
+              style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
+              {showDebug ? <ChevronUp style={{ width: 13, height: 13 }} /> : <ChevronDown style={{ width: 13, height: 13 }} />}
+              {showDebug ? "Ocultar detalhes" : "Ver erro detalhado"}
+            </button>
+          </div>
+
+          {/* Debug panel */}
+          {showDebug && (
+            <div className="mt-4 rounded-xl p-4 font-mono text-[11px] leading-relaxed overflow-x-auto"
+              style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
+              {errorDetail.errorCode !== undefined && (
+                <div><span style={{ color: "#f59e0b" }}>errorCode:</span> {errorDetail.errorCode}</div>
+              )}
+              {errorDetail.errorType && (
+                <div><span style={{ color: "#f59e0b" }}>errorType:</span> {errorDetail.errorType}</div>
+              )}
+              {errorDetail.debug && Object.entries(errorDetail.debug).map(([k, v]) => (
+                <div key={k}><span style={{ color: "#3b7fff" }}>{k}:</span> {String(v)}</div>
+              ))}
+            </div>
           )}
         </div>
+
+        {/* Contextual instructions */}
+        {isExpired && (
+          <div className="rounded-xl border p-5 max-w-lg space-y-3"
+            style={{ background: "rgba(245,158,11,0.04)", borderColor: "rgba(245,158,11,0.2)" }}>
+            <p className="text-[12px] font-bold flex items-center gap-2" style={{ color: "#f59e0b" }}>
+              <Key style={{ width: 13, height: 13 }} />
+              Como renovar o token do Instagram
+            </p>
+            <ol className="space-y-2">
+              {[
+                "Acesse developers.facebook.com → seu app → Ferramentas → Graph API Explorer",
+                "Gere um novo User Access Token com os escopos: instagram_basic, instagram_manage_insights",
+                `Troque pelo token de longa duração chamando a URL abaixo no servidor:`,
+                "Cole o novo token em META_ACCESS_TOKEN no Vercel e faça redeploy",
+              ].map((step, i) => (
+                <li key={i} className="flex items-start gap-2 text-[12px]" style={{ color: "var(--text-secondary)" }}>
+                  <span className="w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] font-bold mt-0.5"
+                    style={{ background: "rgba(245,158,11,0.15)", color: "#f59e0b" }}>
+                    {i + 1}
+                  </span>
+                  {step}
+                </li>
+              ))}
+            </ol>
+            <div className="rounded-lg p-3 text-[10px] font-mono overflow-x-auto"
+              style={{ background: "var(--surface)", color: "var(--text-muted)" }}>
+              GET https://graph.facebook.com/oauth/access_token<br />
+              &nbsp;&nbsp;?grant_type=fb_exchange_token<br />
+              &nbsp;&nbsp;&client_id=&#123;META_APP_ID&#125;<br />
+              &nbsp;&nbsp;&client_secret=&#123;META_APP_SECRET&#125;<br />
+              &nbsp;&nbsp;&fb_exchange_token=&#123;token_curto&#125;
+            </div>
+          </div>
+        )}
+
+        {isNoConfig && (
+          <div className="rounded-xl border p-5 max-w-lg space-y-3"
+            style={{ background: "rgba(225,48,108,0.04)", borderColor: "rgba(225,48,108,0.15)" }}>
+            <p className="text-[12px] font-bold flex items-center gap-2" style={{ color: "#e1306c" }}>
+              <ShieldAlert style={{ width: 13, height: 13 }} />
+              Como configurar as variáveis de ambiente
+            </p>
+            <ol className="space-y-2">
+              {[
+                "No Vercel, vá em Settings → Environment Variables",
+                "Adicione META_ACCESS_TOKEN com o User Access Token de longa duração",
+                "Adicione META_IG_USER_ID com o ID numérico da sua conta Instagram Business",
+                "Para obter o IG User ID: chame /me/accounts no Graph API Explorer e pegue o instagram_business_account.id da sua página",
+                "Faça Redeploy para aplicar as variáveis",
+              ].map((step, i) => (
+                <li key={i} className="flex items-start gap-2 text-[12px]" style={{ color: "var(--text-secondary)" }}>
+                  <span className="w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] font-bold mt-0.5"
+                    style={{ background: "rgba(225,48,108,0.12)", color: "#e1306c" }}>
+                    {i + 1}
+                  </span>
+                  {step}
+                </li>
+              ))}
+            </ol>
+          </div>
+        )}
+
+        {!isExpired && !isNoConfig && !isNetwork && (
+          <div className="rounded-xl border p-5 max-w-lg"
+            style={{ background: "rgba(239,68,68,0.04)", borderColor: "rgba(239,68,68,0.15)" }}>
+            <p className="text-[12px] font-bold mb-2 flex items-center gap-2" style={{ color: "#ef4444" }}>
+              <AlertCircle style={{ width: 13, height: 13 }} />
+              Possíveis causas
+            </p>
+            <ul className="space-y-1.5">
+              {[
+                "Token expirado — tokens de teste expiram em 60 dias",
+                "META_IG_USER_ID incorreto — deve ser o ID da conta Business, não do perfil pessoal",
+                "Permissões insuficientes — o app precisa de instagram_basic e instagram_manage_insights",
+                "App em modo de desenvolvimento — apenas usuários do app têm acesso",
+              ].map((c, i) => (
+                <li key={i} className="flex items-start gap-2 text-[12px]" style={{ color: "var(--text-secondary)" }}>
+                  <span className="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0" style={{ background: "#ef4444" }} />
+                  {c}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     )
   }

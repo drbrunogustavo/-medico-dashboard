@@ -216,6 +216,7 @@ export default function PlanosPage() {
   }, [user])
 
   async function handleCheckout(priceKey: string) {
+    console.log("[planos] handleCheckout chamado, priceKey:", priceKey)
     setStripeError(null)
     setLoading(priceKey)
     try {
@@ -225,12 +226,15 @@ export default function PlanosPage() {
         body: JSON.stringify({ plano: priceKey }),
       })
       const data = await res.json()
+      console.log("[planos] resposta checkout:", res.status, data)
       if (data.url) {
+        console.log("[planos] redirecionando para Stripe:", data.url.substring(0, 60))
         window.location.href = data.url
         return
       }
       setStripeError(data.error ?? "Erro ao iniciar pagamento. Tente novamente.")
-    } catch {
+    } catch (err) {
+      console.error("[planos] erro handleCheckout:", err)
       setStripeError("Erro de conexão. Verifique sua internet e tente novamente.")
     } finally {
       setLoading(null)

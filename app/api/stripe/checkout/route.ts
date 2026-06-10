@@ -3,12 +3,21 @@ import Stripe from "stripe"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
 
-type Plano = "starter" | "pro" | "elite"
+type PlanoKey = "starter" | "pro" | "elite_monthly" | "elite_annual"
 
-const PRICE_IDS: Record<Plano, string | undefined> = {
-  starter: process.env.STRIPE_PRICE_STARTER,
-  pro:     process.env.STRIPE_PRICE_PRO,
-  elite:   process.env.STRIPE_PRICE_ELITE,
+const PRICE_IDS: Record<PlanoKey, string | undefined> = {
+  starter:      process.env.STRIPE_PRICE_STARTER_MONTHLY,
+  pro:          process.env.STRIPE_PRICE_PRO_MONTHLY,
+  elite_monthly:process.env.STRIPE_PRICE_ELITE_MONTHLY,
+  elite_annual: process.env.STRIPE_PRICE_ELITE_ANNUAL,
+}
+
+// Canonical plan name stored in DB
+const PLANO_NAME: Record<PlanoKey, string> = {
+  starter:       "starter",
+  pro:           "pro",
+  elite_monthly: "elite",
+  elite_annual:  "elite",
 }
 
 export async function POST(req: NextRequest) {
@@ -22,33 +31,34 @@ export async function POST(req: NextRequest) {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
 
-  const { plano } = await req.json() as { plano: Plano }
+  const body = await req.json() as { plano: PlanoKey }
+  const { plano } = body
 
   const priceId = PRICE_IDS[plano]
   if (!priceId) {
     return NextResponse.json(
-      { error: `Preço do plano "${plano}" não configurado. Verifique STRIPE_PRICE_${plano.toUpperCase()}.` },
+      { error: `Preço do plano "${plano}" não configurado.` },
       { status: 400 },
     )
   }
 
-  // Fetch user email via Supabase SSR session
   const supabase = createSupabaseServerClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
-
-  const origin = req.headers.get("origin") ?? req.nextUrl.origin
+  const stripe  = new Stripe(process.env.STRIPE_SECRET_KEY)
+  const origin  = req.headers.get("origin") ?? req.nextUrl.origin
+  const planoDb = PLANO_NAME[plano]
 
   const session = await stripe.checkout.sessions.create({
     mode:           "subscription",
     line_items:     [{ price: priceId, quantity: 1 }],
     customer_email: user?.email ?? undefined,
-    success_url:    `${origin}/planos?success=true`,
+    success_url:    `${origin}/dashboard?pagamento=sucesso`,
     cancel_url:     `${origin}/planos`,
-    metadata:       { user_id: auth.userId, plano },
+    metadata:       { user_id: auth.userId, plano: planoDb },
     subscription_data: {
-      metadata: { user_id: auth.userId, plano },
+      trial_period_days: 7,
+      metadata:          { user_id: auth.userId, plano: planoDb },
     },
     locale: "pt-BR",
   })

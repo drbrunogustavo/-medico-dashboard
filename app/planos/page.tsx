@@ -1,258 +1,360 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import Link from "next/link"
-import { ArrowLeft, ArrowRight, Check, X, Zap, Star, Crown } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { ArrowLeft, ArrowRight, Check, X, Zap, Star, Crown, Loader2, CalendarDays } from "lucide-react"
 
-// ─── Data ─────────────────────────────────────────────────────────────────────
+// ─── Types ─────────────────────────────────────────────────────────────────────
 
-interface Feature {
-  text:    string
-  starter: boolean
-  pro:     boolean
-  elite:   boolean
+interface UserPlan {
+  plano:     string
+  status:    string
+  hasStripe: boolean
 }
 
-const FEATURES: Feature[] = [
-  { text: "Gerador de Roteiros",         starter: true,  pro: true,  elite: true  },
-  { text: "Gerador de Legendas",         starter: true,  pro: true,  elite: true  },
-  { text: "Biblioteca de Ganchos",       starter: true,  pro: true,  elite: true  },
-  { text: "Banco de Pautas",             starter: true,  pro: true,  elite: true  },
-  { text: "Radar de Tendências",         starter: false, pro: true,  elite: true  },
-  { text: "Detector de Oportunidades",   starter: false, pro: true,  elite: true  },
-  { text: "Raio-X de Pacientes",         starter: false, pro: true,  elite: true  },
-  { text: "Mapa de Objeções",            starter: false, pro: true,  elite: true  },
-  { text: "Diretor Criativo (Imagens)",  starter: false, pro: true,  elite: true  },
-  { text: "Gerador de Polêmicas",        starter: false, pro: true,  elite: true  },
-  { text: "Monitor de Referências",      starter: false, pro: true,  elite: true  },
-  { text: "Gerador de Ofertas",          starter: false, pro: true,  elite: true  },
-  { text: "Agente Executivo",            starter: false, pro: false, elite: true  },
-  { text: "Lab. de Viralização",         starter: false, pro: false, elite: true  },
-  { text: "Agente WhatsApp",             starter: false, pro: false, elite: true  },
+interface PlanDef {
+  id:       string
+  name:     string
+  priceDisplay: string
+  priceSub: string
+  badge:    string | null
+  highlight: boolean
+  icon:     React.ElementType
+  color:    string
+  border:   string
+  limits:   string
+  support:  string
+  priceKey: string
+}
+
+// ─── Features ──────────────────────────────────────────────────────────────────
+
+const FEATURES = [
+  { text: "Gerador de Roteiros e Legendas",   starter: true,  pro: true,  elite: true  },
+  { text: "Banco de Pautas e Ganchos",         starter: true,  pro: true,  elite: true  },
+  { text: "Calendário Editorial",              starter: true,  pro: true,  elite: true  },
+  { text: "CRM de Leads",                      starter: true,  pro: true,  elite: true  },
+  { text: "Radar de Tendências (IA)",          starter: false, pro: true,  elite: true  },
+  { text: "Diretor Criativo (Imagens IA)",     starter: false, pro: true,  elite: true  },
+  { text: "Copiloto de Consulta",              starter: false, pro: true,  elite: true  },
+  { text: "Pesquisa NPS",                      starter: false, pro: true,  elite: true  },
+  { text: "Precificação Inteligente",          starter: false, pro: true,  elite: true  },
+  { text: "Indicadores da Clínica",            starter: false, pro: true,  elite: true  },
+  { text: "Metas e Planejamento",              starter: false, pro: true,  elite: true  },
+  { text: "Calculadoras Clínicas",             starter: false, pro: true,  elite: true  },
+  { text: "Painel Executivo",                  starter: false, pro: false, elite: true  },
+  { text: "Consultor Estratégico IA",          starter: false, pro: false, elite: true  },
+  { text: "Diagnóstico 360° da Clínica",       starter: false, pro: false, elite: true  },
+  { text: "Expansão de Clínicas",              starter: false, pro: false, elite: true  },
+  { text: "Predição de Crescimento",           starter: false, pro: false, elite: true  },
+  { text: "Agente Executivo (WhatsApp)",        starter: false, pro: false, elite: true  },
 ]
 
-const PLANS = [
+const PLANS: PlanDef[] = [
   {
-    id:      "starter",
-    name:    "Starter",
-    price:   97,
-    badge:   null as string | null,
-    icon:    Zap,
-    color:   "#aaaaaa",
-    border:  "rgba(255,255,255,0.10)",
+    id: "starter",   name: "Starter",
+    priceDisplay: "R$ 97",  priceSub: "/mês",
+    badge: null,   highlight: false,
+    icon: Zap,
+    color: "#aaaaaa", border: "rgba(255,255,255,0.10)",
     limits:  "30 gerações/mês",
     support: "Suporte por email",
+    priceKey: "starter",
   },
   {
-    id:      "pro",
-    name:    "Pro",
-    price:   197,
-    badge:   "RECOMENDADO",
-    icon:    Star,
-    color:   "#00c07f",
-    border:  "rgba(0,192,127,0.30)",
+    id: "pro",       name: "Pro",
+    priceDisplay: "R$ 197", priceSub: "/mês",
+    badge: null,   highlight: false,
+    icon: Star,
+    color: "#00c07f", border: "rgba(0,192,127,0.20)",
     limits:  "200 gerações/mês",
     support: "Suporte por WhatsApp",
+    priceKey: "pro",
   },
   {
-    id:      "elite",
-    name:    "Elite",
-    price:   397,
-    badge:   "ELITE",
-    icon:    Crown,
-    color:   "#d4af37",
-    border:  "rgba(212,175,55,0.25)",
+    id: "elite",     name: "Elite",
+    priceDisplay: "R$ 397", priceSub: "/mês",
+    badge: "MAIS POPULAR", highlight: true,
+    icon: Crown,
+    color: "#d4af37", border: "rgba(212,175,55,0.30)",
     limits:  "Gerações ilimitadas",
     support: "WhatsApp prioritário + onboarding 1:1",
+    priceKey: "elite_monthly",
+  },
+  {
+    id: "elite_annual", name: "Elite Anual",
+    priceDisplay: "R$ 2.997", priceSub: "/ano",
+    badge: "ECONOMIZE 37%", highlight: false,
+    icon: CalendarDays,
+    color: "#a78bfa", border: "rgba(167,139,250,0.25)",
+    limits:  "Gerações ilimitadas · 12 meses",
+    support: "WhatsApp prioritário + onboarding 1:1",
+    priceKey: "elite_annual",
   },
 ]
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// ─── Helpers ───────────────────────────────────────────────────────────────────
+
+function isPlanActive(plan: PlanDef, userPlan: UserPlan | null) {
+  if (!userPlan) return false
+  if (plan.id === "elite_annual") {
+    return userPlan.plano === "elite" && userPlan.hasStripe
+  }
+  return userPlan.plano === plan.id && userPlan.status === "ativo"
+}
+
+// ─── Plan CTA ──────────────────────────────────────────────────────────────────
+
+function PlanCTA({
+  plan, userPlan, loading, onCheckout, onPortal,
+}: {
+  plan:      PlanDef
+  userPlan:  UserPlan | null
+  loading:   string | null
+  onCheckout: (key: string) => void
+  onPortal:  () => void
+}) {
+  const isCurrent = isPlanActive(plan, userPlan)
+  const isLoading = loading === plan.priceKey || (isCurrent && loading === "portal")
+
+  if (isCurrent && userPlan?.hasStripe) {
+    return (
+      <button onClick={onPortal} disabled={!!loading}
+        className="block w-full text-center py-3.5 rounded-xl text-[13px] font-bold disabled:opacity-50 transition-all hover:opacity-90"
+        style={{ background: `${plan.color}18`, color: plan.color, border: `1px solid ${plan.color}35` }}>
+        {isLoading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Gerenciar Assinatura"}
+      </button>
+    )
+  }
+
+  if (isCurrent) {
+    return (
+      <div className="block w-full text-center py-3.5 rounded-xl text-[13px] font-semibold"
+        style={{ background: `${plan.color}10`, color: plan.color, border: `1px solid ${plan.color}25` }}>
+        Plano Atual
+      </div>
+    )
+  }
+
+  if (!userPlan) {
+    return (
+      <Link href="/login"
+        className="block text-center py-3.5 rounded-xl text-[13px] font-bold transition-all hover:opacity-90"
+        style={{
+          background: plan.highlight ? plan.color : `${plan.color}18`,
+          color:      plan.highlight ? "#080808" : plan.color,
+          border:     plan.highlight ? "none" : `1px solid ${plan.color}35`,
+        }}>
+        Começar 7 dias grátis
+      </Link>
+    )
+  }
+
+  return (
+    <button onClick={() => onCheckout(plan.priceKey)} disabled={!!loading}
+      className="block w-full text-center py-3.5 rounded-xl text-[13px] font-bold disabled:opacity-50 transition-all hover:opacity-90 active:scale-[0.98]"
+      style={{
+        background: plan.highlight ? plan.color : `${plan.color}18`,
+        color:      plan.highlight ? "#080808" : plan.color,
+        border:     plan.highlight ? "none" : `1px solid ${plan.color}35`,
+      }}>
+      {isLoading
+        ? <Loader2 className="w-4 h-4 animate-spin mx-auto" />
+        : "Começar 7 dias grátis"
+      }
+    </button>
+  )
+}
+
+// ─── Page ──────────────────────────────────────────────────────────────────────
 
 export default function PlanosPage() {
+  const router = useRouter()
+  const [userPlan,    setUserPlan]    = useState<UserPlan | null>(null)
+  const [loading,     setLoading]     = useState<string | null>(null)
+  const [loadingPlan, setLoadingPlan] = useState(true)
+
+  const isSuccess = typeof window !== "undefined"
+    ? new URLSearchParams(window.location.search).has("pagamento")
+    : false
+
+  useEffect(() => {
+    fetch("/api/planos")
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setUserPlan(d) })
+      .catch(() => {})
+      .finally(() => setLoadingPlan(false))
+  }, [])
+
+  async function handleCheckout(priceKey: string) {
+    setLoading(priceKey)
+    try {
+      const res  = await fetch("/api/stripe/checkout", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plano: priceKey }),
+      })
+      const data = await res.json()
+      if (data.url) window.location.href = data.url
+      else if (data.error) alert(data.error)
+    } catch { alert("Erro ao iniciar pagamento.") }
+    finally { setLoading(null) }
+  }
+
+  async function handlePortal() {
+    setLoading("portal")
+    try {
+      const res  = await fetch("/api/stripe/portal", { method: "POST" })
+      const data = await res.json()
+      if (data.url) window.location.href = data.url
+      else if (data.error) alert(data.error)
+    } catch { alert("Erro ao abrir portal.") }
+    finally { setLoading(null) }
+  }
+
   return (
-    <div
-      className="fixed inset-0 z-[200] overflow-y-auto"
-      style={{ background: "#0a0a0a" }}
-    >
-      {/* Gradient mesh */}
+    <div className="fixed inset-0 z-[200] overflow-y-auto" style={{ background: "#0a0a0a" }}>
       <div className="fixed inset-0 pointer-events-none" style={{
         background: `
           radial-gradient(ellipse at 20% 50%, rgba(0,192,127,0.06) 0%, transparent 55%),
-          radial-gradient(ellipse at 80% 20%, rgba(59,130,246,0.05) 0%, transparent 50%)
+          radial-gradient(ellipse at 80% 20%, rgba(212,175,55,0.04) 0%, transparent 50%)
         `,
       }} />
 
-      {/* ── Nav ──────────────────────────────────────────────────────────── */}
-      <nav
-        className="sticky top-0 z-10 flex items-center justify-between px-6 md:px-12"
+      {/* Nav */}
+      <nav className="sticky top-0 z-10 flex items-center justify-between px-6 md:px-12"
         style={{
-          height: 64,
-          background: "rgba(10,10,10,0.88)",
+          height: 64, background: "rgba(10,10,10,0.88)",
           borderBottom: "1px solid rgba(255,255,255,0.06)",
-          backdropFilter: "blur(16px)",
-          WebkitBackdropFilter: "blur(16px)",
-        }}
-      >
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-3">
-          <svg width="28" height="28" viewBox="0 0 32 32" fill="none" aria-label="PRAXIS">
+          backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
+        }}>
+        <Link href="/dashboard" className="flex items-center gap-3">
+          <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
             <circle cx="16" cy="16" r="14" stroke="#00c07f" strokeWidth="1.5"
               strokeLinecap="round" strokeDasharray="70 18" strokeDashoffset="12" opacity="0.6" />
-            <path d="M10 22V10h5.5a4 4 0 0 1 0 8H10" stroke="#f5f5f7"
-              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            <line x1="18" y1="14" x2="23" y2="22" stroke="#00c07f"
-              strokeWidth="2" strokeLinecap="round" opacity="0.9" />
+            <path d="M10 22V10h5.5a4 4 0 0 1 0 8H10" stroke="#f5f5f7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            <line x1="18" y1="14" x2="23" y2="22" stroke="#00c07f" strokeWidth="2" strokeLinecap="round" opacity="0.9" />
           </svg>
-          <span style={{
-            fontFamily: "var(--font-playfair), Georgia, serif",
-            fontSize: 15, fontWeight: 600, letterSpacing: "4px",
-            color: "#f0f0f0",
-          }}>
-            PRAXIS
-          </span>
+          <span style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: 15, fontWeight: 600, letterSpacing: "4px", color: "#f0f0f0" }}>PRAXIS</span>
         </Link>
-
-        <div className="flex items-center gap-3">
-          <Link
-            href="/login"
-            className="hidden sm:block text-[12px] font-medium transition-colors"
-            style={{ color: "#888" }}
-            onMouseEnter={e => (e.currentTarget.style.color = "#ccc")}
-            onMouseLeave={e => (e.currentTarget.style.color = "#888")}
-          >
-            Já tenho conta
-          </Link>
-          <Link
-            href="/login"
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-[12px] font-semibold transition-all hover:opacity-90"
-            style={{ background: "#00c07f", color: "#080808" }}
-          >
+        {userPlan ? (
+          <button onClick={() => router.push("/dashboard")}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-[12px] font-semibold"
+            style={{ background: "#00c07f", color: "#080808" }}>
+            Ir para o App <ArrowRight className="w-3 h-3" />
+          </button>
+        ) : (
+          <Link href="/login"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-[12px] font-semibold"
+            style={{ background: "#00c07f", color: "#080808" }}>
             Entrar <ArrowRight className="w-3 h-3" />
           </Link>
-        </div>
+        )}
       </nav>
 
-      <div className="relative max-w-5xl mx-auto px-4 md:px-8 pt-10 pb-20 space-y-14">
-
-        {/* Back link */}
-        <Link
-          href="/"
-          className="inline-flex items-center gap-1.5 text-[11px] transition-colors"
+      <div className="relative max-w-6xl mx-auto px-4 md:px-8 pt-10 pb-20 space-y-12">
+        <Link href="/dashboard" className="inline-flex items-center gap-1.5 text-[11px]"
           style={{ color: "#555" }}
           onMouseEnter={e => (e.currentTarget.style.color = "#888")}
-          onMouseLeave={e => (e.currentTarget.style.color = "#555")}
-        >
-          <ArrowLeft className="w-3 h-3" />
-          Voltar para o início
+          onMouseLeave={e => (e.currentTarget.style.color = "#555")}>
+          <ArrowLeft className="w-3 h-3" /> Voltar
         </Link>
 
-        {/* Page header */}
+        {/* Success banner */}
+        {isSuccess && (
+          <div className="rounded-xl p-4 flex items-center gap-3"
+            style={{ background: "rgba(0,192,127,0.08)", border: "1px solid rgba(0,192,127,0.25)" }}>
+            <Check style={{ width: 16, height: 16, color: "#00c07f", flexShrink: 0 }} />
+            <p style={{ fontSize: 13, color: "#00c07f", fontWeight: 600 }}>
+              Assinatura ativada com sucesso! Aproveite seus 7 dias grátis.
+            </p>
+          </div>
+        )}
+
+        {/* Header */}
         <div className="text-center max-w-xl mx-auto">
-          <div style={{
-            fontSize: 10, fontFamily: "monospace", color: "#00c07f",
-            letterSpacing: "3px", textTransform: "uppercase", marginBottom: 16,
-          }}>
+          <div style={{ fontSize: 10, fontFamily: "monospace", color: "#00c07f", letterSpacing: "3px", textTransform: "uppercase", marginBottom: 16 }}>
             PLANOS E PREÇOS
           </div>
           <h1 style={{
             fontFamily: "var(--font-playfair), Georgia, serif",
-            fontSize: "clamp(24px, 4vw, 40px)",
-            fontWeight: 600, color: "#f0f0f0", marginBottom: 16,
+            fontSize: "clamp(24px, 4vw, 40px)", fontWeight: 600, color: "#f0f0f0", marginBottom: 16,
           }}>
             Invista na sua presença digital.
           </h1>
           <p style={{ fontSize: 14, color: "#888", lineHeight: 1.8 }}>
-            Escolha o plano ideal para seu momento. Cancele quando quiser —
-            sem fidelidade, sem burocracia.
+            7 dias grátis em qualquer plano. Cancele quando quiser.
           </p>
         </div>
 
         {/* Plans grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-5">
           {PLANS.map(plan => {
-            const Icon = plan.icon
+            const Icon      = plan.icon
+            const isCurrent = isPlanActive(plan, userPlan)
+
             return (
-              <div
-                key={plan.id}
-                className="relative flex flex-col rounded-2xl"
+              <div key={plan.id} className="relative flex flex-col rounded-2xl"
                 style={{
                   background: "rgba(255,255,255,0.02)",
-                  border: `1px solid ${plan.border}`,
-                  boxShadow: plan.id === "pro" ? "0 0 40px rgba(0,192,127,0.06)" : "none",
-                }}
-              >
-                {/* Badge */}
-                {plan.badge && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  border: `1px solid ${isCurrent ? plan.color + "55" : plan.border}`,
+                  boxShadow: plan.highlight ? `0 0 40px ${plan.color}12` : "none",
+                }}>
+                {(plan.badge || isCurrent) && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
                     <span style={{
-                      display: "block",
-                      fontSize: 9, fontFamily: "monospace", fontWeight: 700,
+                      display: "block", fontSize: 9, fontFamily: "monospace", fontWeight: 700,
                       padding: "3px 14px", borderRadius: 999, letterSpacing: "2px",
-                      background: plan.color, color: "#080808",
+                      background: isCurrent ? plan.color : plan.color,
+                      color: "#080808", whiteSpace: "nowrap",
                     }}>
-                      {plan.badge}
+                      {isCurrent ? "PLANO ATUAL" : plan.badge}
                     </span>
                   </div>
                 )}
 
-                <div className="p-7 flex flex-col flex-1">
-                  {/* Header */}
-                  <div className="flex items-center gap-3 mb-6">
+                <div className="p-6 flex flex-col flex-1">
+                  <div className="flex items-center gap-3 mb-5">
                     <div style={{
                       width: 40, height: 40, borderRadius: 10, flexShrink: 0,
-                      background: `${plan.color}18`,
-                      border: `1px solid ${plan.color}35`,
+                      background: `${plan.color}18`, border: `1px solid ${plan.color}35`,
                       display: "flex", alignItems: "center", justifyContent: "center",
                     }}>
                       <Icon style={{ width: 18, height: 18, color: plan.color }} />
                     </div>
-                    <div style={{ fontSize: 17, fontWeight: 700, color: "#f0f0f0" }}>
-                      {plan.name}
-                    </div>
+                    <div style={{ fontSize: 17, fontWeight: 700, color: "#f0f0f0" }}>{plan.name}</div>
                   </div>
 
-                  {/* Price */}
-                  <div className="mb-6">
+                  <div className="mb-5">
                     <div className="flex items-baseline gap-1">
-                      <span style={{ fontSize: 11, fontFamily: "monospace", color: "#555" }}>R$</span>
-                      <span style={{ fontSize: 40, fontWeight: 800, lineHeight: 1, color: plan.color }}>
-                        {plan.price}
+                      <span style={{ fontSize: 36, fontWeight: 800, lineHeight: 1, color: plan.color }}>
+                        {plan.priceDisplay}
                       </span>
-                      <span style={{ fontSize: 12, color: "#555" }}>/mês</span>
+                      <span style={{ fontSize: 12, color: "#555" }}>{plan.priceSub}</span>
                     </div>
                   </div>
 
-                  {/* Limits + support */}
-                  <div className="space-y-2 mb-5">
+                  <div className="space-y-2 mb-4">
                     {[plan.limits, plan.support].map((item, i) => (
                       <div key={i} className="flex items-center gap-2">
-                        <div style={{
-                          width: 5, height: 5, borderRadius: "50%",
-                          background: plan.color, flexShrink: 0,
-                        }} />
+                        <div style={{ width: 5, height: 5, borderRadius: "50%", background: plan.color, flexShrink: 0 }} />
                         <span style={{ fontSize: 12, color: "#aaa" }}>{item}</span>
                       </div>
                     ))}
                   </div>
 
-                  <div style={{ height: 1, background: "rgba(255,255,255,0.06)", marginBottom: 20 }} />
+                  <div style={{ height: 1, background: "rgba(255,255,255,0.06)", marginBottom: 16 }} />
 
-                  {/* Features */}
-                  <div className="flex-1 space-y-2 mb-7">
+                  <div className="flex-1 space-y-1.5 mb-6">
                     {FEATURES.map((f, i) => {
                       const included = plan.id === "starter" ? f.starter
-                                     : plan.id === "pro"     ? f.pro
-                                     : f.elite
+                        : plan.id === "pro" ? f.pro : f.elite
                       return (
-                        <div key={i} className="flex items-center gap-2.5">
+                        <div key={i} className="flex items-center gap-2">
                           {included
-                            ? <Check style={{ width: 13, height: 13, color: plan.color, flexShrink: 0 }} />
-                            : <X     style={{ width: 13, height: 13, color: "rgba(255,255,255,0.12)", flexShrink: 0 }} />
-                          }
-                          <span style={{
-                            fontSize: 12, lineHeight: 1.4,
-                            color: included ? "#aaa" : "rgba(255,255,255,0.2)",
-                          }}>
+                            ? <Check style={{ width: 12, height: 12, color: plan.color, flexShrink: 0 }} />
+                            : <X style={{ width: 12, height: 12, color: "rgba(255,255,255,0.12)", flexShrink: 0 }} />}
+                          <span style={{ fontSize: 11, lineHeight: 1.4, color: included ? "#aaa" : "rgba(255,255,255,0.2)" }}>
                             {f.text}
                           </span>
                         </div>
@@ -260,44 +362,34 @@ export default function PlanosPage() {
                     })}
                   </div>
 
-                  {/* CTA → /login only */}
-                  <Link
-                    href="/login"
-                    className="block text-center py-3.5 rounded-xl text-[13px] font-bold transition-all hover:opacity-90 active:scale-[0.98]"
-                    style={{
-                      background: plan.id === "pro" ? plan.color : `${plan.color}18`,
-                      color: plan.id === "pro" ? "#080808" : plan.color,
-                      border: plan.id === "pro" ? "none" : `1px solid ${plan.color}35`,
-                    }}
-                  >
-                    Começar com {plan.name}
-                  </Link>
+                  {loadingPlan ? (
+                    <div className="flex justify-center py-3">
+                      <Loader2 className="w-4 h-4 animate-spin" style={{ color: plan.color }} />
+                    </div>
+                  ) : (
+                    <PlanCTA plan={plan} userPlan={userPlan} loading={loading}
+                      onCheckout={handleCheckout} onPortal={handlePortal} />
+                  )}
                 </div>
               </div>
             )
           })}
         </div>
 
-        {/* Disclaimer */}
         <p className="text-center" style={{ fontSize: 12, color: "#444" }}>
-          Acesso imediato após confirmação do pagamento. Processado com segurança pelo Stripe.
-          Dados privados e protegidos.
+          Acesso imediato após confirmação. 7 dias grátis em qualquer plano. Processado com segurança pelo Stripe.
         </p>
       </div>
 
-      {/* Footer */}
       <footer className="relative px-6 py-6" style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-        <div className="max-w-5xl mx-auto flex items-center justify-between flex-wrap gap-4">
+        <div className="max-w-6xl mx-auto flex items-center justify-between flex-wrap gap-4">
           <p style={{ fontSize: 11, fontFamily: "monospace", color: "#333", letterSpacing: "1px" }}>
             © PRAXIS 2026 — Marketing Médico de Alto Padrão
           </p>
-          <Link
-            href="/"
-            style={{ fontSize: 12, color: "#444" }}
+          <Link href="/dashboard" style={{ fontSize: 12, color: "#444" }}
             onMouseEnter={e => (e.currentTarget.style.color = "#00c07f")}
-            onMouseLeave={e => (e.currentTarget.style.color = "#444")}
-          >
-            ← Voltar para o início
+            onMouseLeave={e => (e.currentTarget.style.color = "#444")}>
+            ← Voltar para o app
           </Link>
         </div>
       </footer>

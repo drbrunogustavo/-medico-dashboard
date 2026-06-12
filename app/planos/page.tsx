@@ -66,7 +66,7 @@ const PLANS: PlanDef[] = [
     id: "pro",          name: "Pro",
     priceDisplay: "R$ 197",  priceSub: "/mês",
     badge: null,  highlight: false,
-    icon: Star,  color: "#00c07f", border: "rgba(0,192,127,0.20)",
+    icon: Star,  color: "#b8976a", border: "rgba(184,151,106,0.25)",
     limits:  "200 gerações/mês",
     support: "Suporte por WhatsApp",
     priceKey: "pro",
@@ -156,7 +156,7 @@ function PlanCTA({
         className="block text-center py-3.5 rounded-xl text-[13px] font-bold transition-all hover:opacity-90"
         style={{
           background: plan.highlight ? plan.color : `${plan.color}18`,
-          color:      plan.highlight ? "#080808" : plan.color,
+          color:      plan.highlight ? "#0D1B2A" : plan.color,
           border:     plan.highlight ? "none" : `1px solid ${plan.color}35`,
         }}>
         Começar 7 dias grátis
@@ -265,41 +265,41 @@ export default function PlanosPage() {
     : authed
 
   return (
-    <div className="fixed inset-0 z-[200] overflow-y-auto" style={{ background: "#0a0a0a" }}>
+    <div className="fixed inset-0 z-[200] overflow-y-auto" style={{ background: "#F5F0E8" }}>
       <div className="fixed inset-0 pointer-events-none" style={{
         background: `
-          radial-gradient(ellipse at 20% 50%, rgba(0,192,127,0.06) 0%, transparent 55%),
-          radial-gradient(ellipse at 80% 20%, rgba(212,175,55,0.04) 0%, transparent 50%)
+          radial-gradient(ellipse at 20% 50%, rgba(184,151,106,0.07) 0%, transparent 55%),
+          radial-gradient(ellipse at 80% 20%, rgba(200,163,85,0.04) 0%, transparent 50%)
         `,
       }} />
 
       {/* Nav */}
       <nav className="sticky top-0 z-10 flex items-center justify-between px-6 md:px-12"
         style={{
-          height: 64, background: "rgba(10,10,10,0.88)",
-          borderBottom: "1px solid rgba(255,255,255,0.06)",
+          height: 64, background: "rgba(245,240,232,0.92)",
+          borderBottom: "1px solid rgba(13,27,42,0.08)",
           backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
         }}>
         <Link href={user ? "/dashboard" : "/"} className="flex items-center gap-3">
           <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
-            <circle cx="16" cy="16" r="14" stroke="#00c07f" strokeWidth="1.5"
-              strokeLinecap="round" strokeDasharray="70 18" strokeDashoffset="12" opacity="0.6" />
-            <path d="M10 22V10h5.5a4 4 0 0 1 0 8H10" stroke="#f5f5f7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            <line x1="18" y1="14" x2="23" y2="22" stroke="#00c07f" strokeWidth="2" strokeLinecap="round" opacity="0.9" />
+            <circle cx="16" cy="16" r="14" stroke="#b8976a" strokeWidth="1.5"
+              strokeLinecap="round" strokeDasharray="70 18" strokeDashoffset="12" opacity="0.7" />
+            <path d="M10 22V10h5.5a4 4 0 0 1 0 8H10" stroke="#0D1B2A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            <line x1="18" y1="14" x2="23" y2="22" stroke="#b8976a" strokeWidth="2" strokeLinecap="round" opacity="0.9" />
           </svg>
-          <span style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: 15, fontWeight: 600, letterSpacing: "4px", color: "#f0f0f0" }}>PRAXIS</span>
+          <span style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: 15, fontWeight: 600, letterSpacing: "4px", color: "#0D1B2A" }}>PRAXIS</span>
         </Link>
         <div className="flex items-center gap-3">
           {user ? (
             <button onClick={() => router.push("/dashboard")}
               className="flex items-center gap-2 px-4 py-2 rounded-lg text-[12px] font-semibold"
-              style={{ background: "#00c07f", color: "#080808" }}>
+              style={{ background: "#b8976a", color: "#0D1B2A" }}>
               Ir para o App <ArrowRight className="w-3 h-3" />
             </button>
           ) : (
             <Link href="/login"
               className="flex items-center gap-2 px-4 py-2 rounded-lg text-[12px] font-semibold"
-              style={{ background: "#00c07f", color: "#080808" }}>
+              style={{ background: "#b8976a", color: "#0D1B2A" }}>
               Entrar <ArrowRight className="w-3 h-3" />
             </Link>
           )}
@@ -309,18 +309,18 @@ export default function PlanosPage() {
       <div className="relative max-w-6xl mx-auto px-4 md:px-8 pt-10 pb-20 space-y-12">
         <Link href={user ? "/dashboard" : "/"}
           className="inline-flex items-center gap-1.5 text-[11px]"
-          style={{ color: "#555" }}
-          onMouseEnter={e => (e.currentTarget.style.color = "#888")}
-          onMouseLeave={e => (e.currentTarget.style.color = "#555")}>
+          style={{ color: "#6a5a4a" }}
+          onMouseEnter={e => (e.currentTarget.style.color = "#0D1B2A")}
+          onMouseLeave={e => (e.currentTarget.style.color = "#6a5a4a")}>
           <ArrowLeft className="w-3 h-3" /> Voltar
         </Link>
 
         {/* Success banner */}
         {isSuccess && (
           <div className="rounded-xl p-4 flex items-center gap-3"
-            style={{ background: "rgba(0,192,127,0.08)", border: "1px solid rgba(0,192,127,0.25)" }}>
-            <Check style={{ width: 16, height: 16, color: "#00c07f", flexShrink: 0 }} />
-            <p style={{ fontSize: 13, color: "#00c07f", fontWeight: 600 }}>
+            style={{ background: "rgba(184,151,106,0.08)", border: "1px solid rgba(184,151,106,0.30)" }}>
+            <Check style={{ width: 16, height: 16, color: "#b8976a", flexShrink: 0 }} />
+            <p style={{ fontSize: 13, color: "#b8976a", fontWeight: 600 }}>
               Assinatura ativada com sucesso! Aproveite seus 7 dias grátis.
             </p>
           </div>
@@ -340,16 +340,16 @@ export default function PlanosPage() {
 
         {/* Header */}
         <div className="text-center max-w-xl mx-auto">
-          <div style={{ fontSize: 10, fontFamily: "monospace", color: "#00c07f", letterSpacing: "3px", textTransform: "uppercase", marginBottom: 16 }}>
+          <div style={{ fontSize: 10, fontFamily: "monospace", color: "#b8976a", letterSpacing: "3px", textTransform: "uppercase", marginBottom: 16 }}>
             PLANOS E PREÇOS
           </div>
           <h1 style={{
             fontFamily: "var(--font-playfair), Georgia, serif",
-            fontSize: "clamp(24px, 4vw, 40px)", fontWeight: 600, color: "#f0f0f0", marginBottom: 16,
+            fontSize: "clamp(24px, 4vw, 40px)", fontWeight: 600, color: "#0D1B2A", marginBottom: 16,
           }}>
             Invista na sua presença digital.
           </h1>
-          <p style={{ fontSize: 14, color: "#888", lineHeight: 1.8 }}>
+          <p style={{ fontSize: 14, color: "#6a5a4a", lineHeight: 1.8 }}>
             7 dias grátis em qualquer plano. Cancele quando quiser.
           </p>
         </div>
@@ -363,16 +363,16 @@ export default function PlanosPage() {
             return (
               <div key={plan.id} className="relative flex flex-col rounded-2xl"
                 style={{
-                  background: "rgba(255,255,255,0.02)",
-                  border: `1px solid ${isCurrent ? plan.color + "55" : plan.border}`,
-                  boxShadow: plan.highlight ? `0 0 40px ${plan.color}12` : "none",
+                  background: "#FFFFFF",
+                  border: `1px solid ${isCurrent ? plan.color + "66" : plan.border}`,
+                  boxShadow: plan.highlight ? `0 0 40px ${plan.color}18` : "none",
                 }}>
                 {(plan.badge || isCurrent) && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
                     <span style={{
                       display: "block", fontSize: 9, fontFamily: "monospace", fontWeight: 700,
                       padding: "3px 14px", borderRadius: 999, letterSpacing: "2px",
-                      background: plan.color, color: "#080808", whiteSpace: "nowrap",
+                      background: plan.color, color: "#0D1B2A", whiteSpace: "nowrap",
                     }}>
                       {isCurrent ? "PLANO ATUAL" : plan.badge}
                     </span>
@@ -388,7 +388,7 @@ export default function PlanosPage() {
                     }}>
                       <Icon style={{ width: 18, height: 18, color: plan.color }} />
                     </div>
-                    <div style={{ fontSize: 17, fontWeight: 700, color: "#f0f0f0" }}>{plan.name}</div>
+                    <div style={{ fontSize: 17, fontWeight: 700, color: "#0D1B2A" }}>{plan.name}</div>
                   </div>
 
                   <div className="mb-5">
@@ -396,7 +396,7 @@ export default function PlanosPage() {
                       <span style={{ fontSize: 36, fontWeight: 800, lineHeight: 1, color: plan.color }}>
                         {plan.priceDisplay}
                       </span>
-                      <span style={{ fontSize: 12, color: "#555" }}>{plan.priceSub}</span>
+                      <span style={{ fontSize: 12, color: "#8a7a6a" }}>{plan.priceSub}</span>
                     </div>
                   </div>
 
@@ -409,7 +409,7 @@ export default function PlanosPage() {
                     ))}
                   </div>
 
-                  <div style={{ height: 1, background: "rgba(255,255,255,0.06)", marginBottom: 16 }} />
+                  <div style={{ height: 1, background: "rgba(13,27,42,0.07)", marginBottom: 16 }} />
 
                   <div className="flex-1 space-y-1.5 mb-6">
                     {FEATURES.map((f, i) => {
@@ -419,8 +419,8 @@ export default function PlanosPage() {
                         <div key={i} className="flex items-center gap-2">
                           {included
                             ? <Check style={{ width: 12, height: 12, color: plan.color, flexShrink: 0 }} />
-                            : <X style={{ width: 12, height: 12, color: "rgba(255,255,255,0.12)", flexShrink: 0 }} />}
-                          <span style={{ fontSize: 11, lineHeight: 1.4, color: included ? "#aaa" : "rgba(255,255,255,0.2)" }}>
+                            : <X style={{ width: 12, height: 12, color: "rgba(13,27,42,0.20)", flexShrink: 0 }} />}
+                          <span style={{ fontSize: 11, lineHeight: 1.4, color: included ? "#4A3728" : "rgba(13,27,42,0.30)" }}>
                             {f.text}
                           </span>
                         </div>
@@ -442,19 +442,19 @@ export default function PlanosPage() {
           })}
         </div>
 
-        <p className="text-center" style={{ fontSize: 12, color: "#444" }}>
+        <p className="text-center" style={{ fontSize: 12, color: "#6a5a4a" }}>
           Acesso imediato após confirmação. 7 dias grátis em qualquer plano. Processado com segurança pelo Stripe.
         </p>
       </div>
 
-      <footer className="relative px-6 py-6" style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+      <footer className="relative px-6 py-6" style={{ borderTop: "1px solid rgba(13,27,42,0.08)" }}>
         <div className="max-w-6xl mx-auto flex items-center justify-between flex-wrap gap-4">
-          <p style={{ fontSize: 11, fontFamily: "monospace", color: "#333", letterSpacing: "1px" }}>
+          <p style={{ fontSize: 11, fontFamily: "monospace", color: "#8a7a6a", letterSpacing: "1px" }}>
             © PRAXIS 2026 — Marketing Médico de Alto Padrão
           </p>
-          <Link href={user ? "/dashboard" : "/"} style={{ fontSize: 12, color: "#444" }}
-            onMouseEnter={e => (e.currentTarget.style.color = "#00c07f")}
-            onMouseLeave={e => (e.currentTarget.style.color = "#444")}>
+          <Link href={user ? "/dashboard" : "/"} style={{ fontSize: 12, color: "#6a5a4a" }}
+            onMouseEnter={e => (e.currentTarget.style.color = "#b8976a")}
+            onMouseLeave={e => (e.currentTarget.style.color = "#6a5a4a")}>
             ← Voltar
           </Link>
         </div>

@@ -6,7 +6,7 @@ import { MobileNav }          from "@/components/MobileNav"
 import { MobileMenuProvider } from "@/components/MobileMenuProvider"
 
 // Routes that must NOT render the Sidebar or trigger any auth hooks.
-const PUBLIC_PATHS = new Set(["/", "/login", "/planos", "/landing", "/onboarding", "/captacao", "/privacidade", "/deletar-dados"])
+const PUBLIC_PATHS = new Set(["/", "/login", "/planos", "/landing", "/onboarding", "/captacao", "/privacidade", "/deletar-dados", "/termos"])
 const PUBLIC_PREFIXES = ["/nps/", "/indicar/"]
 
 export function ConditionalLayout({ children }: { children: React.ReactNode }) {

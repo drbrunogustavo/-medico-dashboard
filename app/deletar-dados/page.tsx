@@ -36,25 +36,25 @@ export default function DeletarDadosPage() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--background)" }}>
+    <div style={{ minHeight: "100vh", background: "#F5F0E8", color: "#0D1B2A", "--background": "#F5F0E8", "--surface": "#EDE8DF", "--text-primary": "#0D1B2A", "--text-secondary": "#4A3728", "--text-muted": "#8a7a6a", "--border": "rgba(13,27,42,0.10)" } as React.CSSProperties}>
       {/* Nav */}
       <nav style={{
         position: "sticky", top: 0, zIndex: 10,
-        background: "rgba(var(--surface-rgb, 10,10,10),0.9)",
-        borderBottom: "1px solid var(--border)",
+        background: "rgba(245,240,232,0.92)",
+        borderBottom: "1px solid rgba(13,27,42,0.08)",
         backdropFilter: "blur(16px)",
         padding: "0 24px", height: 60,
         display: "flex", alignItems: "center",
       }}>
         <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
           <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
-            <circle cx="16" cy="16" r="14" stroke="#00c07f" strokeWidth="1.5"
-              strokeDasharray="70 18" strokeDashoffset="12" opacity="0.6" />
-            <path d="M10 22V10h5.5a4 4 0 0 1 0 8H10" stroke="#f5f5f7" strokeWidth="2"
+            <circle cx="16" cy="16" r="14" stroke="#b8976a" strokeWidth="1.5"
+              strokeDasharray="70 18" strokeDashoffset="12" opacity="0.7" />
+            <path d="M10 22V10h5.5a4 4 0 0 1 0 8H10" stroke="#0D1B2A" strokeWidth="2"
               strokeLinecap="round" strokeLinejoin="round" />
-            <line x1="18" y1="14" x2="23" y2="22" stroke="#00c07f" strokeWidth="2" strokeLinecap="round" />
+            <line x1="18" y1="14" x2="23" y2="22" stroke="#b8976a" strokeWidth="2" strokeLinecap="round" />
           </svg>
-          <span style={{ fontFamily: "var(--font-playfair,Georgia,serif)", fontSize: 14, fontWeight: 600, letterSpacing: "4px", color: "#f0f0f0" }}>
+          <span style={{ fontFamily: "var(--font-playfair,Georgia,serif)", fontSize: 14, fontWeight: 600, letterSpacing: "4px", color: "#0D1B2A" }}>
             PRAXIS
           </span>
         </Link>
@@ -72,7 +72,7 @@ export default function DeletarDadosPage() {
 
         {/* Header */}
         <div style={{ marginBottom: 40 }}>
-          <p style={{ fontSize: 11, fontFamily: "monospace", color: "#00c07f", letterSpacing: "3px", textTransform: "uppercase", marginBottom: 12 }}>
+          <p style={{ fontSize: 11, fontFamily: "monospace", color: "#b8976a", letterSpacing: "3px", textTransform: "uppercase", marginBottom: 12 }}>
             LGPD · ART. 18
           </p>
           <h1 style={{
@@ -93,9 +93,9 @@ export default function DeletarDadosPage() {
           /* ── Success state ── */
           <div style={{
             padding: "32px 28px", borderRadius: 16, textAlign: "center",
-            background: "rgba(0,192,127,0.06)", border: "1px solid rgba(0,192,127,0.2)",
+            background: "rgba(184,151,106,0.06)", border: "1px solid rgba(184,151,106,0.25)",
           }}>
-            <CheckCircle2 style={{ width: 40, height: 40, color: "#00c07f", margin: "0 auto 16px" }} />
+            <CheckCircle2 style={{ width: 40, height: 40, color: "#b8976a", margin: "0 auto 16px" }} />
             <h2 style={{ fontSize: 18, fontWeight: 700, color: "var(--text-primary)", marginBottom: 10 }}>
               Solicitação recebida
             </h2>
@@ -107,7 +107,7 @@ export default function DeletarDadosPage() {
               background: "var(--surface)", display: "inline-block",
             }}>
               <p style={{ margin: 0, fontSize: 12, color: "var(--text-muted)" }}>Dúvidas? Entre em contato:</p>
-              <p style={{ margin: "4px 0 0", fontFamily: "monospace", fontSize: 13, color: "#00c07f" }}>
+              <p style={{ margin: "4px 0 0", fontFamily: "monospace", fontSize: 13, color: "#b8976a" }}>
                 contato@praxisplatforma.com.br
               </p>
             </div>
@@ -197,7 +197,7 @@ export default function DeletarDadosPage() {
 
             <p style={{ fontSize: 11, textAlign: "center", color: "var(--text-muted)", margin: 0 }}>
               Dúvidas?{" "}
-              <a href="mailto:contato@praxisplatforma.com.br" style={{ color: "#00c07f", textDecoration: "none" }}>
+              <a href="mailto:contato@praxisplatforma.com.br" style={{ color: "#b8976a", textDecoration: "none" }}>
                 contato@praxisplatforma.com.br
               </a>
             </p>

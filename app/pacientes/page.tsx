@@ -9,13 +9,14 @@ import { cn } from "@/lib/utils"
 import {
   Users, Search, Plus, X, Loader2, Bot, Calendar,
   FileText, Phone, Mail, User, ChevronRight, Check,
-  AlertCircle, ClipboardList, RefreshCw,
+  AlertCircle, ClipboardList, RefreshCw, Trash2, Database,
 } from "lucide-react"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface Paciente {
   [key: string]: unknown
+  _fonte?: string
 }
 
 // ── Field accessors (handles PascalCase and camelCase from MedX) ───────────────
@@ -95,6 +96,23 @@ export default function PacientesPage() {
   const [prontuarioSaving, setProntuarioSaving] = useState(false)
   const [prontuarioOk,    setProntuarioOk]    = useState(false)
   const [prontuarioError, setProntuarioError] = useState("")
+
+  // Delete local patient
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+
+  const deletePaciente = async (pac: Paciente, e: React.MouseEvent) => {
+    e.stopPropagation()
+    const id = getPacId(pac)
+    if (!id || pac._fonte !== "local") return
+    if (!confirm(`Excluir ${getPacNome(pac)}? Esta ação não pode ser desfeita.`)) return
+    setDeletingId(id)
+    try {
+      await fetch(`/api/pacientes?id=${id}`, { method: "DELETE" })
+      setLista(l => l.filter(p => getPacId(p) !== id))
+      setResultados(r => r.filter(p => getPacId(p) !== id))
+    } catch { /* ignore */ }
+    finally { setDeletingId(null) }
+  }
 
   // Novo paciente modal
   const [novoOpen,   setNovoOpen]   = useState(false)
@@ -305,9 +323,9 @@ export default function PacientesPage() {
           />
           <StatCard
             label="Fonte"
-            value="MedX"
-            sub="integração em tempo real"
-            icon={ClipboardList}
+            value={lista[0]?._fonte === "local" ? "Local" : "MedX"}
+            sub={lista[0]?._fonte === "local" ? "banco local Supabase" : "integração em tempo real"}
+            icon={lista[0]?._fonte === "local" ? Database : ClipboardList}
             accent="amber"
           />
         </div>
@@ -391,7 +409,14 @@ export default function PacientesPage() {
                         {ini}
                       </div>
                       <div className="min-w-0">
-                        <div className="text-[13px] font-medium text-text-primary truncate">{nome}</div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[13px] font-medium text-text-primary truncate">{nome}</span>
+                          {pac._fonte === "local" ? (
+                            <span className="text-[8px] font-mono font-semibold px-1.5 py-0.5 rounded-full border bg-amber-950/40 border-amber-500/30 text-amber-400 flex-shrink-0">LOCAL</span>
+                          ) : (
+                            <span className="text-[8px] font-mono font-semibold px-1.5 py-0.5 rounded-full border bg-blue-950/40 border-blue-500/30 text-blue-400 flex-shrink-0">MEDX</span>
+                          )}
+                        </div>
                         {nasc && (
                           <div className="text-[10px] text-text-muted mt-0.5">{calcIdade(nasc)}</div>
                         )}
@@ -436,8 +461,20 @@ export default function PacientesPage() {
                       )}
                     </div>
 
-                    {/* Arrow */}
-                    <div className="flex justify-end">
+                    {/* Arrow / Delete */}
+                    <div className="flex items-center justify-end gap-1">
+                      {pac._fonte === "local" && (
+                        <button
+                          onClick={e => deletePaciente(pac, e)}
+                          disabled={deletingId === getPacId(pac)}
+                          className="w-7 h-7 flex items-center justify-center rounded-lg text-text-muted hover:text-red-400 hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100"
+                        >
+                          {deletingId === getPacId(pac)
+                            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            : <Trash2 className="w-3.5 h-3.5" />
+                          }
+                        </button>
+                      )}
                       <ChevronRight className="w-4 h-4 text-text-muted group-hover:text-blue-400 group-hover:translate-x-0.5 transition-all" />
                     </div>
                   </button>

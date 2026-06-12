@@ -21,25 +21,25 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 export default function PrivacidadePage() {
   return (
-    <div style={{ minHeight: "100vh", background: "var(--background)" }}>
+    <div style={{ minHeight: "100vh", background: "#F5F0E8", color: "#0D1B2A", "--background": "#F5F0E8", "--surface": "#EDE8DF", "--text-primary": "#0D1B2A", "--text-secondary": "#4A3728", "--text-muted": "#8a7a6a", "--border": "rgba(13,27,42,0.10)" } as React.CSSProperties}>
       {/* Nav */}
       <nav style={{
         position: "sticky", top: 0, zIndex: 10,
-        background: "rgba(var(--surface-rgb, 10,10,10),0.9)",
-        borderBottom: "1px solid var(--border)",
+        background: "rgba(245,240,232,0.92)",
+        borderBottom: "1px solid rgba(13,27,42,0.08)",
         backdropFilter: "blur(16px)",
         padding: "0 24px", height: 60,
         display: "flex", alignItems: "center",
       }}>
         <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
           <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
-            <circle cx="16" cy="16" r="14" stroke="#00c07f" strokeWidth="1.5"
-              strokeDasharray="70 18" strokeDashoffset="12" opacity="0.6" />
-            <path d="M10 22V10h5.5a4 4 0 0 1 0 8H10" stroke="#f5f5f7" strokeWidth="2"
+            <circle cx="16" cy="16" r="14" stroke="#b8976a" strokeWidth="1.5"
+              strokeDasharray="70 18" strokeDashoffset="12" opacity="0.7" />
+            <path d="M10 22V10h5.5a4 4 0 0 1 0 8H10" stroke="#0D1B2A" strokeWidth="2"
               strokeLinecap="round" strokeLinejoin="round" />
-            <line x1="18" y1="14" x2="23" y2="22" stroke="#00c07f" strokeWidth="2" strokeLinecap="round" />
+            <line x1="18" y1="14" x2="23" y2="22" stroke="#b8976a" strokeWidth="2" strokeLinecap="round" />
           </svg>
-          <span style={{ fontFamily: "var(--font-playfair,Georgia,serif)", fontSize: 14, fontWeight: 600, letterSpacing: "4px", color: "#f0f0f0" }}>
+          <span style={{ fontFamily: "var(--font-playfair,Georgia,serif)", fontSize: 14, fontWeight: 600, letterSpacing: "4px", color: "#0D1B2A" }}>
             PRAXIS
           </span>
         </Link>
@@ -57,7 +57,7 @@ export default function PrivacidadePage() {
 
         {/* Header */}
         <div style={{ marginBottom: 48 }}>
-          <p style={{ fontSize: 11, fontFamily: "monospace", color: "#00c07f", letterSpacing: "3px", textTransform: "uppercase", marginBottom: 12 }}>
+          <p style={{ fontSize: 11, fontFamily: "monospace", color: "#b8976a", letterSpacing: "3px", textTransform: "uppercase", marginBottom: 12 }}>
             PRAXIS PLATAFORMA
           </p>
           <h1 style={{
@@ -117,7 +117,7 @@ export default function PrivacidadePage() {
             <ul style={{ paddingLeft: 20, display: "flex", flexDirection: "column", gap: 8 }}>
               <li><strong style={{ color: "var(--text-primary)" }}>Acesso:</strong> solicitar uma cópia de todos os dados pessoais que mantemos sobre você.</li>
               <li><strong style={{ color: "var(--text-primary)" }}>Correção:</strong> atualizar informações incorretas ou incompletas diretamente nas configurações da plataforma.</li>
-              <li><strong style={{ color: "var(--text-primary)" }}>Exclusão:</strong> solicitar a exclusão de todos os seus dados pessoais. Processamos solicitações de exclusão em até 30 dias úteis. Acesse <Link href="/deletar-dados" style={{ color: "#00c07f" }}>praxisplatforma.com.br/deletar-dados</Link> para fazer a solicitação.</li>
+              <li><strong style={{ color: "var(--text-primary)" }}>Exclusão:</strong> solicitar a exclusão de todos os seus dados pessoais. Processamos solicitações de exclusão em até 30 dias úteis. Acesse <Link href="/deletar-dados" style={{ color: "#b8976a" }}>praxisplatforma.com.br/deletar-dados</Link> para fazer a solicitação.</li>
               <li><strong style={{ color: "var(--text-primary)" }}>Portabilidade:</strong> solicitar seus dados em formato estruturado (JSON ou CSV).</li>
               <li><strong style={{ color: "var(--text-primary)" }}>Revogação de consentimento:</strong> cancelar integrações (ex: Instagram) a qualquer momento pelas configurações da conta.</li>
               <li><strong style={{ color: "var(--text-primary)" }}>Oposição:</strong> opor-se ao processamento de dados em casos específicos previstos em lei.</li>
@@ -142,9 +142,9 @@ export default function PrivacidadePage() {
             </p>
             <div style={{
               marginTop: 16, padding: "16px 20px", borderRadius: 12,
-              background: "rgba(0,192,127,0.06)", border: "1px solid rgba(0,192,127,0.2)",
+              background: "rgba(184,151,106,0.06)", border: "1px solid rgba(184,151,106,0.25)",
             }}>
-              <p style={{ margin: 0, fontFamily: "monospace", fontSize: 13, color: "#00c07f" }}>
+              <p style={{ margin: 0, fontFamily: "monospace", fontSize: 13, color: "#b8976a" }}>
                 contato@praxisplatforma.com.br
               </p>
               <p style={{ margin: "6px 0 0", fontSize: 12, color: "var(--text-muted)" }}>

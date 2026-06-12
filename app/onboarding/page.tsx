@@ -4,11 +4,12 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { PraxisLogo } from "@/components/PraxisLogo"
 import { cn } from "@/lib/utils"
+import Link from "next/link"
 import {
   ArrowRight, Zap, Star, Crown, Check, X,
   User, MapPin, Stethoscope, Hash, AtSign,
   Users, Sparkles, Loader2, AlertCircle, CalendarDays,
-  Megaphone, BarChart3, GraduationCap, Target,
+  Megaphone, BarChart3, GraduationCap, Target, ShieldCheck,
 } from "lucide-react"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -161,7 +162,7 @@ function StepDot({ n, current, total }: { n: number; current: number; total: num
 }
 
 function ProgressBar({ step }: { step: number }) {
-  const labels = ["Início", "Perfil", "Cenário", "Plano", "Tour"]
+  const labels = ["Início", "Perfil", "Cenário", "Termos", "Plano", "Tour"]
   const total = labels.length
   return (
     <div className="flex items-center gap-0 mb-10">
@@ -210,8 +211,9 @@ const inputCls = "w-full bg-background border border-border rounded-lg px-4 py-3
 export default function OnboardingPage() {
   const router = useRouter()
   const [step,      setStep]      = useState(1)
-  const [saving,    setSaving]    = useState(false)
-  const [erroFinal, setErroFinal] = useState("")
+  const [saving,       setSaving]       = useState(false)
+  const [erroFinal,    setErroFinal]    = useState("")
+  const [termosAceitos, setTermosAceitos] = useState(false)
 
   const [form, setForm] = useState<FormData>({
     nome: "", especialidade: "", crm: "", cidade: "",
@@ -252,7 +254,7 @@ export default function OnboardingPage() {
         setErroFinal(json.error ?? `Erro ${res.status}`)
         return
       }
-      setStep(5)
+      setStep(6)
     } catch {
       setErroFinal("Erro de conexão.")
     } finally {
@@ -464,8 +466,75 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* ── STEP 4: Plano ────────────────────────────────────────────────── */}
+        {/* ── STEP 4: Termos ───────────────────────────────────────────────── */}
         {step === 4 && (
+          <div className="animate-fade-in space-y-6">
+            <div className="text-center space-y-2 mb-8">
+              <div className="w-16 h-16 mx-auto rounded-2xl bg-accent-dim border border-accent-border flex items-center justify-center">
+                <ShieldCheck className="w-8 h-8 text-accent" />
+              </div>
+              <h2 className="text-[26px] font-semibold text-text-primary"
+                style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}>
+                Termos e Privacidade
+              </h2>
+              <p className="text-[13px] text-text-secondary">
+                Antes de escolher seu plano, leia e aceite nossos termos.
+              </p>
+            </div>
+
+            <div className="bg-surface border border-border rounded-xl p-6 space-y-3">
+              {[
+                "Plataforma exclusiva para uso médico profissional com CRM ativo",
+                "Conteúdo gerado por IA deve ser revisado antes da publicação — responsabilidade é do médico",
+                "Conformidade com as normas de publicidade médica do CFM é responsabilidade do usuário",
+                "Dados pessoais tratados conforme a LGPD (Lei 13.709/2018)",
+                "Cancelamento a qualquer momento, sem fidelidade",
+                "Retenção de dados por 90 dias após encerramento da conta",
+              ].map((point, i) => (
+                <div key={i} className="flex items-start gap-2.5">
+                  <Check className="w-3.5 h-3.5 text-accent mt-0.5 flex-shrink-0" />
+                  <span className="text-[13px] text-text-secondary leading-relaxed">{point}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="bg-surface border border-border rounded-xl p-4 space-y-3">
+              <p className="text-[11px] text-text-muted">
+                Leia os documentos completos:{" "}
+                <Link href="/termos" target="_blank" className="text-accent hover:underline">Termos de Uso</Link>
+                {" · "}
+                <Link href="/privacidade" target="_blank" className="text-accent hover:underline">Política de Privacidade</Link>
+              </p>
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={termosAceitos}
+                  onChange={e => setTermosAceitos(e.target.checked)}
+                  className="mt-1 w-4 h-4 accent-accent cursor-pointer flex-shrink-0"
+                />
+                <span className="text-[13px] text-text-primary leading-relaxed">
+                  Li e concordo com os <strong>Termos de Uso</strong> e a <strong>Política de Privacidade</strong> do PRAXIS.
+                </span>
+              </label>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <button onClick={() => setStep(3)} className="text-[12px] text-text-muted hover:text-text-secondary transition-colors">
+                ← Voltar
+              </button>
+              <button
+                onClick={() => next({ termos_aceitos: true, termos_versao: "1.0" })}
+                disabled={!termosAceitos || saving}
+                className="flex items-center gap-2 px-6 py-3 rounded-xl bg-accent text-background text-[13px] font-bold hover:opacity-90 disabled:opacity-40 min-w-[180px] justify-center"
+              >
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Aceitar e continuar <ArrowRight className="w-4 h-4" /></>}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── STEP 5: Plano ────────────────────────────────────────────────── */}
+        {step === 5 && (
           <div className="animate-fade-in space-y-6">
             <div className="text-center space-y-2 mb-6">
               <h2 className="text-[26px] font-semibold text-text-primary"
@@ -555,18 +624,23 @@ export default function OnboardingPage() {
               })}
             </div>
 
-            <div className="flex flex-col items-center gap-3">
-              <button onClick={goTrial} disabled={saving}
-                className="text-[12px] text-text-muted hover:text-text-secondary transition-colors underline underline-offset-4">
-                Continuar no trial gratuito →
+            <div className="flex items-center justify-between">
+              <button onClick={() => setStep(4)} className="text-[12px] text-text-muted hover:text-text-secondary transition-colors">
+                ← Voltar
               </button>
-              <p className="text-[10px] text-text-muted">Pagamento seguro via Stripe. Cancele quando quiser.</p>
+              <div className="flex flex-col items-center gap-1">
+                <button onClick={goTrial} disabled={saving}
+                  className="text-[12px] text-text-muted hover:text-text-secondary transition-colors underline underline-offset-4">
+                  Continuar no trial gratuito →
+                </button>
+                <p className="text-[10px] text-text-muted">Pagamento seguro via Stripe. Cancele quando quiser.</p>
+              </div>
             </div>
           </div>
         )}
 
-        {/* ── STEP 5: Tour guiado ──────────────────────────────────────────── */}
-        {step === 5 && (
+        {/* ── STEP 6: Tour guiado ──────────────────────────────────────────── */}
+        {step === 6 && (
           <div className="animate-fade-in space-y-6">
             <div className="text-center space-y-2 mb-8">
               <h2 className="text-[26px] font-semibold text-text-primary"

@@ -7,6 +7,7 @@ import {
   User, Save, RefreshCw, CheckCircle, AlertCircle,
   Instagram, MapPin, Stethoscope, Hash, Target, Sparkles,
   Palette, Type, MessageSquare, Upload, ImageIcon, Loader2,
+  Link2, CheckCircle2, XCircle,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser"
@@ -60,8 +61,15 @@ const EMPTY: PerfilForm = {
   marca_tom_voz:    "profissional",
 }
 
-type ActiveTab = "perfil" | "marca"
+type ActiveTab = "perfil" | "marca" | "integracoes"
 type Status = "idle" | "saving" | "saved" | "error"
+
+interface IntegStatus {
+  medx: boolean
+  zapi: boolean
+  instagram: boolean
+  stripe: boolean
+}
 
 function Field({ label, icon: Icon, children }: { label: string; icon: React.ElementType; children: React.ReactNode }) {
   return (
@@ -113,6 +121,7 @@ export default function PerfilPage() {
   const [loading,      setLoading]      = useState(true)
   const [activeTab,    setActiveTab]    = useState<ActiveTab>("perfil")
   const [uploadingLogo, setUploadingLogo] = useState(false)
+  const [integStatus,  setIntegStatus]  = useState<IntegStatus | null>(null)
   const logoRef = useRef<HTMLInputElement>(null)
 
   const load = useCallback(async () => {
@@ -146,6 +155,14 @@ export default function PerfilPage() {
   }, [])
 
   useEffect(() => { load() }, [load])
+
+  useEffect(() => {
+    if (activeTab !== "integracoes" || integStatus) return
+    fetch("/api/integrations/status")
+      .then(r => r.json())
+      .then((d: IntegStatus) => setIntegStatus(d))
+      .catch(() => {/* silent */})
+  }, [activeTab, integStatus])
 
   const set = (k: keyof PerfilForm) => (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -246,7 +263,7 @@ export default function PerfilPage() {
 
         {/* Tab navigation */}
         <div className="flex gap-1 bg-surface border border-border rounded-xl p-1">
-          {(["perfil", "marca"] as ActiveTab[]).map(tab => (
+          {(["perfil", "marca", "integracoes"] as ActiveTab[]).map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -259,8 +276,10 @@ export default function PerfilPage() {
             >
               {tab === "perfil" ? (
                 <><User className="w-3.5 h-3.5" /> Perfil</>
-              ) : (
+              ) : tab === "marca" ? (
                 <><Palette className="w-3.5 h-3.5" /> Kit de Marca</>
+              ) : (
+                <><Link2 className="w-3.5 h-3.5" /> Integrações</>
               )}
             </button>
           ))}
@@ -401,6 +420,89 @@ export default function PerfilPage() {
               </div>
             </div>
           </>
+        )}
+
+        {/* ── TAB: INTEGRAÇÕES ─────────────────────────────────────────────── */}
+        {activeTab === "integracoes" && (
+          <div className="space-y-4">
+            <p className="text-[12px] text-text-muted">
+              Status das integrações configuradas via variáveis de ambiente no servidor.
+            </p>
+
+            {integStatus === null ? (
+              <div className="flex items-center justify-center h-32">
+                <Loader2 className="w-5 h-5 animate-spin text-text-muted" />
+              </div>
+            ) : (
+              <div className="bg-surface border border-border rounded-xl divide-y divide-border overflow-hidden">
+                {([
+                  {
+                    key: "medx" as const,
+                    label: "MedX CRM",
+                    desc: "Prontuários e gestão de pacientes via API MedX",
+                    docsKey: "MEDX_URL + MEDX_INTEGRATION_TOKEN",
+                  },
+                  {
+                    key: "zapi" as const,
+                    label: "Z-API (WhatsApp)",
+                    desc: "Envio automático de mensagens via WhatsApp Business",
+                    docsKey: "ZAPI_INSTANCE_ID + ZAPI_CLIENT_TOKEN",
+                  },
+                  {
+                    key: "instagram" as const,
+                    label: "Meta / Instagram",
+                    desc: "Leitura de métricas e publicações via Instagram Graph API",
+                    docsKey: "META_ACCESS_TOKEN + META_IG_USER_ID",
+                  },
+                  {
+                    key: "stripe" as const,
+                    label: "Stripe (Pagamentos)",
+                    desc: "Gestão de assinaturas e planos via Stripe",
+                    docsKey: "STRIPE_SECRET_KEY + STRIPE_PRICE_*",
+                  },
+                ] as const).map(integ => {
+                  const active = integStatus[integ.key]
+                  return (
+                    <div key={integ.key} className="flex items-center gap-4 px-5 py-4">
+                      <div className={cn(
+                        "w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0",
+                        active ? "bg-emerald-500/10" : "bg-surface-2"
+                      )}>
+                        {active
+                          ? <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                          : <XCircle      className="w-4 h-4 text-text-muted" />
+                        }
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[13px] font-semibold text-text-primary">{integ.label}</span>
+                          <span className={cn(
+                            "text-[8px] font-mono font-semibold px-1.5 py-0.5 rounded-full border",
+                            active
+                              ? "bg-emerald-950/40 border-emerald-500/30 text-emerald-400"
+                              : "bg-surface-2 border-border text-text-muted"
+                          )}>
+                            {active ? "ATIVO" : "INATIVO"}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-text-muted mt-0.5 truncate">{integ.desc}</p>
+                        {!active && (
+                          <p className="text-[10px] font-mono text-text-muted/60 mt-0.5">
+                            Configure: {integ.docsKey}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
+            <div className="bg-amber-950/20 border border-amber-500/20 rounded-xl px-4 py-3 text-[11px] text-amber-400/80">
+              As integrações são ativadas via variáveis de ambiente no servidor (não expostas ao cliente por segurança).
+              Para configurar, acesse as configurações de ambiente no Vercel ou no seu arquivo <code className="font-mono">.env.local</code>.
+            </div>
+          </div>
         )}
 
         {/* ── TAB: KIT DE MARCA ────────────────────────────────────────────── */}

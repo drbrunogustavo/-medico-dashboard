@@ -233,23 +233,47 @@ export default function FinanceiroPage() {
         </div>
 
         {/* Group + unit + tipo filters */}
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Group toggle */}
-          <div className="flex gap-1 bg-surface border border-border rounded-xl p-1">
-            {(Object.keys(GRUPOS) as Grupo[]).map(g => (
-              <button
-                key={g}
-                onClick={() => { setGrupo(g); setUnidade("Todas") }}
-                className={cn(
-                  "px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all",
-                  grupo === g
-                    ? "bg-accent-dim border border-accent-border text-accent"
-                    : "text-text-muted hover:text-text-secondary"
-                )}
-              >
-                {GRUPO_LABELS[g]}
-              </button>
-            ))}
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Group toggle */}
+            <div className="flex gap-1 bg-surface border border-border rounded-xl p-1">
+              {(Object.keys(GRUPOS) as Grupo[]).map(g => (
+                <button
+                  key={g}
+                  onClick={() => { setGrupo(g); setUnidade("Todas") }}
+                  className={cn(
+                    "px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all",
+                    grupo === g
+                      ? "bg-accent-dim border border-accent-border text-accent"
+                      : "text-text-muted hover:text-text-secondary"
+                  )}
+                >
+                  {GRUPO_LABELS[g]}
+                </button>
+              ))}
+            </div>
+
+            {/* Tipo filter — pushed right on md+ */}
+            <div className="flex gap-1 md:ml-auto">
+              {(["todos", "receita", "despesa"] as TipoFilter[]).map(t => (
+                <button
+                  key={t}
+                  onClick={() => setTipoFilter(t)}
+                  className={cn(
+                    "text-[10px] px-2.5 py-1 rounded-full border transition-all capitalize",
+                    tipoFilter === t
+                      ? t === "receita"
+                        ? "bg-accent-dim border-accent-border text-accent font-medium"
+                        : t === "despesa"
+                          ? "bg-red-500/10 border-red-500/30 text-red-400 font-medium"
+                          : "bg-accent-dim border-accent-border text-accent font-medium"
+                      : "border-border text-text-muted hover:text-text-secondary"
+                  )}
+                >
+                  {t === "todos" ? "Todos" : t === "receita" ? "Receitas" : "Despesas"}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Unit pills */}
@@ -267,28 +291,6 @@ export default function FinanceiroPage() {
                 )}
               >
                 {u}
-              </button>
-            ))}
-          </div>
-
-          {/* Tipo filter */}
-          <div className="flex gap-1 ml-auto">
-            {(["todos", "receita", "despesa"] as TipoFilter[]).map(t => (
-              <button
-                key={t}
-                onClick={() => setTipoFilter(t)}
-                className={cn(
-                  "text-[10px] px-2.5 py-1 rounded-full border transition-all capitalize",
-                  tipoFilter === t
-                    ? t === "receita"
-                      ? "bg-accent-dim border-accent-border text-accent font-medium"
-                      : t === "despesa"
-                        ? "bg-red-500/10 border-red-500/30 text-red-400 font-medium"
-                        : "bg-accent-dim border-accent-border text-accent font-medium"
-                    : "border-border text-text-muted hover:text-text-secondary"
-                )}
-              >
-                {t === "todos" ? "Todos" : t === "receita" ? "Receitas" : "Despesas"}
               </button>
             ))}
           </div>
@@ -400,77 +402,86 @@ export default function FinanceiroPage() {
               {data.map(l => (
                 <div
                   key={l.id}
-                  className={cn(
-                    "group px-5 py-3.5 hover:bg-surface-2 transition-colors",
-                    "flex flex-col gap-1 md:grid md:grid-cols-[100px_160px_80px_1fr_140px_120px_auto] md:items-center md:gap-4"
-                  )}
+                  className="group px-4 py-3 hover:bg-surface-2 transition-colors"
                 >
-                  {/* Data */}
-                  <span className="hidden md:block text-[11px] font-mono text-text-secondary">{fmtDate(l.data)}</span>
-
-                  {/* Unidade */}
-                  <div className="flex items-center gap-1.5">
-                    <div
-                      className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                      style={{ background: UNIDADE_COLORS[l.unidade] ?? "#888" }}
-                    />
-                    <span className="text-[11px] text-text-secondary truncate">{l.unidade}</span>
+                  {/* Mobile layout */}
+                  <div className="md:hidden space-y-1.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className={cn(
+                          "text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full border uppercase tracking-wider flex-shrink-0",
+                          l.tipo === "receita"
+                            ? "bg-accent-dim border-accent-border text-accent"
+                            : "bg-red-500/10 border-red-500/30 text-red-400"
+                        )}>
+                          {l.tipo === "receita" ? "rec" : "desp"}
+                        </span>
+                        <span className="text-[12px] text-text-primary truncate">{l.descricao}</span>
+                      </div>
+                      <span className={cn(
+                        "text-[13px] font-semibold font-mono flex-shrink-0",
+                        l.tipo === "receita" ? "text-accent" : "text-red-400"
+                      )}>
+                        {l.tipo === "despesa" ? "−" : "+"}{fmt(l.valor)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: UNIDADE_COLORS[l.unidade] ?? "#888" }} />
+                        <span className="text-[10px] text-text-muted">{l.unidade}</span>
+                        <span className="text-text-muted/40">·</span>
+                        <span className="text-[10px] text-text-muted">{fmtDate(l.data)}</span>
+                      </div>
+                      {confirmDeleteId === l.id ? (
+                        <div className="flex gap-1 items-center">
+                          <button onClick={() => excluir(l.id)} className="text-[10px] px-2 py-0.5 bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg font-semibold">Excluir</button>
+                          <button onClick={() => setConfirmDeleteId(null)} className="text-[10px] px-2 py-0.5 border border-border text-text-muted rounded-lg">Não</button>
+                        </div>
+                      ) : (
+                        <button onClick={() => setConfirmDeleteId(l.id)} disabled={deletingId === l.id}
+                          className="w-6 h-6 rounded-lg flex items-center justify-center text-text-muted hover:text-red-400 hover:bg-red-500/10 disabled:opacity-40 transition-all">
+                          {deletingId === l.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
+                        </button>
+                      )}
+                    </div>
                   </div>
 
-                  {/* Tipo */}
-                  <div>
+                  {/* Desktop layout */}
+                  <div className="hidden md:grid md:grid-cols-[100px_160px_80px_1fr_140px_120px_auto] md:items-center md:gap-4">
+                    <span className="text-[11px] font-mono text-text-secondary">{fmtDate(l.data)}</span>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: UNIDADE_COLORS[l.unidade] ?? "#888" }} />
+                      <span className="text-[11px] text-text-secondary truncate">{l.unidade}</span>
+                    </div>
                     <span className={cn(
-                      "text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full border uppercase tracking-wider",
+                      "text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full border uppercase tracking-wider inline-block",
                       l.tipo === "receita"
                         ? "bg-accent-dim border-accent-border text-accent"
                         : "bg-red-500/10 border-red-500/30 text-red-400"
                     )}>
                       {l.tipo}
                     </span>
-                  </div>
-
-                  {/* Descrição */}
-                  <span className="text-[12px] text-text-primary truncate">{l.descricao}</span>
-
-                  {/* Forma de pagamento */}
-                  <span className="hidden md:block text-[11px] text-text-muted">{l.forma_pagamento ?? "—"}</span>
-
-                  {/* Valor */}
-                  <span className={cn(
-                    "text-[13px] font-semibold font-mono",
-                    l.tipo === "receita" ? "text-accent" : "text-red-400"
-                  )}>
-                    {l.tipo === "despesa" ? "−" : "+"}{fmt(l.valor)}
-                  </span>
-
-                  {/* Delete */}
-                  <div className="flex justify-end">
-                    {confirmDeleteId === l.id ? (
-                      <div className="flex gap-1 items-center">
-                        <button
-                          onClick={() => excluir(l.id)}
-                          className="text-[10px] px-2 py-1 bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg font-semibold hover:bg-red-500/20 transition-colors"
-                        >
-                          Excluir
+                    <span className="text-[12px] text-text-primary truncate">{l.descricao}</span>
+                    <span className="text-[11px] text-text-muted">{l.forma_pagamento ?? "—"}</span>
+                    <span className={cn(
+                      "text-[13px] font-semibold font-mono",
+                      l.tipo === "receita" ? "text-accent" : "text-red-400"
+                    )}>
+                      {l.tipo === "despesa" ? "−" : "+"}{fmt(l.valor)}
+                    </span>
+                    <div className="flex justify-end">
+                      {confirmDeleteId === l.id ? (
+                        <div className="flex gap-1 items-center">
+                          <button onClick={() => excluir(l.id)} className="text-[10px] px-2 py-1 bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg font-semibold hover:bg-red-500/20 transition-colors">Excluir</button>
+                          <button onClick={() => setConfirmDeleteId(null)} className="text-[10px] px-2 py-1 border border-border text-text-muted rounded-lg hover:text-text-secondary transition-colors">Não</button>
+                        </div>
+                      ) : (
+                        <button onClick={() => setConfirmDeleteId(l.id)} disabled={deletingId === l.id}
+                          className="opacity-0 group-hover:opacity-100 w-7 h-7 rounded-lg flex items-center justify-center text-text-muted hover:text-red-400 hover:bg-red-500/10 disabled:opacity-40 transition-all">
+                          {deletingId === l.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
                         </button>
-                        <button
-                          onClick={() => setConfirmDeleteId(null)}
-                          className="text-[10px] px-2 py-1 border border-border text-text-muted rounded-lg hover:text-text-secondary transition-colors"
-                        >
-                          Não
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => setConfirmDeleteId(l.id)}
-                        disabled={deletingId === l.id}
-                        className="opacity-0 group-hover:opacity-100 w-7 h-7 rounded-lg flex items-center justify-center text-text-muted hover:text-red-400 hover:bg-red-500/10 disabled:opacity-40 transition-all"
-                      >
-                        {deletingId === l.id
-                          ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          : <Trash2  className="w-3.5 h-3.5" />}
-                      </button>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -531,7 +542,7 @@ export default function FinanceiroPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {/* Unidade */}
                 <div>
                   <label className="text-[10px] font-mono text-text-muted uppercase tracking-widest block mb-1.5">Unidade</label>

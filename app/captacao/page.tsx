@@ -17,7 +17,7 @@ const PROGRAMS = [
     name: "Evolução Metabólica",
     desc: "Programa completo de emagrecimento sustentável com acompanhamento hormonal e metabólico individualizado.",
     tags: ["Emagrecimento", "Hormônios", "Nutrição"],
-    color: "border-accent/30 bg-accent/5",
+    color: "border-[#b8976a]/30 bg-[#b8976a]/5",
   },
   {
     name: "Longevidade Ativa",
@@ -54,7 +54,7 @@ const COMO_ENCONTROU = [
   { v: "outro",     l: "Outro" },
 ]
 
-const inputCls = "w-full bg-[#1a1a2e] border border-white/10 rounded-xl px-4 py-3 text-[14px] text-white placeholder-white/30 focus:outline-none focus:border-accent/60 transition-colors"
+const inputCls = "w-full bg-white border border-[#0D1B2A]/15 rounded-xl px-4 py-3 text-[14px] text-[#0D1B2A] placeholder-[#0D1B2A]/30 focus:outline-none focus:border-[#b8976a]/60 transition-colors"
 const selectCls = cn(inputCls, "appearance-none cursor-pointer")
 
 function fmtPhone(v: string) {
@@ -97,15 +97,15 @@ export default function CaptacaoPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-[#0D1B2A] text-white font-sans">
+    <div className="min-h-screen bg-[#F5F0E8] text-[#0D1B2A] font-sans">
 
       {/* Nav */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0D1B2A]/95 backdrop-blur-sm border-b border-white/5">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-[#F5F0E8]/95 backdrop-blur-sm border-b border-[#0D1B2A]/8">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <PraxisLogo />
           <a
             href="#formulario"
-            className="flex items-center gap-1.5 px-4 py-2 bg-accent rounded-lg text-[13px] font-semibold text-[#0D1B2A] hover:bg-accent/90 transition-colors"
+            className="flex items-center gap-1.5 px-4 py-2 bg-[#b8976a] rounded-lg text-[13px] font-semibold text-[#0D1B2A] hover:bg-[#a8875a] transition-colors"
           >
             Agendar consulta <ArrowRight className="w-3.5 h-3.5" />
           </a>
@@ -115,25 +115,25 @@ export default function CaptacaoPage() {
       {/* Hero */}
       <section className="pt-24 pb-16 px-6">
         <div className="max-w-4xl mx-auto text-center space-y-6">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-accent/10 border border-accent/25 rounded-full text-[11px] font-mono text-accent uppercase tracking-widest">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#b8976a]/10 border border-[#b8976a]/25 rounded-full text-[11px] font-mono text-[#b8976a] uppercase tracking-widest">
             <Sparkles className="w-3 h-3" /> Medicina de Precisão
           </span>
-          <h1 className="text-[36px] md:text-[52px] font-bold leading-tight font-serif">
+          <h1 className="text-[36px] md:text-[52px] font-bold leading-tight font-serif text-[#0D1B2A]">
             Cuide da sua saúde com quem entende do assunto
           </h1>
-          <p className="text-[17px] text-white/70 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-[17px] text-[#0D1B2A]/70 max-w-2xl mx-auto leading-relaxed">
             Endocrinologia, Nutrologia e Longevidade. Atendimento individualizado para quem busca resultados reais com saúde.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <a
               href="#formulario"
-              className="flex items-center gap-2 px-6 py-3.5 bg-accent rounded-xl text-[15px] font-bold text-[#0D1B2A] hover:bg-accent/90 transition-all w-full sm:w-auto justify-center"
+              className="flex items-center gap-2 px-6 py-3.5 bg-[#b8976a] rounded-xl text-[15px] font-bold text-[#0D1B2A] hover:bg-[#a8875a] transition-all w-full sm:w-auto justify-center"
             >
               Quero agendar minha consulta <ArrowRight className="w-4 h-4" />
             </a>
             <a
               href="#programas"
-              className="flex items-center gap-2 px-6 py-3.5 border border-white/20 rounded-xl text-[15px] font-medium text-white/80 hover:border-white/40 transition-all w-full sm:w-auto justify-center"
+              className="flex items-center gap-2 px-6 py-3.5 border border-[#0D1B2A]/20 rounded-xl text-[15px] font-medium text-[#0D1B2A]/80 hover:border-[#0D1B2A]/40 transition-all w-full sm:w-auto justify-center"
             >
               Conhecer os programas
             </a>
@@ -141,8 +141,8 @@ export default function CaptacaoPage() {
           <div className="flex items-center justify-center gap-8 pt-2">
             {[["500+", "Pacientes"], ["98%", "Satisfação"], ["15+", "Anos de experiência"]].map(([v, l]) => (
               <div key={l} className="text-center">
-                <div className="text-[22px] font-bold text-accent">{v}</div>
-                <div className="text-[11px] text-white/50">{l}</div>
+                <div className="text-[22px] font-bold text-[#b8976a]">{v}</div>
+                <div className="text-[11px] text-[#0D1B2A]/50">{l}</div>
               </div>
             ))}
           </div>
@@ -150,32 +150,32 @@ export default function CaptacaoPage() {
       </section>
 
       {/* Sobre */}
-      <section className="py-16 px-6 bg-white/[0.02] border-y border-white/5">
+      <section className="py-16 px-6 bg-[#0D1B2A]/[0.02] border-y border-[#0D1B2A]/8">
         <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-12 items-center">
           <div>
-            <h2 className="text-[28px] font-bold font-serif mb-4">Dr. Bruno Gustavo</h2>
+            <h2 className="text-[28px] font-bold font-serif mb-4 text-[#0D1B2A]">Dr. Bruno Gustavo</h2>
             <div className="flex items-center gap-2 mb-4">
-              <Stethoscope className="w-4 h-4 text-accent" />
-              <span className="text-[13px] text-accent font-mono">Endocrinologista · Nutrologista · Longevidade</span>
+              <Stethoscope className="w-4 h-4 text-[#b8976a]" />
+              <span className="text-[13px] text-[#b8976a] font-mono">Endocrinologista · Nutrologista · Longevidade</span>
             </div>
-            <p className="text-[14px] text-white/70 leading-relaxed mb-4">
+            <p className="text-[14px] text-[#0D1B2A]/70 leading-relaxed mb-4">
               Especialista em medicina metabólica e hormonal, com foco em resultados sustentáveis. Atua na interface entre endocrinologia, nutrologia e medicina preventiva para oferecer um cuidado completo e individualizado.
             </p>
             <ul className="space-y-2">
               {["CRM ativo", "Formação em Endocrinologia", "Especialização em Nutrologia", "Medicina da Longevidade"].map(c => (
-                <li key={c} className="flex items-center gap-2 text-[13px] text-white/60">
-                  <Check className="w-3.5 h-3.5 text-accent flex-shrink-0" /> {c}
+                <li key={c} className="flex items-center gap-2 text-[13px] text-[#0D1B2A]/60">
+                  <Check className="w-3.5 h-3.5 text-[#b8976a] flex-shrink-0" /> {c}
                 </li>
               ))}
             </ul>
           </div>
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-8 flex items-center justify-center min-h-[280px]">
+          <div className="bg-white border border-[#0D1B2A]/10 rounded-2xl p-8 flex items-center justify-center min-h-[280px]">
             <div className="text-center space-y-2">
-              <div className="w-20 h-20 rounded-full bg-accent/20 border-2 border-accent/30 flex items-center justify-center mx-auto mb-4">
-                <span className="text-[28px] font-bold text-accent">BG</span>
+              <div className="w-20 h-20 rounded-full bg-[#b8976a]/20 border-2 border-[#b8976a]/30 flex items-center justify-center mx-auto mb-4">
+                <span className="text-[28px] font-bold text-[#b8976a]">BG</span>
               </div>
-              <div className="text-[16px] font-semibold">Dr. Bruno Gustavo</div>
-              <div className="text-[12px] text-white/50">Foto disponível em breve</div>
+              <div className="text-[16px] font-semibold text-[#0D1B2A]">Dr. Bruno Gustavo</div>
+              <div className="text-[12px] text-[#0D1B2A]/50">Foto disponível em breve</div>
             </div>
           </div>
         </div>
@@ -184,15 +184,15 @@ export default function CaptacaoPage() {
       {/* Como funciona */}
       <section className="py-16 px-6">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-[28px] font-bold font-serif text-center mb-12">Como funciona</h2>
+          <h2 className="text-[28px] font-bold font-serif text-center mb-12 text-[#0D1B2A]">Como funciona</h2>
           <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-6">
             {STEPS.map(s => (
               <div key={s.n} className="text-center">
-                <div className="w-12 h-12 rounded-full bg-accent/10 border border-accent/25 flex items-center justify-center mx-auto mb-3">
-                  <span className="text-[11px] font-mono font-bold text-accent">{s.n}</span>
+                <div className="w-12 h-12 rounded-full bg-[#b8976a]/10 border border-[#b8976a]/25 flex items-center justify-center mx-auto mb-3">
+                  <span className="text-[11px] font-mono font-bold text-[#b8976a]">{s.n}</span>
                 </div>
-                <h3 className="text-[14px] font-semibold mb-1">{s.t}</h3>
-                <p className="text-[12px] text-white/50">{s.d}</p>
+                <h3 className="text-[14px] font-semibold mb-1 text-[#0D1B2A]">{s.t}</h3>
+                <p className="text-[12px] text-[#0D1B2A]/50">{s.d}</p>
               </div>
             ))}
           </div>
@@ -200,38 +200,38 @@ export default function CaptacaoPage() {
       </section>
 
       {/* Programas */}
-      <section id="programas" className="py-16 px-6 bg-white/[0.02] border-y border-white/5">
+      <section id="programas" className="py-16 px-6 bg-[#0D1B2A]/[0.02] border-y border-[#0D1B2A]/8">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-[28px] font-bold font-serif text-center mb-12">Programas</h2>
+          <h2 className="text-[28px] font-bold font-serif text-center mb-12 text-[#0D1B2A]">Programas</h2>
           <div className="grid md:grid-cols-3 gap-6">
             {PROGRAMS.map(p => (
               <div key={p.name} className={cn("rounded-2xl border p-6 space-y-3", p.color)}>
-                <h3 className="text-[16px] font-bold">{p.name}</h3>
-                <p className="text-[13px] text-white/60 leading-relaxed">{p.desc}</p>
+                <h3 className="text-[16px] font-bold text-[#0D1B2A]">{p.name}</h3>
+                <p className="text-[13px] text-[#0D1B2A]/60 leading-relaxed">{p.desc}</p>
                 <div className="flex flex-wrap gap-1.5">
                   {p.tags.map(t => (
-                    <span key={t} className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-white/60">{t}</span>
+                    <span key={t} className="text-[10px] px-2 py-0.5 rounded-full bg-[#0D1B2A]/5 border border-[#0D1B2A]/10 text-[#0D1B2A]/60">{t}</span>
                   ))}
                 </div>
               </div>
             ))}
           </div>
-          <p className="text-center text-[12px] text-white/40 mt-6">Consulte valores diretamente com nossa equipe.</p>
+          <p className="text-center text-[12px] text-[#0D1B2A]/40 mt-6">Consulte valores diretamente com nossa equipe.</p>
         </div>
       </section>
 
       {/* Depoimentos */}
       <section className="py-16 px-6">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-[28px] font-bold font-serif text-center mb-12">O que dizem nossos pacientes</h2>
+          <h2 className="text-[28px] font-bold font-serif text-center mb-12 text-[#0D1B2A]">O que dizem nossos pacientes</h2>
           <div className="grid md:grid-cols-3 gap-6">
             {DEPOIMENTOS.map(d => (
-              <div key={d.nome} className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-3">
+              <div key={d.nome} className="bg-white border border-[#0D1B2A]/10 rounded-2xl p-5 space-y-3">
                 <div className="flex items-center gap-1">
-                  {Array.from({ length: 5 }).map((_, i) => <Star key={i} className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />)}
+                  {Array.from({ length: 5 }).map((_, i) => <Star key={i} className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />)}
                 </div>
-                <p className="text-[13px] text-white/70 leading-relaxed italic">"{d.texto}"</p>
-                <div className="text-[11px] font-semibold text-white/40">— {d.nome}</div>
+                <p className="text-[13px] text-[#0D1B2A]/70 leading-relaxed italic">"{d.texto}"</p>
+                <div className="text-[11px] font-semibold text-[#0D1B2A]/40">— {d.nome}</div>
               </div>
             ))}
           </div>
@@ -239,69 +239,69 @@ export default function CaptacaoPage() {
       </section>
 
       {/* Formulário */}
-      <section id="formulario" className="py-16 px-6 bg-white/[0.02] border-y border-white/5">
+      <section id="formulario" className="py-16 px-6 bg-[#0D1B2A]/[0.02] border-y border-[#0D1B2A]/8">
         <div className="max-w-lg mx-auto">
           <div className="text-center mb-8">
-            <h2 className="text-[28px] font-bold font-serif">Quero cuidar da minha saúde</h2>
-            <p className="text-[14px] text-white/60 mt-2">Preencha o formulário e nossa equipe entrará em contato em até 2h úteis.</p>
+            <h2 className="text-[28px] font-bold font-serif text-[#0D1B2A]">Quero cuidar da minha saúde</h2>
+            <p className="text-[14px] text-[#0D1B2A]/60 mt-2">Preencha o formulário e nossa equipe entrará em contato em até 2h úteis.</p>
           </div>
 
           {step === "done" ? (
             <div className="text-center space-y-4 py-10">
               <div className="flex justify-center">
-                <div className="w-16 h-16 rounded-full bg-accent/20 border-2 border-accent/30 flex items-center justify-center">
-                  <CheckCircle className="w-8 h-8 text-accent" />
+                <div className="w-16 h-16 rounded-full bg-[#b8976a]/20 border-2 border-[#b8976a]/30 flex items-center justify-center">
+                  <CheckCircle className="w-8 h-8 text-[#b8976a]" />
                 </div>
               </div>
-              <h3 className="text-[20px] font-bold">Recebemos seu contato!</h3>
-              <p className="text-[14px] text-white/60">Em breve nossa equipe entrará em contato via WhatsApp para agendar sua consulta.</p>
+              <h3 className="text-[20px] font-bold text-[#0D1B2A]">Recebemos seu contato!</h3>
+              <p className="text-[14px] text-[#0D1B2A]/60">Em breve nossa equipe entrará em contato via WhatsApp para agendar sua consulta.</p>
             </div>
           ) : (
             <form onSubmit={submit} className="space-y-4">
               <div>
-                <label className="block text-[12px] text-white/50 mb-1.5 uppercase tracking-wider">Nome completo *</label>
+                <label className="block text-[12px] text-[#0D1B2A]/50 mb-1.5 uppercase tracking-wider">Nome completo *</label>
                 <input value={form.nome} onChange={e => set("nome", e.target.value)} required placeholder="Seu nome" className={inputCls} />
               </div>
               <div>
-                <label className="block text-[12px] text-white/50 mb-1.5 uppercase tracking-wider">WhatsApp *</label>
+                <label className="block text-[12px] text-[#0D1B2A]/50 mb-1.5 uppercase tracking-wider">WhatsApp *</label>
                 <input value={form.whatsapp} onChange={e => set("whatsapp", fmtPhone(e.target.value))} required placeholder="(11) 99999-9999" className={inputCls} />
               </div>
               <div>
-                <label className="block text-[12px] text-white/50 mb-1.5 uppercase tracking-wider">Email</label>
+                <label className="block text-[12px] text-[#0D1B2A]/50 mb-1.5 uppercase tracking-wider">Email</label>
                 <input type="email" value={form.email} onChange={e => set("email", e.target.value)} placeholder="seu@email.com" className={inputCls} />
               </div>
               <div>
-                <label className="block text-[12px] text-white/50 mb-1.5 uppercase tracking-wider">Interesse principal</label>
+                <label className="block text-[12px] text-[#0D1B2A]/50 mb-1.5 uppercase tracking-wider">Interesse principal</label>
                 <select value={form.interesse} onChange={e => set("interesse", e.target.value)} className={selectCls}>
                   <option value="">Selecione...</option>
                   {INTERESSES.map(i => <option key={i} value={i}>{i}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-[12px] text-white/50 mb-1.5 uppercase tracking-wider">Como nos encontrou</label>
+                <label className="block text-[12px] text-[#0D1B2A]/50 mb-1.5 uppercase tracking-wider">Como nos encontrou</label>
                 <select value={form.como_encontrou} onChange={e => set("como_encontrou", e.target.value)} className={selectCls}>
                   <option value="">Selecione...</option>
                   {COMO_ENCONTROU.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-[12px] text-white/50 mb-1.5 uppercase tracking-wider">Mensagem (opcional)</label>
+                <label className="block text-[12px] text-[#0D1B2A]/50 mb-1.5 uppercase tracking-wider">Mensagem (opcional)</label>
                 <textarea value={form.mensagem} onChange={e => set("mensagem", e.target.value)} rows={3} placeholder="Conte um pouco sobre o que está buscando..." className={cn(inputCls, "resize-none")} />
               </div>
 
               {step === "error" && (
-                <p className="text-[13px] text-red-400">Erro ao enviar. Por favor, tente novamente.</p>
+                <p className="text-[13px] text-red-600">Erro ao enviar. Por favor, tente novamente.</p>
               )}
 
               <button
                 type="submit"
                 disabled={!valid || step === "sending"}
-                className="w-full py-4 rounded-xl bg-accent text-[#0D1B2A] text-[15px] font-bold disabled:opacity-50 flex items-center justify-center gap-2 hover:bg-accent/90 transition-all"
+                className="w-full py-4 rounded-xl bg-[#b8976a] text-[#0D1B2A] text-[15px] font-bold disabled:opacity-50 flex items-center justify-center gap-2 hover:bg-[#a8875a] transition-all"
               >
                 {step === "sending" ? <><Loader2 className="w-4 h-4 animate-spin" /> Enviando...</> : <><Heart className="w-4 h-4" /> Quero cuidar da minha saúde</>}
               </button>
 
-              <p className="text-[11px] text-white/30 text-center">Seus dados são protegidos e nunca serão compartilhados.</p>
+              <p className="text-[11px] text-[#0D1B2A]/30 text-center">Seus dados são protegidos e nunca serão compartilhados.</p>
             </form>
           )}
         </div>
@@ -310,19 +310,19 @@ export default function CaptacaoPage() {
       {/* FAQ */}
       <section className="py-16 px-6">
         <div className="max-w-2xl mx-auto">
-          <h2 className="text-[24px] font-bold font-serif text-center mb-8">Perguntas frequentes</h2>
+          <h2 className="text-[24px] font-bold font-serif text-center mb-8 text-[#0D1B2A]">Perguntas frequentes</h2>
           <div className="space-y-2">
             {FAQ.map((f, i) => (
-              <div key={i} className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
+              <div key={i} className="bg-white border border-[#0D1B2A]/10 rounded-xl overflow-hidden">
                 <button
                   onClick={() => setFaqOpen(faqOpen === i ? null : i)}
                   className="w-full flex items-center justify-between px-5 py-4 text-left"
                 >
-                  <span className="text-[14px] font-medium">{f.q}</span>
-                  {faqOpen === i ? <ChevronUp className="w-4 h-4 text-white/40 flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-white/40 flex-shrink-0" />}
+                  <span className="text-[14px] font-medium text-[#0D1B2A]">{f.q}</span>
+                  {faqOpen === i ? <ChevronUp className="w-4 h-4 text-[#0D1B2A]/40 flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-[#0D1B2A]/40 flex-shrink-0" />}
                 </button>
                 {faqOpen === i && (
-                  <div className="px-5 pb-4 text-[13px] text-white/60 leading-relaxed border-t border-white/5 pt-3">
+                  <div className="px-5 pb-4 text-[13px] text-[#0D1B2A]/60 leading-relaxed border-t border-[#0D1B2A]/5 pt-3">
                     {f.a}
                   </div>
                 )}
@@ -333,23 +333,23 @@ export default function CaptacaoPage() {
       </section>
 
       {/* Footer */}
-      <footer className="py-10 px-6 border-t border-white/5 bg-[#0a1220]">
+      <footer className="py-10 px-6 border-t border-[#0D1B2A]/8 bg-[#EDE8DF]">
         <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <PraxisLogo />
-          <div className="flex items-center gap-4 text-[12px] text-white/40">
+          <div className="flex items-center gap-4 text-[12px] text-[#0D1B2A]/40">
             <span className="flex items-center gap-1"><Stethoscope className="w-3 h-3" /> CRM/SP</span>
             <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> São Paulo, SP</span>
           </div>
           <div className="flex items-center gap-3">
-            <a href="https://wa.me/55" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[12px] text-white/50 hover:text-accent transition-colors">
+            <a href="https://wa.me/55" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[12px] text-[#0D1B2A]/50 hover:text-[#b8976a] transition-colors">
               <Phone className="w-3.5 h-3.5" /> WhatsApp
             </a>
-            <a href="https://instagram.com/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[12px] text-white/50 hover:text-accent transition-colors">
+            <a href="https://instagram.com/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[12px] text-[#0D1B2A]/50 hover:text-[#b8976a] transition-colors">
               <Instagram className="w-3.5 h-3.5" /> Instagram
             </a>
           </div>
         </div>
-        <p className="text-center text-[11px] text-white/20 mt-6">© 2026 Dr. Bruno Gustavo. Todos os direitos reservados.</p>
+        <p className="text-center text-[11px] text-[#0D1B2A]/30 mt-6">© 2026 Dr. Bruno Gustavo. Todos os direitos reservados.</p>
       </footer>
     </div>
   )

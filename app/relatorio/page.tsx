@@ -153,7 +153,7 @@ export default function RelatorioPage() {
   const m = r?.metricas
 
   return (
-    <div className="p-8 space-y-6 animate-fade-in print:p-4">
+    <div className="p-4 md:p-8 space-y-6 animate-fade-in print:p-4">
       {/* Header */}
       <div className="flex items-center justify-between print:hidden">
         <div className="flex items-center gap-3">
@@ -179,7 +179,7 @@ export default function RelatorioPage() {
       </div>
 
       {/* Controls */}
-      <div className="flex items-end gap-4 print:hidden">
+      <div className="flex flex-col sm:flex-row sm:items-end gap-3 sm:gap-4 print:hidden">
         <div>
           <label className="block text-[11px] font-medium mb-1" style={{ color: "var(--text-secondary)" }}>Mês</label>
           <select
@@ -213,7 +213,7 @@ export default function RelatorioPage() {
         <button
           onClick={gerar}
           disabled={loading}
-          className="flex items-center gap-2 px-5 py-2 rounded-xl text-[13px] font-bold disabled:opacity-50 transition-all hover:opacity-80"
+          className="flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-2.5 sm:py-2 rounded-xl text-[13px] font-bold disabled:opacity-50 transition-all hover:opacity-80"
           style={{ background: "#a78bfa", color: "#080808" }}>
           {loading
             ? <Loader2 className="w-4 h-4 animate-spin" />
@@ -270,7 +270,7 @@ export default function RelatorioPage() {
           </Section>
 
           {/* KPIs rápidos */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
             <MetricPill label="Receita"      value={fmtBRL(m.totalReceitas)}   color="#00c07f" />
             <MetricPill label="Lucro Liq."   value={fmtBRL(m.lucroLiquido)}    color={m.lucroLiquido >= 0 ? "#00c07f" : "#ef4444"} />
             <MetricPill label="Leads"        value={fmtN(m.totalLeads)}         color="#3b7fff" />
@@ -284,7 +284,7 @@ export default function RelatorioPage() {
             <p className="text-[13px] leading-relaxed mb-4" style={{ color: "var(--text-secondary)" }}>
               {r.analise.financeiro.avaliacao}
             </p>
-            <div className="grid grid-cols-3 gap-3 mb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
               <MetricPill label="Receita bruta" value={fmtBRL(m.totalReceitas)} color="#00c07f" />
               <MetricPill label="Despesas"      value={fmtBRL(m.totalDespesas)} color="#ef4444" />
               <MetricPill label="Lucro líquido" value={fmtBRL(m.lucroLiquido)}  color={m.lucroLiquido >= 0 ? "#00c07f" : "#ef4444"} />
@@ -306,7 +306,7 @@ export default function RelatorioPage() {
             <p className="text-[13px] leading-relaxed mb-4" style={{ color: "var(--text-secondary)" }}>
               {r.analise.marketing.avaliacao}
             </p>
-            <div className="grid grid-cols-3 gap-3 mb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
               <MetricPill label="Total leads"   value={fmtN(m.totalLeads)}         color="#3b7fff" />
               <MetricPill label="Convertidos"   value={fmtN(m.leadsConvertidos)}    color="#00c07f" />
               <MetricPill label="Taxa conv."    value={`${m.taxaConversao}%`}        color="#3b7fff" />
@@ -347,7 +347,7 @@ export default function RelatorioPage() {
             <p className="text-[13px] leading-relaxed mb-4" style={{ color: "var(--text-secondary)" }}>
               {r.analise.clinico.avaliacao}
             </p>
-            <div className="grid grid-cols-3 gap-3 mb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
               <MetricPill label="NPS Score"     value={m.npsScore !== null ? `${m.npsScore}` : "N/A"} color="#d4af37" />
               <MetricPill label="Nota média"    value={m.npsMedia}     color="#d4af37" />
               <MetricPill label="Respostas"     value={fmtN(m.npsNotas)} color="#d4af37" />

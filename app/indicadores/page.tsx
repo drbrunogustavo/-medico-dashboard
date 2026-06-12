@@ -159,7 +159,7 @@ export default function IndicadoresPage() {
 
   return (
     <div className="animate-fade-in">
-      <div className="flex items-center justify-between p-8 pb-0">
+      <div className="flex items-center justify-between p-4 md:p-8 pb-0">
         <div>
           <h1 className="text-2xl font-bold text-text-primary tracking-tight">Indicadores da Clínica</h1>
           <p className="text-sm text-text-muted mt-1 font-mono">KPIs · PERFORMANCE · DECISÕES</p>
@@ -170,8 +170,8 @@ export default function IndicadoresPage() {
       </div>
 
       {/* Tabs */}
-      <div className="px-8 pt-6">
-        <div className="flex gap-1 bg-[--surface] border border-[--border] rounded-xl p-1 w-fit">
+      <div className="px-4 md:px-8 pt-6">
+        <div className="flex gap-1 bg-[--surface] border border-[--border] rounded-xl p-1 overflow-x-auto scrollbar-none">
           {TABS.map(t => {
             const Icon = t.icon
             return (
@@ -193,12 +193,12 @@ export default function IndicadoresPage() {
         </div>
       </div>
 
-      <div className="p-8 space-y-6 max-w-4xl">
+      <div className="p-4 md:p-8 space-y-6 max-w-4xl">
 
         {/* ── FINANCEIRO ── */}
         {tab === "financeiro" && (
           <>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
               {[
                 { label: "Faturamento do Mês",  value: fmt(exec.faturamento_mes ?? 0) },
                 { label: "Ticket Médio",         value: fmt(ticket_medio) },
@@ -214,7 +214,8 @@ export default function IndicadoresPage() {
 
             <div className="rounded-xl border border-[--border] bg-[--surface] p-5">
               <h3 className="text-xs font-mono text-text-muted uppercase tracking-widest mb-4">Faturamento + Projeção 3 meses</h3>
-              <ResponsiveContainer width="100%" height={200}>
+              <div className="h-[180px] md:h-[200px]">
+              <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} barSize={24}>
                   <XAxis dataKey="mes" tick={{ fill: "#7c85a0", fontSize: 11, fontFamily: "monospace" }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fill: "#7c85a0", fontSize: 10, fontFamily: "monospace" }} axisLine={false} tickLine={false} tickFormatter={v => `${(v/1000).toFixed(0)}k`} />
@@ -227,6 +228,7 @@ export default function IndicadoresPage() {
                   <Bar dataKey="projecao" fill="#a855f740" radius={[4,4,0,0]} />
                 </BarChart>
               </ResponsiveContainer>
+              </div>
               <p className="text-[10px] text-text-muted font-mono mt-2">Barras claras = projeção baseada na tendência</p>
             </div>
 
@@ -244,7 +246,7 @@ export default function IndicadoresPage() {
         {/* ── MARKETING ── */}
         {tab === "marketing" && (
           <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {[
                 { label: "Leads no Mês",            value: String(exec.leads_total ?? 0) },
                 { label: "Taxa Conversão Lead",      value: `${conv_lead}%` },
@@ -301,7 +303,7 @@ export default function IndicadoresPage() {
         {tab === "comercial" && (
           <>
             <p className="text-xs text-text-muted font-mono">Clique nos valores para editar — salvamento automático.</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
               {[
                 { label: "Taxa de comparecimento (%)",        key: "taxa_comparecimento"        as const, suffix: "%" },
                 { label: "Taxa de fechamento de protocolos (%)", key: "taxa_fechamento_protocolos" as const, suffix: "%" },

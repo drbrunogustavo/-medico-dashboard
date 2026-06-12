@@ -295,7 +295,7 @@ export default function ObecoesPage() {
               <BookOpen className="w-3 h-3" /> Importar Pauta
             </button>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <input
               value={tema}
               onChange={e => setTema(e.target.value)}
@@ -306,7 +306,7 @@ export default function ObecoesPage() {
             <button
               onClick={mapearObjecoes}
               disabled={loading || !tema.trim()}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-accent text-background text-[13px] font-bold hover:bg-accent/90 transition-colors disabled:opacity-50 flex-shrink-0"
+              className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-accent text-background text-[13px] font-bold hover:bg-accent/90 transition-colors disabled:opacity-50 sm:flex-shrink-0"
             >
               {loading
                 ? <><Loader2 className="w-4 h-4 animate-spin" /> Mapeando...</>
@@ -346,7 +346,7 @@ export default function ObecoesPage() {
                 Digite o tratamento ou tema. O Claude vai gerar 50 objeções reais categorizadas. Transforme cada objeção em conteúdo: Reel, Story, Carrossel ou FAQ — ou processe todas de uma vez.
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2 justify-center px-4">
               {CATEGORIAS.map(cat => {
                 const c = CAT_CONFIG[cat]
                 return (
@@ -367,7 +367,7 @@ export default function ObecoesPage() {
             <div className={cn("flex-1 min-w-0 space-y-4 transition-all", activeObjecao ? "lg:max-w-[calc(100%-520px)]" : "")}>
 
               {/* Toolbar */}
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-3">
                   <button onClick={selectAll} className="flex items-center gap-1.5 text-[11px] text-text-muted hover:text-text-secondary transition-colors">
                     {selectedIds.length === objecoes.length

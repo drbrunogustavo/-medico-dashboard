@@ -14,6 +14,7 @@ import {
   LogOut, CreditCard, Settings,
   RefreshCw, Map, BarChart2, Rocket,
   Instagram, Calculator, FileBarChart,
+  FlaskConical, FileHeart, Pill,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useMenu } from "@/components/MobileMenuProvider"
@@ -94,8 +95,11 @@ const NAV: Record<AlaId, NavItem[]> = {
     { label: "Central de Objeções",     href: "/objecoes",         icon: ShieldQuestion},
     { label: "SOPs da Clínica",         href: "/sops",             icon: ClipboardList },
     { label: "Calculadoras Clínicas",   href: "/calculadoras",     icon: Calculator    },
-    { label: "Reativação de Pacientes", href: "/reativacao",       icon: RefreshCw     },
-    { label: "Jornada do Paciente",     href: "/jornada",          icon: Map           },
+    { label: "Reativação de Pacientes", href: "/reativacao",          icon: RefreshCw    },
+    { label: "Jornada do Paciente",     href: "/jornada",             icon: Map          },
+    { label: "Interpretação de Exames", href: "/interpretacao-exames",icon: FlaskConical },
+    { label: "Relatório para Paciente", href: "/relatorio-paciente",  icon: FileHeart    },
+    { label: "Prescrição Assistida",    href: "/prescricao",          icon: Pill         },
   ],
   executivo: [
     { label: "Painel Executivo",       href: "/executivo",    icon: BarChart3        },

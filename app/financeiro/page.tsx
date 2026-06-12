@@ -225,7 +225,7 @@ export default function FinanceiroPage() {
       <div className="p-4 md:p-8 space-y-6">
 
         {/* 4 KPI Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
           <StatCard label="Receitas"         value={fmt(receitas)} sub="no período"  icon={TrendingUp}   accent="green" />
           <StatCard label="Despesas"         value={fmt(despesas)} sub="no período"  icon={TrendingDown} accent="red"   />
           <StatCard label="Saldo do Período" value={fmt(saldo)}    sub="líquido"     icon={DollarSign}   accent={saldo >= 0 ? "green" : "red"} />
@@ -578,7 +578,7 @@ export default function FinanceiroPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {/* Valor */}
                 <div>
                   <label className="text-[10px] font-mono text-text-muted uppercase tracking-widest block mb-1.5">Valor (R$)</label>
@@ -619,17 +619,17 @@ export default function FinanceiroPage() {
             </div>
 
             {/* Footer */}
-            <div className="px-6 py-4 border-t border-border flex items-center justify-end gap-3">
+            <div className="px-6 py-4 border-t border-border flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2 sm:gap-3">
               <button
                 onClick={() => setModalOpen(false)}
-                className="px-4 py-2 rounded-xl text-[12px] text-text-muted border border-border hover:border-border-hover hover:text-text-secondary transition-all"
+                className="w-full sm:w-auto px-4 py-2.5 sm:py-2 rounded-xl text-[12px] text-text-muted border border-border hover:border-border-hover hover:text-text-secondary transition-all text-center"
               >
                 Cancelar
               </button>
               <button
                 onClick={salvar}
                 disabled={saving || !form.descricao || !form.valor}
-                className="flex items-center gap-2 bg-accent text-background text-[12px] font-semibold rounded-xl px-5 py-2 hover:opacity-90 disabled:opacity-40 transition-all"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 bg-accent text-background text-[12px] font-semibold rounded-xl px-5 py-2.5 sm:py-2 hover:opacity-90 disabled:opacity-40 transition-all"
               >
                 {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <PlusCircle className="w-3.5 h-3.5" />}
                 Salvar Lançamento

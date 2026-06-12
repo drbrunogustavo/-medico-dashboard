@@ -224,6 +224,20 @@ function WarningBox({ text }: { text: string }) {
   )
 }
 
+function ContextCard({ items }: { items: string[] }) {
+  return (
+    <div className="mt-2 p-3 rounded-lg space-y-1.5"
+      style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+      {items.map((item, i) => (
+        <div key={i} className="flex items-start gap-2">
+          <span className="text-[9px] font-mono mt-1 flex-shrink-0" style={{ color: "var(--accent)" }}>▸</span>
+          <span className="text-[11px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>{item}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 // ─── ATIVIDADES ───────────────────────────────────────────────────────────────
 
 const ATIVIDADES = [
@@ -261,9 +275,37 @@ function CalcIMC({ copied, onCopy }: { copied: string | null; onCopy: (id: strin
           <Field label="Altura" unit="cm" value={altura} onChange={setAltura} min={0} />
         </div>
         {imc && cls && (
-          <ResultBox label="Resultado" value={`${imc.toFixed(1)} kg/m²`}
-            sub={`${cls.label} · Faixa ideal: 18.5–24.9`}
-            color={cls.color} copyId="imc" copyText={text} copied={copied} onCopy={onCopy} />
+          <>
+            <ResultBox label="Resultado" value={`${imc.toFixed(1)} kg/m²`}
+              sub={`${cls.label} · Faixa ideal: 18.5–24.9`}
+              color={cls.color} copyId="imc" copyText={text} copied={copied} onCopy={onCopy} />
+            <ContextCard items={
+              imc < 18.5 ? [
+                "Baixo peso associado a sarcopenia, osteoporose e comprometimento imunológico.",
+                "Investigar causas: má absorção, distúrbios alimentares, neoplasia oculta.",
+                "Avaliar albumina sérica, prega cutânea tricipital e circunferência do braço.",
+              ] : imc < 25 ? [
+                "Peso adequado — manter com alimentação equilibrada e exercício regular.",
+                "Reavaliar IMC periodicamente; valores limítrofes superiores podem mascarar gordura visceral elevada.",
+              ] : imc < 30 ? [
+                "Sobrepeso aumenta risco de HAS, dislipidemia, DM2 e apneia do sono.",
+                "Avaliar distribuição de gordura corporal: CA ≥ 94 cm (H) / ≥ 80 cm (M) = risco metabólico adicional.",
+                "Meta inicial: redução de 5–10% do peso corporal melhora marcadores cardiometabólicos.",
+              ] : imc < 35 ? [
+                "Obesidade Grau I: risco significativo de DM2, DCV, DHGNA e síndrome metabólica.",
+                "Considerar avaliação de glicemia, HbA1c, TG/HDL, AST/ALT e TSH.",
+                "MEV intensiva; avaliar indicação de farmacoterapia (GLP-1 RA, orlistate).",
+              ] : imc < 40 ? [
+                "Obesidade Grau II: risco cardiometabólico elevado. Comorbidades frequentemente presentes.",
+                "Indicação formal para farmacoterapia combinada com MEV estruturada.",
+                "Avaliar elegibilidade cirúrgica conforme critérios SBCBM (IMC ≥35 + comorbidade).",
+              ] : [
+                "Obesidade Grau III (mórbida): risco muito alto de mortalidade cardiovascular e por todas as causas.",
+                "Indicação cirúrgica: avaliar com equipe multidisciplinar (cirurgia bariátrica + acompanhamento nutricional/psicológico).",
+                "Rastreio obrigatório: apneia do sono (polissonografia), DHGNA, HbA1c, cortisol e perfil lipídico.",
+              ]
+            } />
+          </>
         )}
       </div>
     </CalcCard>
@@ -289,9 +331,25 @@ function CalcHOMA({ copied, onCopy }: { copied: string | null; onCopy: (id: stri
           <Field label="Insulina jejum" unit="μU/mL" value={ins} onChange={setIns} min={0} />
         </div>
         {homa && cls && (
-          <ResultBox label="HOMA-IR" value={homa.toFixed(2)}
-            sub={`${cls.label} · <2.5 normal · 2.5–4.0 leve · >4.0 grave`}
-            color={cls.color} copyId="homa" copyText={text} copied={copied} onCopy={onCopy} />
+          <>
+            <ResultBox label="HOMA-IR" value={homa.toFixed(2)}
+              sub={`${cls.label} · <2.5 normal · 2.5–4.0 leve · >4.0 grave`}
+              color={cls.color} copyId="homa" copyText={text} copied={copied} onCopy={onCopy} />
+            <ContextCard items={
+              homa < 2.5 ? [
+                "Sensibilidade insulínica preservada — manter MEV para prevenção.",
+              ] : homa < 4.0 ? [
+                "Resistência insulínica leve. Associada a progressão para pré-diabetes e DM2 a médio prazo.",
+                "Avaliar complementar: relação TG/HDL (>3.0 = risco metabólico), circunferência abdominal, HbA1c.",
+                "Intervenção: redução de 5–7% do peso, exercício aeróbico ≥150min/sem, dieta de baixo índice glicêmico.",
+              ] : [
+                "Resistência insulínica grave. Risco aumentado de DM2, DHGNA, SOP (mulheres) e DCV.",
+                "Solicitar TOTG 75g, peptídeo C, perfil lipídico e transaminases.",
+                "Avaliar farmacoterapia: metformina 500–2000mg/dia é a intervenção de primeira linha.",
+                "Monitorar resposta com HOMA-IR após 3–6 meses de intervenção.",
+              ]
+            } />
+          </>
         )}
       </div>
     </CalcCard>
@@ -331,6 +389,12 @@ function CalcTMB({ copied, onCopy }: { copied: string | null; onCopy: (id: strin
             <ResultBox label="Gasto Calórico Total" value={`${gasto} kcal/dia`}
               sub={ATIVIDADES.find(x => x.value === fator)?.label}
               color="#f97316" copyId="tmb" copyText={text} copied={copied} onCopy={onCopy} />
+            <ContextCard items={[
+              `Deficit de 500 kcal/dia (~${gasto - 500} kcal): perda esperada ~0,5 kg/semana.`,
+              `Deficit de 750 kcal/dia (~${gasto - 750} kcal): perda esperada ~0,75 kg/semana.`,
+              "Não ultrapassar deficit de 1000 kcal/dia — risco de perda de massa muscular e efeito rebote.",
+              "Para ganho de massa: superavit de 200–400 kcal/dia com proteína ≥1,6g/kg/dia.",
+            ]} />
           </div>
         )}
       </div>
@@ -510,9 +574,26 @@ function CalcFramingham({ copied, onCopy }: { copied: string | null; onCopy: (id
           <Toggle label="Fumante" options={["Sim","Não"]} value={fumante} onChange={setFumante} />
         </div>
         {risco && cls && (
-          <ResultBox label="Risco em 10 anos" value={`${risco}%`}
-            sub={`${cls.label} · <10% baixo · 10–20% intermediário · >20% alto`}
-            color={cls.color} copyId="fram" copyText={text} copied={copied} onCopy={onCopy} />
+          <>
+            <ResultBox label="Risco em 10 anos" value={`${risco}%`}
+              sub={`${cls.label} · <10% baixo · 10–20% intermediário · >20% alto`}
+              color={cls.color} copyId="fram" copyText={text} copied={copied} onCopy={onCopy} />
+            <ContextCard items={
+              risco < 10 ? [
+                "Risco baixo: foco em prevenção primária e manutenção dos fatores protetores.",
+                "Meta LDL <130 mg/dL; iniciar estatina apenas se LDL ≥160 + múltiplos fatores de risco.",
+              ] : risco <= 20 ? [
+                "Risco intermediário: considerar escore de cálcio coronariano (CAC) para reclassificação.",
+                "Meta LDL <100 mg/dL. Avaliar estatina de moderada intensidade + mudança de estilo de vida.",
+                "Controle rigoroso de PA (meta <130/80 mmHg), HbA1c e tabagismo.",
+              ] : [
+                "Risco alto: terapia com estatina de alta intensidade é fortemente recomendada.",
+                "Meta LDL <70 mg/dL (idealmente <55 mg/dL em muito alto risco).",
+                "Avaliar antiagregação plaquetária e encaminhamento para cardiologista.",
+                "Rastrear lesão de órgão-alvo: microalbuminúria, ECG, ecocardiograma.",
+              ]
+            } />
+          </>
         )}
       </div>
     </CalcCard>
@@ -625,9 +706,31 @@ function CalcTFG({ copied, onCopy }: { copied: string | null; onCopy: (id: strin
           <Field label="Idade" unit="anos" value={idade} onChange={setIdade} min={18} max={110} />
         </div>
         {tfg && cls && (
-          <ResultBox label={`TFG · Estádio ${cls.estadio}`} value={`${tfg} mL/min/1,73m²`}
-            sub={cls.label} color={cls.color}
-            copyId="tfg" copyText={text} copied={copied} onCopy={onCopy} />
+          <>
+            <ResultBox label={`TFG · Estádio ${cls.estadio}`} value={`${tfg} mL/min/1,73m²`}
+              sub={cls.label} color={cls.color}
+              copyId="tfg" copyText={text} copied={copied} onCopy={onCopy} />
+            <ContextCard items={
+              tfg >= 90 ? [
+                "Função renal normal. Monitorar anualmente se fatores de risco (DM, HAS, história familiar).",
+              ] : tfg >= 60 ? [
+                "Redução leve. Controle rigoroso de PA (meta <130/80 mmHg) e glicemia.",
+                "Evitar AINEs e contraste iodado sem pré-hidratação adequada.",
+                "Microalbuminúria anual; monitorar eletrólitos e hemoglobina.",
+              ] : tfg >= 30 ? [
+                "DRC estádio G3 — encaminhamento precoce ao nefrologista é recomendado.",
+                "Avaliar: anemia (EPO endógena ↓), hiperparatireoidismo secundário (PTH, Ca, P), bicarbonato.",
+                "Restringir proteínas a 0,6–0,8g/kg/dia. Ajustar doses de medicamentos renais.",
+              ] : tfg >= 15 ? [
+                "DRC estádio G4 — acompanhamento nefrológico obrigatório. Planejamento para TRS.",
+                "Preparar acesso vascular para hemodiálise ou encaminhar para avaliação de transplante.",
+                "Dieta baixa em potássio, fósforo e sódio. Corrigir acidose metabólica.",
+              ] : [
+                "Falência renal (G5) — diálise ou transplante. Manejo imediato com nefrologista.",
+                "Monitorar potássio sérico (risco de hipercalemia fatal), volemia e acidose.",
+              ]
+            } />
+          </>
         )}
       </div>
     </CalcCard>
@@ -744,6 +847,19 @@ function CalcCastelli({ copied, onCopy }: { copied: string | null; onCopy: (id: 
             <div className="flex justify-end">
               <CopyButton id="castelli" text={text} copied={copied} onCopy={onCopy} />
             </div>
+            {c1 && cls1 && (
+              <ContextCard items={
+                cls1.label === "Ótimo" && (!cls2 || cls2.label === "Ótimo") ? [
+                  "Índices de Castelli ótimos — perfil lipídico com baixa aterogenicidade.",
+                  "Manter com MEV: dieta mediterrânea, exercício regular, controle do tabagismo.",
+                ] : [
+                  "Índices elevados indicam maior aterogenicidade e risco de placa aterosclerótica.",
+                  "Castelli I >5,0 (H) / >4,4 (M): considerar estatina independente do LDL absoluto.",
+                  "Avaliar proteína C-reativa de alta sensibilidade (PCR-as) e LDL small dense para estratificação adicional.",
+                  "Sugestão: dieta com ômega-3, redução de carboidratos refinados e exercício resistido.",
+                ]
+              } />
+            )}
           </div>
         )}
       </div>
@@ -903,6 +1019,205 @@ function CalcBillewicz({ copied, onCopy }: { copied: string | null; onCopy: (id:
   )
 }
 
+function CalcPercentilOMS({ copied, onCopy }: { copied: string | null; onCopy: (id: string, t: string) => void }) {
+  const [idade,  setIdade]  = useState("")
+  const [peso,   setPeso]   = useState("")
+  const [sexo,   setSexo]   = useState("Menino")
+  const idades = parseFloat(idade); const p = parseFloat(peso)
+
+  // Simplified WHO z-score approximation for weight-for-age 0-60 months
+  // Mean ± SD values at key ages (simplified lookup)
+  function getWHORef(ageMonths: number, sex: string): { median: number; sd: number } {
+    const tableM: [number, number, number][] = [
+      [0,3.3,0.44],[3,6.4,0.65],[6,7.9,0.73],[9,9.2,0.81],[12,10.2,0.85],
+      [18,11.5,0.95],[24,12.7,1.04],[36,14.7,1.22],[48,16.7,1.42],[60,18.7,1.58],
+    ]
+    const tableF: [number, number, number][] = [
+      [0,3.2,0.41],[3,5.8,0.56],[6,7.3,0.67],[9,8.6,0.76],[12,9.6,0.81],
+      [18,11.0,0.92],[24,12.1,1.01],[36,14.1,1.20],[48,16.1,1.38],[60,18.2,1.54],
+    ]
+    const table = sex === "Menino" ? tableM : tableF
+    let best = table[0]
+    for (const row of table) {
+      if (Math.abs(row[0] - ageMonths) < Math.abs(best[0] - ageMonths)) best = row
+    }
+    return { median: best[1], sd: best[2] }
+  }
+
+  const ref    = idades > 0 && idades <= 60 ? getWHORef(idades, sexo) : null
+  const zscore = ref && p > 0 ? ((p - ref.median) / ref.sd) : null
+
+  function classifyZ(z: number): { label: string; color: string } {
+    if (z < -3)   return { label: "Muito baixo peso (< -3 DP)",    color: "#dc2626" }
+    if (z < -2)   return { label: "Baixo peso (< -2 DP)",          color: "#ef4444" }
+    if (z < -1)   return { label: "Risco nutricional (< -1 DP)",   color: "#f59e0b" }
+    if (z <= 1)   return { label: "Eutrófico",                     color: "#00c07f" }
+    if (z <= 2)   return { label: "Risco de sobrepeso (> +1 DP)",  color: "#f59e0b" }
+    if (z <= 3)   return { label: "Sobrepeso (> +2 DP)",           color: "#f97316" }
+    return              { label: "Obesidade (> +3 DP)",            color: "#ef4444" }
+  }
+
+  const cls  = zscore !== null ? classifyZ(zscore) : null
+  const text = zscore !== null && cls
+    ? `Percentil OMS (${sexo}, ${idades}m, ${p}kg): Z-score ${zscore.toFixed(2)} — ${cls.label}`
+    : ""
+
+  return (
+    <CalcCard icon={Baby} title="Percentil Peso/Idade OMS (0–60m)" color="#06b6d4">
+      <div className="space-y-3">
+        <Toggle label="Sexo" options={["Menino", "Menina"]} value={sexo} onChange={setSexo} />
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Idade" unit="meses (0–60)" value={idade} onChange={setIdade} min={0} max={60} />
+          <Field label="Peso atual" unit="kg" value={peso} onChange={setPeso} min={0} step="0.1" />
+        </div>
+        {ref && (
+          <div className="text-[11px] p-2 rounded-lg" style={{ background: "var(--surface)", color: "var(--text-muted)" }}>
+            Referência OMS ({sexo}, ~{idades}m): mediana {ref.median.toFixed(1)} kg · DP {ref.sd.toFixed(2)}
+          </div>
+        )}
+        {zscore !== null && cls && (
+          <>
+            <ResultBox label="Z-score Peso/Idade" value={zscore.toFixed(2)} sub={cls.label}
+              color={cls.color} copyId="percentilOMS" copyText={text} copied={copied} onCopy={onCopy} />
+            <ContextCard items={
+              zscore < -2 ? [
+                "Déficit ponderal significativo — investigar causas: má absorção, doença crônica, déficit alimentar.",
+                "Encaminhar a pediatra/nutricionista. Curvas de crescimento seriadas são essenciais.",
+              ] : zscore > 2 ? [
+                "Excesso de peso em lactente/criança pequena — avaliar padrão alimentar e introdução de alimentos.",
+                "Excesso precoce aumenta risco de obesidade na infância e comorbidades na vida adulta.",
+              ] : [
+                "Peso adequado para a idade. Manter acompanhamento com curvas de crescimento.",
+              ]
+            } />
+          </>
+        )}
+        {idades > 60 && <WarningBox text="Esta calculadora é válida apenas para crianças de 0 a 60 meses." />}
+      </div>
+    </CalcCard>
+  )
+}
+
+function CalcZscoreEstatura({ copied, onCopy }: { copied: string | null; onCopy: (id: string, t: string) => void }) {
+  const [idade,  setIdade]  = useState("")
+  const [altura, setAltura] = useState("")
+  const [sexo,   setSexo]   = useState("Menino")
+  const idades = parseFloat(idade); const h = parseFloat(altura)
+
+  function getHeightRef(ageMonths: number, sex: string): { median: number; sd: number } {
+    const tableM: [number, number, number][] = [
+      [0,49.9,1.9],[3,61.4,2.2],[6,67.6,2.3],[9,72.3,2.4],[12,75.7,2.6],
+      [18,82.3,2.8],[24,87.8,3.1],[36,96.1,3.5],[48,103.3,3.8],[60,110.0,4.0],
+    ]
+    const tableF: [number, number, number][] = [
+      [0,49.1,1.9],[3,59.8,2.2],[6,65.7,2.3],[9,70.1,2.4],[12,74.0,2.5],
+      [18,80.7,2.7],[24,86.4,3.0],[36,95.1,3.4],[48,102.7,3.8],[60,109.4,3.9],
+    ]
+    const table = sex === "Menino" ? tableM : tableF
+    let best = table[0]
+    for (const row of table) {
+      if (Math.abs(row[0] - ageMonths) < Math.abs(best[0] - ageMonths)) best = row
+    }
+    return { median: best[1], sd: best[2] }
+  }
+
+  const ref    = idades > 0 && idades <= 60 ? getHeightRef(idades, sexo) : null
+  const zscore = ref && h > 0 ? ((h - ref.median) / ref.sd) : null
+
+  function classifyZ(z: number): { label: string; color: string } {
+    if (z < -3)  return { label: "Muito baixa estatura (< -3 DP)", color: "#dc2626" }
+    if (z < -2)  return { label: "Baixa estatura (< -2 DP)",       color: "#ef4444" }
+    if (z < -1)  return { label: "Risco (< -1 DP)",                color: "#f59e0b" }
+    if (z <= 1)  return { label: "Estatura adequada",              color: "#00c07f" }
+    if (z <= 2)  return { label: "Estatura elevada (> +1 DP)",     color: "#3b7fff" }
+    return             { label: "Estatura muito elevada (> +2 DP)",color: "#8b5cf6" }
+  }
+
+  const cls  = zscore !== null ? classifyZ(zscore) : null
+  const text = zscore !== null && cls
+    ? `Z-score Estatura/Idade OMS (${sexo}, ${idades}m, ${h}cm): ${zscore.toFixed(2)} — ${cls.label}`
+    : ""
+
+  return (
+    <CalcCard icon={Ruler} title="Z-score Estatura/Idade OMS (0–60m)" color="#8b5cf6">
+      <div className="space-y-3">
+        <Toggle label="Sexo" options={["Menino", "Menina"]} value={sexo} onChange={setSexo} />
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Idade" unit="meses (0–60)" value={idade} onChange={setIdade} min={0} max={60} />
+          <Field label="Estatura/Comprimento" unit="cm" value={altura} onChange={setAltura} min={0} step="0.1" />
+        </div>
+        {ref && (
+          <div className="text-[11px] p-2 rounded-lg" style={{ background: "var(--surface)", color: "var(--text-muted)" }}>
+            Referência OMS ({sexo}, ~{idades}m): mediana {ref.median.toFixed(1)} cm · DP {ref.sd.toFixed(1)}
+          </div>
+        )}
+        {zscore !== null && cls && (
+          <>
+            <ResultBox label="Z-score Estatura/Idade" value={zscore.toFixed(2)} sub={cls.label}
+              color={cls.color} copyId="zEstat" copyText={text} copied={copied} onCopy={onCopy} />
+            <ContextCard items={
+              zscore < -2 ? [
+                "Baixa estatura para a idade — avaliar causas: deficiência de GH, hipotireoidismo, doença celíaca, síndrome genética.",
+                "Solicitar: IGF-1, IGFBP-3, TSH, T4L, hemograma, e radiografia de mão para idade óssea.",
+                "Encaminhar à endocrinologia pediátrica se confirmado atraso de crescimento.",
+              ] : [
+                "Crescimento linear adequado. Acompanhar nas consultas de puericultura.",
+                "Registrar em curva de crescimento — tendência é mais importante que um único ponto.",
+              ]
+            } />
+          </>
+        )}
+        {idades > 60 && <WarningBox text="Esta calculadora é válida apenas para crianças de 0 a 60 meses." />}
+      </div>
+    </CalcCard>
+  )
+}
+
+function CalcDoseGH({ copied, onCopy }: { copied: string | null; onCopy: (id: string, t: string) => void }) {
+  const [peso,    setPeso]    = useState("")
+  const [indicacao, setIndicacao] = useState("baixa_estatura")
+  const p = parseFloat(peso)
+
+  const INDICACOES = [
+    { value: "baixa_estatura",   label: "Baixa estatura / deficiência de GH",       doseMin: 0.025, doseMax: 0.035 },
+    { value: "sga",              label: "Pequeno para IG (SGA)",                    doseMin: 0.035, doseMax: 0.067 },
+    { value: "turner",           label: "Síndrome de Turner",                       doseMin: 0.045, doseMax: 0.067 },
+    { value: "prader_willi",     label: "Síndrome de Prader-Willi",                 doseMin: 0.035, doseMax: 0.050 },
+    { value: "adulto",           label: "Adulto com deficiência de GH",             doseMin: 0.003, doseMax: 0.006 },
+  ]
+  const ind     = INDICACOES.find(x => x.value === indicacao) ?? INDICACOES[0]
+  const doseMin = p > 0 ? (p * ind.doseMin).toFixed(2) : null
+  const doseMax = p > 0 ? (p * ind.doseMax).toFixed(2) : null
+  const text    = doseMin && doseMax
+    ? `Dose de GH (${ind.label}): ${doseMin}–${doseMax} mg/dia SC (${(ind.doseMin * 1000).toFixed(0)}–${(ind.doseMax * 1000).toFixed(0)} mcg/kg/dia)`
+    : ""
+
+  return (
+    <CalcCard icon={Activity} title="Dose de GH (Somatropina)" color="#00c07f">
+      <div className="space-y-3">
+        <Field label="Peso" unit="kg" value={peso} onChange={setPeso} min={0} step="0.1" />
+        <Select label="Indicação" value={indicacao}
+          options={INDICACOES.map(x => ({ value: x.value, label: x.label }))}
+          onChange={setIndicacao} />
+        {doseMin && doseMax && (
+          <>
+            <ResultBox label="Dose Diária SC" value={`${doseMin}–${doseMax} mg/dia`}
+              sub={`${(ind.doseMin * 1000).toFixed(0)}–${(ind.doseMax * 1000).toFixed(0)} mcg/kg/dia · ${ind.label}`}
+              color="#00c07f" copyId="doseGH" copyText={text} copied={copied} onCopy={onCopy} />
+            <ContextCard items={[
+              "Administração SC diária, preferencialmente à noite para mimetizar pulso fisiológico.",
+              "Monitorar IGF-1 a cada 3–6 meses; ajustar dose para manter IGF-1 entre +1 e +2 DP.",
+              "Efeitos adversos: retenção hídrica, cefaleia, resistência insulínica — monitorar glicemia.",
+              "Contraindicações: neoplasia ativa, retinopatia diabética proliferativa, Prader-Willi com obesidade grave.",
+            ]} />
+          </>
+        )}
+        <WarningBox text="Dose inicial. Sempre ajustar conforme resposta clínica, IGF-1 e tolerabilidade." />
+      </div>
+    </CalcCard>
+  )
+}
+
 // ════════════════════════════════════════════════════════════════════════════
 // ABA NUTROLOGIA
 // ════════════════════════════════════════════════════════════════════════════
@@ -1042,6 +1357,50 @@ function CalcIAC({ copied, onCopy }: { copied: string | null; onCopy: (id: strin
   )
 }
 
+function CalcGanzoni({ copied, onCopy }: { copied: string | null; onCopy: (id: string, t: string) => void }) {
+  const [peso,       setPeso]       = useState("")
+  const [hbAtual,    setHbAtual]    = useState("")
+  const [hbAlvo,     setHbAlvo]     = useState("13")
+  const [reserva,    setReserva]    = useState("500")
+  const p = parseFloat(peso); const ha = parseFloat(hbAtual)
+  const ht = parseFloat(hbAlvo); const r = parseFloat(reserva)
+  const ferro = p > 0 && ha > 0 && ht > 0 ? Math.round(p * (ht - ha) * 2.4 + r) : null
+  const text  = ferro
+    ? `Ferro EV (Ganzoni): ${ferro} mg · Peso ${p}kg · Hb atual ${ha} g/dL → alvo ${ht} g/dL`
+    : ""
+  return (
+    <CalcCard icon={Droplets} title="Ferro EV — Fórmula de Ganzoni" color="#ef4444">
+      <div className="space-y-3">
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Peso" unit="kg" value={peso} onChange={setPeso} min={0} step="0.1" />
+          <Field label="Hb atual" unit="g/dL" value={hbAtual} onChange={setHbAtual} min={0} step="0.1" />
+          <Field label="Hb alvo" unit="g/dL" value={hbAlvo} onChange={setHbAlvo} min={0} step="0.1" />
+          <Field label="Reserva" unit="mg" value={reserva} onChange={setReserva} min={0} />
+        </div>
+        <div className="text-[11px] p-2 rounded-lg" style={{ background: "var(--surface)", color: "var(--text-muted)" }}>
+          Fórmula: Ferro (mg) = Peso × (Hb alvo − Hb atual) × 2,4 + Reserva
+          <br />Reserva padrão: 500 mg (&gt;35 kg) ou 15 mg/kg (&lt;35 kg)
+        </div>
+        {ferro && (
+          <>
+            <ResultBox label="Dose Total de Ferro EV" value={`${ferro} mg`}
+              sub={`Reposição + reserva de depósito`}
+              color="#ef4444" copyId="ganzoni" copyText={text} copied={copied} onCopy={onCopy} />
+            <ContextCard items={[
+              "Dose total a ser infundida EV — fracionada conforme produto disponível (sacarato ou carboximaltose).",
+              "Ferro sacarato (Noripurum®): máx. 200 mg/infusão — calcular número de sessões.",
+              "Carboximaltose férrica (Ferinject®): máx. 1000 mg/sessão em dose única — reduz sessões.",
+              "Reavaliar ferritina e Hb após 4–8 semanas da última infusão.",
+              "Indicações: intolerância ao ferro oral, má absorção, anemia grave pré-operatória, DRC, EII.",
+            ]} />
+          </>
+        )}
+        <WarningBox text="Calcule a reserva individualmente: 15 mg/kg para pacientes < 35 kg." />
+      </div>
+    </CalcCard>
+  )
+}
+
 // ════════════════════════════════════════════════════════════════════════════
 // ABA GINECOLOGIA
 // ════════════════════════════════════════════════════════════════════════════
@@ -1158,6 +1517,245 @@ function CalcJanelaFertil({ copied, onCopy }: { copied: string | null; onCopy: (
               color="#a78bfa" copyId="fertil" copyText={text} copied={copied} onCopy={onCopy} />
           </div>
         )}
+      </div>
+    </CalcCard>
+  )
+}
+
+function CalcIdadeGestacional({ copied, onCopy }: { copied: string | null; onCopy: (id: string, t: string) => void }) {
+  const [dum, setDum] = useState("")
+  const today  = new Date()
+  const dumDate = dum ? new Date(dum + "T00:00:00") : null
+  const diffDays = dumDate ? Math.floor((today.getTime() - dumDate.getTime()) / 86400000) : null
+  const semanas  = diffDays !== null && diffDays >= 0 ? Math.floor(diffDays / 7) : null
+  const dias     = diffDays !== null && diffDays >= 0 ? diffDays % 7 : null
+
+  function trimestre(s: number): string {
+    if (s < 13) return "1º trimestre"
+    if (s < 27) return "2º trimestre"
+    return "3º trimestre"
+  }
+
+  const text = semanas !== null && dias !== null
+    ? `Idade Gestacional: ${semanas} semanas e ${dias} dias (DUM: ${dum}) — ${trimestre(semanas)}`
+    : ""
+
+  return (
+    <CalcCard icon={Baby} title="Idade Gestacional (DUM)" color="#e1306c">
+      <div className="space-y-3">
+        <FieldDate label="Data da Última Menstruação (DUM)" value={dum} onChange={setDum} />
+        {semanas !== null && dias !== null && semanas >= 0 && (
+          <>
+            <ResultBox label="Idade Gestacional" value={`${semanas}s ${dias}d`}
+              sub={`${trimestre(semanas)} · Cálculo pela DUM`}
+              color="#e1306c" copyId="idGest" copyText={text} copied={copied} onCopy={onCopy} />
+            <ContextCard items={[
+              semanas < 13 ? "1º Trimestre: 1ª consulta pré-natal, hemograma, VDRL, toxoplasmose, rubéola, CMV, HIV, urina." :
+              semanas < 27 ? "2º Trimestre: morfológico (18–24s), TOTG 75g (24–28s), vacina anti-influenza." :
+              "3º Trimestre: streptococo B (35–37s), monitorização fetal, planejamento do parto.",
+              semanas >= 42 ? "Gestação prolongada (≥ 42s): avaliar conduta para indução do parto." :
+              semanas >= 37 ? "Gestação a termo (37–41s6d)." :
+              semanas >= 34 ? "Pré-termo tardio (34–36s6d): acompanhamento intensivo." :
+              semanas >= 28 ? "Muito pré-termo (28–33s): avaliar corticoterapia e transferência para centro terciário." : "",
+            ].filter(Boolean)} />
+          </>
+        )}
+        {semanas !== null && semanas < 0 && (
+          <WarningBox text="Data informada é posterior à data atual. Verifique a DUM." />
+        )}
+      </div>
+    </CalcCard>
+  )
+}
+
+function CalcDPP({ copied, onCopy }: { copied: string | null; onCopy: (id: string, t: string) => void }) {
+  const [dum, setDum] = useState("")
+  const dumDate = dum ? new Date(dum + "T00:00:00") : null
+  let dpp: string | null = null
+  if (dumDate) {
+    const d = new Date(dumDate)
+    d.setDate(d.getDate() + 7)
+    let m = d.getMonth() - 3
+    let y = d.getFullYear()
+    if (m < 0) { m += 12; y -= 1 }
+    d.setMonth(m)
+    d.setFullYear(y)
+    dpp = d.toLocaleDateString("pt-BR")
+  }
+  const text = dpp ? `DPP (Naegele) a partir da DUM ${dum}: ${dpp}` : ""
+  return (
+    <CalcCard icon={Baby} title="DPP — Regra de Naegele" color="#8b5cf6">
+      <div className="space-y-3">
+        <FieldDate label="Data da Última Menstruação (DUM)" value={dum} onChange={setDum} />
+        {dpp && (
+          <>
+            <ResultBox label="Data Provável do Parto" value={dpp}
+              sub="Regra de Naegele: DUM + 7 dias − 3 meses"
+              color="#8b5cf6" copyId="dpp" copyText={text} copied={copied} onCopy={onCopy} />
+            <ContextCard items={[
+              "Janela de parto a termo: 37 a 41 semanas e 6 dias.",
+              "A DPP pela DUM é válida para ciclos regulares de 28 dias. Corrija pela USG de 1º trimestre se disponível.",
+              "Agende retorno pré-natal e organize calendário de vacinas e exames trimestrais.",
+            ]} />
+          </>
+        )}
+        <WarningBox text="Válido para ciclos regulares de 28 dias. USG 1º trimestre é o padrão-ouro." />
+      </div>
+    </CalcCard>
+  )
+}
+
+function CalcKupperman({ copied, onCopy }: { copied: string | null; onCopy: (id: string, t: string) => void }) {
+  type KItem = { label: string; weight: number; score: number }
+  const [items, setItems] = useState<KItem[]>([
+    { label: "Ondas de calor (fogachos)",     weight: 4, score: 0 },
+    { label: "Parestesias",                   weight: 2, score: 0 },
+    { label: "Insônia",                       weight: 2, score: 0 },
+    { label: "Nervosismo/Irritabilidade",     weight: 2, score: 0 },
+    { label: "Depressão",                     weight: 1, score: 0 },
+    { label: "Vertigens",                     weight: 1, score: 0 },
+    { label: "Fadiga/Astenia",                weight: 1, score: 0 },
+    { label: "Artralgias/Mialgias",           weight: 1, score: 0 },
+    { label: "Cefaleia",                      weight: 1, score: 0 },
+    { label: "Palpitações",                   weight: 1, score: 0 },
+    { label: "Formigamentos",                 weight: 1, score: 0 },
+  ])
+
+  const total = items.reduce((s, x) => s + x.weight * x.score, 0)
+
+  function classify(v: number): { label: string; color: string } {
+    if (v <= 19) return { label: "Sintomas leves",       color: "#00c07f" }
+    if (v <= 35) return { label: "Sintomas moderados",   color: "#f59e0b" }
+    return             { label: "Sintomas intensos",     color: "#ef4444" }
+  }
+  const cls  = classify(total)
+  const text = `Índice de Kupperman: ${total} pontos — ${cls.label}`
+
+  return (
+    <CalcCard icon={Activity} title="Índice de Kupperman (Climatério)" color="#f59e0b">
+      <div className="space-y-3">
+        <div className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+          Intensidade: 0 = ausente · 1 = leve · 2 = moderada · 3 = intensa
+        </div>
+        <div className="space-y-2">
+          {items.map((item, i) => (
+            <div key={i} className="flex items-center gap-3">
+              <span className="flex-1 text-[11px]" style={{ color: "var(--text-secondary)" }}>
+                {item.label} <span className="font-mono text-[9px]" style={{ color: "var(--text-muted)" }}>×{item.weight}</span>
+              </span>
+              <div className="flex gap-1">
+                {[0,1,2,3].map(v => (
+                  <button key={v} onClick={() => setItems(prev => prev.map((x, j) => j === i ? { ...x, score: v } : x))}
+                    className="w-7 h-7 rounded text-[11px] font-mono transition-all"
+                    style={{
+                      background: item.score === v ? "var(--accent-dim)" : "var(--surface)",
+                      border: `1px solid ${item.score === v ? "var(--accent-border)" : "var(--border)"}`,
+                      color: item.score === v ? "var(--accent)" : "var(--text-muted)",
+                    }}>
+                    {v}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+        <ResultBox label="Índice de Kupperman" value={`${total} pts`} sub={`${cls.label} · ≤19 leve · 20–35 moderado · >35 intenso`}
+          color={cls.color} copyId="kupp" copyText={text} copied={copied} onCopy={onCopy} />
+        <ContextCard items={
+          total <= 19 ? [
+            "Sintomatologia climatérica leve — MEV, fitoestrógenos e avaliação individualizada.",
+          ] : total <= 35 ? [
+            "Sintomas moderados — discutir terapia hormonal (TH) conforme perfil de risco individual.",
+            "Avaliar contraindicações à TH: câncer de mama, TEV prévio, sangramento uterino a esclarecer.",
+            "Fitoestrógenos, isoflavonas e terapias não hormonais (venlafaxina, clonidina) como alternativas.",
+          ] : [
+            "Sintomas intensos — TH formal é recomendada para a maioria das pacientes sem contraindicações.",
+            "Individualizar via de administração (oral vs. transdérmica — transdérmica tem menor risco trombótico).",
+            "Reavaliar com índice de Kupperman após 3 meses de tratamento.",
+          ]
+        } />
+      </div>
+    </CalcCard>
+  )
+}
+
+function CalcMRS({ copied, onCopy }: { copied: string | null; onCopy: (id: string, t: string) => void }) {
+  type MRSItem = { label: string; score: number }
+  const [items, setItems] = useState<MRSItem[]>([
+    { label: "Ondas de calor, suores",                           score: 0 },
+    { label: "Desconforto cardíaco (palpitações, aperto)",       score: 0 },
+    { label: "Distúrbios do sono",                               score: 0 },
+    { label: "Estado de humor depressivo",                       score: 0 },
+    { label: "Irritabilidade",                                   score: 0 },
+    { label: "Ansiedade",                                        score: 0 },
+    { label: "Cansaço físico e mental",                          score: 0 },
+    { label: "Problemas sexuais (desejo, atividade, satisfação)",score: 0 },
+    { label: "Problemas bexiga (urgência, incontinência)",       score: 0 },
+    { label: "Secura vaginal, dispareunia",                      score: 0 },
+    { label: "Dores articulares e musculares",                   score: 0 },
+  ])
+
+  const soma        = items.reduce((s, x) => s + x.score, 0)
+  const somatorio   = { somatic: items.slice(0,3).reduce((a,x) => a + x.score, 0), psych: items.slice(3,7).reduce((a,x) => a + x.score, 0), uro: items.slice(7,11).reduce((a,x) => a + x.score, 0) }
+  function classify(v: number): { label: string; color: string } {
+    if (v <= 4)  return { label: "Sintomas ausentes/mínimos",  color: "#00c07f" }
+    if (v <= 8)  return { label: "Sintomas leves",             color: "#84cc16" }
+    if (v <= 16) return { label: "Sintomas moderados",         color: "#f59e0b" }
+    return             { label: "Sintomas graves",             color: "#ef4444" }
+  }
+  const cls  = classify(soma)
+  const text = `MRS Total: ${soma} (Somático: ${somatorio.somatic}, Psicológico: ${somatorio.psych}, Urogenital: ${somatorio.uro}) — ${cls.label}`
+
+  return (
+    <CalcCard icon={Activity} title="MRS — Menopause Rating Scale" color="#e1306c">
+      <div className="space-y-3">
+        <div className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+          Intensidade: 0 = nenhum · 1 = leve · 2 = moderado · 3 = grave · 4 = muito grave
+        </div>
+        <div className="space-y-2">
+          {items.map((item, i) => (
+            <div key={i} className="flex items-center gap-3">
+              <span className="flex-1 text-[11px]" style={{ color: "var(--text-secondary)" }}>{item.label}</span>
+              <div className="flex gap-1">
+                {[0,1,2,3,4].map(v => (
+                  <button key={v} onClick={() => setItems(prev => prev.map((x, j) => j === i ? { ...x, score: v } : x))}
+                    className="w-6 h-6 rounded text-[10px] font-mono transition-all"
+                    style={{
+                      background: item.score === v ? "var(--accent-dim)" : "var(--surface)",
+                      border: `1px solid ${item.score === v ? "var(--accent-border)" : "var(--border)"}`,
+                      color: item.score === v ? "var(--accent)" : "var(--text-muted)",
+                    }}>
+                    {v}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-3 gap-2 text-center">
+          {[
+            { label: "Somático", v: somatorio.somatic, limit: "≤3 / ≤6 / ≤8" },
+            { label: "Psicológico", v: somatorio.psych, limit: "≤4 / ≤8 / ≤11" },
+            { label: "Urogenital", v: somatorio.uro, limit: "≤3 / ≤5 / ≤8" },
+          ].map(d => (
+            <div key={d.label} className="rounded-lg p-2" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+              <div className="text-[9px] font-mono" style={{ color: "var(--text-muted)" }}>{d.label}</div>
+              <div className="text-[16px] font-bold mt-0.5" style={{ color: "var(--text-primary)" }}>{d.v}</div>
+            </div>
+          ))}
+        </div>
+        <ResultBox label="MRS Total" value={`${soma} pts`} sub={cls.label}
+          color={cls.color} copyId="mrs" copyText={text} copied={copied} onCopy={onCopy} />
+        <ContextCard items={
+          soma <= 8 ? [
+            "Sintomatologia climatérica leve a ausente. MEV e acompanhamento regular.",
+          ] : [
+            "Score elevado indica impacto significativo na qualidade de vida.",
+            "Domínio urogenital ≥5: síndrome geniturinária da menopausa — estrogênio vaginal local ou TH sistêmica.",
+            "Domínio psicológico ≥9: avaliar depressão e ansiedade — ISRS ou IRSN podem ser associados à TH.",
+            "Reavaliar MRS após 3–6 meses de tratamento para monitorar resposta.",
+          ]
+        } />
       </div>
     </CalcCard>
   )
@@ -1456,7 +2054,7 @@ export default function CalculadorasPage() {
   const [activeTab, setActiveTab] = useState<TabId>("geral")
 
   const countMap: Record<TabId, number> = {
-    geral: 9, endocrinologia: 3, nutrologia: 3, ginecologia: 3, cardiologia: 3, nutricao: 3,
+    geral: 9, endocrinologia: 6, nutrologia: 4, ginecologia: 7, cardiologia: 3, nutricao: 3,
   }
 
   return (
@@ -1518,9 +2116,12 @@ export default function CalculadorasPage() {
       {/* Tab: Endocrinologia */}
       {activeTab === "endocrinologia" && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <CalcLevotiroxina copied={copied} onCopy={copy} />
-          <CalcFINDRISC     copied={copied} onCopy={copy} />
-          <CalcBillewicz    copied={copied} onCopy={copy} />
+          <CalcLevotiroxina    copied={copied} onCopy={copy} />
+          <CalcFINDRISC        copied={copied} onCopy={copy} />
+          <CalcBillewicz       copied={copied} onCopy={copy} />
+          <CalcPercentilOMS    copied={copied} onCopy={copy} />
+          <CalcZscoreEstatura  copied={copied} onCopy={copy} />
+          <CalcDoseGH          copied={copied} onCopy={copy} />
         </div>
       )}
 
@@ -1530,15 +2131,20 @@ export default function CalculadorasPage() {
           <CalcProteina copied={copied} onCopy={copy} />
           <CalcDeficit  copied={copied} onCopy={copy} />
           <CalcIAC      copied={copied} onCopy={copy} />
+          <CalcGanzoni  copied={copied} onCopy={copy} />
         </div>
       )}
 
       {/* Tab: Ginecologia */}
       {activeTab === "ginecologia" && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <CalcGestacional  copied={copied} onCopy={copy} />
-          <CalcPreeclampsia copied={copied} onCopy={copy} />
-          <CalcJanelaFertil copied={copied} onCopy={copy} />
+          <CalcGestacional      copied={copied} onCopy={copy} />
+          <CalcPreeclampsia     copied={copied} onCopy={copy} />
+          <CalcJanelaFertil     copied={copied} onCopy={copy} />
+          <CalcIdadeGestacional copied={copied} onCopy={copy} />
+          <CalcDPP              copied={copied} onCopy={copy} />
+          <CalcKupperman        copied={copied} onCopy={copy} />
+          <CalcMRS              copied={copied} onCopy={copy} />
         </div>
       )}
 

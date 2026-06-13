@@ -102,17 +102,17 @@ const TABS: { key: TabKey; label: string; Icon: React.ElementType }[] = [
 ]
 
 const VARIACAO_STYLE: Record<string, string> = {
-  "Conservador": "text-blue-400 bg-blue-950/40 border-blue-500/30",
+  "Conservador": "text-blue-700 bg-blue-50 border-blue-200",
   "Equilibrado": "text-accent bg-accent-dim border-accent-border",
-  "Agressivo":   "text-red-400 bg-red-950/40 border-red-500/30",
+  "Agressivo":   "text-red-700 bg-red-50 border-red-200",
 }
 
 const STORY_TYPE_STYLE: Record<string, string> = {
-  "Educativo":  "text-blue-400 bg-blue-950/40 border-blue-500/30",
-  "Depoimento": "text-purple-400 bg-purple-950/40 border-purple-500/30",
-  "Bastidores": "text-amber-400 bg-amber-950/40 border-amber-500/30",
+  "Educativo":  "text-blue-700 bg-blue-50 border-blue-200",
+  "Depoimento": "text-purple-700 bg-purple-50 border-purple-200",
+  "Bastidores": "text-amber-700 bg-amber-50 border-amber-200",
   "Oferta":     "text-accent bg-accent-dim border-accent-border",
-  "FAQ":        "text-text-muted bg-white/5 border-border",
+  "FAQ":        "text-text-muted bg-surface-2 border-border",
 }
 
 // ─── Mock fallback ────────────────────────────────────────────────────────────
@@ -458,7 +458,7 @@ export default function OfertasPage() {
                 onClick={() => setExpanded(prev => open ? prev.filter(x => x !== i) : [...prev, i])}
                 className="w-full flex items-center gap-3 px-5 py-4 hover:bg-white/[0.02] transition-colors text-left"
               >
-                <div className="w-7 h-7 rounded-lg bg-blue-950/40 border border-blue-500/20 flex items-center justify-center flex-shrink-0">
+                <div className="w-7 h-7 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-center flex-shrink-0">
                   <Video className="w-3.5 h-3.5 text-blue-400" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -697,7 +697,7 @@ export default function OfertasPage() {
                 <p className="text-[10px] text-text-secondary mt-0.5">{s.sugestaoVisual}</p>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="text-[9px] font-mono text-amber-400 bg-amber-950/30 border border-amber-500/20 px-2 py-0.5 rounded-full">
+                <span className="text-[9px] font-mono text-amber-400 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
                   {s.sticker}
                 </span>
               </div>
@@ -730,7 +730,7 @@ export default function OfertasPage() {
               <CopyBtn text={m.text} k={m.k} />
             </div>
             <div className="p-4">
-              <div className="bg-green-950/30 border border-green-500/20 rounded-2xl rounded-tl-none p-4 max-w-[90%]">
+              <div className="bg-green-50 border border-green-200 rounded-2xl rounded-tl-none p-4 max-w-[90%]">
                 <p className="text-[12px] text-text-primary leading-relaxed whitespace-pre-line">{m.text}</p>
               </div>
             </div>

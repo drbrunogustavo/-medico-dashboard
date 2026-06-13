@@ -141,18 +141,18 @@ const CATEGORIA_PARA_ESTILO: Record<string, EstiloId> = {
 }
 
 const PRIORIDADE_STYLE: Record<string, string> = {
-  "Alta":  "bg-red-950/60 border-red-500/40 text-red-400",
-  "Média": "bg-amber-950/60 border-amber-500/40 text-amber-400",
-  "Baixa": "bg-slate-900/60 border-slate-600/40 text-slate-400",
+  "Alta":  "bg-red-50 border-red-200 text-red-700",
+  "Média": "bg-amber-50 border-amber-200 text-amber-700",
+  "Baixa": "bg-slate-100 border-slate-300 text-slate-500",
 }
 
 const GATILHO_COLORS: Record<string, string> = {
-  "Medo":        "bg-red-950/60 border-red-500/40 text-red-400",
-  "Curiosidade": "bg-blue-950/60 border-blue-500/40 text-blue-400",
-  "Autoridade":  "bg-violet-950/60 border-violet-500/40 text-violet-400",
-  "Escassez":    "bg-amber-950/60 border-amber-500/40 text-amber-400",
-  "Dor":         "bg-orange-950/60 border-orange-500/40 text-orange-400",
-  "Benefício":   "bg-green-950/60 border-green-600/40 text-green-400",
+  "Medo":        "bg-red-50 border-red-200 text-red-700",
+  "Curiosidade": "bg-blue-50 border-blue-200 text-blue-700",
+  "Autoridade":  "bg-violet-50 border-violet-200 text-violet-700",
+  "Escassez":    "bg-amber-50 border-amber-200 text-amber-700",
+  "Dor":         "bg-orange-50 border-orange-200 text-orange-700",
+  "Benefício":   "bg-green-50 border-green-200 text-green-700",
 }
 
 const MOCK_HEADLINES: Headline[] = [
@@ -730,9 +730,9 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
 
           {/* Error banner */}
           {error && (
-            <div className="flex items-start gap-3 bg-red-950/40 border border-red-500/30 rounded-lg p-4">
-              <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
-              <p className="text-[12px] text-red-300 leading-relaxed">{error}</p>
+            <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-lg p-4">
+              <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
+              <p className="text-[12px] text-red-700 leading-relaxed">{error}</p>
             </div>
           )}
 
@@ -959,8 +959,8 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
                         <span className={cn(
                           "text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full border",
                           i === 0 ? "bg-accent-dim border-accent-border text-accent"
-                            : i === 1 ? "bg-blue-950/60 border-blue-500/40 text-blue-400"
-                              : "bg-purple-950/60 border-purple-500/40 text-purple-400"
+                            : i === 1 ? "bg-blue-50 border-blue-200 text-blue-700"
+                              : "bg-purple-50 border-purple-200 text-purple-700"
                         )}>
                           {v.label}
                         </span>
@@ -1141,9 +1141,9 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
           </div>
 
           {error && (
-            <div className="flex items-start gap-3 bg-red-950/40 border border-red-500/30 rounded-lg p-4">
-              <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
-              <p className="text-[12px] text-red-300 leading-relaxed">{error}</p>
+            <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-lg p-4">
+              <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
+              <p className="text-[12px] text-red-700 leading-relaxed">{error}</p>
             </div>
           )}
 
@@ -1220,7 +1220,7 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
                       <span className="text-[11px] font-mono text-text-muted w-7 flex-shrink-0 tabular-nums">{idx + 1}</span>
                       <span className={cn(
                         "text-[9px] font-mono font-semibold px-2.5 py-1 rounded-full border w-24 text-center flex-shrink-0",
-                        GATILHO_COLORS[h.gatilho] || "bg-slate-900 border-slate-700 text-slate-400"
+                        GATILHO_COLORS[h.gatilho] || "bg-slate-100 border-slate-300 text-slate-500"
                       )}>
                         {h.gatilho}
                       </span>

@@ -15,6 +15,7 @@ import {
   RefreshCw, Map, BarChart2, Rocket,
   Instagram, Calculator, FileBarChart,
   FlaskConical, FileHeart, Pill,
+  BookOpen, Scale,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useMenu } from "@/components/MobileMenuProvider"
@@ -99,7 +100,9 @@ const NAV: Record<AlaId, NavItem[]> = {
     { label: "Jornada do Paciente",     href: "/jornada",             icon: Map          },
     { label: "Interpretação de Exames", href: "/interpretacao-exames",icon: FlaskConical },
     { label: "Relatório para Paciente", href: "/relatorio-paciente",  icon: FileHeart    },
-    { label: "Prescrição Assistida",    href: "/prescricao",          icon: Pill         },
+    { label: "Prescrição Assistida",       href: "/prescricao",    icon: Pill         },
+    { label: "Inteligência Emagrecimento", href: "/emagrecimento", icon: Scale        },
+    { label: "Protocolos Clínicos",        href: "/protocolos",    icon: ClipboardList},
   ],
   executivo: [
     { label: "Painel Executivo",       href: "/executivo",    icon: BarChart3        },
@@ -116,7 +119,8 @@ const NAV: Record<AlaId, NavItem[]> = {
     { label: "Posicionamento Médico",     href: "/posicionamento",    icon: Target  },
     { label: "Diretor Criativo",          href: "/diretor-criativo",  icon: Layers  },
     { label: "Agente Executivo",          href: "/agente-executivo",  icon: Bot,   badge: "PRO" },
-    { label: "Nutrição de Leads Clínica", href: "/nutricao-pacientes",icon: Layers2 },
+    { label: "Nutrição de Leads Clínica", href: "/nutricao-pacientes",icon: Layers2  },
+    { label: "Banco de Estudos",          href: "/estudos",           icon: BookOpen },
   ],
   academy: [
     { label: "PRAXIS Academy",    href: "/academy",  icon: GraduationCap                   },
@@ -321,7 +325,7 @@ function SidebarContent() {
         >
           <div
             className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-            style={{ background: "linear-gradient(135deg, rgba(0,192,127,0.3), rgba(0,192,127,0.1))", border: "1px solid rgba(0,192,127,0.2)" }}
+            style={{ background: "linear-gradient(135deg, rgba(184,151,106,0.3), rgba(184,151,106,0.1))", border: "1px solid rgba(184,151,106,0.25)" }}
           >
             <span className="text-[11px] font-bold text-accent">
               {perfil?.nome
@@ -353,7 +357,7 @@ function SidebarContent() {
           <div className="flex-1" />
           <button
             onClick={signOut}
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-text-muted hover:text-red-400 hover:bg-red-950/30 transition-colors flex-shrink-0"
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-text-muted hover:text-red-500 hover:bg-red-50 transition-colors flex-shrink-0"
             title="Sair"
             aria-label="Sair"
           >

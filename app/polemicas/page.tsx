@@ -34,30 +34,30 @@ const TIPO_CONFIG: Record<Abordagem["tipo"], {
 }> = {
   conservadora: {
     label: "Conservadora",         desc: "Tom seguro, baseado em evidências",
-    color: "text-blue-400",        bg: "bg-blue-950/30",
-    border: "border-blue-500/30",  headerBorder: "border-blue-500/20",
+    color: "text-blue-700",        bg: "bg-blue-50",
+    border: "border-blue-200",     headerBorder: "border-blue-200",
   },
   equilibrada: {
     label: "Equilibrada",          desc: "Dois lados, estimula reflexão",
-    color: "text-amber-400",       bg: "bg-amber-950/30",
-    border: "border-amber-500/30", headerBorder: "border-amber-500/20",
+    color: "text-amber-700",       bg: "bg-amber-50",
+    border: "border-amber-200",    headerBorder: "border-amber-200",
   },
   polemica: {
     label: "Polêmica Controlada",  desc: "Questiona consensos com ciência",
-    color: "text-orange-400",      bg: "bg-orange-950/30",
-    border: "border-orange-500/30",headerBorder: "border-orange-500/20",
+    color: "text-orange-700",      bg: "bg-orange-50",
+    border: "border-orange-200",   headerBorder: "border-orange-200",
   },
   viral: {
     label: "Altamente Viral",      desc: "Máximo impacto emocional",
-    color: "text-red-400",         bg: "bg-red-950/30",
-    border: "border-red-500/30",   headerBorder: "border-red-500/20",
+    color: "text-red-700",         bg: "bg-red-50",
+    border: "border-red-200",      headerBorder: "border-red-200",
   },
 }
 
 const RISCO_STYLE: Record<Abordagem["risco"], string> = {
-  "Baixo": "bg-green-950/60 border-green-600/40 text-green-400",
-  "Médio": "bg-amber-950/60 border-amber-500/40 text-amber-400",
-  "Alto":  "bg-red-950/60 border-red-500/40 text-red-400",
+  "Baixo": "bg-green-50 border-green-200 text-green-700",
+  "Médio": "bg-amber-50 border-amber-200 text-amber-700",
+  "Alto":  "bg-red-50 border-red-200 text-red-700",
 }
 
 // ─── Mock fallback ──────────────────────────────────────────────────────────────
@@ -264,9 +264,9 @@ export default function PolemicasPage() {
 
         {/* Error */}
         {error && (
-          <div className="flex items-start gap-3 bg-red-950/40 border border-red-500/30 rounded-lg p-4">
-            <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
-            <p className="text-[12px] text-red-300 leading-relaxed">{error}</p>
+          <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-lg p-4">
+            <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
+            <p className="text-[12px] text-red-700 leading-relaxed">{error}</p>
           </div>
         )}
 

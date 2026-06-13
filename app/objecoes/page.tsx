@@ -41,11 +41,11 @@ interface Pauta {
 // ─── Config ─────────────────────────────────────────────────────────────────────
 
 const CAT_CONFIG: Record<ObjCategoria, { label: string; color: string; bg: string; border: string; dot: string }> = {
-  "MEDO":         { label: "Medo",               color: "text-red-400",    bg: "bg-red-950/30",    border: "border-red-500/30",    dot: "bg-red-400" },
-  "CUSTO/ACESSO": { label: "Custo/Acesso",        color: "text-amber-400",  bg: "bg-amber-950/30",  border: "border-amber-500/30",  dot: "bg-amber-400" },
-  "EFICACIA":     { label: "Eficácia",            color: "text-blue-400",   bg: "bg-blue-950/30",   border: "border-blue-500/30",   dot: "bg-blue-400" },
-  "EFEITOS":      { label: "Efeitos Colaterais",  color: "text-orange-400", bg: "bg-orange-950/30", border: "border-orange-500/30", dot: "bg-orange-400" },
-  "DEPENDENCIA":  { label: "Dependência/Duração", color: "text-purple-400", bg: "bg-purple-950/30", border: "border-purple-500/30", dot: "bg-purple-400" },
+  "MEDO":         { label: "Medo",               color: "text-red-700",    bg: "bg-red-50",    border: "border-red-200",    dot: "bg-red-500" },
+  "CUSTO/ACESSO": { label: "Custo/Acesso",        color: "text-amber-700",  bg: "bg-amber-50",  border: "border-amber-200",  dot: "bg-amber-500" },
+  "EFICACIA":     { label: "Eficácia",            color: "text-blue-700",   bg: "bg-blue-50",   border: "border-blue-200",   dot: "bg-blue-500" },
+  "EFEITOS":      { label: "Efeitos Colaterais",  color: "text-orange-700", bg: "bg-orange-50", border: "border-orange-200", dot: "bg-orange-500" },
+  "DEPENDENCIA":  { label: "Dependência/Duração", color: "text-purple-700", bg: "bg-purple-50", border: "border-purple-200", dot: "bg-purple-500" },
 }
 
 const FORMATO_TABS: { key: FormatoTab; label: string; icon: React.ElementType }[] = [
@@ -317,9 +317,9 @@ export default function ObecoesPage() {
 
         {/* Error */}
         {error && (
-          <div className="flex items-start gap-3 bg-red-950/40 border border-red-500/30 rounded-lg p-4">
-            <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
-            <p className="text-[12px] text-red-300 leading-relaxed">{error}</p>
+          <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-lg p-4">
+            <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
+            <p className="text-[12px] text-red-700 leading-relaxed">{error}</p>
           </div>
         )}
 

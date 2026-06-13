@@ -40,14 +40,14 @@ interface ExamResult {
 // ─── Classification helpers ───────────────────────────────────────────────────
 
 const LEVEL_CONFIG: Record<ClassLevel, { label: string; color: string; bg: string; border: string }> = {
-  baixo:         { label: "Abaixo",     color: "text-blue-400",   bg: "bg-blue-950/40",   border: "border-blue-500/30"   },
-  deficiente:    { label: "Deficiente", color: "text-red-400",    bg: "bg-red-950/40",    border: "border-red-500/30"    },
-  insuficiente:  { label: "Insuficiente",color:"text-orange-400", bg: "bg-orange-950/40", border: "border-orange-500/30" },
-  limítrofe:     { label: "Limítrofe",  color: "text-amber-400",  bg: "bg-amber-950/40",  border: "border-amber-500/30"  },
-  normal:        { label: "Normal",     color: "text-emerald-400",bg: "bg-emerald-950/40",border: "border-emerald-500/30"},
-  ótimo:         { label: "Ótimo",      color: "text-green-400",  bg: "bg-green-950/40",  border: "border-green-500/30"  },
-  elevado:       { label: "Elevado",    color: "text-orange-400", bg: "bg-orange-950/40", border: "border-orange-500/30" },
-  muito_elevado: { label: "Muito elevado",color:"text-red-400",   bg: "bg-red-950/40",    border: "border-red-500/30"    },
+  baixo:         { label: "Abaixo",     color: "text-blue-700",   bg: "bg-blue-50",   border: "border-blue-200"   },
+  deficiente:    { label: "Deficiente", color: "text-red-700",    bg: "bg-red-50",    border: "border-red-200"    },
+  insuficiente:  { label: "Insuficiente",color:"text-orange-700", bg: "bg-orange-50", border: "border-orange-200" },
+  limítrofe:     { label: "Limítrofe",  color: "text-amber-700",  bg: "bg-amber-50",  border: "border-amber-200"  },
+  normal:        { label: "Normal",     color: "text-emerald-700",bg: "bg-emerald-50",border: "border-emerald-200"},
+  ótimo:         { label: "Ótimo",      color: "text-green-700",  bg: "bg-green-50",  border: "border-green-200"  },
+  elevado:       { label: "Elevado",    color: "text-orange-700", bg: "bg-orange-50", border: "border-orange-200" },
+  muito_elevado: { label: "Muito elevado",color:"text-red-700",   bg: "bg-red-50",    border: "border-red-200"    },
 }
 
 // ─── Exam database ────────────────────────────────────────────────────────────
@@ -548,8 +548,8 @@ function ExamCard({
           )}
 
           {error && (
-            <div className="flex items-start gap-2 p-3 rounded-lg bg-red-950/40 border border-red-500/30">
-              <AlertTriangle className="w-3.5 h-3.5 text-red-400 flex-shrink-0 mt-0.5" />
+            <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50 border border-red-200">
+              <AlertTriangle className="w-3.5 h-3.5 text-red-600 flex-shrink-0 mt-0.5" />
               <span className="text-[11px] text-red-300">{error}</span>
             </div>
           )}

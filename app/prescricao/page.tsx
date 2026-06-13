@@ -871,10 +871,10 @@ const DIAGNOSTICOS: Diagnostico[] = [
 // ─── Config maps ──────────────────────────────────────────────────────────────
 
 const LINHA_CONFIG: Record<Linha, { label: string; color: string; bg: string; border: string }> = {
-  primeira:  { label: "1ª linha",   color: "text-green-400",  bg: "bg-green-950/40",  border: "border-green-500/30"  },
-  segunda:   { label: "2ª linha",   color: "text-amber-400",  bg: "bg-amber-950/40",  border: "border-amber-500/30"  },
-  terceira:  { label: "3ª linha",   color: "text-orange-400", bg: "bg-orange-950/40", border: "border-orange-500/30" },
-  adjuvante: { label: "Adjuvante",  color: "text-purple-400", bg: "bg-purple-950/40", border: "border-purple-500/30" },
+  primeira:  { label: "1ª linha",   color: "text-green-700",  bg: "bg-green-50",  border: "border-green-200"  },
+  segunda:   { label: "2ª linha",   color: "text-amber-700",  bg: "bg-amber-50",  border: "border-amber-200"  },
+  terceira:  { label: "3ª linha",   color: "text-orange-700", bg: "bg-orange-50", border: "border-orange-200" },
+  adjuvante: { label: "Adjuvante",  color: "text-purple-700", bg: "bg-purple-50", border: "border-purple-200" },
 }
 
 const VIA_LABELS: Record<Via, string> = {
@@ -1183,10 +1183,10 @@ export default function PrescricaoPage() {
               {v.label}
             </div>
           ))}
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-blue-300 bg-blue-950/30 border-blue-500/20">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-blue-700 bg-blue-50 border-blue-200">
             <Info className="w-2.5 h-2.5" />Monitoramento obrigatório
           </div>
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-red-300 bg-red-950/30 border-red-500/20">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-red-700 bg-red-50 border-red-200">
             <Shield className="w-2.5 h-2.5" />Contraindicação listada
           </div>
         </div>
@@ -1214,7 +1214,7 @@ export default function PrescricaoPage() {
               </div>
               <div className="flex items-center gap-2">
                 {diag.medicamentos.filter(m => m.linha === "primeira").length > 0 && (
-                  <span className="text-[9px] font-mono px-2 py-0.5 rounded-full text-green-400 bg-green-950/40 border border-green-500/30">
+                  <span className="text-[9px] font-mono px-2 py-0.5 rounded-full text-green-700 bg-green-50 border border-green-200">
                     <Star className="w-2.5 h-2.5 inline mr-0.5" />
                     {diag.medicamentos.filter(m => m.linha === "primeira").length} 1ª linha
                   </span>

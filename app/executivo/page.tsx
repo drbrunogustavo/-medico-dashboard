@@ -359,8 +359,8 @@ export default function ExecutivoPage() {
                   <div key={i} className={cn(
                     "rounded-lg p-3 text-xs leading-relaxed",
                     a.tipo === "warn"
-                      ? "bg-amber-500/8 border border-amber-500/15 text-amber-300"
-                      : "bg-blue-500/8 border border-blue-500/15 text-blue-300"
+                      ? "bg-amber-50 border border-amber-200 text-amber-700"
+                      : "bg-blue-50 border border-blue-200 text-blue-700"
                   )}>
                     {a.msg}
                   </div>

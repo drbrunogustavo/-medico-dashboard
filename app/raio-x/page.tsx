@@ -39,12 +39,12 @@ interface SectionDef {
 }
 
 const SECTIONS: SectionDef[] = [
-  { key: "medos",     label: "Medos",                   Icon: AlertTriangle, color: "text-red-400",    bg: "bg-red-950/30",    border: "border-red-500/30",    desc: "Medos reais e específicos desse perfil" },
-  { key: "desejos",  label: "Desejos",                  Icon: Heart,         color: "text-green-400",  bg: "bg-green-950/30",  border: "border-green-500/30",  desc: "Aspirações e desejos em relação ao tema" },
-  { key: "objecoes", label: "Objeções",                 Icon: ShieldX,       color: "text-amber-400",  bg: "bg-amber-950/30",  border: "border-amber-500/30",  desc: "Resistências comuns à consulta e tratamento" },
-  { key: "linguagem",label: "Linguagem que Usam",       Icon: MessageSquare, color: "text-blue-400",   bg: "bg-blue-950/30",   border: "border-blue-500/30",   desc: "Palavras e frases exatas do paciente" },
-  { key: "conteudos",label: "Conteúdos que Convertem", Icon: TrendingUp,    color: "text-purple-400", bg: "bg-purple-950/30", border: "border-purple-500/30", desc: "Formatos que esse perfil consome e compartilha" },
-  { key: "gatilhos", label: "Gatilhos de Decisão",      Icon: Zap,           color: "text-orange-400", bg: "bg-orange-950/30", border: "border-orange-500/30", desc: "O que faz esse paciente marcar uma consulta" },
+  { key: "medos",     label: "Medos",                   Icon: AlertTriangle, color: "text-red-700",    bg: "bg-red-50",    border: "border-red-200",    desc: "Medos reais e específicos desse perfil" },
+  { key: "desejos",  label: "Desejos",                  Icon: Heart,         color: "text-green-700",  bg: "bg-green-50",  border: "border-green-200",  desc: "Aspirações e desejos em relação ao tema" },
+  { key: "objecoes", label: "Objeções",                 Icon: ShieldX,       color: "text-amber-700",  bg: "bg-amber-50",  border: "border-amber-200",  desc: "Resistências comuns à consulta e tratamento" },
+  { key: "linguagem",label: "Linguagem que Usam",       Icon: MessageSquare, color: "text-blue-700",   bg: "bg-blue-50",   border: "border-blue-200",   desc: "Palavras e frases exatas do paciente" },
+  { key: "conteudos",label: "Conteúdos que Convertem", Icon: TrendingUp,    color: "text-purple-700", bg: "bg-purple-50", border: "border-purple-200", desc: "Formatos que esse perfil consome e compartilha" },
+  { key: "gatilhos", label: "Gatilhos de Decisão",      Icon: Zap,           color: "text-orange-700", bg: "bg-orange-50", border: "border-orange-200", desc: "O que faz esse paciente marcar uma consulta" },
 ]
 
 // ─── Mock fallback ──────────────────────────────────────────────────────────────
@@ -263,9 +263,9 @@ export default function RaioXPage() {
 
         {/* Error */}
         {error && (
-          <div className="flex items-start gap-3 bg-red-950/40 border border-red-500/30 rounded-lg p-4">
-            <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
-            <p className="text-[12px] text-red-300 leading-relaxed">{error}</p>
+          <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-lg p-4">
+            <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
+            <p className="text-[12px] text-red-700 leading-relaxed">{error}</p>
           </div>
         )}
 

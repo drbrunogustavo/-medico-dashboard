@@ -173,9 +173,9 @@ export default function RepurposingPage() {
             </div>
 
             {error && (
-              <div className="flex items-start gap-2.5 bg-red-950/40 border border-red-500/30 rounded-xl px-4 py-3">
-                <AlertTriangle className="w-3.5 h-3.5 text-red-400 flex-shrink-0 mt-0.5" />
-                <p className="text-[12px] text-red-300">{error}</p>
+              <div className="flex items-start gap-2.5 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                <AlertTriangle className="w-3.5 h-3.5 text-red-600 flex-shrink-0 mt-0.5" />
+                <p className="text-[12px] text-red-700">{error}</p>
               </div>
             )}
 

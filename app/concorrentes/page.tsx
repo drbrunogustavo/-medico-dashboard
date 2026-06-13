@@ -79,9 +79,9 @@ const TIPOS: Record<TipoAnalise, { label: string; desc: string; Icon: React.Elem
 }
 
 const PRIO_STYLE: Record<Prioridade, string> = {
-  Alta:  "bg-red-950/60 border-red-500/40 text-red-400",
-  Média: "bg-amber-950/60 border-amber-500/40 text-amber-400",
-  Baixa: "bg-blue-950/60 border-blue-500/40 text-blue-400",
+  Alta:  "bg-red-50 border-red-200 text-red-700",
+  Média: "bg-amber-50 border-amber-200 text-amber-700",
+  Baixa: "bg-blue-50 border-blue-200 text-blue-700",
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -359,9 +359,9 @@ export default function ConcorrentesPage() {
 
             {/* Error */}
             {error && (
-              <div className="flex items-start gap-2.5 bg-red-950/40 border border-red-500/30 rounded-xl px-4 py-3">
-                <AlertTriangle className="w-3.5 h-3.5 text-red-400 flex-shrink-0 mt-0.5" />
-                <p className="text-[12px] text-red-300">{error}</p>
+              <div className="flex items-start gap-2.5 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                <AlertTriangle className="w-3.5 h-3.5 text-red-600 flex-shrink-0 mt-0.5" />
+                <p className="text-[12px] text-red-700">{error}</p>
               </div>
             )}
 

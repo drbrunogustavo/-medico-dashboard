@@ -24,17 +24,17 @@ interface Pauta {
 }
 
 const PRIORIDADE_STYLES: Record<string, string> = {
-  "Alta":  "bg-red-950/60 border-red-500/40 text-red-400",
-  "Média": "bg-amber-950/60 border-amber-500/40 text-amber-400",
-  "Baixa": "bg-green-950/60 border-green-600/40 text-green-400",
+  "Alta":  "bg-red-50 border-red-200 text-red-700",
+  "Média": "bg-amber-50 border-amber-200 text-amber-700",
+  "Baixa": "bg-green-50 border-green-200 text-green-700",
 }
 
 const ESTAGIO_STYLES: Record<string, string> = {
-  "Ideia":       "bg-slate-800/60 border-slate-600/40 text-slate-400",
-  "Em produção": "bg-blue-950/60 border-blue-600/40 text-blue-400",
-  "Revisão":     "bg-amber-950/60 border-amber-500/40 text-amber-400",
-  "Pronto":      "bg-emerald-950/60 border-emerald-600/40 text-emerald-400",
-  "Publicado":   "bg-purple-950/60 border-purple-600/40 text-purple-400",
+  "Ideia":       "bg-slate-100 border-slate-300 text-slate-500",
+  "Em produção": "bg-blue-50 border-blue-200 text-blue-700",
+  "Revisão":     "bg-amber-50 border-amber-200 text-amber-700",
+  "Pronto":      "bg-emerald-50 border-emerald-200 text-emerald-700",
+  "Publicado":   "bg-purple-50 border-purple-200 text-purple-700",
 }
 
 export default function PautasPage() {

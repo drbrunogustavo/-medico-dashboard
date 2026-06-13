@@ -41,18 +41,18 @@ const MESES = [
 const PILARES_OPCOES = ["Educativo", "Autoridade", "Vendas", "Relacionamento", "Entretenimento"]
 
 const FORMATO_STYLE: Record<string, string> = {
-  "Reel":     "bg-red-950/60 border-red-500/40 text-red-400",
-  "Carrossel":"bg-blue-950/60 border-blue-500/40 text-blue-400",
-  "Feed":     "bg-amber-950/60 border-amber-500/40 text-amber-400",
+  "Reel":     "bg-red-50 border-red-200 text-red-700",
+  "Carrossel":"bg-blue-50 border-blue-200 text-blue-700",
+  "Feed":     "bg-amber-50 border-amber-200 text-amber-700",
   "Stories":  "bg-accent-dim border-accent-border text-accent",
 }
 
 const PILAR_STYLE: Record<string, string> = {
-  "Educativo":     "bg-blue-950/60 border-blue-500/40 text-blue-400",
-  "Autoridade":    "bg-purple-950/60 border-purple-500/40 text-purple-400",
-  "Vendas":        "bg-green-950/60 border-green-500/40 text-green-400",
-  "Relacionamento":"bg-pink-950/60 border-pink-500/40 text-pink-400",
-  "Entretenimento":"bg-amber-950/60 border-amber-500/40 text-amber-400",
+  "Educativo":     "bg-blue-50 border-blue-200 text-blue-700",
+  "Autoridade":    "bg-purple-50 border-purple-200 text-purple-700",
+  "Vendas":        "bg-green-50 border-green-200 text-green-700",
+  "Relacionamento":"bg-pink-50 border-pink-200 text-pink-700",
+  "Entretenimento":"bg-amber-50 border-amber-200 text-amber-700",
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -229,9 +229,9 @@ export default function CalendarioPage() {
             </div>
 
             {error && (
-              <div className="flex items-start gap-2.5 bg-red-950/40 border border-red-500/30 rounded-xl px-4 py-3">
-                <AlertTriangle className="w-3.5 h-3.5 text-red-400 flex-shrink-0 mt-0.5" />
-                <p className="text-[12px] text-red-300">{error}</p>
+              <div className="flex items-start gap-2.5 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                <AlertTriangle className="w-3.5 h-3.5 text-red-600 flex-shrink-0 mt-0.5" />
+                <p className="text-[12px] text-red-700">{error}</p>
               </div>
             )}
 

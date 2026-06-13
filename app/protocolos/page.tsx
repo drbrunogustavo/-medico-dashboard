@@ -820,8 +820,8 @@ export default function ProtocolosPage() {
                 </button>
 
                 {error && (
-                  <div className="flex items-start gap-2 rounded-lg p-3 bg-red-950/40 border border-red-500/30">
-                    <AlertCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0 mt-0.5" />
+                  <div className="flex items-start gap-2 rounded-lg p-3 bg-red-50 border border-red-200">
+                    <AlertCircle className="w-3.5 h-3.5 text-red-600 flex-shrink-0 mt-0.5" />
                     <p className="text-[11px] text-red-300">{error}</p>
                   </div>
                 )}

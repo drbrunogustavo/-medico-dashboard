@@ -548,7 +548,7 @@ export default function OnboardingPage() {
 
             {erroFinal && (
               <div className="flex items-start gap-3 bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3">
-                <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+                <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
                 <p className="text-[12px] text-red-400">{erroFinal}</p>
               </div>
             )}

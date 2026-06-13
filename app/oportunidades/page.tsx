@@ -45,9 +45,9 @@ interface OportunidadesResult {
 // ─── Config ─────────────────────────────────────────────────────────────────────
 
 const URGENCIA_STYLE: Record<Urgencia, string> = {
-  "AGORA":        "bg-red-950/60 border-red-500/40 text-red-400",
-  "EM BREVE":     "bg-amber-950/60 border-amber-500/40 text-amber-400",
-  "PLANEJAMENTO": "bg-blue-950/60 border-blue-500/40 text-blue-400",
+  "AGORA":        "bg-red-50 border-red-200 text-red-700",
+  "EM BREVE":     "bg-amber-50 border-amber-200 text-amber-700",
+  "PLANEJAMENTO": "bg-blue-50 border-blue-200 text-blue-700",
 }
 
 const CONCORRENCIA_STYLE: Record<Concorrencia, string> = {
@@ -242,9 +242,9 @@ export default function OportunidadesPage() {
 
         {/* Error */}
         {error && (
-          <div className="flex items-start gap-3 bg-red-950/40 border border-red-500/30 rounded-lg p-4">
-            <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
-            <p className="text-[12px] text-red-300 leading-relaxed">{error}</p>
+          <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-lg p-4">
+            <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
+            <p className="text-[12px] text-red-700 leading-relaxed">{error}</p>
           </div>
         )}
 
@@ -288,7 +288,7 @@ export default function OportunidadesPage() {
             {/* Seção 1: Calendário Sazonal */}
             <div>
               <div className="flex items-center gap-2.5 mb-4">
-                <div className="w-7 h-7 rounded-lg bg-blue-950/40 border border-blue-500/30 flex items-center justify-center flex-shrink-0">
+                <div className="w-7 h-7 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-center flex-shrink-0">
                   <CalendarDays className="w-3.5 h-3.5 text-blue-400" />
                 </div>
                 <div>
@@ -342,7 +342,7 @@ export default function OportunidadesPage() {
             {/* Seção 2: Tendências com Janela de Oportunidade */}
             <div>
               <div className="flex items-center gap-2.5 mb-4">
-                <div className="w-7 h-7 rounded-lg bg-green-950/40 border border-green-500/30 flex items-center justify-center flex-shrink-0">
+                <div className="w-7 h-7 rounded-lg bg-green-50 border border-green-200 flex items-center justify-center flex-shrink-0">
                   <TrendingUp className="w-3.5 h-3.5 text-green-400" />
                 </div>
                 <div>

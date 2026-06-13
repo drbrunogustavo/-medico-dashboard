@@ -563,7 +563,7 @@ function LeadDetailModal({
           {lead.estagio === "perdido" && lead.motivo_perda && (
             <div>
               <div className="text-[9px] font-mono text-text-muted tracking-widest uppercase mb-1.5">Motivo da Perda</div>
-              <p className="text-[12px] text-red-400 leading-relaxed bg-red-950/20 border border-red-500/20 rounded-lg p-3">
+              <p className="text-[12px] text-red-400 leading-relaxed bg-red-50 border border-red-200 rounded-lg p-3">
                 {lead.motivo_perda}
               </p>
             </div>
@@ -690,7 +690,7 @@ function MotivoModal({
                 className={cn(
                   "text-[11px] px-2.5 py-1 rounded-full border transition-all",
                   motivo === m
-                    ? "bg-red-500/15 border-red-500/40 text-red-300"
+                    ? "bg-red-50 border-red-300 text-red-700"
                     : "border-border text-text-muted hover:text-text-secondary hover:border-border-hover"
                 )}
               >
@@ -717,7 +717,7 @@ function MotivoModal({
             <button
               onClick={() => onConfirm(motivo)}
               disabled={saving}
-              className="flex-1 py-2 rounded-lg bg-red-500/15 border border-red-500/30 text-red-300 text-[13px] font-semibold hover:bg-red-500/20 disabled:opacity-60 transition-all flex items-center justify-center gap-2"
+              className="flex-1 py-2 rounded-lg bg-red-50 border border-red-200 text-red-700 text-[13px] font-semibold hover:bg-red-100 disabled:opacity-60 transition-all flex items-center justify-center gap-2"
             >
               {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
               Confirmar

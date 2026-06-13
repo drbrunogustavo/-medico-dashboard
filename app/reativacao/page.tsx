@@ -31,9 +31,9 @@ function diasInativos(ultimo?: string) {
 }
 
 function urgenciaBadge(dias: number) {
-  if (dias >= 90) return { label: "+90 dias", cls: "bg-neutral-800 border-neutral-600 text-neutral-400" }
-  if (dias >= 60) return { label: "60-90 dias", cls: "bg-red-500/10 border-red-500/30 text-red-400" }
-  return           { label: "30-60 dias", cls: "bg-amber-500/10 border-amber-500/30 text-amber-400" }
+  if (dias >= 90) return { label: "+90 dias", cls: "bg-slate-100 border-slate-300 text-slate-500" }
+  if (dias >= 60) return { label: "60-90 dias", cls: "bg-red-50 border-red-200 text-red-700" }
+  return           { label: "30-60 dias", cls: "bg-amber-50 border-amber-200 text-amber-700" }
 }
 
 function CopyBtn({ text }: { text: string }) {

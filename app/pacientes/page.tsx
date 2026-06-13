@@ -412,9 +412,9 @@ export default function PacientesPage() {
                         <div className="flex items-center gap-2">
                           <span className="text-[13px] font-medium text-text-primary truncate">{nome}</span>
                           {pac._fonte === "local" ? (
-                            <span className="text-[8px] font-mono font-semibold px-1.5 py-0.5 rounded-full border bg-amber-950/40 border-amber-500/30 text-amber-400 flex-shrink-0">LOCAL</span>
+                            <span className="text-[8px] font-mono font-semibold px-1.5 py-0.5 rounded-full border bg-amber-50 border-amber-200 text-amber-700 flex-shrink-0">LOCAL</span>
                           ) : (
-                            <span className="text-[8px] font-mono font-semibold px-1.5 py-0.5 rounded-full border bg-blue-950/40 border-blue-500/30 text-blue-400 flex-shrink-0">MEDX</span>
+                            <span className="text-[8px] font-mono font-semibold px-1.5 py-0.5 rounded-full border bg-blue-50 border-blue-200 text-blue-700 flex-shrink-0">MEDX</span>
                           )}
                         </div>
                         {nasc && (

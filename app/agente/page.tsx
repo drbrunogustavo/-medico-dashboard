@@ -52,9 +52,9 @@ const CONTENT_TABS: { key: ContentSection; label: string; Icon: LucideIcon }[] =
 ]
 
 const FORMATO_BADGE: Record<string, string> = {
-  "Reel":      "bg-blue-950/60 border-blue-500/40 text-blue-400",
-  "Story":     "bg-purple-950/60 border-purple-500/40 text-purple-400",
-  "Carrossel": "bg-amber-950/60 border-amber-500/40 text-amber-400",
+  "Reel":      "bg-blue-50 border-blue-200 text-blue-700",
+  "Story":     "bg-purple-50 border-purple-200 text-purple-700",
+  "Carrossel": "bg-amber-50 border-amber-200 text-amber-700",
 }
 
 const FORMATO_CAL_BG: Record<string, string> = {
@@ -490,9 +490,9 @@ p{line-height:1.7;color:#374151;margin:4px 0}ul{padding-left:20px;margin:6px 0}l
             )}
 
             {planoError && (
-              <div className="flex items-start gap-3 bg-amber-950/40 border border-amber-500/30 rounded-lg p-4">
-                <AlertCircle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
-                <p className="text-[12px] text-amber-300 leading-relaxed">{planoError}</p>
+              <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                <p className="text-[12px] text-amber-700 leading-relaxed">{planoError}</p>
               </div>
             )}
 
@@ -790,7 +790,7 @@ p{line-height:1.7;color:#374151;margin:4px 0}ul{padding-left:20px;margin:6px 0}l
                                   <div className="text-[9px] font-mono text-text-muted uppercase tracking-wider mb-2">Hashtags</div>
                                   <div className="flex flex-wrap gap-1.5">
                                     {(d.legenda.hashtags ?? []).map((h, hi) => (
-                                      <span key={hi} className="text-[10px] font-mono px-2.5 py-1 rounded-full border border-blue-500/30 bg-blue-950/30 text-blue-400">{h}</span>
+                                      <span key={hi} className="text-[10px] font-mono px-2.5 py-1 rounded-full border border-blue-200 bg-blue-50 text-blue-700">{h}</span>
                                     ))}
                                   </div>
                                 </div>
@@ -1048,7 +1048,7 @@ p{line-height:1.7;color:#374151;margin:4px 0}ul{padding-left:20px;margin:6px 0}l
                     <div className="text-[9px] font-mono text-text-muted uppercase tracking-wider mb-2">Hashtags</div>
                     <div className="flex flex-wrap gap-1.5">
                       {(calendarDay.legenda.hashtags ?? []).map((h, hi) => (
-                        <span key={hi} className="text-[10px] font-mono px-2.5 py-1 rounded-full border border-blue-500/30 bg-blue-950/30 text-blue-400">{h}</span>
+                        <span key={hi} className="text-[10px] font-mono px-2.5 py-1 rounded-full border border-blue-200 bg-blue-50 text-blue-700">{h}</span>
                       ))}
                     </div>
                   </div>

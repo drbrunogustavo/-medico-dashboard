@@ -52,47 +52,47 @@ const PERIODS = [
 // ─── STYLES ─────────────────────────────────────────────────────────────────
 
 const SOURCE_STYLES: Record<string,{bg:string;border:string;text:string;dot:string}> = {
-  "PubMed":                      {bg:"bg-emerald-950/60",border:"border-emerald-600/40",text:"text-emerald-400", dot:"bg-emerald-400"},
-  "The Lancet":                  {bg:"bg-violet-950/60", border:"border-violet-600/40", text:"text-violet-400",  dot:"bg-violet-400"},
-  "NEJM":                        {bg:"bg-blue-950/60",   border:"border-blue-600/40",   text:"text-blue-400",    dot:"bg-blue-400"},
-  "Nature Medicine":             {bg:"bg-lime-950/60",   border:"border-lime-600/40",   text:"text-lime-400",    dot:"bg-lime-400"},
-  "MedScape":                    {bg:"bg-fuchsia-950/60",border:"border-fuchsia-600/40",text:"text-fuchsia-400", dot:"bg-fuchsia-400"},
-  "G1 Saúde":                    {bg:"bg-amber-950/60",  border:"border-amber-600/40",  text:"text-amber-400",   dot:"bg-amber-400"},
-  "CNN Health":                  {bg:"bg-red-950/60",    border:"border-red-600/40",    text:"text-red-400",     dot:"bg-red-400"},
-  "Instagram Trending":          {bg:"bg-pink-950/60",   border:"border-pink-600/40",   text:"text-pink-400",    dot:"bg-pink-400"},
-  "Instagram Viral Intelligence":{bg:"bg-rose-950/60",   border:"border-rose-500/40",   text:"text-rose-400",    dot:"bg-rose-400"},
-  "TikTok Trending":             {bg:"bg-purple-950/60", border:"border-purple-600/40", text:"text-purple-400",  dot:"bg-purple-400"},
-  "YouTube Trending":            {bg:"bg-red-950/60",    border:"border-red-500/40",    text:"text-red-300",     dot:"bg-red-300"},
-  "X (Twitter)":                 {bg:"bg-slate-900/80",  border:"border-slate-600/40",  text:"text-slate-300",   dot:"bg-slate-300"},
-  "Reddit":                      {bg:"bg-orange-950/60", border:"border-orange-600/40", text:"text-orange-400",  dot:"bg-orange-400"},
-  "Reddit Health":               {bg:"bg-orange-950/60", border:"border-orange-500/40", text:"text-orange-300",  dot:"bg-orange-300"},
-  "Reddit Longevity":            {bg:"bg-teal-950/60",   border:"border-teal-600/40",   text:"text-teal-400",    dot:"bg-teal-400"},
-  "Reddit Biohackers":           {bg:"bg-cyan-950/60",   border:"border-cyan-600/40",   text:"text-cyan-400",    dot:"bg-cyan-400"},
-  "Reddit Menopause":            {bg:"bg-pink-950/60",   border:"border-pink-500/40",   text:"text-pink-300",    dot:"bg-pink-300"},
-  "Reddit Testosterone":         {bg:"bg-amber-950/60",  border:"border-amber-500/40",  text:"text-amber-300",   dot:"bg-amber-300"},
-  "Reddit Weight Loss":          {bg:"bg-green-950/60",  border:"border-green-600/40",  text:"text-green-400",   dot:"bg-green-400"},
-  "Reddit Nutrition":            {bg:"bg-lime-950/60",   border:"border-lime-500/40",   text:"text-lime-300",    dot:"bg-lime-300"},
-  "FDA":                         {bg:"bg-blue-950/60",   border:"border-blue-700/40",   text:"text-blue-300",    dot:"bg-blue-300"},
-  "BMJ":                         {bg:"bg-teal-950/60",   border:"border-teal-600/40",   text:"text-teal-400",    dot:"bg-teal-400"},
-  "JAMA":                        {bg:"bg-indigo-950/60", border:"border-indigo-600/40", text:"text-indigo-400",  dot:"bg-indigo-400"},
-  "UpToDate":                    {bg:"bg-sky-950/60",    border:"border-sky-600/40",    text:"text-sky-400",     dot:"bg-sky-400"},
-  "Medscape Brasil":             {bg:"bg-pink-950/60",   border:"border-pink-600/40",   text:"text-pink-400",    dot:"bg-pink-400"},
-  "Healthline":                  {bg:"bg-green-950/60",  border:"border-green-600/40",  text:"text-green-400",   dot:"bg-green-400"},
-  "Mayo Clinic":                 {bg:"bg-cyan-950/60",   border:"border-cyan-600/40",   text:"text-cyan-400",    dot:"bg-cyan-400"},
-  "SBD":                         {bg:"bg-orange-950/60", border:"border-orange-600/40", text:"text-orange-400",  dot:"bg-orange-400"},
-  "STAT News":                   {bg:"bg-slate-800/60",  border:"border-slate-500/40",  text:"text-slate-300",   dot:"bg-slate-300"},
-  "MedPage Today":               {bg:"bg-blue-950/60",   border:"border-blue-500/40",   text:"text-blue-300",    dot:"bg-blue-300"},
-  "Fierce Healthcare":           {bg:"bg-rose-950/60",   border:"border-rose-600/40",   text:"text-rose-400",    dot:"bg-rose-400"},
-  "Endocrine News":              {bg:"bg-yellow-950/60", border:"border-yellow-600/40", text:"text-yellow-400",  dot:"bg-yellow-400"},
-  "Healio Endocrinologia":       {bg:"bg-violet-950/60", border:"border-violet-500/40", text:"text-violet-300",  dot:"bg-violet-300"},
-  "medRxiv":                     {bg:"bg-emerald-950/60",border:"border-emerald-500/40",text:"text-emerald-300", dot:"bg-emerald-300"},
-  "bioRxiv":                     {bg:"bg-lime-950/60",   border:"border-lime-600/40",   text:"text-lime-400",    dot:"bg-lime-400"},
+  "PubMed":                      {bg:"bg-emerald-50",     border:"border-emerald-200",   text:"text-emerald-700", dot:"bg-emerald-500"},
+  "The Lancet":                  {bg:"bg-violet-50",      border:"border-violet-200",    text:"text-violet-700",  dot:"bg-violet-500"},
+  "NEJM":                        {bg:"bg-blue-50",        border:"border-blue-200",      text:"text-blue-700",    dot:"bg-blue-500"},
+  "Nature Medicine":             {bg:"bg-lime-50",        border:"border-lime-200",      text:"text-lime-700",    dot:"bg-lime-500"},
+  "MedScape":                    {bg:"bg-fuchsia-50",     border:"border-fuchsia-200",   text:"text-fuchsia-700", dot:"bg-fuchsia-500"},
+  "G1 Saúde":                    {bg:"bg-amber-50",       border:"border-amber-200",     text:"text-amber-700",   dot:"bg-amber-500"},
+  "CNN Health":                  {bg:"bg-red-50",         border:"border-red-200",       text:"text-red-700",     dot:"bg-red-500"},
+  "Instagram Trending":          {bg:"bg-pink-50",        border:"border-pink-200",      text:"text-pink-700",    dot:"bg-pink-500"},
+  "Instagram Viral Intelligence":{bg:"bg-rose-50",        border:"border-rose-200",      text:"text-rose-700",    dot:"bg-rose-500"},
+  "TikTok Trending":             {bg:"bg-purple-50",      border:"border-purple-200",    text:"text-purple-700",  dot:"bg-purple-500"},
+  "YouTube Trending":            {bg:"bg-red-50",         border:"border-red-200",       text:"text-red-600",     dot:"bg-red-400"},
+  "X (Twitter)":                 {bg:"bg-slate-100",      border:"border-slate-300",     text:"text-slate-600",   dot:"bg-slate-400"},
+  "Reddit":                      {bg:"bg-orange-50",      border:"border-orange-200",    text:"text-orange-700",  dot:"bg-orange-500"},
+  "Reddit Health":               {bg:"bg-orange-50",      border:"border-orange-200",    text:"text-orange-600",  dot:"bg-orange-400"},
+  "Reddit Longevity":            {bg:"bg-teal-50",        border:"border-teal-200",      text:"text-teal-700",    dot:"bg-teal-500"},
+  "Reddit Biohackers":           {bg:"bg-cyan-50",        border:"border-cyan-200",      text:"text-cyan-700",    dot:"bg-cyan-500"},
+  "Reddit Menopause":            {bg:"bg-pink-50",        border:"border-pink-200",      text:"text-pink-600",    dot:"bg-pink-400"},
+  "Reddit Testosterone":         {bg:"bg-amber-50",       border:"border-amber-200",     text:"text-amber-600",   dot:"bg-amber-400"},
+  "Reddit Weight Loss":          {bg:"bg-green-50",       border:"border-green-200",     text:"text-green-700",   dot:"bg-green-500"},
+  "Reddit Nutrition":            {bg:"bg-lime-50",        border:"border-lime-200",      text:"text-lime-600",    dot:"bg-lime-400"},
+  "FDA":                         {bg:"bg-blue-50",        border:"border-blue-200",      text:"text-blue-600",    dot:"bg-blue-400"},
+  "BMJ":                         {bg:"bg-teal-50",        border:"border-teal-200",      text:"text-teal-700",    dot:"bg-teal-500"},
+  "JAMA":                        {bg:"bg-indigo-50",      border:"border-indigo-200",    text:"text-indigo-700",  dot:"bg-indigo-500"},
+  "UpToDate":                    {bg:"bg-sky-50",         border:"border-sky-200",       text:"text-sky-700",     dot:"bg-sky-500"},
+  "Medscape Brasil":             {bg:"bg-pink-50",        border:"border-pink-200",      text:"text-pink-700",    dot:"bg-pink-500"},
+  "Healthline":                  {bg:"bg-green-50",       border:"border-green-200",     text:"text-green-700",   dot:"bg-green-500"},
+  "Mayo Clinic":                 {bg:"bg-cyan-50",        border:"border-cyan-200",      text:"text-cyan-700",    dot:"bg-cyan-500"},
+  "SBD":                         {bg:"bg-orange-50",      border:"border-orange-200",    text:"text-orange-700",  dot:"bg-orange-500"},
+  "STAT News":                   {bg:"bg-slate-100",      border:"border-slate-300",     text:"text-slate-600",   dot:"bg-slate-400"},
+  "MedPage Today":               {bg:"bg-blue-50",        border:"border-blue-200",      text:"text-blue-600",    dot:"bg-blue-400"},
+  "Fierce Healthcare":           {bg:"bg-rose-50",        border:"border-rose-200",      text:"text-rose-700",    dot:"bg-rose-500"},
+  "Endocrine News":              {bg:"bg-yellow-50",      border:"border-yellow-200",    text:"text-yellow-700",  dot:"bg-yellow-500"},
+  "Healio Endocrinologia":       {bg:"bg-violet-50",      border:"border-violet-200",    text:"text-violet-600",  dot:"bg-violet-400"},
+  "medRxiv":                     {bg:"bg-emerald-50",     border:"border-emerald-200",   text:"text-emerald-600", dot:"bg-emerald-400"},
+  "bioRxiv":                     {bg:"bg-lime-50",        border:"border-lime-200",      text:"text-lime-700",    dot:"bg-lime-500"},
 }
 
 const RELEVANCE_STYLES: Record<string,{bg:string;border:string;text:string;pulse:boolean}> = {
-  "Alto":  {bg:"bg-red-950/60",   border:"border-red-500/50",   text:"text-red-400",   pulse:true},
-  "Médio": {bg:"bg-amber-950/60", border:"border-amber-500/50", text:"text-amber-400", pulse:false},
-  "Baixo": {bg:"bg-green-950/60", border:"border-green-600/50", text:"text-green-400", pulse:false},
+  "Alto":  {bg:"bg-red-50",    border:"border-red-300",    text:"text-red-700",   pulse:true},
+  "Médio": {bg:"bg-amber-50",  border:"border-amber-300",  text:"text-amber-700", pulse:false},
+  "Baixo": {bg:"bg-green-50",  border:"border-green-300",  text:"text-green-700", pulse:false},
 }
 
 // ─── MOCK DATA ───────────────────────────────────────────────────────────────
@@ -202,7 +202,7 @@ type Tab = "radar" | "reels" | "velocity" | "opportunities"
 // ─── BADGE COMPONENTS ────────────────────────────────────────────────────────
 
 function SourceBadge({ source }: { source: string }) {
-  const s = SOURCE_STYLES[source] || {bg:"bg-slate-900",border:"border-slate-700",text:"text-slate-400",dot:"bg-slate-400"}
+  const s = SOURCE_STYLES[source] || {bg:"bg-slate-100",border:"border-slate-300",text:"text-slate-500",dot:"bg-slate-400"}
   return (
     <span className={cn("inline-flex items-center gap-1.5 text-[9px] font-mono font-medium px-2 py-0.5 rounded-full border",s.bg,s.border,s.text)}>
       <span className={cn("w-1 h-1 rounded-full flex-shrink-0",s.dot)} />{source}
@@ -221,14 +221,14 @@ function RelevanceBadge({ level }: { level: string }) {
 
 function PlatformBadge({ platform }: { platform: string }) {
   const map: Record<string,string> = {
-    "Instagram":"bg-pink-950/60 border-pink-600/40 text-pink-400",
-    "TikTok":   "bg-purple-950/60 border-purple-600/40 text-purple-400",
-    "YouTube":  "bg-red-950/60 border-red-600/40 text-red-400",
-    "Reddit":   "bg-orange-950/60 border-orange-600/40 text-orange-400",
-    "X (Twitter)":"bg-slate-900/80 border-slate-600/40 text-slate-300",
+    "Instagram":"bg-pink-50 border-pink-200 text-pink-700",
+    "TikTok":   "bg-purple-50 border-purple-200 text-purple-700",
+    "YouTube":  "bg-red-50 border-red-200 text-red-700",
+    "Reddit":   "bg-orange-50 border-orange-200 text-orange-700",
+    "X (Twitter)":"bg-slate-100 border-slate-300 text-slate-600",
   }
   return (
-    <span className={cn("text-[9px] font-mono font-medium px-2 py-0.5 rounded-full border",map[platform]||"bg-slate-900 border-slate-700 text-slate-400")}>
+    <span className={cn("text-[9px] font-mono font-medium px-2 py-0.5 rounded-full border",map[platform]||"bg-slate-100 border-slate-300 text-slate-500")}>
       {platform}
     </span>
   )
@@ -542,7 +542,7 @@ Retorne um objeto JSON com:
                 <button key={t} onClick={() => setFilters(f=>({...f,topic:t}))}
                   className={cn(
                     "text-[10px] px-2.5 py-0.5 rounded-full border transition-all",
-                    filters.topic===t ? "bg-blue-950/60 border-blue-500/40 text-blue-400 font-medium" : "border-border text-text-muted hover:text-text-secondary hover:border-border-hover"
+                    filters.topic===t ? "bg-blue-50 border-blue-300 text-blue-700 font-medium" : "border-border text-text-muted hover:text-text-secondary hover:border-border-hover"
                   )}>{t}</button>
               ))}
             </div>
@@ -842,7 +842,7 @@ Retorne um objeto JSON com:
                       <h3 className="text-[14px] font-bold text-text-primary leading-tight">{opp.topic}</h3>
                       <span className={cn(
                         "flex-shrink-0 text-[12px] font-bold px-2.5 py-1 rounded-full font-mono",
-                        opp.score>=90 ? "bg-accent-dim border border-accent-border text-accent" : "bg-blue-950/60 border border-blue-500/40 text-blue-400"
+                        opp.score>=90 ? "bg-accent-dim border border-accent-border text-accent" : "bg-blue-50 border border-blue-200 text-blue-700"
                       )}>{opp.score}</span>
                     </div>
 

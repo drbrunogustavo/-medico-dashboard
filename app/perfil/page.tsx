@@ -242,7 +242,7 @@ export default function PerfilPage() {
             className={cn(
               "flex items-center gap-2 px-4 py-2 rounded-lg text-[12px] font-semibold transition-all",
               status === "saved"  ? "bg-accent/15 border border-accent/30 text-accent" :
-              status === "error"  ? "bg-red-950/40 border border-red-500/30 text-red-400" :
+              status === "error"  ? "bg-red-50 border border-red-200 text-red-700" :
               "bg-accent-dim border border-accent-border text-accent hover:bg-accent/15"
             )}
           >
@@ -412,7 +412,7 @@ export default function PerfilPage() {
                 </div>
                 <button
                   onClick={refazerOnboarding}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg border border-red-500/20 text-red-400 text-[12px] font-semibold hover:bg-red-950/30 transition-all flex-shrink-0"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg border border-red-200 text-red-600 text-[12px] font-semibold hover:bg-red-50 transition-all flex-shrink-0"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
                   Refazer Onboarding
@@ -479,7 +479,7 @@ export default function PerfilPage() {
                           <span className={cn(
                             "text-[8px] font-mono font-semibold px-1.5 py-0.5 rounded-full border",
                             active
-                              ? "bg-emerald-950/40 border-emerald-500/30 text-emerald-400"
+                              ? "bg-emerald-50 border-emerald-200 text-emerald-700"
                               : "bg-surface-2 border-border text-text-muted"
                           )}>
                             {active ? "ATIVO" : "INATIVO"}
@@ -498,7 +498,7 @@ export default function PerfilPage() {
               </div>
             )}
 
-            <div className="bg-amber-950/20 border border-amber-500/20 rounded-xl px-4 py-3 text-[11px] text-amber-400/80">
+            <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-[11px] text-amber-700">
               As integrações são ativadas via variáveis de ambiente no servidor (não expostas ao cliente por segurança).
               Para configurar, acesse as configurações de ambiente no Vercel ou no seu arquivo <code className="font-mono">.env.local</code>.
             </div>

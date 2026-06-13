@@ -560,9 +560,9 @@ export default function EditorPage() {
 
         {/* Error */}
         {error && (
-          <div className="flex items-start gap-3 bg-red-950/40 border border-red-500/30 rounded-lg p-4">
-            <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
-            <p className="text-[12px] text-red-300 leading-relaxed whitespace-pre-line">{error}</p>
+          <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-lg p-4">
+            <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
+            <p className="text-[12px] text-red-700 leading-relaxed whitespace-pre-line">{error}</p>
           </div>
         )}
 

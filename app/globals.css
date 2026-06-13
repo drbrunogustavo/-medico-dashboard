@@ -9,27 +9,27 @@
 ══════════════════════════════════════════════════════════════════════════════ */
 
 :root {
-  --background:     #f5f5f0;
-  --surface:        #ffffff;
-  --surface-2:      #f0f0eb;
-  --card:           #ffffff;
-  --border:         #e0e0d8;
-  --border-hover:   #c8c8c0;
+  --background:     #F5F0E8;
+  --surface:        #FFFFFF;
+  --surface-2:      #EDE8DF;
+  --card:           #FFFFFF;
+  --border:         #E8E0D0;
+  --border-hover:   #D0C8B8;
 
-  --text-primary:   #1a1a1a;
-  --text-secondary: #4a4a4a;
-  --text-muted:     #8a8a8a;
+  --text-primary:   #0D1B2A;
+  --text-secondary: #5C4D3C;
+  --text-muted:     #8C7B6B;
 
-  --accent-rgb:     0 168 107;
-  --accent:         #00a86b;
-  --accent-text:    #00a86b;
-  --accent-dim:     rgba(0, 168, 107, 0.08);
-  --accent-border:  rgba(0, 168, 107, 0.20);
+  --accent-rgb:     184 151 106;
+  --accent:         #b8976a;
+  --accent-text:    #b8976a;
+  --accent-dim:     rgba(184, 151, 106, 0.10);
+  --accent-border:  rgba(184, 151, 106, 0.25);
 
-  --gold:           #d4af37;
-  --topbar-bg:      rgba(245, 245, 240, 0.92);
-  --scrollbar:      #c8c8c0;
-  --selection-bg:   rgba(0, 168, 107, 0.15);
+  --gold:           #b8976a;
+  --topbar-bg:      rgba(245, 240, 232, 0.92);
+  --scrollbar:      #C8BCA8;
+  --selection-bg:   rgba(184, 151, 106, 0.15);
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
@@ -177,11 +177,11 @@ button, a, input, select, textarea, [role="button"] {
   }
 
   .card-glow-accent {
-    box-shadow: 0 0 0 1px var(--accent-border), 0 8px 32px rgba(0,0,0,0.4);
+    box-shadow: 0 0 0 1px var(--accent-border), 0 8px 32px rgba(184,151,106,0.12);
   }
 
   .card-glow-gold {
-    box-shadow: 0 0 0 1px rgba(212,175,55,0.12), 0 8px 32px rgba(0,0,0,0.4);
+    box-shadow: 0 0 0 1px rgba(184,151,106,0.20), 0 8px 32px rgba(184,151,106,0.10);
   }
 
   .scrollbar-none {
@@ -212,7 +212,7 @@ input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
 input:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0px 1000px #1e1e1e inset !important;
-  -webkit-text-fill-color: #ffffff !important;
+  -webkit-box-shadow: 0 0 0px 1000px #F5F0E8 inset !important;
+  -webkit-text-fill-color: #0D1B2A !important;
   transition: background-color 9999s ease-in-out 0s;
 }

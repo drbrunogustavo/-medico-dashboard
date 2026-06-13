@@ -249,7 +249,7 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {PAINS.map((p, i) => (
               <div key={i} className="bg-surface border border-border rounded-xl p-6 hover:border-border-hover transition-all">
-                <div className="w-8 h-8 rounded-lg bg-red-950/30 border border-red-500/20 flex items-center justify-center mb-4">
+                <div className="w-8 h-8 rounded-lg bg-red-50 border border-red-200 flex items-center justify-center mb-4">
                   <X className="w-4 h-4 text-red-400" />
                 </div>
                 <h3 className="text-[15px] font-semibold text-text-primary mb-2">{p.title}</h3>

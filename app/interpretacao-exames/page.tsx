@@ -344,6 +344,835 @@ const EXAMS: ExamData[] = [
     conducts: ["TG 150–500: dieta baixa em carboidratos refinados, redução de álcool, exercício", "TG >500: risco de pancreatite aguda — fibratos (fenofibrato 200mg/dia)", "Ômega-3 (EPA/DHA ≥4g/dia) reduz TG em 25–30%"],
     related: ["HDL-c", "Glicemia", "Insulina", "HOMA-IR", "Ácido úrico"],
   },
+  // ── Hemograma Completo ──
+  {
+    id: "hemoglobina", name: "Hemoglobina", category: "Hemograma Completo",
+    range: {
+      lab: "13,5–17,5 g/dL (H) · 12,0–15,5 g/dL (M)", functional: "14,0–17,0 g/dL (H) · 13,0–15,5 g/dL (M)", unit: "g/dL",
+      classifyFn: (v, s) => {
+        const limH = s === "Homem"
+        if (v < 8) return "muito_elevado"
+        if (limH ? v < 10 : v < 8) return "muito_elevado"
+        if (limH ? v < 12 : v < 10) return "elevado"
+        if (limH ? v < 13.5 : v < 12) return "baixo"
+        if (limH ? v <= 17.5 : v <= 15.5) return "normal"
+        return "elevado"
+      },
+    },
+    correlations: [
+      "Hb <12 (M) / <13,5 (H): anemia — classificar pelo VCM (micro/normo/macrocítica)",
+      "Anemia microcítica (VCM <80): ferropriva, talassemia, anemia de doença crônica",
+      "Anemia normocítica (VCM 80–100): doença crônica, hemólise, hemorragia aguda, IRC",
+      "Anemia macrocítica (VCM >100): deficiência B12/folato, hipotireoidismo, hepatopatia, álcool",
+      "Hb elevada (>17,5 H / >15,5 M): policitemia vera, DPOC, altitude, desidratação",
+    ],
+    conducts: [
+      "Anemia ferropriva confirmada: ferro oral (sulfato ferroso 200mg 2–3x/dia) por 3–6 meses",
+      "Anemia grave (<8 g/dL) com sintomas: avaliar transfusão + investigar causa urgente",
+      "Hb limítrofe com sintomas: solicitar reticulócitos, ferritina, B12, folato, TSH",
+      "Policitemia vera suspeita: JAK2 V617F + hematologista",
+    ],
+    related: ["VCM", "HCM", "RDW", "Ferritina", "Vitamina B12", "Folato", "Reticulócitos"],
+    notes: "Sempre associar à contagem de eritrócitos e índices hematimétricos para classificação correta.",
+  },
+  {
+    id: "hematocrito", name: "Hematócrito", category: "Hemograma Completo",
+    range: {
+      lab: "40–52% (H) · 36–46% (M)", functional: "42–50% (H) · 38–45% (M)", unit: "%",
+      classifyFn: (v, s) => {
+        const limH = s === "Homem"
+        if (limH ? v < 36 : v < 33) return "baixo"
+        if (limH ? v <= 52 : v <= 46) return "normal"
+        return "elevado"
+      },
+    },
+    correlations: [
+      "Hematócrito = % do volume sanguíneo ocupado por hemácias — correlaciona com Hb (Ht ≈ Hb × 3)",
+      "Ht baixo com Hb normal: macrocitose — B12/folato",
+      "Ht alto: desidratação (pseudo-eritrocitose), DPOC, policitemia vera",
+    ],
+    conducts: [
+      "Interpretar sempre com Hb e VCM — raramente avaliado isoladamente",
+      "Ht <30%: anemia clinicamente significativa — investigar causa",
+      "Ht >52% (H) / >47% (M): solicitar EPO, JAK2 e excluir causas secundárias",
+    ],
+    related: ["Hemoglobina", "VCM", "Eritrócitos"],
+  },
+  {
+    id: "vcm", name: "VCM (Volume Corpuscular Médio)", category: "Hemograma Completo",
+    range: {
+      lab: "80–100 fL", functional: "82–98 fL", unit: "fL",
+      classifyFn: (v) => v < 80 ? "baixo" : v <= 100 ? "normal" : "elevado",
+    },
+    correlations: [
+      "VCM <80 fL (microcítica): deficiência de ferro, talassemia, anemia de doença crônica, intoxicação por chumbo",
+      "VCM 80–100 fL (normocítica): doença crônica, hemólise aguda, insuficiência renal, hipotireoidismo leve",
+      "VCM >100 fL (macrocítica): deficiência de B12 ou folato, hepatopatia crônica, alcoolismo, hipotireoidismo grave, metotrexato, hidroxiureia",
+    ],
+    conducts: [
+      "Microcítica: solicitar ferritina, saturação de transferrina, eletroforese de Hb",
+      "Macrocítica: solicitar B12, folato, TSH, hepatograma, reticulócitos",
+      "Normocítica com anemia: solicitar reticulócitos, função renal, PCR, proteínas totais",
+    ],
+    related: ["HCM", "CHCM", "RDW", "Hemoglobina", "Vitamina B12", "Folato", "Ferritina"],
+  },
+  {
+    id: "hcm", name: "HCM e CHCM", category: "Hemograma Completo",
+    range: {
+      lab: "HCM: 27–32 pg · CHCM: 32–36 g/dL", unit: "pg / g/dL",
+      classifyFn: (v) => v < 27 ? "baixo" : v <= 32 ? "normal" : "elevado",
+    },
+    correlations: [
+      "HCM baixo (<27 pg): hipocromia — deficiência de ferro, talassemia",
+      "CHCM alto (>36 g/dL): esferocitose hereditária — células mais densas",
+      "CHCM baixo (<32): hipocrômia — confirma carência de ferro funcional",
+    ],
+    conducts: [
+      "HCM baixo com ferritina baixa: deficiência de ferro — repor",
+      "HCM baixo com ferritina normal/alta: anemia de doença crônica ou talassemia — eletroforese de Hb",
+      "CHCM alto isolado: investigar esferocitose — fragilidade osmótica",
+    ],
+    related: ["VCM", "RDW", "Ferritina", "Saturação de transferrina"],
+  },
+  {
+    id: "leucocitos", name: "Leucócitos Totais", category: "Hemograma Completo",
+    range: {
+      lab: "4.000–10.000/mm³", functional: "4.500–9.000/mm³", unit: "/mm³",
+      classifyFn: (v) => v < 4000 ? "baixo" : v <= 10000 ? "normal" : v <= 15000 ? "elevado" : "muito_elevado",
+    },
+    correlations: [
+      "Leucocitose (>10.000): infecção bacteriana, inflamação, corticoides, estresse, leucemia",
+      "Leucopenia (<4.000): infecção viral, neutropenia medicamentosa, autoimune, aplasia",
+      "Leucocitose >30.000: suspeitar de leucemia — solicitar frotis + hematologista",
+    ],
+    conducts: [
+      "Leucocitose com febre e foco infeccioso: antibioticoterapia direcionada",
+      "Leucopenia isolada: checar medicamentos (metotrexato, AINEs), solicitar diferencial e FAN",
+      "Leucocitose >30.000 sem causa óbvia: encaminhar hematologia urgente",
+    ],
+    related: ["Diferencial leucocitário", "PCR", "VHS", "Hemocultura"],
+  },
+  {
+    id: "neutrofilos", name: "Neutrófilos (Diferencial)", category: "Hemograma Completo",
+    range: {
+      lab: "1.800–7.000/mm³ (45–75%)", functional: "2.000–6.000/mm³", unit: "/mm³",
+      classifyFn: (v) => v < 1000 ? "muito_elevado" : v < 1800 ? "baixo" : v <= 7000 ? "normal" : "elevado",
+    },
+    correlations: [
+      "Neutrofilia: infecção bacteriana, inflamação, corticoides, estresse cirúrgico, neoplasias",
+      "Neutropenia grave (<500): risco alto de infecção bacteriana grave — neutropenia febril",
+      "Desvio à esquerda (bastões >10%): infecção ativa, sepse, processos inflamatórios graves",
+    ],
+    conducts: [
+      "Neutropenia <1.000: suspender medicamentos causadores, isolar, monitorar temperatura",
+      "Neutropenia febril: internação + antibioticoterapia empírica imediata",
+      "Neutrofilia >10.000 sem causa óbvia: afastar infecção oculta e leucemia mieloide",
+    ],
+    related: ["Linfócitos", "Monócitos", "PCR", "Hemocultura", "Frotis sanguíneo"],
+  },
+  {
+    id: "plaquetas", name: "Plaquetas", category: "Hemograma Completo",
+    range: {
+      lab: "150.000–400.000/mm³", functional: "180.000–350.000/mm³", unit: "/mm³",
+      classifyFn: (v) => v < 50000 ? "muito_elevado" : v < 100000 ? "elevado" : v < 150000 ? "baixo" : v <= 400000 ? "normal" : "elevado",
+    },
+    correlations: [
+      "Trombocitopenia <150.000: dengue, PTI, hiperesplenismo, medicamentos (heparina, quimio), CIVD",
+      "Plaquetas <50.000: risco de sangramento espontâneo aumentado",
+      "Trombocitose >450.000: reativa (infecção, inflamação, deficiência de ferro) ou trombocitemia essencial",
+    ],
+    conducts: [
+      "Plaquetas <100.000: investigar causa — dengue NS1, anticorpos antiplaquetários, hepatograma",
+      "Plaquetas <20.000 com sangramento: avaliar transfusão + hematologista urgente",
+      "Trombocitose isolada com ferritina baixa: repor ferro e repetir hemograma em 4 semanas",
+    ],
+    related: ["TP/INR", "TTPA", "D-Dímero", "Fibrinogênio", "Hepatograma"],
+  },
+  {
+    id: "rdw", name: "RDW (Anisocitose)", category: "Hemograma Completo",
+    range: {
+      lab: "11,5–14,5%", unit: "%",
+      classifyFn: (v) => v <= 14.5 ? "normal" : v <= 16 ? "limítrofe" : "elevado",
+    },
+    correlations: [
+      "RDW alto + VCM baixo: deficiência de ferro (vs. talassemia que tem RDW normal)",
+      "RDW alto + VCM alto: deficiência de B12/folato, anemia hemolítica",
+      "RDW alto + VCM normal: anemia mista (ferro + B12), estados iniciais de carência",
+    ],
+    conducts: [
+      "RDW alto com VCM normal ou baixo: dosar ferritina E B12/folato — anemia mista frequente",
+      "RDW normal com VCM baixo: pensar em talassemia minor — eletroforese de Hb",
+      "RDW útil para diferenciar ferropenia (alto) de talassemia (normal) quando VCM baixo",
+    ],
+    related: ["VCM", "HCM", "Ferritina", "Vitamina B12", "Folato"],
+  },
+  // ── Função Renal ──
+  {
+    id: "creatinina", name: "Creatinina", category: "Função Renal",
+    range: {
+      lab: "0,7–1,2 mg/dL (H) · 0,5–1,0 mg/dL (M)", functional: "0,7–1,0 mg/dL", unit: "mg/dL",
+      classifyFn: (v, s) => {
+        const limH = s === "Homem"
+        if (v < 0.5) return "baixo"
+        if (limH ? v <= 1.2 : v <= 1.0) return "normal"
+        if (limH ? v <= 1.5 : v <= 1.3) return "limítrofe"
+        if (v <= 3.0) return "elevado"
+        return "muito_elevado"
+      },
+    },
+    correlations: [
+      "Creatinina é produto da degradação muscular — depende de massa muscular (baixa em idosos, sarcopênicos)",
+      "TFGe-CKD-EPI é mais preciso que creatinina isolada para estimar função renal",
+      "Creatinina pode ser 'normal' com TFG reduzida em pacientes com baixa massa muscular",
+    ],
+    conducts: [
+      "Sempre calcular TFGe (CKD-EPI) para classificar estágio de DRC",
+      "TFGe <60 por >3 meses: DRC — ajustar medicamentos nefrotóxicos, encaminhar nefrologia",
+      "Aumento agudo >0,3 mg/dL em 48h: LRA — investigar causa (hipovolemia, sepse, nefrotóxico)",
+    ],
+    related: ["Ureia", "Cistatina C", "Microalbuminúria", "EAS", "Potássio", "Ácido úrico"],
+  },
+  {
+    id: "ureia", name: "Ureia e BUN", category: "Função Renal",
+    range: {
+      lab: "15–45 mg/dL (ureia) · BUN: 7–21 mg/dL", unit: "mg/dL",
+      classifyFn: (v) => v < 15 ? "baixo" : v <= 45 ? "normal" : v <= 70 ? "elevado" : "muito_elevado",
+    },
+    correlations: [
+      "Ureia elevada com creatinina normal: aumento pré-renal (desidratação, sangramento GI, dieta hiperprot.)",
+      "Razão ureia/creatinina >40: causa pré-renal ou sangramento digestivo",
+      "Ureia baixa: desnutrição proteica grave, hepatopatia avançada (déficit de síntese hepática)",
+    ],
+    conducts: [
+      "Ureia >70 mg/dL + creatinina elevada: avaliar diálise se sintomático (uremia)",
+      "Razão ureia/creatinina >40: afastar sangramento GI alto (EDA) e hipovolemia",
+      "Ureia baixa com albumina baixa: investigar desnutrição e hepatopatia",
+    ],
+    related: ["Creatinina", "TFGe", "Eletrólitos", "EAS"],
+  },
+  {
+    id: "acidourico", name: "Ácido Úrico", category: "Função Renal",
+    range: {
+      lab: "3,4–7,0 mg/dL (H) · 2,4–6,0 mg/dL (M)", functional: "<5,5 mg/dL", unit: "mg/dL",
+      classifyFn: (v, s) => {
+        const limH = s === "Homem"
+        if (v < 2.4) return "baixo"
+        if (limH ? v <= 7.0 : v <= 6.0) return "normal"
+        if (limH ? v <= 8.0 : v <= 7.0) return "limítrofe"
+        return "muito_elevado"
+      },
+    },
+    correlations: [
+      "Hiperuricemia (>7 H / >6 M): gota, urolitíase, síndrome metabólica, IRC, diuréticos tiazídicos",
+      "Ácido úrico >6 mg/dL: risco de gota aumenta progressivamente",
+      "Frutose e álcool elevam ácido úrico — mudança dietética é fundamental",
+    ],
+    conducts: [
+      "Hiperuricemia assintomática: dieta (reduzir purinas, álcool, frutose) + hidratação",
+      "Gota aguda: colchicina 1,5 mg no início + 0,5 mg 1h depois; AINEs se sem contraindicação",
+      "Gota crônica/recorrente: alopurinol 100 mg (titular até ácido úrico <6 mg/dL)",
+    ],
+    related: ["Creatinina", "Função Renal", "TG", "Insulina", "PCR"],
+  },
+  {
+    id: "microalb", name: "Microalbuminúria / RAC", category: "Função Renal",
+    range: {
+      lab: "RAC <30 mg/g (normal) · 30–300 (microalbuminúria) · >300 (macroalbuminúria)", unit: "mg/g creatinina",
+      classifyFn: (v) => v < 30 ? "normal" : v <= 300 ? "elevado" : "muito_elevado",
+    },
+    correlations: [
+      "Microalbuminúria é o marcador mais precoce de nefropatia diabética e hipertensiva",
+      "RAC >30: risco cardiovascular aumentado independentemente da TFGe",
+      "Macroalbuminúria (RAC >300): nefropatia estabelecida — progressão acelerada para DRC",
+    ],
+    conducts: [
+      "RAC 30–300: iniciar IECA ou BRA + controle rigoroso de PA e HbA1c",
+      "iSGLT2 (empagliflozina, dapagliflozina): reduzem progressão da nefropatia diabética independentemente da glicemia",
+      "RAC >300: encaminhar nefrologia + considerar biópsia renal se causa incerta",
+    ],
+    related: ["Creatinina", "TFGe", "HbA1c", "PA", "Proteínas totais"],
+    notes: "Coletar na 1ª urina da manhã. Confirmar com 2 de 3 amostras em 3–6 meses.",
+  },
+  {
+    id: "cystC", name: "Cistatina C", category: "Função Renal",
+    range: {
+      lab: "0,5–1,0 mg/L", unit: "mg/L",
+      classifyFn: (v) => v <= 1.0 ? "normal" : v <= 1.3 ? "limítrofe" : "elevado",
+    },
+    correlations: [
+      "Melhor marcador de TFGe em idosos, sarcopênicos, pacientes com doença hepática (não depende de massa muscular)",
+      "Detecta redução de TFG antes da creatinina se elevar",
+      "Cistatina C alta com creatinina normal: função renal subestimada pela creatinina",
+    ],
+    conducts: [
+      "Solicitar quando creatinina pode ser enganosa: idosos <60 kg, pacientes com sarcopenia, hepatopatia",
+      "TFGe pela cistatina C (<60 mL/min): DRC — mesma conduta que creatinina",
+      "Combinar TFGe-crea e TFGe-CysC para estimativa mais precisa",
+    ],
+    related: ["Creatinina", "TFGe", "Albumina", "Microalbuminúria"],
+  },
+  // ── Função Hepática ──
+  {
+    id: "tgo", name: "TGO / AST", category: "Função Hepática",
+    range: {
+      lab: "<40 U/L (H) · <32 U/L (M)", functional: "<25 U/L", unit: "U/L",
+      classifyFn: (v) => v <= 25 ? "ótimo" : v <= 40 ? "normal" : v <= 120 ? "elevado" : "muito_elevado",
+    },
+    correlations: [
+      "TGO 1–3× LSN: hepatite leve, DHGNA, álcool, esforço físico intenso",
+      "TGO 3–10× LSN: hepatite viral aguda, hepatotoxicidade medicamentosa, isquemia hepática",
+      "TGO >10× LSN: hepatite aguda grave, lesão isquêmica, hepatotoxicidade grave",
+      "Razão TGO/TGP >2: sugere álcool como causa (deficiência de piridoxina reduz TGP)",
+    ],
+    conducts: [
+      "TGO 1–3×: investigar álcool, medicamentos hepatotóxicos, avaliar ultrasson abdominal",
+      "TGO >3×: suspender hepatotóxicos potenciais, solicitar hepatite viral (A, B, C), autoanticorpos",
+      "TGO >10× com sintomas: avaliar internação para hepatite fulminante",
+    ],
+    related: ["TGP/ALT", "GGT", "Fosfatase alcalina", "Bilirrubinas", "Albumina", "TP/INR"],
+  },
+  {
+    id: "tgp", name: "TGP / ALT", category: "Função Hepática",
+    range: {
+      lab: "<56 U/L (H) · <45 U/L (M)", functional: "<25 U/L", unit: "U/L",
+      classifyFn: (v) => v <= 25 ? "ótimo" : v <= 45 ? "normal" : v <= 135 ? "elevado" : "muito_elevado",
+    },
+    correlations: [
+      "TGP é mais específico para fígado que TGO (TGO também está em músculo e coração)",
+      "TGP elevada isolada: DHGNA, hepatite C crônica, medicamentos",
+      "TGP/TGO >1: padrão hepatocelular — DHGNA, hepatite viral",
+      "TGO/TGP >2 com GGT elevada: padrão alcoólico",
+    ],
+    conducts: [
+      "TGP persistentemente elevada (>3 meses): sorologias virais + USG + avaliar biópsia se >3× LSN",
+      "DHGNA suspeita: ultrassom + RNM hepática + FIB-4 score para avaliar fibrose",
+      "Medicamentos hepatotóxicos: paracetamol, AINEs, estatinas, antifúngicos, anticonvulsivantes",
+    ],
+    related: ["TGO/AST", "GGT", "Fosfatase alcalina", "Ferritina", "USG abdominal"],
+  },
+  {
+    id: "ggt", name: "GGT", category: "Função Hepática",
+    range: {
+      lab: "<60 U/L (H) · <40 U/L (M)", functional: "<30 U/L", unit: "U/L",
+      classifyFn: (v, s) => {
+        const lim = s === "Homem" ? 60 : 40
+        return v <= lim * 0.5 ? "ótimo" : v <= lim ? "normal" : v <= lim * 2 ? "elevado" : "muito_elevado"
+      },
+    },
+    correlations: [
+      "GGT é o marcador mais sensível para uso de álcool — eleva antes dos outros",
+      "GGT + fosfatase alcalina elevados: colestase (cálculo biliar, colangite, cirrose)",
+      "GGT isolada elevada: síndrome metabólica, DHGNA, medicamentos (anticonvulsivantes, estatinas)",
+    ],
+    conducts: [
+      "GGT elevada isolada: pesquisar uso de álcool, DHGNA, medicamentos (anticonvulsivantes)",
+      "GGT + FA elevadas: USG de vias biliares para afastar obstrução",
+      "GGT >3×: investigar doença biliar, hepatopatia alcoólica, hepatite crônica",
+    ],
+    related: ["TGO", "TGP", "Fosfatase alcalina", "Bilirrubinas", "USG abdominal"],
+  },
+  {
+    id: "bilirrubinas", name: "Bilirrubinas (BT, BD, BI)", category: "Função Hepática",
+    range: {
+      lab: "BT: 0,3–1,2 mg/dL · BD: <0,3 · BI: <0,8", unit: "mg/dL",
+      classifyFn: (v) => v <= 1.2 ? "normal" : v <= 2.0 ? "limítrofe" : v <= 10 ? "elevado" : "muito_elevado",
+    },
+    correlations: [
+      "BI elevada isolada: síndrome de Gilbert (benigna), hemólise, reabsorção de hematoma",
+      "BD elevada: colestase — cálculo, colangite, tumor de via biliar, hepatite grave",
+      "BT >2 com icterícia visível: solicitar perfil completo para investigar causa",
+    ],
+    conducts: [
+      "BI elevada isolada + outros exames normais: síndrome de Gilbert — benigna, sem tratamento",
+      "BD elevada: USG abdominal + GGT + FA para afastar colestase obstrutiva",
+      "Hiperbilirrubinemia + encefalopatia: falência hepática aguda — internação urgente",
+    ],
+    related: ["TGO", "TGP", "GGT", "Fosfatase alcalina", "Albumina", "TP/INR"],
+  },
+  {
+    id: "albumina", name: "Albumina Sérica", category: "Função Hepática",
+    range: {
+      lab: "3,5–5,0 g/dL", functional: "4,0–5,0 g/dL", unit: "g/dL",
+      classifyFn: (v) => v < 3.0 ? "muito_elevado" : v < 3.5 ? "elevado" : v <= 5.0 ? "normal" : "baixo",
+    },
+    correlations: [
+      "Albumina é o principal marcador de síntese hepática — meia-vida de 20 dias",
+      "Hipoalbuminemia: hepatopatia crônica, desnutrição proteica, síndrome nefrótica, enteropatia perdedora",
+      "Albumina <3,0 g/dL: marcador de mau prognóstico em doenças crônicas",
+    ],
+    conducts: [
+      "Albumina <3,5: avaliar estado nutricional, hepatograma completo, proteinúria",
+      "Hipoalbuminemia + edema: síndrome nefrótica (proteinúria 24h) vs. hepatopatia (bilirrubinas)",
+      "Albumina como marcador nutricional: inferior ao pré-albumina/proteína ligadora de retinol (mais rápidos)",
+    ],
+    related: ["TP/INR", "TGO", "TGP", "Proteinúria 24h", "Pré-albumina"],
+  },
+  {
+    id: "inr", name: "TP / INR", category: "Função Hepática",
+    range: {
+      lab: "TP: 10–13s · INR: 0,8–1,2", functional: "INR 0,9–1,1", unit: "INR",
+      classifyFn: (v) => v <= 1.2 ? "normal" : v <= 1.5 ? "limítrofe" : v <= 3.0 ? "elevado" : "muito_elevado",
+    },
+    correlations: [
+      "INR alargado na hepatopatia: déficit de síntese de fatores II, VII, IX, X (vitamina K-dependentes)",
+      "INR em pacientes anticoagulados com varfarina: meta 2,0–3,0 (FA, TVP) ou 2,5–3,5 (prótese valvar)",
+      "INR >1,5 sem anticoagulante: investigar hepatopatia ou coagulopatia",
+    ],
+    conducts: [
+      "INR >1,5 com hepatopatia: hepatite grave ou cirrose descompensada — avaliar suporte e transplante",
+      "INR fora do alvo em anticoagulados: ajustar dose de varfarina + checar interações",
+      "INR >3,0 com sangramento: vitamina K EV + plasma fresco congelado se necessário",
+    ],
+    related: ["TTPA", "Fibrinogênio", "Albumina", "TGO", "TGP", "Plaquetas"],
+  },
+  // ── Metabolismo Ósseo ──
+  {
+    id: "calcio", name: "Cálcio Total e Ionizado", category: "Metabolismo Ósseo",
+    range: {
+      lab: "Total: 8,5–10,5 mg/dL · Ionizado: 1,12–1,32 mmol/L", functional: "9,0–10,0 mg/dL", unit: "mg/dL",
+      classifyFn: (v) => v < 7.5 ? "muito_elevado" : v < 8.5 ? "elevado" : v <= 10.5 ? "normal" : v <= 11.5 ? "elevado" : "muito_elevado",
+    },
+    correlations: [
+      "Hipercalcemia (>10,5): hiperparatireoidismo primário (PTH elevado), hipercalcemia maligna (PTH suprimido)",
+      "Hipocalcemia (<8,5): hipoparatireoidismo, deficiência grave de VitD, hipomagnesemia",
+      "Sempre corrigir pelo albumina: Ca corrigido = Ca total + 0,8 × (4,0 – albumina)",
+    ],
+    conducts: [
+      "Hipercalcemia assintomática: dosar PTH + VitD + 24h Ca urinário",
+      "Hipercalcemia sintomática (>12): hidratação EV + zoledronato se maligna",
+      "Hipocalcemia: gluconato de Ca EV se sintomática; carbonato de Ca oral + VitD se crônica",
+    ],
+    related: ["PTH intacto", "Vitamina D", "Fósforo", "Magnésio", "Albumina"],
+  },
+  {
+    id: "fosforo", name: "Fósforo", category: "Metabolismo Ósseo",
+    range: {
+      lab: "2,5–4,5 mg/dL", unit: "mg/dL",
+      classifyFn: (v) => v < 2.0 ? "muito_elevado" : v < 2.5 ? "baixo" : v <= 4.5 ? "normal" : "elevado",
+    },
+    correlations: [
+      "Hiperfosfatemia: IRC (principal), hipoparatireoidismo, acidose metabólica, rabdomiólise",
+      "Hipofosfatemia: desnutrição, alcoolismo, hiperparatireoidismo, síndrome de realimentação, osteomalácia",
+      "Fósforo e PTH têm relação inversa: PTH alto suprime fósforo sérico",
+    ],
+    conducts: [
+      "Hiperfosfatemia + IRC: restringir alimentos ricos em fósforo + quelantes (carbonato de Ca, sevelamer)",
+      "Hipofosfatemia grave (<1,0): fosfato EV + investigar causa (síndr. realimentação, osteomalácia)",
+      "Interpretar sempre com cálcio, PTH e VitD — fazem parte do mesmo eixo",
+    ],
+    related: ["Cálcio", "PTH", "Vitamina D", "Magnésio", "Creatinina"],
+  },
+  {
+    id: "magnesio", name: "Magnésio Sérico", category: "Metabolismo Ósseo",
+    range: {
+      lab: "1,7–2,2 mg/dL", functional: "1,9–2,5 mg/dL", unit: "mg/dL",
+      classifyFn: (v) => v < 1.3 ? "muito_elevado" : v < 1.7 ? "baixo" : v <= 2.2 ? "normal" : "elevado",
+    },
+    correlations: [
+      "Magnésio sérico normal NÃO exclui deficiência intracelular — 99% do Mg é intracelular",
+      "Hipomagnesemia: alcoolismo, diarreia crônica, diuréticos tiazídicos e de alça, omeprazol crônico",
+      "Mg baixo causa hipocalcemia refratária e hipocalemia refratária",
+    ],
+    conducts: [
+      "Mg baixo com sintomas (cãibras, arritmias, tremores): sulfato de Mg IM/EV",
+      "Suspeita clínica forte com Mg normal sérico: dosar Mg urinário 24h ou Mg eritrocitário",
+      "Omeprazol crônico: monitorar Mg a cada 6–12 meses",
+    ],
+    related: ["Cálcio", "Potássio", "Vitamina D", "PTH"],
+    notes: "Magnésio sérico tem baixa sensibilidade para deficiência intracelular.",
+  },
+  {
+    id: "pth", name: "PTH Intacto", category: "Metabolismo Ósseo",
+    range: {
+      lab: "15–65 pg/mL", functional: "20–55 pg/mL", unit: "pg/mL",
+      classifyFn: (v) => v < 10 ? "muito_elevado" : v < 15 ? "baixo" : v <= 65 ? "normal" : v <= 100 ? "elevado" : "muito_elevado",
+    },
+    correlations: [
+      "PTH elevado + Ca elevado: hiperparatireoidismo primário (adenoma paratiroidiano em 85%)",
+      "PTH elevado + Ca normal/baixo: hiperparatireoidismo secundário à deficiência de VitD ou IRC",
+      "PTH suprimido + Ca elevado: hipercalcemia maligna, intoxicação por VitD",
+    ],
+    conducts: [
+      "PTH elevado + Ca elevado: USG paratiroides + cintilografia (Sestamibi) — avaliar paratireoidectomia",
+      "PTH elevado + VitD <30: corrigir VitD primeiro e repetir PTH em 3 meses",
+      "PTH elevado + IRC: néfrologista + quelantes de fósforo + análogos de VitD ativa (calcitriol)",
+    ],
+    related: ["Vitamina D", "Cálcio", "Fósforo", "Creatinina", "Albumina"],
+  },
+  {
+    id: "ctx", name: "CTX (Marcador de Reabsorção Óssea)", category: "Metabolismo Ósseo",
+    range: {
+      lab: "<0,573 ng/mL (M pré-menopausa) · <0,854 (M pós-menopausa) · <0,704 (H)", unit: "ng/mL",
+      classifyFn: (v) => v < 0.3 ? "ótimo" : v <= 0.7 ? "normal" : v <= 1.0 ? "elevado" : "muito_elevado",
+    },
+    correlations: [
+      "CTX é fragmento do colágeno tipo I — eleva na reabsorção óssea ativa",
+      "Alto em: osteoporose, Paget, hiperparatireoidismo, metástase óssea, pós-menopausa sem tratamento",
+      "Baixo após bisfosfonatos/denosumabe: indica supressão de remodelação óssea",
+    ],
+    conducts: [
+      "CTX alto + densitometria com osteoporose: iniciar bisfosfonato ou denosumabe",
+      "Monitorar CTX 3–6 meses após início de antirreabsortivo — queda >50% indica boa resposta",
+      "CTX muito baixo (<0,05) com uso de bisfosfonato há >5 anos: avaliar drug holiday",
+    ],
+    related: ["Densitometria", "P1NP", "Cálcio", "PTH", "Vitamina D"],
+  },
+  // ── Inflamação e Imunologia ──
+  {
+    id: "pcr", name: "PCR Ultrassensível (PCR-as)", category: "Inflamação e Imunologia",
+    range: {
+      lab: "<1,0 mg/L (baixo risco CV) · 1–3 (médio risco) · >3 (alto risco)", functional: "<1,0 mg/L", unit: "mg/L",
+      classifyFn: (v) => v < 1.0 ? "ótimo" : v <= 3.0 ? "limítrofe" : v <= 10.0 ? "elevado" : "muito_elevado",
+    },
+    correlations: [
+      "PCR-as estratifica risco cardiovascular residual — adiciona informação além do LDL",
+      "PCR-as >3 mg/L: risco CV aumentado — indicação para estatina mesmo com LDL borderline (JUPITER trial)",
+      "PCR-as >10 mg/L: inflamação ativa aguda — não usar para risco CV, investigar causa infecciosa",
+    ],
+    conducts: [
+      "PCR-as 1–3 mg/L: otimizar fatores de risco, considerar estatina em risco intermediário",
+      "PCR-as >3 mg/L sem infecção: anti-inflamatório sistêmico (estilo de vida), colchicina cardiovascular",
+      "Coletar em jejum, sem infecção ativa. Repetir em 2 semanas se >10 mg/L",
+    ],
+    related: ["LDL-c", "ApoB", "Homocisteína", "VHS", "Ferritina"],
+  },
+  {
+    id: "vhs", name: "VHS (Velocidade de Hemossedimentação)", category: "Inflamação e Imunologia",
+    range: {
+      lab: "<20 mm/h (H jovem) · <30 mm/h (M jovem) · eleva com idade", unit: "mm/h",
+      classifyFn: (v) => v < 20 ? "normal" : v <= 40 ? "limítrofe" : v <= 100 ? "elevado" : "muito_elevado",
+    },
+    correlations: [
+      "Marcador inespecífico de inflamação — eleva em infecção, neoplasia, doenças autoimunes",
+      "VHS >100: mieloma múltiplo, endocardite bacteriana, arterite temporal (giant cell arteritis)",
+      "VHS é influenciado por anemia (eleva), policitemia (reduz) e idade",
+    ],
+    conducts: [
+      "VHS >100 sem causa óbvia: proteínas séricas (pico M), hemoculturas, FAN, FR, USG vasos temporais (>50 anos)",
+      "VHS elevado com PCR-as normal: raramente significativo — provável interferência (anemia, gravidez)",
+      "Usar PCR-as como marcador preferencial — VHS menos específico e mais lento para resposta",
+    ],
+    related: ["PCR", "PCR-as", "Proteínas totais", "Eletroforese de proteínas", "FAN", "FR"],
+  },
+  {
+    id: "homocisteina", name: "Homocisteína", category: "Inflamação e Imunologia",
+    range: {
+      lab: "<15 µmol/L", functional: "<10 µmol/L", unit: "µmol/L",
+      classifyFn: (v) => v < 10 ? "ótimo" : v <= 15 ? "normal" : v <= 30 ? "elevado" : "muito_elevado",
+    },
+    correlations: [
+      "Hiperhomocisteinemia: fator de risco independente para DCV, AVC, TVP e demência",
+      "Causas: deficiência de B12, B6, folato; IRC; hipotireoidismo; mutação MTHFR C677T",
+      "Homocisteína >15 aumenta risco CV em ~1,5× por unidade adicional",
+    ],
+    conducts: [
+      "Homocisteína elevada: dosar B12, B6, folato + pesquisar MTHFR se <50 anos",
+      "Tratamento: ácido fólico 0,8–5 mg/dia + B12 1.000 µg/dia + B6 25 mg/dia",
+      "Normalização reduz homocisteína mas não provou redução de eventos CV em ensaios — tratar mesmo assim",
+    ],
+    related: ["Vitamina B12", "Ácido fólico", "MTHFR", "PCR-as", "Creatinina"],
+  },
+  {
+    id: "fan", name: "FAN (Fator Antinuclear)", category: "Inflamação e Imunologia",
+    range: {
+      lab: "Negativo (<1:80) ou 1:80, 1:160, 1:320...", unit: "títulos",
+      classifyFn: (v) => v < 80 ? "normal" : v < 160 ? "limítrofe" : "elevado",
+    },
+    correlations: [
+      "FAN positivo em 5–15% da população saudável — não é diagnóstico de doença",
+      "FAN >1:320 com sintomas: maior relevância — solicitar especificidade (Anti-dsDNA, Anti-Sm, Anti-SSA/SSB)",
+      "Indicação: artralgia persistente + fotossensibilidade + rash + pleurite + citopenia inexplicada",
+    ],
+    conducts: [
+      "FAN positivo baixo título sem sintomas: relevância clínica questionável — reavaliar em 6–12 meses",
+      "FAN >1:160 com sintomas sugestivos: anti-dsDNA (lúpus), Anti-SSA/SSB (Sjögren), Anti-Scl70 (esclerodermia)",
+      "FAN negativo não exclui lúpus em fase inicial — repetir se clínica sugestiva",
+    ],
+    related: ["Anti-dsDNA", "Anti-Sm", "Anti-SSA", "Complemento C3/C4", "FR"],
+    notes: "Solicitar FAN somente com suspeita clínica — não rastrear assintomáticos.",
+  },
+  {
+    id: "fr", name: "FR (Fator Reumatoide)", category: "Inflamação e Imunologia",
+    range: {
+      lab: "<14 UI/mL (negativo)", unit: "UI/mL",
+      classifyFn: (v) => v < 14 ? "normal" : v < 50 ? "limítrofe" : "elevado",
+    },
+    correlations: [
+      "FR positivo em 5–10% da população saudável — inespecífico",
+      "AR soropositiva: FR positivo em 70–80% dos casos; associado a doença mais grave",
+      "FR pode estar positivo em: hepatite C, endocardite, Sjögren, crioglobulinemia",
+    ],
+    conducts: [
+      "FR positivo com artrite simétrica de pequenas articulações: solicitar Anti-CCP (mais específico para AR)",
+      "Anti-CCP positivo: diagnóstico de AR muito provável — reumatologista + iniciar MTX precocemente",
+      "FR positivo isolado sem sintomas: repetir em 6 meses + monitorar sintomas articulares",
+    ],
+    related: ["Anti-CCP", "FAN", "PCR", "VHS", "Hemograma"],
+  },
+  // ── Hormônios Adrenais ──
+  {
+    id: "cortisol", name: "Cortisol Basal (8h)", category: "Hormônios Adrenais",
+    range: {
+      lab: "5–25 µg/dL (às 8h)", functional: "10–20 µg/dL", unit: "µg/dL",
+      classifyFn: (v) => v < 3 ? "muito_elevado" : v < 5 ? "baixo" : v <= 20 ? "normal" : v <= 35 ? "elevado" : "muito_elevado",
+    },
+    correlations: [
+      "Cortisol baixo (<5 µg/dL às 8h): insuficiência adrenal primária ou secundária",
+      "Cortisol alto (>20 µg/dL) com sintomas Cushingoides: rastrear Cushing com cortisol salivar noturno",
+      "Cortisol varia muito — sempre coletar às 8h em jejum, sem estresse",
+    ],
+    conducts: [
+      "Cortisol <5 µg/dL: ACTH estimulado (1 µg ou 250 µg) para confirmar insuficiência adrenal",
+      "Suspeita de Cushing: cortisol salivar noturno (2 amostras) ou cortisol urinário livre 24h",
+      "Cortisol em vigência de estresse/doença grave: valores elevados são esperados — não interpretar isoladamente",
+    ],
+    related: ["ACTH", "DHEA-S", "Aldosterona", "Renina", "Glicemia"],
+    notes: "Coletar entre 7h–9h. Evitar estresse físico e psicológico antes da coleta.",
+  },
+  {
+    id: "acth", name: "ACTH", category: "Hormônios Adrenais",
+    range: {
+      lab: "10–60 pg/mL (às 8h)", unit: "pg/mL",
+      classifyFn: (v) => v < 10 ? "baixo" : v <= 60 ? "normal" : v <= 120 ? "elevado" : "muito_elevado",
+    },
+    correlations: [
+      "ACTH alto + cortisol baixo: insuficiência adrenal primária (doença de Addison)",
+      "ACTH baixo + cortisol baixo: insuficiência adrenal secundária (hipopituitarismo)",
+      "ACTH alto + cortisol alto: Cushing ectópico (tumor produtor de ACTH) ou Doença de Cushing (adenoma hipofisário)",
+    ],
+    conducts: [
+      "ACTH baixo + cortisol baixo: pesquisar hipopituitarismo — RNM de sela túrcica + outros eixos hipofisários",
+      "ACTH alto + cortisol alto: TC adrenal + RNM hipófise para localizar tumor",
+      "Insuficiência adrenal confirmada: hidrocortisona 15–25 mg/dia (matutina) ± fludrocortisona",
+    ],
+    related: ["Cortisol", "DHEA-S", "TSH", "GH/IGF-1", "RNM sela túrcica"],
+  },
+  {
+    id: "aldosterona", name: "Aldosterona / Renina (RAR)", category: "Hormônios Adrenais",
+    range: {
+      lab: "RAR (Razão Aldosterona/Renina): <30 ng/dL por ng/mL/h", unit: "RAR",
+      classifyFn: (v) => v < 20 ? "normal" : v <= 30 ? "limítrofe" : "muito_elevado",
+    },
+    correlations: [
+      "RAR >30 com aldosterona >15 ng/dL: hiperaldosteronismo primário (adenoma ou hiperplasia bilateral)",
+      "Hiperaldosteronismo primário: causa mais comum de HAS secundária (5–10% dos hipertensos)",
+      "Rastrear em: HAS resistente, hipocalemia espontânea, incidentaloma adrenal",
+    ],
+    conducts: [
+      "RAR >30: confirmar com teste de sobrecarga salina — se não suprimível: hiperaldosteronismo primário",
+      "TC adrenal: adenoma unilateral (cirurgia) vs. hiperplasia bilateral (espironolactona)",
+      "Espironolactona 25–100 mg/dia: tratamento clínico da hiperplasia bilateral",
+    ],
+    related: ["Cortisol", "ACTH", "Potássio", "PA", "TC adrenal"],
+    notes: "Suspender anti-hipertensivos por 4 semanas antes se possível (especialmente espironolactona e inibidores do SRAA).",
+  },
+  // ── Eixo GH/IGF ──
+  {
+    id: "igf1", name: "IGF-1", category: "Eixo GH/IGF",
+    range: {
+      lab: "Varia por faixa etária: adulto 20–40 anos: 105–382 ng/mL · 40–60 anos: 71–263 ng/mL", functional: "Terço superior da faixa para a idade", unit: "ng/mL",
+      classifyFn: (v) => v < 80 ? "baixo" : v <= 300 ? "normal" : v <= 400 ? "limítrofe" : "muito_elevado",
+    },
+    correlations: [
+      "IGF-1 é o marcador de ação do GH — mais estável que GH basal (sem pulsos)",
+      "IGF-1 baixo para a idade: deficiência de GH, desnutrição, hipotireoidismo, doença hepática",
+      "IGF-1 alto: acromegalia (GH elevado persistente, tumor hipofisário)",
+    ],
+    conducts: [
+      "IGF-1 baixo com sintomas (fadiga, sarcopenia, adiposidade visceral): teste de estímulo de GH (hipoglicemia insulínica ou GHRH+arginina)",
+      "Reposição de GH no adulto: somente após confirmação por teste de estímulo + endocrinologista",
+      "IGF-1 alto + sintomas de acromegalia: RNM hipófise + OGTT com GH (diagnóstico)",
+    ],
+    related: ["GH basal", "IGFBP-3", "TSH", "Albumina", "ACTH"],
+  },
+  // ── Vitaminas e Micronutrientes ──
+  {
+    id: "b12", name: "Vitamina B12", category: "Vitaminas e Micronutrientes",
+    range: {
+      lab: "200–900 pg/mL", functional: "400–900 pg/mL", unit: "pg/mL",
+      classifyFn: (v) => v < 150 ? "deficiente" : v < 200 ? "muito_elevado" : v < 400 ? "limítrofe" : v <= 900 ? "normal" : "elevado",
+    },
+    correlations: [
+      "B12 <200: anemia megaloblástica, neuropatia periférica, disfunção cognitiva, homocisteína elevada",
+      "Deficiência subclínica (200–400): sintomas neurológicos sem anemia — frequente em veganos, idosos, uso de metformina/IBP",
+      "B12 elevada: não costuma ser preocupante; raramente indica policitemia vera, leucemia ou doença hepática",
+    ],
+    conducts: [
+      "B12 <200: cianocobalamina IM 1.000 µg/semana × 4 semanas, depois mensal × 6 meses (ou oral 1.000 µg/dia se absorção normal)",
+      "B12 200–400 com sintomas: suplementar oral 1.000 µg/dia + investigar causa (metformina, IBP, vegetarianismo, gastrite atrófica)",
+      "Reavaliar em 3 meses após início da reposição",
+    ],
+    related: ["Ácido fólico", "Homocisteína", "Hemograma", "VCM", "Ferritina"],
+  },
+  {
+    id: "zinco", name: "Zinco Sérico", category: "Vitaminas e Micronutrientes",
+    range: {
+      lab: "70–120 µg/dL", functional: "80–120 µg/dL", unit: "µg/dL",
+      classifyFn: (v) => v < 60 ? "deficiente" : v < 70 ? "baixo" : v <= 120 ? "normal" : "elevado",
+    },
+    correlations: [
+      "Deficiência de zinco: queda de cabelo, dermatite acral, perda de olfato/paladar, cicatrização lenta, disfunção imune",
+      "Zinco e testosterona: deficiência reduz produção de testosterona em homens",
+      "Cobre e zinco competem pela absorção — excesso de zinco causa deficiência de cobre",
+    ],
+    conducts: [
+      "Zinco <70: sulfato de zinco 220 mg (50 mg de Zn elementar) 1–2x/dia por 3 meses",
+      "Não ultrapassar 40 mg/dia por longos períodos — risco de deficiência de cobre",
+      "Reavaliar em 3 meses; zinco sérico tem limitações como marcador de deficiência (40% de sensibilidade)",
+    ],
+    related: ["Cobre", "Ferritina", "Albumina", "Testosterona"],
+  },
+  {
+    id: "selenio", name: "Selênio Sérico", category: "Vitaminas e Micronutrientes",
+    range: {
+      lab: "70–120 µg/L", functional: "90–120 µg/L", unit: "µg/L",
+      classifyFn: (v) => v < 50 ? "deficiente" : v < 70 ? "baixo" : v <= 120 ? "normal" : "muito_elevado",
+    },
+    correlations: [
+      "Selênio cofator de deiodinases: deficiência prejudica conversão T4→T3 e aumenta Anti-TPO",
+      "Selênio e imunidade: deficiência associada a maior suscetibilidade a infecções virais",
+      "Toxicidade (selenose) com >400 µg/dia: queda de cabelo, unhas frágeis, alopecia, neuropatia",
+    ],
+    conducts: [
+      "Selênio baixo com Hashimoto: selenometionina 200 µg/dia por 6 meses (reduz Anti-TPO)",
+      "Dieta: castanha-do-pará é a fonte mais rica (1–2/dia = dose adequada)",
+      "Não suplementar >200 µg/dia sem monitoramento — margem de segurança estreita",
+    ],
+    related: ["TSH", "T3 livre", "Anti-TPO", "Zinco"],
+  },
+  // ── Marcadores Cardíacos ──
+  {
+    id: "troponina", name: "Troponina (hs-TnI / hs-TnT)", category: "Marcadores Cardíacos",
+    range: {
+      lab: "hs-TnI: <16 ng/L (H) · <12 ng/L (M) · hs-TnT: <19 ng/L", unit: "ng/L",
+      classifyFn: (v) => v < 12 ? "normal" : v <= 52 ? "elevado" : "muito_elevado",
+    },
+    correlations: [
+      "Troponina de alta sensibilidade detecta lesão miocárdica mínima — mais sensível que troponina convencional",
+      "Eleva em: IAM (principal), miocardite, embolia pulmonar, sepse, insuficiência renal, cardiomiopatia",
+      "Dinâmica importante: aumento >20% em 1–3h sugere IAM — não interpretar valor único isolado",
+    ],
+    conducts: [
+      "Troponina elevada com dor torácica: protocolo de IAM — ECG urgente + 2ª dosagem em 1–3h",
+      "Troponina elevada sem dor torácica: investigar miocardite, TEP, IC grave, sepse",
+      "Troponina cronicamente elevada em IRC: não indica IAM — linha de base mais alta nesses pacientes",
+    ],
+    related: ["ECG", "CK-MB", "BNP", "Ecocardiograma", "Coronariografia"],
+  },
+  {
+    id: "bnp", name: "BNP / NT-proBNP", category: "Marcadores Cardíacos",
+    range: {
+      lab: "BNP <100 pg/mL (IC improvável) · 100–400 (zona cinza) · >400 (IC muito provável)", unit: "pg/mL",
+      classifyFn: (v) => v < 100 ? "normal" : v <= 400 ? "limítrofe" : "muito_elevado",
+    },
+    correlations: [
+      "BNP liberado pelos ventrículos em resposta à sobrecarga pressórica ou volumétrica",
+      "Valor preditivo negativo alto: BNP <100 pg/mL exclui IC como causa de dispneia com >95% de precisão",
+      "BNP eleva também em: FA, TEP, cor pulmonale, disfunção renal",
+    ],
+    conducts: [
+      "BNP >400 com dispneia: IC provável — ecocardiograma + cardiologista",
+      "BNP 100–400: zona cinza — ecocardiograma para esclarecer + avaliar causas alternativas de dispneia",
+      "Monitorar BNP na IC em tratamento: queda indica boa resposta; aumento indica descompensação",
+    ],
+    related: ["ECG", "Ecocardiograma", "Troponina", "Creatinina", "Eletrólitos"],
+  },
+  // ── Coagulação ──
+  {
+    id: "ttpa", name: "TTPA (Tempo de Tromboplastina Parcial Ativada)", category: "Coagulação",
+    range: {
+      lab: "25–40 segundos (TTPA normal) · Relação TTPA: <1,2", unit: "segundos",
+      classifyFn: (v) => v <= 40 ? "normal" : v <= 55 ? "limítrofe" : "muito_elevado",
+    },
+    correlations: [
+      "TTPA avalia via intrínseca: fatores XII, XI, IX, VIII — deficiências hemofilia A (VIII) e B (IX)",
+      "TTPA prolongado + TP normal: hemofilia, doença de von Willebrand, anticoagulante lúpico",
+      "TTPA prolongado + TP prolongado: hepatopatia grave, CIVD, deficiência de vitamina K",
+    ],
+    conducts: [
+      "TTPA prolongado sem heparina: dosar fatores VIII, IX, XI; anticoagulante lúpico",
+      "TTPA em uso de heparina não fracionada: meta 60–100 segundos (1,5–2,5× o normal)",
+      "TTPA + TP prolongados com hepatopatia: insuficiência hepática grave — avaliar suporte e TP",
+    ],
+    related: ["TP/INR", "Plaquetas", "Fibrinogênio", "D-Dímero", "Fator VIII"],
+  },
+  {
+    id: "ddimero", name: "D-Dímero", category: "Coagulação",
+    range: {
+      lab: "<500 ng/mL FEU (ou <0,5 µg/mL)", unit: "ng/mL FEU",
+      classifyFn: (v) => v < 500 ? "normal" : v <= 1000 ? "elevado" : "muito_elevado",
+    },
+    correlations: [
+      "D-Dímero tem alto valor preditivo NEGATIVO — D-Dímero normal praticamente exclui TEP/TVP com baixa probabilidade clínica",
+      "Eleva em: TEP, TVP, CIVD, gestação, sepse, cirurgia recente, neoplasia, COVID-19",
+      "Interpretação depende da probabilidade pré-teste (escore Wells, escore de Genebra)",
+    ],
+    conducts: [
+      "D-Dímero <500 com baixa probabilidade clínica (Wells <2): TEP/TVP improvável — sem necessidade de imagem",
+      "D-Dímero elevado com suspeita de TEP: angioTC de tórax urgente",
+      "D-Dímero elevado isolado sem suspeita clínica: não tem valor diagnóstico — não solicitar como rastreio",
+    ],
+    related: ["TTPA", "TP/INR", "Fibrinogênio", "Plaquetas", "AngioTC tórax"],
+    notes: "Limiar de corte aumenta com a idade: usar D-Dímero ajustado = idade × 10 ng/mL em >50 anos.",
+  },
+  // ── Marcadores Tumorais ──
+  {
+    id: "psa", name: "PSA Total e Livre", category: "Marcadores Tumorais",
+    range: {
+      lab: "<4,0 ng/mL (<50 anos: <2,5) · PSA Livre/Total >25% (benigno)", unit: "ng/mL",
+      classifyFn: (v) => v < 4.0 ? "normal" : v <= 10.0 ? "elevado" : "muito_elevado",
+    },
+    correlations: [
+      "PSA não é específico para câncer — eleva em prostatite, HBP, biopsia, ejaculação recente",
+      "PSA 4–10 ng/mL: zona cinza — razão PSA livre/total <10% sugere câncer; >25% sugere HBP",
+      "PSA >10 ng/mL: risco alto de câncer de próstata — biópsia indicada",
+    ],
+    conducts: [
+      "PSA 4–10 ng/mL: solicitar PSA livre + densitometria de PSA + urologista",
+      "PSA >10 ng/mL: encaminhar urologia para biópsia guiada por USG ou RM multiparamétrica",
+      "Rastreio: SBU recomenda PSA + toque retal anual a partir de 50 anos (45 em alto risco)",
+    ],
+    related: ["PSA livre", "Fosfatase ácida", "RM próstata", "Biópsia de próstata"],
+    notes: "Marcador tumoral com limitações importantes. Sempre interpretar no contexto clínico. Evitar relações sexuais 48h antes da coleta.",
+  },
+  {
+    id: "ca125", name: "CA-125", category: "Marcadores Tumorais",
+    range: {
+      lab: "<35 U/mL", unit: "U/mL",
+      classifyFn: (v) => v < 35 ? "normal" : v <= 200 ? "elevado" : "muito_elevado",
+    },
+    correlations: [
+      "CA-125 eleva em: câncer de ovário (sensibilidade 50–80%), endometriose, mioma, menstruação, gestação, cirrose",
+      "Valor preditivo positivo baixo em mulheres pré-menopausa — endometriose é causa frequente",
+      "Maior utilidade no acompanhamento de câncer de ovário tratado (marcador de resposta/recidiva)",
+    ],
+    conducts: [
+      "CA-125 elevado + massa ovariana: encaminhar ginecologia/oncologia urgente",
+      "CA-125 elevado sem massa: investigar endometriose, cirrose; repetir em 6 semanas",
+      "Não usar como rastreio populacional de câncer de ovário — evidência não suporta",
+    ],
+    related: ["HE4", "USG pélvica", "CA-19-9", "CEA", "RM pélvica"],
+    notes: "Não específico para câncer de ovário. Sempre correlacionar com clínica e imagem.",
+  },
+  {
+    id: "cea", name: "CEA (Antígeno Carcinoembrionário)", category: "Marcadores Tumorais",
+    range: {
+      lab: "<3,0 ng/mL (não fumante) · <5,0 ng/mL (fumante)", unit: "ng/mL",
+      classifyFn: (v) => v < 3.0 ? "normal" : v <= 5.0 ? "limítrofe" : v <= 20 ? "elevado" : "muito_elevado",
+    },
+    correlations: [
+      "CEA útil principalmente no SEGUIMENTO de câncer colorretal tratado — não para rastreio",
+      "CEA eleva em: câncer de cólon, mama, pulmão, pâncreas; cirrose, doença inflamatória intestinal, tabagismo",
+      "CEA >20 ng/mL com câncer conhecido: sugere doença avançada ou metástase",
+    ],
+    conducts: [
+      "CEA elevado sem câncer conhecido: colonoscopia + TC tórax/abdome/pelve",
+      "CEA em câncer colorretal tratado: dosar pré e pós-cirurgia; aumento em seguimento = provável recidiva",
+      "Não usar como rastreio de câncer colorretal — colonoscopia é o padrão-ouro",
+    ],
+    related: ["CA-19-9", "AFP", "Colonoscopia", "TC abdome"],
+    notes: "Não específico — eleva em fumantes e condições benignas. Uso principal: seguimento de ca colorretal.",
+  },
 ]
 
 // Group by category

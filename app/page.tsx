@@ -151,7 +151,7 @@ function Logo({ size = 28 }: { size?: number }) {
 
 export default function LandingPage() {
   const { user } = useAuth()
-  const ctaHref  = user ? "/dashboard" : "/planos"
+  const ctaHref  = "/planos"
 
   const [atividadeIdx, setAtividadeIdx] = useState(0)
   const [faqOpen,      setFaqOpen]      = useState<number | null>(null)
@@ -178,11 +178,18 @@ export default function LandingPage() {
             onMouseEnter={e => (e.currentTarget.style.color = "#0D1B2A")} onMouseLeave={e => (e.currentTarget.style.color = "#6a5a4a")}>
             Planos
           </Link>
-          <Link href="/login" className="text-[12px] transition-colors" style={{ color: "#6a5a4a" }}
-            onMouseEnter={e => (e.currentTarget.style.color = "#0D1B2A")} onMouseLeave={e => (e.currentTarget.style.color = "#6a5a4a")}>
-            Entrar
-          </Link>
-          <Link href={ctaHref}
+          {user ? (
+            <Link href="/dashboard" className="text-[12px] transition-colors" style={{ color: "#6a5a4a" }}
+              onMouseEnter={e => (e.currentTarget.style.color = "#0D1B2A")} onMouseLeave={e => (e.currentTarget.style.color = "#6a5a4a")}>
+              Acessar plataforma
+            </Link>
+          ) : (
+            <Link href="/login" className="text-[12px] transition-colors" style={{ color: "#6a5a4a" }}
+              onMouseEnter={e => (e.currentTarget.style.color = "#0D1B2A")} onMouseLeave={e => (e.currentTarget.style.color = "#6a5a4a")}>
+              Entrar
+            </Link>
+          )}
+          <Link href="/planos"
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-bold transition-all hover:opacity-90"
             style={{ background: "#b8976a", color: "#0D1B2A" }}>
             Começar grátis <ArrowRight className="w-3.5 h-3.5" />

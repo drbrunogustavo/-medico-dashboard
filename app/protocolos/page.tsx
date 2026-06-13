@@ -10,7 +10,7 @@ import {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type Especialidade = "Endocrinologia" | "Nutrologia" | "Cardiologia" | "Geral"
+type Especialidade = "Endocrinologia" | "Nutrologia" | "Cardiologia" | "Ginecologia" | "Reumatologia" | "Neurologia" | "Geral"
 
 interface SecaoProtocolo {
   titulo: string
@@ -572,15 +572,517 @@ const PROTOCOLOS: Protocolo[] = [
       ],
     },
   },
+  // ── DHGNA ──
+  {
+    id: "dhgna",
+    nome: "DHGNA / Esteatose Hepática",
+    especialidade: "Nutrologia",
+    cor: "#f59e0b",
+    emoji: "🫀",
+    diagnostico: {
+      titulo: "Diagnóstico",
+      items: [
+        "DHGNA: esteatose >5% dos hepatócitos sem causa secundária (álcool, medicamentos)",
+        "NASH (esteato-hepatite): esteatose + inflamação + balonização hepatocitária ± fibrose",
+        "USG abdome: ecodensidade hepática aumentada (sensibilidade 60–94% para >30% de gordura)",
+        "Score FIB-4 = [Idade × AST] / [Plaquetas × √ALT]: <1,30 (baixo risco fibrose); >2,67 (alto risco)",
+        "Elastografia hepática (FibroScan): kPa >7,0 sugere fibrose significativa (F≥2)",
+        "Biópsia: padrão-ouro para graduação de NASH e estadiamento de fibrose",
+      ],
+    },
+    exames: {
+      titulo: "Exames",
+      items: [
+        "Hepatograma (TGO, TGP, GGT, FA, Bilirrubinas)",
+        "Albumina, TP/INR — função hepática sintética",
+        "FIB-4 score — calculado a partir de ALT, AST, plaquetas e idade",
+        "USG abdominal — esteatose, esplenomegalia, hipertensão portal",
+        "Elastografia hepática (FibroScan) — fibrose avançada",
+        "Glicemia, insulina, HOMA-IR, HbA1c — resistência insulínica",
+        "Lipidograma, TG — associação com síndrome metabólica",
+        "Ferritina, saturação de transferrina — hemocromatose como diagnóstico diferencial",
+      ],
+    },
+    tratamento: {
+      titulo: "Tratamento",
+      items: [
+        "Perda de peso ≥7–10%: reduz esteatose e NASH (intervenção mais eficaz)",
+        "Dieta mediterrânea ou low-carb: evidência para redução de gordura hepática",
+        "Exercício: 150–300 min/semana aeróbico + resistido — reduz TGP independentemente do peso",
+        "Eliminar frutose, álcool e bebidas açucaradas — principais drivers da lipogênese hepática",
+        "Vitamina E 800 UI/dia: melhora NASH histologicamente em não-diabéticos (PIVENS trial)",
+        "GLP-1 RA (semaglutida): reduz marcadores de fibrose — ensaios em fase III (NASH trial)",
+        "iSGLT2 (empagliflozina): reduz TGP e gordura hepática em DM2 + DHGNA",
+        "Evitar hepatotóxicos: AINEs, estatinas (se TGP >3× LSN), suplementos não regulados",
+      ],
+    },
+    acompanhamento: {
+      titulo: "Acompanhamento",
+      items: [
+        "Hepatograma a cada 3–6 meses até normalização",
+        "FIB-4 anual: se >1,30, solicitar elastografia",
+        "USG anual para vigilância de hepatocarcinoma em cirrose",
+        "Repetir elastografia em 2–3 anos em fibrose F1–F2",
+        "Meta metabólica: HbA1c <7%, TG <150, PA <130/80",
+        "Encaminhar hepatologia se: FIB-4 >2,67, cirrose suspeita, sangramento GI",
+      ],
+    },
+  },
+  // ── GINECOLOGIA ──
+  {
+    id: "sop",
+    nome: "SOP — Síndrome do Ovário Policístico",
+    especialidade: "Ginecologia",
+    cor: "#e1306c",
+    emoji: "🌸",
+    diagnostico: {
+      titulo: "Diagnóstico (Rotterdam — 2 de 3)",
+      items: [
+        "Oligo/anovulação: ciclos <21d ou >35d, ou <8 ciclos/ano",
+        "Hiperandrogenismo clínico: acne, hirsutismo (Ferriman-Gallwey ≥8), alopecia androgênica",
+        "Hiperandrogenismo laboratorial: testosterona total elevada, DHEA-S elevado",
+        "USG pélvica: ≥20 folículos de 2–9 mm em ao menos um ovário OU volume ovárico >10 mL",
+        "Excluir: hiperprolactinemia, disfunção tireoidiana, hiperplasia adrenal congênita, Cushing",
+        "Rastrear: síndrome metabólica, resistência insulínica, dislipidemia, saúde mental",
+      ],
+    },
+    exames: {
+      titulo: "Exames",
+      items: [
+        "Testosterona total e livre, DHEA-S, 17-OH-Progesterona",
+        "LH, FSH (D2–D5): razão LH/FSH >2 sugestiva",
+        "TSH — excluir hipotireoidismo",
+        "Prolactina — excluir hiperprolactinemia",
+        "Glicemia jejum, insulina, HOMA-IR — resistência insulínica (presente em 50–70%)",
+        "HbA1c, TOTG 75g — rastreio pré-DM/DM",
+        "Lipidograma completo — dislipidemia associada em 70%",
+        "USG pélvica transvaginal (D3–D5 de preferência)",
+      ],
+    },
+    tratamento: {
+      titulo: "Tratamento",
+      items: [
+        "MEV: perda de 5–10% do peso melhora ciclicidade menstrual e ovulação",
+        "Mioinositol 2g 2x/dia + ácido fólico: melhora sensibilidade insulínica e ovulação (1ª linha funcional)",
+        "Metformina 500 mg → 1.500–2.000 mg/dia: melhora RI, ciclicidade e hiperandrogenismo",
+        "ACO combinado (EE 20–30 mcg + progestogênio antiandrogênico): controle de acne, hirsutismo e proteção endometrial",
+        "Espironolactona 50–200 mg/dia: antiandrogênico para hirsutismo e acne (off-label, contracepção obrigatória)",
+        "Indução de ovulação (fertilidade): letrozol 2,5–5 mg D3–D7 (superior ao clomifeno — NEJM 2014)",
+        "Finasterida 2,5–5 mg/dia: alopecia androgênica severa resistente",
+        "Vitamina D, magnésio, ômega-3: suporte metabólico adjuvante",
+      ],
+    },
+    acompanhamento: {
+      titulo: "Acompanhamento",
+      items: [
+        "Ciclo menstrual e sintomas androgenicos a cada consulta",
+        "HOMA-IR e glicemia a cada 6 meses",
+        "Lipidograma e PA anual",
+        "USG pélvica anual — monitorar folículos e espessura endometrial",
+        "Rastreio humor: ansiedade e depressão são mais frequentes em SOP",
+        "Gravidez: sem contracepção + letrozol — ovulação esperada em 70–80%",
+      ],
+    },
+  },
+  {
+    id: "endometriose",
+    nome: "Endometriose",
+    especialidade: "Ginecologia",
+    cor: "#c084fc",
+    emoji: "🔮",
+    diagnostico: {
+      titulo: "Diagnóstico",
+      items: [
+        "Clínico: dismenorreia severa (EVA >7), dispareunia profunda, dor pélvica crônica, infertilidade",
+        "Diagnóstico definitivo: laparoscopia + biópsia (glândulas e estroma ectópico)",
+        "USG transvaginal: endometrioma ovariano (cisto chocolate), nódulos retrocervicais",
+        "RNM pélvica: avalia profundidade de infiltração (endometriose profunda)",
+        "CA-125: elevado em endometriose severa — inespecífico, uso limitado",
+        "Classificação rASRM: I (mínima) a IV (severa) pela laparoscopia",
+      ],
+    },
+    exames: {
+      titulo: "Exames",
+      items: [
+        "USG pélvica transvaginal — endometriomas, nódulos",
+        "RNM pélvica com preparo intestinal — profundidade de infiltração",
+        "CA-125 — monitoramento de resposta, não diagnóstico",
+        "AMH — reserva ovariana (reduzida em endometriomas)",
+        "FSH, LH, estradiol — função ovariana",
+        "Uroressonância / colonoscopia se suspeita de endometriose urinária/intestinal",
+        "Laparoscopia diagnóstica + terapêutica quando indicada",
+      ],
+    },
+    tratamento: {
+      titulo: "Tratamento",
+      items: [
+        "Dor leve: AINEs (ibuprofeno 400–600 mg 3x/dia) no período perimenstrual",
+        "ACO contínuo (sem pausa): suprime ciclo, reduz dor em 70% — 1ª linha hormonal",
+        "Progestágenos: dienogeste 2 mg/dia (Visanne) — padrão ouro hormonal para dor",
+        "SIU-LNG (Mirena): opção para dor pélvica + contracepção",
+        "Análogos de GnRH (goserelina, leuprolida): grave/refratária — add-back obrigatório >3 meses",
+        "Cirurgia laparoscópica: exérese de endometriomas, ressecção de nódulos profundos",
+        "Fertilidade: laparoscopia + FIV se necessário — cirurgia melhora taxa de gravidez em endometrioma",
+        "Suporte: psicoterapia, fisioterapia pélvica, gestão da dor crônica",
+      ],
+    },
+    acompanhamento: {
+      titulo: "Acompanhamento",
+      items: [
+        "Avaliação de dor (EVA) a cada consulta",
+        "USG anual para monitorar endometriomas",
+        "AMH periódico em mulheres com endometriomas — risco de falência ovariana precoce",
+        "Recorrência após cirurgia: 20–30% em 5 anos — manutenção hormonal reduz recidiva",
+        "Rastrear: depressão, fadiga, saúde sexual — impacto significativo na qualidade de vida",
+        "Encaminhar reprodução humana se desejo de gravidez sem sucesso após 6 meses",
+      ],
+    },
+  },
+  // ── CARDIOLOGIA ──
+  {
+    id: "has",
+    nome: "Hipertensão Arterial Sistêmica",
+    especialidade: "Cardiologia",
+    cor: "#ef4444",
+    emoji: "❤️",
+    diagnostico: {
+      titulo: "Diagnóstico",
+      items: [
+        "PA ≥140/90 mmHg em ≥2 medições em ≥2 visitas: diagnóstico de HAS",
+        "PA 130–139/80–89: pré-hipertensão (AHA/ACC 2017) — MEV obrigatória",
+        "Hipertensão do avental branco: PA elevada no consultório, normal em MAPA — não tratar",
+        "Hipertensão mascarada: PA normal no consultório, elevada em MAPA — maior risco CV",
+        "MAPA 24h: gold standard diagnóstico — excluir fenômenos white-coat e mascarada",
+        "Estratificar risco CV: Framingham, escore de risco brasileiro (ERB)",
+        "Investigar HAS secundária: hiperaldosteronismo (10%), apneia do sono, doença renal, feocromocitoma",
+      ],
+    },
+    exames: {
+      titulo: "Exames",
+      items: [
+        "MAPA 24h ou MRPA — confirmar diagnóstico e avaliar padrão circadiano",
+        "Glicemia, HbA1c — DM como fator de risco",
+        "Creatinina + TFGe — lesão de órgão-alvo renal",
+        "Microalbuminúria (RAC) — nefropatia hipertensiva precoce",
+        "Potássio — hipoCalemia espontânea sugere hiperaldosteronismo",
+        "ECG — HVE, arritmias",
+        "Fundoscopia — retinopatia hipertensiva",
+        "RAR (Aldosterona/Renina) se HAS resistente ou hipocalemia",
+      ],
+    },
+    tratamento: {
+      titulo: "Tratamento",
+      items: [
+        "MEV: perda de peso, DASH, restrição de sódio <2g/dia, exercício ≥150 min/semana, cessação tabágica",
+        "1ª linha: IECA (enalapril 5–40 mg) ou BRA (losartana 50–100 mg) — especialmente DM/DRC",
+        "1ª linha alternativa: BCC (anlodipino 5–10 mg) ou diurético tiazídico (HCTZ 12,5–25 mg)",
+        "HAS + DM ou DRC: IECA/BRA obrigatório + iSGLT2 se TFGe >20",
+        "HAS + IC: IECA + beta-bloqueador + espironolactona",
+        "HAS resistente (3+ drogas): adicionar espironolactona 25–50 mg/dia (PATHWAY-2)",
+        "Metas PA: <130/80 mmHg (geral) / <140/90 (idosos frágeis >75 anos)",
+      ],
+    },
+    acompanhamento: {
+      titulo: "Acompanhamento",
+      items: [
+        "PA, FC e peso a cada consulta",
+        "Creatinina + K após início de IECA/BRA (em 2–4 semanas)",
+        "Microalbuminúria anual em DM e DRC",
+        "ECG anual — progressão de HVE",
+        "Risco CV (Framingham/ERB): reclassificar anualmente",
+        "HAS controlada: consulta a cada 3–6 meses",
+        "Refratária: encaminhar cardiologia ou nefrologia",
+      ],
+    },
+  },
+  {
+    id: "dislipidemia-av",
+    nome: "Dislipidemia — Alto Risco CV",
+    especialidade: "Cardiologia",
+    cor: "#f97316",
+    emoji: "💊",
+    diagnostico: {
+      titulo: "Diagnóstico e Estratificação",
+      items: [
+        "LDL-c calculado (Friedewald) ou direto — principal alvo",
+        "Non-HDL-c = CT - HDL-c: inclui LDL + VLDL + IDL — alvo secundário",
+        "ApoB: melhor marcador de risco aterogênico — cada partícula LDL/VLDL carrega 1 ApoB",
+        "Muito alto risco: DCV estabelecida, DM2 com LOA, DRC G3–G4, Framingham >20%",
+        "Alto risco: Framingham 10–20%, DM1 ou DM2 sem LOA, HAS grave, colesterolemia familiar",
+        "Lp(a) >50 mg/dL: fator independente de risco — medir ao menos uma vez na vida",
+      ],
+    },
+    exames: {
+      titulo: "Exames",
+      items: [
+        "Lipidograma completo (CT, LDL, HDL, TG) — em jejum de 12h se TG elevado",
+        "ApoB — partículas aterogênicas totais",
+        "Lp(a) — risco residual genético",
+        "PCR-as — inflamação vascular",
+        "Glicemia, HbA1c — DM como modificador de risco",
+        "TFGe, microalbuminúria — DRC como modificador de risco",
+        "TSH — hipotireoidismo causa dislipidemia secundária",
+        "CK basal — antes de iniciar estatina",
+      ],
+    },
+    tratamento: {
+      titulo: "Tratamento",
+      items: [
+        "Dieta: mediterrânea, redução de gordura saturada, aumento de fibras e ômega-3",
+        "Estatina alta intensidade: rosuvastatina 20–40 mg ou atorvastatina 40–80 mg (reduz LDL 50–55%)",
+        "Meta LDL: <70 mg/dL (alto risco) / <55 mg/dL (muito alto risco) / <50 mg/dL (DCV+ novo evento)",
+        "Ezetimiba 10 mg: adicionar se meta não atingida com estatina (IMPROVE-IT: -6% eventos CV)",
+        "PCSK9i (evolocumabe, alirocumabe): reduz LDL 50–60% adicional — alto custo",
+        "Inclisirán: siRNA semestral — alternativa PCSK9i de longa ação",
+        "TG >500: fenofibrato 200 mg/dia + ômega-3 (EPA/DHA ≥4 g/dia)",
+        "Intolernância à estatina: rosuvastatina em dias alternados + ezetimiba",
+      ],
+    },
+    acompanhamento: {
+      titulo: "Acompanhamento",
+      items: [
+        "Lipidograma + CK 4–8 semanas após início ou ajuste",
+        "Meta atingida: lipidograma anual",
+        "CK se mialgia: suspender se >10× LSN ou mialgia grave",
+        "Hepático: transaminases antes e 3 meses após início (não rotina após estabilização)",
+        "ApoB: meta <80 mg/dL (alto risco) / <65 mg/dL (muito alto risco)",
+        "Lp(a) elevado: não muda com estatina — estratégia de minimizar outros riscos",
+      ],
+    },
+  },
+  // ── REUMATOLOGIA ──
+  {
+    id: "ar",
+    nome: "Artrite Reumatoide",
+    especialidade: "Reumatologia",
+    cor: "#8b5cf6",
+    emoji: "🦴",
+    diagnostico: {
+      titulo: "Diagnóstico (ACR/EULAR 2010 — score ≥6)",
+      items: [
+        "Artrite simétrica de pequenas articulações (IFP, MCF, punhos) por ≥6 semanas",
+        "FR (IgM): positivo em 70–80% — inespecífico isolado",
+        "Anti-CCP (ACPA): alta especificidade (95%) — diagnóstico AR mesmo FR negativo",
+        "PCR e VHS: marcadores de atividade inflamatória",
+        "Rigidez matinal >60 min: sugestiva de inflamação sinovial ativa",
+        "Erosões ósseas em RX — artrite erosiva estabelecida",
+        "Excluir: artrite psoriásica, LES, gota, infecção (artrite séptica)",
+      ],
+    },
+    exames: {
+      titulo: "Exames",
+      items: [
+        "FR + Anti-CCP — diagnóstico e prognóstico",
+        "PCR-as + VHS — atividade inflamatória",
+        "Hemograma — anemia de doença crônica, leucopenia (DMARD)",
+        "Creatinina, TFGe — baseline antes de DMARDs",
+        "Transaminases (AST, ALT) — hepatotoxicidade metotrexato",
+        "RX mãos e pés — erosões, espaço articular",
+        "USG articular com Doppler — sinovite, erosões subclínicas",
+        "PPD/IGRA + RX tórax — antes de biológicos (rastrear TB latente)",
+      ],
+    },
+    tratamento: {
+      titulo: "Tratamento",
+      items: [
+        "Metotrexato (MTX): 10–25 mg/semana VO ou SC — anchor drug da AR",
+        "Ácido fólico 5 mg/semana (24h após MTX): reduz toxicidade hematológica e hepática",
+        "Leflunomida 20 mg/dia: alternativa ao MTX ou combo",
+        "Hidroxicloroquina 5 mg/kg/dia: adjuvante, especialmente em AR inicial leve",
+        "Corticoide (prednisona ≤10 mg/dia): bridge terapêutico — reduzir e cessar em 3–6 meses",
+        "Biológico anti-TNF (adalimumabe, certolizumabe): falha a 2 DMARDs sintéticos",
+        "JAK inibidores (baricitinibe, tofacitinibe): alternativa oral a biológicos",
+        "Meta T2T: remissão (DAS28 <2,6) ou baixa atividade (DAS28 <3,2) em 6 meses",
+      ],
+    },
+    acompanhamento: {
+      titulo: "Acompanhamento",
+      items: [
+        "DAS28 ou CDAI a cada consulta — avaliar atividade de doença",
+        "Hemograma, TGO/TGP, creatinina: mensal nos primeiros 6 meses de MTX; depois 3–6 meses",
+        "RX mãos/pés anual — progressão erosiva",
+        "Rastrear: dislipidemia, DCV (risco 2x maior em AR), osteoporose",
+        "Vacinas: influenza, pneumococo, herpes zóster — antes de biológicos",
+        "Biológico: rastrear infecções oportunistas, tuberculose",
+        "Remissão sustentada >12 meses: considerar desmame gradual de DMARDs",
+      ],
+    },
+  },
+  {
+    id: "fibromialgia",
+    nome: "Fibromialgia",
+    especialidade: "Reumatologia",
+    cor: "#06b6d4",
+    emoji: "🧠",
+    diagnostico: {
+      titulo: "Diagnóstico (ACR 2010/2016)",
+      items: [
+        "Dor generalizada bilateral (>3 meses) acima e abaixo da cintura, incluindo axial",
+        "Índice de dor generalizada (WPI) ≥7 + pontuação de gravidade dos sintomas (SS) ≥5",
+        "Ou WPI 4–6 + SS ≥9",
+        "Sintomas associados: fadiga, sono não reparador, disfunção cognitiva (fibro fog)",
+        "Excluir: hipotireoidismo, polimialgia reumática, LES, miosite, apneia do sono",
+        "Fibromialgia não exclui outras patologias — pode coexistir com AR, espondiloartrite",
+      ],
+    },
+    exames: {
+      titulo: "Exames",
+      items: [
+        "TSH — hipotireoidismo mimetiza fibromialgia",
+        "Hemograma, VHS, PCR — excluir doença inflamatória sistêmica",
+        "FAN, FR, Anti-CCP — excluir autoimune",
+        "CK, aldolase — excluir miopatia inflamatória",
+        "Vitamina D, magnésio, B12 — deficiências agravam sintomas",
+        "Polissonografia se insônia grave ou suspeita de apneia",
+        "Exames normais na fibromialgia — serve para excluir outros diagnósticos",
+      ],
+    },
+    tratamento: {
+      titulo: "Tratamento",
+      items: [
+        "Educação: explicar o mecanismo (sensibilização central) — fundamental para adesão",
+        "Exercício aeróbico: intervenção mais eficaz — caminhada, natação, ciclismo, 3–5x/semana",
+        "Duloxetina 30 → 60–120 mg/dia: analgesia central + componente depressivo",
+        "Pregabalina 75 → 300–450 mg/dia: reduz sensibilização central, melhora sono",
+        "Amitriptilina 10–25 mg/noite: melhora sono e dor em baixas doses",
+        "Milnaciprano (ISRSN): alternativa à duloxetina se predomina fadiga",
+        "TCC (Terapia Cognitivo-Comportamental): melhor evidência psicoterapêutica",
+        "Evitar opioides — ineficazes na fibromialgia e causam hiperalgesia por opioide",
+      ],
+    },
+    acompanhamento: {
+      titulo: "Acompanhamento",
+      items: [
+        "FIQ (Fibromyalgia Impact Questionnaire) — avaliar resposta",
+        "EVA de dor, qualidade do sono e fadiga a cada consulta",
+        "Ajuste de medicação a cada 4–8 semanas até dose terapêutica",
+        "Psicoterapia: mínimo 12 sessões de TCC",
+        "Encaminhar reumatologia se diagnóstico incerto ou refratariedade",
+        "Fibromialgia é crônica — meta realista: redução 30% da dor + melhora funcional",
+      ],
+    },
+  },
+  // ── NEUROLOGIA ──
+  {
+    id: "depressao",
+    nome: "Depressão Maior",
+    especialidade: "Neurologia",
+    cor: "#6366f1",
+    emoji: "🧠",
+    diagnostico: {
+      titulo: "Diagnóstico (DSM-5)",
+      items: [
+        "≥5 sintomas por ≥2 semanas, incluindo: humor deprimido OU anedonia",
+        "Outros: alteração de peso/apetite, insônia/hipersonia, fadiga, culpa excessiva, dificuldade de concentração, pensamentos de morte",
+        "PHQ-9 ≥10: depressão moderada a grave",
+        "Excluir: hipotireoidismo, anemia, deficiência de B12/D, apneia, medicamentos (betabloq., corticoide)",
+        "Diferenciar: distimia (crônica/leve), transtorno bipolar (contraindicação antidepressivo em monot.)",
+        "Avaliar ideação suicida em toda consulta",
+      ],
+    },
+    exames: {
+      titulo: "Exames",
+      items: [
+        "TSH, T4L — hipotireoidismo mimetiza depressão",
+        "Hemograma, ferritina — anemia como causa de fadiga/humor",
+        "Vitamina B12, folato — déficit = causa tratável",
+        "Vitamina D — associada à depressão (evidência moderada)",
+        "Glicemia, HbA1c — DM2 aumenta risco depressão 2x",
+        "Cortisol matinal — excluir hipocortisolismo",
+        "PHQ-9 + GAD-7 + escala de Hamilton — quantificar e monitorar",
+        "RNM crânio se: início tardio, sintomas atípicos, déficit neurológico",
+      ],
+    },
+    tratamento: {
+      titulo: "Tratamento",
+      items: [
+        "ISRS: sertralina 50 → 200 mg/dia (1ª linha — seguro, bem tolerado)",
+        "ISRS alternativa: escitalopram 10–20 mg/dia (melhor perfil de efeitos adversos)",
+        "IRSN: venlafaxina 75 → 225 mg/dia (dor + depressão) ou duloxetina 60–120 mg",
+        "Mirtazapina 15–45 mg/noite: insônia + depressão + perda de peso",
+        "Bupropiona 150–300 mg: sem disfunção sexual + cessação tabágica",
+        "Avaliar resposta em 4–6 semanas: redução PHQ-9 ≥50% = boa resposta",
+        "Refratário a 2 ISRS: encaminhar psiquiatria — augmentação (lítio, aripiprazol, quetiapina)",
+        "Psicoterapia: TCC — eficácia igual ao antidepressivo em leve/moderado; potencializa em grave",
+      ],
+    },
+    acompanhamento: {
+      titulo: "Acompanhamento",
+      items: [
+        "PHQ-9 a cada 4 semanas até remissão (PHQ-9 <5)",
+        "Manter antidepressivo por ≥6–12 meses após remissão (reduz recaída em 50%)",
+        "2º episódio: manter ≥2 anos; ≥3 episódios: tratar indefinidamente",
+        "Disfunção sexual: efeito adverso comum dos ISRS — trocar por bupropiona ou mirtazapina",
+        "Suicidalidade: reavaliação imediata — internação se risco alto",
+        "Encaminhar psiquiatria: refratário, bipolar, psicose, alto risco suicida",
+      ],
+    },
+  },
+  {
+    id: "enxaqueca",
+    nome: "Enxaqueca (Migrânea)",
+    especialidade: "Neurologia",
+    cor: "#7c3aed",
+    emoji: "⚡",
+    diagnostico: {
+      titulo: "Diagnóstico (IHS-3)",
+      items: [
+        "≥5 crises: cefaleia unilateral, pulsátil, moderada/grave, 4–72h",
+        "Náusea/vômito OU foto/fonofobia durante a crise",
+        "Piora com atividade física rotineira",
+        "Enxaqueca com aura: sintomas neurológicos reversíveis precedendo a dor (visual, sensitivo, motor)",
+        "Enxaqueca crônica: ≥15 dias/mês, dos quais ≥8 com características de migrânea",
+        "Excluir cefaleia secundária: rigidez de nuca, febre, deficit neurológico, 'thunderclap headache'",
+      ],
+    },
+    exames: {
+      titulo: "Exames",
+      items: [
+        "Diagnóstico clínico — exames para excluir causa secundária",
+        "RNM crânio com contraste: se: aura prolongada, progressão, >50 anos, sintomas atípicos",
+        "Hemograma, TSH — causas sistêmicas de cefaleia",
+        "Diário de cefaleia: frequência, duração, gatilhos, resposta ao tratamento",
+        "Escala MIDAS: avaliar impacto na qualidade de vida",
+        "Pressão arterial em toda consulta",
+      ],
+    },
+    tratamento: {
+      titulo: "Tratamento",
+      items: [
+        "Crise leve: paracetamol 1g ou AAS 500–1000 mg ± antiemético",
+        "Crise moderada/grave: triptano (sumatriptano 50–100 mg VO ou 6 mg SC) — 1ª linha",
+        "Triptanos + AINE: combinação mais eficaz que monoterapia",
+        "Gepantes (rimegepanto, ubrogepanto): antagonistas CGRP — nova opção sem vasoconstricção",
+        "Profilaxia (≥4 crises/mês ou MIDAS ≥11): propranolol 40–160 mg, amitriptilina 25–75 mg, topiramato 50–100 mg",
+        "Anti-CGRP (fremanezumabe, erenumabe): injeção mensal/trimestral — refratários (aprovado ANVISA)",
+        "Toxina botulínica A 155–195 U: enxaqueca crônica refratária",
+        "Evitar uso de analgésicos >10 dias/mês (cefaleia por uso excessivo de medicamento)",
+      ],
+    },
+    acompanhamento: {
+      titulo: "Acompanhamento",
+      items: [
+        "Diário de cefaleia: frequência, duração, gatilhos mensalmente",
+        "MIDAS a cada 3 meses: avaliar resposta à profilaxia",
+        "Profilaxia: reavaliar eficácia após 3 meses — manter se >50% redução",
+        "Após 12 meses sem crise: considerar desmame gradual",
+        "Cefaleia >15 dias/mês: investigar uso excessivo de analgésicos — desintoxicação",
+        "Gestantes: paracetamol para crise; sumatriptano (2ª opção); propranolol para profilaxia",
+      ],
+    },
+  },
 ]
 
 // ─── Components ───────────────────────────────────────────────────────────────
 
-const ESPECIALIDADES: Especialidade[] = ["Endocrinologia", "Nutrologia", "Cardiologia", "Geral"]
+const ESPECIALIDADES: Especialidade[] = ["Endocrinologia", "Nutrologia", "Cardiologia", "Ginecologia", "Reumatologia", "Neurologia", "Geral"]
 const ESP_CORES: Record<Especialidade, string> = {
   Endocrinologia: "#f59e0b",
   Nutrologia:     "#10b981",
   Cardiologia:    "#ef4444",
+  Ginecologia:    "#e1306c",
+  Reumatologia:   "#8b5cf6",
+  Neurologia:     "#6366f1",
   Geral:          "#7c85a0",
 }
 

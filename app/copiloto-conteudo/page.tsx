@@ -1,9 +1,11 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import {
   Wand2, Loader2, Copy, Check, Film, LayoutGrid,
   BookOpen, X, ChevronRight, Sparkles, Hash, MessageSquare, Zap,
+  BookmarkPlus, CalendarPlus,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -229,23 +231,55 @@ function LegendaAltCard({ data }: { data: LegendaAlt }) {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
-const TOPICOS_SUGERIDOS = [
-  "Resistência à insulina",
-  "Como emagrecer com saúde",
-  "Tireoide: mitos e verdades",
-  "Jejum intermitente",
-  "Vitamina D e imunidade",
-  "Síndrome metabólica",
-  "Longevidade e hormônios",
-  "Pré-diabetes: o que fazer",
+interface TopicoPill {
+  label:     string
+  categoria: string
+}
+
+const TOPICOS_SUGERIDOS: TopicoPill[] = [
+  { label: "Reel sobre resistência insulínica",  categoria: "Endocrinologia" },
+  { label: "Série sobre menopausa",              categoria: "Ginecologia"    },
+  { label: "Carrossel GLP-1",                    categoria: "Endocrinologia" },
+  { label: "Stories longevidade",                categoria: "Preventivo"     },
+  { label: "Conteúdo sono",                      categoria: "Bem-estar"      },
+  { label: "Resistência à insulina",             categoria: "Endocrinologia" },
+  { label: "Jejum intermitente",                 categoria: "Nutrição"       },
+  { label: "Vitamina D e imunidade",             categoria: "Preventivo"     },
 ]
 
 export default function CopilotoConteudoPage() {
-  const [topico,   setTopico]   = useState("")
-  const [contexto, setContexto] = useState("")
-  const [dados,    setDados]    = useState<ConteudoData | null>(null)
-  const [loading,  setLoading]  = useState(false)
-  const [error,    setError]    = useState("")
+  const router = useRouter()
+  const [topico,       setTopico]       = useState("")
+  const [contexto,     setContexto]     = useState("")
+  const [dados,        setDados]        = useState<ConteudoData | null>(null)
+  const [loading,      setLoading]      = useState(false)
+  const [error,        setError]        = useState("")
+  const [salvando,     setSalvando]     = useState(false)
+  const [salvouPauta,  setSalvouPauta]  = useState(false)
+
+  async function salvarEmPautas() {
+    if (!dados) return
+    setSalvando(true)
+    try {
+      await fetch("/api/pautas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          titulo:    dados.topico,
+          categoria: "Conteúdo",
+          prioridade: "Alta",
+          estagio:   "Ideia",
+          descricao: `Pacote gerado pelo Copiloto: Reel, Carrossel, Stories e Legenda`,
+        }),
+      })
+      setSalvouPauta(true)
+      setTimeout(() => setSalvouPauta(false), 3000)
+    } catch {
+      // silently fail
+    } finally {
+      setSalvando(false)
+    }
+  }
 
   async function gerar() {
     if (!topico.trim()) return
@@ -316,14 +350,14 @@ export default function CopilotoConteudoPage() {
             <p className="text-[10px] font-mono text-text-muted uppercase tracking-widest">Sugestões rápidas</p>
             <div className="flex flex-wrap gap-2">
               {TOPICOS_SUGERIDOS.map(t => (
-                <button key={t} onClick={() => setTopico(t)}
+                <button key={t.label} onClick={() => setTopico(t.label)}
                   className={cn(
                     "text-[11px] px-2.5 py-1 rounded-full border transition-all",
-                    topico === t
+                    topico === t.label
                       ? "border-accent-border bg-accent-dim text-accent"
                       : "border-border text-text-muted hover:text-text-secondary hover:border-border-hover"
                   )}>
-                  {t}
+                  {t.label}
                 </button>
               ))}
             </div>
@@ -356,15 +390,32 @@ export default function CopilotoConteudoPage() {
         {/* Results */}
         {dados && !loading && (
           <div className="space-y-5">
-            <div className="flex items-center justify-between">
+            <div className="flex items-start justify-between gap-3">
               <div>
                 <h2 className="text-[15px] font-semibold text-text-primary">Pacote: {dados.topico}</h2>
                 <p className="text-[11px] text-text-muted">4 formatos gerados — clique em &ldquo;Copiar tudo&rdquo; em cada card</p>
               </div>
-              <button onClick={() => setDados(null)}
-                className="w-7 h-7 rounded-lg border border-border flex items-center justify-center text-text-muted hover:text-text-primary transition-colors">
-                <X className="w-3.5 h-3.5" />
-              </button>
+              <div className="flex items-center gap-2">
+                <button onClick={salvarEmPautas} disabled={salvando}
+                  className={cn(
+                    "flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg border transition-all",
+                    salvouPauta
+                      ? "bg-accent-dim border-accent-border text-accent"
+                      : "border-border text-text-muted hover:border-accent-border hover:text-accent"
+                  )}>
+                  {salvando ? <Loader2 className="w-3 h-3 animate-spin" /> : <BookmarkPlus className="w-3 h-3" />}
+                  {salvouPauta ? "Salvo!" : "Salvar em pautas"}
+                </button>
+                <button onClick={() => router.push("/calendario")}
+                  className="flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg border border-border text-text-muted hover:border-accent-border hover:text-accent transition-all">
+                  <CalendarPlus className="w-3 h-3" />
+                  Agendar
+                </button>
+                <button onClick={() => setDados(null)}
+                  className="w-7 h-7 rounded-lg border border-border flex items-center justify-center text-text-muted hover:text-text-primary transition-colors">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">

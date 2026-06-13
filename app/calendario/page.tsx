@@ -3,9 +3,10 @@
 import { useState } from "react"
 import {
   Loader2, CalendarDays, Sparkles, ChevronRight,
-  Copy, Check, X, Film, LayoutGrid, BookOpen, MessageSquare, Hash,
-  Download,
+  Copy, Check, X, Film, LayoutGrid, BookOpen, Hash,
+  Download, Printer, ArrowRight,
 } from "lucide-react"
+import Link from "next/link"
 import { cn } from "@/lib/utils"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -62,11 +63,31 @@ const TEMAS_SUGERIDOS = [
   "Check-up anual",
 ]
 
+// Reel=roxo, Carrossel=azul, Stories=âmbar, Foto/Feed=verde
 const FORMATO_STYLE: Record<string, string> = {
-  Reel:      "bg-red-50 border-red-200 text-red-700",
+  Reel:      "bg-purple-50 border-purple-200 text-purple-700",
   Carrossel: "bg-blue-50 border-blue-200 text-blue-700",
-  Feed:      "bg-purple-50 border-purple-200 text-purple-700",
+  Feed:      "bg-green-50 border-green-200 text-green-700",
+  Foto:      "bg-green-50 border-green-200 text-green-700",
   Stories:   "bg-amber-50 border-amber-200 text-amber-700",
+}
+
+// dot colors for calendar grid
+const FORMATO_DOT: Record<string, string> = {
+  Reel:      "bg-purple-400",
+  Carrossel: "bg-blue-400",
+  Feed:      "bg-green-400",
+  Foto:      "bg-green-400",
+  Stories:   "bg-amber-400",
+}
+
+// module links per formato
+const FORMATO_HREF: Record<string, string> = {
+  Reel:      "/reels",
+  Carrossel: "/carrossel",
+  Stories:   "/stories",
+  Feed:      "/legendas",
+  Foto:      "/legendas",
 }
 
 const PILAR_STYLE: Record<string, string> = {
@@ -81,7 +102,11 @@ const PILAR_DOT: Record<string, string> = {
   Autoridade:     "bg-purple-400",
   Vendas:         "bg-green-400",
   Relacionamento: "bg-pink-400",
+  Preventivo:     "bg-amber-400",
+  Engajamento:    "bg-indigo-400",
 }
+
+interface MixPct { reel: number; carrossel: number; stories: number; foto: number }
 
 const MESES = [
   "Janeiro","Fevereiro","Março","Abril","Maio","Junho",
@@ -194,6 +219,18 @@ function DayModal({ post, onClose }: { post: Post; onClose: () => void }) {
           })}
         </div>
 
+        {/* Gerar conteúdo completo */}
+        <div className="px-5 pt-3">
+          <Link
+            href={FORMATO_HREF[post.formato] ?? "/copiloto-conteudo"}
+            className="w-full flex items-center justify-center gap-2 bg-accent text-white text-[12px] font-semibold rounded-xl py-2.5 hover:bg-accent/90 transition-colors"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            Gerar {post.formato} completo
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+
         {/* Tab content */}
         <div className="overflow-y-auto flex-1 p-5 pt-3">
           {tab === "legenda" && (
@@ -302,7 +339,7 @@ function CalendarGrid({
                     {post && (
                       <div className="flex flex-col gap-0.5">
                         <div className="flex items-center gap-1">
-                          <div className={cn("w-1.5 h-1.5 rounded-full flex-shrink-0", PILAR_DOT[post.pilar] ?? "bg-gray-300")} />
+                          <div className={cn("w-1.5 h-1.5 rounded-full flex-shrink-0", FORMATO_DOT[post.formato] ?? "bg-gray-300")} />
                           <span className="text-[9px] font-mono text-text-muted truncate">{post.formato}</span>
                         </div>
                         <p className="text-[9px] text-text-secondary leading-tight line-clamp-2">{post.tema}</p>
@@ -328,6 +365,7 @@ export default function CalendarioPage() {
   const [especialidade, setEspecialidade] = useState(ESPECIALIDADES[0])
   const [frequencia,    setFrequencia]    = useState(5)
   const [temasSel,      setTemasSel]      = useState<string[]>([])
+  const [mixPct,        setMixPct]        = useState<MixPct>({ reel: 40, carrossel: 30, stories: 20, foto: 10 })
   const [resultado,     setResultado]     = useState<CalendarioResult | null>(null)
   const [loading,       setLoading]       = useState(false)
   const [error,         setError]         = useState("")
@@ -351,6 +389,7 @@ export default function CalendarioPage() {
           pilares: ["Educativo", "Autoridade", "Vendas", "Relacionamento"],
           frequencia,
           temas: temasSel,
+          mix: mixPct,
         }),
       })
       if (!resp.ok) throw new Error(await resp.text())
@@ -394,11 +433,18 @@ export default function CalendarioPage() {
             <p className="text-[11px] text-text-muted mt-1 font-mono uppercase tracking-widest">30 DIAS DE CONTEÚDO COM IA</p>
           </div>
           {resultado && (
-            <button onClick={exportCSV}
-              className="flex items-center gap-2 text-[12px] px-3 py-1.5 rounded-lg border border-border text-text-muted hover:text-text-primary transition-colors">
-              <Download className="w-3.5 h-3.5" />
-              Exportar CSV
-            </button>
+            <div className="flex items-center gap-2">
+              <button onClick={() => window.print()}
+                className="flex items-center gap-2 text-[12px] px-3 py-1.5 rounded-lg border border-border text-text-muted hover:text-text-primary transition-colors">
+                <Printer className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">PDF</span>
+              </button>
+              <button onClick={exportCSV}
+                className="flex items-center gap-2 text-[12px] px-3 py-1.5 rounded-lg border border-border text-text-muted hover:text-text-primary transition-colors">
+                <Download className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">CSV</span>
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -447,6 +493,38 @@ export default function CalendarioPage() {
                 <Pill key={f} label={`${f}x/semana`} active={frequencia === f} onClick={() => setFrequencia(f)} />
               ))}
               <span className="text-[11px] text-text-muted ml-2">≈ {Math.round(frequencia * 4.3)} posts/mês</span>
+            </div>
+          </div>
+
+          {/* Mix de conteúdo */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] font-mono text-text-muted uppercase tracking-widest">Mix de conteúdo (%)</label>
+              <span className="text-[10px] font-mono text-text-muted">
+                Total: {mixPct.reel + mixPct.carrossel + mixPct.stories + mixPct.foto}%
+              </span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {([
+                { key: "reel" as const,      label: "Reels",     dot: "bg-purple-400" },
+                { key: "carrossel" as const, label: "Carrossel", dot: "bg-blue-400"   },
+                { key: "stories" as const,   label: "Stories",   dot: "bg-amber-400"  },
+                { key: "foto" as const,      label: "Foto/Feed", dot: "bg-green-400"  },
+              ]).map(({ key, label, dot }) => (
+                <div key={key} className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <div className={cn("w-2 h-2 rounded-full", dot)} />
+                      <span className="text-[11px] text-text-secondary">{label}</span>
+                    </div>
+                    <span className="text-[11px] font-mono text-accent">{mixPct[key]}%</span>
+                  </div>
+                  <input type="range" min={0} max={70} value={mixPct[key]}
+                    onChange={e => setMixPct(m => ({ ...m, [key]: Number(e.target.value) }))}
+                    className="w-full accent-accent h-1.5"
+                  />
+                </div>
+              ))}
             </div>
           </div>
 

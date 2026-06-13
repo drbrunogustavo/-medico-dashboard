@@ -30,13 +30,24 @@ interface ExecData {
   leads_origem:       { origem: string; count: number }[]
 }
 
+interface TopPost {
+  tema:       string
+  formato:    string
+  curtidas:   number
+  comentarios: number
+}
+
 interface MarketingManual {
   seguidores:      number
   ganho_semanal:   number
   alcance_semanal: number
+  alcance_ant:     number
   posts_mes:       number
   reels_mes:       number
   stories_mes:     number
+  ultimo_post:     string
+  horario_melhor:  string
+  top3:            TopPost[]
 }
 
 interface OperacaoManual {
@@ -74,8 +85,10 @@ function getLocalStorage<T>(key: string, fallback: T): T {
 }
 
 const MKTG_DEFAULT: MarketingManual = {
-  seguidores: 0, ganho_semanal: 0, alcance_semanal: 0,
+  seguidores: 0, ganho_semanal: 0, alcance_semanal: 0, alcance_ant: 0,
   posts_mes: 0, reels_mes: 0, stories_mes: 0,
+  ultimo_post: "", horario_melhor: "19h",
+  top3: [],
 }
 
 const OPS_DEFAULT: OperacaoManual = {
@@ -158,9 +171,25 @@ function AbaMarketing({ mktg, onSave }: {
   const [editing, setEditing] = useState(false)
   const [draft,   setDraft]   = useState<MarketingManual>(mktg)
 
-  const diasSemAtividade = mktg.posts_mes === 0 ? 7 : Math.floor(30 / Math.max(mktg.posts_mes, 1))
+  // days since last post
+  const diasSemPost = (() => {
+    if (!mktg.ultimo_post) return null
+    const diff = Date.now() - new Date(mktg.ultimo_post).getTime()
+    return Math.floor(diff / 86400000)
+  })()
+
+  const alcanceDiff = mktg.alcance_ant > 0
+    ? Math.round((mktg.alcance_semanal - mktg.alcance_ant) / mktg.alcance_ant * 100)
+    : null
 
   function save() { onSave(draft); setEditing(false) }
+
+  function updateTop3(i: number, field: keyof TopPost, val: string | number) {
+    const arr = [...(draft.top3 ?? [])]
+    if (!arr[i]) arr[i] = { tema: "", formato: "Reel", curtidas: 0, comentarios: 0 }
+    arr[i] = { ...arr[i], [field]: val }
+    setDraft(d => ({ ...d, top3: arr }))
+  }
 
   return (
     <div className="space-y-6">
@@ -175,7 +204,7 @@ function AbaMarketing({ mktg, onSave }: {
             </button>
           </div>
         ) : (
-          <button onClick={() => { setDraft(mktg); setEditing(true) }}
+          <button onClick={() => { setDraft({ ...mktg }); setEditing(true) }}
             className="text-[12px] px-3 py-1.5 rounded-lg border border-border text-text-muted hover:text-text-primary transition-colors flex items-center gap-1.5">
             <Edit3 className="w-3.5 h-3.5" /> Editar dados
           </button>
@@ -183,15 +212,67 @@ function AbaMarketing({ mktg, onSave }: {
       </div>
 
       {editing ? (
-        <div className="rounded-xl border border-border bg-surface p-5">
-          <p className="text-[11px] text-text-muted mb-4">Insira seus dados de marketing Instagram manualmente ou conecte via /instagram</p>
+        <div className="rounded-xl border border-border bg-surface p-5 space-y-5">
+          <p className="text-[11px] text-text-muted">Insira seus dados do Instagram. Dados salvos localmente no navegador.</p>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            <EditableField label="Seguidores totais" value={draft.seguidores}      onChange={v => setDraft(d => ({...d, seguidores: v}))} />
-            <EditableField label="Ganho esta semana" value={draft.ganho_semanal}   onChange={v => setDraft(d => ({...d, ganho_semanal: v}))} />
-            <EditableField label="Alcance semanal"   value={draft.alcance_semanal} onChange={v => setDraft(d => ({...d, alcance_semanal: v}))} />
-            <EditableField label="Posts no mês"      value={draft.posts_mes}       onChange={v => setDraft(d => ({...d, posts_mes: v}))} />
-            <EditableField label="Reels no mês"      value={draft.reels_mes}       onChange={v => setDraft(d => ({...d, reels_mes: v}))} />
-            <EditableField label="Stories no mês"    value={draft.stories_mes}     onChange={v => setDraft(d => ({...d, stories_mes: v}))} />
+            <EditableField label="Seguidores totais"       value={draft.seguidores}      onChange={v => setDraft(d => ({...d, seguidores: v}))} />
+            <EditableField label="Ganho esta semana"       value={draft.ganho_semanal}   onChange={v => setDraft(d => ({...d, ganho_semanal: v}))} />
+            <EditableField label="Alcance semanal"         value={draft.alcance_semanal} onChange={v => setDraft(d => ({...d, alcance_semanal: v}))} />
+            <EditableField label="Alcance semana anterior" value={draft.alcance_ant}     onChange={v => setDraft(d => ({...d, alcance_ant: v}))} />
+            <EditableField label="Posts no mês"            value={draft.posts_mes}       onChange={v => setDraft(d => ({...d, posts_mes: v}))} />
+            <EditableField label="Reels no mês"            value={draft.reels_mes}       onChange={v => setDraft(d => ({...d, reels_mes: v}))} />
+            <EditableField label="Stories no mês"          value={draft.stories_mes}     onChange={v => setDraft(d => ({...d, stories_mes: v}))} />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-[10px] font-mono text-text-muted uppercase tracking-wider">Data último post</label>
+              <input type="date" value={draft.ultimo_post}
+                onChange={e => setDraft(d => ({...d, ultimo_post: e.target.value}))}
+                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-[13px] text-text-primary focus:outline-none focus:border-accent/50 transition-colors"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-mono text-text-muted uppercase tracking-wider">Melhor horário para publicar</label>
+              <input type="text" value={draft.horario_melhor} placeholder="ex: 19h"
+                onChange={e => setDraft(d => ({...d, horario_melhor: e.target.value}))}
+                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-[13px] text-text-primary focus:outline-none focus:border-accent/50 transition-colors"
+              />
+            </div>
+          </div>
+
+          {/* Top 3 Posts */}
+          <div>
+            <p className="text-[10px] font-mono text-text-muted uppercase tracking-wider mb-3">Top 3 Posts do Mês</p>
+            <div className="space-y-3">
+              {[0, 1, 2].map(i => (
+                <div key={i} className="rounded-lg border border-border bg-background p-3 space-y-2">
+                  <p className="text-[10px] font-mono text-text-muted">Post #{i + 1}</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <div className="col-span-2">
+                      <input placeholder="Tema do post"
+                        value={draft.top3?.[i]?.tema ?? ""}
+                        onChange={e => updateTop3(i, "tema", e.target.value)}
+                        className="w-full bg-surface border border-border rounded-lg px-2.5 py-1.5 text-[12px] text-text-primary focus:outline-none focus:border-accent/50"
+                      />
+                    </div>
+                    <select value={draft.top3?.[i]?.formato ?? "Reel"}
+                      onChange={e => updateTop3(i, "formato", e.target.value)}
+                      className="bg-surface border border-border rounded-lg px-2 py-1.5 text-[12px] text-text-primary focus:outline-none">
+                      {["Reel","Carrossel","Stories","Foto"].map(f => <option key={f}>{f}</option>)}
+                    </select>
+                    <div className="flex gap-1">
+                      <input type="number" placeholder="❤️"
+                        value={draft.top3?.[i]?.curtidas ?? ""}
+                        onChange={e => updateTop3(i, "curtidas", Number(e.target.value))}
+                        className="w-full bg-surface border border-border rounded-lg px-2 py-1.5 text-[12px] text-text-primary focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       ) : (
@@ -201,39 +282,71 @@ function AbaMarketing({ mktg, onSave }: {
             <StatCard label="Seguidores" value={mktg.seguidores.toLocaleString("pt-BR")}
               sub={`+${mktg.ganho_semanal} esta semana`} icon={Users} color="text-pink-600" />
             <StatCard label="Alcance Semanal" value={mktg.alcance_semanal.toLocaleString("pt-BR")}
-              sub="pessoas únicas alcançadas" icon={Eye} color="text-blue-600" />
+              sub={alcanceDiff !== null ? `${alcanceDiff >= 0 ? "+" : ""}${alcanceDiff}% vs semana anterior` : "pessoas únicas alcançadas"} icon={Eye}
+              color={alcanceDiff !== null && alcanceDiff < -10 ? "text-red-600" : "text-blue-600"} />
             <StatCard label="Posts no Mês" value={String(mktg.posts_mes)}
               sub={`${mktg.reels_mes} reels · ${mktg.stories_mes} stories`} icon={Camera} color="text-purple-600" />
           </div>
 
-          {/* O que está funcionando */}
+          {/* Diagnóstico IA */}
           <div className="rounded-xl border border-border bg-surface p-5">
-            <h3 className="text-[11px] font-mono text-text-muted uppercase tracking-widest mb-4">Diagnóstico de Conteúdo</h3>
+            <h3 className="text-[11px] font-mono text-text-muted uppercase tracking-widest mb-4">Diagnóstico IA</h3>
             <div className="space-y-2.5">
-              {mktg.posts_mes === 0 && (
+              {mktg.posts_mes === 0 ? (
                 <InsightBullet text="Configure seus dados de marketing clicando em 'Editar dados' acima" type="info" />
-              )}
-              {mktg.posts_mes > 0 && mktg.posts_mes < 8 && (
-                <InsightBullet text={`Você publicou ${mktg.posts_mes} conteúdos este mês — abaixo de 12 posts/mês o alcance orgânico cai`} type="warn" />
-              )}
-              {mktg.posts_mes >= 12 && (
-                <InsightBullet text={`Ótima frequência: ${mktg.posts_mes} conteúdos este mês — consistência gera 3x mais alcance`} type="ok" />
-              )}
-              {mktg.reels_mes > 0 && mktg.reels_mes >= mktg.posts_mes * 0.4 && (
-                <InsightBullet text={`${mktg.reels_mes} Reels no mês — excelente, Reels geram 5x mais alcance que posts estáticos`} type="ok" />
-              )}
-              {mktg.ganho_semanal > 0 && (
-                <InsightBullet text={`+${mktg.ganho_semanal} seguidores esta semana — crescimento consistente acima de 50/semana é saudável`} type={mktg.ganho_semanal >= 50 ? "ok" : "info"} />
-              )}
-              {diasSemAtividade > 4 && mktg.posts_mes > 0 && (
-                <InsightBullet text={`Frequência atual: 1 post a cada ${diasSemAtividade} dias — ideal é publicar pelo menos a cada 2 dias`} type="warn" />
-              )}
-              {mktg.alcance_semanal > 0 && mktg.seguidores > 0 && (
-                <InsightBullet text={`Taxa de alcance: ${Math.round(mktg.alcance_semanal / mktg.seguidores * 100)}% dos seus seguidores — média saudável é 20%+`}
-                  type={mktg.alcance_semanal / mktg.seguidores >= 0.2 ? "ok" : "info"} />
+              ) : (
+                <>
+                  {diasSemPost !== null && diasSemPost >= 3 && (
+                    <InsightBullet text={`Não publicou há ${diasSemPost} dias — cada dia sem post reduz seu alcance orgânico em ~8%`} type="warn" />
+                  )}
+                  {diasSemPost !== null && diasSemPost < 2 && (
+                    <InsightBullet text="Publicou hoje ou ontem — ótima consistência! Continue para manter o alcance crescendo" type="ok" />
+                  )}
+                  {alcanceDiff !== null && alcanceDiff < -15 && (
+                    <InsightBullet text={`Alcance caiu ${Math.abs(alcanceDiff)}% em relação à semana anterior — publicar Reels hoje pode reverter a queda`} type="warn" />
+                  )}
+                  {alcanceDiff !== null && alcanceDiff >= 10 && (
+                    <InsightBullet text={`Alcance cresceu ${alcanceDiff}% vs semana anterior — mantenha o ritmo de publicações`} type="ok" />
+                  )}
+                  {mktg.horario_melhor && (
+                    <InsightBullet text={`Melhor horário para publicar: ${mktg.horario_melhor} — posts neste horário recebem até 2x mais engajamento`} type="info" />
+                  )}
+                  {mktg.posts_mes > 0 && mktg.posts_mes < 8 && (
+                    <InsightBullet text={`Você publicou ${mktg.posts_mes} conteúdos este mês — abaixo de 12 posts/mês o algoritmo reduz seu alcance`} type="warn" />
+                  )}
+                  {mktg.reels_mes > 0 && mktg.reels_mes >= mktg.posts_mes * 0.4 && (
+                    <InsightBullet text={`${mktg.reels_mes} Reels este mês — excelente! Reels têm 5x mais alcance que posts estáticos`} type="ok" />
+                  )}
+                  {mktg.alcance_semanal > 0 && mktg.seguidores > 0 && (
+                    <InsightBullet
+                      text={`Taxa de alcance: ${Math.round(mktg.alcance_semanal / mktg.seguidores * 100)}% dos seguidores — média saudável é 20%+`}
+                      type={mktg.alcance_semanal / mktg.seguidores >= 0.2 ? "ok" : "info"} />
+                  )}
+                </>
               )}
             </div>
           </div>
+
+          {/* Top 3 Posts */}
+          {(mktg.top3 ?? []).some(p => p.tema) && (
+            <div className="rounded-xl border border-border bg-surface p-5">
+              <h3 className="text-[11px] font-mono text-text-muted uppercase tracking-widest mb-4">Top 3 Posts do Mês</h3>
+              <div className="space-y-2.5">
+                {(mktg.top3 ?? []).filter(p => p.tema).map((p, i) => (
+                  <div key={i} className="flex items-center gap-3 rounded-lg bg-background border border-border px-3 py-2.5">
+                    <span className="text-[11px] font-mono font-bold text-accent w-5 flex-shrink-0">#{i + 1}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[12px] font-medium text-text-primary truncate">{p.tema}</p>
+                      <p className="text-[10px] text-text-muted font-mono">{p.formato}</p>
+                    </div>
+                    {p.curtidas > 0 && (
+                      <span className="text-[11px] font-mono text-text-secondary flex-shrink-0">❤️ {p.curtidas.toLocaleString("pt-BR")}</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Ações rápidas */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">

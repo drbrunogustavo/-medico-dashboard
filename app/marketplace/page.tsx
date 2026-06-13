@@ -21,100 +21,126 @@ interface Parceiro {
 }
 
 const PARCEIROS: Parceiro[] = [
-  // Tecnologia médica
+  // Tráfego Pago
   {
-    id: "1", nome: "Doctoralia Pro",
-    descricao: "Plataforma de agendamento online com perfil médico, avaliações e prontuário eletrônico integrado.",
-    categoria: "Agendamento", avaliacao: 4.8, preco: "A partir de R$ 149/mês",
-    beneficio: "30 dias grátis para usuários PRAXIS", destaque: true,
-    link: "#", iniciais: "DP", cor: "bg-blue-100 text-blue-700",
+    id: "1", nome: "Traffic Med",
+    descricao: "Especialistas em tráfego pago para médicos e clínicas: Google Ads, Meta Ads e estratégia de captação de pacientes.",
+    categoria: "Tráfego Pago", avaliacao: 4.9, preco: "A partir de R$ 800/mês",
+    beneficio: "Auditoria gratuita de conta + 1 mês sem taxa de gestão", destaque: true,
+    link: "#", iniciais: "TM", cor: "bg-blue-100 text-blue-700",
   },
   {
-    id: "2", nome: "iClinic",
-    descricao: "Prontuário eletrônico completo com prescrição digital, telemedicina e gestão financeira.",
-    categoria: "Prontuário", avaliacao: 4.7, preco: "A partir de R$ 199/mês",
-    beneficio: "15% de desconto com código PRAXIS15", destaque: false,
-    link: "#", iniciais: "IC", cor: "bg-green-100 text-green-700",
+    id: "2", nome: "MedAds Agency",
+    descricao: "Agência especializada em performance para saúde. ROI médio de 8x para clínicas parceiras.",
+    categoria: "Tráfego Pago", avaliacao: 4.7, preco: "A partir de R$ 600/mês",
+    beneficio: "Setup gratuito para membros PRAXIS", destaque: false,
+    link: "#", iniciais: "MA", cor: "bg-indigo-100 text-indigo-700",
   },
+  // Design
   {
-    id: "3", nome: "Conexa Saúde",
-    descricao: "Plataforma de telemedicina líder no Brasil. Consultas online com segurança e conformidade CFM.",
-    categoria: "Telemedicina", avaliacao: 4.9, preco: "R$ 0,90/min de consulta",
-    beneficio: "Setup gratuito + 50 consultas grátis", destaque: true,
-    link: "#", iniciais: "CS", cor: "bg-purple-100 text-purple-700",
-  },
-  // Marketing e conteúdo
-  {
-    id: "4", nome: "Canva for Teams",
-    descricao: "Design profissional para médicos: templates de posts, stories, carrosséis e materiais de sala.",
-    categoria: "Design", avaliacao: 4.6, preco: "R$ 55/mês",
-    beneficio: "2 meses grátis no plano anual", destaque: false,
+    id: "3", nome: "Estúdio Clínica Visual",
+    descricao: "Design gráfico para médicos: identidade visual, templates de posts, materiais de sala de espera e embalagens.",
+    categoria: "Design", avaliacao: 4.8, preco: "A partir de R$ 290/mês",
+    beneficio: "Kit de identidade médica gratuito no 1º mês", destaque: true,
     link: "#", iniciais: "CV", cor: "bg-pink-100 text-pink-700",
   },
   {
-    id: "5", nome: "Later — Agendamento Social",
-    descricao: "Agende posts no Instagram, Facebook e TikTok com prévia do feed. Integra com o Calendário PRAXIS.",
-    categoria: "Redes Sociais", avaliacao: 4.5, preco: "A partir de R$ 89/mês",
-    beneficio: "Plano Starter gratuito por 90 dias", destaque: false,
-    link: "#", iniciais: "LT", cor: "bg-indigo-100 text-indigo-700",
+    id: "4", nome: "Canva for Teams",
+    descricao: "Design profissional para médicos: templates de posts, carrosséis, stories e materiais impressos.",
+    categoria: "Design", avaliacao: 4.6, preco: "R$ 55/mês",
+    beneficio: "2 meses grátis no plano anual via PRAXIS", destaque: false,
+    link: "#", iniciais: "CF", cor: "bg-purple-100 text-purple-700",
   },
-  // Educação e certificações
+  // Edição de Vídeos
   {
-    id: "6", nome: "Medscape Courses",
-    descricao: "Cursos de atualização médica certificados, artigos e guidelines das principais especialidades.",
-    categoria: "Educação", avaliacao: 4.9, preco: "Grátis (acesso básico)",
-    beneficio: "Acesso Premium com desconto de 40%", destaque: true,
-    link: "#", iniciais: "MC", cor: "bg-amber-100 text-amber-700",
-  },
-  {
-    id: "7", nome: "Afya Cursos",
-    descricao: "Pós-graduações e especializações médicas online homologadas por universidades parceiras.",
-    categoria: "Educação", avaliacao: 4.7, preco: "Varia por curso",
-    beneficio: "20% de desconto em qualquer pós-graduação", destaque: false,
-    link: "#", iniciais: "AF", cor: "bg-orange-100 text-orange-700",
-  },
-  // Financeiro
-  {
-    id: "8", nome: "Conta Stone para Médicos",
-    descricao: "Conta PJ com maquininha sem aluguel, Pix gratuito e integração com sistemas de cobrança.",
-    categoria: "Financeiro", avaliacao: 4.4, preco: "Sem mensalidade",
-    beneficio: "R$ 200 de crédito na abertura via PRAXIS", destaque: false,
-    link: "#", iniciais: "ST", cor: "bg-green-100 text-green-700",
+    id: "5", nome: "ReelMed Studio",
+    descricao: "Edição de Reels médicos e educativos. Entrega em 48h, corte profissional e legendas automáticas.",
+    categoria: "Edição de Vídeos", avaliacao: 4.9, preco: "A partir de R$ 120/vídeo",
+    beneficio: "5 Reels no 1º mês por R$ 350 (economia de R$ 250)", destaque: true,
+    link: "#", iniciais: "RS", cor: "bg-red-100 text-red-700",
   },
   {
-    id: "9", nome: "Omie Gestão",
-    descricao: "ERP completo para clínicas: faturamento, NF-e, contas a receber, folha de pagamento.",
-    categoria: "Financeiro", avaliacao: 4.6, preco: "A partir de R$ 99/mês",
-    beneficio: "3 meses grátis + implementação sem custo", destaque: false,
-    link: "#", iniciais: "OM", cor: "bg-blue-100 text-blue-700",
+    id: "6", nome: "CapCut Business",
+    descricao: "Plataforma de edição de vídeo com IA: remoção de fundo, transcrição automática e templates virais.",
+    categoria: "Edição de Vídeos", avaliacao: 4.5, preco: "R$ 45/mês",
+    beneficio: "3 meses do plano Pro por R$ 79 (50% off)", destaque: false,
+    link: "#", iniciais: "CC", cor: "bg-black/10 text-gray-700",
   },
-  // Equipamentos e suprimentos
+  // Secretária Virtual
   {
-    id: "10", nome: "Saúde Mais",
-    descricao: "Maior marketplace de equipamentos médicos, materiais descartáveis e mobiliário clínico.",
-    categoria: "Equipamentos", avaliacao: 4.3, preco: "Catálogo aberto",
-    beneficio: "Frete grátis acima de R$ 500 + parcelamento 12x", destaque: false,
-    link: "#", iniciais: "SM", cor: "bg-red-100 text-red-700",
+    id: "7", nome: "SecMed — Secretária Virtual",
+    descricao: "Atendimento humanizado 24/7 para sua clínica: agendamentos, confirmações e primeira triagem de pacientes.",
+    categoria: "Secretária Virtual", avaliacao: 4.8, preco: "A partir de R$ 350/mês",
+    beneficio: "1 mês grátis + integração com seu sistema atual", destaque: true,
+    link: "#", iniciais: "SM", cor: "bg-green-100 text-green-700",
   },
-  // Jurídico e compliance
   {
-    id: "11", nome: "MedLegal",
-    descricao: "Assessoria jurídica especializada em direito médico, contratos, LGPD e defesa no CRM.",
-    categoria: "Jurídico", avaliacao: 4.8, preco: "Consulta inicial grátis",
-    beneficio: "1ª hora de consultoria gratuita para membros PRAXIS", destaque: false,
+    id: "8", nome: "DoutorBot",
+    descricao: "Chatbot inteligente para WhatsApp: agenda consultas, responde dúvidas frequentes e qualifica pacientes.",
+    categoria: "Secretária Virtual", avaliacao: 4.6, preco: "R$ 197/mês",
+    beneficio: "Setup gratuito + 30 dias de trial sem cartão", destaque: false,
+    link: "#", iniciais: "DB", cor: "bg-emerald-100 text-emerald-700",
+  },
+  // Fotografia Médica
+  {
+    id: "9", nome: "Med Photo Studio",
+    descricao: "Fotografia profissional para médicos: fotos de perfil, clínica e conteúdo editorial para redes sociais.",
+    categoria: "Fotografia Médica", avaliacao: 4.9, preco: "A partir de R$ 490/sessão",
+    beneficio: "Sessão completa + edição por R$ 390 para membros PRAXIS", destaque: true,
+    link: "#", iniciais: "MP", cor: "bg-amber-100 text-amber-700",
+  },
+  // Gestão Financeira
+  {
+    id: "10", nome: "FinMed — Gestão Clínica",
+    descricao: "Controle financeiro completo para médicos: faturamento, DRE, fluxo de caixa e relatórios de rentabilidade.",
+    categoria: "Gestão Financeira", avaliacao: 4.7, preco: "A partir de R$ 149/mês",
+    beneficio: "3 meses grátis + consultoria de onboarding inclusa", destaque: true,
+    link: "#", iniciais: "FM", cor: "bg-blue-100 text-blue-700",
+  },
+  {
+    id: "11", nome: "Conta Simples PJ",
+    descricao: "Conta PJ digital com Pix gratuito, cartão virtual e relatórios de gastos por categoria.",
+    categoria: "Gestão Financeira", avaliacao: 4.4, preco: "Sem mensalidade",
+    beneficio: "R$ 150 de cashback na abertura via PRAXIS", destaque: false,
+    link: "#", iniciais: "CS", cor: "bg-green-100 text-green-700",
+  },
+  // Jurídico Médico
+  {
+    id: "12", nome: "MedLegal",
+    descricao: "Assessoria jurídica especializada em direito médico: contratos, LGPD, defesa no CRM e questões éticas.",
+    categoria: "Jurídico Médico", avaliacao: 4.8, preco: "Consulta inicial grátis",
+    beneficio: "1ª hora de consultoria gratuita + desconto de 20% em contratos", destaque: true,
     link: "#", iniciais: "ML", cor: "bg-gray-100 text-gray-700",
   },
-  // Seguros
+  // Tecnologia
   {
-    id: "12", nome: "Tokio Marine — Seguro Médico",
-    descricao: "Responsabilidade civil médica, seguro de vida e plano de saúde corporativo para clínicas.",
-    categoria: "Seguros", avaliacao: 4.7, preco: "Cotação personalizada",
-    beneficio: "Cotação gratuita com análise de risco inclusa", destaque: false,
-    link: "#", iniciais: "TM", cor: "bg-yellow-100 text-yellow-700",
+    id: "13", nome: "iClinic",
+    descricao: "Prontuário eletrônico completo com prescrição digital, telemedicina e gestão de agenda integrada.",
+    categoria: "Tecnologia", avaliacao: 4.7, preco: "A partir de R$ 199/mês",
+    beneficio: "15% de desconto permanente com código PRAXIS15", destaque: false,
+    link: "#", iniciais: "IC", cor: "bg-blue-100 text-blue-700",
+  },
+  {
+    id: "14", nome: "Conexa Saúde",
+    descricao: "Plataforma líder em telemedicina no Brasil. Conformidade CFM, prontuário e assinatura digital.",
+    categoria: "Tecnologia", avaliacao: 4.9, preco: "R$ 0,90/min de consulta",
+    beneficio: "Setup gratuito + 50 consultas grátis para novos parceiros", destaque: false,
+    link: "#", iniciais: "CS", cor: "bg-purple-100 text-purple-700",
   },
 ]
 
-const CATEGORIAS = ["Todas", ...Array.from(new Set(PARCEIROS.map(p => p.categoria)))]
+const CATEGORIAS_ORDEM = [
+  "Todas",
+  "Tráfego Pago",
+  "Design",
+  "Edição de Vídeos",
+  "Secretária Virtual",
+  "Fotografia Médica",
+  "Gestão Financeira",
+  "Jurídico Médico",
+  "Tecnologia",
+]
+const CATEGORIAS = CATEGORIAS_ORDEM
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -235,6 +261,21 @@ export default function MarketplacePage() {
             <p className="text-[12px] text-text-muted">Tente ajustar os filtros ou a busca</p>
           </div>
         )}
+
+        {/* Banner parceria */}
+        <div className="rounded-xl border border-accent-border bg-accent-dim p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div>
+            <p className="text-[14px] font-semibold text-text-primary">Quer ser parceiro PRAXIS?</p>
+            <p className="text-[12px] text-text-muted mt-0.5">
+              Conectamos sua empresa a milhares de médicos empreendedores em todo o Brasil.
+            </p>
+          </div>
+          <a href="mailto:parcerias@praxis.med.br"
+            className="flex-shrink-0 flex items-center gap-2 bg-accent text-white text-[12px] font-semibold px-5 py-2.5 rounded-lg hover:bg-accent/90 transition-all whitespace-nowrap">
+            <ExternalLink className="w-3.5 h-3.5" />
+            Entre em contato
+          </a>
+        </div>
       </div>
     </div>
   )
@@ -255,8 +296,8 @@ function ParceiroCard({ parceiro: p }: { parceiro: Parceiro }) {
           <div className="flex items-start justify-between gap-1">
             <h3 className="text-[13px] font-semibold text-text-primary leading-snug">{p.nome}</h3>
             {p.destaque && (
-              <span className="text-[8px] font-mono px-1.5 py-0.5 rounded border border-amber-200 bg-amber-50 text-amber-700 flex-shrink-0">
-                DESTAQUE
+              <span className="text-[8px] font-mono px-1.5 py-0.5 rounded border border-amber-200 bg-amber-50 text-amber-700 flex-shrink-0 whitespace-nowrap">
+                ★ Recomendado PRAXIS
               </span>
             )}
           </div>

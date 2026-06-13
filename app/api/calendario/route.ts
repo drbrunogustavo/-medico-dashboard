@@ -12,11 +12,16 @@ export async function POST(req: NextRequest) {
     const {
       mes,
       ano,
+      especialidade = "Endocrinologia e Nutrologia",
       pilares = ["Educativo", "Autoridade", "Vendas", "Relacionamento"],
       frequencia = 5,
       temas = [],
     } = await req.json() as {
-      mes: number; ano: number; pilares?: string[]; frequencia?: number; temas?: string[]
+      mes: number; ano: number
+      especialidade?: string
+      pilares?: string[]
+      frequencia?: number
+      temas?: string[]
     }
 
     const meses = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"]
@@ -24,36 +29,41 @@ export async function POST(req: NextRequest) {
 
     const resp = await client.messages.create({
       model: "claude-sonnet-4-20250514",
-      max_tokens: 5000,
-      system: "Você é especialista em calendário editorial médico para Instagram. Retorne APENAS JSON válido, sem markdown.",
+      max_tokens: 8000,
+      system: "Você é especialista em calendário editorial médico para Instagram. Retorne APENAS JSON válido, sem markdown, sem texto adicional.",
       messages: [{
         role: "user",
-        content: `Crie um calendário editorial para ${mesNome}/${ano ?? 2025} para o Dr. Bruno Gustavo (Endocrinologia, Nutrologia, Longevidade — Poços de Caldas, MG).
+        content: `Crie um calendário editorial completo para ${mesNome}/${ano ?? 2025}.
 
+ESPECIALIDADE: ${especialidade}
+MÉDICO: Dr. Bruno Gustavo (Poços de Caldas, MG)
 PILARES DE CONTEÚDO: ${pilares.join(", ")}
 FREQUÊNCIA: ${frequencia} posts por semana${temas.length > 0 ? `\nTEMAS PRIORITÁRIOS: ${temas.join(", ")}` : ""}
 
-Distribua os posts de forma equilibrada entre os pilares.
-Inclua datas reais de ${mesNome}/${ano ?? 2025} (dias 1 a 30/31).
-Só inclua dias úteis para posting (segunda a sábado).
+Distribua os posts de forma equilibrada.
+Inclua apenas dias com post agendado (segunda a sábado, respeitando a frequência).
 
-Retorne JSON:
+Retorne JSON neste formato exato:
 {
   "mes": "${mesNome}/${ano ?? 2025}",
-  "total_posts": número,
+  "total_posts": 20,
   "posts": [
     {
       "dia": 1,
       "dia_semana": "Segunda",
-      "formato": "Reel|Carrossel|Feed|Stories",
-      "pilar": "Educativo|Autoridade|Vendas|Relacionamento",
-      "tema": "Tema específico do conteúdo",
-      "gancho": "Sugestão de gancho ou título",
-      "hashtags": ["tag1", "tag2", "tag3"]
+      "formato": "Reel",
+      "pilar": "Educativo",
+      "tema": "Título específico do conteúdo",
+      "gancho": "Você sabia que 70% dos brasileiros têm resistência à insulina sem saber?",
+      "legenda": "Legenda completa para Instagram (150-200 palavras) com storytelling médico, educativo e chamada para engajamento",
+      "cta": "Salva esse post para revisar depois! Me conta nos comentários: você já fez exames de insulina em jejum?",
+      "roteiro": "Roteiro completo: [0-3s] Gancho visual. [3-10s] Desenvolvimento do problema. [10-25s] Solução prática. [25-30s] CTA e encerramento.",
+      "stories_sequencia": ["Card 1: pergunta engajamento", "Card 2: informação principal", "Card 3: dica prática", "Card 4: CTA para o post"],
+      "hashtags": ["endocrinologia", "resistenciainsulina", "saude"]
     }
   ],
   "distribuicao_pilares": { "Educativo": 40, "Autoridade": 30, "Vendas": 20, "Relacionamento": 10 },
-  "dica_estrategica": "Dica estratégica para o mês baseada no calendário gerado"
+  "dica_estrategica": "Dica estratégica para o mês."
 }`,
       }],
     })

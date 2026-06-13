@@ -15,7 +15,7 @@ import {
   RefreshCw, Map, BarChart2, Rocket,
   Instagram, Calculator, FileBarChart,
   FlaskConical, FileHeart, Pill,
-  BookOpen, Scale,
+  BookOpen, Scale, Wand2, Store,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useMenu } from "@/components/MobileMenuProvider"
@@ -73,6 +73,7 @@ const NAV: Record<AlaId, NavItem[]> = {
     { label: "Calendário Editorial",   href: "/calendario",       icon: CalendarDays      },
     { label: "Radar de Tendências",    href: "/radar",            icon: Radio,   badge: "LIVE" },
     { label: "Análise de Concorrentes",href: "/concorrentes",     icon: Users2            },
+    { label: "Copiloto de Conteúdo",   href: "/copiloto-conteudo",icon: Wand2, badge: "IA" },
     { label: "Gerador de Legendas",    href: "/legendas",         icon: Sparkles          },
     { label: "Gerador de Roteiros",    href: "/roteiros",         icon: Video             },
     { label: "Instagram Analytics",     href: "/instagram",        icon: Instagram         },
@@ -121,6 +122,7 @@ const NAV: Record<AlaId, NavItem[]> = {
     { label: "Agente Executivo",          href: "/agente-executivo",  icon: Bot,   badge: "PRO" },
     { label: "Nutrição de Leads Clínica", href: "/nutricao-pacientes",icon: Layers2  },
     { label: "Banco de Estudos",          href: "/estudos",           icon: BookOpen },
+    { label: "Inteligência de Mercado",   href: "/mercado",           icon: TrendingUp },
   ],
   academy: [
     { label: "PRAXIS Academy",    href: "/academy",  icon: GraduationCap                   },
@@ -128,6 +130,7 @@ const NAV: Record<AlaId, NavItem[]> = {
     { label: "Trilha Gestão",     href: "/academy",  icon: BarChart3,  badge: "EM BREVE"   },
     { label: "Trilha Comercial",  href: "/academy",  icon: TrendingUp, badge: "EM BREVE"   },
     { label: "Trilha Escala",     href: "/academy",  icon: Rocket,     badge: "EM BREVE"   },
+    { label: "Marketplace",       href: "/marketplace", icon: Store                         },
   ],
 }
 

@@ -235,7 +235,7 @@ const EXAMS: ExamData[] = [
   {
     id: "dheas", name: "DHEA-S", category: "Hormônios Sexuais",
     range: {
-      lab: "80–400 mcg/dL (M) · 35–340 mcg/dL (M)", unit: "mcg/dL",
+      lab: "80–400 mcg/dL (H) · 35–340 mcg/dL (M)", unit: "mcg/dL",
       classifyFn: (v) => v < 35 ? "baixo" : v <= 350 ? "normal" : "elevado",
     },
     correlations: ["Principal androgênio adrenal — marcador de atividade adrenal", "Declina progressivamente após os 30 anos (dehydroepiandrosteronopausa)", "Elevado: SOP, hiperplasia adrenal congênita, tumor adrenal"],

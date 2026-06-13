@@ -436,8 +436,16 @@ function CalcAgua({ copied, onCopy }: { copied: string | null; onCopy: (id: stri
           options={["Sedentário", "Ativo", "Muito ativo"]}
           value={atividade} onChange={setAtividade} />
         {value && (
-          <ResultBox label="Ingestão Recomendada" value={value} sub={sub}
-            color="#06b6d4" copyId="agua" copyText={text} copied={copied} onCopy={onCopy} />
+          <>
+            <ResultBox label="Ingestão Recomendada" value={value} sub={sub}
+              color="#06b6d4" copyId="agua" copyText={text} copied={copied} onCopy={onCopy} />
+            <ContextCard items={[
+              "Distribuir ao longo do dia — não esperar sentir sede, especialmente em idosos.",
+              "Principais fontes: água, chás, sopas, frutas e vegetais hidratados (melancia, pepino).",
+              "Urina amarelo-pálha = hidratação adequada; amarelo escuro = ingestão insuficiente.",
+              atividade === "Muito ativo" ? "Atletas: adicionar 500–1000 ml/h de exercício intenso + eletrólitos em atividades >60 min." : "Diuréticos ou sudorese intensa: aumentar ingestão além da recomendação base.",
+            ]} />
+          </>
         )}
       </div>
     </CalcCard>
@@ -661,6 +669,22 @@ function CalcGLP1({ copied, onCopy }: { copied: string | null; onCopy: (id: stri
                 </p>
               ))}
             </div>
+            <div className="mt-2">
+              <ContextCard items={
+                farmaco === "Tirzepatida" ? [
+                  "Tirzepatida (GIP + GLP-1): maior eficácia de perda de peso — SURMOUNT-1: -20,9% peso vs. placebo.",
+                  "Titular lentamente: náusea e vômito são os principais limitantes — não saltar etapas.",
+                  "Monitorar: frequência cardíaca, PA, função renal, amilase/lipase em sintomas abdominais.",
+                ] : farmaco === "Semaglutida" ? [
+                  "Semaglutida SC: STEP-1 mostrou -14,9% do peso. SELECT (2023): redução de 20% em eventos CV.",
+                  "Nausea melhora após 4–8 semanas — orientar o paciente para não desistir precocemente.",
+                  "Contraindicações: carcinoma medular de tireoide pessoal/familiar, NEM-2, gastroparesia grave.",
+                ] : [
+                  "Liraglutida: eficácia menor que semaglutida e tirzepatida, mas opção válida em tolerância.",
+                  "Dose máxima (3mg) tem adesão mais baixa por ser diária — ponderar vs. formulações semanais.",
+                ]
+              } />
+            </div>
             <div className="mt-2"><WarningBox text={aviso} /></div>
             <div className="mt-2 flex justify-end">
               <CopyButton id="glp1" text={text} copied={copied} onCopy={onCopy} />
@@ -764,8 +788,23 @@ function CalcMetabolico({ copied, onCopy }: { copied: string | null; onCopy: (id
           Referência ({sexo}): {ref}
         </div>
         {v > 0 && cls && (
-          <ResultBox label="Classificação" value={cls.label} sub={cls.rec}
-            color={cls.color} copyId="meta" copyText={text} copied={copied} onCopy={onCopy} />
+          <>
+            <ResultBox label="Classificação" value={cls.label} sub={cls.rec}
+              color={cls.color} copyId="meta" copyText={text} copied={copied} onCopy={onCopy} />
+            <ContextCard items={
+              cls.label === "Normal" ? [
+                "Circunferência abdominal adequada — manter com exercício regular e dieta equilibrada.",
+              ] : cls.label === "Risco aumentado" ? [
+                "Gordura visceral aumentada: risco moderado de SM, DM2 e DCV.",
+                "Meta: redução de 5–7% do peso corporal com MEV estruturada.",
+                "Priorizar exercício aeróbico ≥150 min/semana + resistido ≥2x/semana.",
+              ] : [
+                "Gordura visceral marcadamente aumentada — risco elevado de síndrome metabólica.",
+                "Solicitar glicemia, insulina, HOMA-IR, TG/HDL, transaminases (DHGNA).",
+                "Farmacoterapia frequentemente indicada: GLP-1 RA, metformina ou combinação.",
+              ]
+            } />
+          </>
         )}
       </div>
     </CalcCard>
@@ -906,6 +945,13 @@ function CalcLevotiroxina({ copied, onCopy }: { copied: string | null; onCopy: (
             <ResultBox label="Dose Inicial Sugerida" value={doseStr}
               sub={estrategia} color="#06b6d4"
               copyId="levo" copyText={text} copied={copied} onCopy={onCopy} />
+            <ContextCard items={[
+              "Tomar em jejum 30–60 min antes do café da manhã para máxima absorção.",
+              "Controle de TSH após 4–6 semanas de início ou ajuste de dose — meta TSH 0,5–2,5 mUI/L.",
+              "Interações: ferro, cálcio, antiácidos e colestiramina reduzem absorção — intervalo de 2–4h.",
+              "Gestantes: TSH alvo <2,5 mUI/L no 1º trimestre; monitoramento a cada 4 semanas.",
+              "Após emagrecimento significativo: rever dose pois pode ser necessário reduzir.",
+            ]} />
             <WarningBox text="Dose inicial — ajustar conforme TSH de controle a cada 6–8 semanas." />
           </div>
         )}
@@ -968,6 +1014,23 @@ function CalcFINDRISC({ copied, onCopy }: { copied: string | null; onCopy: (id: 
         <ResultBox label={`Score FINDRISC · Risco ${cls.label}`} value={`${score} pts`}
           sub={`Probabilidade DM2 em 10 anos: ${cls.prob}`}
           color={cls.color} copyId="findrisc" copyText={text} copied={copied} onCopy={onCopy} />
+        <ContextCard items={
+          score < 7 ? [
+            "Risco baixo — manutenção de hábitos saudáveis e reavaliação em 3–5 anos.",
+          ] : score < 12 ? [
+            "Risco leve — iniciar intervenção preventiva: redução de peso, atividade física ≥150min/semana.",
+            "Solicitar glicemia de jejum e HbA1c para rastreio basal.",
+          ] : score < 15 ? [
+            "Risco moderado (~17%): MEV estruturada obrigatória. Encaminhar para nutricionista.",
+            "Solicitar TOTG 75g + insulina + HOMA-IR. Reavaliação em 6–12 meses.",
+            "Metformina 500–1000mg/dia pode ser discutida como prevenção primária.",
+          ] : [
+            "Risco alto ou muito alto: grande probabilidade de DM2 em 10 anos.",
+            "TOTG 75g imediato + glicemia pós-prandial + HbA1c. Iniciar MEV intensiva.",
+            "Considerar farmacoterapia preventiva: metformina ou inibidor GLP-1 em obesos.",
+            "Rastrear complicações precocemente: lipidograma, PA, microalbuminúria.",
+          ]
+        } />
       </div>
     </CalcCard>
   )
@@ -1014,6 +1077,18 @@ function CalcBillewicz({ copied, onCopy }: { copied: string | null; onCopy: (id:
         <ResultBox label={`Score Billewicz`} value={`${score > 0 ? "+" : ""}${score}`}
           sub={cls.label} color={cls.color}
           copyId="billewicz" copyText={text} copied={copied} onCopy={onCopy} />
+        <ContextCard items={
+          score > 25 ? [
+            "Hipotireoidismo provável (score >25): solicitar TSH + T4L para confirmação.",
+            "Tratar se TSH >4,0 mUI/L + sintomas compatíveis. Dose inicial levotiroxina: 1,6 mcg/kg/dia.",
+          ] : score >= 10 ? [
+            "Hipotireoidismo suspeito (score 10–25): solicitar TSH, T4L e Anti-TPO.",
+            "Repetir TSH em 4–6 semanas se limítrofe. Correlacionar com clínica e exames laboratoriais.",
+          ] : [
+            "Hipotireoidismo improvável. Outros diagnósticos devem ser considerados para os sintomas.",
+            "Se TSH ainda suspeito, repetir em 3–6 meses ou solicitar Anti-TPO.",
+          ]
+        } />
       </div>
     </CalcCard>
   )
@@ -1259,8 +1334,28 @@ function CalcProteina({ copied, onCopy }: { copied: string | null; onCopy: (id: 
           ]}
           onChange={setObjetivo} />
         {valueStr && (
-          <ResultBox label="Proteína Diária" value={valueStr} sub={subStr}
-            color="#f97316" copyId="proteina" copyText={text} copied={copied} onCopy={onCopy} />
+          <>
+            <ResultBox label="Proteína Diária" value={valueStr} sub={subStr}
+              color="#f97316" copyId="proteina" copyText={text} copied={copied} onCopy={onCopy} />
+            <ContextCard items={
+              objetivo === "hipertrofia" ? [
+                "Distribuir em 4–5 refeições com pelo menos 3–4g de leucina por refeição para maximizar MPS.",
+                "Proteína animal (carne, ovos, laticínios) tem melhor biodisponibilidade e perfil de aminoácidos.",
+                "Whey protein é prático para complementar — absorção rápida ideal no pós-treino.",
+              ] : objetivo === "emagrec" ? [
+                "Proteína elevada durante emagrecimento preserva massa magra e aumenta saciedade.",
+                "Priorizar proteínas magras: frango, peixe, ovos, atum, ricota, iogurte grego.",
+                "Distribuição equitativa nas refeições é mais eficaz que concentrar no jantar.",
+              ] : objetivo === "idoso" ? [
+                "Idosos têm resistência anabólica — doses >30g/refeição podem ser necessárias para ativar MPS.",
+                "Suplementar leucina (3g/refeição) ou BCAA para superar a resistência anabólica.",
+                "Creatina (3–5g/dia) potencializa o efeito do exercício e da proteína em idosos.",
+              ] : [
+                "Distribuir uniformemente nas refeições — evitar concentrar toda proteína em uma refeição.",
+                "Fontes variadas garantem todos os aminoácidos essenciais.",
+              ]
+            } />
+          </>
         )}
       </div>
     </CalcCard>
@@ -1306,6 +1401,11 @@ function CalcDeficit({ copied, onCopy }: { copied: string | null; onCopy: (id: s
               sub={`Déficit de ${deficit} kcal · meta ${meta} kg/semana`}
               color={alerta ? "#ef4444" : "#00c07f"}
               copyId="deficit" copyText={text} copied={copied} onCopy={onCopy} />
+            <ContextCard items={[
+              `Meta conservadora (${meta} kg/sem): sustentável a longo prazo e preserva mais massa magra.`,
+              "Ciclos de realimentação a cada 10–14 dias (refeed day) atenuam a queda de leptina e metabolismo.",
+              "Monitorar peso no mesmo horário e condição — variações diárias de 1–2 kg são normais (hidratação/intestino).",
+            ]} />
             {alerta && <WarningBox text="Déficit > 1000 kcal/dia pode causar perda de massa magra. Avalie com cautela." />}
           </div>
         )}
@@ -1348,9 +1448,20 @@ function CalcIAC({ copied, onCopy }: { copied: string | null; onCopy: (id: strin
           Referência ({sexo}): {ref}
         </div>
         {iac && cls && (
-          <ResultBox label="IAC" value={`${iac.toFixed(1)}%`}
-            sub={`${cls.label} · Fórmula: (quadril / altura^1.5) − 18`}
-            color={cls.color} copyId="iac" copyText={text} copied={copied} onCopy={onCopy} />
+          <>
+            <ResultBox label="IAC" value={`${iac.toFixed(1)}%`}
+              sub={`${cls.label} · Fórmula: (quadril / altura^1.5) − 18`}
+              color={cls.color} copyId="iac" copyText={text} copied={copied} onCopy={onCopy} />
+            <ContextCard items={
+              cls.label === "Normal" ? [
+                "IAC dentro da normalidade. Combinar com circunferência abdominal para avaliação de gordura visceral.",
+              ] : [
+                "IAC elevado indica excesso de gordura corporal total — risco cardiometabólico aumentado.",
+                "Complementar com bioimpedância ou DEXA para quantificar gordura visceral separadamente.",
+                "Exercício resistido + aeróbico e dieta hipocalórica são as intervenções de primeira linha.",
+              ]
+            } />
+          </>
         )}
       </div>
     </CalcCard>
@@ -1438,6 +1549,19 @@ function CalcGestacional({ copied, onCopy }: { copied: string | null; onCopy: (i
             <ResultBox label="Ganho Total Recomendado" value={`${faixa.min}–${faixa.max} kg`}
               sub={`${faixa.label} · Ganho esperado no ${tr}º trim: ${ganhoTrimStr}`}
               color="#e1306c" copyId="gest" copyText={text} copied={copied} onCopy={onCopy} />
+            <ContextCard items={
+              imc >= 30 ? [
+                "Ganho excessivo em gestante obesa aumenta risco de DMG, PE, macrossomia e cesárea.",
+                "Orientar dieta equilibrada — nunca dieta restritiva na gestação (mínimo 1800 kcal/dia).",
+                "Exercício moderado (caminhada, hidroginástica) é seguro e reduz ganho excessivo.",
+              ] : imc < 18.5 ? [
+                "Ganho adequado é essencial — baixo peso gestacional aumenta risco de RCIU e prematuridade.",
+                "Avaliar suporte nutricional e investigar causas de baixo peso pré-gestacional.",
+              ] : [
+                "Monitorar ganho trimestral: 0,5–2 kg no 1º trimestre, depois ~0,4–0,5 kg/semana.",
+                "Ganho insuficiente ou excessivo: avaliar com nutricionista especializada em gestação.",
+              ]
+            } />
           </div>
         )}
       </div>
@@ -1515,6 +1639,12 @@ function CalcJanelaFertil({ copied, onCopy }: { copied: string | null; onCopy: (
             <ResultBox label="Janela Fértil" value={`${fmt(janelaInicio)} – ${fmt(janelaFim)}`}
               sub={`Ovulação no dia ${c - 14} do ciclo (±2 dias)`}
               color="#a78bfa" copyId="fertil" copyText={text} copied={copied} onCopy={onCopy} />
+            <ContextCard items={[
+              "Relações nos 5 dias antes e no dia da ovulação maximizam a chance de gravidez.",
+              "Cálculo baseado em ciclos regulares. Variações no comprimento do ciclo deslocam a janela.",
+              "Monitorização de LH urinário (teste ovulatório) é mais precisa que o cálculo pelo ciclo.",
+              "Ciclos irregulares (SOP, perimenopausa): usar USG folicular seriada para maior precisão.",
+            ]} />
           </div>
         )}
       </div>
@@ -1560,7 +1690,7 @@ function CalcIdadeGestacional({ copied, onCopy }: { copied: string | null; onCop
             ].filter(Boolean)} />
           </>
         )}
-        {semanas !== null && semanas < 0 && (
+        {dumDate && diffDays !== null && diffDays < 0 && (
           <WarningBox text="Data informada é posterior à data atual. Verifique a DUM." />
         )}
       </div>
@@ -1797,6 +1927,19 @@ function CalcWells({ copied, onCopy }: { copied: string | null; onCopy: (id: str
         <ResultBox label={`Wells TEP · ${cls.label}`} value={`${score} pts`}
           sub="≤1 baixa · 2–6 intermediária · ≥7 alta probabilidade"
           color={cls.color} copyId="wells" copyText={text} copied={copied} onCopy={onCopy} />
+        <ContextCard items={
+          score <= 1 ? [
+            "Probabilidade baixa: D-Dímero (<500 ng/mL) exclui TEP com segurança.",
+            "Se D-Dímero negativo, TEP é praticamente descartado — sem necessidade de angiotomografia.",
+          ] : score <= 6 ? [
+            "Probabilidade intermediária: D-Dímero obrigatório; se positivo, angiotomografia de tórax.",
+            "Considerar anticoagulação empírica se demora na imagem em paciente com alta suspeita clínica.",
+          ] : [
+            "Alta probabilidade: indicação direta de angiotomografia — não aguardar D-Dímero.",
+            "Iniciar anticoagulação imediata (enoxaparina 1 mg/kg SC 12/12h ou heparina EV) se sem contraindicação.",
+            "Avaliar estabilidade hemodinâmica: TEP maciço → trombólise sistêmica ou embolectomia.",
+          ]
+        } />
       </div>
     </CalcCard>
   )
@@ -1849,6 +1992,21 @@ function CalcCHA2DS2({ copied, onCopy }: { copied: string | null; onCopy: (id: s
         <ResultBox label={`CHA₂DS₂-VASc`} value={`${score} pts`}
           sub={`${cls.label} · ${cls.rec}`}
           color={cls.color} copyId="chads" copyText={text} copied={copied} onCopy={onCopy} />
+        <ContextCard items={
+          cls.label.includes("recomendada") ? [
+            "Anticoagulação oral indicada: preferir ACO diretos (DOACs) — apixabana, rivaroxabana ou dabigatrana.",
+            "Warfarina apenas se válvula mecânica, estenose mitral reumática ou contraindicação a DOAC.",
+            "Avaliar escore HAS-BLED antes de iniciar anticoagulação (risco de sangramento).",
+            "Controle de FA por cardioversão ou ablação não substitui anticoagulação — manter mesmo em ritmo sinusal.",
+          ] : cls.label.includes("Considerar") ? [
+            "Score limítrofe: avaliar individualmente perfil de risco/benefício da anticoagulação.",
+            "Fatores que pesam a favor: labilidade do INR, queda frequente, interações medicamentosas.",
+            "Reavaliação anual ou com mudança do status clínico.",
+          ] : [
+            "Sem indicação de anticoagulação no momento (baixo risco de AVC).",
+            "Reavaliação anual do escore — novos fatores de risco podem mudar a indicação.",
+          ]
+        } />
       </div>
     </CalcCard>
   )
@@ -1897,6 +2055,7 @@ function CalcPressao({ copied, onCopy }: { copied: string | null; onCopy: (id: s
                 Pressão Arterial Média (PAD + PP/3)
               </div>
               <div className="text-[18px] font-bold" style={{ color: "var(--text-primary)" }}>{pam} mmHg</div>
+
               <div className="text-[11px]" style={{ color: "var(--text-muted)" }}>
                 {clsPAM.label} · normal 70–100 mmHg · meta UTI ≥65 mmHg
               </div>
@@ -1904,6 +2063,19 @@ function CalcPressao({ copied, onCopy }: { copied: string | null; onCopy: (id: s
             <div className="flex justify-end">
               <CopyButton id="pressao" text={text} copied={copied} onCopy={onCopy} />
             </div>
+            <ContextCard items={
+              (pp ?? 0) >= 60 ? [
+                "PP alargada (≥60 mmHg) é marcador independente de risco cardiovascular — indica rigidez arterial.",
+                "Associada à calcificação vascular, doença aterosclerótica e maior mortalidade CV.",
+                "Avaliar: escore de cálcio coronariano, velocidade de onda de pulso se disponível.",
+              ] : (pam ?? 0) < 65 ? [
+                "PAM <65 mmHg: hipoperfusão tecidual — monitorar sinais de choque e débito urinário.",
+                "Em UTI: meta PAM ≥65 mmHg (sepse: ≥65 mmHg com vasopressores se necessário).",
+              ] : [
+                "Parâmetros hemodinâmicos dentro da normalidade.",
+                "PP normal e PAM adequada indicam boa reserva cardiovascular.",
+              ]
+            } />
           </div>
         )}
       </div>
@@ -1938,9 +2110,24 @@ function CalcCargaGlicemica({ copied, onCopy }: { copied: string | null; onCopy:
           CG = (IG × carboidratos) / 100 · baixa &lt;10 / média 11–19 / alta ≥20
         </div>
         {cg && cls && (
-          <ResultBox label="Carga Glicêmica" value={cg.toFixed(1)}
-            sub={`${cls.label} · baixa <10 / média 11–19 / alta ≥20`}
-            color={cls.color} copyId="cg" copyText={text} copied={copied} onCopy={onCopy} />
+          <>
+            <ResultBox label="Carga Glicêmica" value={cg.toFixed(1)}
+              sub={`${cls.label} · baixa <10 / média 11–19 / alta ≥20`}
+              color={cls.color} copyId="cg" copyText={text} copied={copied} onCopy={onCopy} />
+            <ContextCard items={
+              cg >= 20 ? [
+                "Carga glicêmica alta provoca pico insulínico excessivo — desfavorável para RI e emagrecimento.",
+                "Estratégias para reduzir CG: diminuir porção, combinar com proteína/gordura/fibra, optar por versões integrais.",
+                "Refeições com CG alta concentradas à noite aumentam desproporcionalmente o acúmulo de gordura.",
+              ] : cg >= 10 ? [
+                "Carga glicêmica moderada — adequada para a maioria das pessoas sem RI.",
+                "Pacientes com DM2 ou RI devem preferir alimentos com CG <10.",
+              ] : [
+                "Carga glicêmica baixa — ideal para controle glicêmico e saúde metabólica.",
+                "Manter padrão alimentar com CG total diária <100 é favorável para prevenção de DM2.",
+              ]
+            } />
+          </>
         )}
       </div>
     </CalcCard>
@@ -1978,9 +2165,20 @@ function CalcRCQ({ copied, onCopy }: { copied: string | null; onCopy: (id: strin
           Referência ({sexo}): {ref}
         </div>
         {rcq && cls && (
-          <ResultBox label="RCQ" value={rcq.toFixed(2)}
-            sub={`${cls.label} · risco cardiovascular`}
-            color={cls.color} copyId="rcq" copyText={text} copied={copied} onCopy={onCopy} />
+          <>
+            <ResultBox label="RCQ" value={rcq.toFixed(2)}
+              sub={`${cls.label} · risco cardiovascular`}
+              color={cls.color} copyId="rcq" copyText={text} copied={copied} onCopy={onCopy} />
+            <ContextCard items={
+              cls.label === "Risco baixo" ? [
+                "Distribuição de gordura favorável — gordura periférica (glúteo-femoral) é metabolicamente mais segura.",
+              ] : [
+                "RCQ elevado indica predominância de gordura abdominal/visceral — maior risco metabólico e cardiovascular.",
+                "Combinar com circunferência abdominal e IMC para avaliação completa do risco.",
+                "Exercício aeróbico ≥150 min/semana é a intervenção mais eficaz para reduzir gordura visceral.",
+              ]
+            } />
+          </>
         )}
       </div>
     </CalcCard>
@@ -2023,6 +2221,11 @@ function CalcMifflin({ copied, onCopy }: { copied: string | null; onCopy: (id: s
             <ResultBox label="GET + Macros" value={`${get} kcal/dia`}
               sub={`P: ${prot}g (30%) · C: ${carb}g (45%) · G: ${gord}g (25%)`}
               color="#f97316" copyId="mifflin" copyText={text} copied={copied} onCopy={onCopy} />
+            <ContextCard items={[
+              "Mifflin-St Jeor é mais precisa que Harris-Benedict para adultos moderadamente ativos.",
+              "Distribuição de macros é padrão — ajustar para objetivos: mais proteína em hipertrofia, menos carboidrato em RI.",
+              "Carboidratos no pré e pós-treino maximizam desempenho e recuperação.",
+            ]} />
           </div>
         )}
       </div>

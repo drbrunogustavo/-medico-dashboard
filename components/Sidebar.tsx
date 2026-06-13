@@ -357,6 +357,20 @@ function SidebarContent() {
           >
             <Settings className="w-3.5 h-3.5" />
           </Link>
+          <Link
+            href="/configuracoes/membros"
+            onClick={closeMenu}
+            className={cn(
+              "w-7 h-7 rounded-lg flex items-center justify-center transition-colors flex-shrink-0",
+              pathname === "/configuracoes/membros"
+                ? "bg-accent-dim text-accent border border-accent-border"
+                : "text-text-muted hover:text-text-primary hover:bg-surface-2"
+            )}
+            title="Membros da Equipe"
+            aria-label="Membros da Equipe"
+          >
+            <Users2 className="w-3.5 h-3.5" />
+          </Link>
           <div className="flex-1" />
           <button
             onClick={signOut}

@@ -255,6 +255,14 @@ export default function CaptacaoPage() {
               </div>
               <h3 className="text-[20px] font-bold text-[#0D1B2A]">Recebemos seu contato!</h3>
               <p className="text-[14px] text-[#0D1B2A]/60">Em breve nossa equipe entrará em contato via WhatsApp para agendar sua consulta.</p>
+              <div className="pt-2">
+                <Link
+                  href="/planos"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-[#b8976a] rounded-xl text-[14px] font-bold text-[#0D1B2A] hover:bg-[#a8875a] transition-all"
+                >
+                  Ver planos PRAXIS <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
             </div>
           ) : (
             <form onSubmit={submit} className="space-y-4">

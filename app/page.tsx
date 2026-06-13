@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { useEffect, useRef, useState } from "react"
 import { ArrowRight, Check, ChevronDown, Zap, Star, Crown } from "lucide-react"
+import { useAuth } from "@/hooks/useAuth"
 
 // ─── Intersection Observer animation ─────────────────────────────────────────
 
@@ -168,6 +169,9 @@ function LogoLight({ size = 30 }: { size?: number }) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function LandingPage() {
+  const { user } = useAuth()
+  const ctaHref = user ? "/dashboard" : "/planos"
+
   return (
     <div className="fixed inset-0 z-[200] overflow-y-auto" style={{ background: "#F5F0E8" }}>
 
@@ -284,7 +288,7 @@ export default function LandingPage() {
         {/* CTAs */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
-            href="/login"
+            href={ctaHref}
             className="inline-flex items-center gap-2.5 rounded-xl font-bold transition-all hover:opacity-95 active:scale-[0.98]"
             style={{
               padding: "16px 36px",
@@ -527,7 +531,7 @@ export default function LandingPage() {
               Apenas a plataforma certa e a sua expertise.
             </p>
             <Link
-              href="/login"
+              href={ctaHref}
               className="inline-flex items-center gap-2.5 rounded-xl font-bold transition-all hover:opacity-95 active:scale-[0.98]"
               style={{
                 padding: "16px 40px",
@@ -633,7 +637,7 @@ export default function LandingPage() {
                     </ul>
 
                     <Link
-                      href="/login"
+                      href={ctaHref}
                       className="block text-center py-3.5 rounded-xl text-[13px] font-bold transition-all hover:opacity-90 active:scale-[0.98]"
                       style={{
                         background: plan.id === "pro" ? plan.color : `${plan.color}18`,

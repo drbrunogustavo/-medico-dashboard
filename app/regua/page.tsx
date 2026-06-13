@@ -83,7 +83,7 @@ function AddModal({ onSave, onClose }: { onSave: (f: Record<string, string>) => 
             <label className="block text-[11px] font-mono text-text-muted mb-1.5 uppercase tracking-wider">WhatsApp *</label>
             <input value={form.paciente_telefone} onChange={e => set("paciente_telefone", fmtPhone(e.target.value))} required placeholder="(11) 99999-9999" className={inputCls} />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-[11px] font-mono text-text-muted mb-1.5 uppercase tracking-wider">Data de Nascimento</label>
               <input type="date" value={form.data_nascimento} onChange={e => set("data_nascimento", e.target.value)} className={inputCls} />
@@ -308,14 +308,14 @@ export default function ReguaPage() {
             onClick={() => setShowAdd(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-accent text-background text-[12px] font-semibold rounded-lg hover:bg-accent/90 transition-colors"
           >
-            <Plus className="w-3.5 h-3.5" /> Adicionar Paciente
+            <Plus className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Adicionar Paciente</span>
           </button>
         }
       />
 
       <div className="p-4 md:p-8 space-y-6">
         {/* Metrics */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {[
             { label: "Pacientes na Régua", value: total,   color: "text-accent"     },
             { label: "Mensagens Agendadas", value: pending, color: "text-amber-400"  },

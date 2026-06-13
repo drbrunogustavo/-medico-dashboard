@@ -185,7 +185,7 @@ function AbaMarketing({ mktg, onSave }: {
       {editing ? (
         <div className="rounded-xl border border-border bg-surface p-5">
           <p className="text-[11px] text-text-muted mb-4">Insira seus dados de marketing Instagram manualmente ou conecte via /instagram</p>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             <EditableField label="Seguidores totais" value={draft.seguidores}      onChange={v => setDraft(d => ({...d, seguidores: v}))} />
             <EditableField label="Ganho esta semana" value={draft.ganho_semanal}   onChange={v => setDraft(d => ({...d, ganho_semanal: v}))} />
             <EditableField label="Alcance semanal"   value={draft.alcance_semanal} onChange={v => setDraft(d => ({...d, alcance_semanal: v}))} />
@@ -197,7 +197,7 @@ function AbaMarketing({ mktg, onSave }: {
       ) : (
         <>
           {/* KPI Cards */}
-          <div className="grid grid-cols-2 xl:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
             <StatCard label="Seguidores" value={mktg.seguidores.toLocaleString("pt-BR")}
               sub={`+${mktg.ganho_semanal} esta semana`} icon={Users} color="text-pink-600" />
             <StatCard label="Alcance Semanal" value={mktg.alcance_semanal.toLocaleString("pt-BR")}
@@ -236,7 +236,7 @@ function AbaMarketing({ mktg, onSave }: {
           </div>
 
           {/* Ações rápidas */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
             {[
               { label: "Criar Reel",          href: "/reels",      color: "text-red-600 bg-red-50 border-red-200" },
               { label: "Planejar Calendário", href: "/calendario", color: "text-blue-600 bg-blue-50 border-blue-200" },
@@ -365,7 +365,7 @@ function AbaComercial({ exec }: { exec: Partial<ExecData> }) {
       </div>
 
       {/* Ações */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Link href="/crm" className="rounded-xl border border-blue-200 bg-blue-50 text-blue-700 px-4 py-3 text-[12px] font-semibold flex items-center gap-2 hover:opacity-80 transition-opacity">
           <Users className="w-3.5 h-3.5" /> Abrir CRM
         </Link>
@@ -417,7 +417,7 @@ function AbaOperacao({ ops, onSave, exec }: {
       {editing ? (
         <div className="rounded-xl border border-border bg-surface p-5">
           <p className="text-[11px] text-text-muted mb-4">Insira os indicadores operacionais do mês atual</p>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <EditableField label="Ocupação da agenda %" value={draft.ocupacao_pct}  onChange={v => setDraft(d => ({...d, ocupacao_pct: Math.min(v, 100)}))} suffix="%" />
             <EditableField label="Taxa de faltas %"     value={draft.faltas_pct}    onChange={v => setDraft(d => ({...d, faltas_pct: Math.min(v, 100)}))} suffix="%" />
             <EditableField label="Ticket médio (R$)"    value={draft.ticket_medio}  onChange={v => setDraft(d => ({...d, ticket_medio: v}))} prefix="R$" />
@@ -426,7 +426,7 @@ function AbaOperacao({ ops, onSave, exec }: {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
             <StatCard label="Ocupação Agenda" value={`${ops.ocupacao_pct}%`}
               sub="capacidade utilizada" icon={Calendar} color="text-accent" />
             <StatCard label="Taxa de Faltas" value={`${ops.faltas_pct}%`}
@@ -532,7 +532,7 @@ function AbaAutoridade({ exec, aut, onSave }: {
 
       {editing ? (
         <div className="rounded-xl border border-border bg-surface p-5">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <EditableField label="Avaliação Google (0-5)" value={draft.google_rating} onChange={v => setDraft(d => ({...d, google_rating: Math.min(v, 5)}))} suffix="/5" />
             <EditableField label="Depoimentos esta semana" value={draft.depoimentos_semana} onChange={v => setDraft(d => ({...d, depoimentos_semana: v}))} />
             <EditableField label="Indicações ativas" value={draft.indicacoes_ativas} onChange={v => setDraft(d => ({...d, indicacoes_ativas: v}))} />
@@ -597,7 +597,7 @@ function AbaAutoridade({ exec, aut, onSave }: {
           </div>
 
           {/* KPIs autoridade */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             <StatCard label="Depoimentos (semana)" value={String(aut.depoimentos_semana)}
               sub="coletados esta semana" icon={ThumbsUp} color="text-green-600" />
             <StatCard label="Indicações Ativas" value={String(aut.indicacoes_ativas)}
@@ -700,8 +700,8 @@ export default function ExecutivoPage() {
   return (
     <div className="animate-fade-in">
       {/* Header */}
-      <div className="px-8 pt-8 pb-5">
-        <div className="flex items-start justify-between">
+      <div className="px-4 md:px-8 pt-4 md:pt-8 pb-5">
+        <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
             <h1 className="text-2xl font-bold text-text-primary tracking-tight">Centro de Comando</h1>
             <p className="text-[11px] text-text-muted mt-1 font-mono capitalize">{getNow()}</p>
@@ -713,7 +713,7 @@ export default function ExecutivoPage() {
         </div>
 
         {/* KPIs rápidos */}
-        <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 mt-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 mt-5">
           <StatCard label="Leads no CRM"    value={String(exec.leads_total ?? 0)} sub={`+${exec.leads_semana ?? 0} esta semana`}  icon={Users}    color="text-blue-600" />
           <StatCard label="Consultas/Mês"   value={String(exec.consultas_mes ?? 0)} sub="agenda registrada"                       icon={Calendar} color="text-accent" />
           <StatCard label="Score NPS"       value={exec.nps_score !== null && exec.nps_score !== undefined ? String(exec.nps_score) : "—"} sub="satisfação" icon={Star}  color="text-amber-600" />
@@ -722,8 +722,8 @@ export default function ExecutivoPage() {
       </div>
 
       {/* Tab pills */}
-      <div className="px-8 pb-2">
-        <div className="flex items-center gap-2 border-b border-border pb-0">
+      <div className="px-4 md:px-8 pb-2">
+        <div className="flex items-center gap-1 md:gap-2 border-b border-border pb-0 overflow-x-auto scrollbar-none">
           {ABAS.map(a => {
             const active = aba === a.id
             return (
@@ -746,7 +746,7 @@ export default function ExecutivoPage() {
       </div>
 
       {/* Tab content */}
-      <div className="p-8 pt-6">
+      <div className="p-4 md:p-8 pt-4 md:pt-6">
         {aba === "marketing"  && <AbaMarketing mktg={mktg} onSave={saveMktg} />}
         {aba === "comercial"  && <AbaComercial exec={exec} />}
         {aba === "operacao"   && <AbaOperacao ops={ops} onSave={saveOps} exec={exec} />}

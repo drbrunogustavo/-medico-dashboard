@@ -950,7 +950,7 @@ export default function CopilotoPage() {
           style={{ background: "var(--topbar-bg)" }}>
           <div className="h-4 w-48 rounded bg-surface-2 shimmer" />
         </div>
-        <div className="p-8 space-y-3">
+        <div className="p-4 md:p-8 space-y-3">
           {[1,2,3].map(i => <div key={i} className="h-16 rounded-xl bg-surface border border-border shimmer" />)}
         </div>
       </div>

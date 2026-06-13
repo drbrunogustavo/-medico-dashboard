@@ -198,7 +198,7 @@ export default function FinanceiroPage() {
         title="Financeiro por Unidade"
         subtitle="ALA CLÍNICA · SUPABASE"
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {/* Month selector */}
             <div className="flex items-center gap-1 bg-surface border border-border rounded-lg px-2 py-1.5">
               <button onClick={prevMonth} className="text-text-muted hover:text-text-primary transition-colors p-0.5">
@@ -225,7 +225,7 @@ export default function FinanceiroPage() {
       <div className="p-4 md:p-8 space-y-6">
 
         {/* 4 KPI Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <StatCard label="Receitas"         value={fmt(receitas)} sub="no período"  icon={TrendingUp}   accent="green" />
           <StatCard label="Despesas"         value={fmt(despesas)} sub="no período"  icon={TrendingDown} accent="red"   />
           <StatCard label="Saldo do Período" value={fmt(saldo)}    sub="líquido"     icon={DollarSign}   accent={saldo >= 0 ? "green" : "red"} />

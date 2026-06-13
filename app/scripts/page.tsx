@@ -356,7 +356,7 @@ export default function ScriptsPage() {
 
   return (
     <div className="animate-fade-in">
-      <div className="p-8 pb-0">
+      <div className="p-4 md:p-8 pb-0">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-9 h-9 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
             <FileText className="w-5 h-5 text-blue-400" />
@@ -388,7 +388,7 @@ export default function ScriptsPage() {
 
       {/* ── Tab: Biblioteca ── */}
       {tab === "biblioteca" && (
-        <div className="p-8 space-y-6">
+        <div className="p-4 md:p-8 space-y-6">
           {/* Category Filter */}
           <div className="flex flex-wrap gap-2">
             <button
@@ -444,11 +444,11 @@ export default function ScriptsPage() {
 
       {/* ── Tab: Gerar Script ── */}
       {tab === "gerar" && (
-        <div className="p-8 space-y-6 max-w-2xl">
+        <div className="p-4 md:p-8 space-y-6 max-w-2xl">
           {/* Doctor Info */}
           <div className="space-y-3">
             <h2 className="text-xs font-mono text-text-muted uppercase tracking-widest">Seu Perfil</h2>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1">
                 <label className="text-[11px] font-mono text-text-muted uppercase tracking-wide">Seu nome</label>
                 <input

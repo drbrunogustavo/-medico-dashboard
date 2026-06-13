@@ -86,7 +86,7 @@ export default function JornadaPage() {
 
   return (
     <div className="animate-fade-in">
-      <div className="flex items-center justify-between p-8 pb-0">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between p-4 md:p-8 pb-0 gap-3">
         <div>
           <h1 className="text-2xl font-bold text-text-primary tracking-tight">Jornada do Paciente</h1>
           <p className="text-sm text-text-muted mt-1 font-mono">CONSULTÓRIO · MAPA DE EXPERIÊNCIA</p>
@@ -111,7 +111,7 @@ export default function JornadaPage() {
         </div>
       </div>
 
-      <div className="p-8 space-y-6">
+      <div className="p-4 md:p-8 space-y-6">
         {/* Mapa visual */}
         <div className="flex items-center gap-1 overflow-x-auto pb-2">
           {etapas.map((e, i) => {
@@ -234,7 +234,7 @@ export default function JornadaPage() {
               <div className="space-y-2">
                 <h3 className="text-xs font-mono text-text-muted uppercase tracking-widest">Comparação com Jornada Ideal</h3>
                 {analise.jornada_ideal_diff.map((d, i) => (
-                  <div key={i} className="grid grid-cols-3 gap-3 rounded-xl border border-[--border] bg-[--surface] p-4">
+                  <div key={i} className="grid grid-cols-1 sm:grid-cols-3 gap-3 rounded-xl border border-[--border] bg-[--surface] p-4">
                     <div>
                       <p className="text-[10px] font-mono text-text-muted mb-1">{d.etapa}</p>
                     </div>

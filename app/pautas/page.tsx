@@ -229,7 +229,7 @@ export default function PautasPage() {
           <div className="space-y-3">
             {filtered.map(p => (
               <div key={p.id} className="group bg-card border border-border hover:border-border-hover rounded-lg p-5 transition-all duration-150">
-                <div className="flex items-start gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-2 flex-wrap">
                       <span className={cn("text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full border", PRIORIDADE_STYLES[p.prioridade] || PRIORIDADE_STYLES["Baixa"])}>
@@ -254,7 +254,7 @@ export default function PautasPage() {
                       </div>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex-shrink-0">
+                  <div className="flex flex-wrap items-center gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex-shrink-0">
                     <button
                       onClick={() => router.push('/imagens?tema=' + encodeURIComponent(p.titulo))}
                       className="flex items-center gap-1 px-2.5 py-1.5 rounded-md border border-border text-text-muted hover:text-accent hover:border-accent-border text-[10px] font-mono transition-colors whitespace-nowrap">

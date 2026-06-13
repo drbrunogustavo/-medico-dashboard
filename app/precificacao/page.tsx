@@ -164,7 +164,7 @@ function Simulator({
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <SliderField
           label="Preço da consulta"
           value={preco}
@@ -181,7 +181,7 @@ function Simulator({
           min={20} max={100} suffix="%"
         />
       </div>
-      <div className="grid grid-cols-3 gap-3 mt-2">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-2">
         <div className="rounded-lg bg-[--surface] border border-[--border] p-3 text-center">
           <p className="text-[10px] font-mono text-text-muted uppercase mb-1">Consultas/mês</p>
           <p className="text-lg font-bold text-text-primary font-mono">{consultasEfetivas}</p>
@@ -301,7 +301,7 @@ export default function PrecificacaoPage() {
   if (step === 3 && result) {
     return (
       <div className="animate-fade-in">
-        <div className="flex items-center justify-between p-8 pb-0">
+        <div className="flex flex-wrap items-center justify-between gap-3 p-4 md:p-8 pb-0">
           <div>
             <h1 className="text-2xl font-bold text-text-primary tracking-tight">Precificação Estratégica</h1>
             <p className="text-sm text-text-muted mt-1 font-mono">
@@ -316,7 +316,7 @@ export default function PrecificacaoPage() {
           </button>
         </div>
 
-        <div className="p-8 space-y-6">
+        <div className="p-4 md:p-8 space-y-6">
           {/* Value Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <ValueCard
@@ -341,7 +341,7 @@ export default function PrecificacaoPage() {
           </div>
 
           {/* KPI Row */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
             {[
               { label: "Ponto de equilíbrio",     value: fmt(result.ponto_equilibrio),                         note: "por consulta" },
               { label: "Margem líquida est.",      value: `${result.margem_liquida_pct}%`,                     note: "no recomendado" },
@@ -434,7 +434,7 @@ export default function PrecificacaoPage() {
   // ── Step 1: Form ──
   return (
     <div className="animate-fade-in">
-      <div className="p-8 pb-0">
+      <div className="p-4 md:p-8 pb-0">
         <div className="flex items-center gap-3 mb-1">
           <div className="w-9 h-9 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center">
             <Calculator className="w-5 h-5 text-accent" />
@@ -446,7 +446,7 @@ export default function PrecificacaoPage() {
         </div>
       </div>
 
-      <div className="p-8 space-y-8 max-w-3xl">
+      <div className="p-4 md:p-8 space-y-8 max-w-3xl w-full">
         {error && (
           <div className="flex items-start gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
             <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
@@ -526,7 +526,7 @@ export default function PrecificacaoPage() {
             <span className="w-5 h-5 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center text-accent text-[10px]">3</span>
             Custos Operacionais Mensais
           </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
             <CostField label="Aluguel / espaço"    value={custoAluguel}      onChange={setCustoAluguel} />
             <CostField label="Funcionários"         value={custoFuncionarios} onChange={setCustoFuncionarios} />
             <CostField label="Sistemas / software"  value={custoSistemas}     onChange={setCustoSistemas} />
@@ -550,7 +550,7 @@ export default function PrecificacaoPage() {
             <span className="w-5 h-5 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center text-accent text-[10px]">4</span>
             Posicionamento Desejado
           </h2>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {POSICIONAMENTO_OPTS.map(p => (
               <button
                 key={p.id}

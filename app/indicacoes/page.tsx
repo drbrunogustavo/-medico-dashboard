@@ -114,7 +114,7 @@ function IndicacaoCard({
 
       {open && (
         <div className="border-t border-border p-4 space-y-4">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="bg-background border border-border rounded-lg p-3">
               <div className="text-[9px] font-mono text-text-muted uppercase tracking-widest mb-1">Indicador</div>
               <div className="text-[13px] font-semibold text-text-primary">{ind.indicador_nome}</div>
@@ -128,7 +128,7 @@ function IndicacaoCard({
           </div>
 
           {/* Pipeline status */}
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {[
               { done: true,                                label: "Indicação registrada" },
               { done: ind.consulta_indicado_realizada,    label: "Indicado consultou"    },
@@ -146,7 +146,7 @@ function IndicacaoCard({
           </div>
 
           {/* Actions */}
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {!ind.consulta_indicado_realizada && (
               <button
                 onClick={() => onConfirmarConsulta(ind.id)}

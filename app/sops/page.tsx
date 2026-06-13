@@ -253,14 +253,14 @@ function SopGeradoView({ sop, onNovo }: { sop: SopResult; onNovo: () => void }) 
     <div className="space-y-6">
       {/* Header */}
       <div className="rounded-xl border border-accent/20 bg-accent/5 p-5">
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
           <div>
             <h2 className="text-xl font-bold text-text-primary">{sop.titulo}</h2>
             <p className="text-sm text-text-secondary mt-1">{sop.objetivo}</p>
           </div>
           <button
             onClick={onNovo}
-            className="text-xs font-mono border border-[--border] px-3 py-1.5 rounded-lg text-text-muted hover:text-text-secondary hover:border-accent/30 transition-colors flex-shrink-0"
+            className="text-xs font-mono border border-[--border] px-3 py-1.5 rounded-lg text-text-muted hover:text-text-secondary hover:border-accent/30 transition-colors sm:flex-shrink-0 self-start"
           >
             Novo SOP
           </button>
@@ -427,7 +427,7 @@ export default function SopsPage() {
     <div className="animate-fade-in">
       {sopModal && <SopModal sop={sopModal} onClose={() => setSopModal(null)} />}
 
-      <div className="p-8 pb-0">
+      <div className="p-4 md:p-8 pb-0">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
             <ClipboardList className="w-5 h-5 text-emerald-400" />
@@ -459,7 +459,7 @@ export default function SopsPage() {
 
       {/* ── Tab: Biblioteca ── */}
       {tab === "biblioteca" && (
-        <div className="p-8 space-y-8">
+        <div className="p-4 md:p-8 space-y-8">
           {categorias.map(cat => (
             <div key={cat} className="space-y-3">
               <div className="flex items-center gap-2 pb-1">
@@ -490,7 +490,7 @@ export default function SopsPage() {
 
       {/* ── Tab: Gerar SOP ── */}
       {tab === "gerar" && (
-        <div className="p-8 space-y-6 max-w-2xl">
+        <div className="p-4 md:p-8 space-y-6 max-w-2xl">
           {result ? (
             <SopGeradoView sop={result} onNovo={() => { setResult(null); setProcesso("") }} />
           ) : (

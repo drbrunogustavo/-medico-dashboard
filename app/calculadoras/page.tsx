@@ -577,7 +577,7 @@ function CalcFramingham({ copied, onCopy }: { copied: string | null; onCopy: (id
           <Field label="HDL" unit="mg/dL" value={hdl} onChange={setHdl} min={0} />
           <Field label="PAS" unit="mmHg" value={pas} onChange={setPas} min={0} />
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Toggle label="Trat. anti-hipert." options={["Sim","Não"]} value={tratado} onChange={setTratado} />
           <Toggle label="Fumante" options={["Sim","Não"]} value={fumante} onChange={setFumante} />
         </div>
@@ -850,7 +850,7 @@ function CalcCastelli({ copied, onCopy }: { copied: string | null; onCopy: (id: 
     <CalcCard icon={TrendingUp} title="Índice de Castelli" color="#8b5cf6">
       <div className="space-y-3">
         <Toggle label="Sexo" options={["Homem","Mulher"]} value={sexo} onChange={setSexo} />
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <Field label="CT" unit="mg/dL" value={ct} onChange={setCt} min={0} />
           <Field label="HDL" unit="mg/dL" value={hdl} onChange={setHdl} min={0} />
           <Field label="LDL" unit="mg/dL" value={ldl} onChange={setLdl} min={0} />
@@ -2261,7 +2261,7 @@ export default function CalculadorasPage() {
   }
 
   return (
-    <div className="p-8 space-y-6 animate-fade-in">
+    <div className="p-4 md:p-8 space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="w-8 h-8 rounded-xl flex items-center justify-center"

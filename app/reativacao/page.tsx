@@ -245,12 +245,12 @@ export default function ReativacaoPage() {
         <CampanhaModal pacientes={pacSelecionados} onClose={() => setShowCampanha(false)} />
       )}
 
-      <div className="flex items-center justify-between p-8 pb-0">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between p-4 md:p-8 pb-0 gap-3">
         <div>
           <h1 className="text-2xl font-bold text-text-primary tracking-tight">Reativação de Pacientes</h1>
           <p className="text-sm text-text-muted mt-1 font-mono">CONSULTÓRIO · RECUPERAR PACIENTES PERDIDOS</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {selecionados.length > 0 && (
             <button
               onClick={() => setShowCampanha(true)}
@@ -270,7 +270,7 @@ export default function ReativacaoPage() {
         </div>
       </div>
 
-      <div className="p-8 space-y-4">
+      <div className="p-4 md:p-8 space-y-4">
         {pacientes.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 gap-4">
             <div className="w-12 h-12 rounded-xl bg-[--surface] border border-[--border] flex items-center justify-center">
@@ -290,7 +290,7 @@ export default function ReativacaoPage() {
 
         {/* Stats */}
         {pacientes.length > 0 && (
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {[
               { label: "+90 dias",  count: pacientes.filter(p => diasInativos(p.ultimo_contato) >= 90).length, color: "text-neutral-400" },
               { label: "60-90 dias",count: pacientes.filter(p => { const d = diasInativos(p.ultimo_contato); return d >= 60 && d < 90 }).length, color: "text-red-400" },
@@ -344,7 +344,7 @@ export default function ReativacaoPage() {
                         {badge.label}
                       </span>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <button
                         onClick={() => gerarMensagem(p)}
                         disabled={gerandoMsg === p.id}

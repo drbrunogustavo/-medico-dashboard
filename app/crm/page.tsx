@@ -369,7 +369,7 @@ function LeadModal({
           </div>
 
           {/* Telefone + Instagram */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-[11px] font-mono text-text-muted mb-1.5 tracking-wider uppercase">Telefone</label>
               <input
@@ -391,7 +391,7 @@ function LeadModal({
           </div>
 
           {/* Origem + Estágio */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-[11px] font-mono text-text-muted mb-1.5 tracking-wider uppercase">Origem</label>
               <select
@@ -506,7 +506,7 @@ function LeadDetailModal({
         {/* Body */}
         <div className="p-5 space-y-4">
           {/* Contact info */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="bg-background border border-border rounded-lg p-3">
               <div className="text-[9px] font-mono text-text-muted tracking-widest uppercase mb-1">Origem</div>
               <span className={cn(

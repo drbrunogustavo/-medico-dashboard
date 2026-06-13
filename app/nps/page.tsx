@@ -169,7 +169,7 @@ function DepoimentoModal({ nps, onClose }: { nps: NPS; onClose: () => void }) {
               <label className="block text-[11px] font-mono text-text-muted mb-1.5 uppercase tracking-wider">Resultado obtido</label>
               <input value={form.resultado} onChange={e => setForm(f => ({ ...f, resultado: e.target.value }))} placeholder="Ex: Perdeu 8kg em 3 meses" className={inputCls} />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-[11px] font-mono text-text-muted mb-1.5 uppercase tracking-wider">Tempo como paciente</label>
                 <input value={form.tempo_paciente} onChange={e => setForm(f => ({ ...f, tempo_paciente: e.target.value }))} placeholder="Ex: 6 meses" className={inputCls} />
@@ -312,7 +312,7 @@ export default function NPSPage() {
             <div className="text-[11px] font-mono text-text-muted uppercase tracking-widest mt-1">Score NPS</div>
           </div>
           <div className="w-px h-16 bg-border hidden md:block" />
-          <div className="grid grid-cols-3 gap-6 flex-1">
+          <div className="grid grid-cols-3 gap-3 sm:gap-6 flex-1">
             {[
               { label: "Promotores",  value: promotores, cls: "text-emerald-400", sub: "nota 9-10" },
               { label: "Neutros",     value: respondidas.length - promotores - detratores, cls: "text-amber-400", sub: "nota 7-8" },

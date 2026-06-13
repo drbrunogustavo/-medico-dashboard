@@ -681,7 +681,7 @@ export default function ProtocolosPage() {
       />
 
       <div className="p-4 md:p-8">
-        <div className="flex flex-col sm:flex-row gap-3 mb-5">
+        <div className="flex flex-col gap-3 mb-5">
           <input
             value={busca}
             onChange={e => setBusca(e.target.value)}
@@ -692,7 +692,7 @@ export default function ProtocolosPage() {
               color: "var(--text-primary)",
             }}
           />
-          <div className="flex gap-1.5 flex-wrap">
+          <div className="flex gap-1.5 flex-wrap items-center">
             {(["Todos", ...ESPECIALIDADES] as const).map(e => (
               <button
                 key={e}
@@ -747,7 +747,7 @@ export default function ProtocolosPage() {
           style={{ background: "rgba(8,9,14,0.85)" }}
           onClick={e => { if (e.target === e.currentTarget) setSelected(null) }}
         >
-          <div className="w-full max-w-2xl rounded-2xl overflow-hidden" style={{ background: "var(--card)", border: "1px solid var(--border)" }}>
+          <div className="w-full max-w-2xl mx-auto rounded-2xl overflow-hidden" style={{ background: "var(--card)", border: "1px solid var(--border)" }}>
             {/* Header */}
             <div className="px-5 py-4 flex items-start justify-between gap-3" style={{ background: `${selected.cor}08`, borderBottom: "1px solid var(--border)" }}>
               <div className="flex items-center gap-3">

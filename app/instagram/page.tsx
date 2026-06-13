@@ -298,7 +298,7 @@ export default function InstagramPage() {
 
   if (loading) {
     return (
-      <div className="p-8 animate-fade-in">
+      <div className="p-4 md:p-8 animate-fade-in">
         <div className="flex items-center gap-3 mb-8">
           <div className="w-8 h-8 rounded-xl flex items-center justify-center"
             style={{ background: "rgba(225,48,108,0.12)", border: "1px solid rgba(225,48,108,0.25)" }}>
@@ -339,7 +339,7 @@ export default function InstagramPage() {
                              : "Erro ao acessar Instagram"
 
     return (
-      <div className="p-8 space-y-6 animate-fade-in">
+      <div className="p-4 md:p-8 space-y-6 animate-fade-in">
         {/* Header */}
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-xl flex items-center justify-center"
@@ -355,7 +355,7 @@ export default function InstagramPage() {
         </div>
 
         {/* Main error card */}
-        <div className="rounded-2xl border p-6 max-w-lg"
+        <div className="rounded-2xl border p-6 w-full max-w-lg"
           style={{ background: "var(--card)", borderColor: "var(--border)" }}>
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style={iconBg}>
@@ -407,7 +407,7 @@ export default function InstagramPage() {
 
         {/* Contextual instructions */}
         {isExpired && (
-          <div className="rounded-xl border p-5 max-w-lg space-y-3"
+          <div className="rounded-xl border p-5 w-full max-w-lg space-y-3"
             style={{ background: "rgba(245,158,11,0.04)", borderColor: "rgba(245,158,11,0.2)" }}>
             <p className="text-[12px] font-bold flex items-center gap-2" style={{ color: "#f59e0b" }}>
               <Key style={{ width: 13, height: 13 }} />
@@ -441,7 +441,7 @@ export default function InstagramPage() {
         )}
 
         {isNoConfig && (
-          <div className="rounded-xl border p-5 max-w-lg space-y-3"
+          <div className="rounded-xl border p-5 w-full max-w-lg space-y-3"
             style={{ background: "rgba(225,48,108,0.04)", borderColor: "rgba(225,48,108,0.15)" }}>
             <p className="text-[12px] font-bold flex items-center gap-2" style={{ color: "#e1306c" }}>
               <ShieldAlert style={{ width: 13, height: 13 }} />
@@ -468,7 +468,7 @@ export default function InstagramPage() {
         )}
 
         {!isExpired && !isNoConfig && !isNetwork && (
-          <div className="rounded-xl border p-5 max-w-lg"
+          <div className="rounded-xl border p-5 w-full max-w-lg"
             style={{ background: "rgba(239,68,68,0.04)", borderColor: "rgba(239,68,68,0.15)" }}>
             <p className="text-[12px] font-bold mb-2 flex items-center gap-2" style={{ color: "#ef4444" }}>
               <AlertCircle style={{ width: 13, height: 13 }} />
@@ -496,7 +496,7 @@ export default function InstagramPage() {
   // ── Connected ──────────────────────────────────────────────────────────────
 
   return (
-    <div className="p-8 space-y-8 animate-fade-in">
+    <div className="p-4 md:p-8 space-y-8 animate-fade-in">
 
       {/* Toast */}
       {toast && (
@@ -508,7 +508,7 @@ export default function InstagramPage() {
       )}
 
       {/* ── Header ────────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-xl flex items-center justify-center"
             style={{ background: "rgba(225,48,108,0.12)", border: "1px solid rgba(225,48,108,0.25)" }}>
@@ -532,7 +532,7 @@ export default function InstagramPage() {
       </div>
 
       {/* ── SEÇÃO 1: Status ───────────────────────────────────────────────── */}
-      <div className="rounded-xl p-4 flex items-center gap-4"
+      <div className="rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-4"
         style={{ background: "rgba(0,192,127,0.06)", border: "1px solid rgba(0,192,127,0.2)" }}>
         {metrics?.profilePic ? (
           <img src={metrics.profilePic} alt={metrics.username}
@@ -558,7 +558,7 @@ export default function InstagramPage() {
             <p className="text-[12px] truncate" style={{ color: "var(--text-muted)" }}>{metrics.biography}</p>
           )}
         </div>
-        <div className="text-right flex-shrink-0">
+        <div className="text-left sm:text-right flex-shrink-0">
           {lastSync && (
             <p className="text-[10px] font-mono" style={{ color: "var(--text-muted)" }}>
               Sync {lastSync.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
@@ -566,7 +566,7 @@ export default function InstagramPage() {
           )}
           {metrics?.website && (
             <a href={metrics.website} target="_blank" rel="noopener noreferrer"
-              className="text-[11px] flex items-center gap-1 justify-end mt-1 hover:opacity-80"
+              className="text-[11px] flex items-center gap-1 justify-start sm:justify-end mt-1 hover:opacity-80"
               style={{ color: "#00c07f" }}>
               Site <ExternalLink style={{ width: 10, height: 10 }} />
             </a>

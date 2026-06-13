@@ -253,7 +253,7 @@ export default function RaioXPage() {
           <button
             onClick={analisar}
             disabled={loading || !perfil.trim() || !tema.trim()}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-accent text-background text-[13px] font-bold hover:bg-accent/90 transition-colors disabled:opacity-50"
+            className="flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-2.5 rounded-lg bg-accent text-background text-[13px] font-bold hover:bg-accent/90 transition-colors disabled:opacity-50"
           >
             {loading
               ? <><Loader2 className="w-4 h-4 animate-spin" /> Analisando paciente...</>
@@ -292,7 +292,7 @@ export default function RaioXPage() {
                 Descreva o perfil do seu paciente ideal e o tema. O Claude vai revelar o mapa completo: medos, desejos, objeções, linguagem que usam, conteúdos que convertem e os gatilhos que os fazem marcar consulta.
               </p>
             </div>
-            <div className="grid grid-cols-3 gap-2 w-full max-w-lg">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 w-full max-w-lg">
               {SECTIONS.map(s => (
                 <div key={s.key} className={cn("rounded-lg p-2.5 text-center border", s.bg, s.border)}>
                   <s.Icon className={cn("w-3.5 h-3.5 mx-auto mb-1", s.color)} />

@@ -514,7 +514,7 @@ export default function EmagrecimentoPage() {
         }
       />
 
-      <div className="p-4 md:p-8 space-y-5 max-w-4xl mx-auto">
+      <div className="p-4 md:p-8 space-y-5 max-w-4xl mx-auto w-full">
 
         {fase === "form" && (
           <>
@@ -602,7 +602,7 @@ export default function EmagrecimentoPage() {
             </div>
 
             {/* Navigation */}
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
               <button
                 onClick={() => setFatorIdx(i => Math.max(0, i - 1))}
                 disabled={fatorIdx === 0}
@@ -670,7 +670,7 @@ export default function EmagrecimentoPage() {
                   </div>
                 </div>
               </div>
-              <ResponsiveContainer width="100%" height={320}>
+              <ResponsiveContainer width="100%" height={240} className="md:!h-[320px]">
                 <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="70%">
                   <PolarGrid stroke="var(--border)" />
                   <PolarAngleAxis dataKey="fator" tick={<RadarLabel />} />
@@ -797,7 +797,7 @@ export default function EmagrecimentoPage() {
               <p className="text-[12px] leading-relaxed whitespace-pre-line" style={{ color: "var(--text-secondary)" }}>
                 {result.textoParaPaciente}
               </p>
-              <div className="flex flex-col sm:flex-row gap-2">
+              <div className="flex flex-col gap-2">
                 <button
                   onClick={() => copiar("paciente")}
                   className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-[11px] font-medium transition-all"

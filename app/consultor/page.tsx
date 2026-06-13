@@ -206,7 +206,7 @@ export default function ConsultorPage() {
   return (
     <div className="animate-fade-in flex flex-col" style={{ height: "calc(100vh - 1px)" }}>
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-[--border] flex-shrink-0">
+      <div className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-[--border] flex-shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
             <Lightbulb className="w-4 h-4 text-purple-400" />
@@ -252,7 +252,7 @@ export default function ConsultorPage() {
         {/* Chat area */}
         <div className="flex-1 flex flex-col min-w-0">
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+          <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-4">
             {messages.length === 0 && !loading && (
               <div className="flex flex-col items-center justify-center h-full gap-4 py-12">
                 <div className="w-14 h-14 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
@@ -284,7 +284,7 @@ export default function ConsultorPage() {
           </div>
 
           {/* Input */}
-          <div className="flex-shrink-0 px-6 py-4 border-t border-[--border]">
+          <div className="flex-shrink-0 px-4 md:px-6 py-4 border-t border-[--border]">
             <div className="flex gap-3 items-end">
               <textarea
                 ref={inputRef}

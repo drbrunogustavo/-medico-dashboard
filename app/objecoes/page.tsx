@@ -286,12 +286,12 @@ export default function ObecoesPage() {
 
         {/* Input */}
         <div className="bg-card border border-border rounded-lg p-5">
-          <div className="flex items-start justify-between gap-4 mb-3">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-3">
             <div>
               <h3 className="text-[13px] font-semibold text-text-primary">Tratamento ou Tema</h3>
               <p className="text-[11px] text-text-muted mt-0.5">Mapeie todas as objeções reais de pacientes e transforme cada uma em conteúdo educativo</p>
             </div>
-            <button onClick={abrirModal} className="flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-md border border-border text-text-muted hover:border-accent-border hover:text-accent transition-all flex-shrink-0">
+            <button onClick={abrirModal} className="flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-md border border-border text-text-muted hover:border-accent-border hover:text-accent transition-all sm:flex-shrink-0 self-start">
               <BookOpen className="w-3 h-3" /> Importar Pauta
             </button>
           </div>

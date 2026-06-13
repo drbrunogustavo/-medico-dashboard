@@ -458,7 +458,7 @@ export default function AgendaPage() {
               className="flex items-center gap-1.5 text-[11px] bg-blue-500 text-white font-semibold rounded-lg px-3 py-1.5 hover:bg-blue-600 transition-colors"
             >
               <Plus className="w-3.5 h-3.5" />
-              Agendamento
+              <span className="hidden sm:inline">Agendamento</span>
             </button>
 
             <button
@@ -467,7 +467,7 @@ export default function AgendaPage() {
               className="flex items-center gap-1.5 text-[11px] border border-border text-text-secondary rounded-lg px-3 py-1.5 hover:border-border-hover transition-colors"
             >
               <RefreshCw className={cn("w-3.5 h-3.5", loading && "animate-spin")} />
-              Atualizar
+              <span className="hidden sm:inline">Atualizar</span>
             </button>
           </div>
         }
@@ -1117,7 +1117,7 @@ export default function AgendaPage() {
               </div>
 
               {/* Date + Times */}
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 <div>
                   <label className="text-[10px] font-mono text-text-muted uppercase tracking-widest block mb-1.5">Data</label>
                   <input

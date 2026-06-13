@@ -159,7 +159,7 @@ export default function IndicadoresPage() {
 
   return (
     <div className="animate-fade-in">
-      <div className="flex items-center justify-between p-4 md:p-8 pb-0">
+      <div className="flex flex-wrap items-center justify-between gap-3 p-4 md:p-8 pb-0">
         <div>
           <h1 className="text-2xl font-bold text-text-primary tracking-tight">Indicadores da Clínica</h1>
           <p className="text-sm text-text-muted mt-1 font-mono">KPIs · PERFORMANCE · DECISÕES</p>
@@ -198,7 +198,7 @@ export default function IndicadoresPage() {
         {/* ── FINANCEIRO ── */}
         {tab === "financeiro" && (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {[
                 { label: "Faturamento do Mês",  value: fmt(exec.faturamento_mes ?? 0) },
                 { label: "Ticket Médio",         value: fmt(ticket_medio) },
@@ -214,7 +214,7 @@ export default function IndicadoresPage() {
 
             <div className="rounded-xl border border-[--border] bg-[--surface] p-5">
               <h3 className="text-xs font-mono text-text-muted uppercase tracking-widest mb-4">Faturamento + Projeção 3 meses</h3>
-              <div className="h-[180px] md:h-[200px]">
+              <div className="h-[160px] md:h-[200px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} barSize={24}>
                   <XAxis dataKey="mes" tick={{ fill: "#7c85a0", fontSize: 11, fontFamily: "monospace" }} axisLine={false} tickLine={false} />
@@ -261,8 +261,9 @@ export default function IndicadoresPage() {
 
             <div className="rounded-xl border border-[--border] bg-[--surface] p-5">
               <h3 className="text-xs font-mono text-text-muted uppercase tracking-widest mb-4">Leads por Origem</h3>
-              <div className="flex items-center gap-6">
-                <ResponsiveContainer width={180} height={180}>
+              <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+                <div className="w-full sm:w-[180px] h-[180px] flex-shrink-0">
+                <ResponsiveContainer width="100%" height={180}>
                   <PieChart>
                     <Pie data={exec.leads_origem ?? []} dataKey="count" nameKey="origem" cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={3}>
                       {(exec.leads_origem ?? []).map((_, i) => (
@@ -275,7 +276,8 @@ export default function IndicadoresPage() {
                     />
                   </PieChart>
                 </ResponsiveContainer>
-                <div className="space-y-2 flex-1">
+                </div>
+                <div className="space-y-2 flex-1 w-full sm:w-auto">
                   {(exec.leads_origem ?? []).map((o, i) => (
                     <div key={o.origem} className="flex items-center gap-2">
                       <div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: ORIGEM_COLORS[i % ORIGEM_COLORS.length] }} />
@@ -365,7 +367,7 @@ export default function IndicadoresPage() {
               ))}
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="rounded-xl border border-[--border] bg-[--surface] p-4">
                 <p className="text-[10px] font-mono text-text-muted uppercase">Pacientes Ativos no CRM</p>
                 <p className="text-2xl font-bold text-text-primary mt-1">{exec.leads_total ?? 0}</p>

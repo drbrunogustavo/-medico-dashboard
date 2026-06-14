@@ -108,7 +108,7 @@ export default function DeletarDadosPage() {
             }}>
               <p style={{ margin: 0, fontSize: 12, color: "var(--text-muted)" }}>Dúvidas? Entre em contato:</p>
               <p style={{ margin: "4px 0 0", fontFamily: "monospace", fontSize: 13, color: "#b8976a" }}>
-                contato@praxisplatforma.com.br
+                contato@praxisplataforma.com.br
               </p>
             </div>
           </div>
@@ -197,8 +197,8 @@ export default function DeletarDadosPage() {
 
             <p style={{ fontSize: 11, textAlign: "center", color: "var(--text-muted)", margin: 0 }}>
               Dúvidas?{" "}
-              <a href="mailto:contato@praxisplatforma.com.br" style={{ color: "#b8976a", textDecoration: "none" }}>
-                contato@praxisplatforma.com.br
+              <a href="mailto:contato@praxisplataforma.com.br" style={{ color: "#b8976a", textDecoration: "none" }}>
+                contato@praxisplataforma.com.br
               </a>
             </p>
           </form>

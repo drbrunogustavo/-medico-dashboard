@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
     userId = auth.userId
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://praxis.app"
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://praxisplataforma.com.br"
 
   try {
     const supabase = createSupabaseServerClient()

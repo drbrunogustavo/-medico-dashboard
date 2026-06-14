@@ -170,7 +170,7 @@ export default function TermosPage() {
           <Section n={9} title="Suspensão e Encerramento">
             <p>
               A PRAXIS pode suspender ou encerrar sua conta sem aviso prévio em caso de violação destes Termos, inadimplência ou uso fraudulento. Você pode solicitar o encerramento da conta e a exclusão de seus dados a qualquer momento em{" "}
-              <Link href="/deletar-dados" style={{ color: "#b8976a" }}>praxisplatforma.com.br/deletar-dados</Link>.
+              <Link href="/deletar-dados" style={{ color: "#b8976a" }}>praxisplataforma.com.br/deletar-dados</Link>.
             </p>
             <p style={{ marginTop: 10 }}>
               Após o encerramento, os dados são retidos por 90 dias para fins de recuperação, após o que são anonimizados ou excluídos permanentemente.
@@ -186,8 +186,8 @@ export default function TermosPage() {
             </p>
             <p style={{ marginTop: 10 }}>
               Dúvidas:{" "}
-              <a href="mailto:contato@praxisplatforma.com.br" style={{ color: "#b8976a" }}>
-                contato@praxisplatforma.com.br
+              <a href="mailto:contato@praxisplataforma.com.br" style={{ color: "#b8976a" }}>
+                contato@praxisplataforma.com.br
               </a>
             </p>
           </Section>

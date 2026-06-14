@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { PraxisLogo } from "@/components/PraxisLogo"
 import { cn } from "@/lib/utils"
@@ -8,21 +8,26 @@ import Link from "next/link"
 import {
   ArrowRight, Zap, Star, Crown, Check, X,
   User, MapPin, Stethoscope, Hash, AtSign,
-  Users, Sparkles, Loader2, AlertCircle, CalendarDays,
-  Megaphone, BarChart3, GraduationCap, Target, ShieldCheck,
+  Users, Sparkles, Loader2, AlertCircle,
+  Megaphone, BarChart3, GraduationCap, Target,
+  Camera, TrendingUp, Calendar, DollarSign,
+  Activity, Building, Smartphone,
 } from "lucide-react"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface FormData {
-  nome:           string
-  especialidade:  string
-  crm:            string
-  cidade:         string
-  instagram:      string
-  desafio:        string
-  pacientes_mes:  number
-  ticket_medio:   number
+  nome:                string
+  especialidade:       string
+  crm:                 string
+  cidade:              string
+  estado:              string
+  instagram:           string
+  anos_experiencia:    number
+  desafios:            string[]
+  pacientes_mes:       number
+  ticket_medio:        number
+  conteudo_frequencia: string
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -36,167 +41,169 @@ const ESPECIALIDADES = [
   "Medicina Estética", "Cirurgia Plástica", "Cirurgia Geral", "Outra",
 ]
 
-const DESAFIOS = [
-  "Agenda vazia",
-  "Ticket baixo",
-  "Dependência de convênio",
-  "Sem presença digital",
-  "Quero escalar",
+const ESTADOS_BR = [
+  "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA",
+  "MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN",
+  "RS","RO","RR","SC","SP","SE","TO",
 ]
 
-const FEATURES = [
-  { text: "Gerador de Roteiros e Legendas", starter: true,  pro: true,  elite: true  },
-  { text: "Banco de Pautas e Ganchos",       starter: true,  pro: true,  elite: true  },
-  { text: "Calendário Editorial",             starter: true,  pro: true,  elite: true  },
-  { text: "CRM de Leads",                     starter: true,  pro: true,  elite: true  },
-  { text: "Radar de Tendências (IA)",         starter: false, pro: true,  elite: true  },
-  { text: "Diretor Criativo + Imagens",       starter: false, pro: true,  elite: true  },
-  { text: "Copiloto de Consulta",             starter: false, pro: true,  elite: true  },
-  { text: "Painel Executivo + Consultor IA",  starter: false, pro: false, elite: true  },
-  { text: "Diagnóstico 360° da Clínica",      starter: false, pro: false, elite: true  },
-  { text: "Expansão de Clínicas + Predição",  starter: false, pro: false, elite: true  },
+const DESAFIOS_LIST = [
+  { id: "agenda",     label: "Agenda vazia ou pouco ocupada",         icon: "📅" },
+  { id: "ticket",     label: "Ticket médio baixo",                    icon: "💰" },
+  { id: "convenio",   label: "Dependência de convênios",              icon: "🏥" },
+  { id: "digital",    label: "Sem presença digital",                  icon: "📱" },
+  { id: "captacao",   label: "Dificuldade de captar novos pacientes", icon: "👥" },
+  { id: "indicadores",label: "Não consigo acompanhar os indicadores", icon: "📊" },
+  { id: "escalar",    label: "Quero escalar e abrir nova unidade",    icon: "🚀" },
 ]
 
-interface PlanDef {
-  id:           string
-  name:         string
-  priceDisplay: string
-  priceSub:     string
-  badge:        string | null
-  highlight:    boolean
-  icon:         React.ElementType
-  color:        string
-  colorDark:    string
-  border:       string
-  limits:       string
-  priceKey:     string
-}
+const CONTEUDO_FREQUENCIA = [
+  "Não produzo",
+  "Às vezes",
+  "1–2x/semana",
+  "Todo dia",
+]
 
-const PLANS: PlanDef[] = [
+const PLANOS = [
   {
-    id: "starter",       name: "Starter",
-    priceDisplay: "R$ 97",  priceSub: "/mês",
-    badge: null,  highlight: false,
-    icon: Zap, color: "text-text-secondary", colorDark: "#aaa",
-    border: "border-border hover:border-border-hover",
+    id: "starter", name: "Starter", price: "R$ 97", sub: "/mês",
+    badge: "7 dias grátis", highlight: false,
+    icon: Zap, color: "#64748b",
     limits: "30 gerações/mês",
+    features: ["Roteiros e Legendas", "Banco de Pautas", "CRM básico"],
     priceKey: "starter",
   },
   {
-    id: "pro",           name: "Pro",
-    priceDisplay: "R$ 197", priceSub: "/mês",
-    badge: null,  highlight: false,
-    icon: Star, color: "text-accent", colorDark: "#00c07f",
-    border: "border-accent-border",
+    id: "pro", name: "Pro", price: "R$ 197", sub: "/mês",
+    badge: "7 dias grátis", highlight: false,
+    icon: Star, color: "#b8976a",
     limits: "200 gerações/mês",
+    features: ["Tudo do Starter", "Radar de Tendências IA", "Diretor Criativo + Imagens", "Copiloto de Consulta"],
     priceKey: "pro",
   },
   {
-    id: "elite",         name: "Elite",
-    priceDisplay: "R$ 397", priceSub: "/mês",
-    badge: "MAIS POPULAR", highlight: true,
-    icon: Crown, color: "text-[#d4af37]", colorDark: "#d4af37",
-    border: "border-[rgba(212,175,55,0.25)] hover:border-[rgba(212,175,55,0.45)]",
+    id: "elite", name: "Elite", price: "R$ 397", sub: "/mês",
+    badge: "RECOMENDADO", highlight: true,
+    icon: Crown, color: "#b8976a",
     limits: "Gerações ilimitadas",
+    features: ["Tudo do Pro", "Painel Executivo", "Diagnóstico 360°", "Expansão e Predição IA"],
     priceKey: "elite_monthly",
-  },
-  {
-    id: "elite_annual",  name: "Elite Anual",
-    priceDisplay: "R$ 2.997", priceSub: "/ano",
-    badge: "ECONOMIZE 37%", highlight: false,
-    icon: CalendarDays, color: "text-purple-400", colorDark: "#a78bfa",
-    border: "border-purple-500/20 hover:border-purple-500/40",
-    limits: "Ilimitado · 12 meses",
-    priceKey: "elite_annual",
   },
 ]
 
 const ALAS_TOUR = [
   {
-    id: "social", icon: Megaphone, color: "text-accent", bg: "bg-accent/10", border: "border-accent/20",
+    id: "social", Icon: Megaphone, color: "#b8976a",
     title: "PRAXIS Social", desc: "Crie conteúdo que atrai pacientes todos os dias",
     href: "/roteiros", cta: "Ver Roteiros",
-    highlight: ["Agenda vazia", "Sem presença digital"],
+    triggers: ["agenda", "digital", "captacao"],
   },
   {
-    id: "consultorio", icon: Stethoscope, color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20",
-    title: "PRAXIS Consultório", desc: "Converta leads em pacientes fiéis com automação",
+    id: "crm", Icon: Users, color: "#3b82f6",
+    title: "PRAXIS CRM", desc: "Converta leads em pacientes com automação",
     href: "/crm", cta: "Abrir CRM",
-    highlight: ["Agenda vazia", "Ticket baixo"],
+    triggers: ["agenda", "captacao", "ticket"],
   },
   {
-    id: "executivo", icon: BarChart3, color: "text-purple-400", bg: "bg-purple-500/10", border: "border-purple-500/20",
+    id: "executivo", Icon: BarChart3, color: "#8b5cf6",
     title: "PRAXIS Executivo", desc: "Gerencie finanças, indicadores e metas",
     href: "/executivo", cta: "Ver Painel",
-    highlight: ["Ticket baixo", "Dependência de convênio"],
+    triggers: ["ticket", "convenio", "indicadores"],
   },
   {
-    id: "ia", icon: Sparkles, color: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/20",
-    title: "PRAXIS IA", desc: "Estratégias e automações inteligentes para crescer",
+    id: "ia", Icon: Sparkles, color: "#f59e0b",
+    title: "Consultor Estratégico IA", desc: "Estratégias e automações inteligentes",
     href: "/posicionamento", cta: "Ver Estratégia",
-    highlight: ["Quero escalar", "Dependência de convênio"],
+    triggers: ["escalar", "convenio"],
   },
   {
-    id: "academy", icon: GraduationCap, color: "text-pink-400", bg: "bg-pink-500/10", border: "border-pink-500/20",
-    title: "PRAXIS Academy", desc: "Aprenda a construir uma clínica de alto padrão",
+    id: "academy", Icon: GraduationCap, color: "#ec4899",
+    title: "PRAXIS Academy", desc: "Construa uma clínica de alto padrão",
     href: "/academy", cta: "Ver Academy",
-    highlight: ["Quero escalar"],
+    triggers: ["escalar", "indicadores"],
   },
 ]
 
-// ─── Step indicator ───────────────────────────────────────────────────────────
+// ─── Design tokens ────────────────────────────────────────────────────────────
 
-function StepDot({ n, current, total }: { n: number; current: number; total: number }) {
-  const done   = n < current
-  const active = n === current
+const BG      = "#F5F0E8"
+const GOLD    = "#b8976a"
+const DARK    = "#0D1B2A"
+const TEXT2   = "#6a5a4a"
+const CARD_BG = "#FFFFFF"
+const BORDER  = "#e8ddd0"
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function ProgressBar({ step, total }: { step: number; total: number }) {
+  const labels = ["Início", "Perfil", "Diagnóstico", "Plano", "Tour"]
   return (
-    <div className={cn(
-      "w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold transition-all border",
-      done   ? "bg-accent border-accent text-background"
-             : active ? "bg-accent-dim border-accent text-accent"
-             : "bg-surface-2 border-border text-text-muted"
-    )}>
-      {done ? <Check className="w-3.5 h-3.5" /> : n}
+    <div className="w-full mb-10">
+      <div className="flex items-center justify-between mb-3">
+        {labels.map((label, i) => {
+          const n = i + 1
+          const done = n < step
+          const active = n === step
+          return (
+            <div key={i} className="flex flex-col items-center gap-1 flex-1">
+              <div
+                className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold transition-all border"
+                style={{
+                  background: done ? GOLD : active ? `${GOLD}22` : CARD_BG,
+                  borderColor: done || active ? GOLD : BORDER,
+                  color: done ? "#fff" : active ? GOLD : TEXT2,
+                }}>
+                {done ? <Check className="w-3.5 h-3.5" /> : n}
+              </div>
+              <span className="text-[9px] font-mono tracking-wider" style={{ color: active ? GOLD : TEXT2 }}>
+                {label.toUpperCase()}
+              </span>
+            </div>
+          )
+        })}
+      </div>
+      <div className="relative h-1.5 rounded-full" style={{ background: BORDER }}>
+        <div
+          className="absolute left-0 top-0 h-full rounded-full transition-all duration-500"
+          style={{ width: `${((step - 1) / (total - 1)) * 100}%`, background: GOLD }}
+        />
+      </div>
     </div>
   )
 }
 
-function ProgressBar({ step }: { step: number }) {
-  const labels = ["Início", "Perfil", "Cenário", "Termos", "Plano", "Tour"]
-  const total = labels.length
+function GoldBtn({
+  onClick, disabled, loading, children, full, secondary,
+}: {
+  onClick?: () => void; disabled?: boolean; loading?: boolean;
+  children: React.ReactNode; full?: boolean; secondary?: boolean;
+}) {
   return (
-    <div className="flex items-center gap-0 mb-10">
-      {labels.map((label, i) => (
-        <div key={i} className="flex items-center">
-          <div className="flex flex-col items-center gap-1.5">
-            <StepDot n={i + 1} current={step} total={total} />
-            <span className={cn(
-              "text-[9px] font-mono tracking-wider whitespace-nowrap",
-              step === i + 1 ? "text-accent" : "text-text-muted"
-            )}>
-              {label.toUpperCase()}
-            </span>
-          </div>
-          {i < labels.length - 1 && (
-            <div className={cn(
-              "h-px w-12 sm:w-20 mx-2 mb-4 transition-all",
-              step > i + 1 ? "bg-accent" : "bg-border"
-            )} />
-          )}
-        </div>
-      ))}
-    </div>
+    <button
+      onClick={onClick}
+      disabled={disabled || loading}
+      className={cn(
+        "flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-[13px] font-bold transition-all disabled:opacity-40",
+        full ? "w-full" : "",
+        secondary
+          ? "text-sm underline underline-offset-4"
+          : "hover:opacity-90 shadow-sm"
+      )}
+      style={secondary
+        ? { color: TEXT2 }
+        : { background: GOLD, color: "#fff" }
+      }>
+      {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : children}
+    </button>
   )
 }
 
-// ─── Input ────────────────────────────────────────────────────────────────────
-
-function Field({ label, icon: Icon, children }: {
+function InputField({ label, icon: Icon, children }: {
   label: string; icon: React.ElementType; children: React.ReactNode
 }) {
   return (
     <div className="space-y-1.5">
-      <label className="flex items-center gap-1.5 text-[11px] font-mono text-text-muted tracking-widest uppercase">
+      <label className="flex items-center gap-1.5 text-[11px] font-mono tracking-widest uppercase" style={{ color: TEXT2 }}>
         <Icon className="w-3 h-3" /> {label}
       </label>
       {children}
@@ -204,25 +211,55 @@ function Field({ label, icon: Icon, children }: {
   )
 }
 
-const inputCls = "w-full bg-background border border-border rounded-lg px-4 py-3 text-[13px] text-text-primary placeholder:text-text-muted outline-none focus:border-accent/40 transition-colors"
+const inputStyle: React.CSSProperties = {
+  background: CARD_BG,
+  border: `1px solid ${BORDER}`,
+  color: DARK,
+  borderRadius: "0.5rem",
+  padding: "0.75rem 1rem",
+  fontSize: "0.8125rem",
+  width: "100%",
+  outline: "none",
+}
 
-// ─── Page ────────────────────────────────────────────────────────────────────
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function OnboardingPage() {
-  const router = useRouter()
-  const [step,      setStep]      = useState(1)
-  const [saving,       setSaving]       = useState(false)
-  const [erroFinal,    setErroFinal]    = useState("")
-  const [termosAceitos, setTermosAceitos] = useState(false)
+  const router  = useRouter()
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  const [step,      setStep]     = useState(1)
+  const [saving,    setSaving]   = useState(false)
+  const [erroMsg,   setErroMsg]  = useState("")
+  const [terms,     setTerms]    = useState(false)
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
 
   const [form, setForm] = useState<FormData>({
-    nome: "", especialidade: "", crm: "", cidade: "",
-    instagram: "", desafio: "", pacientes_mes: 50, ticket_medio: 500,
+    nome: "", especialidade: "", crm: "", cidade: "", estado: "SP",
+    instagram: "", anos_experiencia: 5,
+    desafios: [], pacientes_mes: 50, ticket_medio: 500,
+    conteudo_frequencia: "",
   })
 
-  const set = (k: keyof FormData) =>
-    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
+  const setF = (k: keyof FormData) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
       setForm(f => ({ ...f, [k]: e.target.value }))
+
+  const toggleDesafio = (id: string) => {
+    setForm(f => {
+      const already = f.desafios.includes(id)
+      if (already) return { ...f, desafios: f.desafios.filter(d => d !== id) }
+      if (f.desafios.length >= 2) return f
+      return { ...f, desafios: [...f.desafios, id] }
+    })
+  }
+
+  const handleAvatar = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const url = URL.createObjectURL(file)
+    setAvatarUrl(url)
+  }
 
   const saveProfile = async (extra?: Record<string, unknown>) => {
     await fetch("/api/perfil", {
@@ -239,451 +276,527 @@ export default function OnboardingPage() {
     setStep(s => s + 1)
   }
 
-  const goTrial = async () => {
-    setSaving(true)
-    setErroFinal("")
-    try {
-      await saveProfile()
-      const res = await fetch("/api/perfil", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ onboarding_completo: true }),
-      })
-      if (!res.ok) {
-        const json = await res.json().catch(() => ({})) as { error?: string }
-        setErroFinal(json.error ?? `Erro ${res.status}`)
-        return
-      }
-      setStep(6)
-    } catch {
-      setErroFinal("Erro de conexão.")
-    } finally {
-      setSaving(false)
-    }
-  }
-
   const choosePlan = async (priceKey: string) => {
     setSaving(true)
-    setErroFinal("")
+    setErroMsg("")
     try {
-      await saveProfile({ onboarding_completo: true })
+      await saveProfile({ onboarding_completo: true, termos_aceitos: terms })
+      // Fire welcome email before redirecting to Stripe
+      const perfil = await fetch("/api/perfil").then(r => r.json()).catch(() => null) as { email?: string; nome?: string } | null
+      if (perfil?.email && perfil?.nome) {
+        fetch("/api/email/boas-vindas", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ nome: perfil.nome, email: perfil.email }),
+        }).catch(() => null)
+      }
       const res  = await fetch("/api/stripe/checkout", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ plano: priceKey }),
       })
-      const data = await res.json()
+      const data = await res.json() as { url?: string; error?: string }
       if (data.url) { window.location.href = data.url; return }
-      setErroFinal(data.error ?? "Erro ao gerar checkout.")
+      setErroMsg(data.error ?? "Erro ao gerar checkout.")
     } catch {
-      setErroFinal("Erro de conexão com o Stripe.")
+      setErroMsg("Erro de conexão com o Stripe.")
     } finally {
       setSaving(false)
     }
   }
 
-  const finishTour = async () => {
-    router.push("/dashboard")
+  const goTrial = async () => {
+    setSaving(true)
+    setErroMsg("")
+    try {
+      await saveProfile({ onboarding_completo: true, termos_aceitos: terms })
+      // Dispatch welcome email (fire-and-forget — don't block UX)
+      const perfil = await fetch("/api/perfil").then(r => r.json()).catch(() => null) as { email?: string; nome?: string } | null
+      if (perfil?.email && perfil?.nome) {
+        fetch("/api/email/boas-vindas", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ nome: perfil.nome, email: perfil.email }),
+        }).catch(() => null)
+      }
+      setStep(5)
+    } catch {
+      setErroMsg("Erro de conexão.")
+    } finally {
+      setSaving(false)
+    }
   }
 
   const nome = form.nome ? `Dr. ${form.nome.replace(/^Dr\.?\s*/i, "")}` : "Doutor(a)"
 
-  return (
-    <div className="fixed inset-0 z-[200] bg-background flex items-center justify-center p-4 overflow-y-auto">
-      <div className="w-full max-w-2xl mx-auto py-8">
+  // Find most relevant ala based on desafios
+  const topAla = ALAS_TOUR.find(a => a.triggers.some(t => form.desafios.includes(t))) ?? ALAS_TOUR[0]
 
+  return (
+    <div className="fixed inset-0 z-[200] flex items-start justify-center overflow-y-auto" style={{ background: BG }}>
+      <div className="w-full max-w-2xl mx-auto px-4 py-8">
+
+        {/* Logo */}
         <div className="flex justify-center mb-8">
           <PraxisLogo />
         </div>
 
-        <ProgressBar step={step} />
+        {/* Progress */}
+        <ProgressBar step={step} total={5} />
 
-        {/* ── STEP 1: Boas-vindas ─────────────────────────────────────────── */}
+        {/* ── ETAPA 1 — Boas-vindas ───────────────────────────────────────── */}
         {step === 1 && (
           <div className="text-center animate-fade-in space-y-8">
-            <div className="space-y-4">
-              <div className="w-20 h-20 mx-auto rounded-2xl bg-accent-dim border border-accent-border flex items-center justify-center">
-                <Sparkles className="w-10 h-10 text-accent" />
+            <div className="space-y-5">
+              <div
+                className="w-20 h-20 mx-auto rounded-2xl flex items-center justify-center"
+                style={{ background: `${GOLD}18`, border: `1px solid ${GOLD}40` }}>
+                <Sparkles className="w-10 h-10" style={{ color: GOLD }} />
               </div>
-              <h1 className="text-[32px] sm:text-[38px] font-semibold text-text-primary leading-tight"
-                style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}>
-                Bem-vindo ao PRAXIS
-              </h1>
-              <p className="text-[15px] text-text-secondary max-w-md mx-auto leading-relaxed">
-                Vamos configurar sua plataforma em 3 minutos e personalizar cada módulo para sua realidade clínica.
-              </p>
+              <div>
+                <h1 className="text-[32px] sm:text-[40px] font-semibold leading-tight" style={{ color: DARK, fontFamily: "var(--font-playfair), Georgia, serif" }}>
+                  Bem-vindo ao PRAXIS!
+                </h1>
+                <p className="text-[15px] mt-3 max-w-md mx-auto leading-relaxed" style={{ color: TEXT2 }}>
+                  Vamos configurar sua plataforma em 3 minutos e personalizar cada módulo para sua realidade clínica.
+                </p>
+              </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-4 max-w-sm mx-auto">
+            <div className="grid grid-cols-3 gap-3 max-w-sm mx-auto">
               {[
-                { label: "36+",         sub: "módulos de IA" },
-                { label: "5 alas",      sub: "integradas"    },
-                { label: "7 dias",      sub: "grátis"        },
-              ].map((item, i) => (
-                <div key={i} className="bg-surface border border-border rounded-xl p-4 text-center">
-                  <div className="text-[15px] font-bold text-accent">{item.label}</div>
-                  <div className="text-[10px] text-text-muted mt-0.5">{item.sub}</div>
+                { label: "36+",    sub: "módulos de IA", icon: Sparkles   },
+                { label: "5 alas", sub: "integradas",    icon: Building   },
+                { label: "7 dias", sub: "grátis",        icon: Calendar   },
+              ].map(({ label, sub, icon: Icon }, i) => (
+                <div key={i} className="rounded-xl p-4 text-center" style={{ background: CARD_BG, border: `1px solid ${BORDER}` }}>
+                  <Icon className="w-4 h-4 mx-auto mb-1.5" style={{ color: GOLD }} />
+                  <div className="text-[15px] font-bold" style={{ color: GOLD }}>{label}</div>
+                  <div className="text-[10px] mt-0.5" style={{ color: TEXT2 }}>{sub}</div>
                 </div>
               ))}
             </div>
 
-            <button onClick={() => setStep(2)}
-              className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-accent text-background text-[14px] font-bold hover:opacity-90 transition-all shadow-lg shadow-accent/20">
+            <GoldBtn onClick={() => setStep(2)}>
               Começar configuração <ArrowRight className="w-4 h-4" />
-            </button>
+            </GoldBtn>
           </div>
         )}
 
-        {/* ── STEP 2: Perfil ──────────────────────────────────────────────── */}
+        {/* ── ETAPA 2 — Perfil ────────────────────────────────────────────── */}
         {step === 2 && (
           <div className="animate-fade-in space-y-6">
-            <div className="text-center space-y-2 mb-8">
-              <h2 className="text-[26px] font-semibold text-text-primary"
-                style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}>
+            <div className="text-center space-y-2 mb-6">
+              <h2 className="text-[26px] font-semibold" style={{ color: DARK, fontFamily: "var(--font-playfair), Georgia, serif" }}>
                 Perfil Profissional
               </h2>
-              <p className="text-[13px] text-text-secondary">
-                Esses dados personalizam os prompts de IA em todo o sistema.
+              <p className="text-[13px]" style={{ color: TEXT2 }}>
+                Esses dados personalizam toda a plataforma.
               </p>
             </div>
 
-            <div className="bg-surface border border-border rounded-xl p-6 space-y-4">
-              <Field label="Nome completo" icon={User}>
-                <input value={form.nome} onChange={set("nome")} placeholder="Dr. Bruno Gustavo" className={inputCls} />
-              </Field>
-              <Field label="Especialidade" icon={Stethoscope}>
-                <select value={form.especialidade} onChange={set("especialidade")} className={inputCls}>
-                  <option value="">Selecione a especialidade principal</option>
+            <div className="rounded-2xl p-6 space-y-5" style={{ background: CARD_BG, border: `1px solid ${BORDER}` }}>
+
+              {/* Avatar upload */}
+              <div className="flex flex-col items-center gap-3">
+                <div
+                  className="w-20 h-20 rounded-full flex items-center justify-center cursor-pointer relative overflow-hidden"
+                  style={{ background: `${GOLD}12`, border: `2px dashed ${GOLD}50` }}
+                  onClick={() => fileRef.current?.click()}>
+                  {avatarUrl
+                    ? <img src={avatarUrl} alt="avatar" className="w-full h-full object-cover" />
+                    : <Camera className="w-7 h-7" style={{ color: GOLD }} />
+                  }
+                </div>
+                <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatar} />
+                <button className="text-[11px]" style={{ color: TEXT2 }} onClick={() => fileRef.current?.click()}>
+                  Foto de perfil (opcional)
+                </button>
+              </div>
+
+              <InputField label="Nome completo" icon={User}>
+                <input
+                  value={form.nome}
+                  onChange={setF("nome")}
+                  placeholder="Dr. Bruno Gustavo"
+                  style={inputStyle}
+                />
+              </InputField>
+
+              <InputField label="Especialidade principal" icon={Stethoscope}>
+                <select value={form.especialidade} onChange={setF("especialidade")} style={inputStyle}>
+                  <option value="">Selecione a especialidade</option>
                   {ESPECIALIDADES.map(e => <option key={e} value={e}>{e}</option>)}
                 </select>
-              </Field>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Field label="CRM" icon={Hash}>
-                  <input value={form.crm} onChange={set("crm")} placeholder="CRM/SP 123456" className={inputCls} />
-                </Field>
-                <Field label="Cidade" icon={MapPin}>
-                  <input value={form.cidade} onChange={set("cidade")} placeholder="São Paulo, SP" className={inputCls} />
-                </Field>
+              </InputField>
+
+              <InputField label="CRM" icon={Hash}>
+                <input value={form.crm} onChange={setF("crm")} placeholder="CRM/SP 123456" style={inputStyle} />
+              </InputField>
+
+              <div className="grid grid-cols-2 gap-3">
+                <InputField label="Cidade" icon={MapPin}>
+                  <input value={form.cidade} onChange={setF("cidade")} placeholder="São Paulo" style={inputStyle} />
+                </InputField>
+                <InputField label="Estado" icon={MapPin}>
+                  <select value={form.estado} onChange={setF("estado")} style={inputStyle}>
+                    {ESTADOS_BR.map(uf => <option key={uf} value={uf}>{uf}</option>)}
+                  </select>
+                </InputField>
               </div>
-              <Field label="Instagram" icon={AtSign}>
-                <input value={form.instagram} onChange={set("instagram")} placeholder="@drbruno" className={inputCls} />
-              </Field>
+
+              <InputField label="Instagram" icon={AtSign}>
+                <input value={form.instagram} onChange={setF("instagram")} placeholder="@drbruno" style={inputStyle} />
+              </InputField>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-mono tracking-widest uppercase" style={{ color: TEXT2 }}>
+                    Anos de experiência
+                  </label>
+                  <span className="text-[15px] font-bold" style={{ color: GOLD }}>{form.anos_experiencia}</span>
+                </div>
+                <input
+                  type="range" min={1} max={30} step={1}
+                  value={form.anos_experiencia}
+                  onChange={e => setForm(f => ({ ...f, anos_experiencia: Number(e.target.value) }))}
+                  className="w-full"
+                  style={{ accentColor: GOLD }}
+                />
+                <div className="flex justify-between text-[10px] font-mono" style={{ color: TEXT2 }}>
+                  <span>1 ano</span><span>30 anos</span>
+                </div>
+              </div>
             </div>
 
             <div className="flex items-center justify-between">
-              <button onClick={() => next()} disabled={saving}
-                className="text-[12px] text-text-muted hover:text-text-secondary transition-colors">
-                Pular por agora →
+              <button onClick={() => next()} className="text-[12px] underline underline-offset-4" style={{ color: TEXT2 }}>
+                Pular por agora
               </button>
-              <button onClick={() => next()} disabled={saving}
-                className="flex items-center gap-2 px-6 py-3 rounded-xl bg-accent text-background text-[13px] font-bold hover:opacity-90 disabled:opacity-50 min-w-[140px] justify-center">
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Próximo <ArrowRight className="w-4 h-4" /></>}
-              </button>
+              <GoldBtn onClick={() => next()} loading={saving}>
+                Próximo <ArrowRight className="w-4 h-4" />
+              </GoldBtn>
             </div>
           </div>
         )}
 
-        {/* ── STEP 3: Posicionamento ──────────────────────────────────────── */}
+        {/* ── ETAPA 3 — Diagnóstico ───────────────────────────────────────── */}
         {step === 3 && (
           <div className="animate-fade-in space-y-6">
-            <div className="text-center space-y-2 mb-8">
-              <h2 className="text-[26px] font-semibold text-text-primary"
-                style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}>
-                Seu cenário atual
+            <div className="text-center space-y-2 mb-6">
+              <h2 className="text-[26px] font-semibold" style={{ color: DARK, fontFamily: "var(--font-playfair), Georgia, serif" }}>
+                Conte-nos sobre sua clínica
               </h2>
-              <p className="text-[13px] text-text-secondary">
-                Isso nos ajuda a destacar os módulos mais relevantes para você.
+              <p className="text-[13px]" style={{ color: TEXT2 }}>
+                Isso personaliza os módulos mais relevantes para você.
               </p>
             </div>
 
-            <div className="bg-surface border border-border rounded-xl p-6 space-y-6">
-              {/* Desafio pills */}
+            <div className="rounded-2xl p-6 space-y-6" style={{ background: CARD_BG, border: `1px solid ${BORDER}` }}>
+
+              {/* Multi-select desafios */}
               <div className="space-y-3">
-                <label className="flex items-center gap-1.5 text-[11px] font-mono text-text-muted tracking-widest uppercase">
-                  <Target className="w-3 h-3" /> Qual seu maior desafio hoje?
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {DESAFIOS.map(d => (
-                    <button key={d} type="button"
-                      onClick={() => setForm(f => ({ ...f, desafio: d }))}
-                      className={cn(
-                        "text-[12px] px-3 py-2 rounded-lg border transition-all",
-                        form.desafio === d
-                          ? "bg-accent-dim border-accent-border text-accent font-medium"
-                          : "border-border text-text-muted hover:text-text-secondary"
-                      )}>
-                      {d}
-                    </button>
-                  ))}
+                <div className="flex items-center justify-between">
+                  <label className="flex items-center gap-1.5 text-[11px] font-mono tracking-widest uppercase" style={{ color: TEXT2 }}>
+                    <Target className="w-3 h-3" /> Qual seu maior desafio hoje?
+                  </label>
+                  <span className="text-[10px] font-mono" style={{ color: GOLD }}>
+                    {form.desafios.length}/2 escolhidos
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 gap-2">
+                  {DESAFIOS_LIST.map(d => {
+                    const sel = form.desafios.includes(d.id)
+                    const maxed = form.desafios.length >= 2 && !sel
+                    return (
+                      <button
+                        key={d.id}
+                        onClick={() => toggleDesafio(d.id)}
+                        disabled={maxed}
+                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all disabled:opacity-40"
+                        style={{
+                          background:   sel ? `${GOLD}12` : "#F8F5F0",
+                          border:       `1px solid ${sel ? GOLD : BORDER}`,
+                          color:        sel ? GOLD : DARK,
+                        }}>
+                        <span className="text-[16px]">{d.icon}</span>
+                        <span className="text-[13px] font-medium flex-1">{d.label}</span>
+                        {sel && <Check className="w-4 h-4 flex-shrink-0" style={{ color: GOLD }} />}
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
 
               {/* Pacientes slider */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="flex items-center gap-1.5 text-[11px] font-mono text-text-muted tracking-widest uppercase">
+                  <label className="flex items-center gap-1.5 text-[11px] font-mono tracking-widest uppercase" style={{ color: TEXT2 }}>
                     <Users className="w-3 h-3" /> Pacientes por mês
                   </label>
-                  <span className="text-[13px] font-semibold text-accent">{form.pacientes_mes}</span>
+                  <span className="text-[15px] font-bold" style={{ color: GOLD }}>
+                    {form.pacientes_mes >= 300 ? "300+" : form.pacientes_mes}
+                  </span>
                 </div>
-                <input type="range" min={5} max={500} step={5}
+                <input
+                  type="range" min={0} max={300} step={5}
                   value={form.pacientes_mes}
                   onChange={e => setForm(f => ({ ...f, pacientes_mes: Number(e.target.value) }))}
-                  className="w-full accent-accent" />
-                <div className="flex justify-between text-[10px] text-text-muted font-mono">
-                  <span>5</span><span>500</span>
+                  className="w-full"
+                  style={{ accentColor: GOLD }}
+                />
+                <div className="flex justify-between text-[10px] font-mono" style={{ color: TEXT2 }}>
+                  <span>0</span><span>300+</span>
                 </div>
               </div>
 
               {/* Ticket slider */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="flex items-center gap-1.5 text-[11px] font-mono text-text-muted tracking-widest uppercase">
-                    <Zap className="w-3 h-3" /> Ticket médio atual (R$)
+                  <label className="flex items-center gap-1.5 text-[11px] font-mono tracking-widest uppercase" style={{ color: TEXT2 }}>
+                    <DollarSign className="w-3 h-3" /> Ticket médio atual
                   </label>
-                  <span className="text-[13px] font-semibold text-accent">
-                    R$ {form.ticket_medio.toLocaleString("pt-BR")}
+                  <span className="text-[15px] font-bold" style={{ color: GOLD }}>
+                    {form.ticket_medio >= 2000 ? "R$ 2.000+" : `R$ ${form.ticket_medio.toLocaleString("pt-BR")}`}
                   </span>
                 </div>
-                <input type="range" min={100} max={5000} step={50}
+                <input
+                  type="range" min={0} max={2000} step={50}
                   value={form.ticket_medio}
                   onChange={e => setForm(f => ({ ...f, ticket_medio: Number(e.target.value) }))}
-                  className="w-full accent-accent" />
-                <div className="flex justify-between text-[10px] text-text-muted font-mono">
-                  <span>R$ 100</span><span>R$ 5.000</span>
+                  className="w-full"
+                  style={{ accentColor: GOLD }}
+                />
+                <div className="flex justify-between text-[10px] font-mono" style={{ color: TEXT2 }}>
+                  <span>R$ 0</span><span>R$ 2.000+</span>
+                </div>
+              </div>
+
+              {/* Frequência de conteúdo */}
+              <div className="space-y-3">
+                <label className="flex items-center gap-1.5 text-[11px] font-mono tracking-widest uppercase" style={{ color: TEXT2 }}>
+                  <Smartphone className="w-3 h-3" /> Você produz conteúdo para redes sociais?
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {CONTEUDO_FREQUENCIA.map(f => (
+                    <button
+                      key={f}
+                      onClick={() => setForm(fm => ({ ...fm, conteudo_frequencia: f }))}
+                      className="text-[12px] px-4 py-2 rounded-full border transition-all"
+                      style={{
+                        background: form.conteudo_frequencia === f ? `${GOLD}12` : "#F8F5F0",
+                        borderColor: form.conteudo_frequencia === f ? GOLD : BORDER,
+                        color:       form.conteudo_frequencia === f ? GOLD : TEXT2,
+                        fontWeight:  form.conteudo_frequencia === f ? "600" : "400",
+                      }}>
+                      {f}
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>
 
             <div className="flex items-center justify-between">
-              <button onClick={() => setStep(2)} className="text-[12px] text-text-muted hover:text-text-secondary transition-colors">
+              <button onClick={() => setStep(2)} className="text-[12px]" style={{ color: TEXT2 }}>
                 ← Voltar
               </button>
-              <button onClick={() => next()} disabled={saving}
-                className="flex items-center gap-2 px-6 py-3 rounded-xl bg-accent text-background text-[13px] font-bold hover:opacity-90 disabled:opacity-50 min-w-[140px] justify-center">
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Próximo <ArrowRight className="w-4 h-4" /></>}
-              </button>
+              <GoldBtn onClick={() => next()} loading={saving}>
+                Próximo <ArrowRight className="w-4 h-4" />
+              </GoldBtn>
             </div>
           </div>
         )}
 
-        {/* ── STEP 4: Termos ───────────────────────────────────────────────── */}
+        {/* ── ETAPA 4 — Plano ─────────────────────────────────────────────── */}
         {step === 4 && (
           <div className="animate-fade-in space-y-6">
-            <div className="text-center space-y-2 mb-8">
-              <div className="w-16 h-16 mx-auto rounded-2xl bg-accent-dim border border-accent-border flex items-center justify-center">
-                <ShieldCheck className="w-8 h-8 text-accent" />
-              </div>
-              <h2 className="text-[26px] font-semibold text-text-primary"
-                style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}>
-                Termos e Privacidade
-              </h2>
-              <p className="text-[13px] text-text-secondary">
-                Antes de escolher seu plano, leia e aceite nossos termos.
-              </p>
-            </div>
-
-            <div className="bg-surface border border-border rounded-xl p-6 space-y-3">
-              {[
-                "Plataforma exclusiva para uso médico profissional com CRM ativo",
-                "Conteúdo gerado por IA deve ser revisado antes da publicação — responsabilidade é do médico",
-                "Conformidade com as normas de publicidade médica do CFM é responsabilidade do usuário",
-                "Dados pessoais tratados conforme a LGPD (Lei 13.709/2018)",
-                "Cancelamento a qualquer momento, sem fidelidade",
-                "Retenção de dados por 90 dias após encerramento da conta",
-              ].map((point, i) => (
-                <div key={i} className="flex items-start gap-2.5">
-                  <Check className="w-3.5 h-3.5 text-accent mt-0.5 flex-shrink-0" />
-                  <span className="text-[13px] text-text-secondary leading-relaxed">{point}</span>
-                </div>
-              ))}
-            </div>
-
-            <div className="bg-surface border border-border rounded-xl p-4 space-y-3">
-              <p className="text-[11px] text-text-muted">
-                Leia os documentos completos:{" "}
-                <Link href="/termos" target="_blank" className="text-accent hover:underline">Termos de Uso</Link>
-                {" · "}
-                <Link href="/privacidade" target="_blank" className="text-accent hover:underline">Política de Privacidade</Link>
-              </p>
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={termosAceitos}
-                  onChange={e => setTermosAceitos(e.target.checked)}
-                  className="mt-1 w-4 h-4 accent-accent cursor-pointer flex-shrink-0"
-                />
-                <span className="text-[13px] text-text-primary leading-relaxed">
-                  Li e concordo com os <strong>Termos de Uso</strong> e a <strong>Política de Privacidade</strong> do PRAXIS.
-                </span>
-              </label>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <button onClick={() => setStep(3)} className="text-[12px] text-text-muted hover:text-text-secondary transition-colors">
-                ← Voltar
-              </button>
-              <button
-                onClick={() => next({ termos_aceitos: true, termos_versao: "1.0" })}
-                disabled={!termosAceitos || saving}
-                className="flex items-center gap-2 px-6 py-3 rounded-xl bg-accent text-background text-[13px] font-bold hover:opacity-90 disabled:opacity-40 min-w-[180px] justify-center"
-              >
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Aceitar e continuar <ArrowRight className="w-4 h-4" /></>}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ── STEP 5: Plano ────────────────────────────────────────────────── */}
-        {step === 5 && (
-          <div className="animate-fade-in space-y-6">
             <div className="text-center space-y-2 mb-6">
-              <h2 className="text-[26px] font-semibold text-text-primary"
-                style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}>
+              <h2 className="text-[26px] font-semibold" style={{ color: DARK, fontFamily: "var(--font-playfair), Georgia, serif" }}>
                 Escolha seu plano
               </h2>
-              <p className="text-[13px] text-text-secondary">
+              <p className="text-[13px]" style={{ color: TEXT2 }}>
                 7 dias grátis em qualquer plano. Sem fidelidade.
               </p>
             </div>
 
-            {erroFinal && (
-              <div className="flex items-start gap-3 bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3">
-                <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
-                <p className="text-[12px] text-red-400">{erroFinal}</p>
+            {erroMsg && (
+              <div className="flex items-start gap-3 rounded-xl px-4 py-3" style={{ background: "#fef2f2", border: "1px solid #fecaca" }}>
+                <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+                <p className="text-[12px] text-red-600">{erroMsg}</p>
               </div>
             )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {PLANS.map(plan => {
-                const Icon = plan.icon
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {PLANOS.map(plan => {
+                const PIcon = plan.icon
                 return (
-                  <div key={plan.id} className={cn(
-                    "relative bg-surface border rounded-xl p-5 flex flex-col gap-3 transition-all hover:-translate-y-0.5",
-                    plan.border
-                  )}>
-                    {plan.badge && (
-                      <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                        <span className={cn(
-                          "text-[9px] font-mono font-bold px-3 py-1 rounded-full border tracking-widest",
-                          plan.highlight
-                            ? "bg-[#d4af37] text-background border-[#d4af37]"
-                            : "bg-purple-500/10 text-purple-400 border-purple-500/30"
-                        )}>
-                          {plan.badge}
-                        </span>
-                      </div>
-                    )}
+                  <div
+                    key={plan.id}
+                    className="relative flex flex-col gap-4 p-5 rounded-2xl transition-all hover:-translate-y-0.5"
+                    style={{
+                      background: CARD_BG,
+                      border: plan.highlight ? `2px solid ${GOLD}` : `1px solid ${BORDER}`,
+                      boxShadow: plan.highlight ? `0 4px 20px ${GOLD}22` : "none",
+                    }}>
 
-                    <div className="flex items-center gap-2.5">
-                      <Icon className={cn("w-5 h-5 flex-shrink-0", plan.color)} />
-                      <span className={cn("text-[15px] font-semibold", plan.color)}>{plan.name}</span>
+                    {/* Badge */}
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                      <span
+                        className="text-[9px] font-mono font-bold px-3 py-1 rounded-full border tracking-widest whitespace-nowrap"
+                        style={{
+                          background:  plan.highlight ? GOLD : CARD_BG,
+                          borderColor: GOLD,
+                          color:       plan.highlight ? "#fff" : GOLD,
+                        }}>
+                        {plan.badge}
+                      </span>
+                    </div>
+
+                    <div className="mt-3 flex items-center gap-2">
+                      <PIcon className="w-5 h-5 flex-shrink-0" style={{ color: plan.color }} />
+                      <span className="text-[15px] font-semibold" style={{ color: plan.highlight ? GOLD : DARK }}>{plan.name}</span>
                     </div>
 
                     <div>
                       <div className="flex items-baseline gap-1">
-                        <span className={cn("text-[24px] font-bold leading-none", plan.color)}>{plan.priceDisplay}</span>
-                        <span className="text-[11px] text-text-muted">{plan.priceSub}</span>
+                        <span className="text-[24px] font-bold" style={{ color: DARK }}>{plan.price}</span>
+                        <span className="text-[11px]" style={{ color: TEXT2 }}>{plan.sub}</span>
                       </div>
-                      <p className="text-[10px] text-text-muted mt-1">{plan.limits}</p>
+                      <p className="text-[10px] mt-0.5" style={{ color: TEXT2 }}>{plan.limits}</p>
                     </div>
 
-                    <div className="flex-1 space-y-1">
-                      {FEATURES.map((f, i) => {
-                        const incl = plan.id === "starter" ? f.starter
-                          : plan.id === "pro" ? f.pro : f.elite
-                        return (
-                          <div key={i} className="flex items-center gap-2">
-                            {incl
-                              ? <Check className="w-3 h-3 text-accent flex-shrink-0" />
-                              : <X className="w-3 h-3 text-text-muted/40 flex-shrink-0" />}
-                            <span className={cn("text-[10px] leading-snug", incl ? "text-text-secondary" : "text-text-muted/50")}>
-                              {f.text}
-                            </span>
-                          </div>
-                        )
-                      })}
-                    </div>
+                    <ul className="flex-1 space-y-1.5">
+                      {plan.features.map((f, i) => (
+                        <li key={i} className="flex items-center gap-2 text-[11px]" style={{ color: TEXT2 }}>
+                          <Check className="w-3 h-3 flex-shrink-0" style={{ color: GOLD }} />
+                          {f}
+                        </li>
+                      ))}
+                    </ul>
 
-                    <button onClick={() => choosePlan(plan.priceKey)} disabled={saving}
-                      className={cn(
-                        "w-full py-2.5 rounded-lg text-[12px] font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 min-h-[44px]",
-                        plan.highlight
-                          ? "bg-[#d4af37] hover:bg-[#e0bc40] text-[#080808]"
-                          : plan.id === "pro"
-                            ? "bg-accent hover:opacity-90 text-background"
-                            : plan.id === "elite_annual"
-                              ? "bg-purple-500/10 hover:bg-purple-500/15 text-purple-400 border border-purple-500/20"
-                              : "bg-white/[0.06] hover:bg-white/[0.10] text-text-secondary"
-                      )}>
-                      {saving
-                        ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        : "Começar 7 dias grátis"}
+                    <button
+                      onClick={() => choosePlan(plan.priceKey)}
+                      disabled={saving}
+                      className="w-full py-2.5 rounded-xl text-[12px] font-bold transition-all disabled:opacity-50"
+                      style={{
+                        background: plan.highlight ? GOLD : `${GOLD}15`,
+                        color:      plan.highlight ? "#fff" : GOLD,
+                      }}>
+                      Escolher este plano
                     </button>
                   </div>
                 )
               })}
             </div>
 
+            {/* Terms inline */}
+            <label className="flex items-start gap-3 cursor-pointer p-4 rounded-xl" style={{ background: CARD_BG, border: `1px solid ${BORDER}` }}>
+              <input type="checkbox" checked={terms} onChange={e => setTerms(e.target.checked)}
+                className="mt-1 w-4 h-4 cursor-pointer flex-shrink-0" style={{ accentColor: GOLD }} />
+              <span className="text-[12px] leading-relaxed" style={{ color: TEXT2 }}>
+                Li e concordo com os{" "}
+                <Link href="/termos" target="_blank" className="underline" style={{ color: GOLD }}>Termos de Uso</Link>
+                {" "}e a{" "}
+                <Link href="/privacidade" target="_blank" className="underline" style={{ color: GOLD }}>Política de Privacidade</Link>
+                {" "}do PRAXIS.
+              </span>
+            </label>
+
             <div className="flex items-center justify-between">
-              <button onClick={() => setStep(4)} className="text-[12px] text-text-muted hover:text-text-secondary transition-colors">
+              <button onClick={() => setStep(3)} className="text-[12px]" style={{ color: TEXT2 }}>
                 ← Voltar
               </button>
-              <div className="flex flex-col items-center gap-1">
-                <button onClick={goTrial} disabled={saving}
-                  className="text-[12px] text-text-muted hover:text-text-secondary transition-colors underline underline-offset-4">
-                  Continuar no trial gratuito →
-                </button>
-                <p className="text-[10px] text-text-muted">Pagamento seguro via Stripe. Cancele quando quiser.</p>
-              </div>
+              <button
+                onClick={goTrial}
+                disabled={saving}
+                className="text-[12px] underline underline-offset-4 disabled:opacity-40"
+                style={{ color: TEXT2 }}>
+                {saving ? "..." : "Continuar no trial gratuito →"}
+              </button>
             </div>
           </div>
         )}
 
-        {/* ── STEP 6: Tour guiado ──────────────────────────────────────────── */}
-        {step === 6 && (
+        {/* ── ETAPA 5 — Tour guiado ───────────────────────────────────────── */}
+        {step === 5 && (
           <div className="animate-fade-in space-y-6">
-            <div className="text-center space-y-2 mb-8">
-              <h2 className="text-[26px] font-semibold text-text-primary"
-                style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}>
-                Tudo pronto, {nome}!
+            <div className="text-center space-y-3 mb-8">
+              <div
+                className="w-16 h-16 mx-auto rounded-full flex items-center justify-center text-[32px]"
+                style={{ background: `${GOLD}18`, border: `2px solid ${GOLD}40` }}>
+                🎉
+              </div>
+              <h2 className="text-[28px] font-semibold" style={{ color: DARK, fontFamily: "var(--font-playfair), Georgia, serif" }}>
+                Sua plataforma está pronta!
               </h2>
-              <p className="text-[13px] text-text-secondary">
-                Explore as alas do PRAXIS. Começamos pela sua maior prioridade.
+              <p className="text-[14px]" style={{ color: TEXT2 }}>
+                Por onde começar, {nome}?
               </p>
+            </div>
+
+            {/* Highlight card for top recommendation */}
+            <div
+              className="rounded-2xl p-5 flex items-start gap-4"
+              style={{ background: `${GOLD}10`, border: `1.5px solid ${GOLD}50` }}>
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ background: `${GOLD}20` }}>
+                <Activity className="w-5 h-5" style={{ color: GOLD }} />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 mb-0.5">
+                  <span className="text-[13px] font-bold" style={{ color: GOLD }}>Recomendado para você</span>
+                  <span className="text-[9px] font-mono px-2 py-0.5 rounded-full font-bold" style={{ background: GOLD, color: "#fff" }}>
+                    PRIORIDADE
+                  </span>
+                </div>
+                <p className="text-[12px]" style={{ color: TEXT2 }}>
+                  Baseado nos seus desafios, começar pelo <strong style={{ color: DARK }}>{topAla.title}</strong> vai gerar resultados mais rápidos.
+                </p>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {ALAS_TOUR.map(ala => {
-                const Icon     = ala.icon
-                const isHighlight = form.desafio && ala.highlight.includes(form.desafio)
+                const AIcon = ala.Icon
+                const isTop = ala.id === topAla.id
+                const isRel = form.desafios.some(d => ala.triggers.includes(d))
                 return (
-                  <div key={ala.id} className={cn(
-                    "rounded-xl border p-4 flex flex-col gap-3 transition-all hover:-translate-y-0.5",
-                    isHighlight ? `${ala.bg} ${ala.border}` : "bg-surface border-border hover:border-border-hover"
-                  )}>
+                  <div
+                    key={ala.id}
+                    className="rounded-xl p-4 flex flex-col gap-3 transition-all hover:-translate-y-0.5"
+                    style={{
+                      background:  isTop ? `${ala.color}08` : CARD_BG,
+                      border:      `1px solid ${isTop ? ala.color + "55" : BORDER}`,
+                    }}>
                     <div className="flex items-center gap-2.5">
-                      <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center border flex-shrink-0", ala.bg, ala.border)}>
-                        <Icon className={cn("w-4 h-4", ala.color)} />
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${ala.color}15` }}>
+                        <AIcon className="w-4 h-4" style={{ color: ala.color }} />
                       </div>
                       <div>
-                        <div className={cn("text-[12px] font-bold", isHighlight ? ala.color : "text-text-primary")}>
-                          {ala.title}
-                          {isHighlight && (
-                            <span className="ml-2 text-[9px] font-mono px-1.5 py-0.5 rounded-full bg-accent-dim text-accent border border-accent-border">
-                              RECOMENDADO
+                        <div className="flex items-center gap-2">
+                          <span className="text-[12px] font-bold" style={{ color: DARK }}>{ala.title}</span>
+                          {isTop && (
+                            <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-full" style={{ background: `${GOLD}15`, color: GOLD, border: `1px solid ${GOLD}40` }}>
+                              TOP
+                            </span>
+                          )}
+                          {isRel && !isTop && (
+                            <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-full" style={{ background: "#f0fdf4", color: "#16a34a", border: "1px solid #bbf7d0" }}>
+                              RELEVANTE
                             </span>
                           )}
                         </div>
-                        <p className="text-[10px] text-text-muted">{ala.desc}</p>
+                        <p className="text-[10px]" style={{ color: TEXT2 }}>{ala.desc}</p>
                       </div>
                     </div>
-                    <a href={ala.href}
-                      className={cn(
-                        "text-center py-2 rounded-lg text-[11px] font-semibold transition-colors",
-                        isHighlight
-                          ? `${ala.bg} ${ala.color} border ${ala.border} hover:opacity-80`
-                          : "bg-surface-2 text-text-muted hover:text-text-primary border border-border"
-                      )}>
+                    <a
+                      href={ala.href}
+                      className="text-center py-2 rounded-lg text-[11px] font-semibold transition-all"
+                      style={{
+                        background:  isTop ? `${ala.color}15` : "#F8F5F0",
+                        color:       isTop ? ala.color : TEXT2,
+                        border:      `1px solid ${isTop ? ala.color + "30" : BORDER}`,
+                      }}>
                       {ala.cta} →
                     </a>
                   </div>
@@ -691,10 +804,21 @@ export default function OnboardingPage() {
               })}
             </div>
 
-            <div className="flex justify-center mt-4">
-              <button onClick={finishTour}
-                className="flex items-center gap-2 px-8 py-3.5 rounded-xl bg-accent text-background text-[14px] font-bold hover:opacity-90 transition-all shadow-lg shadow-accent/20">
-                Entrar no PRAXIS <ArrowRight className="w-4 h-4" />
+            <div className="flex justify-center mt-2 pt-2">
+              <button
+                onClick={() => router.push("/dashboard")}
+                className="flex items-center gap-2 px-8 py-4 rounded-xl text-[14px] font-bold transition-all hover:opacity-90 shadow-lg"
+                style={{ background: GOLD, color: "#fff", boxShadow: `0 4px 20px ${GOLD}44` }}>
+                Ir para o Dashboard <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="flex justify-center">
+              <button
+                onClick={() => router.push("/dashboard")}
+                className="text-[11px]"
+                style={{ color: TEXT2 }}>
+                Explorar depois
               </button>
             </div>
           </div>

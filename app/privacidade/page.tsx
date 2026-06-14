@@ -117,7 +117,7 @@ export default function PrivacidadePage() {
             <ul style={{ paddingLeft: 20, display: "flex", flexDirection: "column", gap: 8 }}>
               <li><strong style={{ color: "var(--text-primary)" }}>Acesso:</strong> solicitar uma cópia de todos os dados pessoais que mantemos sobre você.</li>
               <li><strong style={{ color: "var(--text-primary)" }}>Correção:</strong> atualizar informações incorretas ou incompletas diretamente nas configurações da plataforma.</li>
-              <li><strong style={{ color: "var(--text-primary)" }}>Exclusão:</strong> solicitar a exclusão de todos os seus dados pessoais. Processamos solicitações de exclusão em até 30 dias úteis. Acesse <Link href="/deletar-dados" style={{ color: "#b8976a" }}>praxisplatforma.com.br/deletar-dados</Link> para fazer a solicitação.</li>
+              <li><strong style={{ color: "var(--text-primary)" }}>Exclusão:</strong> solicitar a exclusão de todos os seus dados pessoais. Processamos solicitações de exclusão em até 30 dias úteis. Acesse <Link href="/deletar-dados" style={{ color: "#b8976a" }}>praxisplataforma.com.br/deletar-dados</Link> para fazer a solicitação.</li>
               <li><strong style={{ color: "var(--text-primary)" }}>Portabilidade:</strong> solicitar seus dados em formato estruturado (JSON ou CSV).</li>
               <li><strong style={{ color: "var(--text-primary)" }}>Revogação de consentimento:</strong> cancelar integrações (ex: Instagram) a qualquer momento pelas configurações da conta.</li>
               <li><strong style={{ color: "var(--text-primary)" }}>Oposição:</strong> opor-se ao processamento de dados em casos específicos previstos em lei.</li>
@@ -145,7 +145,7 @@ export default function PrivacidadePage() {
               background: "rgba(184,151,106,0.06)", border: "1px solid rgba(184,151,106,0.25)",
             }}>
               <p style={{ margin: 0, fontFamily: "monospace", fontSize: 13, color: "#b8976a" }}>
-                contato@praxisplatforma.com.br
+                contato@praxisplataforma.com.br
               </p>
               <p style={{ margin: "6px 0 0", fontSize: 12, color: "var(--text-muted)" }}>
                 Respondemos em até 5 dias úteis.

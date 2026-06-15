@@ -8,7 +8,8 @@ import {
   ArrowRight, Activity, BarChart,
   Lightbulb, Users, TrendingUp,
   Megaphone, BarChart3, Sparkles, GraduationCap,
-  FileText, Stethoscope, Check, Star,
+  FileText, Stethoscope, Check, Star, AlertTriangle,
+  BookOpen, Trophy,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { usePerfil } from "@/hooks/usePerfil"
@@ -121,6 +122,100 @@ interface ExecMetrics {
   leads_total:   number
   nps_score:     number | null
   consultas_mes: number
+}
+
+interface AcademyProgresso { aula_id: string; status: string }
+
+// ─── IA Alert ────────────────────────────────────────────────────────────────
+
+function AlertaIA({ metrics, loading }: { metrics: ExecMetrics | null; loading: boolean }) {
+  if (loading) return null
+
+  const alertas: { msg: string; href: string; label: string }[] = []
+
+  if (metrics) {
+    if (metrics.leads_total > 0 && metrics.consultas_mes === 0)
+      alertas.push({ msg: "Você tem leads no CRM sem consultas este mês.", href: "/crm", label: "Ver CRM" })
+    if (metrics.nps_score !== null && metrics.nps_score < 7)
+      alertas.push({ msg: `NPS em ${metrics.nps_score} — abaixo do ideal. Considere uma campanha de reengajamento.`, href: "/nps", label: "Ver NPS" })
+  }
+  const diasSemConteudo = 3
+  if (diasSemConteudo >= 3)
+    alertas.push({ msg: `${diasSemConteudo} dias sem publicar conteúdo. Sua presença digital pode estar caindo.`, href: "/calendario", label: "Calendário" })
+
+  if (alertas.length === 0) return null
+
+  return (
+    <div className="rounded-xl border px-5 py-4 space-y-3"
+      style={{ background: "rgba(245,158,11,0.06)", borderColor: "rgba(245,158,11,0.22)" }}>
+      <div className="flex items-center gap-2 mb-1">
+        <Sparkles className="w-3.5 h-3.5" style={{ color: "#f59e0b" }} />
+        <span className="text-[11px] font-mono font-semibold tracking-widest uppercase" style={{ color: "#f59e0b" }}>
+          Alerta PRAXIS IA
+        </span>
+      </div>
+      {alertas.map((a, i) => (
+        <div key={i} className="flex items-start gap-3">
+          <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: "#f59e0b" }} />
+          <div className="flex-1 min-w-0">
+            <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>{a.msg}</p>
+          </div>
+          <Link href={a.href}
+            className="text-[11px] font-semibold flex-shrink-0 hover:underline"
+            style={{ color: "#f59e0b" }}>
+            {a.label} →
+          </Link>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ─── Academy progress mini card ───────────────────────────────────────────────
+
+function AcademyMiniCard() {
+  const [progresso, setProgresso] = useState<AcademyProgresso[]>([])
+
+  useEffect(() => {
+    fetch("/api/academy/progresso")
+      .then(r => r.ok ? r.json() : [])
+      .then((d: unknown) => { if (Array.isArray(d)) setProgresso(d as AcademyProgresso[]) })
+      .catch(() => {})
+  }, [])
+
+  const concluidas = progresso.filter(p => p.status === "concluida").length
+  const total = 38
+  const pct = Math.round((concluidas / total) * 100)
+
+  return (
+    <Link href="/academy"
+      className="flex items-center gap-4 px-5 py-4 rounded-xl border transition-all hover:-translate-y-0.5"
+      style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
+      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+        style={{ background: "rgba(244,114,182,0.1)", border: "1px solid rgba(244,114,182,0.25)" }}>
+        <GraduationCap className="w-5 h-5" style={{ color: "#f472b6" }} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between mb-1.5">
+          <p className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>PRAXIS Academy</p>
+          <span className="text-[11px] font-mono" style={{ color: "var(--text-muted)" }}>
+            {concluidas}/{total} aulas
+          </span>
+        </div>
+        <div className="w-full h-1.5 rounded-full" style={{ background: "var(--border)" }}>
+          <div className="h-full rounded-full transition-all duration-700"
+            style={{ width: `${pct}%`, background: "#f472b6" }} />
+        </div>
+        <p className="text-[10px] mt-1 font-mono" style={{ color: "var(--text-muted)" }}>
+          {pct}% concluído
+          {concluidas > 0 && <span className="ml-2 text-pink-400">· Continue de onde parou →</span>}
+        </p>
+      </div>
+      {concluidas >= 10 && (
+        <Trophy className="w-4 h-4 flex-shrink-0" style={{ color: "#f59e0b" }} />
+      )}
+    </Link>
+  )
 }
 
 interface Pauta { id: number | string; titulo: string; categoria: string }
@@ -298,6 +393,9 @@ export default function DashboardPage() {
           />
         </div>
 
+        {/* ── Alerta IA ───────────────────────────────────────────────────── */}
+        <AlertaIA metrics={execMetrics} loading={execLoading} />
+
         {/* ── SEÇÃO 2: Ação recomendada ───────────────────────────────────── */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-surface border border-border rounded-xl overflow-hidden">
@@ -395,6 +493,9 @@ export default function DashboardPage() {
             })}
           </div>
         </div>
+
+        {/* ── Academy progress ────────────────────────────────────────────── */}
+        <AcademyMiniCard />
 
         {/* ── Última sessão ───────────────────────────────────────────────── */}
         {lastAccess && (

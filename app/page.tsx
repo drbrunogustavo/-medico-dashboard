@@ -243,6 +243,10 @@ export default function LandingPage() {
         {/* Sem riscos */}
         <p style={{ fontSize: 12, color: "#8a7a6a", letterSpacing: "0.5px" }}>
           Sem cartão de crédito &nbsp;•&nbsp; Cancele quando quiser &nbsp;•&nbsp; Resultados em 7 dias
+          &nbsp;•&nbsp;{" "}
+          <Link href="/demo" style={{ color: "#b8976a", textDecoration: "none", fontWeight: 600 }}>
+            Ver demonstração →
+          </Link>
         </p>
 
         {/* Dashboard mockup */}

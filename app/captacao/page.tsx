@@ -34,7 +34,7 @@ const PROGRAMS = [
 ]
 
 const DEPOIMENTOS = [
-  { nome: "Ana C., 38 anos", nota: 10, texto: "Depois de 3 meses de acompanhamento, perdi 12kg e recuperei minha energia. O Dr. Bruno é incrível — vai muito além da consulta comum!" },
+  { nome: "Ana C., 38 anos", nota: 10, texto: "Depois de 3 meses de acompanhamento, perdi 12kg e recuperei minha energia. O atendimento vai muito além da consulta comum!" },
   { nome: "Roberto M., 45 anos", nota: 10, texto: "Finalmente um médico que investigou a causa do meu cansaço. Meus hormônios estavam desregulados. Em 2 meses me sinto outra pessoa." },
   { nome: "Cláudia F., 52 anos", nota: 10, texto: "O programa de longevidade mudou minha vida. Hoje tenho mais energia do que quando tinha 40 anos. Recomendo muito!" },
 ]
@@ -90,7 +90,7 @@ export default function CaptacaoPage() {
   }
 
   const FAQ = [
-    { q: "Qual a diferença do atendimento do Dr. Bruno?", a: "O Dr. Bruno realiza uma avaliação clínica profunda, investigando causas hormonais, metabólicas e nutricionais que muitas vezes passam despercebidas. Cada plano é 100% individualizado." },
+    { q: "Qual a diferença deste atendimento?", a: "Realizamos uma avaliação clínica profunda, investigando causas hormonais, metabólicas e nutricionais que muitas vezes passam despercebidas. Cada plano é 100% individualizado." },
     { q: "Quanto tempo dura a consulta?", a: "A consulta inicial tem duração mínima de 60 minutos, para garantir uma avaliação completa." },
     { q: "As consultas são presenciais ou online?", a: "Realizamos atendimentos presenciais e teleconsulta. Informe sua preferência no formulário." },
     { q: "Qual o prazo para agendamento?", a: "Nossa equipe entra em contato em até 2 horas úteis após o preenchimento do formulário." },
@@ -153,7 +153,7 @@ export default function CaptacaoPage() {
       <section className="py-16 px-6 bg-[#0D1B2A]/[0.02] border-y border-[#0D1B2A]/8">
         <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-12 items-center">
           <div>
-            <h2 className="text-[28px] font-bold font-serif mb-4 text-[#0D1B2A]">Dr. Bruno Gustavo</h2>
+            <h2 className="text-[28px] font-bold font-serif mb-4 text-[#0D1B2A]">Nossa equipe médica</h2>
             <div className="flex items-center gap-2 mb-4">
               <Stethoscope className="w-4 h-4 text-[#b8976a]" />
               <span className="text-[13px] text-[#b8976a] font-mono">Endocrinologista · Nutrologista · Longevidade</span>
@@ -174,7 +174,7 @@ export default function CaptacaoPage() {
               <div className="w-20 h-20 rounded-full bg-[#b8976a]/20 border-2 border-[#b8976a]/30 flex items-center justify-center mx-auto mb-4">
                 <span className="text-[28px] font-bold text-[#b8976a]">BG</span>
               </div>
-              <div className="text-[16px] font-semibold text-[#0D1B2A]">Dr. Bruno Gustavo</div>
+              <div className="text-[16px] font-semibold text-[#0D1B2A]">Nossa equipe médica</div>
               <div className="text-[12px] text-[#0D1B2A]/50">Foto disponível em breve</div>
             </div>
           </div>
@@ -357,7 +357,7 @@ export default function CaptacaoPage() {
             </a>
           </div>
         </div>
-        <p className="text-center text-[11px] text-[#0D1B2A]/30 mt-6">© 2026 Dr. Bruno Gustavo. Todos os direitos reservados.</p>
+        <p className="text-center text-[11px] text-[#0D1B2A]/30 mt-6">© 2026 PRAXIS. Todos os direitos reservados.</p>
       </footer>
     </div>
   )

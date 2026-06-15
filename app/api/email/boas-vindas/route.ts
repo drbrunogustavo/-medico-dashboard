@@ -123,8 +123,8 @@ function buildHtml(nome: string): string {
 
                   <!-- Signature -->
                   <p style="margin:0 0 4px;font-size:14px;color:#6a5a4a;">Com toda a força,</p>
-                  <p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#0D1B2A;">Dr. Bruno Gustavo</p>
-                  <p style="margin:0 0 28px;font-size:12px;color:#9a8a7a;">Fundador do PRAXIS</p>
+                  <p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#0D1B2A;">Equipe PRAXIS</p>
+                  <p style="margin:0 0 28px;font-size:12px;color:#9a8a7a;">contato@praxisplataforma.com.br</p>
 
                   <!-- CTA Button -->
                   <table cellpadding="0" cellspacing="0">

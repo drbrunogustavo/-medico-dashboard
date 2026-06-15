@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 8000,
-        system: `Você é o Agente Executivo de Conteúdo Médico do Dr. Bruno Gustavo, especialista em Endocrinologia e Nutrologia em Poços de Caldas - MG. Você cria conteúdo médico de alta qualidade, baseado em evidências, que educa e converte no Instagram.
+        system: `Você é o Agente Executivo de Conteúdo Médico do o médico usuário, especialista em Endocrinologia e Nutrologia em Poços de Caldas - MG. Você cria conteúdo médico de alta qualidade, baseado em evidências, que educa e converte no Instagram.
 
 Retorne SOMENTE um JSON array. Sem markdown, sem texto extra.`,
         messages: [{

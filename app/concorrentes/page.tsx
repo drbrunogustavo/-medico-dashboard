@@ -685,17 +685,15 @@ export default function ConcorrentesPage() {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          titulo:     rec.acao,
-          categoria:  "Estratégia de Conteúdo",
-          prioridade: rec.prioridade,
-          estagio:    "Ideia",
-          nota:       `${rec.justificativa}\n\nFormato sugerido: ${rec.formato_sugerido}\n\n— Gerado pela Análise de Concorrentes (${nome})`,
+          titulo:    rec.acao,
+          nota:      `${rec.justificativa}\n\nFormato sugerido: ${rec.formato_sugerido}\n\n— Concorrente analisado: ${nome}`,
+          categoria: "concorrentes",
         }),
       })
       if (!res.ok) throw new Error()
-      showToast("Pauta salva!")
+      showToast("Salvo no banco de pautas!")
     } catch {
-      showToast("Erro ao salvar pauta", "error")
+      showToast("Erro ao salvar. Tente novamente.", "error")
     } finally {
       setSavingId(null)
     }

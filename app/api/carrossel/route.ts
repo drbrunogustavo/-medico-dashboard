@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
       system: "Você é especialista em criação de carrosséis para Instagram de médicos no Brasil. Retorne APENAS JSON válido, sem markdown, sem texto antes ou depois.",
       messages: [{
         role: "user",
-        content: `Crie um carrossel do Instagram para o Dr. Bruno Gustavo (Endocrinologia, Nutrologia, Longevidade).
+        content: `Crie um carrossel do Instagram para o o médico usuário.
 
 TEMA: ${tema}
 NÚMERO DE SLIDES: ${slides}

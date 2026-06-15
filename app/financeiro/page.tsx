@@ -573,7 +573,7 @@ export default function FinanceiroPage() {
                 <input
                   value={form.descricao}
                   onChange={e => setForm(f => ({ ...f, descricao: e.target.value }))}
-                  placeholder="Ex: Consulta particular — Dr. Bruno"
+                  placeholder="Ex: Consulta particular"
                   className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2 text-[12px] text-text-primary placeholder:text-text-muted focus:border-accent/40 outline-none transition-colors"
                 />
               </div>

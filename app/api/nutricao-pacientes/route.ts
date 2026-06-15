@@ -5,15 +5,14 @@ import { createSupabaseServerClient } from "@/lib/supabase-server"
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
-const ASSINATURA = `Dr. Bruno Gustavo
-Médico Clínico-Geral
-Pós-graduado em Endocrinologia & Nutrologia
-CRM-MG XXXXX`
+const ASSINATURA = `Nossa equipe médica
+Endocrinologia & Nutrologia
+PRAXIS Clínica`
 
 const MAPS = {
-  pocas:    "https://maps.google.com/?q=Dr+Bruno+Gustavo+Pocos+de+Caldas+MG",
-  alfenas:  "https://maps.google.com/?q=Dr+Bruno+Gustavo+Alfenas+MG",
-  camboriu: "https://maps.google.com/?q=Dr+Bruno+Gustavo+Balneario+Camboriu+SC",
+  pocas:    "https://maps.google.com/?q=Clinica+Praxis+Pocos+de+Caldas+MG",
+  alfenas:  "https://maps.google.com/?q=Clinica+Praxis+Alfenas+MG",
+  camboriu: "https://maps.google.com/?q=Clinica+Praxis+Balneario+Camboriu+SC",
 }
 
 export async function POST(req: NextRequest) {
@@ -111,7 +110,7 @@ D-15 (15 dias antes do retorno):
       max_tokens: 3000,
       messages: [{
         role:    "user",
-        content: `Você é o assistente de comunicação clínica do Dr. Bruno Gustavo.
+        content: `Você é o assistente de comunicação clínica do o médico usuário.
 
 Crie as mensagens de WhatsApp para a seguinte trilha:
 

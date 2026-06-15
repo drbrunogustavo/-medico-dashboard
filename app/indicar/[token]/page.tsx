@@ -56,7 +56,7 @@ export default function IndicarPage() {
               </div>
               <h1 className="text-[20px] font-bold text-text-primary mb-2">Indique um amigo</h1>
               <p className="text-[13px] text-text-secondary leading-relaxed">
-                Você foi indicado por um paciente do Dr. Bruno Gustavo. Preencha seus dados e nossa equipe entrará em contato para agendar sua consulta.
+                Você foi indicado por um paciente. Preencha seus dados e nossa equipe entrará em contato para agendar sua consulta.
               </p>
             </div>
 
@@ -94,7 +94,7 @@ export default function IndicarPage() {
             </div>
             <h1 className="text-[20px] font-bold text-text-primary">Obrigado pelo interesse!</h1>
             <p className="text-[13px] text-text-secondary">
-              Recebemos seus dados. Nossa equipe entrará em contato via WhatsApp em breve para agendar sua consulta com o Dr. Bruno Gustavo.
+              Recebemos seus dados. Nossa equipe entrará em contato via WhatsApp em breve para agendar sua consulta.
             </p>
           </div>
         ) : (
@@ -104,7 +104,7 @@ export default function IndicarPage() {
           </div>
         )}
 
-        <p className="text-center text-[11px] text-text-muted mt-6">Dr. Bruno Gustavo · PRAXIS</p>
+        <p className="text-center text-[11px] text-text-muted mt-6">PRAXIS</p>
       </div>
     </div>
   )

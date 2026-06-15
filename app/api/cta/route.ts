@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
       system: "Você é especialista em copywriting médico para Instagram. Retorne APENAS JSON válido, sem markdown.",
       messages: [{
         role: "user",
-        content: `Crie ${quantidade} CTAs (calls-to-action) para o Dr. Bruno Gustavo (Endocrinologia, Nutrologia, Longevidade).
+        content: `Crie ${quantidade} CTAs (calls-to-action) para o o médico usuário.
 
 TEMA DO CONTEÚDO: ${tema}
 OBJETIVO DO CTA: ${objetivo}

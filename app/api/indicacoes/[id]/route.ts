@@ -34,7 +34,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       updates.status = "cortesia_gerada"
 
       // Envia WhatsApp para o indicador
-      const msg = `Olá, ${cur.indicador_nome}! 🎉\n\nSua indicação de ${cur.indicado_nome} realizou a consulta com o Dr. Bruno Gustavo.\n\nComo prometido, sua próxima consulta conosco será cortesia. 🙏\n\nObrigado pela confiança!\n— Dr. Bruno Gustavo`
+      const msg = `Olá, ${cur.indicador_nome}! 🎉\n\nSua indicação de ${cur.indicado_nome} realizou a consulta com o o médico usuário.\n\nComo prometido, sua próxima consulta conosco será cortesia. 🙏\n\nObrigado pela confiança!\n— o médico usuário`
       sendZapi(cur.indicador_telefone, msg).catch(console.error)
     }
 

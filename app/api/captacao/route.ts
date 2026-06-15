@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
   try {
     const supabase = createSupabaseServiceClient()
 
-    // Fetch user_id of the doctor (Bruno Gustavo) — use first active user or env var
+    // Fetch user_id of the doctor — use first active user or env var
     const doctorUserId = process.env.DOCTOR_USER_ID ?? null
 
     const { data: lead, error } = await supabase

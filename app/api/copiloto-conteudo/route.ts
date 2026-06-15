@@ -25,8 +25,8 @@ export async function POST(req: NextRequest) {
       .maybeSingle()
 
     const perfilCtx = perfil
-      ? `Médico: ${perfil.nome ?? "Dr. Bruno Gustavo"}. Especialidade: ${perfil.especialidade ?? "Endocrinologia e Nutrologia"}. Cidade: ${perfil.cidade ?? "Poços de Caldas"}, ${perfil.estado ?? "MG"}. Público: ${perfil.publico_alvo ?? "adultos preocupados com saúde e longevidade"}. Tom: ${perfil.tom_voz ?? "didático, acolhedor e confiante"}.`
-      : "Médico: Dr. Bruno Gustavo. Especialidade: Endocrinologia e Nutrologia. Cidade: Poços de Caldas, MG. Tom: didático, acolhedor e confiante."
+      ? `Médico: ${perfil.nome ?? "o médico usuário"}. Especialidade: ${perfil.especialidade ?? "Endocrinologia e Nutrologia"}. Cidade: ${perfil.cidade ?? "Poços de Caldas"}, ${perfil.estado ?? "MG"}. Público: ${perfil.publico_alvo ?? "adultos preocupados com saúde e longevidade"}. Tom: ${perfil.tom_voz ?? "didático, acolhedor e confiante"}.`
+      : "Médico: o médico usuário. Especialidade: Endocrinologia e Nutrologia. Cidade: Poços de Caldas, MG. Tom: didático, acolhedor e confiante."
 
     const resp = await client.messages.create({
       model: "claude-sonnet-4-20250514",

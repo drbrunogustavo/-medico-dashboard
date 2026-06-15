@@ -55,7 +55,7 @@ export default function HashtagsPage() {
     try {
       const obj = OBJETIVOS.find(o => o.v === objetivo)
       const prompt =
-        'Sugira EXATAMENTE 5 hashtags para o Instagram do Dr. Bruno Gustavo — ' + nicho + ', Poços de Caldas-MG.\n' +
+        'Sugira EXATAMENTE 5 hashtags para o Instagram do o médico usuário — ' + nicho + ', Poços de Caldas-MG.\n' +
         'TEMA DO POST: ' + tema + '\nOBJETIVO: ' + obj?.l + ' — ' + obj?.desc + '\n\n' +
         'REGRAS CRÍTICAS:\n' +
         '- Instagram em 2024-2025 penaliza posts com muitas hashtags. Use APENAS 5.\n' +

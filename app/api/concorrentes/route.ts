@@ -24,7 +24,7 @@ interface ConcorrentesRequest {
 const TIPO_FOCO: Record<TipoAnalise, string> = {
   estrategia:             "Aprofunde especialmente a estratégia de conteúdo: frequência, formatos, temas, ganchos e padrões de engajamento.",
   posicionamento:         "Aprofunde especialmente o posicionamento: proposta de valor, público-alvo, linguagem e diferenciais.",
-  pontos_fracos:          "Aprofunde especialmente os pontos fracos e gaps: onde ele falha, o que está ausente, como Dr. Bruno pode se beneficiar.",
+  pontos_fracos:          "Aprofunde especialmente os pontos fracos e gaps: onde ele falha, o que está ausente, como o médico pode se beneficiar.",
   completa:               "Faça uma análise completa e aprofundada de todas as dimensões. Seja detalhado em todos os campos.",
   benchmark:              "Compare os dados informados com os benchmarks reais da especialidade no Instagram médico brasileiro.",
   crescimento_instagram:  "Gere um plano de crescimento no Instagram específico para médicos, orientado a atrair pacientes particulares.",
@@ -58,7 +58,7 @@ function buildConcorrentePrompt(body: ConcorrentesRequest): string {
     tipo === "pontos_fracos"  ? "Pontos Fracos / Oportunidades" :
                                 "Análise Completa"
 
-  return `Analise o seguinte concorrente médico para o Dr. Bruno Gustavo (Clínico Geral, Endocrinologia e Nutrologia, baseado no Brasil, foco em longevidade e saúde hormonal).
+  return `Analise o seguinte concorrente médico para o o médico usuário (Clínico Geral, Endocrinologia e Nutrologia, baseado no Brasil, foco em longevidade e saúde hormonal).
 
 CONCORRENTE:
 - Nome: ${nome}${instagram ? `\n- Instagram: @${instagram.replace("@", "")}` : ""}${especialidade ? `\n- Especialidade: ${especialidade}` : ""}${contexto ? `\n\nContexto adicional:\n${contexto}` : ""}
@@ -89,13 +89,13 @@ Retorne um JSON com EXATAMENTE esta estrutura (todos os valores em português br
     "publico_alvo": "quem ele atrai e por quê",
     "tom_comunicacao": "como ele se comunica",
     "diferenciais": ["diferencial 1", "diferencial 2", "diferencial 3"],
-    "comparacao_com_voce": "onde ele se diferencia ou se assemelha ao Dr. Bruno Gustavo"
+    "comparacao_com_voce": "onde ele se diferencia ou se assemelha ao o médico usuário"
   },
   "pontos_fracos": [
     {
       "gap": "nome curto do gap",
       "oportunidade": "o que isso representa como oportunidade de mercado",
-      "como_aproveitar": "ação concreta e específica que Dr. Bruno pode tomar",
+      "como_aproveitar": "ação concreta e específica que o médico pode tomar",
       "prioridade": "Alta"
     }
   ],

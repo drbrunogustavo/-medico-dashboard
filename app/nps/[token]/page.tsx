@@ -80,7 +80,7 @@ export default function NPSSurveyPage() {
 
             <div>
               <p className="text-[12px] text-text-muted text-center mb-3">
-                De 0 a 10, qual a probabilidade de indicar o Dr. Bruno Gustavo a alguém?
+                De 0 a 10, qual a probabilidade de indicar nossa clínica a alguém?
               </p>
               <div className="grid grid-cols-6 gap-2 mb-2">
                 {[0,1,2,3,4,5].map(n => (
@@ -176,7 +176,7 @@ export default function NPSSurveyPage() {
         )}
 
         <p className="text-center text-[11px] text-text-muted mt-6">
-          Desenvolvido com PRAXIS · Dr. Bruno Gustavo
+          Desenvolvido com PRAXIS
         </p>
       </div>
     </div>

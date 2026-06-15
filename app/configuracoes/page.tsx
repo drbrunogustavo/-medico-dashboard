@@ -517,7 +517,7 @@ function TabSeguranca() {
 
 function TabMembros() {
   const PREVIEW = [
-    { nome: "Dr. Bruno Gustavo", email: "brunogustavosa@gmail.com", role: "Admin",       avatar: "BG" },
+    { nome: "Administrador", email: "contato@praxisplataforma.com.br", role: "Admin", avatar: "P" },
     { nome: "Ana Secretaria",    email: "ana@clinica.com.br",       role: "Secretária",  avatar: "AS" },
     { nome: "Marcos Assistente", email: "marcos@clinica.com.br",    role: "Assistente",  avatar: "MA" },
   ]

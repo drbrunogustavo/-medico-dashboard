@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
 
   if (body.action === "enviar_aprovacao") {
     if (!body.paciente_telefone) return NextResponse.json({ error: "telefone obrigatório" }, { status: 400 })
-    const msg = `Olá, ${body.paciente_nome}! 😊\n\nCriamos um depoimento baseado na sua avaliação. Antes de usar, gostaríamos da sua aprovação:\n\n"${body.comentario}"\n\nPode confirmar o uso? Responda SIM ou NÃO.\n\nObrigado!\n— Dr. Bruno Gustavo`
+    const msg = `Olá, ${body.paciente_nome}! 😊\n\nCriamos um depoimento baseado na sua avaliação. Antes de usar, gostaríamos da sua aprovação:\n\n"${body.comentario}"\n\nPode confirmar o uso? Responda SIM ou NÃO.\n\nObrigado!\n— o médico usuário`
     const { ok, error } = await sendZapi(body.paciente_telefone, msg)
     if (!ok) return NextResponse.json({ error }, { status: 500 })
     return NextResponse.json({ ok: true })
@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
       messages: [{
         role: "user",
         content:
-`Você é especialista em marketing médico. Transforme este feedback em depoimento profissional para Dr. Bruno Gustavo.
+`Você é especialista em marketing médico. Transforme este feedback em depoimento profissional para o médico usuário.
 
 Dados:
 - Nome: ${nome}

@@ -340,10 +340,10 @@ function SidebarContent() {
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-[12px] font-semibold text-text-primary truncate leading-none group-hover:text-accent transition-colors">
-              {perfil?.nome ?? "Dr. Bruno Gustavo"}
+              {perfil?.nome ?? "Meu perfil"}
             </div>
             <div className="text-[10px] text-text-muted truncate mt-0.5 leading-none">
-              {perfil?.especialidade ?? user?.email ?? "brunogustavosa@gmail.com"}
+              {perfil?.especialidade ?? user?.email ?? "contato@praxisplataforma.com.br"}
             </div>
           </div>
         </Link>

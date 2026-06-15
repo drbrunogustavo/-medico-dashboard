@@ -417,7 +417,7 @@ export default function OnboardingPage() {
                 <input
                   value={form.nome}
                   onChange={setF("nome")}
-                  placeholder="Dr. Bruno Gustavo"
+                  placeholder="Dr. João Silva"
                   style={inputStyle}
                 />
               </InputField>

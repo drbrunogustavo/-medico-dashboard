@@ -59,7 +59,7 @@ const MOCK_TIMELINE: Segment[] = [
   { id:"s6", segundo_inicio:30, segundo_fim:38, tipo:"video", instrucao:"As 3 soluções práticas",       posicao:"centro" },
   { id:"s7", segundo_inicio:38, segundo_fim:44, tipo:"texto", instrucao:"Lista das soluções",           texto_sugerido:"① Jejum 14h  ② Proteína no café  ③ Caminhe 20min", texto:"① Jejum 14h  ② Proteína no café  ③ Caminhe 20min" },
   { id:"s8", segundo_inicio:44, segundo_fim:52, tipo:"video", instrucao:"CTA: salve e compartilhe",     posicao:"centro" },
-  { id:"s9", segundo_inicio:52, segundo_fim:57, tipo:"texto", instrucao:"Handle + CTA",                 texto_sugerido:"@drbrunogustavo — Salve esse post!", texto:"@drbrunogustavo — Salve esse post!" },
+  { id:"s9", segundo_inicio:52, segundo_fim:57, tipo:"texto", instrucao:"Handle + CTA",                 texto_sugerido:"@praxisplataforma — Salve esse post!", texto:"@praxisplataforma — Salve esse post!" },
 ]
 
 // ─── Helpers ────────────────────────────────────────────────────────────────────

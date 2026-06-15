@@ -83,15 +83,15 @@ function AnaliseModal({ referencia, onClose }: { referencia: Referencia; onClose
         const prompt =
           'Você é estrategista de conteúdo médico. Analise o perfil @' + handle +
           ' (especialidade: ' + referencia.especialidade + (referencia.temas?.length ? ', temas conhecidos: ' + referencia.temas.join(', ') : '') + ')' +
-          ' do ponto de vista do Dr. Bruno Gustavo — Clínico-Geral, Endocrinologia e Nutrologia, Poços de Caldas-MG (@drbrunogustavo).\n\n' +
+          ' do ponto de vista do o médico usuário — Clínico-Geral, Endocrinologia e Nutrologia, Poços de Caldas-MG (@praxisplataforma).\n\n' +
           'Gere análise estratégica completa. Se não conhecer o perfil, baseie-se em perfis típicos desta especialidade.\n\n' +
           'Retorne SOMENTE JSON válido, sem nenhum texto antes ou depois:\n' +
           '{"perfil":{"nome":"nome ou estimado","handle":"@' + handle + '","especialidade":"' + referencia.especialidade + '","posicionamento":"como se posiciona","tom":"tom de voz","frequencia":"frequência estimada","formatos":["Reels","Carrossel"]},' +
           '"temas":{"principal":"tema dominante","secundarios":["tema2","tema3"],"gaps":["gap1","gap2"]},' +
           '"pontos_fortes":["forte1","forte2","forte3"],' +
           '"pontos_fracos":["fraco1","fraco2"],' +
-          '"oportunidades":["oportunidade para Dr. Bruno 1","oportunidade 2","oportunidade 3"],' +
-          '"estrategia":{"diferencial":"como Dr. Bruno se diferencia em 2 frases","temas_atacar":["tema1"],"formatos_rec":["formato1"],"gancho":"exemplo de gancho para competir"},' +
+          '"oportunidades":["oportunidade para o médico 1","oportunidade 2","oportunidade 3"],' +
+          '"estrategia":{"diferencial":"como o médico se diferencia em 2 frases","temas_atacar":["tema1"],"formatos_rec":["formato1"],"gancho":"exemplo de gancho para competir"},' +
           '"score":{"conteudo":7,"consistencia":6,"engajamento":7,"nicho":7}}'
 
         console.log('[AnaliseModal] chamando /api/roteiros...')
@@ -151,7 +151,7 @@ function AnaliseModal({ referencia, onClose }: { referencia: Referencia; onClose
     'Gaps: ' + resultado.temas.gaps.join(', '),
     '\nFORTES: ' + resultado.pontos_fortes.join(' | '),
     'FRACOS: ' + resultado.pontos_fracos.join(' | '),
-    '\nOPORTUNIDADES PARA DR. BRUNO',
+    '\nOPORTUNIDADES PARA VOCÊ',
     ...resultado.oportunidades.map(o=>'→ '+o),
     '\nESTRATÉGIA',
     'Diferencial: ' + resultado.estrategia.diferencial,
@@ -265,7 +265,7 @@ function AnaliseModal({ referencia, onClose }: { referencia: Referencia; onClose
               </div>
 
               {/* Oportunidades */}
-              <ASection title="🎯 Oportunidades para Dr. Bruno">
+              <ASection title="🎯 Oportunidades para você">
                 {resultado.oportunidades.map((o,i)=>(
                   <div key={i} style={{ display:'flex', gap:10, padding:'10px 14px', background:'rgba(200,168,76,0.05)', border:'1px solid rgba(200,168,76,0.15)', borderRadius:7, marginBottom:8 }}>
                     <span style={{ color:'var(--accent)', fontWeight:900, flexShrink:0 }}>→</span>

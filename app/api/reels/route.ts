@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
       system: "Você é especialista em ideias de Reels médicos para Instagram e TikTok. Retorne APENAS JSON válido, sem markdown.",
       messages: [{
         role: "user",
-        content: `Crie ${quantidade} ideias de Reels para o Dr. Bruno Gustavo (Endocrinologia, Nutrologia, Longevidade).
+        content: `Crie ${quantidade} ideias de Reels para o o médico usuário.
 
 TEMA GERAL: ${tema}
 CATEGORIA: ${categoria}

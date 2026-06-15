@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
       system: "Você é especialista em repurposing de conteúdo médico para redes sociais. Retorne APENAS JSON válido, sem markdown.",
       messages: [{
         role: "user",
-        content: `Repurpose o seguinte conteúdo do Dr. Bruno Gustavo (Endocrinologia, Nutrologia, Longevidade) para diferentes formatos.
+        content: `Repurpose o seguinte conteúdo do o médico usuário para diferentes formatos.
 
 CONTEÚDO ORIGINAL:
 ${conteudo}

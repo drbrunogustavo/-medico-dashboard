@@ -33,17 +33,17 @@ const FLUXOS_DEFAULT: FluxoItem[] = [
 ]
 
 const RESPOSTAS_DEFAULT: RespostaRapida[] = [
-  { id:'1', gatilho:'oi|olá|boa tarde|bom dia|boa noite', resposta:'Olá! Sou o assistente do Dr. Bruno Gustavo. Como posso ajudar você hoje?', ativo:true },
-  { id:'2', gatilho:'consulta|agendar|horário|marcar', resposta:'Ótimo! Para agendar sua consulta, preciso de algumas informações. Você já é paciente do Dr. Bruno?', ativo:true },
-  { id:'3', gatilho:'exame|resultado|laudo', resposta:'Pode enviar seus exames por aqui. O Dr. Bruno irá analisar e retornaremos em até 48h úteis.', ativo:true },
+  { id:'1', gatilho:'oi|olá|boa tarde|bom dia|boa noite', resposta:'Olá! Sou o assistente da clínica. Como posso ajudar você hoje?', ativo:true },
+  { id:'2', gatilho:'consulta|agendar|horário|marcar', resposta:'Ótimo! Para agendar sua consulta, preciso de algumas informações. Você já é paciente da nossa clínica?', ativo:true },
+  { id:'3', gatilho:'exame|resultado|laudo', resposta:'Pode enviar seus exames por aqui. Nossa equipe irá analisar e retornaremos em até 48h úteis.', ativo:true },
   { id:'4', gatilho:'preço|valor|quanto custa|convênio', resposta:'As consultas são particulares. Para valores e disponibilidade, acesse nossa agenda online ou aguarde nosso contato.', ativo:true },
   { id:'5', gatilho:'urgência|emergência|dor forte', resposta:'Em caso de emergência, ligue 192 (SAMU) ou vá ao pronto-socorro mais próximo. Este canal é para consultas eletivas.', ativo:true },
 ]
 
 const CONFIG_DEFAULT: ConfigAgente = {
-  nome: 'Assistente Dr. Bruno Gustavo',
-  saudacao: 'Olá! Sou o assistente virtual do Dr. Bruno Gustavo — Clínico-Geral, Endocrinologista e Nutrólogo. Como posso ajudar?',
-  despedida: 'Obrigado pelo contato! O Dr. Bruno e sua equipe estão à disposição. Até logo! 👨‍⚕️',
+  nome: 'Assistente PRAXIS',
+  saudacao: 'Olá! Sou o assistente virtual da clínica — Clínico-Geral, Endocrinologista e Nutrólogo. Como posso ajudar?',
+  despedida: 'Obrigado pelo contato! Nossa equipe está à disposição. Até logo! 👨‍⚕️',
   horario_inicio: '08:00', horario_fim: '18:00',
   dias_semana: ['seg','ter','qua','qui','sex'],
   tempo_resposta: '30', n8n_webhook: '', medx_token: '', numero_whatsapp: '',

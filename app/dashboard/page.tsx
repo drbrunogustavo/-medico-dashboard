@@ -354,7 +354,7 @@ export default function DashboardPage() {
             <p className="text-[11px] font-mono text-text-muted tracking-widest uppercase mb-2">{dateStr}</p>
             <h2 className="text-[24px] md:text-[32px] font-semibold text-text-primary leading-tight mb-2"
               style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}>
-              {greet}, {perfil?.nome ? perfil.nome.replace(/^Dr\.?\s*/i, "Dr. ") : "Dr. Bruno"}.
+              {greet}, {perfil?.nome ? perfil.nome.replace(/^Dr\.?\s*/i, "Dr. ") : "Doutor"}.
             </h2>
             <p className="text-[13px] md:text-[14px] text-text-secondary">
               {perfil?.especialidade && (

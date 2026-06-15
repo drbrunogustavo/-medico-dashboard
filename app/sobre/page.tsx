@@ -107,7 +107,7 @@ const DIFERENCIAIS = [
   {
     icon: Heart, color: GOLD,
     titulo: "Construído por um médico",
-    desc: "Dr. Bruno Gustavo (CRM-MG 67.215), endocrinologista e nutrólogo, construiu o PRAXIS para resolver os próprios problemas. Cada módulo foi projetado a partir de uma necessidade clínica real.",
+    desc: "O PRAXIS nasceu de uma frustração comum entre médicos: as ferramentas existentes eram genéricas, caras ou não entendiam a realidade da medicina brasileira. Cada módulo foi projetado a partir de necessidades clínicas reais.",
   },
   {
     icon: Cpu, color: "#3b7fff",
@@ -185,19 +185,19 @@ export default function SobrePage() {
           <div className="rounded-2xl p-10 md:p-14" style={{ background: DARK }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
               <div style={{ width: 44, height: 44, borderRadius: "50%", background: `${GOLD}20`, border: `1px solid ${GOLD}40`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <span style={{ fontSize: 16, fontWeight: 800, color: GOLD }}>BG</span>
+                <span style={{ fontSize: 16, fontWeight: 800, color: GOLD }}>P</span>
               </div>
               <div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: "#F5F0E8" }}>Dr. Bruno Gustavo</div>
-                <div style={{ fontSize: 11, color: "rgba(245,240,232,0.50)" }}>CRM-MG 67.215 · Endocrinologia e Nutrologia</div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: "#F5F0E8" }}>Equipe PRAXIS</div>
+                <div style={{ fontSize: 11, color: "rgba(245,240,232,0.50)" }}>Médicos · Desenvolvedores · Brasil</div>
               </div>
             </div>
             <blockquote style={{ fontSize: 16, color: "rgba(245,240,232,0.85)", lineHeight: 1.85, fontStyle: "italic", borderLeft: `3px solid ${GOLD}60`, paddingLeft: 20 }}>
-              "Em 2024, percebi que estava gastando mais tempo gerenciando ferramentas do que atendendo pacientes. Tinha 5 assinaturas diferentes — e nenhuma conversava com a outra. Contratei uma agência e o resultado foi genérico. Testei o ChatGPT e as respostas não entendiam medicina.
+              "O PRAXIS nasceu de uma frustração comum entre médicos: as ferramentas existentes eram genéricas, caras ou não entendiam a realidade da medicina brasileira. Tinham 5 assinaturas diferentes — e nenhuma conversava com a outra. Agências entregavam resultados genéricos. O ChatGPT não entendia medicina.
               <br /><br />
-              Então decidi construir o que eu precisava. Uma plataforma que entende medicina, automatiza o administrativo e ainda me ajuda a crescer — sem precisar de agência, sem ferramentas fragmentadas, sem perder horas de consultório.
+              Um grupo de médicos e desenvolvedores decidiu mudar isso. Uma plataforma que entende medicina, automatiza o administrativo e ainda ajuda a crescer — sem ferramentas fragmentadas, sem perder horas de consultório.
               <br /><br />
-              O PRAXIS é o sistema que eu queria ter desde o começo da carreira."
+              O PRAXIS é o sistema que os médicos sempre quiseram ter."
             </blockquote>
           </div>
         </FadeUp>

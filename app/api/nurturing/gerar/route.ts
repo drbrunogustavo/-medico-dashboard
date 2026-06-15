@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
       messages: [{
         role: "user",
         content:
-`Você é um assistente de Dr. Bruno Gustavo (Endocrinologista, Nutrologista, especialista em Longevidade).
+`Você é um assistente de o médico usuário (especialista em Longevidade).
 Crie 4 mensagens WhatsApp para sequência de nurturing. Cada uma CURTA (máx 3 parágrafos), pessoal, sem markdown.
 
 Lead:

@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
       system: "Você é especialista em criação de Stories para médicos no Instagram. Retorne APENAS JSON válido, sem markdown.",
       messages: [{
         role: "user",
-        content: `Crie uma sequência de ${slides} Stories para o Instagram do Dr. Bruno Gustavo (Endocrinologia, Nutrologia, Longevidade).
+        content: `Crie uma sequência de ${slides} Stories para o Instagram do o médico usuário.
 
 TEMA: ${tema}
 TOM: ${tom}

@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
       messages: [{
         role: "user",
         content:
-`Você é assistente de Dr. Bruno Gustavo (Endocrinologista/Nutrologista).
+`Você é assistente de o médico usuário.
 Crie mensagens de WhatsApp para régua de relacionamento do paciente. Curtas, pessoais, sem markdown.
 
 Paciente: ${body.paciente_nome}

@@ -56,7 +56,7 @@ SEÇÕES OBRIGATÓRIAS (nesta ordem):
    - Hover: borda muda para #00c07f40, transform translateY(-4px), transition 0.3s
 
 4. SOBRE O MÉDICO (id="medico")
-   - Nome: Dr. Bruno Gustavo
+   - Nome: o médico usuário
    - Especialidades: Endocrinologia · Nutrologia · Longevidade
    - Localização: Poços de Caldas, MG
    - CRM: visível abaixo do nome
@@ -83,7 +83,7 @@ SEÇÕES OBRIGATÓRIAS (nesta ordem):
 8. RODAPÉ
    - Fundo #08090e, borda topo #1c1d2a
    - Nome + CRM + especialidade
-   - Links para Instagram (@drbrunogustavo) e WhatsApp
+   - Links para Instagram (@praxisplataforma) e WhatsApp
    - Aviso: "Conteúdo informativo. Consulte sempre um médico especialista."
 
 ESTILOS GLOBAIS:

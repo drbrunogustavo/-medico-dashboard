@@ -39,7 +39,7 @@ export default function RoteirosPage(){
   const gerar=useCallback(async()=>{
     if(!tema.trim())return;setLoading(true)
     try{const prompt = [
-        'Você é roteirista médico para Reels do Dr. Bruno Gustavo — Clínico-Geral, Endocrinologia e Nutrologia.',
+        'Você é roteirista médico para Reels do o médico usuário — Clínico-Geral, Endocrinologia e Nutrologia.',
         'TEMA: ' + tema + (publico ? ' | PÚBLICO: ' + publico : ''),
         'DURAÇÃO: ' + duracao + ' | ESTILO: ' + estilo,
         'Tom: direto, humano, sem enrolação. Gancho nos primeiros 3 segundos.',
@@ -57,7 +57,7 @@ export default function RoteirosPage(){
   },[tema,publico,duracao,estilo])
   const regenBloco=useCallback(async(idx:number)=>{
     if(!roteiro||!editInstr.trim())return;setRegenLoad(true)
-    try{const b=roteiro.blocos[idx];const prompt='Reescreva bloco para Dr. Bruno Gustavo. Tom: humano.\ntipo="'+b.tipo+'" | fala="'+b.fala+'"\nINSTRUÇÃO: '+editInstr+'\nRetorne SOMENTE JSON: {"fala":"...","visual":"...","corte":"..."}'
+    try{const b=roteiro.blocos[idx];const prompt='Reescreva bloco para o médico usuário. Tom: humano.\ntipo="'+b.tipo+'" | fala="'+b.fala+'"\nINSTRUÇÃO: '+editInstr+'\nRetorne SOMENTE JSON: {"fala":"...","visual":"...","corte":"..."}'
     const res=await fetch('/api/roteiros',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:400,messages:[{role:'user',content:prompt}]})})
     const data=await res.json();const json=JSON.parse((data.content?.[0]?.text||'{}').replace(/```json/g,'').replace(/```/g,'').trim())
     setRoteiro(prev=>prev?{...prev,blocos:prev.blocos.map((bl,i)=>i===idx?{...bl,...json}:bl)}:prev);setEditInstr('');setEditIdx(null)

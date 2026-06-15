@@ -427,8 +427,8 @@ Retorne um objeto JSON com:
   "polemica": número inteiro 0-10,
   "compartilhamento": "Baixo|Médio|Alto|Viral",
   "versao_adaptada": {
-    "titulo": "título adaptado para Dr. Bruno — Endocrinologia/Nutrologia/Longevidade",
-    "gancho": "abertura adaptada para o estilo clínico e científico do Dr. Bruno",
+    "titulo": "título adaptado para o médico usuário — Endocrinologia/Nutrologia/Longevidade",
+    "gancho": "abertura adaptada para o estilo clínico e científico do médico",
     "estrutura": ["ponto 1", "ponto 2", "ponto 3", "ponto 4", "ponto 5"]
   }
 }`,

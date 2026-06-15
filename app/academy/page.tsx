@@ -556,7 +556,7 @@ function AbaComunidade() {
     { icon: Award,     label: "Desafios mensais com premiação", desc: "Participe de desafios e ganhe reconhecimento da comunidade." },
     { icon: BarChart2, label: "Benchmarking por especialidade", desc: "Dados anônimos para saber como você se compara ao mercado." },
     { icon: Users,     label: "Grupos por especialidade",       desc: "Conecte-se com médicos da mesma área para trocar experiências." },
-    { icon: GraduationCap, label: "Mentoria ao vivo",          desc: "Sessões mensais de Q&A ao vivo com o Dr. Bruno Gustavo." },
+    { icon: GraduationCap, label: "Mentoria ao vivo",          desc: "Sessões mensais de Q&A ao vivo com especialistas PRAXIS." },
   ]
 
   const inputSt: React.CSSProperties = {

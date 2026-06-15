@@ -178,7 +178,7 @@ export default function MetasPage() {
         </div>
       </div>
 
-      <div className="p-8 space-y-6 max-w-3xl">
+      <div className="p-4 md:p-8 space-y-6 max-w-3xl">
 
         {/* ── SEÇÃO 1: Metas do Ano ── */}
         <Accordion title="Metas do Ano" icon={TrendingUp} defaultOpen>

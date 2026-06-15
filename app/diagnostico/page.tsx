@@ -169,7 +169,7 @@ export default function DiagnosticoPage() {
   if (step === 0) {
     return (
       <div className="animate-fade-in">
-        <div className="p-8 max-w-2xl">
+        <div className="p-4 md:p-8 max-w-2xl">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-9 h-9 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center">
               <Activity className="w-5 h-5 text-accent" />
@@ -185,7 +185,7 @@ export default function DiagnosticoPage() {
             <p className="text-sm text-text-secondary leading-relaxed mb-4">
               Responda {totalPergs} perguntas em 5 dimensões e receba um diagnóstico completo com seu score, classificação e um plano de ação de 90 dias gerado por IA.
             </p>
-            <div className="grid grid-cols-5 gap-2">
+            <div className="grid grid-cols-5 sm:grid-cols-5 gap-1.5 sm:gap-2">
               {DIMENSOES.map((d, i) => (
                 <div key={d.id} className="text-center">
                   <div className="w-8 h-8 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center mx-auto mb-1">
@@ -247,7 +247,7 @@ export default function DiagnosticoPage() {
           </button>
         </div>
 
-        <div className="p-8 space-y-6 max-w-3xl">
+        <div className="p-4 md:p-8 space-y-6 max-w-3xl">
           {/* Radar + score */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="rounded-xl border border-[--border] bg-[--surface] p-5">
@@ -372,7 +372,7 @@ export default function DiagnosticoPage() {
 
   return (
     <div className="animate-fade-in">
-      <div className="p-8 pb-0">
+      <div className="p-4 md:p-8 pb-0">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-8 h-8 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center">
             <Activity className="w-4 h-4 text-accent" />
@@ -390,7 +390,7 @@ export default function DiagnosticoPage() {
         <h2 className="text-xl font-bold text-text-primary">{dimAtual.titulo}</h2>
       </div>
 
-      <div className="p-8 space-y-4 max-w-2xl">
+      <div className="p-4 md:p-8 space-y-4 max-w-2xl">
         {error && <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">{error}</p>}
 
         {dimAtual.perguntas.map(p => (

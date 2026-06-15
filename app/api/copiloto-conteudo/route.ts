@@ -28,13 +28,27 @@ export async function POST(req: NextRequest) {
       ? `Médico: ${perfil.nome ?? "o médico usuário"}. Especialidade: ${perfil.especialidade ?? "Endocrinologia e Nutrologia"}. Cidade: ${perfil.cidade ?? "Poços de Caldas"}, ${perfil.estado ?? "MG"}. Público: ${perfil.publico_alvo ?? "adultos preocupados com saúde e longevidade"}. Tom: ${perfil.tom_voz ?? "didático, acolhedor e confiante"}.`
       : "Médico: o médico usuário. Especialidade: Endocrinologia e Nutrologia. Cidade: Poços de Caldas, MG. Tom: didático, acolhedor e confiante."
 
+    // Inject temas favoritos from memoria
+    let temasCtx = ""
+    try {
+      const { data: temas } = await supabase
+        .from("memoria_clinica")
+        .select("titulo, conteudo")
+        .eq("user_id", auth.userId)
+        .eq("tipo", "tema")
+        .limit(5)
+      if (temas?.length) {
+        temasCtx = "\n\nTEMAS FAVORITOS DO MÉDICO:\n" + temas.map(t => `• ${t.titulo}: ${t.conteudo.slice(0, 150)}`).join("\n")
+      }
+    } catch { /* silent */ }
+
     const resp = await client.messages.create({
       model: "claude-sonnet-4-20250514",
       max_tokens: 6000,
       system: `Você é o melhor ghostwriter médico do Brasil, especializado em conteúdo de saúde para Instagram. Gera conteúdo que viraliza, educa e converte. Retorne APENAS JSON válido, sem markdown.`,
       messages: [{
         role: "user",
-        content: `${perfilCtx}${contexto ? ` Contexto adicional: ${contexto}` : ""}
+        content: `${perfilCtx}${temasCtx}${contexto ? ` Contexto adicional: ${contexto}` : ""}
 
 TÓPICO SOLICITADO: "${topico}"
 

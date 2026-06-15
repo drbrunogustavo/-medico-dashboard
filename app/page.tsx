@@ -11,6 +11,7 @@ import {
 import { useAuth } from "@/hooks/useAuth"
 import { SimuladorROI } from "@/components/SimuladorROI"
 import { ProductMockup } from "@/components/ProductMockup"
+import { FluxoIntegrado } from "@/components/FluxoIntegrado"
 
 // ─── Tokens ───────────────────────────────────────────────────────────────────
 const BG     = "#F5F0E8"
@@ -509,6 +510,22 @@ export default function LandingPage() {
               </tbody>
             </table>
           </div>
+        </FadeUp>
+      </section>
+
+      {/* ── SEÇÃO 6.5 — FLUXO INTEGRADO ─────────────────────────────────────── */}
+      <section className="max-w-5xl mx-auto px-6 pb-24">
+        <FadeUp className="text-center mb-10">
+          <SLabel>CICLO COMPLETO</SLabel>
+          <h2 style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: "clamp(22px, 4vw, 38px)", fontWeight: 700, color: DARK }}>
+            Do lead ao conteúdo — em um só sistema
+          </h2>
+          <p style={{ fontSize: 16, color: TEXT2, marginTop: 12, lineHeight: 1.7 }}>
+            O PRAXIS conecta cada etapa da sua clínica em um ciclo contínuo de crescimento.
+          </p>
+        </FadeUp>
+        <FadeUp delay={200}>
+          <FluxoIntegrado />
         </FadeUp>
       </section>
 

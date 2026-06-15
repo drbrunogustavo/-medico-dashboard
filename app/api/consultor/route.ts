@@ -38,9 +38,21 @@ export async function POST(req: NextRequest) {
       ctx.posicionamento && `Posicionamento salvo: ${JSON.stringify(ctx.posicionamento)}`,
     ].filter(Boolean).join("\n")
 
+    // Inject protocolos + historico recente from memoria
+    let memoriaExtra = ""
+    try {
+      const supabase = createSupabaseServerClient()
+      const [{ data: protocolos }, { data: historico }] = await Promise.all([
+        supabase.from("memoria_clinica").select("titulo,conteudo").eq("user_id", auth.userId).eq("tipo", "protocolo").eq("favorito", true).limit(3),
+        supabase.from("copiloto_historico").select("tipo_consulta,created_at").eq("user_id", auth.userId).order("created_at", { ascending: false }).limit(5),
+      ])
+      if (protocolos?.length) memoriaExtra += "\n\nPROTOCOLOS FAVORITOS:\n" + protocolos.map(d => `• ${d.titulo}: ${d.conteudo.slice(0, 200)}`).join("\n")
+      if (historico?.length) memoriaExtra += "\n\nÚLTIMAS CONSULTAS:\n" + historico.map(h => `• ${h.tipo_consulta ?? "Consulta"} (${new Date(h.created_at).toLocaleDateString("pt-BR")})`).join("\n")
+    } catch { /* silent */ }
+
     const systemFull = ctxTxt
-      ? `${SYSTEM}\n\nDADOS DA CLÍNICA DO USUÁRIO:\n${ctxTxt}`
-      : SYSTEM
+      ? `${SYSTEM}\n\nDADOS DA CLÍNICA DO USUÁRIO:\n${ctxTxt}${memoriaExtra}`
+      : SYSTEM + memoriaExtra
 
     const stream = await ai.messages.stream({
       model:      "claude-sonnet-4-20250514",

@@ -15,7 +15,7 @@ import {
   RefreshCw, Map, BarChart2, Rocket,
   Instagram, Calculator, FileBarChart,
   FlaskConical, FileHeart, Pill,
-  BookOpen, Scale, Wand2, Store,
+  BookOpen, Scale, Wand2, Store, Brain,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useMenu } from "@/components/MobileMenuProvider"
@@ -121,6 +121,7 @@ const NAV: Record<AlaId, NavItem[]> = {
     { label: "Diretor Criativo",          href: "/diretor-criativo",  icon: Layers  },
     { label: "Agente Executivo",          href: "/agente-executivo",  icon: Bot,   badge: "PRO" },
     { label: "Nutrição de Leads Clínica", href: "/nutricao-pacientes",icon: Layers2  },
+    { label: "Memória Clínica",            href: "/memoria",           icon: Brain,   badge: "NOVO" },
     { label: "Banco de Estudos",          href: "/estudos",           icon: BookOpen },
     { label: "Inteligência de Mercado",   href: "/mercado",           icon: TrendingUp },
   ],
@@ -143,6 +144,7 @@ const BADGE_STYLE: Record<string, string> = {
   "EM BREVE":   "bg-surface-2 text-text-muted border border-border",
   "IA":         "bg-amber-500/10 text-amber-400 border border-amber-500/25",
   "MAIS USADO": "bg-[rgba(212,175,55,0.08)] text-[#d4af37] border border-[rgba(212,175,55,0.25)]",
+  "NOVO":       "bg-accent-dim text-accent border border-accent-border",
 }
 
 const PLAN_UI = {

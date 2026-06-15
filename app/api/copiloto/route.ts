@@ -6,8 +6,22 @@ import { inserirProntuario } from "@/lib/medx"
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
-const SYSTEM = `Você é o Copiloto de Consulta do PRAXIS — assistente clínico especialista em Endocrinologia, Nutrologia e Longevidade.
+const SYSTEM_BASE = `Você é o Copiloto de Consulta do PRAXIS — assistente clínico especialista em Endocrinologia, Nutrologia e Longevidade.
 Retorne APENAS JSON válido, sem markdown, sem texto antes ou depois do JSON.`
+
+async function getMemoriaContext(userId: string): Promise<string> {
+  try {
+    const supabase = createSupabaseServerClient()
+    const [{ data: conhecimento }, { data: protocolos }] = await Promise.all([
+      supabase.from("memoria_clinica").select("titulo,conteudo").eq("user_id", userId).eq("tipo", "conhecimento").limit(5),
+      supabase.from("memoria_clinica").select("titulo,conteudo").eq("user_id", userId).eq("tipo", "protocolo").eq("favorito", true).limit(3),
+    ])
+    const parts: string[] = []
+    if (conhecimento?.length) parts.push("BASE DE CONHECIMENTO:\n" + conhecimento.map(d => `• ${d.titulo}: ${d.conteudo.slice(0, 300)}`).join("\n"))
+    if (protocolos?.length) parts.push("PROTOCOLOS ATIVOS:\n" + protocolos.map(d => `• ${d.titulo}: ${d.conteudo.slice(0, 200)}`).join("\n"))
+    return parts.length ? "\n\n" + parts.join("\n\n") : ""
+  } catch { return "" }
+}
 
 function errMsg(e: unknown): string {
   if (e instanceof Error) return e.message
@@ -90,6 +104,8 @@ export async function POST(req: NextRequest) {
 
     const nome = body.nomePaciente ?? "paciente"
     const tipo = body.tipoConsulta ?? "Consulta"
+    const memoriaCtx = await getMemoriaContext(auth.userId)
+    const SYSTEM = SYSTEM_BASE + memoriaCtx
 
     const resp = await client.messages.create({
       model:      "claude-sonnet-4-20250514",

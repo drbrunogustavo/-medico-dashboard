@@ -6,12 +6,13 @@ import {
   ArrowRight, Check, ChevronDown, ChevronUp, Shield,
   Zap, Star, Crown, Megaphone, Stethoscope, TrendingUp,
   Bot, BarChart3, Users, Target, Settings, Lock,
-  Database, CheckCircle2, X, Minus, ChevronRight,
+  Database, CheckCircle2, X, Minus, ChevronRight, BookOpen,
 } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
 import { SimuladorROI } from "@/components/SimuladorROI"
 import { ProductMockup } from "@/components/ProductMockup"
 import { FluxoIntegrado } from "@/components/FluxoIntegrado"
+import { SystemScreenshots } from "@/components/SystemScreenshots"
 
 // ─── Tokens ───────────────────────────────────────────────────────────────────
 const BG     = "#F5F0E8"
@@ -129,86 +130,101 @@ const COMP_FEATURES = [
     agencia: "R$ 3-8k/mês", chatgpt: "R$ 20/mês", crm: "R$ 200-500", praxis: "R$ 97-397/mês" },
 ]
 
-const MODULES_ACCORDION = [
+const ALAS_ACCORDION = [
   {
-    title: "Atrair Pacientes — Ala Social",
-    items: [
-      "Copiloto de Conteúdo — roteiros, legendas e estratégia em um clique",
+    id: "social", icon: Megaphone, color: "#3b7fff",
+    title: "PRAXIS Social",
+    tagline: "Atração e conteúdo médico de alto impacto",
+    features: [
+      "Copiloto de Conteúdo — roteiros, legendas e reels em um clique",
       "Calendário Editorial — 30 dias planejados automaticamente",
       "Radar de Tendências — temas médicos em alta no Instagram e Google",
-      "Gerador de Reels, Stories e Carrosséis — formatos prontos para publicar",
-      "Análise de Concorrentes — inteligência do seu nicho",
-      "Banco de Pautas — organize e priorize seus temas",
+      "Gerador de Carrosséis — slides prontos para publicar",
+      "Banco de Pautas — organize e priorize seus temas clínicos",
+      "Análise de Concorrentes — inteligência competitiva do seu nicho",
       "Biblioteca de Ganchos — aberturas virais para cada formato",
+      "Gerador de Hashtags — tags segmentadas por especialidade",
     ],
+    resultado: "30 dias de conteúdo em 2 horas",
   },
   {
-    title: "Gerenciar Leads — CRM",
-    items: [
-      "CRM de Leads — kanban visual com histórico completo",
-      "Nutrição de Leads — sequências automáticas WhatsApp D+1 a D+30",
-      "Régua de Relacionamento — jornada do lead ao paciente fiel",
-      "Scripts de Atendimento — respostas padronizadas para WhatsApp",
-      "Central de Objeções — como responder cada resistência",
-      "Programa de Indicações — sistema de referral para sua clínica",
-    ],
-  },
-  {
-    title: "Atender Melhor — IA Clínica",
-    items: [
+    id: "consultorio", icon: Stethoscope, color: GOLD,
+    title: "PRAXIS Consultório",
+    tagline: "Atendimento aumentado por inteligência artificial",
+    features: [
       "Copiloto de Consulta — resumo SOAP, plano e follow-up por IA",
       "Calculadoras Clínicas — HOMA-IR, ASCVD, TMB, idade metabólica",
       "Protocolos Clínicos — biblioteca editável de condutas",
       "Prescrição Assistida — sugestões baseadas no quadro clínico",
       "Relatório para Paciente — documento humanizado em linguagem simples",
       "Interpretação de Exames — análise assistida por IA",
+      "Follow-up Automático — mensagens D+1, D+7 e D+30",
+      "Memória Clínica — IA aprende seus protocolos favoritos",
     ],
+    resultado: "Consulta documentada em menos de 3 minutos",
   },
   {
-    title: "Gerenciar a Clínica — Operação",
-    items: [
-      "Agenda Inteligente — integração com MedX em tempo real",
-      "Gestão de Pacientes — prontuários e histórico centralizado",
-      "Financeiro por Unidade — lançamentos e relatórios por clínica",
-      "SOPs da Clínica — procedimentos operacionais documentados",
-      "Nutrição de Pacientes — trilhas pós-consulta automatizadas",
-      "Pesquisa NPS — medir satisfação e identificar promotores",
-    ],
-  },
-  {
-    title: "Crescer com Dados — Executivo",
-    items: [
-      "Painel Executivo — indicadores de marketing, operação e finanças",
+    id: "executivo", icon: BarChart3, color: "#16a34a",
+    title: "PRAXIS Executivo",
+    tagline: "Sua clínica como um negócio gerenciado com dados",
+    features: [
+      "Painel Executivo — faturamento, NPS e indicadores em tempo real",
       "Consultor Estratégico IA — análise e recomendações mensais",
-      "Diagnóstico 360° — auditoria completa da clínica",
-      "Metas e Planejamento — OKRs com acompanhamento automatizado",
+      "Diagnóstico 360° — auditoria completa de marketing e operação",
+      "CRM de Leads — funil visual com histórico completo",
+      "Nurturing WhatsApp — sequências automáticas D+1 a D+30",
+      "Programa de Indicações — sistema de referral para a clínica",
       "Relatório Mensal — gerado automaticamente todo mês",
-      "Inteligência de Mercado — análise do cenário da sua especialidade",
     ],
+    resultado: "Visão 360° da clínica em um painel",
+  },
+  {
+    id: "ia", icon: Bot, color: "#a78bfa",
+    title: "PRAXIS IA",
+    tagline: "Inteligência artificial integrada a todas as áreas",
+    features: [
+      "Consultor Estratégico — análise da clínica com Claude Sonnet",
+      "Busca Inteligente — respostas médicas com fontes atualizadas",
+      "Gerador de Conteúdo — adapta tom e especialidade automaticamente",
+      "Análise de Tendências — radar de temas com IA em tempo real",
+      "Copiloto Clínico — IA treinada em protocolos de saúde",
+      "Aprendizado Contínuo — IA memoriza seus protocolos favoritos",
+    ],
+    resultado: "IA especializada em medicina, não genérica",
+  },
+  {
+    id: "academy", icon: BookOpen, color: "#f59e0b",
+    title: "PRAXIS Academy",
+    tagline: "Estratégias validadas de marketing médico e gestão",
+    features: [
+      "Biblioteca de Playbooks — estratégias testadas por médicos",
+      "SOPs da Clínica — procedimentos operacionais documentados",
+      "Scripts de Atendimento — respostas padronizadas para WhatsApp",
+      "Central de Objeções — como responder cada resistência do paciente",
+      "Guias de Precificação — como posicionar e cobrar o que você vale",
+    ],
+    resultado: "Estratégias validadas por médicos empreendedores",
   },
 ]
 
-const DEPOIMENTOS = [
+const CAPACIDADES = [
   {
-    ini: "MC", nome: "Dr. Marcelo C.", esp: "Endocrinologia", cid: "São Paulo",
-    desafio: "Dependia de convênios, agenda cheia de particular era exceção",
-    usou: "CRM de Leads + Copiloto de Conteúdo + Nurturing WhatsApp",
-    resultado: "Nos primeiros 60 dias de uso consistente, adicionei 8 consultas particulares por semana ao meu fluxo regular.",
-    cor: "#3b7fff",
+    icon: Megaphone, color: "#3b7fff",
+    titulo: "Consultórios que pararam de depender de convênios",
+    descricao: "Com o CRM de Leads e o Copiloto de Conteúdo integrados, médicos passam a ter um fluxo previsível de pacientes particulares — sem contratar agência, sem pagar por tráfego pago.",
+    modulos: ["CRM de Leads", "Nurturing WhatsApp", "Copiloto de Conteúdo"],
   },
   {
-    ini: "AF", nome: "Dra. Ana F.", esp: "Nutrologia", cid: "Rio de Janeiro",
-    desafio: "Gastava 3h/semana criando conteúdo e os resultados eram inconsistentes",
-    usou: "Calendário Editorial + Copiloto de Conteúdo + Banco de Pautas",
-    resultado: "Hoje dedico menos de 30 minutos por semana ao conteúdo. A qualidade melhorou e o engajamento cresceu de forma orgânica.",
-    cor: "#16a34a",
+    icon: Stethoscope, color: GOLD,
+    titulo: "Médicos que recuperaram horas dentro da consulta",
+    descricao: "A IA clínica do PRAXIS entrega resumo SOAP, plano terapêutico e follow-up em minutos após a consulta — deixando mais tempo para o que importa: o paciente.",
+    modulos: ["Copiloto de Consulta", "Memória Clínica", "Follow-up Automático"],
   },
   {
-    ini: "PR", nome: "Dr. Pedro R.", esp: "Ginecologia", cid: "Belo Horizonte",
-    desafio: "Perdia leads por falta de follow-up sistemático — respondia quando lembrava",
-    usou: "CRM + Nurturing WhatsApp automático + Scripts de Atendimento",
-    resultado: "Com a nutrição automática, minha taxa de conversão de leads melhorou significativamente. Perco muito menos oportunidades.",
-    cor: GOLD,
+    icon: BarChart3, color: "#16a34a",
+    titulo: "Clínicas que deixaram de adivinhar o que fazer",
+    descricao: "O Painel Executivo e o Consultor Estratégico IA transformam dados da clínica em recomendações acionáveis — sem precisar de consultoria externa.",
+    modulos: ["Painel Executivo", "Consultor Estratégico IA", "Diagnóstico 360°"],
   },
 ]
 
@@ -283,7 +299,7 @@ export default function LandingPage() {
       <section className="max-w-5xl mx-auto px-6 pt-20 pb-16 text-center">
         <FadeUp>
           <span style={{ display: "inline-block", fontSize: 11, fontFamily: "monospace", color: GOLD, letterSpacing: "2px", border: `1px solid ${GOLD}40`, padding: "4px 16px", borderRadius: 999, marginBottom: 28 }}>
-            Usado por médicos em todo o Brasil
+            ✓ Desenvolvido e usado por médicos
           </span>
           <h1 style={{
             fontFamily: "var(--font-playfair), Georgia, serif",
@@ -348,6 +364,65 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── SEÇÃO 2.5 — PONTE PROMESSA → PRODUTO ────────────────────────────── */}
+      <section className="max-w-5xl mx-auto px-6 pb-24">
+        <FadeUp className="text-center mb-12">
+          <SLabel>COMO FUNCIONA NA PRÁTICA</SLabel>
+          <h2 style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: "clamp(22px, 4vw, 38px)", fontWeight: 700, color: DARK }}>
+            Como o PRAXIS lota sua agenda
+          </h2>
+          <p style={{ fontSize: 15, color: TEXT2, marginTop: 12, lineHeight: 1.7 }}>
+            Em 5 passos — do primeiro post ao paciente fiel.
+          </p>
+        </FadeUp>
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          {[
+            {
+              n: 1, icon: Megaphone, color: "#3b7fff",
+              titulo: "Conteúdo atrai",
+              desc: "IA cria roteiros e legendas em minutos. Você posta. Pacientes encontram você.",
+            },
+            {
+              n: 2, icon: Users, color: GOLD,
+              titulo: "Lead entra",
+              desc: "Novo seguidor manda mensagem. CRM captura e abre o funil automaticamente.",
+            },
+            {
+              n: 3, icon: Zap, color: "#16a34a",
+              titulo: "Nurturing ativa",
+              desc: "Sequência D+1, D+3, D+7 nutre o lead até ele estar pronto para agendar.",
+            },
+            {
+              n: 4, icon: Stethoscope, color: "#a78bfa",
+              titulo: "Consulta realizada",
+              desc: "IA documenta a consulta, gera plano e dispara o follow-up em segundos.",
+            },
+            {
+              n: 5, icon: Star, color: "#f59e0b",
+              titulo: "Paciente fidelizado",
+              desc: "NPS capturado. Indicação gerada. Ciclo reinicia — sem esforço adicional.",
+            },
+          ].map(({ n, icon: Icon, color, titulo, desc }, i) => (
+            <FadeUp key={n} delay={i * 80}>
+              <div className="rounded-2xl p-6 h-full flex flex-col" style={{ background: CARD, border: `1px solid ${color}20`, position: "relative" }}>
+                <div style={{ width: 32, height: 32, borderRadius: 10, background: `${color}14`, border: `1px solid ${color}30`, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
+                  <Icon style={{ width: 15, height: 15, color }} />
+                </div>
+                <div style={{ position: "absolute", top: 16, right: 16, fontSize: 28, fontWeight: 800, color: `${color}12`, fontFamily: "monospace" }}>{n}</div>
+                <h3 style={{ fontSize: 13, fontWeight: 700, color: DARK, marginBottom: 8, lineHeight: 1.3 }}>{titulo}</h3>
+                <p style={{ fontSize: 12, color: TEXT2, lineHeight: 1.65, flex: 1 }}>{desc}</p>
+                {i < 4 && (
+                  <div className="hidden md:block absolute -right-3 top-1/2 -translate-y-1/2 z-10"
+                    style={{ width: 20, height: 20, borderRadius: "50%", background: BG, border: `1px solid ${BORDER}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <ChevronRight style={{ width: 10, height: 10, color: MUTED }} />
+                  </div>
+                )}
+              </div>
+            </FadeUp>
+          ))}
+        </div>
+      </section>
+
       {/* ── SEÇÃO 3 — PRODUTO EM AÇÃO ────────────────────────────────────────── */}
       <section className="max-w-5xl mx-auto px-6 pb-24">
         <FadeUp className="text-center mb-10">
@@ -381,6 +456,20 @@ export default function LandingPage() {
           <p className="text-center mt-4" style={{ fontSize: 14, color: TEXT2 }}>
             {PRODUCT_TABS[activeTab].caption}
           </p>
+        </FadeUp>
+      </section>
+
+      {/* ── SEÇÃO 3.5 — SCREENSHOTS DO SISTEMA ──────────────────────────────── */}
+      <section className="max-w-5xl mx-auto px-6 pb-24">
+        <FadeUp className="text-center mb-10">
+          <SLabel>VEJA POR DENTRO</SLabel>
+          <h2 style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: "clamp(22px, 4vw, 38px)", fontWeight: 700, color: DARK, marginBottom: 8 }}>
+            O sistema real — sem prints de Figma
+          </h2>
+          <p style={{ fontSize: 14, color: TEXT2 }}>Navegue pelos módulos e veja como cada um funciona na prática.</p>
+        </FadeUp>
+        <FadeUp delay={100}>
+          <SystemScreenshots />
         </FadeUp>
       </section>
 
@@ -543,36 +632,57 @@ export default function LandingPage() {
         </FadeUp>
       </section>
 
-      {/* ── SEÇÃO 8 — MÓDULOS ACCORDION ──────────────────────────────────────── */}
-      <section className="max-w-3xl mx-auto px-6 pb-24">
+      {/* ── SEÇÃO 8 — ALAS ACCORDION ─────────────────────────────────────────── */}
+      <section className="max-w-4xl mx-auto px-6 pb-24">
         <FadeUp className="text-center mb-10">
           <SLabel>FUNCIONALIDADES</SLabel>
           <h2 style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: "clamp(22px, 4vw, 38px)", fontWeight: 700, color: DARK }}>
-            Mais de 60 funcionalidades integradas
+            5 alas. Mais de 60 funcionalidades integradas.
           </h2>
+          <p style={{ fontSize: 14, color: TEXT2, marginTop: 10 }}>
+            Cada ala resolve um problema específico — juntas, formam o sistema operacional da sua clínica.
+          </p>
         </FadeUp>
-        <div className="space-y-2">
-          {MODULES_ACCORDION.map(({ title, items }, i) => (
-            <FadeUp key={i} delay={i * 50}>
-              <div className="rounded-xl overflow-hidden" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
+        <div className="space-y-3">
+          {ALAS_ACCORDION.map(({ id, icon: Icon, color, title, tagline, features, resultado }, i) => (
+            <FadeUp key={id} delay={i * 50}>
+              <div className="rounded-2xl overflow-hidden" style={{ background: CARD, border: `1px solid ${openModule === i ? color + "40" : BORDER}`, transition: "border-color 0.2s" }}>
                 <button type="button" onClick={() => setOpenModule(openModule === i ? null : i)}
-                  className="w-full flex items-center justify-between px-5 py-4 text-left">
-                  <span style={{ fontSize: 14, fontWeight: 600, color: DARK }}>{title}</span>
-                  {openModule === i
-                    ? <ChevronUp style={{ width: 16, height: 16, color: GOLD }} />
-                    : <ChevronDown style={{ width: 16, height: 16, color: MUTED }} />
-                  }
+                  className="w-full flex items-center gap-4 px-6 py-5 text-left">
+                  <div style={{ width: 38, height: 38, borderRadius: 10, flexShrink: 0, background: `${color}12`, border: `1px solid ${color}30`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <Icon style={{ width: 17, height: 17, color }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div style={{ fontSize: 14, fontWeight: 700, color: DARK }}>{title}</div>
+                    <div style={{ fontSize: 11, color: MUTED }}>{tagline}</div>
+                  </div>
+                  <span style={{ fontSize: 10, fontFamily: "monospace", fontWeight: 700, padding: "3px 10px", borderRadius: 999, background: `${color}12`, color, border: `1px solid ${color}25`, whiteSpace: "nowrap", flexShrink: 0 }}>
+                    {resultado}
+                  </span>
+                  <div className="ml-2 flex-shrink-0">
+                    {openModule === i
+                      ? <ChevronUp   style={{ width: 16, height: 16, color }} />
+                      : <ChevronDown style={{ width: 16, height: 16, color: MUTED }} />
+                    }
+                  </div>
                 </button>
                 {openModule === i && (
-                  <div className="px-5 pb-5" style={{ borderTop: `1px solid ${BORDER}`, paddingTop: 12 }}>
-                    <ul className="space-y-2">
-                      {items.map((item, j) => (
-                        <li key={j} className="flex items-start gap-2.5">
-                          <ChevronRight style={{ width: 13, height: 13, color: GOLD, flexShrink: 0, marginTop: 2 }} />
-                          <span style={{ fontSize: 13, color: TEXT2 }}>{item}</span>
-                        </li>
+                  <div style={{ borderTop: `1px solid ${BORDER}` }}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 p-6 pt-5">
+                      {features.map((f, j) => (
+                        <div key={j} className="flex items-start gap-2.5">
+                          <Check style={{ width: 13, height: 13, color, flexShrink: 0, marginTop: 2 }} />
+                          <span style={{ fontSize: 13, color: TEXT2, lineHeight: 1.5 }}>{f}</span>
+                        </div>
                       ))}
-                    </ul>
+                    </div>
+                    <div className="px-6 pb-5">
+                      <Link href="/demo"
+                        className="inline-flex items-center gap-1.5 text-[12px] font-semibold transition-all hover:opacity-80"
+                        style={{ color, textDecoration: "none" }}>
+                        Explorar {title} <ArrowRight style={{ width: 12, height: 12 }} />
+                      </Link>
+                    </div>
                   </div>
                 )}
               </div>
@@ -581,46 +691,62 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── SEÇÃO 9 — DEPOIMENTOS ────────────────────────────────────────────── */}
+      {/* ── SEÇÃO 9 — O QUE O PRAXIS TORNA POSSÍVEL ─────────────────────────── */}
       <section className="max-w-5xl mx-auto px-6 pb-24">
         <FadeUp className="text-center mb-10">
-          <SLabel>RESULTADOS DE USUÁRIOS</SLabel>
+          <SLabel>O QUE O PRAXIS TORNA POSSÍVEL</SLabel>
           <h2 style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: "clamp(22px, 4vw, 38px)", fontWeight: 700, color: DARK }}>
-            Médicos que escolheram crescer com dados
+            Três transformações que os módulos viabilizam
           </h2>
+          <p style={{ fontSize: 14, color: TEXT2, marginTop: 10, maxWidth: 540, margin: "10px auto 0" }}>
+            Sem números inventados. Sem depoimentos fictícios. Apenas o que a plataforma foi construída para fazer.
+          </p>
         </FadeUp>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {DEPOIMENTOS.map(({ ini, nome, esp, cid, desafio, usou, resultado, cor }, i) => (
-            <FadeUp key={nome} delay={i * 80}>
-              <div className="rounded-2xl p-6 h-full flex flex-col" style={{ background: CARD, border: `1px solid ${cor}25` }}>
-                <div className="flex items-center gap-3 mb-5">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-[13px] flex-shrink-0"
-                    style={{ background: `${cor}15`, color: cor, border: `1px solid ${cor}30` }}>
-                    {ini}
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: DARK }}>{nome}</div>
-                    <div style={{ fontSize: 10, color: MUTED }}>{esp} · {cid}</div>
-                  </div>
+
+        {/* OPÇÃO B — capability cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-12">
+          {CAPACIDADES.map(({ icon: Icon, color, titulo, descricao, modulos }, i) => (
+            <FadeUp key={titulo} delay={i * 80}>
+              <div className="rounded-2xl p-6 h-full flex flex-col" style={{ background: CARD, border: `1px solid ${color}20` }}>
+                <div style={{ width: 40, height: 40, borderRadius: 12, background: `${color}12`, border: `1px solid ${color}28`, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14 }}>
+                  <Icon style={{ width: 18, height: 18, color }} />
                 </div>
-                <div className="space-y-3 flex-1">
-                  <div>
-                    <div style={{ fontSize: 9, fontFamily: "monospace", color: MUTED, letterSpacing: "1.5px", marginBottom: 4 }}>DESAFIO</div>
-                    <p style={{ fontSize: 12, color: TEXT2, lineHeight: 1.5 }}>"{desafio}"</p>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 9, fontFamily: "monospace", color: MUTED, letterSpacing: "1.5px", marginBottom: 4 }}>O QUE USOU</div>
-                    <p style={{ fontSize: 11, color: MUTED, lineHeight: 1.5 }}>{usou}</p>
-                  </div>
-                  <div className="pt-3 mt-auto" style={{ borderTop: `1px solid ${cor}20` }}>
-                    <div style={{ fontSize: 9, fontFamily: "monospace", color: cor, letterSpacing: "1.5px", marginBottom: 4 }}>RESULTADO</div>
-                    <p style={{ fontSize: 12, color: DARK, lineHeight: 1.6, fontWeight: 500 }}>"{resultado}"</p>
-                  </div>
+                <h3 style={{ fontSize: 14, fontWeight: 700, color: DARK, marginBottom: 10, lineHeight: 1.35 }}>{titulo}</h3>
+                <p style={{ fontSize: 12, color: TEXT2, lineHeight: 1.7, flex: 1, marginBottom: 14 }}>{descricao}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {modulos.map(m => (
+                    <span key={m} style={{ fontSize: 9, fontFamily: "monospace", fontWeight: 700, padding: "2px 8px", borderRadius: 999, background: `${color}10`, color, border: `1px solid ${color}25` }}>
+                      {m}
+                    </span>
+                  ))}
                 </div>
               </div>
             </FadeUp>
           ))}
         </div>
+
+        {/* OPÇÃO C — founder quote */}
+        <FadeUp delay={200}>
+          <div className="rounded-2xl p-8 md:p-10" style={{ background: DARK, border: `1px solid ${GOLD}20` }}>
+            <div className="flex items-start gap-5">
+              <div style={{ fontSize: 48, color: `${GOLD}30`, fontFamily: "Georgia, serif", lineHeight: 1, flexShrink: 0, marginTop: -8 }}>"</div>
+              <div>
+                <p style={{ fontSize: "clamp(14px, 2vw, 17px)", color: "rgba(245,240,232,0.85)", lineHeight: 1.75, fontStyle: "italic", marginBottom: 20 }}>
+                  Construí o PRAXIS para resolver meus próprios problemas como médico: perder leads por falta de follow-up, gastar horas com conteúdo sem estratégia, não ter dados para decidir sobre a clínica. Só disponibilizo porque vejo os mesmos problemas em colegas.
+                </p>
+                <div className="flex items-center gap-3">
+                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: `${GOLD}20`, border: `1px solid ${GOLD}35`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <span style={{ fontSize: 13, fontWeight: 800, color: GOLD }}>P</span>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: "rgba(245,240,232,0.9)" }}>Fundador do PRAXIS</div>
+                    <div style={{ fontSize: 10, color: "rgba(245,240,232,0.4)", fontFamily: "monospace" }}>Médico em atividade · Brasil</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </FadeUp>
       </section>
 
       {/* ── SEÇÃO 10 — PLANOS ────────────────────────────────────────────────── */}

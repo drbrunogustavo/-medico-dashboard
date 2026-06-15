@@ -25,7 +25,7 @@ export function PraxisLogo({ compact = false, className }: PraxisLogoProps) {
           PRAXIS
         </div>
         <div className="text-[8px] font-sans text-text-muted tracking-[3px] uppercase mt-1 leading-none">
-          Marketing Médico de Alto Padrão
+          Sistema Operacional da Clínica
         </div>
       </div>
     </div>

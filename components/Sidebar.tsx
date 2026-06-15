@@ -337,7 +337,7 @@ function SidebarContent() {
             <span className="text-[11px] font-bold text-accent">
               {perfil?.nome
                 ? perfil.nome.replace(/^Dr\.?\s*/i, "").slice(0, 2).toUpperCase()
-                : "BG"}
+                : user?.email?.slice(0, 2).toUpperCase() ?? "??"}
             </span>
           </div>
           <div className="flex-1 min-w-0">
@@ -345,7 +345,7 @@ function SidebarContent() {
               {perfil?.nome ?? "Meu perfil"}
             </div>
             <div className="text-[10px] text-text-muted truncate mt-0.5 leading-none">
-              {perfil?.especialidade ?? user?.email ?? "contato@praxisplataforma.com.br"}
+              {perfil?.especialidade ?? user?.email ?? ""}
             </div>
           </div>
         </Link>

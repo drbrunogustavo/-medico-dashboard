@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { useEffect, useRef, useState } from "react"
 import {
   ArrowRight, Check, ChevronDown, ChevronUp, Shield,
@@ -12,7 +13,6 @@ import { useAuth } from "@/hooks/useAuth"
 import { SimuladorROI } from "@/components/SimuladorROI"
 import { ProductMockup } from "@/components/ProductMockup"
 import { FluxoIntegrado } from "@/components/FluxoIntegrado"
-import { SystemScreenshots } from "@/components/SystemScreenshots"
 
 // ─── Tokens ───────────────────────────────────────────────────────────────────
 const BG     = "#F5F0E8"
@@ -207,6 +207,37 @@ const ALAS_ACCORDION = [
   },
 ]
 
+const SCREENSHOTS = [
+  {
+    tab: "Dashboard",
+    img: "/screenshots/executivo.png",
+    caption: "Centro de comando da clínica — leads, faturamento, NPS e indicadores em tempo real.",
+    href: "/dashboard",
+    color: "#16a34a",
+  },
+  {
+    tab: "CRM de Leads",
+    img: "/screenshots/crm.png",
+    caption: "Funil Kanban visual — do primeiro contato ao paciente fiel com nurturing automático.",
+    href: "/crm",
+    color: "#3b7fff",
+  },
+  {
+    tab: "Copiloto IA",
+    img: "/screenshots/copiloto.png",
+    caption: "Resumo SOAP, plano terapêutico e follow-up gerados em segundos após a consulta.",
+    href: "/copiloto",
+    color: GOLD,
+  },
+  {
+    tab: "Calendário",
+    img: "/screenshots/calendario.png",
+    caption: "30 dias de conteúdo estratégico planejados automaticamente — adaptados à sua especialidade.",
+    href: "/calendario",
+    color: "#a78bfa",
+  },
+]
+
 const CAPACIDADES = [
   {
     icon: Megaphone, color: "#3b7fff",
@@ -270,9 +301,10 @@ export default function LandingPage() {
   const ctaHref = "/planos"
   const appHref = !authLoading && user ? "/dashboard" : "/login"
 
-  const [activeTab,   setActiveTab]   = useState(0)
-  const [faqOpen,     setFaqOpen]     = useState<number | null>(null)
-  const [openModule,  setOpenModule]  = useState<number | null>(null)
+  const [activeTab,        setActiveTab]        = useState(0)
+  const [faqOpen,          setFaqOpen]          = useState<number | null>(null)
+  const [openModule,       setOpenModule]       = useState<number | null>(null)
+  const [activeScreenshot, setActiveScreenshot] = useState(0)
 
   return (
     <div className="fixed inset-0 z-[200] overflow-y-auto" style={{ background: BG, fontFamily: "Inter, sans-serif" }}>
@@ -466,10 +498,62 @@ export default function LandingPage() {
           <h2 style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: "clamp(22px, 4vw, 38px)", fontWeight: 700, color: DARK, marginBottom: 8 }}>
             O sistema real — sem prints de Figma
           </h2>
-          <p style={{ fontSize: 14, color: TEXT2 }}>Navegue pelos módulos e veja como cada um funciona na prática.</p>
+          <p style={{ fontSize: 14, color: TEXT2 }}>Clique nos módulos para ver cada tela do PRAXIS.</p>
         </FadeUp>
         <FadeUp delay={100}>
-          <SystemScreenshots />
+          {/* Tab selector */}
+          <div className="flex flex-wrap gap-2 mb-6 justify-center">
+            {SCREENSHOTS.map(({ tab, color }, i) => (
+              <button key={i} type="button" onClick={() => setActiveScreenshot(i)}
+                className="text-[12px] font-semibold px-5 py-2 rounded-full border transition-all"
+                style={{
+                  background: activeScreenshot === i ? DARK : "transparent",
+                  color:      activeScreenshot === i ? GOLD : MUTED,
+                  border:     `1px solid ${activeScreenshot === i ? DARK : BORDER}`,
+                }}>
+                {tab}
+              </button>
+            ))}
+          </div>
+
+          {/* Screenshot frame */}
+          <div className="rounded-2xl overflow-hidden" style={{ boxShadow: `0 20px 80px rgba(13,27,42,0.15), 0 0 0 1px ${BORDER}` }}>
+            {/* Browser chrome */}
+            <div style={{ background: "#1a1a1c", padding: "10px 14px", display: "flex", alignItems: "center", gap: 8, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+              <div style={{ display: "flex", gap: 5 }}>
+                {["#ff5f57","#febc2e","#28c840"].map(c => (
+                  <div key={c} style={{ width: 10, height: 10, borderRadius: "50%", background: c, opacity: 0.7 }} />
+                ))}
+              </div>
+              <div style={{ flex: 1, background: "rgba(255,255,255,0.06)", borderRadius: 5, padding: "3px 10px", fontSize: 10, color: "rgba(255,255,255,0.28)", textAlign: "center" }}>
+                app.praxisplataforma.com.br
+              </div>
+            </div>
+            {/* Image */}
+            <div className="relative w-full" style={{ background: "#0a0a0b" }}>
+              <Image
+                src={SCREENSHOTS[activeScreenshot].img}
+                alt={`PRAXIS — ${SCREENSHOTS[activeScreenshot].tab}`}
+                width={1280}
+                height={800}
+                className="w-full h-auto block"
+                priority={activeScreenshot === 0}
+                unoptimized
+              />
+            </div>
+          </div>
+
+          {/* Caption + CTA */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-5 px-1">
+            <p style={{ fontSize: 14, color: TEXT2, lineHeight: 1.6 }}>
+              {SCREENSHOTS[activeScreenshot].caption}
+            </p>
+            <Link href={SCREENSHOTS[activeScreenshot].href}
+              className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg font-semibold text-[13px] transition-all hover:opacity-90 flex-shrink-0"
+              style={{ padding: "9px 20px", background: `${SCREENSHOTS[activeScreenshot].color}15`, color: SCREENSHOTS[activeScreenshot].color, border: `1px solid ${SCREENSHOTS[activeScreenshot].color}35` }}>
+              Explorar este módulo <ArrowRight style={{ width: 13, height: 13 }} />
+            </Link>
+          </div>
         </FadeUp>
       </section>
 

@@ -4,7 +4,7 @@ import { Resend } from "resend"
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 const APP_URL    = process.env.NEXT_PUBLIC_APP_URL    ?? "https://praxisplataforma.com.br"
-const FROM_EMAIL = process.env.EMAIL_FROM             ?? "noreply@praxisplataforma.com.br"
+const FROM_EMAIL = process.env.EMAIL_FROM             ?? "PRAXIS <onboarding@resend.dev>"
 const REPLY_TO   = process.env.EMAIL_REPLY_TO         ?? "contato@praxisplataforma.com.br"
 
 function buildHtml(nome: string): string {

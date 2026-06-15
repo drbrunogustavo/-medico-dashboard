@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { Inter, Playfair_Display } from "next/font/google"
 import "./globals.css"
 import { ConditionalLayout } from "@/components/ConditionalLayout"
+import { InstallPWA } from "@/components/InstallPWA"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -53,11 +54,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="pt-BR" data-theme="light" className={`${inter.variable} ${playfair.variable}`}>
       <head>
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-        <link rel="apple-touch-icon" href="/icon-192.png" />
+        <link rel="apple-touch-icon" href="/icons/icon-192.png" />
         <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#0D1B2A" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       </head>
       <body className="bg-background text-text-primary antialiased">
         <ConditionalLayout>{children}</ConditionalLayout>
+        <InstallPWA />
+        <script dangerouslySetInnerHTML={{ __html: `
+          if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+              navigator.serviceWorker.register('/sw.js').catch(function() {});
+            });
+          }
+        `}} />
       </body>
     </html>
   )

@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /api
+Disallow: /onboarding
+Disallow: /configuracoes
+Disallow: /perfil
+Sitemap: https://praxisplataforma.com.br/sitemap.xml

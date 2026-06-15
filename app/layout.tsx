@@ -17,12 +17,28 @@ const playfair = Playfair_Display({
 })
 
 export const metadata: Metadata = {
-  title: "PRAXIS — Marketing Médico de Alto Padrão",
-  description: "Plataforma de inteligência e criação de conteúdo para profissionais de saúde.",
+  title: "PRAXIS — A plataforma que transforma clínicas",
+  description: "Plataforma completa para médicos: marketing digital, gestão clínica, CRM de leads, IA estratégica e muito mais.",
+  keywords: ["médicos", "marketing médico", "gestão clínica", "plataforma médica", "CRM médico", "conteúdo médico", "IA para médicos"],
   openGraph: {
-    title: "PRAXIS — Marketing Médico de Alto Padrão",
-    description: "Plataforma de inteligência e criação de conteúdo para profissionais de saúde.",
+    title: "PRAXIS — Para médicos que pensam grande",
+    description: "Plataforma completa para médicos: marketing digital, gestão clínica, CRM de leads, IA estratégica e muito mais.",
+    url: "https://praxisplataforma.com.br",
+    siteName: "PRAXIS",
+    locale: "pt_BR",
     type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "PRAXIS",
+    description: "Plataforma completa para médicos: marketing digital, gestão clínica, CRM de leads, IA estratégica e muito mais.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+  alternates: {
+    canonical: "https://praxisplataforma.com.br",
   },
   manifest: "/manifest.json",
   appleWebApp: {

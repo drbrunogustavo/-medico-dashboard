@@ -93,6 +93,94 @@ const PASSOS = [
   { n: "03", t: "Comece a usar",                   d: "Resultados visíveis nos primeiros 7 dias." },
 ]
 
+const ALA_TABS = [
+  {
+    id: "social",
+    name: "PRAXIS Social",
+    emoji: "📱",
+    icon: Megaphone,
+    color: "#b8976a",
+    desc: "Crie conteúdo estratégico que atrai pacientes qualificados e consolida sua autoridade médica no Instagram, TikTok e YouTube.",
+    features: [
+      "Gerador de Roteiros para Reels",
+      "Calendário editorial 30 dias",
+      "Copiloto de Conteúdo com IA",
+      "Análise de Concorrentes",
+      "Banco de Pautas clínicas",
+      "Radar de Tendências médicas",
+    ],
+    resultado: "Médicos que usam crescem em média 3.200 seguidores nos primeiros 90 dias",
+  },
+  {
+    id: "consultorio",
+    name: "PRAXIS Consultório",
+    emoji: "🩺",
+    icon: Stethoscope,
+    color: "#3b82f6",
+    desc: "Converta seguidores em pacientes fiéis com CRM inteligente, nurturing automático e ferramentas clínicas de ponta.",
+    features: [
+      "CRM de Leads com funil visual",
+      "Nurturing automático via WhatsApp",
+      "Copiloto de Consulta com IA",
+      "Calculadoras Clínicas avançadas",
+      "Protocolos por especialidade",
+      "Prescrição Assistida por IA",
+    ],
+    resultado: "Converta até 40% mais leads em pacientes com nurturing automático",
+  },
+  {
+    id: "executivo",
+    name: "PRAXIS Executivo",
+    emoji: "📊",
+    icon: BarChart3,
+    color: "#7c5cbf",
+    desc: "Gerencie sua clínica como uma empresa de alta performance com dados, metas e inteligência estratégica em tempo real.",
+    features: [
+      "Painel Executivo com indicadores",
+      "Consultor Estratégico IA",
+      "Diagnóstico 360° da clínica",
+      "Precificação inteligente",
+      "Metas e planejamento anual",
+      "Análise de rentabilidade",
+    ],
+    resultado: "Médicos aumentam faturamento em média R$8.000/mês em 6 meses",
+  },
+  {
+    id: "ia",
+    name: "PRAXIS IA",
+    emoji: "✨",
+    icon: Sparkles,
+    color: "#c8931a",
+    desc: "Inteligência artificial especializada em medicina trabalhando por você 24h/dia — pesquisa, análise e estratégia sem limites.",
+    features: [
+      "Posicionamento Médico personalizado",
+      "Banco de Estudos Científicos",
+      "Inteligência de Mercado em tempo real",
+      "Interpretação de Exames laboratoriais",
+      "Gerador de Relatórios para Paciente",
+      "Agente Executivo autônomo",
+    ],
+    resultado: "IA trabalhando por você 24h/dia — pesquisa, estratégia e conteúdo",
+  },
+  {
+    id: "academy",
+    name: "PRAXIS Academy",
+    emoji: "🎓",
+    icon: GraduationCap,
+    color: "#c0507a",
+    desc: "38 aulas em 4 trilhas práticas ensinando o que a faculdade de medicina não ensinou: negócios, marketing e gestão de clínica.",
+    features: [
+      "38 aulas em 4 trilhas completas",
+      "Marketing Médico do zero ao avançado",
+      "Gestão e escalabilidade de clínica",
+      "Comercial e conversão de pacientes",
+      "Produção de conteúdo médico",
+      "Certificado de conclusão PRAXIS",
+    ],
+    resultado: "Aprenda o que não ensinaram na faculdade de medicina",
+  },
+]
+
 const PILARES = [
   { icon: Megaphone,    name: "PRAXIS Social",      desc: "Conteúdo que atrai pacientes",         color: "#b8976a", bg: "rgba(184,151,106,0.06)", border: "rgba(184,151,106,0.20)" },
   { icon: Stethoscope, name: "PRAXIS Consultório",  desc: "Leads que viram consultas",            color: "#3b82f6", bg: "rgba(59,130,246,0.05)",   border: "rgba(59,130,246,0.18)"  },
@@ -147,11 +235,151 @@ function Logo({ size = 28 }: { size?: number }) {
   )
 }
 
+// ─── Ala Tab Section ──────────────────────────────────────────────────────────
+
+function AlaTabSection() {
+  const [active, setActive] = useState(0)
+  const ala = ALA_TABS[active]
+
+  return (
+    <div>
+      {/* Tab buttons */}
+      <div className="flex flex-wrap gap-2 justify-center mb-8">
+        {ALA_TABS.map((t, i) => (
+          <button
+            key={t.id}
+            onClick={() => setActive(i)}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-semibold transition-all"
+            style={{
+              background:   i === active ? t.color : "rgba(13,27,42,0.04)",
+              color:        i === active ? "#FFFFFF" : "#6a5a4a",
+              border:       i === active ? "none" : "1px solid rgba(13,27,42,0.10)",
+              boxShadow:    i === active ? `0 4px 20px ${t.color}30` : "none",
+            }}>
+            <span>{t.emoji}</span>
+            {t.name}
+          </button>
+        ))}
+      </div>
+
+      {/* Content panel */}
+      <div className="rounded-2xl overflow-hidden" style={{ background: "#FFFFFF", border: "1px solid rgba(13,27,42,0.10)" }}>
+        <div className="grid grid-cols-1 lg:grid-cols-2">
+
+          {/* Left: info */}
+          <div className="p-8 md:p-12">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-[24px]"
+                style={{ background: `${ala.color}12`, border: `1px solid ${ala.color}25` }}>
+                {ala.emoji}
+              </div>
+              <div>
+                <h3 style={{ fontSize: 20, fontWeight: 700, color: "#0D1B2A", fontFamily: "var(--font-playfair), Georgia, serif" }}>
+                  {ala.name}
+                </h3>
+                <p style={{ fontSize: 11, fontFamily: "monospace", color: ala.color, letterSpacing: "2px", textTransform: "uppercase" }}>
+                  MÓDULO COMPLETO
+                </p>
+              </div>
+            </div>
+
+            <p style={{ fontSize: 14, color: "#6a5a4a", lineHeight: 1.7, marginBottom: 28 }}>
+              {ala.desc}
+            </p>
+
+            <div className="space-y-2.5 mb-8">
+              {ala.features.map(f => (
+                <div key={f} className="flex items-center gap-3">
+                  <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+                    style={{ background: `${ala.color}12`, border: `1px solid ${ala.color}25` }}>
+                    <span style={{ fontSize: 10, color: ala.color, fontWeight: 800 }}>✓</span>
+                  </div>
+                  <span style={{ fontSize: 14, color: "#3a2a1a" }}>{f}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Resultado */}
+            <div className="rounded-xl p-4" style={{ background: `${ala.color}08`, border: `1px solid ${ala.color}20` }}>
+              <p style={{ fontSize: 11, fontFamily: "monospace", color: ala.color, letterSpacing: "1px", textTransform: "uppercase", marginBottom: 4 }}>
+                RESULTADO
+              </p>
+              <p style={{ fontSize: 14, fontWeight: 700, color: "#0D1B2A", lineHeight: 1.4 }}>
+                {ala.resultado}
+              </p>
+            </div>
+          </div>
+
+          {/* Right: mockup placeholder */}
+          <div className="relative flex items-center justify-center p-8 min-h-[320px]"
+            style={{ background: `${ala.color}05`, borderLeft: "1px solid rgba(13,27,42,0.07)" }}>
+
+            {/* Decorative grid */}
+            <div className="absolute inset-0 opacity-30"
+              style={{ backgroundImage: `radial-gradient(circle, ${ala.color}20 1px, transparent 1px)`, backgroundSize: "28px 28px" }} />
+
+            <div className="relative w-full max-w-sm">
+              {/* Fake dashboard card */}
+              <div className="rounded-2xl p-6 shadow-xl" style={{ background: "#FFFFFF", border: "1px solid rgba(13,27,42,0.10)" }}>
+                <div className="flex items-center gap-2.5 mb-5">
+                  <div className="w-8 h-8 rounded-xl flex items-center justify-center text-[16px]"
+                    style={{ background: `${ala.color}12` }}>
+                    {ala.emoji}
+                  </div>
+                  <div>
+                    <div className="h-2.5 w-24 rounded-full" style={{ background: `${ala.color}20` }} />
+                    <div className="h-2 w-16 rounded-full mt-1.5" style={{ background: "rgba(13,27,42,0.06)" }} />
+                  </div>
+                </div>
+                {[80, 60, 90, 45, 70].map((w, i) => (
+                  <div key={i} className="flex items-center gap-3 mb-3">
+                    <div className="w-5 h-5 rounded-lg flex-shrink-0"
+                      style={{ background: i % 2 === 0 ? `${ala.color}15` : "rgba(13,27,42,0.06)" }} />
+                    <div className="flex-1 h-2.5 rounded-full" style={{ background: "rgba(13,27,42,0.07)", width: `${w}%` }}>
+                      <div className="h-full rounded-full" style={{ background: `${ala.color}40`, width: "60%" }} />
+                    </div>
+                  </div>
+                ))}
+                <div className="mt-5 h-8 rounded-xl" style={{ background: `${ala.color}15`, border: `1px solid ${ala.color}25` }} />
+              </div>
+
+              {/* Floating stat */}
+              <div className="absolute -top-4 -right-4 rounded-xl px-3 py-2 shadow-lg"
+                style={{ background: "#0D1B2A", border: `1px solid ${ala.color}30` }}>
+                <p style={{ fontSize: 11, fontFamily: "monospace", color: ala.color, fontWeight: 700 }}>
+                  {["↑ 3.2K seguidores", "↑ 40% conversão", "↑ R$8K/mês", "24h disponível", "38 aulas"][active]}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation dots */}
+      <div className="flex items-center justify-center gap-2 mt-6">
+        {ALA_TABS.map((t, i) => (
+          <button
+            key={t.id}
+            onClick={() => setActive(i)}
+            className="rounded-full transition-all"
+            style={{
+              width:  i === active ? 24 : 8,
+              height: 8,
+              background: i === active ? ala.color : "rgba(13,27,42,0.15)",
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function LandingPage() {
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const ctaHref  = "/planos"
+  const appHref  = !authLoading && user ? "/dashboard" : "/login"
 
   const [atividadeIdx, setAtividadeIdx] = useState(0)
   const [faqOpen,      setFaqOpen]      = useState<number | null>(null)
@@ -178,17 +406,10 @@ export default function LandingPage() {
             onMouseEnter={e => (e.currentTarget.style.color = "#0D1B2A")} onMouseLeave={e => (e.currentTarget.style.color = "#6a5a4a")}>
             Planos
           </Link>
-          {user ? (
-            <Link href="/dashboard" className="text-[12px] transition-colors" style={{ color: "#6a5a4a" }}
-              onMouseEnter={e => (e.currentTarget.style.color = "#0D1B2A")} onMouseLeave={e => (e.currentTarget.style.color = "#6a5a4a")}>
-              Acessar plataforma
-            </Link>
-          ) : (
-            <Link href="/login" className="text-[12px] transition-colors" style={{ color: "#6a5a4a" }}
-              onMouseEnter={e => (e.currentTarget.style.color = "#0D1B2A")} onMouseLeave={e => (e.currentTarget.style.color = "#6a5a4a")}>
-              Entrar
-            </Link>
-          )}
+          <Link href={appHref} className="text-[12px] transition-colors" style={{ color: "#6a5a4a" }}
+            onMouseEnter={e => (e.currentTarget.style.color = "#0D1B2A")} onMouseLeave={e => (e.currentTarget.style.color = "#6a5a4a")}>
+            {!authLoading && user ? "Acessar plataforma" : "Entrar"}
+          </Link>
           <Link href="/planos"
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-bold transition-all hover:opacity-90"
             style={{ background: "#b8976a", color: "#0D1B2A" }}>
@@ -414,30 +635,20 @@ export default function LandingPage() {
       </section>
 
       {/* ── SEÇÃO 5 — COMO FUNCIONA ─────────────────────────────────────── */}
-      <section id="como-funciona" className="max-w-4xl mx-auto px-6 pb-24">
-        <FadeUp className="text-center mb-14">
+      <section id="como-funciona" className="max-w-6xl mx-auto px-6 pb-24">
+        <FadeUp className="text-center mb-12">
           <p style={{ fontSize: 10, fontFamily: "monospace", color: "#b8976a", letterSpacing: "3px", textTransform: "uppercase", marginBottom: 12 }}>
-            SIMPLES ASSIM
+            TUDO QUE VOCÊ PRECISA
           </p>
           <h2 style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: "clamp(22px, 4vw, 40px)", fontWeight: 700, color: "#0D1B2A" }}>
-            3 passos para transformar sua clínica
+            Tudo que você precisa para crescer
           </h2>
+          <p style={{ fontSize: 15, color: "#6a5a4a", marginTop: 12, maxWidth: 540, margin: "12px auto 0" }}>
+            5 frentes integradas. Uma plataforma. Resultados reais desde a primeira semana.
+          </p>
         </FadeUp>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {PASSOS.map((p, i) => (
-            <FadeUp key={i} delay={i * 100}>
-              <div className="text-center rounded-2xl p-8" style={{ background: "#FFFFFF", border: "1px solid rgba(13,27,42,0.10)" }}>
-                <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-5"
-                  style={{ background: "rgba(184,151,106,0.10)", border: "1px solid rgba(184,151,106,0.25)" }}>
-                  <span style={{ fontSize: 12, fontFamily: "monospace", fontWeight: 800, color: "#b8976a" }}>{p.n}</span>
-                </div>
-                <h3 style={{ fontSize: 15, fontWeight: 700, color: "#0D1B2A", marginBottom: 8 }}>{p.t}</h3>
-                <p style={{ fontSize: 13, color: "#6a5a4a", lineHeight: 1.6 }}>{p.d}</p>
-              </div>
-            </FadeUp>
-          ))}
-        </div>
+        <AlaTabSection />
       </section>
 
       {/* ── SEÇÃO 6 — MÓDULOS ───────────────────────────────────────────── */}

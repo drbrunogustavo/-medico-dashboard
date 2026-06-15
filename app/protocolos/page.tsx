@@ -10,7 +10,7 @@ import {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type Especialidade = "Endocrinologia" | "Nutrologia" | "Cardiologia" | "Ginecologia" | "Reumatologia" | "Neurologia" | "Geral"
+type Especialidade = "Endocrinologia" | "Nutrologia" | "Cardiologia" | "Ginecologia" | "Reumatologia" | "Neurologia" | "Dermatologia" | "Geriatria" | "Medicina do Esporte" | "Geral"
 
 interface SecaoProtocolo {
   titulo: string
@@ -1071,19 +1071,239 @@ const PROTOCOLOS: Protocolo[] = [
       ],
     },
   },
+
+  // ── DERMATOLOGIA ──────────────────────────────────────────────────────────────
+  {
+    id: "acne_protocolo",
+    nome: "Acne Vulgar",
+    especialidade: "Dermatologia",
+    cor: "#f472b6",
+    emoji: "🔬",
+    diagnostico: {
+      titulo: "Classificação e Diagnóstico",
+      items: [
+        "Leve: comedões predominantes (cravos abertos/fechados), poucas pápulas, sem nódulos",
+        "Moderada: pápulas e pústulas em face/tronco, comedões abundantes, sem nódulos significativos",
+        "Grave: nódulos, cistos, acne conglobata, cicatrizes em formação",
+        "Adulta feminina (>25a): acne de mandíbula/queixo, piora perimenstrual → investigar SOP e hiperandrogenismo",
+        "Acne neonatal/infantil: avaliar causa hormonal; acne cosmética: examinar produtos usados",
+        "Documentar fotografia do rosto (baseline e seguimento)",
+      ],
+    },
+    exames: {
+      titulo: "Exames",
+      items: [
+        "Acne leve/moderada sem suspeita hormonal: CLÍNICO — sem exames necessários",
+        "Acne em mulher adulta com irregularidade menstrual: testosterona total, DHEA-S, 17-OH progesterona, FSH, LH",
+        "Pré-isotretinoína: TGP, TGO, triglicerídeos, colesterol, teste de gravidez (BHCG)",
+        "Monitoramento mensal na isotretinoína: triglicerídeos, TGP, TGO, hemograma",
+        "Acne nodular resistente: excluir uso de anabolizantes e cosméticos comedogênicos",
+      ],
+    },
+    tratamento: {
+      titulo: "Tratamento por Gravidade",
+      items: [
+        "LEVE: retinoide tópico (tretinoína 0,025–0,05%) + peróxido de benzoíla 2,5–5% — monoterapia ou combinados",
+        "MODERADA: retinoide tópico + antibiótico oral (doxiciclina 100 mg/dia × 12 semanas) + peróxido de benzoíla",
+        "GRAVE: isotretinoína 0,5–1 mg/kg/dia (dose cumulativa 120–150 mg/kg); considerar corticoide inicial se inflamação intensa",
+        "Feminina hormonal: anticoncepcional com progestagênio antiandrogênico (drospirenona, dienogeste) ± espironolactona 50–100 mg/dia",
+        "Evitar antibiótico oral >3–4 meses como monoterapia (resistência bacterial) — sempre associar tópico",
+        "Cicatriz pós-acne: ácido glicólico, retinoides, luz pulsada, preenchimento ou CO2 fracionado (dermatologista)",
+      ],
+    },
+    acompanhamento: {
+      titulo: "Acompanhamento",
+      items: [
+        "Reavaliação em 8–12 semanas de qualquer esquema",
+        "Isotretinoína: consulta mensal com labs — monitorar triglicerídeos, enzimas, gravidez",
+        "Resposta parcial após 12 semanas: escalar para próximo nível de tratamento",
+        "Manutenção pós-tratamento: retinoide tópico 2–3x/semana (previne recidiva)",
+        "Registro fotográfico a cada consulta para comparar evolução",
+      ],
+    },
+  },
+  {
+    id: "psoriase",
+    nome: "Psoríase",
+    especialidade: "Dermatologia",
+    cor: "#f472b6",
+    emoji: "🧬",
+    diagnostico: {
+      titulo: "Diagnóstico",
+      items: [
+        "Clínico: placas eritematosas com descamação prateada, bem delimitadas — cotovelos, joelhos, couro cabeludo, região lombossacra",
+        "Fenômeno de Koebner: lesões em áreas de trauma cutâneo",
+        "Sinal da vela: raspagem revela escamas que desprendem como raspar uma vela",
+        "Sinal de Auspitz: sangramento puntiforme ao remover escamas",
+        "Artrite psoriásica em 30%: dactilite, entesite, oligoartrite assimétrica ou padrão de AR — rastrear sempre",
+        "PASI (Psoriasis Area Severity Index): quantifica extensão e gravidade — PASI >10 = moderada/grave",
+      ],
+    },
+    exames: {
+      titulo: "Avaliação e Exames",
+      items: [
+        "Leve-moderada sem artropatia: clínico, sem exames obrigatórios",
+        "Antes de biológicos: PPD/IGRA (tuberculose latente), HIV, hepatite B (HBsAg, anti-HBc), hepatite C",
+        "Metotrexato: hemograma, TFGe, TGP, TGO basal; FAN e anti-dsDNA se suspeita lúpus",
+        "Artrite psoriásica: RX de mãos/pés, VSH, PCR-as, anti-CCP (geralmente negativo), fator reumatoide",
+        "Comorbidades: síndrome metabólica, DM2, DCV, depressão — avaliar em cada consulta",
+        "Biópsia cutânea: se diagnóstico incerto (psoríase vs. parapsoriase, micose fungoide)",
+      ],
+    },
+    tratamento: {
+      titulo: "Tratamento Escalonado",
+      items: [
+        "LEVE (PASI <10, BSA <10%): corticoide tópico + análogo de vitamina D3 (calcipotriol) — combinação Dovobet®",
+        "MODERADA: fototerapia UVB banda estreita (3x/semana) ou PUVA; metotrexato 15–25 mg/semana",
+        "GRAVE (PASI >10) ou artrite: biológicos — anti-TNF (adalimumabe, etanercepte), anti-IL-17 (secuquinumabe, ixequizumabe), anti-IL-23 (guselcumabe, risanquizumabe)",
+        "Anti-IL-17 e IL-23: taxas de PASI 90–100 acima de 80% em estudos — superiores ao anti-TNF em pele",
+        "Apremilaste (inibidor de PDE4): alternativa oral para formas moderadas sem artrite",
+        "Psoríase do couro cabeludo: xampu de coaltar, xampus de corticoide, calcipotriol loção",
+        "Artrite psoriásica: AINEs para sintomas leves; metotrexato; biológico se falha ou artrite axial",
+      ],
+    },
+    acompanhamento: {
+      titulo: "Acompanhamento",
+      items: [
+        "Alvo terapêutico: PASI 90 (redução de 90%) ou PASI 75 mínimo",
+        "Reavaliação de biológico em 16 semanas — se PASI <75: trocar de mecanismo",
+        "Tuberculose latente (IGRA+): tratamento com isoniazida 9 meses antes de iniciar biológico",
+        "Comorbidades: controle de peso, estatina, pressão arterial — psoríase é fator de risco cardiovascular",
+        "Triagem anual de artrite psoriásica (PEST questionnaire): articulações dolorosas, dactilite, entesite",
+      ],
+    },
+  },
+
+  // ── GERIATRIA ─────────────────────────────────────────────────────────────────
+  {
+    id: "fragilidade",
+    nome: "Síndrome de Fragilidade no Idoso",
+    especialidade: "Geriatria",
+    cor: "#94a3b8",
+    emoji: "🧓",
+    diagnostico: {
+      titulo: "Critérios de Fried (Fenotipo de Fragilidade)",
+      items: [
+        "1. Perda de peso não intencional: >4,5 kg ou >5% do peso no último ano",
+        "2. Exaustão/fadiga: autorrelato de sentir-se exausto na maioria dos dias",
+        "3. Fraqueza muscular: força de preensão palmar <26 kg (H) ou <18 kg (M) — dinamômetro",
+        "4. Lentidão da marcha: tempo >6 segundos para percorrer 4,5 metros",
+        "5. Baixo nível de atividade física: <383 kcal/semana (H) ou <270 kcal/semana (M)",
+        "Pré-frágil: 1–2 critérios | Frágil: ≥3 critérios — maior risco de quedas, hospitalização e morte",
+      ],
+    },
+    exames: {
+      titulo: "Avaliação Laboratorial e Funcional",
+      items: [
+        "Hemograma: anemia como fator contribuinte",
+        "TSH: hipotireoidismo causa fadiga e fraqueza",
+        "Vitamina D: deficiência contribui para fraqueza muscular e quedas",
+        "Albumina e proteína: estado nutricional",
+        "Glicemia e HbA1c: DM não controlado piora sarcopenia",
+        "Avaliação Geriátrica Ampla (AGA): cognição (MoCA/MEEM), funcionalidade (ADL/IADL), humor (GDS), nutrição (MNA), quedas",
+        "Densitometria óssea: associação frequente com osteoporose",
+        "Força de preensão palmar (dinamômetro) + velocidade de marcha (TUG test)",
+      ],
+    },
+    tratamento: {
+      titulo: "Intervenção Multidimensional",
+      items: [
+        "EXERCÍCIO: treinamento resistido progressivo 2–3x/semana — principal intervenção com evidência",
+        "NUTRIÇÃO: 1,2–1,5 g/proteína/kg/dia; suplementação de whey proteína após treino; calorias adequadas",
+        "Vitamina D: 800–2000 UI/dia (otimizar para 50–80 ng/mL) — melhora força muscular e reduz quedas",
+        "Deprescrisção: revisar medicamentos (polifarmácia pior a fragilidade) — usar critérios de Beers",
+        "Controle de comorbidades: anemia, hipotireoidismo, depressão, dor crônica",
+        "Intervenção psicossocial: estimulação cognitiva, atividades sociais, suporte familiar",
+        "Revisão do ambiente: banheiro adaptado, iluminação, tapetes removidos (prevenção de quedas)",
+      ],
+    },
+    acompanhamento: {
+      titulo: "Acompanhamento",
+      items: [
+        "Reavaliação funcional (TUG, SPPB) a cada 3–6 meses",
+        "Força de preensão: alvo >26 kg (H) e >16 kg (M)",
+        "Nutrição: monitorar peso e albumina mensalmente se desnutrição",
+        "Revisão de medicamentos a cada 6 meses (polifarmácia)",
+        "Avaliação de quedas: diário de quedas, adaptação do ambiente",
+        "Meta: regressão para pré-frágil ou manutenção da funcionalidade",
+      ],
+    },
+  },
+
+  // ── MEDICINA DO ESPORTE ───────────────────────────────────────────────────────
+  {
+    id: "overtraining",
+    nome: "Síndrome do Overtraining (SOT)",
+    especialidade: "Medicina do Esporte",
+    cor: "#22d3ee",
+    emoji: "🏃",
+    diagnostico: {
+      titulo: "Critérios Diagnósticos (REDS/ECSS 2023)",
+      items: [
+        "Queda de performance inexplicada por ≥2 semanas apesar de período adequado de recuperação",
+        "Fadiga persistente desproporcional ao volume de treino",
+        "Sintomas: alteração do humor (irritabilidade, depressão), distúrbios do sono, anorexia, infecções recorrentes",
+        "Diagnóstico de exclusão: afastar patologias (hipotireoidismo, anemia, DM, depressão, infecção viral)",
+        "Overreaching não funcional: recuperação em semanas; SOT verdadeiro: recuperação em meses a anos",
+        "Atletas femininas: investigar RED-S (Deficiência Energética Relativa no Esporte) — tríade: energia, ciclo menstrual, DMO",
+      ],
+    },
+    exames: {
+      titulo: "Avaliação Laboratorial",
+      items: [
+        "Hemograma: anemia (ferropriva, deficiência de B12)",
+        "Ferritina: <50 ng/mL prejudica performance aeróbica mesmo sem anemia",
+        "TSH e T4L: hipotireoidismo mimetiza SOT",
+        "Testosterona total + cortisol matinal: ratio T:C diminuído no SOT",
+        "Glicemia e HbA1c: DM1/2 não controlado",
+        "Vitamina D: deficiência causa fadiga e queda de performance",
+        "CK total: elevação crônica em overreaching, normaliza em repouso",
+        "Hormônios reprodutivos femininos (amenorreia): FSH, LH, estradiol, AMH",
+        "DEXA: densidade óssea se suspeita de RED-S",
+      ],
+    },
+    tratamento: {
+      titulo: "Manejo e Recuperação",
+      items: [
+        "REDUÇÃO DO VOLUME: diminuir intensidade e volume em 30–50% por pelo menos 2–4 semanas",
+        "REPOUSO ATIVO: treinos leves (yoga, natação recreativa, caminhada) — não repouso absoluto",
+        "NUTRIÇÃO: garantir balanço energético positivo — calcular gasto energético e atingir superávit leve",
+        "Carboidratos: 5–7 g/kg/dia para reposição de glicogênio",
+        "Proteína: 1,6–2,0 g/kg/dia para reparo muscular",
+        "Sono: 8–10h/noite — higiene do sono rigorosa",
+        "Psicólogo esportivo: se componente emocional (burnout, pressão de performance)",
+        "RED-S: recuperação de peso e ciclo menstrual; considerar COC se amenorreia por >6 meses",
+        "Retorno ao treino: gradual (10% volume/semana) com monitoramento de HRV e performance",
+      ],
+    },
+    acompanhamento: {
+      titulo: "Monitoramento e Prevenção",
+      items: [
+        "HRV (Heart Rate Variability): redução sustentada precede SOT — monitorar com app ou Garmin/Polar",
+        "PSE (Percepção Subjetiva de Esforço): alta PSE com mesma carga = sinal precoce",
+        "POMS (Profile of Mood States): detecção precoce de alterações do humor",
+        "Periodização do treino: semanas de descarga a cada 3–4 semanas de carga",
+        "Labs: ferritina, vitamina D e hemograma a cada 3 meses em atletas de alto rendimento",
+        "Retorno à competição: só após performance normalizar e ausência de sintomas",
+      ],
+    },
+  },
 ]
 
 // ─── Components ───────────────────────────────────────────────────────────────
 
-const ESPECIALIDADES: Especialidade[] = ["Endocrinologia", "Nutrologia", "Cardiologia", "Ginecologia", "Reumatologia", "Neurologia", "Geral"]
+const ESPECIALIDADES: Especialidade[] = ["Endocrinologia", "Nutrologia", "Cardiologia", "Ginecologia", "Reumatologia", "Neurologia", "Dermatologia", "Geriatria", "Medicina do Esporte", "Geral"]
 const ESP_CORES: Record<Especialidade, string> = {
-  Endocrinologia: "#f59e0b",
-  Nutrologia:     "#10b981",
-  Cardiologia:    "#ef4444",
-  Ginecologia:    "#e1306c",
-  Reumatologia:   "#8b5cf6",
-  Neurologia:     "#6366f1",
-  Geral:          "#7c85a0",
+  Endocrinologia:      "#f59e0b",
+  Nutrologia:          "#10b981",
+  Cardiologia:         "#ef4444",
+  Ginecologia:         "#e1306c",
+  Reumatologia:        "#8b5cf6",
+  Neurologia:          "#6366f1",
+  Dermatologia:        "#f472b6",
+  Geriatria:           "#94a3b8",
+  "Medicina do Esporte": "#22d3ee",
+  Geral:               "#7c85a0",
 }
 
 function SecaoItem({ titulo, items, cor }: { titulo: string; items: string[]; cor: string }) {

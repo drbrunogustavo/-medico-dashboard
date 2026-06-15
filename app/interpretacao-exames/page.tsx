@@ -1173,6 +1173,573 @@ const EXAMS: ExamData[] = [
     related: ["CA-19-9", "AFP", "Colonoscopia", "TC abdome"],
     notes: "Não específico — eleva em fumantes e condições benignas. Uso principal: seguimento de ca colorretal.",
   },
+
+  // ── Oncologia ──
+  {
+    id: "afp", name: "AFP (Alfa-Fetoproteína)", category: "Marcadores Tumorais",
+    range: {
+      lab: "<10 ng/mL", unit: "ng/mL",
+      classifyFn: (v) => v < 10 ? "normal" : v <= 100 ? "elevado" : "muito_elevado",
+    },
+    correlations: [
+      "AFP muito elevada (>400 ng/mL) em contexto de hepatopatia: altamente sugestivo de hepatocarcinoma (CHC)",
+      "AFP moderada (<400 ng/mL): cirrose, hepatite crônica ativa, teratoma, tumores de células germinativas",
+      "AFP em gestação: rastreio de defeitos do tubo neural (elevada) e síndrome de Down (baixa)",
+    ],
+    conducts: [
+      "AFP >400 ng/mL + massa hepática em cirrótico: diagnóstico de CHC sem biópsia (EASL/AASLD)",
+      "AFP elevada sem massa hepática: investigar tumores germinativos (testicular, ovariano) + TC",
+      "AFP em seguimento de CHC tratado: aumento após resposta = recidiva tumoral",
+    ],
+    related: ["USG hepática", "TC abdome", "Beta-HCG", "LDH"],
+    notes: "Tumores germinativos: AFP sobe em teratoma embrionário e tumor do saco vitelínico. Seminoma puro não eleva AFP.",
+  },
+  {
+    id: "ldh", name: "LDH (Lactato Desidrogenase)", category: "Marcadores Tumorais",
+    range: {
+      lab: "120–240 U/L", unit: "U/L",
+      classifyFn: (v) => v < 120 ? "baixo" : v <= 240 ? "normal" : v <= 480 ? "elevado" : "muito_elevado",
+    },
+    correlations: [
+      "Marcador inespecífico de dano celular: presente em hemólise, infarto, hepatite, tumores",
+      "LDH muito elevado + tumor: indica alta carga tumoral e agressividade (linfoma, melanoma, CHC)",
+      "LDH no linfoma: importante para estadiamento e prognóstico (IPI — International Prognostic Index)",
+    ],
+    conducts: [
+      "LDH isolada sem clínica: investigar causas comuns (esforço, hemólise) antes de tumores",
+      "LDH elevada em neoplasia hematológica: estadiamento obrigatório (PET-CT, biópsia de medula)",
+      "LDH como marcador de resposta: redução durante quimioterapia = boa resposta",
+    ],
+    related: ["Hemograma", "PCR-as", "Beta-2 microglobulina", "USG abdome"],
+  },
+  {
+    id: "b2micro", name: "Beta-2 Microglobulina", category: "Marcadores Tumorais",
+    range: {
+      lab: "0,8–2,4 mg/L", unit: "mg/L",
+      classifyFn: (v) => v < 0.8 ? "baixo" : v <= 2.4 ? "normal" : v <= 5.5 ? "elevado" : "muito_elevado",
+    },
+    correlations: [
+      "Mieloma múltiplo: componente essencial do estadiamento ISS (International Staging System)",
+      "Linfoma não-Hodgkin: valor prognóstico — elevada indica doença avançada",
+      "Eleva em disfunção renal (filtração reduzida) — interpretar com TFGe",
+    ],
+    conducts: [
+      "Beta-2 >3,5 mg/L no mieloma: estadio II (ISS); >5,5 com albumina <3,5: estadio III (pior prognóstico)",
+      "Descartar causa renal antes de atribuir ao tumor (solicitar creatinina + TFGe)",
+      "Usar em conjunto com albumina e LDH para estadiamento hematológico completo",
+    ],
+    related: ["Albumina", "LDH", "Proteínas séricas", "Eletroforese de proteínas", "TFGe"],
+  },
+
+  // ── Doenças Autoimunes ──
+  {
+    id: "ana_fan", name: "ANA / FAN (Fator Antinuclear)", category: "Doenças Autoimunes",
+    range: {
+      lab: "Negativo (< 1:80)", unit: "título",
+      classifyFn: (v) => v < 80 ? "normal" : v < 320 ? "limítrofe" : "elevado",
+    },
+    correlations: [
+      "Padrão homogêneo: anti-DNA ds (lúpus), anti-histona (lúpus induzido por droga)",
+      "Padrão pontilhado fino: anti-Sm, anti-Ro, anti-La (lúpus, Sjögren)",
+      "Padrão nucleolar: anti-Scl-70 (esclerodermia difusa), anti-PM-Scl",
+      "Padrão citoplasmático: anti-Jo-1 (polimiosite), anti-Ro citoplasmático",
+      "FAN positivo em até 5–20% da população saudável (título baixo, sem significado clínico)",
+    ],
+    conducts: [
+      "FAN positivo: complementar com painel específico (anti-DNA ds, anti-Sm, anti-Ro, anti-La, anti-Scl-70, anti-centômero)",
+      "FAN 1:80 isolado sem sintomas: observar — baixo valor preditivo positivo",
+      "FAN negativo com suspeita de lúpus: não exclui — solicitar anti-Ro e anti-La (podem ser positivos com FAN negativo)",
+    ],
+    related: ["Anti-DNA ds", "Anti-Sm", "Anti-Ro/SSA", "Anti-La/SSB", "C3", "C4"],
+    notes: "O PADRÃO do FAN é tão importante quanto o título. Sempre laudar o padrão e correlacionar com clínica.",
+  },
+  {
+    id: "anti_dna", name: "Anti-DNA de Dupla Fita (Anti-dsDNA)", category: "Doenças Autoimunes",
+    range: {
+      lab: "<10 UI/mL", unit: "UI/mL",
+      classifyFn: (v) => v < 10 ? "normal" : v < 30 ? "limítrofe" : "elevado",
+    },
+    correlations: [
+      "Altamente específico para Lúpus Eritematoso Sistêmico (LES) — especificidade >95%",
+      "Títulos elevados correlacionam com atividade da doença, especialmente nefrite lúpica",
+      "Útil no monitoramento de atividade — aumenta durante flares",
+    ],
+    conducts: [
+      "Anti-dsDNA positivo + critérios clínicos: confirma diagnóstico de LES (ACR/EULAR 2019)",
+      "Anti-dsDNA elevado em LES conhecido + queda de C3/C4: flare iminente — revisar tratamento",
+      "Anti-dsDNA negativo não exclui LES — solicitar painel completo (anti-Sm, anti-Ro)",
+    ],
+    related: ["FAN", "Anti-Sm", "C3", "C4", "Urina 24h (proteinúria)", "Complemento"],
+  },
+  {
+    id: "anti_ro_la", name: "Anti-Ro/SSA e Anti-La/SSB", category: "Doenças Autoimunes",
+    range: {
+      lab: "Negativo", unit: "resultado",
+      classifyFn: (v) => v < 1 ? "normal" : "elevado",
+    },
+    correlations: [
+      "Anti-Ro/SSA: Síndrome de Sjögren primária (>90%), LES (30–40%), lúpus neonatal",
+      "Anti-La/SSB: quase sempre acompanha Anti-Ro; mais específico para Sjögren",
+      "Lúpus neonatal: passagem transplacentária de Anti-Ro causa bloqueio cardíaco congênito",
+      "FAN pode ser negativo em Sjögren com Anti-Ro positivo",
+    ],
+    conducts: [
+      "Anti-Ro positivo em gestante: rastreio cardíaco fetal com ECO a partir de 16 semanas",
+      "Anti-Ro/La positivo + xeroftalmia + xerostomia: critérios de Sjögren — considerar biópsia de glândula salivar",
+      "Anti-Ro positivo em lúpus: maior risco de fotossensibilidade e manifestações cutâneas subagudas",
+    ],
+    related: ["FAN", "Anti-dsDNA", "Anti-Sm", "Biópsia de glândula salivar"],
+    notes: "Anti-La isolado (sem Anti-Ro) é raro e deve ser interpretado com cautela.",
+  },
+  {
+    id: "anti_scl70", name: "Anti-Scl-70 (Anti-Topoisomerase I)", category: "Doenças Autoimunes",
+    range: {
+      lab: "Negativo", unit: "resultado",
+      classifyFn: (v) => v < 1 ? "normal" : "elevado",
+    },
+    correlations: [
+      "Esclerodermia sistêmica difusa (ESP difusa) — marcador de doença extensa e rápida progressão",
+      "Risco aumentado de fibrose pulmonar intersticial e envolvimento cardíaco",
+      "Anti-centômero e Anti-Scl-70 raramente coexistem — diferencia subtipos de esclerodermia",
+    ],
+    conducts: [
+      "Anti-Scl-70 positivo: TC de tórax de alta resolução (fibrose), ecocardiograma (HAP) e avaliação renal",
+      "Seguimento semestral de função pulmonar (CVF, DLCO) em pacientes Anti-Scl-70 positivos",
+      "Tratamento precoce da fibrose pulmonar: micofenolato ou nintedanibe — Anti-Scl-70 orienta agressividade",
+    ],
+    related: ["FAN", "Anti-centrômero", "TC tórax", "Ecostress", "CVF e DLCO"],
+  },
+  {
+    id: "anca", name: "ANCA (Anticorpo Anticitoplasma de Neutrófilos)", category: "Doenças Autoimunes",
+    range: {
+      lab: "Negativo", unit: "resultado",
+      classifyFn: (v) => v < 1 ? "normal" : "elevado",
+    },
+    correlations: [
+      "c-ANCA (anti-PR3): Granulomatose com Poliangiite (GPA — Wegener) — especificidade >95%",
+      "p-ANCA (anti-MPO): Poliangiite Microscópica (PAM), Granulomatose Eosinofílica (GEPA/Churg-Strauss)",
+      "ANCA positivo + glomerulonefrite rápida progressiva: emergência nefrológica",
+    ],
+    conducts: [
+      "ANCA positivo + síndrome pulmão-rim: biópsia renal urgente — diagnóstico e estadiamento",
+      "GPA ativa (c-ANCA alto): indução com rituximabe + ciclofosfamida + corticoide",
+      "Monitorar títulos de ANCA durante remissão — aumento pode preceder recidiva",
+    ],
+    related: ["Creatinina", "Urina (hematúria, proteinúria)", "Biópsia renal", "TC tórax"],
+    notes: "ANCA positivo por ELISA deve ser confirmado por imunofluorescência para padrão c ou p.",
+  },
+  {
+    id: "anti_ccp", name: "Anti-CCP (Anti-Peptídeos Citrulinados)", category: "Doenças Autoimunes",
+    range: {
+      lab: "<17 U/mL", unit: "U/mL",
+      classifyFn: (v) => v < 17 ? "normal" : v < 50 ? "limítrofe" : "elevado",
+    },
+    correlations: [
+      "Artrite Reumatoide (AR): sensibilidade 70–80%, especificidade >95% — superior ao FR",
+      "Anti-CCP pode ser positivo anos antes do início clínico da AR (fase pré-clínica)",
+      "Anti-CCP alto + FR alto: AR soropositiva — maior risco de erosões ósseas e dano articular",
+    ],
+    conducts: [
+      "Anti-CCP positivo + artrite simétrica de pequenas articulações: diagnóstico de AR (ACR/EULAR 2010)",
+      "Iniciar DMARD precocemente (metotrexato) — Anti-CCP alto não indica prognóstico melhor com tratamento tardio",
+      "Anti-CCP negativo não exclui AR — 20–30% dos casos são soronegativos",
+    ],
+    related: ["FR", "PCR-as", "VHS", "Radiografia de mãos"],
+  },
+  {
+    id: "complemento", name: "Complemento C3 e C4", category: "Doenças Autoimunes",
+    range: {
+      lab: "C3: 90–180 mg/dL · C4: 16–47 mg/dL", unit: "mg/dL",
+      classifyFn: (v) => v < 70 ? "baixo" : v <= 180 ? "normal" : "elevado",
+    },
+    correlations: [
+      "C3 e C4 baixos: ativação do complemento — lúpus ativo, crioglobulinemia, glomerulonefrite membranoproliferativa",
+      "C3 baixo isolado: deficiência de C3, glomerulonefrite pós-estreptocócica (transitória)",
+      "C4 baixo isolado: deficiência genética de C4 (comum em lúpus), uso de IECA, vasculite",
+      "Complemento normal não exclui lúpus — pode ser normal em lúpus cutâneo ou em remissão",
+    ],
+    conducts: [
+      "C3 e C4 baixos em LES + proteinúria crescente: flare renal — intensificar imunossupressão",
+      "Monitorar C3 e C4 mensalmente durante flares de LES — normalização indica resposta",
+      "C4 persistentemente baixo sem lúpus ativo: investigar deficiência genética de C4",
+    ],
+    related: ["Anti-dsDNA", "FAN", "Urina 24h", "Biópsia renal"],
+  },
+
+  // ── Gastroenterologia ──
+  {
+    id: "amilase", name: "Amilase e Lipase", category: "Gastroenterologia",
+    range: {
+      lab: "Amilase: 30–110 U/L · Lipase: 13–60 U/L", unit: "U/L",
+      classifyFn: (v) => v < 30 ? "baixo" : v <= 110 ? "normal" : v <= 330 ? "elevado" : "muito_elevado",
+    },
+    correlations: [
+      "Lipase >3x LSN: altamente sugestivo de pancreatite aguda (mais específica que amilase)",
+      "Amilase pode elevar em: parotidite, úlcera perfurada, isquemia mesentérica, cetoacidose diabética",
+      "Valores altos não correlacionam com gravidade da pancreatite — usar escore de Ranson/CTSI",
+    ],
+    conducts: [
+      "Lipase >3x LSN + dor abdominal em cinturão: diagnóstico de pancreatite aguda — sem necessidade de biópsia",
+      "Pancreatite aguda leve (Ranson <3): jejum, hidratação EV, analgesia — reavaliar em 48h",
+      "Pancreatite aguda grave (Ranson ≥3 ou necrose na TC): UTI, NPT, cirurgia se indicado",
+    ],
+    related: ["PCR-as", "TC abdome com contraste", "USG abdome", "Triglicerídeos"],
+    notes: "Hiperlipasemia isolada sem dor não é pancreatite. Lipase pode persistir elevada por 7–14 dias.",
+  },
+  {
+    id: "calprotectina", name: "Calprotectina Fecal", category: "Gastroenterologia",
+    range: {
+      lab: "<50 mcg/g fezes", unit: "mcg/g",
+      classifyFn: (v) => v < 50 ? "normal" : v < 200 ? "limítrofe" : "elevado",
+    },
+    correlations: [
+      "Marcador de inflamação intestinal — diferencia DII (Crohn, RCU) de SII (funcional)",
+      "Calprotectina >200 mcg/g: inflamação ativa — colonoscopia indicada",
+      "Calprotectina <50 mcg/g com sintomas: SII improvável doenças inflamatórias — favorece causa funcional",
+    ],
+    conducts: [
+      "Calprotectina elevada + alteração do hábito intestinal: colonoscopia com biópsia",
+      "DII em remissão: calprotectina <50 mcg/g = remissão mucosa (alvo do tratamento moderno)",
+      "Uso para monitorar resposta ao tratamento biológico na DII — normalização = mucosa cicatrizada",
+    ],
+    related: ["Colonoscopia", "PCR-as", "Hemograma", "Albumina", "Lactoferrina fecal"],
+    notes: "Armazenar fezes refrigeradas. AINEs podem elevar calprotectina falsamente.",
+  },
+  {
+    id: "antitransglutaminase", name: "Anti-Transglutaminase IgA (anti-tTG)", category: "Gastroenterologia",
+    range: {
+      lab: "<10 U/mL (negativo)", unit: "U/mL",
+      classifyFn: (v) => v < 10 ? "normal" : v < 30 ? "limítrofe" : "elevado",
+    },
+    correlations: [
+      "Rastreio de doença celíaca — sensibilidade 93%, especificidade 97%",
+      "Falso negativo em deficiência de IgA (prevalente em celíacos): solicitar IgA total junto",
+      "Títulos altos (>10x LSN): alta probabilidade de atrofia vilositária — pode dispensar biópsia em crianças",
+    ],
+    conducts: [
+      "Anti-tTG positivo + IgA total normal: biópsia duodenal (endoscopia) para confirmar e estadiar (Marsh)",
+      "Anti-tTG positivo + IgA total baixa: falso negativo possível — solicitar anti-DGP IgG",
+      "Dieta sem glúten (DSG): anti-tTG deve negativar em 12–18 meses — persistência sugere má adesão",
+    ],
+    related: ["IgA total", "Anti-EMA IgA", "Anti-DGP IgG", "Endoscopia + biópsia duodenal", "Hemograma", "Ferritina"],
+    notes: "Nunca retirar glúten antes da confirmação diagnóstica — os anticorpos negativam e a biópsia perde a acurácia.",
+  },
+  {
+    id: "elastase_fecal", name: "Elastase Fecal", category: "Gastroenterologia",
+    range: {
+      lab: ">200 mcg/g fezes (normal)", unit: "mcg/g",
+      classifyFn: (v) => v > 200 ? "normal" : v > 100 ? "limítrofe" : "deficiente",
+    },
+    correlations: [
+      "Marcador de insuficiência pancreática exócrina (IPE) — elástica produzida pelo pâncreas",
+      "Elastase <100 mcg/g: IPE grave — má absorção de gorduras, esteatorréia",
+      "IPE em: pancreatite crônica, fibrose cística, gastrectomia, diabetes tipo 3c",
+    ],
+    conducts: [
+      "Elastase <200 mcg/g: reposição de enzimas pancreáticas (pancreatina) com as refeições",
+      "Elastase <100 mcg/g: dosagem alta de pancreatina (25.000–75.000 UI de lipase por refeição)",
+      "IPE em DM2 longa duração: investigar pâncreas com USG/TC (pancreatite crônica assintomática)",
+    ],
+    related: ["Lipase sérica", "Amilase", "TC abdome", "Glicemia", "Vitaminas lipossolúveis (A, D, E, K)"],
+  },
+
+  // ── Endocrinologia Avançada ──
+  {
+    id: "peptidoC", name: "Peptídeo C", category: "Endocrinologia Avançada",
+    range: {
+      lab: "1,1–4,4 ng/mL (jejum)", unit: "ng/mL",
+      classifyFn: (v) => v < 0.2 ? "deficiente" : v < 1.1 ? "baixo" : v <= 4.4 ? "normal" : "elevado",
+    },
+    correlations: [
+      "Marcador de secreção endógena de insulina — metade-vida mais longa que insulina",
+      "Peptídeo C baixo (<0,2 ng/mL): DM1 com destruição das células beta (dependência insulínica)",
+      "Peptídeo C normal/elevado em DM: DM2 ou DM tipo LADA (autoimune lento do adulto)",
+      "Útil na suspeita de hipoglicemia factícia: Peptídeo C baixo + insulina alta = insulina exógena",
+    ],
+    conducts: [
+      "DM com Peptídeo C >0,6 ng/mL: ainda há reserva beta — pode ser DM2 ou LADA",
+      "DM jovem com Peptídeo C indetectável + GAD positivo: DM1 clássico",
+      "Investigação de hipoglicemia: se Peptídeo C suprimido durante hipoglicemia = insulina exógena (factícia)",
+    ],
+    related: ["Insulina basal", "Glicemia", "HbA1c", "Anti-GAD", "Anti-IA2", "ZnT8"],
+  },
+  {
+    id: "antiGAD", name: "Anticorpos Anti-GAD, Anti-IA2, ZnT8", category: "Endocrinologia Avançada",
+    range: {
+      lab: "Anti-GAD: <5 UI/mL · Anti-IA2 e ZnT8: negativos", unit: "UI/mL",
+      classifyFn: (v) => v < 5 ? "normal" : "elevado",
+    },
+    correlations: [
+      "Anti-GAD65: presente em 80% do DM1, também em LADA (diabetes autoimune latente do adulto)",
+      "Anti-IA2 e ZnT8: aumentam especificidade para DM1 — menos prevalentes no LADA",
+      "Positividade de ≥2 anticorpos: alto risco de progressão para DM1 clínico",
+    ],
+    conducts: [
+      "DM2 suspeito sem resposta oral + anti-GAD positivo: reclassificar como LADA — iniciar insulina",
+      "Parente de DM1 + anticorpos positivos: rastreio de glicemia rigoroso — considerar trialzumabe (prevenção)",
+      "LADA (LADA): anti-GAD positivo + peptídeo C preservado + diagnóstico após 30 anos + sem cetoacidose inicial",
+    ],
+    related: ["Peptídeo C", "HbA1c", "Glicemia", "TSH", "Anti-TPO"],
+    notes: "Anti-GAD também eleva em síndrome do homem rígido (stiff person syndrome) — valores 10–100x maiores.",
+  },
+  {
+    id: "amh", name: "AMH (Hormônio Antimülleriano)", category: "Endocrinologia Avançada",
+    range: {
+      lab: "Férteis (20–35a): 1,0–4,0 ng/mL · Declínio após 35a", functional: "1,0–3,5 ng/mL", unit: "ng/mL",
+      classifyFn: (v) => v < 0.5 ? "deficiente" : v < 1.0 ? "baixo" : v <= 4.0 ? "normal" : "elevado",
+    },
+    correlations: [
+      "Marcador de reserva ovariana — reflete quantidade de folículos antrais",
+      "AMH baixo (<1,0 ng/mL): reserva ovariana diminuída — dificuldade de concepção, menos ovócitos na FIV",
+      "AMH elevado (>4,0 ng/mL): SOP — grande quantidade de folículos antrais pequenos",
+      "AMH não varia significativamente durante o ciclo — pode ser dosado em qualquer dia",
+    ],
+    conducts: [
+      "AMH <0,5 ng/mL em mulher jovem: investigar insuficiência ovariana prematura (anticorpos ovarianos, cariotipo)",
+      "AMH + contagem de folículos antrais (CFA): guiam protocolo de estimulação na FIV",
+      "AMH elevado + ciclo irregular: critério adicional para SOP (Rotterdam 2023)",
+    ],
+    related: ["FSH", "LH", "Estradiol (D3)", "Contagem de folículos antrais (USG transvaginal)", "Prolactina"],
+    notes: "AMH não avalia QUALIDADE ovocitária — apenas quantidade. Idade é o principal preditor de qualidade.",
+  },
+  {
+    id: "frutosamina", name: "Frutosamina", category: "Endocrinologia Avançada",
+    range: {
+      lab: "205–285 mmol/L", unit: "mmol/L",
+      classifyFn: (v) => v < 205 ? "baixo" : v <= 285 ? "normal" : "elevado",
+    },
+    correlations: [
+      "Reflete controle glicêmico das últimas 2–3 semanas (vs. HbA1c que reflete 2–3 meses)",
+      "Útil quando HbA1c não é confiável: hemoglobinopatias, anemia hemolítica, gestação com anemia",
+      "Frutosamina >300 mmol/L equivale aproximadamente a HbA1c >8%",
+    ],
+    conducts: [
+      "Usar frutosamina na gestação (triagem de DMG) quando HbA1c é inacurada pela anemia ferropriva",
+      "Ajuste rápido de tratamento: frutosamina mostra resposta em 2–3 semanas vs. 3 meses da HbA1c",
+      "Valores baixos de albumina (desnutrição) reduzem falsamente a frutosamina",
+    ],
+    related: ["HbA1c", "Glicemia de jejum", "Albumina", "Hemograma"],
+  },
+  {
+    id: "oh17prog", name: "17-OH Progesterona", category: "Endocrinologia Avançada",
+    range: {
+      lab: "<2 ng/mL (pré-puberdade) · <10 ng/mL (adulto, fase folicular)", unit: "ng/mL",
+      classifyFn: (v) => v < 2 ? "normal" : v < 10 ? "limítrofe" : "elevado",
+    },
+    correlations: [
+      "Marcador de Hiperplasia Adrenal Congênita (HAC) por deficiência de 21-hidroxilase",
+      "Triagem neonatal: valor >10 ng/mL (metodologia específica) indica HAC — confirmar com teste de ACTH",
+      "17-OHP elevada + virilização em mulher: HAC tardia (forma não clássica) — comum em medicina funcional",
+    ],
+    conducts: [
+      "17-OHP >10 ng/mL: teste de estimulação com ACTH (250 mcg EV) — pico >10 ng/mL confirma HAC",
+      "HAC não clássica com sintomas (hirsutismo, acne, irregularidade): hidrocortisona em baixa dose",
+      "Coleta: fase folicular (D3–D5), manhã cedo — evitar fase lútea (eleva fisiologicamente)",
+    ],
+    related: ["ACTH", "Cortisol", "DHEA-S", "Androstenediona", "Testosterona total", "USG pélvica"],
+  },
+
+  // ── Neurologia/Psiquiatria ──
+  {
+    id: "acidoval", name: "Ácido Valproico (Nível Sérico)", category: "Neurologia/Psiquiatria",
+    range: {
+      lab: "50–100 mcg/mL (terapêutico)", unit: "mcg/mL",
+      classifyFn: (v) => v < 50 ? "baixo" : v <= 100 ? "normal" : "muito_elevado",
+    },
+    correlations: [
+      "Janela terapêutica estreita: abaixo de 50 mcg/mL = risco de crises; acima de 100 mcg/mL = toxicidade",
+      "Toxicidade: sedação, tremor, encefalopatia hiperamonêmica (NH3 elevado sem disfunção hepática)",
+      "Interações: carbamezapina reduz níveis; aspirina desloca da albumina (aumenta fração livre)",
+    ],
+    conducts: [
+      "Coleta: nível vale (imediatamente antes da dose da manhã, em equilíbrio — após 5 meias-vidas)",
+      "Nível <50 mcg/mL com crises: aumentar dose gradualmente (500 mg/semana)",
+      "Nível >100 mcg/mL: reduzir dose; se encefalopatia: dosar amônia, suspender se >150 mcg/mL",
+    ],
+    related: ["Amônia sérica", "TGP", "TGO", "Hemograma (plaquetas)", "Outros antiepilépticos"],
+    notes: "Valproato inibe plaquetas e causa trombocitopenia — monitorar hemograma a cada 6 meses.",
+  },
+  {
+    id: "litio", name: "Lítio (Nível Sérico)", category: "Neurologia/Psiquiatria",
+    range: {
+      lab: "0,6–1,0 mEq/L (manutenção) · 0,8–1,2 mEq/L (fase aguda)", unit: "mEq/L",
+      classifyFn: (v) => v < 0.6 ? "baixo" : v <= 1.0 ? "normal" : v <= 1.5 ? "elevado" : "muito_elevado",
+    },
+    correlations: [
+      "Janela terapêutica extremamente estreita — índice terapêutico muito baixo",
+      "Toxicidade leve (1,5–2,0 mEq/L): tremor fino, náusea, poliúria, diarreia",
+      "Toxicidade grave (>2,0 mEq/L): confusão, fasciculações, arritmias, insuficiência renal aguda",
+      "AINE, diuréticos tiazídicos e dieta com restrição de sal aumentam os níveis de lítio",
+    ],
+    conducts: [
+      "Monitorar nível 12h após a última dose (nível vale padrão)",
+      "Nível >1,5 mEq/L: reduzir dose imediatamente, aumentar hidratação",
+      "Nível >2,5 mEq/L ou toxicidade grave: hemodiálise de urgência",
+      "Monitorar função renal, TSH e cálcio a cada 6 meses (lítio causa nefrite intersticial e hipotireoidismo)",
+    ],
+    related: ["Creatinina", "TFGe", "TSH", "Cálcio sérico", "Sódio sérico"],
+    notes: "Lítio reduz risco de suicídio em TAB — não suspender abruptamente (rebote maníaco).",
+  },
+  {
+    id: "prolactina_psiq", name: "Prolactina (Hiperprolactinemia por Antipsicóticos)", category: "Neurologia/Psiquiatria",
+    range: {
+      lab: "2–18 ng/mL (M) · 2–15 ng/mL (H)", unit: "ng/mL",
+      classifyFn: (v, s) => {
+        const lim = s === "Homem" ? 15 : 18
+        return v < 2 ? "baixo" : v <= lim ? "normal" : v <= 50 ? "elevado" : "muito_elevado"
+      },
+    },
+    correlations: [
+      "Antipsicóticos típicos e risperidona elevam prolactina por bloqueio de receptores D2 tuberoinfundibulares",
+      "Sinais de hiperprolactinemia: galactorreia, amenorreia, disfunção erétil, osteoporose",
+      "Prolactina >200 ng/mL: sempre investigar macroadenoma hipofisário (mesmo com uso de antipsicótico)",
+    ],
+    conducts: [
+      "Prolactina elevada + antipsicótico: trocar para aripiprazol ou quetiapina (não elevam prolactina)",
+      "Prolactina >100 ng/mL: RM de hipófise para excluir prolactinoma",
+      "Hiperprolactinemia funcional grave: cabergolina 0,25 mg 2x/semana (agonista dopaminérgico)",
+    ],
+    related: ["RM sela túrcica", "FSH", "LH", "Estradiol / Testosterona", "Densidade óssea (DXA)"],
+    notes: "Macroprolactinemia (complexo prolactina-IgG): prolactina alta sem sintomas — dosar após precipitação com PEG.",
+  },
+  {
+    id: "tiaminaB1", name: "Vitamina B1 / Tiamina", category: "Neurologia/Psiquiatria",
+    range: {
+      lab: "66–200 nmol/L (sangue total)", unit: "nmol/L",
+      classifyFn: (v) => v < 66 ? "deficiente" : v <= 200 ? "normal" : "elevado",
+    },
+    correlations: [
+      "Deficiência grave: Encefalopatia de Wernicke (confusão, oftalmoplegia, ataxia) e Síndrome de Korsakoff",
+      "Grupos de risco: alcoolismo, bariátrica, hiperemese gravídica, nutrição parenteral sem tiamina, anorexia",
+      "Deficiência pode ocorrer em dias a semanas (estoques hepáticos pequenos)",
+    ],
+    conducts: [
+      "EMERGÊNCIA: suspeita de Wernicke → tiamina 500 mg EV/IM antes de qualquer glicose (glicose precipita o quadro)",
+      "Reposição ambulatorial: tiamina 100 mg/dia por 1–3 meses em grupos de risco",
+      "Alcoolismo em abstinência: tiamina 300 mg/dia oral como profilaxia de Wernicke",
+    ],
+    related: ["Glicemia", "Sódio", "RM crânio (hiperintensidade no corpo mamilar e tálamo)", "Albumina"],
+    notes: "A dosagem de tiamina no sangue total é mais acurada que no soro. Resultado pode ser normal mesmo com depleção tecidual.",
+  },
+
+  // ── Imunologia/Infectologia ──
+  {
+    id: "igTotal", name: "Imunoglobulinas Totais (IgG, IgM, IgA, IgE)", category: "Imunologia/Infectologia",
+    range: {
+      lab: "IgG: 700–1600 mg/dL · IgA: 70–400 mg/dL · IgM: 40–230 mg/dL · IgE: <100 UI/mL", unit: "mg/dL",
+      classifyFn: (v) => v < 400 ? "baixo" : v <= 1600 ? "normal" : "elevado",
+    },
+    correlations: [
+      "Hipogamaglobulinemia: imunodeficiência comum variável (CVID), agamaglobulinemia de Bruton, nefrose, mieloma",
+      "IgE muito elevada (>1000 UI/mL): atopia grave, aspergilose, síndrome de Hiper-IgE",
+      "IgM isoladamente elevada: Macroglobulinemia de Waldenström, mononucleose infecciosa",
+      "Eletroforese de proteínas para identificar pico monoclonal (mieloma, MGUS)",
+    ],
+    conducts: [
+      "Hipogamaglobulinemia + infecções recorrentes: imunologista, dosagem de anticorpos pós-vacina (resposta funcional)",
+      "IgE >1000 UI/mL: painel de alérgenos, hemograma (eosinofilia) e pesquisa de parasitoses",
+      "IgM elevada isolada + linfonodomegalia: investigar linfoma e macroglobulinemia (eletroforese + imunofenotipagem)",
+    ],
+    related: ["Eletroforese de proteínas", "Hemograma", "IgE específica (RAST)", "Anti-TPO"],
+  },
+  {
+    id: "cargaViralHIV", name: "Carga Viral HIV e CD4/CD8", category: "Imunologia/Infectologia",
+    range: {
+      lab: "Carga viral indetectável: <20–50 cópias/mL · CD4 normal: >500 células/mm³", unit: "cópias/mL",
+      classifyFn: (v) => v < 50 ? "ótimo" : v <= 200 ? "normal" : v <= 1000 ? "elevado" : "muito_elevado",
+    },
+    correlations: [
+      "Carga viral indetectável + TARV: indetectável = intransmissível (I=I — Undetectable=Untransmittable)",
+      "CD4 <200 células/mm³: AIDS — profilaxia de oportunistas (SMX-TMP para PCP) independente da carga viral",
+      "CD4/CD8 ratio: <1 sugere imunossupressão crônica mesmo com CD4 normal",
+    ],
+    conducts: [
+      "Acompanhamento: carga viral + CD4 a cada 3–6 meses até estabilização; a cada 12 meses em controlados",
+      "Carga viral detectável em uso de TARV: investigar adesão, interações, resistência (genotipagem)",
+      "CD4 <100: profilaxia de toxoplasmose (SMX-TMP), CMV e MAC dependendo do nível",
+    ],
+    related: ["Hemograma", "Função hepática", "Função renal", "Glicemia", "Lipidograma", "ISTs"],
+    notes: "CD4 pode variar 30% entre dias diferentes. Usar tendência (nadir) e não valores isolados.",
+  },
+  {
+    id: "hepatiteB_status", name: "Status Sorológico Hepatite B (HBsAg, Anti-HBs, Anti-HBc)", category: "Imunologia/Infectologia",
+    range: {
+      lab: "Anti-HBs >10 UI/L = imunidade adequada", unit: "UI/L",
+      classifyFn: (v) => v < 10 ? "deficiente" : v <= 100 ? "normal" : "ótimo",
+    },
+    correlations: [
+      "HBsAg+, Anti-HBc+, Anti-HBs-: infecção ativa pelo HBV",
+      "HBsAg-, Anti-HBc+, Anti-HBs+: infecção passada resolvida — imunidade natural",
+      "HBsAg-, Anti-HBc-, Anti-HBs+: vacinado — imunidade por vacina",
+      "HBsAg-, Anti-HBc+, Anti-HBs-: infecção passada ou janela imunológica — dosar HBV DNA",
+      "HBsAg-, Anti-HBc-, Anti-HBs-: suscetível — vacinar",
+    ],
+    conducts: [
+      "HBsAg positivo: solicitar HBeAg, Anti-HBe, HBV DNA, TGP, biópsia se indicado; encaminhar hepatologia",
+      "Anti-HBs <10 UI/L em vacinado: reforço vacinal (1 dose); repetir sorologia em 1 mês",
+      "Imunossuprimidos (biológicos, quimio): rastreio obrigatório de HBsAg e Anti-HBc; se positivo, profilaxia com tenofovir",
+    ],
+    related: ["HBeAg", "HBV DNA", "TGP", "TGO", "USG abdome", "Biópsia hepática"],
+    notes: "AntiHBc total positivo isolado: pode ser infecção oculta — dosar HBV DNA antes de imunossupressão.",
+  },
+  {
+    id: "hepatiteC_status", name: "Anti-HCV e PCR HCV", category: "Imunologia/Infectologia",
+    range: {
+      lab: "Anti-HCV: negativo · HCV RNA: indetectável", unit: "resultado",
+      classifyFn: (v) => v < 1 ? "normal" : "elevado",
+    },
+    correlations: [
+      "Anti-HCV positivo: indica contato com HCV (atual ou passado) — confirmar com PCR HCV quantitativo",
+      "Anti-HCV positivo + HCV RNA positivo: hepatite C ativa — tratar com antivirais de ação direta (AAD)",
+      "Anti-HCV positivo + HCV RNA negativo: cura espontânea (rara ~25%) ou resposta sustentada ao tratamento",
+      "HCV RNA positivo com Anti-HCV negativo: imunodeprimido (HIV, transplantado) — janela imunológica",
+    ],
+    conducts: [
+      "HCV RNA detectável: genotipar, estadiar fibrose (APRI, FIB-4, elastografia), encaminhar hepatologia",
+      "Tratamento: AAD (sofosbuvir/velpatasvir ou glecaprevir/pibrentasvir) — RVS >97% em 8–12 semanas",
+      "Pós-tratamento (RVS12): HCV RNA indetectável 12 semanas após o fim do tratamento = cura",
+    ],
+    related: ["HCV RNA quantitativo", "Genotipagem HCV", "TGP", "TGO", "USG abdome", "Elastografia hepática"],
+  },
+  {
+    id: "sifilis", name: "VDRL e FTA-ABS (Sífilis)", category: "Imunologia/Infectologia",
+    range: {
+      lab: "VDRL: não reativo · FTA-ABS: não reativo", unit: "resultado",
+      classifyFn: (v) => v < 1 ? "normal" : "elevado",
+    },
+    correlations: [
+      "VDRL é teste não treponêmico — usado para rastreio e monitoramento de resposta ao tratamento",
+      "FTA-ABS é teste treponêmico — confirmatório, permanece positivo mesmo após cura",
+      "VDRL falso positivo: lúpus, gestação, infecções virais (COVID), hanseníase",
+      "Neurossífilis: VDRL no LCR (mesmo com baixa sensibilidade) + VDRL sérico alto + clínica",
+    ],
+    related: ["FTA-ABS", "HIV", "Hepatite B e C", "Exame neurológico", "LCR se neurossífilis"],
+    conducts: [
+      "VDRL reagente: confirmar com FTA-ABS; se positivo → tratar com penicilina G benzatina",
+      "Sífilis primária/secundária: penicilina G benzatina 2,4 mi UI IM dose única",
+      "Monitorar VDRL: queda de 4 títulos (2 diluições) em 3–6 meses indica resposta adequada",
+    ],
+  },
+  {
+    id: "dengue_sorologia", name: "Dengue NS1, IgM e IgG", category: "Imunologia/Infectologia",
+    range: {
+      lab: "NS1: negativo · IgM: não detectado · IgG: não detectado (zona endêmica pode ser positivo)", unit: "resultado",
+      classifyFn: (v) => v < 1 ? "normal" : "elevado",
+    },
+    correlations: [
+      "NS1 antígeno: positivo do D1 ao D5 da doença (fase virêmica) — alta sensibilidade fase precoce",
+      "IgM anti-dengue: aparece D5–D7, persiste 1–3 meses — confirma infecção recente",
+      "IgG: memória imunológica — positivo por anos após infecção prévia ou vacina",
+      "NS1 negativo + IgM negativo antes do D5: janela sorológica — repetir no D6–D7",
+    ],
+    conducts: [
+      "NS1 positivo: dengue provável — hemograma seriado, hidratação, paracetamol (evitar AAS/AINEs)",
+      "Plaquetas <100.000 ou sinais de alarme: hospitalização para observação",
+      "Sinais de choque (dengue grave): expansão volêmica agressiva EV, UTI",
+    ],
+    related: ["Hemograma (plaquetas, hematócrito)", "ALT/AST", "Hematócrito"],
+    notes: "IgG positivo isolado sem IgM: infecção antiga ou vacinação. Não tratar como dengue aguda.",
+  },
 ]
 
 // Group by category

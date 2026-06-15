@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 
 // Fully public — no auth check at all
-const PUBLIC_ROUTES = new Set(["/", "/planos", "/landing", "/privacidade", "/deletar-dados", "/termos", "/captacao"])
+const PUBLIC_ROUTES = new Set(["/", "/planos", "/landing", "/privacidade", "/deletar-dados", "/termos", "/captacao", "/demo"])
 
 // Authenticated users may access without completing onboarding
 const ONBOARDING_EXEMPT = new Set(["/onboarding", "/dashboard"])

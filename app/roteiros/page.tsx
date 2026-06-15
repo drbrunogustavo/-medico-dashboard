@@ -29,7 +29,13 @@ export default function RoteirosPage(){
   const[errMsg,setErrMsg]=useState<string|null>(null)
   const showErr=(msg:string)=>{setErrMsg(msg);setTimeout(()=>setErrMsg(null),4000)}
   const isMob=typeof window!=='undefined'&&window.innerWidth<768
-  useEffect(()=>{if(typeof window==='undefined')return;const t=new URLSearchParams(window.location.search).get('tema');if(t)setTema(decodeURIComponent(t))},[])
+  useEffect(()=>{
+    if(typeof window==='undefined')return
+    const urlTema=new URLSearchParams(window.location.search).get('tema')
+    if(urlTema){setTema(decodeURIComponent(urlTema));return}
+    const saved=localStorage.getItem('praxis_roteiro_tema')
+    if(saved){setTema(saved);localStorage.removeItem('praxis_roteiro_tema')}
+  },[])
   const gerar=useCallback(async()=>{
     if(!tema.trim())return;setLoading(true)
     try{const prompt = [

@@ -41,23 +41,23 @@ const ALAS: Record<AlaId, {
   activeIndicator: string
 }> = {
   social:      {
-    label: "PRAXIS Social",      short: "Social",   icon: Megaphone,
+    label: "Atrair Pacientes",        short: "Social",   icon: Megaphone,
     activeTxt: "text-accent",    activeBg: "bg-accent-dim",       activeBorder: "border-accent-border",     activeIndicator: "bg-accent",
   },
   consultorio: {
-    label: "PRAXIS Consultório", short: "Consult.", icon: Stethoscope,
+    label: "Atender Melhor",          short: "Consult.", icon: Stethoscope,
     activeTxt: "text-blue-400",  activeBg: "bg-blue-500/10",      activeBorder: "border-blue-500/25",       activeIndicator: "bg-blue-400",
   },
   executivo:   {
-    label: "PRAXIS Executivo",   short: "Exec.",    icon: BarChart3,
+    label: "Gerir e Escalar",         short: "Exec.",    icon: BarChart3,
     activeTxt: "text-purple-400",activeBg: "bg-purple-500/10",    activeBorder: "border-purple-500/25",     activeIndicator: "bg-purple-400",
   },
   ia:          {
-    label: "PRAXIS IA",          short: "IA",       icon: Sparkles,
+    label: "Inteligência Estratégica",short: "IA",       icon: Sparkles,
     activeTxt: "text-amber-400", activeBg: "bg-amber-500/10",     activeBorder: "border-amber-500/25",      activeIndicator: "bg-amber-400",
   },
   academy:     {
-    label: "PRAXIS Academy",     short: "Academy",  icon: GraduationCap,
+    label: "Aprender e Crescer",      short: "Academy",  icon: GraduationCap,
     activeTxt: "text-pink-400",  activeBg: "bg-pink-500/10",      activeBorder: "border-pink-500/25",       activeIndicator: "bg-pink-400",
   },
 }
@@ -89,7 +89,7 @@ const NAV: Record<AlaId, NavItem[]> = {
     { label: "Nutrição de Leads",       href: "/nutricao-leads",   icon: TrendingUp    },
     { label: "Régua de Relacionamento", href: "/regua",            icon: Heart         },
     { label: "Agenda Inteligente",      href: "/agenda",           icon: Calendar      },
-    { label: "Copiloto de Consulta",    href: "/copiloto",         icon: Bot           },
+    { label: "Copiloto de Consulta",    href: "/copiloto",         icon: Bot,           badge: "MAIS USADO" },
     { label: "Gestão de Pacientes",     href: "/pacientes",        icon: Users         },
     { label: "Pesquisa NPS",            href: "/nps",              icon: Star          },
     { label: "Programa de Indicações",  href: "/indicacoes",       icon: UserPlus      },
@@ -137,10 +137,12 @@ const NAV: Record<AlaId, NavItem[]> = {
 // ─── Badge styles ─────────────────────────────────────────────────────────────
 
 const BADGE_STYLE: Record<string, string> = {
-  "ELITE":    "bg-[rgba(212,175,55,0.08)] text-[#d4af37] border border-[rgba(212,175,55,0.25)]",
-  "PRO":      "bg-accent-dim text-accent border border-accent-border",
-  "LIVE":     "bg-red-500/10 text-red-400 border border-red-500/30",
-  "EM BREVE": "bg-surface-2 text-text-muted border border-border",
+  "ELITE":      "bg-[rgba(212,175,55,0.08)] text-[#d4af37] border border-[rgba(212,175,55,0.25)]",
+  "PRO":        "bg-accent-dim text-accent border border-accent-border",
+  "LIVE":       "bg-red-500/10 text-red-400 border border-red-500/30",
+  "EM BREVE":   "bg-surface-2 text-text-muted border border-border",
+  "IA":         "bg-amber-500/10 text-amber-400 border border-amber-500/25",
+  "MAIS USADO": "bg-[rgba(212,175,55,0.08)] text-[#d4af37] border border-[rgba(212,175,55,0.25)]",
 }
 
 const PLAN_UI = {

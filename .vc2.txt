@@ -1,0 +1,58 @@
+a185a2220b83eedfc4ba8798d5a258bacbfbc391
+---LSTREE---
+040000 tree 01a1d803ad9b37623970fd8c0ecdfd74b8233eb9       -	public/screenshots
+---GITIGNORE---
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# Arquivos locais
+*.docx
+n8n-workflow.json
+meu-dashboard/
+.DS_Store
+---LSACTUAL---
+public/screenshots/crm.png
+public/screenshots/CRM DE LEADS.png
+public/screenshots/NPS E SATISFAÇÃO.png
+public/screenshots/executivo.png
+public/screenshots/CONSULTOR ESTRATÉGICO.png
+public/screenshots/INCIADORES .png
+public/screenshots/indicadores.png
+public/screenshots/nps.png
+public/screenshots/consultor.png
+public/screenshots/PAINEL EXECUTIVO.png

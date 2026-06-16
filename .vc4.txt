@@ -1,0 +1,37 @@
+74:const PRODUCT_TABS = [
+156:      "Calculadoras Clínicas — HOMA-IR, ASCVD, TMB, idade metabólica",
+210:const SCREENSHOTS = [
+212:    tab: "Dashboard",
+213:    img: "/screenshots/executivo.png",
+219:    tab: "CRM de Leads",
+220:    img: "/screenshots/crm.png",
+226:    tab: "Copiloto IA",
+227:    img: "/screenshots/copiloto.png",
+233:    tab: "Calendário",
+234:    img: "/screenshots/calendario.png",
+305:  const [activeTab,        setActiveTab]        = useState(0)
+308:  const [activeScreenshot, setActiveScreenshot] = useState(0)
+462:          <SLabel>VEJA O PRAXIS FUNCIONANDO</SLabel>
+469:        {/* Tabs */}
+471:          {PRODUCT_TABS.map(({ label }, i) => (
+472:            <button key={i} type="button" onClick={() => setActiveTab(i)}
+475:                background: activeTab === i ? DARK : "transparent",
+476:                color:      activeTab === i ? GOLD : MUTED,
+477:                border:     `1px solid ${activeTab === i ? DARK : BORDER}`,
+487:            <ProductMockup id={PRODUCT_TABS[activeTab].id} />
+490:            {PRODUCT_TABS[activeTab].caption}
+495:      {/* ── SEÇÃO 3.5 — SCREENSHOTS DO SISTEMA ──────────────────────────────── */}
+505:          {/* Tab selector */}
+507:            {SCREENSHOTS.map(({ tab, color }, i) => (
+508:              <button key={i} type="button" onClick={() => setActiveScreenshot(i)}
+511:                  background: activeScreenshot === i ? DARK : "transparent",
+512:                  color:      activeScreenshot === i ? GOLD : MUTED,
+513:                  border:     `1px solid ${activeScreenshot === i ? DARK : BORDER}`,
+515:                {tab}
+520:          {/* Screenshot frame */}
+536:                src={SCREENSHOTS[activeScreenshot].img}
+537:                alt={`PRAXIS — ${SCREENSHOTS[activeScreenshot].tab}`}
+541:                priority={activeScreenshot === 0}
+550:              {SCREENSHOTS[activeScreenshot].caption}
+552:            <Link href={SCREENSHOTS[activeScreenshot].href}
+554:              style={{ padding: "9px 20px", background: `${SCREENSHOTS[activeScreenshot].color}15`, color: SCREENSHOTS[activeScreenshot].color, border: `1px solid ${SCREENSHOTS[activeScreenshot].color}35` }}>

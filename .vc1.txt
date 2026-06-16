@@ -1,0 +1,10 @@
+a185a22 feat: screenshots 800px
+---FETCH---
+---STATUS---
+?? .vc1.txt
+---LOGREMOTE---
+a185a22 feat: screenshots 800px
+003ccaf feat: screenshots comprimidos
+b5081c0 feat: screenshots reais da plataforma
+788d727 fix: financeiro tinha apenas visão de mês atual, sem opção de ver todo o histórico
+2834a63 fix: financeiro filtra por user_id explicitamente, não só via RLS

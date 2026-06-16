@@ -132,7 +132,7 @@ const COMP_FEATURES = [
 
 const ALAS_ACCORDION = [
   {
-    id: "social", icon: Megaphone, color: "#3b7fff",
+    id: "social", icon: Megaphone, color: "#3b7fff", href: "/praxis-social",
     title: "PRAXIS Social",
     tagline: "Atração e conteúdo médico de alto impacto",
     features: [
@@ -148,7 +148,7 @@ const ALAS_ACCORDION = [
     resultado: "30 dias de conteúdo em 2 horas",
   },
   {
-    id: "consultorio", icon: Stethoscope, color: GOLD,
+    id: "consultorio", icon: Stethoscope, color: GOLD, href: "/praxis-consultorio",
     title: "PRAXIS Consultório",
     tagline: "Atendimento aumentado por inteligência artificial",
     features: [
@@ -164,7 +164,7 @@ const ALAS_ACCORDION = [
     resultado: "Consulta documentada em menos de 3 minutos",
   },
   {
-    id: "executivo", icon: BarChart3, color: "#16a34a",
+    id: "executivo", icon: BarChart3, color: "#16a34a", href: "/praxis-executivo",
     title: "PRAXIS Executivo",
     tagline: "Sua clínica como um negócio gerenciado com dados",
     features: [
@@ -179,7 +179,7 @@ const ALAS_ACCORDION = [
     resultado: "Visão 360° da clínica em um painel",
   },
   {
-    id: "ia", icon: Bot, color: "#a78bfa",
+    id: "ia", icon: Bot, color: "#a78bfa", href: "/praxis-ia",
     title: "PRAXIS IA",
     tagline: "Inteligência artificial integrada a todas as áreas",
     features: [
@@ -193,7 +193,7 @@ const ALAS_ACCORDION = [
     resultado: "IA especializada em medicina, não genérica",
   },
   {
-    id: "academy", icon: BookOpen, color: "#f59e0b",
+    id: "academy", icon: BookOpen, color: "#f59e0b", href: "/praxis-academy",
     title: "PRAXIS Academy",
     tagline: "Estratégias validadas de marketing médico e gestão",
     features: [
@@ -313,6 +313,7 @@ export default function LandingPage() {
   const [faqOpen,          setFaqOpen]          = useState<number | null>(null)
   const [openModule,       setOpenModule]       = useState<number | null>(null)
   const [activeScreenshot, setActiveScreenshot] = useState(0)
+  const [moduleMenuOpen,   setModuleMenuOpen]   = useState(false)
 
   return (
     <div className="fixed inset-0 z-[200] overflow-y-auto" style={{ background: BG, fontFamily: "Inter, sans-serif" }}>
@@ -322,6 +323,29 @@ export default function LandingPage() {
         style={{ height: 64, background: "rgba(245,240,232,0.93)", borderBottom: `1px solid ${BORDER}`, backdropFilter: "blur(16px)" }}>
         <Logo />
         <div className="flex items-center gap-4 md:gap-6">
+          <div className="hidden md:block relative"
+            onMouseEnter={() => setModuleMenuOpen(true)}
+            onMouseLeave={() => setModuleMenuOpen(false)}>
+            <button type="button" className="flex items-center gap-1 text-[12px]" style={{ color: TEXT2 }}>
+              Módulos <ChevronDown style={{ width: 12, height: 12 }} />
+            </button>
+            {moduleMenuOpen && (
+              <div className="absolute left-1/2 -translate-x-1/2 mt-2 rounded-xl overflow-hidden"
+                style={{ width: 260, background: CARD, border: `1px solid ${BORDER}`, boxShadow: "0 16px 50px rgba(13,27,42,0.18)" }}>
+                {ALAS_ACCORDION.map(({ id, icon: Icon, color, title, tagline, href }) => (
+                  <Link key={id} href={href} className="flex items-start gap-3 px-4 py-3 transition-colors hover:bg-black/[0.03]">
+                    <div style={{ width: 30, height: 30, borderRadius: 8, flexShrink: 0, background: `${color}12`, border: `1px solid ${color}28`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Icon style={{ width: 14, height: 14, color }} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 12.5, fontWeight: 700, color: DARK }}>{title}</div>
+                      <div style={{ fontSize: 10.5, color: MUTED, lineHeight: 1.4 }}>{tagline}</div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
           <Link href="/sobre" className="hidden md:block text-[12px]" style={{ color: TEXT2 }}>Por que o PRAXIS?</Link>
           <Link href={ctaHref} className="hidden md:block text-[12px]" style={{ color: TEXT2 }}>Planos</Link>
           <Link href={appHref} className="text-[12px]" style={{ color: TEXT2 }}>
@@ -736,7 +760,7 @@ export default function LandingPage() {
           </p>
         </FadeUp>
         <div className="space-y-3">
-          {ALAS_ACCORDION.map(({ id, icon: Icon, color, title, tagline, features, resultado }, i) => (
+          {ALAS_ACCORDION.map(({ id, icon: Icon, color, title, tagline, features, resultado, href }, i) => (
             <FadeUp key={id} delay={i * 50}>
               <div className="rounded-2xl overflow-hidden" style={{ background: CARD, border: `1px solid ${openModule === i ? color + "40" : BORDER}`, transition: "border-color 0.2s" }}>
                 <button type="button" onClick={() => setOpenModule(openModule === i ? null : i)}
@@ -769,10 +793,10 @@ export default function LandingPage() {
                       ))}
                     </div>
                     <div className="px-6 pb-5">
-                      <Link href="/demo"
+                      <Link href={href}
                         className="inline-flex items-center gap-1.5 text-[12px] font-semibold transition-all hover:opacity-80"
                         style={{ color, textDecoration: "none" }}>
-                        Explorar {title} <ArrowRight style={{ width: 12, height: 12 }} />
+                        Saiba mais <ArrowRight style={{ width: 12, height: 12 }} />
                       </Link>
                     </div>
                   </div>
@@ -1047,6 +1071,13 @@ export default function LandingPage() {
                 </Link>
               ))}
             </div>
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-5 mb-6">
+            {ALAS_ACCORDION.map(({ id, title, href }) => (
+              <Link key={id} href={href} className="text-[11px] font-mono" style={{ color: GOLD }}>
+                {title}
+              </Link>
+            ))}
           </div>
           <div style={{ height: 1, background: "rgba(13,27,42,0.06)", marginBottom: 20 }} />
           <p className="text-center" style={{ fontSize: 11, fontFamily: "monospace", color: MUTED, letterSpacing: "0.5px" }}>

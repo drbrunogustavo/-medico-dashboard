@@ -336,13 +336,21 @@ function SidebarContent() {
           >
             <span className="text-[11px] font-bold text-accent">
               {perfil?.nome
-                ? perfil.nome.replace(/^Dr\.?\s*/i, "").slice(0, 2).toUpperCase()
+                ? perfil.nome
+                    .replace(/^Dr\.?\s*/i, "")
+                    .trim()
+                    .split(" ")
+                    .filter(Boolean)
+                    .map(n => n[0])
+                    .slice(0, 2)
+                    .join("")
+                    .toUpperCase()
                 : user?.email?.slice(0, 2).toUpperCase() ?? "??"}
             </span>
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-[12px] font-semibold text-text-primary truncate leading-none group-hover:text-accent transition-colors">
-              {perfil?.nome ?? "Meu perfil"}
+              {perfil?.nome ?? user?.email?.split("@")[0] ?? "Meu perfil"}
             </div>
             <div className="text-[10px] text-text-muted truncate mt-0.5 leading-none">
               {perfil?.especialidade ?? user?.email ?? ""}

@@ -209,13 +209,6 @@ const ALAS_ACCORDION = [
 
 const SCREENSHOTS = [
   {
-    tab: "Dashboard",
-    img: "/screenshots/executivo.png",
-    caption: "Centro de comando da clínica — leads, faturamento, NPS e indicadores em tempo real.",
-    href: "/dashboard",
-    color: "#16a34a",
-  },
-  {
     tab: "CRM de Leads",
     img: "/screenshots/crm.png",
     caption: "Funil Kanban visual — do primeiro contato ao paciente fiel com nurturing automático.",
@@ -223,18 +216,32 @@ const SCREENSHOTS = [
     color: "#3b7fff",
   },
   {
-    tab: "Copiloto IA",
-    img: "/screenshots/copiloto.png",
-    caption: "Resumo SOAP, plano terapêutico e follow-up gerados em segundos após a consulta.",
-    href: "/copiloto",
+    tab: "Indicadores da Clínica",
+    img: "/screenshots/indicadores.png",
+    caption: "Faturamento, ocupação de agenda e taxa de conversão acompanhados em tempo real.",
+    href: "/indicadores",
+    color: "#16a34a",
+  },
+  {
+    tab: "NPS & Satisfação",
+    img: "/screenshots/nps.png",
+    caption: "Satisfação dos pacientes medida automaticamente após cada consulta — sem planilhas.",
+    href: "/nps",
+    color: "#a78bfa",
+  },
+  {
+    tab: "Painel Executivo",
+    img: "/screenshots/executivo.png",
+    caption: "Centro de comando da clínica — leads, faturamento, NPS e indicadores em uma única tela.",
+    href: "/executivo",
     color: GOLD,
   },
   {
-    tab: "Calendário",
-    img: "/screenshots/calendario.png",
-    caption: "30 dias de conteúdo estratégico planejados automaticamente — adaptados à sua especialidade.",
-    href: "/calendario",
-    color: "#a78bfa",
+    tab: "Consultor Estratégico",
+    img: "/screenshots/consultor.png",
+    caption: "IA analisa os dados da sua clínica e recomenda os próximos passos para crescer.",
+    href: "/consultor",
+    color: "#ec4899",
   },
 ]
 
@@ -535,8 +542,8 @@ export default function LandingPage() {
               <Image
                 src={SCREENSHOTS[activeScreenshot].img}
                 alt={`PRAXIS — ${SCREENSHOTS[activeScreenshot].tab}`}
-                width={1280}
-                height={800}
+                width={1200}
+                height={750}
                 className="w-full h-auto block"
                 priority={activeScreenshot === 0}
                 unoptimized
@@ -552,7 +559,7 @@ export default function LandingPage() {
             <Link href={SCREENSHOTS[activeScreenshot].href}
               className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg font-semibold text-[13px] transition-all hover:opacity-90 flex-shrink-0"
               style={{ padding: "9px 20px", background: `${SCREENSHOTS[activeScreenshot].color}15`, color: SCREENSHOTS[activeScreenshot].color, border: `1px solid ${SCREENSHOTS[activeScreenshot].color}35` }}>
-              Explorar este módulo <ArrowRight style={{ width: 13, height: 13 }} />
+              Explorar {SCREENSHOTS[activeScreenshot].tab} <ArrowRight style={{ width: 13, height: 13 }} />
             </Link>
           </div>
         </FadeUp>

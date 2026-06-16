@@ -686,7 +686,7 @@ export default function ConcorrentesPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           titulo:    rec.acao,
-          nota:      `${rec.justificativa}\n\nFormato sugerido: ${rec.formato_sugerido}\n\n— Concorrente analisado: ${nome}`,
+          conteudo:  `${rec.justificativa}\n\nFormato sugerido: ${rec.formato_sugerido}\n\n— Concorrente analisado: ${nome}`,
           categoria: "concorrentes",
         }),
       })

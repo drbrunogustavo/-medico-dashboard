@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server"
 
 // Fully public — no auth check at all
 const PUBLIC_ROUTES = new Set([
-  "/", "/planos", "/landing", "/sobre", "/privacidade", "/deletar-dados", "/termos", "/captacao", "/demo",
+  "/", "/planos", "/landing", "/sobre", "/privacidade", "/deletar-dados", "/termos", "/captacao", "/demo", "/tour",
   "/praxis-social", "/praxis-consultorio", "/praxis-executivo", "/praxis-ia", "/praxis-academy",
 ])
 

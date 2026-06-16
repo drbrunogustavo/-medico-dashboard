@@ -9,11 +9,6 @@ const ASSINATURA = `Nossa equipe médica
 Endocrinologia & Nutrologia
 PRAXIS Clínica`
 
-const MAPS = {
-  pocas:    "https://maps.google.com/?q=Clinica+Praxis+Pocos+de+Caldas+MG",
-  alfenas:  "https://maps.google.com/?q=Clinica+Praxis+Alfenas+MG",
-  camboriu: "https://maps.google.com/?q=Clinica+Praxis+Balneario+Camboriu+SC",
-}
 
 export async function POST(req: NextRequest) {
   const auth = await checkAuth()
@@ -79,11 +74,7 @@ D-1 (dia anterior à consulta):
 - Orientações para bioimpedância: hidratação, não praticar exercícios no dia, não fazer refeição pesada nas 4h anteriores, não usar cremes hidratantes.
 
 D-0 (manhã do dia da consulta):
-- Localização do consultório com links do Google Maps:
-  Poços de Caldas: ${MAPS.pocas}
-  Alfenas: ${MAPS.alfenas}
-  Balneário Camboriú: ${MAPS.camboriu}
-- Horário da consulta e pedido para chegar 15 minutos antes
+- Horário da consulta, localização do consultório e pedido para chegar 15 minutos antes
 - Lembrete das orientações de bioimpedância`
       : `TRILHA PÓS-CONSULTA para ${body.nomePaciente}:
 

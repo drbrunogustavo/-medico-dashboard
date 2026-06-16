@@ -346,6 +346,7 @@ export default function LandingPage() {
               </div>
             )}
           </div>
+          <Link href="/tour" className="hidden md:block text-[12px]" style={{ color: TEXT2 }}>Tour da plataforma</Link>
           <Link href="/sobre" className="hidden md:block text-[12px]" style={{ color: TEXT2 }}>Por que o PRAXIS?</Link>
           <Link href={ctaHref} className="hidden md:block text-[12px]" style={{ color: TEXT2 }}>Planos</Link>
           <Link href={appHref} className="text-[12px]" style={{ color: TEXT2 }}>
@@ -378,7 +379,7 @@ export default function LandingPage() {
             Feita por médico, para médicos.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Link href="/demo"
+            <Link href="/tour"
               className="inline-flex items-center gap-2 rounded-xl font-bold transition-all hover:opacity-90 active:scale-[0.98]"
               style={{ padding: "16px 36px", fontSize: 15, background: GOLD, color: DARK, boxShadow: `0 8px 40px ${GOLD}30` }}>
               Explorar a plataforma <ArrowRight style={{ width: 16, height: 16 }} />
@@ -580,11 +581,18 @@ export default function LandingPage() {
             <p style={{ fontSize: 14, color: TEXT2, lineHeight: 1.6 }}>
               {SCREENSHOTS[activeScreenshot].caption}
             </p>
-            <Link href={SCREENSHOTS[activeScreenshot].href}
-              className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg font-semibold text-[13px] transition-all hover:opacity-90 flex-shrink-0"
-              style={{ padding: "9px 20px", background: `${SCREENSHOTS[activeScreenshot].color}15`, color: SCREENSHOTS[activeScreenshot].color, border: `1px solid ${SCREENSHOTS[activeScreenshot].color}35` }}>
-              Explorar {SCREENSHOTS[activeScreenshot].tab} <ArrowRight style={{ width: 13, height: 13 }} />
-            </Link>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <Link href="/tour"
+                className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg font-semibold text-[13px] transition-all hover:opacity-90"
+                style={{ padding: "9px 20px", background: `${GOLD}12`, color: GOLD, border: `1px solid ${GOLD}35` }}>
+                Ver tour completo <ArrowRight style={{ width: 13, height: 13 }} />
+              </Link>
+              <Link href={SCREENSHOTS[activeScreenshot].href}
+                className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg font-semibold text-[13px] transition-all hover:opacity-90"
+                style={{ padding: "9px 20px", background: `${SCREENSHOTS[activeScreenshot].color}15`, color: SCREENSHOTS[activeScreenshot].color, border: `1px solid ${SCREENSHOTS[activeScreenshot].color}35` }}>
+                Explorar {SCREENSHOTS[activeScreenshot].tab} <ArrowRight style={{ width: 13, height: 13 }} />
+              </Link>
+            </div>
           </div>
         </FadeUp>
       </section>
@@ -1039,7 +1047,7 @@ export default function LandingPage() {
             <p style={{ fontSize: 15, color: TEXT2, lineHeight: 1.7, marginBottom: 32 }}>
               Comece o período de teste gratuito. Nenhum cartão necessário.
             </p>
-            <Link href="/demo"
+            <Link href="/tour"
               className="inline-flex items-center gap-2.5 rounded-xl font-bold transition-all hover:opacity-95 active:scale-[0.98]"
               style={{ padding: "18px 44px", fontSize: 16, background: GOLD, color: DARK, boxShadow: `0 0 60px ${GOLD}25` }}>
               Explorar a plataforma <ArrowRight style={{ width: 16, height: 16 }} />
@@ -1058,6 +1066,7 @@ export default function LandingPage() {
             <Logo size={24} />
             <div className="flex flex-wrap items-center justify-center gap-6">
               {[
+                { l: "Tour da plataforma",h: "/tour"        },
                 { l: "Por que o PRAXIS?", h: "/sobre"       },
                 { l: "Planos",            h: "/planos"      },
                 { l: "Privacidade",       h: "/privacidade" },

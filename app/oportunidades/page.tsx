@@ -89,7 +89,7 @@ const MOCK: OportunidadesResult = {
 
 export default function OportunidadesPage() {
   const [especialidade, setEspecialidade] = useState("Endocrinologia + Nutrologia")
-  const [localizacao,   setLocalizacao]   = useState("Poços de Caldas - MG")
+  const [localizacao,   setLocalizacao]   = useState("")
   const [janela,        setJanela]        = useState("30")
   const [resultado,     setResultado]     = useState<OportunidadesResult | null>(null)
   const [loading,       setLoading]       = useState(false)

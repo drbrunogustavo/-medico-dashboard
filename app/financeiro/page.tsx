@@ -26,28 +26,11 @@ type TipoFilter = "todos" | "receita" | "despesa"
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
-const UNIDADES = ["Poços de Caldas", "Alfenas", "São Paulo", "Balneário Camboriú", "Itapema"] as const
+const PALETTE = ["#00c07f", "#3b7fff", "#d4af37", "#a855f7", "#f97316", "#ef4444", "#06b6d4", "#ec4899"]
 
-const UNIDADE_COLORS: Record<string, string> = {
-  "Poços de Caldas":    "#00c07f",
-  "Alfenas":            "#3b7fff",
-  "São Paulo":          "#d4af37",
-  "Balneário Camboriú": "#a855f7",
-  "Itapema":            "#f97316",
-}
-
-const GRUPOS = {
-  consolidado: UNIDADES,
-  g1:          ["Poços de Caldas", "Alfenas", "São Paulo"] as string[],
-  g2:          ["Balneário Camboriú", "Itapema"] as string[],
-} as const
-
-type Grupo = keyof typeof GRUPOS
-
-const GRUPO_LABELS: Record<Grupo, string> = {
-  consolidado: "Consolidado",
-  g1:          "Grupo 1",
-  g2:          "Grupo 2",
+function unitColor(sortedUnits: string[], u: string): string {
+  const idx = sortedUnits.indexOf(u)
+  return idx >= 0 ? (PALETTE[idx % PALETTE.length] ?? "#888") : "#888"
 }
 
 const FORMAS = ["PIX", "Dinheiro", "Cartão de Crédito", "Cartão de Débito", "Transferência", "Convênio", "Boleto"]
@@ -84,7 +67,6 @@ export default function FinanceiroPage() {
 
   const { inicio, fim } = monthRange(currentYear, currentMonth)
 
-  const [grupo,       setGrupo]       = useState<Grupo>("consolidado")
   const [unidade,     setUnidade]     = useState("Todas")
   const [tipoFilter,  setTipoFilter]  = useState<TipoFilter>("todos")
   const [viewAll,      setViewAll]     = useState(false)
@@ -97,7 +79,7 @@ export default function FinanceiroPage() {
   const [saving,      setSaving]      = useState(false)
 
   const [form, setForm] = useState({
-    unidade:         "Poços de Caldas",
+    unidade:         "",
     tipo:            "receita" as "receita" | "despesa",
     descricao:       "",
     valor:           "",
@@ -105,8 +87,6 @@ export default function FinanceiroPage() {
     observacao:      "",
     data:            now.toISOString().slice(0, 10),
   })
-
-  const unidadesGrupo: string[] = [...GRUPOS[grupo]]
 
   const prevMonth = () => {
     if (currentMonth === 0) { setCurrentYear(y => y - 1); setCurrentMonth(11) }
@@ -135,9 +115,11 @@ export default function FinanceiroPage() {
 
   useEffect(() => { fetchData() }, [fetchData])
 
+  // Unique units derived from all loaded data
+  const unidades = Array.from(new Set(rawData.map(l => l.unidade).filter(Boolean))).sort()
+
   // Client-side filters
   const data = rawData
-    .filter(l => (unidadesGrupo as string[]).includes(l.unidade))
     .filter(l => unidade    === "Todas" || l.unidade === unidade)
     .filter(l => tipoFilter === "todos" || l.tipo    === tipoFilter)
 
@@ -184,10 +166,9 @@ export default function FinanceiroPage() {
   const totalCount = data.length
 
   // Per-unit bar chart (unfiltered by tipo so bars show full picture)
-  const dataGrupo = rawData.filter(l => (unidadesGrupo as string[]).includes(l.unidade))
-  const porUnidade = unidadesGrupo.map(u => {
-    const rec  = dataGrupo.filter(l => l.unidade === u && l.tipo === "receita").reduce((s, l) => s + l.valor, 0)
-    const desp = dataGrupo.filter(l => l.unidade === u && l.tipo === "despesa").reduce((s, l) => s + l.valor, 0)
+  const porUnidade = unidades.map(u => {
+    const rec  = rawData.filter(l => l.unidade === u && l.tipo === "receita").reduce((s, l) => s + l.valor, 0)
+    const desp = rawData.filter(l => l.unidade === u && l.tipo === "despesa").reduce((s, l) => s + l.valor, 0)
     return { unidade: u, rec, desp, saldo: rec - desp }
   }).filter(u => u.rec > 0 || u.desp > 0)
 
@@ -247,29 +228,11 @@ export default function FinanceiroPage() {
           <StatCard label="Lançamentos"      value={totalCount}    sub="no período"  icon={Hash}         accent="blue"  />
         </div>
 
-        {/* Group + unit + tipo filters */}
+        {/* Tipo + unit filters */}
         <div className="flex flex-col gap-2">
           <div className="flex flex-wrap items-center gap-2">
-            {/* Group toggle */}
-            <div className="flex gap-1 bg-surface border border-border rounded-xl p-1">
-              {(Object.keys(GRUPOS) as Grupo[]).map(g => (
-                <button
-                  key={g}
-                  onClick={() => { setGrupo(g); setUnidade("Todas") }}
-                  className={cn(
-                    "px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all",
-                    grupo === g
-                      ? "bg-accent-dim border border-accent-border text-accent"
-                      : "text-text-muted hover:text-text-secondary"
-                  )}
-                >
-                  {GRUPO_LABELS[g]}
-                </button>
-              ))}
-            </div>
-
-            {/* Tipo filter — pushed right on md+ */}
-            <div className="flex gap-1 md:ml-auto">
+            {/* Tipo filter */}
+            <div className="flex gap-1">
               {(["todos", "receita", "despesa"] as TipoFilter[]).map(t => (
                 <button
                   key={t}
@@ -292,23 +255,25 @@ export default function FinanceiroPage() {
           </div>
 
           {/* Unit pills */}
-          <div className="flex items-center gap-1 flex-wrap">
-            <Filter className="w-3.5 h-3.5 text-text-muted flex-shrink-0" />
-            {["Todas", ...unidadesGrupo].map(u => (
-              <button
-                key={u}
-                onClick={() => setUnidade(u)}
-                className={cn(
-                  "text-[10px] px-2.5 py-1 rounded-full border transition-all",
-                  unidade === u
-                    ? "bg-accent-dim border-accent-border text-accent font-medium"
-                    : "border-border text-text-muted hover:text-text-secondary"
-                )}
-              >
-                {u}
-              </button>
-            ))}
-          </div>
+          {unidades.length > 0 && (
+            <div className="flex items-center gap-1 flex-wrap">
+              <Filter className="w-3.5 h-3.5 text-text-muted flex-shrink-0" />
+              {["Todas", ...unidades].map(u => (
+                <button
+                  key={u}
+                  onClick={() => setUnidade(u)}
+                  className={cn(
+                    "text-[10px] px-2.5 py-1 rounded-full border transition-all",
+                    unidade === u
+                      ? "bg-accent-dim border-accent-border text-accent font-medium"
+                      : "border-border text-text-muted hover:text-text-secondary"
+                  )}
+                >
+                  {u}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {error && (
@@ -321,7 +286,7 @@ export default function FinanceiroPage() {
         {porUnidade.length > 0 && (
           <div className="bg-surface border border-border rounded-xl p-5">
             <div className="text-[10px] font-mono text-text-muted uppercase tracking-widest mb-4">
-              Desempenho por Unidade — {GRUPO_LABELS[grupo]} · {MESES[currentMonth]} {currentYear}
+              Desempenho por Unidade — {MESES[currentMonth]} {currentYear}
             </div>
             <div className="space-y-4">
               {porUnidade.map(u => (
@@ -330,7 +295,7 @@ export default function FinanceiroPage() {
                     <div className="flex items-center gap-2">
                       <div
                         className="w-2 h-2 rounded-full flex-shrink-0"
-                        style={{ background: UNIDADE_COLORS[u.unidade] ?? "#888" }}
+                        style={{ background: unitColor(unidades, u.unidade) }}
                       />
                       <span className="text-[11px] text-text-secondary">{u.unidade}</span>
                     </div>
@@ -343,7 +308,7 @@ export default function FinanceiroPage() {
                       className="rounded-full transition-all"
                       style={{
                         width:      `${(u.rec / maxVal) * 100}%`,
-                        background: UNIDADE_COLORS[u.unidade] ?? "#00c07f",
+                        background: unitColor(unidades, u.unidade),
                         opacity:    0.85,
                       }}
                     />
@@ -445,7 +410,7 @@ export default function FinanceiroPage() {
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1.5">
-                        <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: UNIDADE_COLORS[l.unidade] ?? "#888" }} />
+                        <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: unitColor(unidades, l.unidade) }} />
                         <span className="text-[10px] text-text-muted">{l.unidade}</span>
                         <span className="text-text-muted/40">·</span>
                         <span className="text-[10px] text-text-muted">{fmtDate(l.data)}</span>
@@ -468,7 +433,7 @@ export default function FinanceiroPage() {
                   <div className="hidden md:grid md:grid-cols-[100px_160px_80px_1fr_140px_120px_auto] md:items-center md:gap-4">
                     <span className="text-[11px] font-mono text-text-secondary">{fmtDate(l.data)}</span>
                     <div className="flex items-center gap-1.5">
-                      <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: UNIDADE_COLORS[l.unidade] ?? "#888" }} />
+                      <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: unitColor(unidades, l.unidade) }} />
                       <span className="text-[11px] text-text-secondary truncate">{l.unidade}</span>
                     </div>
                     <span className={cn(
@@ -564,13 +529,16 @@ export default function FinanceiroPage() {
                 {/* Unidade */}
                 <div>
                   <label className="text-[10px] font-mono text-text-muted uppercase tracking-widest block mb-1.5">Unidade</label>
-                  <select
+                  <input
+                    list="unidades-datalist"
                     value={form.unidade}
                     onChange={e => setForm(f => ({ ...f, unidade: e.target.value }))}
-                    className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2 text-[12px] text-text-primary outline-none focus:border-accent/40 transition-colors"
-                  >
-                    {UNIDADES.map(u => <option key={u}>{u}</option>)}
-                  </select>
+                    placeholder="Nome da unidade"
+                    className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2 text-[12px] text-text-primary placeholder:text-text-muted outline-none focus:border-accent/40 transition-colors"
+                  />
+                  <datalist id="unidades-datalist">
+                    {unidades.map(u => <option key={u} value={u} />)}
+                  </datalist>
                 </div>
 
                 {/* Data */}

@@ -299,6 +299,7 @@ function Cell({ v }: { v: boolean | string }) {
 export default function LandingPage() {
   const { user, loading: authLoading } = useAuth()
   const ctaHref = "/planos"
+  const signupHref = "/cadastro"
   const appHref = !authLoading && user ? "/dashboard" : "/login"
 
   const [activeTab,        setActiveTab]        = useState(0)
@@ -319,7 +320,7 @@ export default function LandingPage() {
           <Link href={appHref} className="text-[12px]" style={{ color: TEXT2 }}>
             {!authLoading && user ? "Acessar plataforma" : "Entrar"}
           </Link>
-          <Link href={ctaHref}
+          <Link href={signupHref}
             className="inline-flex items-center gap-1.5 rounded-lg font-semibold text-[12px] transition-all hover:opacity-90"
             style={{ padding: "8px 18px", background: DARK, color: GOLD }}>
             Testar grátis <ArrowRight style={{ width: 12, height: 12 }} />
@@ -712,7 +713,7 @@ export default function LandingPage() {
           <p style={{ fontSize: 13, color: MUTED, marginTop: 8 }}>Estimativa baseada em dados médios de usuários. Resultados variam conforme uso e dedicação.</p>
         </FadeUp>
         <FadeUp>
-          <SimuladorROI ctaHref={ctaHref} />
+          <SimuladorROI ctaHref={signupHref} />
         </FadeUp>
       </section>
 
@@ -907,7 +908,7 @@ export default function LandingPage() {
                       </li>
                     ))}
                   </ul>
-                  <Link href={ctaHref}
+                  <Link href={signupHref}
                     className="block text-center py-3.5 rounded-xl text-[13px] font-bold transition-all hover:opacity-90"
                     style={{
                       background: id === "os" ? color : `${color}18`,

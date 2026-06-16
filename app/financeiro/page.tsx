@@ -87,6 +87,7 @@ export default function FinanceiroPage() {
   const [grupo,       setGrupo]       = useState<Grupo>("consolidado")
   const [unidade,     setUnidade]     = useState("Todas")
   const [tipoFilter,  setTipoFilter]  = useState<TipoFilter>("todos")
+  const [viewAll,      setViewAll]     = useState(false)
   const [rawData,     setRawData]     = useState<Lancamento[]>([])
   const [loading,     setLoading]     = useState(false)
   const [deletingId,  setDeletingId]  = useState<string | null>(null)
@@ -120,7 +121,7 @@ export default function FinanceiroPage() {
     setLoading(true)
     setError("")
     try {
-      const params = new URLSearchParams({ inicio, fim })
+      const params = new URLSearchParams(viewAll ? {} : { inicio, fim })
       const res    = await fetch(`/api/financeiro?${params}`)
       const json   = await res.json()
       if (json.error) throw new Error(json.error)
@@ -130,7 +131,7 @@ export default function FinanceiroPage() {
     } finally {
       setLoading(false)
     }
-  }, [inicio, fim])
+  }, [inicio, fim, viewAll])
 
   useEffect(() => { fetchData() }, [fetchData])
 
@@ -200,7 +201,10 @@ export default function FinanceiroPage() {
         actions={
           <div className="flex flex-wrap items-center gap-2">
             {/* Month selector */}
-            <div className="flex items-center gap-1 bg-surface border border-border rounded-lg px-2 py-1.5">
+            <div className={cn(
+              "flex items-center gap-1 bg-surface border border-border rounded-lg px-2 py-1.5",
+              viewAll && "opacity-40 pointer-events-none"
+            )}>
               <button onClick={prevMonth} className="text-text-muted hover:text-text-primary transition-colors p-0.5">
                 <ChevronLeft className="w-3.5 h-3.5" />
               </button>
@@ -211,6 +215,17 @@ export default function FinanceiroPage() {
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
+            <button
+              onClick={() => setViewAll(v => !v)}
+              className={cn(
+                "text-[11px] font-medium rounded-lg px-3 py-1.5 border transition-colors",
+                viewAll
+                  ? "bg-accent-dim border-accent-border text-accent"
+                  : "border-border text-text-muted hover:text-text-secondary"
+              )}
+            >
+              Ver tudo
+            </button>
             <button
               onClick={() => setModalOpen(true)}
               className="flex items-center gap-1.5 text-[11px] bg-accent text-background font-semibold rounded-lg px-3 py-1.5 hover:opacity-90 transition-opacity"
@@ -395,7 +410,10 @@ export default function FinanceiroPage() {
             </div>
           ) : data.length === 0 && !loading ? (
             <div className="py-12 text-center text-[13px] text-text-muted">
-              Nenhum lançamento no período selecionado.
+              {viewAll
+                ? "Nenhum lançamento encontrado."
+                : <>Nenhum lançamento em {MESES[currentMonth]}. <button onClick={() => setViewAll(true)} className="text-accent hover:underline">Ver todos os períodos</button></>
+              }
             </div>
           ) : (
             <div className="divide-y divide-border">

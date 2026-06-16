@@ -22,6 +22,7 @@ export async function GET(req: NextRequest) {
     let query      = supabase
       .from("financeiro_lancamentos")
       .select("*")
+      .eq("user_id", auth.userId)
       .order("data", { ascending: false })
 
     if (unidade) query = query.eq("unidade", unidade)

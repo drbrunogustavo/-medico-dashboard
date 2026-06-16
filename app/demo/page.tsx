@@ -19,9 +19,9 @@ function DemoBanner() {
     <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between gap-3 px-4 py-2.5"
       style={{ background: "#0D1B2A", borderBottom: "1px solid rgba(184,151,106,0.25)" }}>
       <div className="flex items-center gap-2">
-        <Sparkles className="w-4 h-4 flex-shrink-0" style={{ color: "#b8976a" }} />
+        <span className="text-[14px]">📊</span>
         <span className="text-[12px] font-medium" style={{ color: "#e8ddd0" }}>
-          Você está no <strong style={{ color: "#b8976a" }}>modo demonstração</strong> com dados fictícios do Dr. João Silva.
+          <strong style={{ color: "#b8976a" }}>Dados demonstrativos</strong> para fins ilustrativos — não representam dados reais de nenhum usuário.
         </span>
       </div>
       <div className="flex items-center gap-3 flex-shrink-0">
@@ -284,6 +284,7 @@ export default function DemoPage() {
                   </div>
                   <div className="text-[11px] font-semibold" style={{ color: "var(--text-primary)" }}>{m.label}</div>
                   <div className="text-[10px]" style={{ color: "var(--text-muted)" }}>{m.sub}</div>
+                  <div className="text-[9px] font-mono mt-1.5 px-1.5 py-0.5 rounded inline-block" style={{ background: "rgba(245,158,11,0.1)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.2)" }}>dado ilustrativo</div>
                 </div>
               )
             })}

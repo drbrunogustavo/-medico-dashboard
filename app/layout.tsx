@@ -3,6 +3,7 @@ import { Inter, Playfair_Display } from "next/font/google"
 import "./globals.css"
 import { ConditionalLayout } from "@/components/ConditionalLayout"
 import { InstallPWA } from "@/components/InstallPWA"
+import { Analytics } from "@vercel/analytics/react"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -63,6 +64,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="bg-background text-text-primary antialiased">
         <ConditionalLayout>{children}</ConditionalLayout>
         <InstallPWA />
+        <Analytics />
         <script dangerouslySetInnerHTML={{ __html: `
           if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {

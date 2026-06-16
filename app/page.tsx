@@ -10,6 +10,7 @@ import {
   Database, CheckCircle2, X, Minus, ChevronRight, BookOpen,
 } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
+import { track } from "@vercel/analytics"
 import { SimuladorROI } from "@/components/SimuladorROI"
 import { ProductMockup } from "@/components/ProductMockup"
 import { FluxoIntegrado } from "@/components/FluxoIntegrado"
@@ -380,11 +381,13 @@ export default function LandingPage() {
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link href="/tour"
+              onClick={() => track("cta_click", { button: "hero_explorar_plataforma" })}
               className="inline-flex items-center gap-2 rounded-xl font-bold transition-all hover:opacity-90 active:scale-[0.98]"
               style={{ padding: "16px 36px", fontSize: 15, background: GOLD, color: DARK, boxShadow: `0 8px 40px ${GOLD}30` }}>
               Explorar a plataforma <ArrowRight style={{ width: 16, height: 16 }} />
             </Link>
             <Link href="/sobre"
+              onClick={() => track("cta_click", { button: "hero_ver_planos" })}
               className="inline-flex items-center gap-2 rounded-xl font-semibold text-[14px] transition-all hover:opacity-80"
               style={{ padding: "16px 28px", background: "rgba(13,27,42,0.06)", color: DARK, border: `1px solid ${BORDER}` }}>
               Ver planos →
@@ -873,6 +876,86 @@ export default function LandingPage() {
         </FadeUp>
       </section>
 
+      {/* ── SEÇÃO 9.5 — COPILOTO DESTAQUE MÁXIMO ────────────────────────────── */}
+      <section className="max-w-7xl mx-auto px-6 pb-24">
+        <FadeUp>
+          <div className="rounded-3xl overflow-hidden" style={{ background: DARK, border: `1px solid ${GOLD}20` }}>
+            <div className="px-8 md:px-16 py-14 md:py-20">
+              <FadeUp className="text-center mb-16">
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 11, fontFamily: "monospace", color: GOLD, letterSpacing: "2px", border: `1px solid ${GOLD}40`, padding: "4px 16px", borderRadius: 999, marginBottom: 24 }}>
+                  ✦ EXCLUSIVO PRAXIS
+                </span>
+                <h2 style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: "clamp(24px, 4vw, 44px)", fontWeight: 700, color: "#F5F0E8", lineHeight: 1.2, marginBottom: 12 }}>
+                  O módulo que diferencia o PRAXIS<br />de qualquer concorrente
+                </h2>
+                <p style={{ fontSize: "clamp(14px, 2vw, 18px)", color: "rgba(245,240,232,0.65)", maxWidth: 560, margin: "0 auto" }}>
+                  IA clínica aplicada à consulta — não apenas marketing
+                </p>
+              </FadeUp>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+                <FadeUp delay={100}>
+                  <div>
+                    <p style={{ fontSize: 10, fontFamily: "monospace", color: GOLD, letterSpacing: "3px", textTransform: "uppercase", marginBottom: 24 }}>COMO FUNCIONA</p>
+                    <div className="space-y-7">
+                      {[
+                        { n: 1, t: "Descreva a consulta em texto livre", d: "Durante ou após o atendimento, narre o caso clínico como preferir — sem formulários ou campos obrigatórios." },
+                        { n: 2, t: "IA gera documentação completa em segundos", d: "SOAP, plano terapêutico, exames, orientações e mensagens de follow-up — tudo gerado automaticamente." },
+                        { n: 3, t: "Revise, copie e envie para o paciente", d: "Tudo editável. Exporte para o prontuário ou envie direto via WhatsApp." },
+                      ].map(({ n, t, d }) => (
+                        <div key={n} className="flex gap-5">
+                          <div style={{ width: 38, height: 38, borderRadius: "50%", background: `${GOLD}15`, border: `1px solid ${GOLD}30`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 14, fontWeight: 800, color: GOLD }}>
+                            {n}
+                          </div>
+                          <div>
+                            <div style={{ fontSize: 16, fontWeight: 700, color: "#F5F0E8", marginBottom: 5, lineHeight: 1.3 }}>{t}</div>
+                            <div style={{ fontSize: 13, color: "rgba(245,240,232,0.55)", lineHeight: 1.65 }}>{d}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </FadeUp>
+
+                <FadeUp delay={200}>
+                  <div>
+                    <p style={{ fontSize: 10, fontFamily: "monospace", color: GOLD, letterSpacing: "3px", textTransform: "uppercase", marginBottom: 24 }}>O QUE É GERADO</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {[
+                        { icon: "📋", label: "Resumo Clínico (SOAP)" },
+                        { icon: "💊", label: "Plano Terapêutico" },
+                        { icon: "🔬", label: "Exames Solicitados" },
+                        { icon: "📱", label: "Orientações ao Paciente" },
+                        { icon: "⏰", label: "Follow-up D+1, D+7, D+30" },
+                        { icon: "✍️", label: "Sugestão de Conteúdo" },
+                        { icon: "📄", label: "Prontuário Formatado" },
+                      ].map(({ icon, label }) => (
+                        <div key={label} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderRadius: 10, background: `${GOLD}08`, border: `1px solid ${GOLD}20` }}>
+                          <span style={{ fontSize: 16 }}>{icon}</span>
+                          <Check style={{ width: 13, height: 13, color: GOLD, flexShrink: 0 }} />
+                          <span style={{ fontSize: 13, color: "rgba(245,240,232,0.82)" }}>{label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </FadeUp>
+              </div>
+
+              <FadeUp delay={300}>
+                <div className="text-center mt-14">
+                  <Link href="/tour"
+                    onClick={() => track("cta_click", { button: "copiloto_ver_demo" })}
+                    className="inline-flex items-center gap-2 rounded-xl font-semibold text-[14px] transition-all hover:opacity-90"
+                    style={{ padding: "14px 32px", background: `${GOLD}18`, color: GOLD, border: `1px solid ${GOLD}35` }}>
+                    Ver demonstração completa <ArrowRight style={{ width: 15, height: 15 }} />
+                  </Link>
+                </div>
+              </FadeUp>
+            </div>
+          </div>
+        </FadeUp>
+      </section>
+
       {/* ── SEÇÃO 10 — PLANOS ────────────────────────────────────────────────── */}
       <section className="max-w-5xl mx-auto px-6 pb-24">
         <FadeUp className="text-center mb-8">
@@ -1048,6 +1131,7 @@ export default function LandingPage() {
               Comece o período de teste gratuito. Nenhum cartão necessário.
             </p>
             <Link href="/tour"
+              onClick={() => track("cta_click", { button: "cta_final_explorar" })}
               className="inline-flex items-center gap-2.5 rounded-xl font-bold transition-all hover:opacity-95 active:scale-[0.98]"
               style={{ padding: "18px 44px", fontSize: 16, background: GOLD, color: DARK, boxShadow: `0 0 60px ${GOLD}25` }}>
               Explorar a plataforma <ArrowRight style={{ width: 16, height: 16 }} />

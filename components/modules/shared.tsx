@@ -268,6 +268,36 @@ export function ModuleFinalCTA({
   )
 }
 
+// ─── FAQ ────────────────────────────────────────────────────────────────────
+
+export interface FAQItem { q: string; a: string }
+
+export function ModuleFAQ({ items, color = GOLD }: { items: FAQItem[]; color?: string }) {
+  return (
+    <section className="max-w-3xl mx-auto px-6 pb-24 animate-fade-in">
+      <div className="text-center mb-10">
+        <SectionLabel color={color}>FAQ</SectionLabel>
+        <h2 style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: "clamp(22px, 4vw, 36px)", fontWeight: 700, color: DARK }}>
+          Perguntas frequentes
+        </h2>
+      </div>
+      <div className="space-y-3">
+        {items.map((item, i) => (
+          <details key={i} className="rounded-xl overflow-hidden group" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
+            <summary className="flex items-center justify-between px-5 py-4 cursor-pointer list-none" style={{ fontSize: 14, fontWeight: 600, color: DARK }}>
+              {item.q}
+              <span style={{ fontSize: 18, color: MUTED, flexShrink: 0, marginLeft: 12 }}>+</span>
+            </summary>
+            <div className="px-5 pb-4" style={{ fontSize: 13, color: TEXT2, lineHeight: 1.7, borderTop: `1px solid ${BORDER}`, paddingTop: 12 }}>
+              {item.a}
+            </div>
+          </details>
+        ))}
+      </div>
+    </section>
+  )
+}
+
 // ─── Wrapper de página ──────────────────────────────────────────────────────
 
 export function ModulePageShell({ active, children }: { active: string; children: React.ReactNode }) {

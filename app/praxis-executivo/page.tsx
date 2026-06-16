@@ -4,7 +4,7 @@ import {
 } from "lucide-react"
 import {
   ModulePageShell, ModuleHero, ModuleScreenshot,
-  FeatureGrid, ModuleFinalCTA, type FeatureItem,
+  FeatureGrid, ModuleFinalCTA, ModuleFAQ, type FeatureItem, type FAQItem,
 } from "@/components/modules/shared"
 
 const ACCENT = "#16a34a"
@@ -26,6 +26,25 @@ export const metadata: Metadata = {
     type: "website",
   },
 }
+
+const FAQ_ITEMS: FAQItem[] = [
+  {
+    q: "Preciso de conhecimento em finanças para usar o Painel Executivo?",
+    a: "Não. O painel é desenhado para médicos sem formação em gestão. Cada indicador tem uma explicação clara e o Consultor Estratégico IA traduz os números em recomendações acionáveis em linguagem simples.",
+  },
+  {
+    q: "Os indicadores são atualizados em tempo real?",
+    a: "Sim. O painel reflete as últimas movimentações registradas — lançamentos financeiros, novos leads no CRM, NPS de pacientes e consultas agendadas são atualizados automaticamente.",
+  },
+  {
+    q: "Funciona para clínicas com mais de uma unidade?",
+    a: "Sim. Você pode criar múltiplas unidades e visualizar indicadores consolidados ou por unidade individualmente. Ideal para médicos que atendem em mais de um consultório.",
+  },
+  {
+    q: "O Consultor Estratégico IA substitui uma consultoria de gestão?",
+    a: "Para a grande maioria das decisões do dia a dia, sim. Para situações complexas como fusões, investimentos de alto valor ou reestruturações societárias, uma consultoria especializada pode ser necessária — o PRAXIS complementa essa visão.",
+  },
+]
 
 const FEATURES: FeatureItem[] = [
   { icon: LayoutDashboard, title: "Painel Executivo",         desc: "Todas as métricas em um único lugar." },
@@ -74,6 +93,8 @@ export default function PraxisExecutivoPage() {
           ctaHref="/cadastro"
         />
       </section>
+
+      <ModuleFAQ items={FAQ_ITEMS} color={ACCENT} />
 
       <ModuleFinalCTA
         title="Pronto para gerenciar sua clínica com dados?"

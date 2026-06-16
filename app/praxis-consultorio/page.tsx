@@ -5,7 +5,7 @@ import {
 } from "lucide-react"
 import {
   ModulePageShell, ModuleHero, ModuleScreenshot,
-  FeatureGrid, ModuleFinalCTA, type FeatureItem,
+  FeatureGrid, ModuleFinalCTA, ModuleFAQ, type FeatureItem, type FAQItem,
 } from "@/components/modules/shared"
 import { ProductMockup } from "@/components/ProductMockup"
 import { GOLD, DARK } from "@/lib/module-tokens"
@@ -28,6 +28,25 @@ export const metadata: Metadata = {
     type: "website",
   },
 }
+
+const FAQ_ITEMS: FAQItem[] = [
+  {
+    q: "O Copiloto substitui o prontuário eletrônico?",
+    a: "Não substitui — complementa. O Copiloto gera a documentação estruturada (SOAP, plano, orientações) que você cola ou exporta para o seu sistema de prontuário atual. Ele elimina o tempo de digitação, não a ferramenta.",
+  },
+  {
+    q: "Funciona com qualquer especialidade médica?",
+    a: "Sim. A IA é instruída com o contexto da sua especialidade ao configurar o perfil. Usada por endocrinologistas, dermatologistas, clínicos gerais, nutrologistas, ginecologistas e mais de 25 especialidades.",
+  },
+  {
+    q: "Os dados dos pacientes são seguros?",
+    a: "Sim. O PRAXIS usa Supabase com Row Level Security — seus dados são isolados por usuário. Nenhuma informação clínica é usada para treinar modelos de IA. Estamos em conformidade com a LGPD.",
+  },
+  {
+    q: "O CRM substitui minha secretária?",
+    a: "Não substitui — automatiza a parte repetitiva. O nurturing via WhatsApp e o acompanhamento de leads são automáticos. Sua secretária foca no que exige toque humano.",
+  },
+]
 
 const FEATURES: FeatureItem[] = [
   { icon: Users,        title: "CRM de Leads",            desc: "Funil visual do lead ao paciente ativo." },
@@ -111,6 +130,8 @@ export default function PraxisConsultorioPage() {
           </div>
         </div>
       </section>
+
+      <ModuleFAQ items={FAQ_ITEMS} color={ACCENT} />
 
       <ModuleFinalCTA
         title="Pronto para converter mais leads em pacientes?"

@@ -4,9 +4,10 @@ import {
 } from "lucide-react"
 import {
   ModulePageShell, ModuleHero, ProblemBlock,
-  FeatureGrid, ModuleFinalCTA, SectionLabel, type FeatureItem,
+  FeatureGrid, ModuleFinalCTA, ModuleFAQ, SectionLabel,
+  type FeatureItem, type FAQItem,
 } from "@/components/modules/shared"
-import { DARK, TEXT2, CARD } from "@/lib/module-tokens"
+import { DARK, TEXT2, CARD, GOLD, MUTED, BORDER } from "@/lib/module-tokens"
 
 const ACCENT = "#a78bfa"
 
@@ -34,6 +35,36 @@ const FEATURES: FeatureItem[] = [
   { icon: Compass,      title: "Posicionamento Médico",        desc: "Descubra seu nicho e diferencial." },
   { icon: TrendingUp,   title: "Inteligência de Mercado",      desc: "Trending topics médicos em tempo real." },
   { icon: Bot,          title: "Consultor Estratégico",        desc: "Análise baseada nos dados reais." },
+]
+
+const FAQ_ITEMS: FAQItem[] = [
+  {
+    q: "Os dados da minha clínica são usados para treinar a IA?",
+    a: "Não. Nenhum dado da sua clínica, dos seus pacientes ou dos seus conteúdos é usado para treinar modelos de IA. Cada conta é isolada por Row Level Security no banco de dados.",
+  },
+  {
+    q: "Qual a diferença do PRAXIS IA para o ChatGPT?",
+    a: "O ChatGPT é genérico. O PRAXIS IA é instruído com o contexto da medicina, da sua especialidade e da sua clínica. Além disso, está integrado ao seu CRM, financeiro e indicadores — gerando análises com dados reais, não exemplos fictícios.",
+  },
+  {
+    q: "A IA comete erros nas sugestões clínicas?",
+    a: "Sim — como qualquer ferramenta de IA. O PRAXIS é projetado como suporte à decisão médica, não substituto. Todo output é revisável e você, como médico, mantém responsabilidade total pelas condutas.",
+  },
+  {
+    q: "Funciona sem internet?",
+    a: "Não. As funções de IA requerem conexão com a internet para processar as requisições. O restante da plataforma (CRM, financeiro, calendário) funciona normalmente com conexão intermitente.",
+  },
+]
+
+const COMP_ROWS = [
+  { feature: "Contexto médico especializado",   chatgpt: false, praxis: true  },
+  { feature: "Integrado ao CRM e financeiro",   chatgpt: false, praxis: true  },
+  { feature: "Memória da clínica e protocolos", chatgpt: false, praxis: true  },
+  { feature: "Dados reais da sua clínica",       chatgpt: false, praxis: true  },
+  { feature: "Análise de tendências médicas",    chatgpt: "~",   praxis: true  },
+  { feature: "Geração de conteúdo",              chatgpt: true,  praxis: true  },
+  { feature: "Resposta a perguntas gerais",      chatgpt: true,  praxis: true  },
+  { feature: "Privacidade dos dados",            chatgpt: "~",   praxis: true  },
 ]
 
 const PASSOS = [
@@ -84,6 +115,46 @@ export default function PraxisIaPage() {
           ))}
         </div>
       </section>
+
+      {/* ── PRAXIS IA vs ChatGPT ──────────────────────────────────────────────── */}
+      <section className="max-w-4xl mx-auto px-6 pb-24 animate-fade-in">
+        <div className="text-center mb-10">
+          <SectionLabel color={ACCENT}>COMPARATIVO</SectionLabel>
+          <h2 style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: "clamp(22px, 4vw, 36px)", fontWeight: 700, color: DARK }}>
+            PRAXIS IA vs ChatGPT
+          </h2>
+          <p style={{ fontSize: 14, color: TEXT2, marginTop: 10 }}>Não é um wrapper. É uma IA integrada ao seu negócio.</p>
+        </div>
+        <div className="overflow-x-auto rounded-2xl" style={{ border: `1px solid ${BORDER}` }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", background: CARD }}>
+            <thead>
+              <tr style={{ borderBottom: `1px solid ${BORDER}` }}>
+                <th style={{ padding: "14px 20px", textAlign: "left", fontSize: 11, fontFamily: "monospace", color: MUTED, letterSpacing: "1px", fontWeight: 600 }}>RECURSO</th>
+                {["ChatGPT", "PRAXIS IA"].map((h, i) => (
+                  <th key={h} style={{ padding: "14px 16px", textAlign: "center", fontSize: 12, fontWeight: 700, color: i === 1 ? ACCENT : TEXT2, background: i === 1 ? `${ACCENT}06` : "transparent" }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {COMP_ROWS.map(({ feature, chatgpt, praxis }, ri) => (
+                <tr key={feature} style={{ borderBottom: ri < COMP_ROWS.length - 1 ? `1px solid ${BORDER}` : "none" }}>
+                  <td style={{ padding: "12px 20px", fontSize: 13, color: TEXT2 }}>{feature}</td>
+                  <td style={{ padding: "12px 16px", textAlign: "center" }}>
+                    {chatgpt === true  ? <span style={{ fontSize: 16 }}>✓</span>
+                    : chatgpt === false ? <span style={{ color: "#dc2626", fontSize: 14, fontWeight: 700 }}>✗</span>
+                    : <span style={{ color: "#d97706" }}>~</span>}
+                  </td>
+                  <td style={{ padding: "12px 16px", textAlign: "center", background: `${ACCENT}05` }}>
+                    {praxis === true ? <span style={{ color: ACCENT, fontSize: 16 }}>✓</span> : <span style={{ color: "#dc2626" }}>✗</span>}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <ModuleFAQ items={FAQ_ITEMS} color={ACCENT} />
 
       <ModuleFinalCTA
         title="Quanto mais cedo começar, mais personalizada fica"

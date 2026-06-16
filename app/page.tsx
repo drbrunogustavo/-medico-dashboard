@@ -302,6 +302,98 @@ function Cell({ v }: { v: boolean | string }) {
   return <span style={{ fontSize: 11, color: TEXT2 }}>{v}</span>
 }
 
+// ─── CopilotoFlow ─────────────────────────────────────────────────────────────
+
+const COPILOTO_TEXTO = "Paciente 45 anos, queixa fadiga há 3 meses, TSH 6.2, peso +8kg, sem melhora com dieta..."
+const COPILOTO_CARDS = [
+  "Resumo Clínico (SOAP) gerado",
+  "Plano Terapêutico gerado",
+  "Follow-up D+1 pronto",
+  "Sugestão de conteúdo",
+]
+
+function CopilotoFlow() {
+  const [phase,    setPhase]    = useState(0)
+  const [typed,    setTyped]    = useState("")
+  const [progress, setProgress] = useState(0)
+  const [cards,    setCards]    = useState(0)
+
+  useEffect(() => {
+    if (phase === 0) {
+      if (typed.length < COPILOTO_TEXTO.length) {
+        const t = setTimeout(() => setTyped(COPILOTO_TEXTO.slice(0, typed.length + 1)), 30)
+        return () => clearTimeout(t)
+      }
+      const t = setTimeout(() => setPhase(1), 700)
+      return () => clearTimeout(t)
+    }
+    if (phase === 1) {
+      if (progress < 100) {
+        const t = setTimeout(() => setProgress(p => Math.min(100, p + 4)), 30)
+        return () => clearTimeout(t)
+      }
+      const t = setTimeout(() => setPhase(2), 400)
+      return () => clearTimeout(t)
+    }
+    if (phase === 2) {
+      if (cards < COPILOTO_CARDS.length) {
+        const t = setTimeout(() => setCards(c => c + 1), 380)
+        return () => clearTimeout(t)
+      }
+      const t = setTimeout(() => { setPhase(0); setTyped(""); setProgress(0); setCards(0) }, 4000)
+      return () => clearTimeout(t)
+    }
+  }, [phase, typed, progress, cards])
+
+  return (
+    <div className="rounded-xl overflow-hidden" style={{ background: "#111827", border: "1px solid rgba(184,151,106,0.25)" }}>
+      <div style={{ background: "#0a0f1a", padding: "8px 14px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ display: "flex", gap: 5 }}>
+          {["#ff5f57","#febc2e","#28c840"].map(c => <div key={c} style={{ width: 8, height: 8, borderRadius: "50%", background: c, opacity: 0.6 }} />)}
+        </div>
+        <span style={{ fontSize: 10, fontFamily: "monospace", color: "rgba(255,255,255,0.3)" }}>Copiloto de Consulta — PRAXIS</span>
+      </div>
+      <div className="p-5 space-y-4">
+        <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.10)", borderRadius: 8, padding: "10px 14px" }}>
+          <div style={{ fontSize: 9, fontFamily: "monospace", color: "rgba(184,151,106,0.7)", letterSpacing: "1px", marginBottom: 6 }}>RELATO DA CONSULTA</div>
+          <p style={{ fontSize: 12, color: "rgba(255,255,255,0.75)", lineHeight: 1.6, minHeight: 38 }}>
+            {typed}{phase === 0 && typed.length < COPILOTO_TEXTO.length && (
+              <span style={{ display: "inline-block", width: 2, height: 14, background: GOLD, marginLeft: 2, verticalAlign: "text-bottom" }} />
+            )}
+          </p>
+        </div>
+        {phase >= 1 && (
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
+              <span style={{ fontSize: 10, fontFamily: "monospace", color: "rgba(184,151,106,0.8)" }}>Gerando documentação...</span>
+              <span style={{ fontSize: 10, fontFamily: "monospace", color: "rgba(184,151,106,0.8)" }}>{progress}%</span>
+            </div>
+            <div style={{ height: 3, background: "rgba(255,255,255,0.08)", borderRadius: 999 }}>
+              <div style={{ height: "100%", background: GOLD, borderRadius: 999, width: `${progress}%`, transition: "width 0.05s linear" }} />
+            </div>
+          </div>
+        )}
+        {phase === 2 && (
+          <div className="space-y-1.5">
+            {COPILOTO_CARDS.map((card, i) => (
+              <div key={i} style={{
+                display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 8,
+                background: i < cards ? "rgba(184,151,106,0.08)" : "transparent",
+                border: `1px solid ${i < cards ? "rgba(184,151,106,0.25)" : "transparent"}`,
+                opacity: i < cards ? 1 : 0,
+                transition: "all 0.4s ease",
+              }}>
+                <Check style={{ width: 13, height: 13, color: GOLD, flexShrink: 0 }} />
+                <span style={{ fontSize: 12, color: "rgba(255,255,255,0.8)" }}>{card}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function LandingPage() {
@@ -372,12 +464,12 @@ export default function LandingPage() {
             fontSize: "clamp(28px, 5vw, 58px)",
             fontWeight: 700, color: DARK, lineHeight: 1.15, marginBottom: 20,
           }}>
-            A infraestrutura digital<br />
-            <span style={{ color: GOLD }}>que sua clínica precisa.</span>
+            Nunca mais perca um paciente<br />
+            <span style={{ color: GOLD }}>por falta de follow-up.</span>
           </h1>
           <p style={{ fontSize: "clamp(15px, 2vw, 19px)", color: TEXT2, lineHeight: 1.75, maxWidth: 600, margin: "0 auto 36px" }}>
-            CRM médico, IA clínica, marketing e gestão em uma plataforma integrada.<br className="hidden md:block" />
-            Feita por médico, para médicos.
+            O sistema operacional da clínica moderna —<br className="hidden md:block" />
+            CRM, IA clínica, conteúdo e gestão em um só lugar.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link href="/tour"
@@ -396,36 +488,180 @@ export default function LandingPage() {
         </FadeUp>
       </section>
 
-      {/* ── SEÇÃO 2 — O PROBLEMA ─────────────────────────────────────────────── */}
-      <section className="max-w-5xl mx-auto px-6 pb-20">
-        <FadeUp className="text-center mb-10">
-          <SLabel>O PROBLEMA</SLabel>
+      {/* ── SEÇÃO 1.5 — COPILOTO ESTRELA ────────────────────────────────────── */}
+      <section style={{ background: DARK }}>
+        <div className="max-w-6xl mx-auto px-6 py-20 md:py-28">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <FadeUp>
+              <div>
+                <div style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11, fontFamily: "monospace", color: GOLD, letterSpacing: "2px", border: `1px solid ${GOLD}40`, padding: "4px 14px", borderRadius: 999, marginBottom: 20 }}>
+                  ⭐ O módulo mais valioso
+                </div>
+                <h2 style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: "clamp(26px, 4vw, 48px)", fontWeight: 700, color: "#F5F0E8", lineHeight: 1.15, marginBottom: 16 }}>
+                  Documentação clínica em<br />
+                  <span style={{ color: GOLD }}>30 segundos.</span>
+                </h2>
+                <p style={{ fontSize: "clamp(14px, 2vw, 17px)", color: "rgba(245,240,232,0.65)", lineHeight: 1.75, marginBottom: 32 }}>
+                  Enquanto outros médicos passam 40 minutos documentando,<br className="hidden md:block" />
+                  você já está atendendo o próximo paciente.
+                </p>
+                <CopilotoFlow />
+                <div className="mt-8 space-y-3">
+                  <Link href="/tour"
+                    className="inline-flex items-center gap-2 rounded-xl font-semibold text-[14px] transition-all hover:opacity-90"
+                    style={{ padding: "14px 28px", background: `${GOLD}18`, color: GOLD, border: `1px solid ${GOLD}35` }}>
+                    Ver o Copiloto em ação <ArrowRight style={{ width: 15, height: 15 }} />
+                  </Link>
+                  <p style={{ fontSize: 11, color: "rgba(245,240,232,0.35)", fontFamily: "monospace" }}>
+                    Usado em Endocrinologia, Nutrologia, Ginecologia e Clínica Geral
+                  </p>
+                </div>
+              </div>
+            </FadeUp>
+            <FadeUp delay={150}>
+              <div className="rounded-2xl overflow-hidden" style={{ boxShadow: `0 20px 80px rgba(0,0,0,0.4), 0 0 0 1px ${GOLD}20` }}>
+                <div style={{ background: "#0a0f1a", padding: "10px 14px", display: "flex", alignItems: "center", gap: 8, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                  <div style={{ display: "flex", gap: 5 }}>
+                    {["#ff5f57","#febc2e","#28c840"].map(c => <div key={c} style={{ width: 10, height: 10, borderRadius: "50%", background: c, opacity: 0.7 }} />)}
+                  </div>
+                  <div style={{ flex: 1, background: "rgba(255,255,255,0.06)", borderRadius: 5, padding: "3px 10px", fontSize: 10, color: "rgba(255,255,255,0.28)", textAlign: "center" }}>
+                    app.praxisplataforma.com.br/copiloto
+                  </div>
+                </div>
+                <Image src="/screenshots/consultor.png" alt="Copiloto de Consulta — PRAXIS" width={800} height={500} className="w-full h-auto block" unoptimized />
+              </div>
+            </FadeUp>
+          </div>
+        </div>
+      </section>
+
+      {/* ── SEÇÃO 1.7 — 60 SEGUNDOS PARA ENTENDER ───────────────────────────── */}
+      <section className="max-w-5xl mx-auto px-6 py-20 pb-4">
+        <FadeUp className="text-center mb-12">
+          <SLabel>ENTENDA EM 60 SEGUNDOS</SLabel>
           <h2 style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: "clamp(22px, 4vw, 38px)", fontWeight: 700, color: DARK }}>
-            O médico moderno enfrenta 3 desafios simultâneos
+            Três problemas reais.<br />Três soluções concretas.
           </h2>
         </FadeUp>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {[
             {
-              icon: Users, color: GOLD, label: "AQUISIÇÃO",
-              q: "Como atrair pacientes particulares de forma consistente sem depender de convênios ou indicações?",
+              cor: "#3b7fff", modulo: "PRAXIS Consultório", emoji: "🧑‍💼", titulo: "O Lead",
+              antes: "Lead manda mensagem no Instagram. Você vê 4 horas depois. Responde. Ele já foi para o concorrente.",
+              depois: "Lead chega → CRM captura → WhatsApp automático em minutos → consulta agendada.",
             },
             {
-              icon: Settings, color: "#3b7fff", label: "OPERAÇÃO",
-              q: "Como gerenciar leads, consultas, pacientes e financeiro sem perder horas em tarefas administrativas?",
+              cor: GOLD, modulo: "Copiloto de Consulta", emoji: "🩺", titulo: "A Consulta",
+              antes: "40 minutos de consulta. 30 minutos documentando. Repete amanhã.",
+              depois: "40 minutos de consulta. 30 segundos para gerar prontuário completo com o Copiloto.",
             },
             {
-              icon: BarChart3, color: "#16a34a", label: "CRESCIMENTO",
-              q: "Como tomar decisões estratégicas sobre a clínica com base em dados reais, não em intuição?",
+              cor: "#16a34a", modulo: "PRAXIS Executivo", emoji: "📊", titulo: "A Gestão",
+              antes: "Quanto faturei esse mês? Qual minha taxa de retorno? Onde estou perdendo dinheiro?",
+              depois: "Painel executivo mostra tudo em tempo real. Consultor IA analisa e recomenda ações.",
             },
-          ].map(({ icon: Icon, color, label, q }, i) => (
-            <FadeUp key={label} delay={i * 80}>
-              <div className="rounded-2xl p-7 h-full" style={{ background: CARD, border: `1px solid ${color}20` }}>
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ background: `${color}12`, border: `1px solid ${color}25` }}>
-                  <Icon style={{ width: 20, height: 20, color }} />
+          ].map(({ cor, modulo, emoji, titulo, antes, depois }, i) => (
+            <FadeUp key={i} delay={i * 100}>
+              <div className="rounded-2xl overflow-hidden h-full flex flex-col" style={{ background: CARD, border: `1px solid ${cor}25` }}>
+                <div className="p-6 pb-4 flex-1">
+                  <div className="flex items-center gap-2 mb-4">
+                    <span style={{ fontSize: 22 }}>{emoji}</span>
+                    <div>
+                      <div style={{ fontSize: 9, fontFamily: "monospace", color: cor, letterSpacing: "1.5px", textTransform: "uppercase", fontWeight: 700 }}>{modulo}</div>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: DARK }}>{titulo}</div>
+                    </div>
+                  </div>
+                  <div className="rounded-xl p-4 mb-3" style={{ background: "rgba(220,38,38,0.04)", border: "1px solid rgba(220,38,38,0.15)" }}>
+                    <div style={{ fontSize: 9, fontFamily: "monospace", color: "#dc2626", letterSpacing: "1px", marginBottom: 5, textTransform: "uppercase" }}>ANTES</div>
+                    <p style={{ fontSize: 12, color: TEXT2, lineHeight: 1.65 }}>{antes}</p>
+                  </div>
+                  <div className="rounded-xl p-4" style={{ background: `${cor}06`, border: `1px solid ${cor}25` }}>
+                    <div style={{ fontSize: 9, fontFamily: "monospace", color: cor, letterSpacing: "1px", marginBottom: 5, textTransform: "uppercase", fontWeight: 700 }}>DEPOIS</div>
+                    <p style={{ fontSize: 12, fontWeight: 600, color: DARK, lineHeight: 1.65 }}>{depois}</p>
+                  </div>
                 </div>
-                <p style={{ fontSize: 10, fontFamily: "monospace", color, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 8 }}>{label}</p>
-                <p style={{ fontSize: 14, color: TEXT2, lineHeight: 1.7, fontStyle: "italic" }}>"{q}"</p>
+                <div className="px-6 pb-5">
+                  <span style={{ fontSize: 10, fontFamily: "monospace", fontWeight: 700, padding: "3px 10px", borderRadius: 999, background: `${cor}10`, color: cor, border: `1px solid ${cor}25` }}>
+                    {modulo}
+                  </span>
+                </div>
+              </div>
+            </FadeUp>
+          ))}
+        </div>
+      </section>
+
+      {/* ── SEÇÃO 2 — DORES COM LINGUAGEM DE ATRITO ──────────────────────────── */}
+      <section className="max-w-5xl mx-auto px-6 py-8 pb-12">
+        <FadeUp className="text-center mb-10">
+          <SLabel>RECONHECE ISSO?</SLabel>
+          <h2 style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: "clamp(22px, 4vw, 38px)", fontWeight: 700, color: DARK }}>
+            O PRAXIS resolve cada um desses problemas
+          </h2>
+        </FadeUp>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {[
+            { problema: "Perde leads por falta de follow-up?",    solucao: "Nurturing automático",                  cor: "#3b7fff" },
+            { problema: "Não sabe onde está perdendo dinheiro?",  solucao: "Painel executivo em tempo real",        cor: "#16a34a" },
+            { problema: "3h para criar um post?",                  solucao: "20 minutos com IA",                    cor: GOLD      },
+            { problema: "Pacientes faltam sem aviso?",             solucao: "Lembretes e confirmações automáticas", cor: "#a78bfa" },
+            { problema: "Prontuário manual após cada consulta?",  solucao: "Copiloto gera em 30 segundos",          cor: "#f59e0b" },
+            { problema: "Não consegue sair dos convênios?",       solucao: "Estratégia para ir ao particular",      cor: "#ec4899" },
+          ].map(({ problema, solucao, cor }, i) => (
+            <FadeUp key={i} delay={i * 50}>
+              <div className="rounded-2xl p-5 grid grid-cols-2 gap-3 items-center" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
+                <div className="flex items-start gap-2.5">
+                  <span style={{ color: "#dc2626", flexShrink: 0, fontSize: 15, marginTop: 1 }}>❌</span>
+                  <span style={{ fontSize: 13, color: TEXT2, lineHeight: 1.5 }}>{problema}</span>
+                </div>
+                <div className="flex items-center gap-2 rounded-xl px-3 py-2" style={{ background: `${cor}10`, border: `1px solid ${cor}25` }}>
+                  <span style={{ fontSize: 14, flexShrink: 0 }}>✅</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: cor, lineHeight: 1.4 }}>{solucao}</span>
+                </div>
+              </div>
+            </FadeUp>
+          ))}
+        </div>
+      </section>
+
+      {/* ── SEÇÃO 2.3 — PROPOSTA DE VALOR ───────────────────────────────────── */}
+      <section className="max-w-5xl mx-auto px-6 pb-24">
+        <FadeUp className="text-center mb-12">
+          <SLabel>O QUE O PRAXIS RESOLVE DE VERDADE</SLabel>
+          <h2 style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: "clamp(22px, 4vw, 38px)", fontWeight: 700, color: DARK }}>
+            Problemas reais. Soluções integradas.
+          </h2>
+        </FadeUp>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {[
+            {
+              cor: "#3b7fff", label: "CAPTAÇÃO", icon: Users,
+              problema: "Médicos perdem em média 40% dos leads por falta de resposta rápida",
+              solucao: "CRM + nurturing automático via WhatsApp — o lead é respondido em minutos, não dias",
+            },
+            {
+              cor: GOLD, label: "CONSULTA", icon: Stethoscope,
+              problema: "30-40 minutos de documentação após cada consulta",
+              solucao: "Copiloto de Consulta: prontuário SOAP, plano terapêutico e follow-up em 30 segundos",
+            },
+            {
+              cor: "#16a34a", label: "GESTÃO", icon: BarChart3,
+              problema: "Médicos não sabem quanto faturam, qual a taxa de retorno ou custo por lead",
+              solucao: "Painel executivo com todos os indicadores da clínica em tempo real",
+            },
+          ].map(({ cor, label, icon: Icon, problema, solucao }, i) => (
+            <FadeUp key={label} delay={i * 100}>
+              <div className="rounded-2xl p-7 h-full flex flex-col" style={{ background: CARD, border: `1px solid ${cor}20` }}>
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ background: `${cor}12`, border: `1px solid ${cor}25` }}>
+                  <Icon style={{ width: 20, height: 20, color: cor }} />
+                </div>
+                <p style={{ fontSize: 10, fontFamily: "monospace", color: cor, letterSpacing: "2px", textTransform: "uppercase", marginBottom: 10 }}>{label}</p>
+                <div className="rounded-xl p-3 mb-4" style={{ background: "rgba(220,38,38,0.04)", border: "1px solid rgba(220,38,38,0.12)" }}>
+                  <p style={{ fontSize: 12, color: TEXT2, lineHeight: 1.6, fontStyle: "italic" }}>{problema}</p>
+                </div>
+                <div className="rounded-xl p-3 flex-1" style={{ background: `${cor}06`, border: `1px solid ${cor}20` }}>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: DARK, lineHeight: 1.65 }}>{solucao}</p>
+                </div>
               </div>
             </FadeUp>
           ))}

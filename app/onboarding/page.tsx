@@ -281,6 +281,9 @@ export default function OnboardingPage() {
     setErroMsg("")
     try {
       await saveProfile({ onboarding_completo: true, termos_aceitos: terms })
+      // Garante onboarding_completo=true via rota dedicada (service role),
+      // independente de falha silenciosa no upsert genérico acima.
+      await fetch("/api/perfil/onboarding", { method: "POST" }).catch(() => null)
       // Fire welcome email before redirecting to Stripe
       const perfil = await fetch("/api/perfil").then(r => r.json()).catch(() => null) as { email?: string; nome?: string } | null
       if (perfil?.email && perfil?.nome) {
@@ -309,6 +312,9 @@ export default function OnboardingPage() {
     setErroMsg("")
     try {
       await saveProfile({ onboarding_completo: true, termos_aceitos: terms })
+      // Garante onboarding_completo=true via rota dedicada (service role),
+      // independente de falha silenciosa no upsert genérico acima.
+      await fetch("/api/perfil/onboarding", { method: "POST" }).catch(() => null)
       // Dispatch welcome email (fire-and-forget — don't block UX)
       const perfil = await fetch("/api/perfil").then(r => r.json()).catch(() => null) as { email?: string; nome?: string } | null
       if (perfil?.email && perfil?.nome) {

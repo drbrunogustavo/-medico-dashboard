@@ -149,10 +149,10 @@ function PlanCTA({
     )
   }
 
-  // Not logged in — redirect to login
+  // Not logged in — redirect to signup
   if (!authed) {
     return (
-      <Link href="/login"
+      <Link href="/cadastro"
         className="block text-center py-3.5 rounded-xl text-[13px] font-bold transition-all hover:opacity-90"
         style={{
           background: plan.highlight ? plan.color : `${plan.color}18`,

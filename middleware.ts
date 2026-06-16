@@ -20,7 +20,7 @@ export async function middleware(request: NextRequest) {
   if (PUBLIC_ROUTES.has(pathname))  return NextResponse.next()
 
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    if (pathname === "/login") return NextResponse.next()
+    if (pathname === "/login" || pathname === "/cadastro") return NextResponse.next()
     return NextResponse.redirect(new URL("/login", request.url))
   }
 
@@ -45,7 +45,7 @@ export async function middleware(request: NextRequest) {
 
   const { data: { session } } = await supabase.auth.getSession()
 
-  if (pathname === "/login") {
+  if (pathname === "/login" || pathname === "/cadastro") {
     if (session) return NextResponse.redirect(new URL("/dashboard", request.url))
     return supabaseResponse
   }

@@ -346,7 +346,7 @@ export default function LandingPage() {
             Feita por médico, para médicos.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Link href={ctaHref}
+            <Link href="/demo"
               className="inline-flex items-center gap-2 rounded-xl font-bold transition-all hover:opacity-90 active:scale-[0.98]"
               style={{ padding: "16px 36px", fontSize: 15, background: GOLD, color: DARK, boxShadow: `0 8px 40px ${GOLD}30` }}>
               Explorar a plataforma <ArrowRight style={{ width: 16, height: 16 }} />
@@ -1007,7 +1007,7 @@ export default function LandingPage() {
             <p style={{ fontSize: 15, color: TEXT2, lineHeight: 1.7, marginBottom: 32 }}>
               Comece o período de teste gratuito. Nenhum cartão necessário.
             </p>
-            <Link href={ctaHref}
+            <Link href="/demo"
               className="inline-flex items-center gap-2.5 rounded-xl font-bold transition-all hover:opacity-95 active:scale-[0.98]"
               style={{ padding: "18px 44px", fontSize: 16, background: GOLD, color: DARK, boxShadow: `0 0 60px ${GOLD}25` }}>
               Explorar a plataforma <ArrowRight style={{ width: 16, height: 16 }} />

@@ -71,7 +71,7 @@ export default function GanchosPage() {
     try {
       const tiposLabel = tipos.map(v => TIPOS.find(t=>t.v===v)?.l).filter(Boolean).join(', ')
       const prompt =
-        'Crie 8 ganchos de abertura para ' + formato + ' do o médico usuário — Clínico-Geral, Endocrinologia e Nutrologia.\n' +
+        'Crie 8 ganchos de abertura para ' + formato + ' do médico usuário — Clínico-Geral, Endocrinologia e Nutrologia.\n' +
         'TEMA: ' + tema + '\nTIPOS DE GANCHO: ' + tiposLabel + '\n\n' +
         'REGRAS:\n' +
         '- Máx 2 frases por gancho — para o dedo no scroll em 3 segundos\n' +

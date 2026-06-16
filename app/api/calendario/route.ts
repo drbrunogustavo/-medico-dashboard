@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
         content: `Crie um calendário editorial completo para ${mesNome}/${ano ?? 2025}.
 
 ESPECIALIDADE: ${especialidade}
-MÉDICO: o médico usuário (Poços de Caldas, MG)
+MÉDICO: o médico usuário
 PILARES DE CONTEÚDO: ${pilares.join(", ")}
 FREQUÊNCIA: ${frequencia} posts por semana${temas.length > 0 ? `\nTEMAS PRIORITÁRIOS: ${temas.join(", ")}` : ""}
 

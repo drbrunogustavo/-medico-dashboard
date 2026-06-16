@@ -58,7 +58,7 @@ function buildConcorrentePrompt(body: ConcorrentesRequest): string {
     tipo === "pontos_fracos"  ? "Pontos Fracos / Oportunidades" :
                                 "Análise Completa"
 
-  return `Analise o seguinte concorrente médico para o o médico usuário (Clínico Geral, Endocrinologia e Nutrologia, baseado no Brasil, foco em longevidade e saúde hormonal).
+  return `Analise o seguinte concorrente médico para o médico usuário (Clínico Geral, Endocrinologia e Nutrologia, baseado no Brasil, foco em longevidade e saúde hormonal).
 
 CONCORRENTE:
 - Nome: ${nome}${instagram ? `\n- Instagram: @${instagram.replace("@", "")}` : ""}${especialidade ? `\n- Especialidade: ${especialidade}` : ""}${contexto ? `\n\nContexto adicional:\n${contexto}` : ""}
@@ -89,7 +89,7 @@ Retorne um JSON com EXATAMENTE esta estrutura (todos os valores em português br
     "publico_alvo": "quem ele atrai e por quê",
     "tom_comunicacao": "como ele se comunica",
     "diferenciais": ["diferencial 1", "diferencial 2", "diferencial 3"],
-    "comparacao_com_voce": "onde ele se diferencia ou se assemelha ao o médico usuário"
+    "comparacao_com_voce": "onde ele se diferencia ou se assemelha ao médico usuário"
   },
   "pontos_fracos": [
     {

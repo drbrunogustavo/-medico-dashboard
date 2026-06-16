@@ -110,7 +110,7 @@ D-15 (15 dias antes do retorno):
       max_tokens: 3000,
       messages: [{
         role:    "user",
-        content: `Você é o assistente de comunicação clínica do o médico usuário.
+        content: `Você é o assistente de comunicação clínica do médico usuário.
 
 Crie as mensagens de WhatsApp para a seguinte trilha:
 

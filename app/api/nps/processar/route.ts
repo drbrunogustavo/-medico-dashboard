@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
     let enviados = 0
     for (const row of data) {
       const link = `${appUrl}/nps/${row.token}`
-      const msg  = `Olá, ${row.paciente_nome}! 👋\n\nSua opinião é muito importante para nós.\nComo foi sua última consulta com o o médico usuário?\n\nResponda em menos de 1 minuto: ${link}\n\nObrigado pela confiança! 🙏`
+      const msg  = `Olá, ${row.paciente_nome}! 👋\n\nSua opinião é muito importante para nós.\nComo foi sua última consulta com o médico usuário?\n\nResponda em menos de 1 minuto: ${link}\n\nObrigado pela confiança! 🙏`
       const { ok } = await sendZapi(row.paciente_telefone, msg)
       if (ok) {
         await supabase

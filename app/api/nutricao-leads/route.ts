@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
       max_tokens: 4000,
       messages: [{
         role:    "user",
-        content: `Você é especialista em nutrição de leads médicos para o o médico usuário (Endocrinologia, Nutrologia, Longevidade — Poços de Caldas).
+        content: `Você é especialista em nutrição de leads médicos para o médico usuário.
 
 PERFIL DO LEAD: ${body.perfil}
 INTERESSE DEMONSTRADO: ${body.interesse}

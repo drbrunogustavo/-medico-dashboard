@@ -83,7 +83,7 @@ function AnaliseModal({ referencia, onClose }: { referencia: Referencia; onClose
         const prompt =
           'Você é estrategista de conteúdo médico. Analise o perfil @' + handle +
           ' (especialidade: ' + referencia.especialidade + (referencia.temas?.length ? ', temas conhecidos: ' + referencia.temas.join(', ') : '') + ')' +
-          ' do ponto de vista do o médico usuário — Clínico-Geral, Endocrinologia e Nutrologia, Poços de Caldas-MG (@praxisplataforma).\n\n' +
+          ' do ponto de vista do médico usuário.\n\n' +
           'Gere análise estratégica completa. Se não conhecer o perfil, baseie-se em perfis típicos desta especialidade.\n\n' +
           'Retorne SOMENTE JSON válido, sem nenhum texto antes ou depois:\n' +
           '{"perfil":{"nome":"nome ou estimado","handle":"@' + handle + '","especialidade":"' + referencia.especialidade + '","posicionamento":"como se posiciona","tom":"tom de voz","frequencia":"frequência estimada","formatos":["Reels","Carrossel"]},' +

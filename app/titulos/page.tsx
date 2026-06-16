@@ -51,7 +51,7 @@ export default function TitulosPage() {
     try {
       const obj = OBJETIVOS.find(o => o.v === objetivo)
       const prompt =
-        'Crie 10 títulos/headlines para um post de ' + formato + ' do o médico usuário — Clínico-Geral, Endocrinologia e Nutrologia.\n' +
+        'Crie 10 títulos/headlines para um post de ' + formato + ' do médico usuário — Clínico-Geral, Endocrinologia e Nutrologia.\n' +
         'TEMA: ' + tema + '\nOBJETIVO: ' + obj?.l + '\n' +
         'REGRAS: diretos, sem enrolação, máx 12 palavras cada, sem clichês de IA.\n' +
         'Retorne SOMENTE JSON: {"titulos":[{"texto":"...","tipo":"' + obj?.l + '"}]}'

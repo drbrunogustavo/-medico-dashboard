@@ -23,7 +23,7 @@ export async function gerarNurturingInline(userId: string, leadId: string) {
     messages: [{
       role: "user",
       content:
-`Você é assistente de Dr. Bruno Gustavo (Endocrinologista, Nutrologista e especialista em Longevidade).
+`Você é assistente do médico usuário da plataforma.
 Crie 4 mensagens WhatsApp para sequência de nurturing. Cada uma CURTA (máx 3 parágrafos), pessoal, sem markdown.
 
 Lead:

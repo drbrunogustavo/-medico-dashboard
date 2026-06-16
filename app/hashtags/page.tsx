@@ -17,7 +17,7 @@ const OBJETIVOS = [
   { v:'alcance',     l:'Alcance Máximo',   e:'📡', desc:'Hashtags amplas para mais pessoas' },
   { v:'nicho',       l:'Nicho Médico',     e:'🩺', desc:'Médicos e profissionais de saúde' },
   { v:'engajamento', l:'Engajamento',      e:'💬', desc:'Audiência que comenta e salva' },
-  { v:'local',       l:'Local',            e:'📍', desc:'Poços de Caldas e região' },
+  { v:'local',       l:'Local',            e:'📍', desc:'Sua cidade e região' },
 ]
 
 interface HashtagResult {
@@ -55,7 +55,7 @@ export default function HashtagsPage() {
     try {
       const obj = OBJETIVOS.find(o => o.v === objetivo)
       const prompt =
-        'Sugira EXATAMENTE 5 hashtags para o Instagram do o médico usuário — ' + nicho + ', Poços de Caldas-MG.\n' +
+        'Sugira EXATAMENTE 5 hashtags para o Instagram do médico usuário — ' + nicho + '.\n' +
         'TEMA DO POST: ' + tema + '\nOBJETIVO: ' + obj?.l + ' — ' + obj?.desc + '\n\n' +
         'REGRAS CRÍTICAS:\n' +
         '- Instagram em 2024-2025 penaliza posts com muitas hashtags. Use APENAS 5.\n' +

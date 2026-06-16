@@ -22,6 +22,13 @@ export async function POST(req: NextRequest) {
 
     const supabase = createSupabaseServerClient()
 
+    const { data: perfil } = await supabase
+      .from("perfis")
+      .select("cidade, estado")
+      .eq("user_id", auth.userId)
+      .maybeSingle()
+    const local = perfil?.cidade ? `${perfil.cidade}, ${perfil.estado ?? ""}`.trim() : "Brasil"
+
     // Check 7-day cache
     const { data: cached } = await supabase
       .from("mercado_cache")
@@ -40,7 +47,7 @@ export async function POST(req: NextRequest) {
       system: "Você é especialista em marketing médico e inteligência de mercado para médicos brasileiros. Retorne APENAS JSON válido, sem markdown.",
       messages: [{
         role: "user",
-        content: `Gere um relatório de inteligência de mercado para um médico especialista em ${especialidade} no Brasil (Poços de Caldas, MG) para a semana de ${new Date().toLocaleDateString("pt-BR")}.
+        content: `Gere um relatório de inteligência de mercado para um médico especialista em ${especialidade} no Brasil (${local}) para a semana de ${new Date().toLocaleDateString("pt-BR")}.
 
 Retorne JSON neste formato:
 {

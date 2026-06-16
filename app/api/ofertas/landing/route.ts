@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import Anthropic from "@anthropic-ai/sdk"
 import { checkAuth } from "@/lib/auth-check"
+import { createSupabaseServerClient } from "@/lib/supabase-server"
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -17,6 +18,14 @@ export async function POST(req: NextRequest) {
   if (!auth.authenticated) return auth.response
   try {
     const { tema, publico, objetivo, tom, landingPage } = await req.json()
+
+    const supabase = createSupabaseServerClient()
+    const { data: perfil } = await supabase
+      .from("perfis")
+      .select("cidade")
+      .eq("user_id", auth.userId)
+      .single()
+    const localizacao = perfil?.cidade ?? "a região atendida pelo médico"
 
     const prompt = `Você é um desenvolvedor frontend especialista em landing pages médicas de alta conversão.
 
@@ -58,10 +67,10 @@ SEÇÕES OBRIGATÓRIAS (nesta ordem):
 4. SOBRE O MÉDICO (id="medico")
    - Nome: o médico usuário
    - Especialidades: Endocrinologia · Nutrologia · Longevidade
-   - Localização: Poços de Caldas, MG
+   - Localização: ${localizacao}
    - CRM: visível abaixo do nome
    - Texto de autoridade em 3 linhas personalizadas para a campanha
-   - Avatar com iniciais "BG" em círculo verde
+   - Avatar com as iniciais do médico em círculo verde
 
 5. PROVA SOCIAL (id="depoimentos")
    - 3 depoimentos fictícios em cards
@@ -78,7 +87,7 @@ SEÇÕES OBRIGATÓRIAS (nesta ordem):
    - Headline de urgência em destaque
    - Botão WhatsApp grande (fundo #25D366) com ícone SVG do WhatsApp embutido
    - Texto de escassez abaixo em #9ca3af
-   - Link href do WhatsApp: https://wa.me/5535999999999
+   - Link href do WhatsApp: usar placeholder "https://wa.me/SEUNUMERO" (o médico substitui pelo número real)
 
 8. RODAPÉ
    - Fundo #08090e, borda topo #1c1d2a

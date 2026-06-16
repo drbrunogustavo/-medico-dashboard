@@ -39,7 +39,7 @@ export default function RoteirosPage(){
   const gerar=useCallback(async()=>{
     if(!tema.trim())return;setLoading(true)
     try{const prompt = [
-        'Você é roteirista médico para Reels do o médico usuário — Clínico-Geral, Endocrinologia e Nutrologia.',
+        'Você é roteirista médico para Reels do médico usuário — Clínico-Geral, Endocrinologia e Nutrologia.',
         'TEMA: ' + tema + (publico ? ' | PÚBLICO: ' + publico : ''),
         'DURAÇÃO: ' + duracao + ' | ESTILO: ' + estilo,
         'Tom: direto, humano, sem enrolação. Gancho nos primeiros 3 segundos.',

@@ -69,6 +69,15 @@ export async function POST(req: NextRequest) {
 
         if (error) console.error("[stripe/webhook] Erro ao salvar plano:", error)
         else console.log(`[stripe/webhook] Plano "${plano}" ativado — user ${userId}`)
+
+        // Safety net: pagamento confirmado é prova definitiva de onboarding concluído,
+        // independente de falha silenciosa no PATCH /api/perfil feito pelo cliente antes do checkout.
+        const { error: perfilError } = await supabase
+          .from("perfis")
+          .update({ onboarding_completo: true })
+          .eq("user_id", userId)
+
+        if (perfilError) console.error("[stripe/webhook] Erro ao marcar onboarding_completo:", perfilError)
         break
       }
 

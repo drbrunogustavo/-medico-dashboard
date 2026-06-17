@@ -66,26 +66,16 @@
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   THEME TRANSITION
-   Applied globally for smooth switching.
-   Exceptions retain fast interaction transitions.
+   INTERACTION TRANSITIONS
+   Only on interactive elements — NOT on *, which caused global reflow trembling
+   from rapid React re-renders (e.g. typing animations at 33fps).
 ══════════════════════════════════════════════════════════════════════════════ */
 
-*,
-*::before,
-*::after {
-  transition:
-    background-color 300ms ease,
-    border-color     300ms ease,
-    color            200ms ease;
-}
-
-/* Fast interactions — override the above */
 button, a, input, select, textarea, [role="button"] {
   transition:
-    background-color 300ms ease,
-    border-color     200ms ease,
-    color            200ms ease,
+    background-color 150ms ease,
+    border-color     150ms ease,
+    color            150ms ease,
     opacity          150ms ease,
     transform        150ms ease,
     box-shadow       150ms ease;
@@ -106,7 +96,10 @@ button, a, input, select, textarea, [role="button"] {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0);   }
 }
-.animate-fade-in { animation: fadeIn 400ms ease-out; }
+.animate-fade-in {
+  animation: fadeIn 400ms ease-out;
+  will-change: transform, opacity;
+}
 
 @keyframes shimmer {
   from { background-position: -200% 0; }

@@ -72,14 +72,15 @@ export function FluxoIntegrado() {
               onMouseLeave={() => setActive(null)}
             >
               <div
-                className="w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-300"
+                className="w-14 h-14 rounded-2xl flex items-center justify-center"
                 style={{
                   background: active === step.id ? step.color + "22" : "var(--card)",
                   border: `1.5px solid ${active === step.id ? step.color : "var(--border)"}`,
                   transform: ok ? "translateY(0) scale(1)" : "translateY(20px) scale(0.8)",
                   opacity: ok ? 1 : 0,
-                  transition: `transform 500ms ${delay}ms ease-out, opacity 500ms ${delay}ms ease-out, background 200ms, border 200ms`,
+                  transition: `transform 500ms ${delay}ms ease-out, opacity 500ms ${delay}ms ease-out, background 200ms, border 200ms, box-shadow 200ms`,
                   boxShadow: active === step.id ? `0 0 20px ${step.color}30` : "none",
+                  willChange: "transform, opacity",
                 }}
               >
                 <Icon className="w-6 h-6" style={{ color: step.color }} />
@@ -129,6 +130,7 @@ export function FluxoIntegrado() {
                   transform: ok ? "translateX(0)" : "translateX(-16px)",
                   opacity: ok ? 1 : 0,
                   transition: `transform 450ms ${delay}ms ease-out, opacity 450ms ${delay}ms ease-out`,
+                  willChange: "transform, opacity",
                 }}
               >
                 {/* Node dot */}

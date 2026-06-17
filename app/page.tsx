@@ -44,6 +44,7 @@ function FadeUp({ children, delay = 0, className = "" }: { children: React.React
       opacity: ok ? 1 : 0,
       transform: ok ? "translateY(0)" : "translateY(20px)",
       transition: `opacity 0.6s ease ${delay}ms, transform 0.6s ease ${delay}ms`,
+      willChange: ok ? "auto" : "transform, opacity",
     }}>{children}</div>
   )
 }
@@ -354,7 +355,8 @@ function CopilotoFlow() {
         </div>
         <span style={{ fontSize: 10, fontFamily: "monospace", color: "rgba(255,255,255,0.3)" }}>Copiloto de Consulta — PRAXIS</span>
       </div>
-      <div className="p-5 space-y-4">
+      {/* Fixed-height content area prevents layout shift between phases */}
+      <div className="p-5" style={{ display: "flex", flexDirection: "column", gap: 16, minHeight: 260 }}>
         <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.10)", borderRadius: 8, padding: "10px 14px" }}>
           <div style={{ fontSize: 9, fontFamily: "monospace", color: "rgba(184,151,106,0.7)", letterSpacing: "1px", marginBottom: 6 }}>RELATO DA CONSULTA</div>
           <p style={{ fontSize: 12, color: "rgba(255,255,255,0.75)", lineHeight: 1.6, minHeight: 38 }}>
@@ -363,33 +365,33 @@ function CopilotoFlow() {
             )}
           </p>
         </div>
-        {phase >= 1 && (
-          <div>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
-              <span style={{ fontSize: 10, fontFamily: "monospace", color: "rgba(184,151,106,0.8)" }}>Gerando documentação...</span>
-              <span style={{ fontSize: 10, fontFamily: "monospace", color: "rgba(184,151,106,0.8)" }}>{progress}%</span>
-            </div>
-            <div style={{ height: 3, background: "rgba(255,255,255,0.08)", borderRadius: 999 }}>
-              <div style={{ height: "100%", background: GOLD, borderRadius: 999, width: `${progress}%`, transition: "width 0.05s linear" }} />
-            </div>
+        {/* Progress bar — always rendered to reserve space; opacity hides when inactive */}
+        <div style={{ opacity: phase >= 1 ? 1 : 0, transition: "opacity 0.3s ease", minHeight: 24 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
+            <span style={{ fontSize: 10, fontFamily: "monospace", color: "rgba(184,151,106,0.8)" }}>Gerando documentação...</span>
+            <span style={{ fontSize: 10, fontFamily: "monospace", color: "rgba(184,151,106,0.8)" }}>{progress}%</span>
           </div>
-        )}
-        {phase === 2 && (
-          <div className="space-y-1.5">
-            {COPILOTO_CARDS.map((card, i) => (
-              <div key={i} style={{
-                display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 8,
-                background: i < cards ? "rgba(184,151,106,0.08)" : "transparent",
-                border: `1px solid ${i < cards ? "rgba(184,151,106,0.25)" : "transparent"}`,
-                opacity: i < cards ? 1 : 0,
-                transition: "all 0.4s ease",
-              }}>
-                <Check style={{ width: 13, height: 13, color: GOLD, flexShrink: 0 }} />
-                <span style={{ fontSize: 12, color: "rgba(255,255,255,0.8)" }}>{card}</span>
-              </div>
-            ))}
+          {/* scaleX instead of width — compositor-only, no layout recalculation */}
+          <div style={{ height: 3, background: "rgba(255,255,255,0.08)", borderRadius: 999, overflow: "hidden" }}>
+            <div style={{ height: "100%", background: GOLD, borderRadius: 999, width: "100%", transform: `scaleX(${progress / 100})`, transformOrigin: "left center", transition: "transform 0.05s linear" }} />
           </div>
-        )}
+        </div>
+        {/* Cards — always rendered to reserve space; opacity controlled per card */}
+        <div style={{ opacity: phase === 2 ? 1 : 0, transition: "opacity 0.3s ease", minHeight: 148, display: "flex", flexDirection: "column", gap: 6 }}>
+          {COPILOTO_CARDS.map((card, i) => (
+            <div key={i} style={{
+              display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 8,
+              background: i < cards ? "rgba(184,151,106,0.08)" : "rgba(255,255,255,0.02)",
+              border: `1px solid ${i < cards ? "rgba(184,151,106,0.25)" : "rgba(255,255,255,0.05)"}`,
+              opacity: i < cards ? 1 : 0.15,
+              transition: "opacity 0.4s ease",
+              willChange: "opacity",
+            }}>
+              <Check style={{ width: 13, height: 13, color: GOLD, flexShrink: 0 }} />
+              <span style={{ fontSize: 12, color: "rgba(255,255,255,0.8)" }}>{card}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )
@@ -849,8 +851,8 @@ export default function LandingPage() {
                 app.praxisplataforma.com.br
               </div>
             </div>
-            {/* Image */}
-            <div className="relative w-full" style={{ background: "#0a0a0b" }}>
+            {/* Image — contain:layout prevents screenshot switch from triggering ancestor reflow */}
+            <div className="relative w-full" style={{ background: "#0a0a0b", contain: "layout paint" }}>
               <Image
                 src={SCREENSHOTS[activeScreenshot].img}
                 alt={`PRAXIS — ${SCREENSHOTS[activeScreenshot].tab}`}

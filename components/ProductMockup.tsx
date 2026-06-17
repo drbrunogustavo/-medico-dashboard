@@ -226,6 +226,7 @@ export function MockupCopiloto() {
             display: "inline-block", width: 2, height: 10,
             background: "#00c07f", verticalAlign: "middle",
             animation: "copBlk 1s step-end infinite",
+            willChange: "opacity",
           }} />
         </div>
       )}

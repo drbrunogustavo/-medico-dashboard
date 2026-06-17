@@ -9,7 +9,7 @@ const PRICE_IDS: Record<PlanoKey, string | undefined> = {
   starter:      process.env.STRIPE_PRICE_STARTER_MONTHLY,
   pro:          process.env.STRIPE_PRICE_PRO_MONTHLY,
   elite_monthly:process.env.STRIPE_PRICE_ELITE_MONTHLY,
-  elite_annual: process.env.STRIPE_PRICE_ELITE_ANNUAL,
+  elite_annual: process.env.STRIPE_PRICE_ELITE_ANNUAL ?? process.env.STRIPE_PRICE_ELITE_ANUAL,
 }
 
 // Canonical plan name stored in DB
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
   console.log("[stripe/checkout] STRIPE_PRICE_STARTER:", !!process.env.STRIPE_PRICE_STARTER_MONTHLY)
   console.log("[stripe/checkout] STRIPE_PRICE_PRO:", !!process.env.STRIPE_PRICE_PRO_MONTHLY)
   console.log("[stripe/checkout] STRIPE_PRICE_ELITE_MONTHLY:", !!process.env.STRIPE_PRICE_ELITE_MONTHLY)
-  console.log("[stripe/checkout] STRIPE_PRICE_ELITE_ANNUAL:", !!process.env.STRIPE_PRICE_ELITE_ANNUAL)
+  console.log("[stripe/checkout] STRIPE_PRICE_ELITE_ANNUAL:", !!process.env.STRIPE_PRICE_ELITE_ANNUAL, "| STRIPE_PRICE_ELITE_ANUAL:", !!process.env.STRIPE_PRICE_ELITE_ANUAL)
   console.log("[stripe/checkout] NEXT_PUBLIC_APP_URL:", process.env.NEXT_PUBLIC_APP_URL ?? "(not set)")
 
   if (!process.env.STRIPE_SECRET_KEY) {
@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
       payment_method_types: ["card"],
       line_items:           [{ price: priceId, quantity: 1 }],
       customer_email:       user?.email ?? undefined,
-      success_url:          `${origin}/dashboard?pagamento=sucesso`,
+      success_url:          `${origin}/planos?pagamento=sucesso`,
       cancel_url:           `${origin}/planos`,
       metadata:             { user_id: auth.userId, plano: planoDb },
       subscription_data: {

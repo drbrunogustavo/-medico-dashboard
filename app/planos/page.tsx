@@ -197,8 +197,10 @@ export default function PlanosPage() {
   const [stripeError, setStripeError] = useState<string | null>(null)
 
   const isSuccess = typeof window !== "undefined"
-    ? new URLSearchParams(window.location.search).has("pagamento")
+    ? new URLSearchParams(window.location.search).get("pagamento") === "sucesso"
     : false
+
+  const [pollDone, setPollDone] = useState(false)
 
   // Derive authentication state from useAuth
   // null = still determining, true/false = resolved
@@ -214,6 +216,31 @@ export default function PlanosPage() {
       .catch(() => {})
       .finally(() => setPlanLoading(false))
   }, [user])
+
+  // After Stripe success redirect, poll until webhook has updated user_planos
+  useEffect(() => {
+    if (!isSuccess || !user) return
+    let attempts = 0
+    const maxAttempts = 10
+    const interval = setInterval(async () => {
+      attempts++
+      try {
+        const res = await fetch("/api/planos")
+        if (!res.ok) return
+        const data = await res.json() as UserPlan
+        if (data.status === "ativo" && data.hasStripe) {
+          clearInterval(interval)
+          router.replace("/dashboard")
+          return
+        }
+      } catch { /* ignore — retry */ }
+      if (attempts >= maxAttempts) {
+        clearInterval(interval)
+        setPollDone(true)
+      }
+    }, 2000)
+    return () => clearInterval(interval)
+  }, [isSuccess, user, router])
 
   async function handleCheckout(priceKey: string) {
     console.log("[planos] handleCheckout chamado, priceKey:", priceKey)
@@ -315,14 +342,30 @@ export default function PlanosPage() {
           <ArrowLeft className="w-3 h-3" /> Voltar
         </Link>
 
-        {/* Success banner */}
+        {/* Success banner — shown while webhook processes after Stripe redirect */}
         {isSuccess && (
           <div className="rounded-xl p-4 flex items-center gap-3"
             style={{ background: "rgba(184,151,106,0.08)", border: "1px solid rgba(184,151,106,0.30)" }}>
-            <Check style={{ width: 16, height: 16, color: "#b8976a", flexShrink: 0 }} />
-            <p style={{ fontSize: 13, color: "#b8976a", fontWeight: 600 }}>
-              Assinatura ativada com sucesso! Aproveite seus 7 dias grátis.
-            </p>
+            {pollDone ? (
+              <Check style={{ width: 16, height: 16, color: "#b8976a", flexShrink: 0 }} />
+            ) : (
+              <Loader2 style={{ width: 16, height: 16, color: "#b8976a", flexShrink: 0 }} className="animate-spin" />
+            )}
+            <div>
+              <p style={{ fontSize: 13, color: "#b8976a", fontWeight: 600 }}>
+                {pollDone
+                  ? "Pagamento confirmado! Clique abaixo para entrar."
+                  : "Pagamento confirmado! Ativando sua conta..."}
+              </p>
+              {pollDone && (
+                <button
+                  onClick={() => router.replace("/dashboard")}
+                  className="mt-1 text-[12px] underline underline-offset-2"
+                  style={{ color: "#b8976a" }}>
+                  Ir para o dashboard →
+                </button>
+              )}
+            </div>
           </div>
         )}
 

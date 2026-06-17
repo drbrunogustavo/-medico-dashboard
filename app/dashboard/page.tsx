@@ -335,6 +335,25 @@ export default function DashboardPage() {
 
       <div className="p-4 md:p-8 space-y-6">
 
+        {/* ── Banner depoimento ───────────────────────────────────────────── */}
+        <div className="flex items-start justify-between gap-4 px-5 py-4 rounded-xl border"
+          style={{ background: "rgba(184,151,106,0.06)", borderColor: "rgba(184,151,106,0.2)" }}>
+          <div className="flex items-start gap-3">
+            <span className="text-lg flex-shrink-0">⭐</span>
+            <div>
+              <p className="text-[13px] font-semibold text-text-primary">Gostou do PRAXIS?</p>
+              <p className="text-[11px] text-text-muted mt-0.5">
+                Deixe seu depoimento e ajude outros médicos a conhecer a plataforma.
+              </p>
+            </div>
+          </div>
+          <a href="/depoimento"
+            className="flex-shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-lg transition-all hover:opacity-80"
+            style={{ background: "rgba(184,151,106,0.14)", color: "#b8976a", border: "1px solid rgba(184,151,106,0.3)", whiteSpace: "nowrap" }}>
+            Compartilhar →
+          </a>
+        </div>
+
         {/* ── Pagamento sucesso banner ────────────────────────────────────── */}
         {pagamentoSucesso && (
           <div className="flex items-center gap-3 px-5 py-4 rounded-xl border"

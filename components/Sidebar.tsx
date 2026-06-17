@@ -358,6 +358,18 @@ function SidebarContent() {
           </div>
         </Link>
 
+        {/* Depoimento CTA */}
+        <div className="px-3 pb-2">
+          <Link
+            href="/depoimento"
+            onClick={closeMenu}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-[11px] font-semibold transition-all hover:opacity-80"
+            style={{ background: "var(--accent-dim)", color: "var(--accent)", border: "1px solid var(--accent-border)" }}>
+            <Star className="w-3 h-3 flex-shrink-0" />
+            Deixar depoimento
+          </Link>
+        </div>
+
         {/* Settings + Sign out */}
         <div className="flex items-center gap-1.5 px-4 pb-3">
           <Link

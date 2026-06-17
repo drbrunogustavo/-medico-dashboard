@@ -407,6 +407,14 @@ export default function LandingPage() {
   const [openModule,       setOpenModule]       = useState<number | null>(null)
   const [activeScreenshot, setActiveScreenshot] = useState(0)
   const [moduleMenuOpen,   setModuleMenuOpen]   = useState(false)
+  const [depoimentos,      setDepoimentos]      = useState<{id:string;nome:string;especialidade:string;cidade?:string;estado?:string;depoimento:string;resultado_destaque?:string}[]>([])
+
+  useEffect(() => {
+    fetch("/api/depoimentos/publicos")
+      .then(r => r.json())
+      .then((d: unknown) => { if (Array.isArray(d)) setDepoimentos(d) })
+      .catch(() => null)
+  }, [])
 
   return (
     <div className="fixed inset-0 z-[200] overflow-y-auto" style={{ background: BG, fontFamily: "Inter, sans-serif" }}>
@@ -532,6 +540,45 @@ export default function LandingPage() {
               </div>
             </FadeUp>
           </div>
+        </div>
+      </section>
+
+      {/* ── SEÇÃO 1.6 — PERGUNTAS DIRETAS, RESPOSTAS DIRETAS ────────────────── */}
+      <section className="max-w-5xl mx-auto px-6 py-16">
+        <FadeUp className="text-center mb-10">
+          <SLabel>TRANSPARÊNCIA</SLabel>
+          <h2 style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: "clamp(22px, 4vw, 38px)", fontWeight: 700, color: DARK }}>
+            Perguntas diretas, respostas diretas
+          </h2>
+        </FadeUp>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[
+            {
+              pergunta: "Isso funciona hoje ou está em desenvolvimento?",
+              resposta: "Todos os módulos mostrados são funcionais e estão em uso. Você pode testar gratuitamente por 7 dias e ver com seus próprios olhos.",
+              cor: "#16a34a",
+            },
+            {
+              pergunta: "A IA foi treinada para medicina ou é só ChatGPT?",
+              resposta: "Usamos modelos de IA de ponta (Claude, Anthropic) com prompts especializados em cada especialidade médica, protocolos clínicos e boas práticas.",
+              cor: GOLD,
+            },
+            {
+              pergunta: "Quantos médicos já usam?",
+              resposta: "Estamos em fase de lançamento com os primeiros médicos parceiros. Você pode ser um dos pioneiros e ajudar a moldar o produto.",
+              cor: "#3b7fff",
+            },
+          ].map(({ pergunta, resposta, cor }, i) => (
+            <FadeUp key={i} delay={i * 80}>
+              <div className="rounded-2xl p-7 h-full flex flex-col" style={{ background: CARD, border: `1px solid ${cor}20` }}>
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center mb-4 flex-shrink-0" style={{ background: `${cor}12`, border: `1px solid ${cor}25` }}>
+                  <span style={{ fontSize: 14, color: cor, fontWeight: 800 }}>?</span>
+                </div>
+                <h3 style={{ fontSize: 14, fontWeight: 700, color: DARK, marginBottom: 10, lineHeight: 1.4 }}>{pergunta}</h3>
+                <p style={{ fontSize: 13, color: TEXT2, lineHeight: 1.7, flex: 1 }}>{resposta}</p>
+              </div>
+            </FadeUp>
+          ))}
         </div>
       </section>
 
@@ -1095,14 +1142,14 @@ export default function LandingPage() {
               <div style={{ fontSize: 48, color: `${GOLD}30`, fontFamily: "Georgia, serif", lineHeight: 1, flexShrink: 0, marginTop: -8 }}>"</div>
               <div>
                 <p style={{ fontSize: "clamp(14px, 2vw, 17px)", color: "rgba(245,240,232,0.85)", lineHeight: 1.75, fontStyle: "italic", marginBottom: 20 }}>
-                  Construí o PRAXIS para resolver meus próprios problemas como médico: perder leads por falta de follow-up, gastar horas com conteúdo sem estratégia, não ter dados para decidir sobre a clínica. Só disponibilizo porque vejo os mesmos problemas em colegas.
+                  Construí o PRAXIS para resolver problemas que enfrentei na prática: perder oportunidades por falta de acompanhamento, gastar horas com marketing sem previsibilidade e administrar a clínica sem indicadores claros. Quando percebi que esses desafios eram comuns entre médicos empreendedores, decidi transformar a solução que funcionou para mim em uma plataforma completa.
                 </p>
                 <div className="flex items-center gap-3">
                   <div style={{ width: 36, height: 36, borderRadius: "50%", background: `${GOLD}20`, border: `1px solid ${GOLD}35`, display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <span style={{ fontSize: 13, fontWeight: 800, color: GOLD }}>P</span>
                   </div>
                   <div>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: "rgba(245,240,232,0.9)" }}>Fundador do PRAXIS</div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: "rgba(245,240,232,0.9)" }}>Médico empreendedor e fundador do PRAXIS</div>
                     <div style={{ fontSize: 10, color: "rgba(245,240,232,0.4)", fontFamily: "monospace" }}>Médico em atividade · Brasil</div>
                   </div>
                 </div>
@@ -1110,6 +1157,66 @@ export default function LandingPage() {
             </div>
           </div>
         </FadeUp>
+      </section>
+
+      {/* ── SEÇÃO 9.3 — DEPOIMENTOS REAIS ───────────────────────────────────── */}
+      <section className="max-w-5xl mx-auto px-6 pb-24">
+        <FadeUp className="text-center mb-10">
+          <SLabel>DEPOIMENTOS</SLabel>
+          <h2 style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: "clamp(22px, 4vw, 38px)", fontWeight: 700, color: DARK }}>
+            {depoimentos.length > 0 ? "Médicos que usam o PRAXIS" : "Seja o primeiro a usar e compartilhar"}
+          </h2>
+        </FadeUp>
+
+        {depoimentos.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {depoimentos.map((dep) => (
+              <FadeUp key={dep.id}>
+                <div className="rounded-2xl p-6 h-full flex flex-col" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
+                  {dep.resultado_destaque && (
+                    <div className="mb-4 inline-flex">
+                      <span style={{ fontSize: 10, fontFamily: "monospace", fontWeight: 700, padding: "3px 10px", borderRadius: 999, background: `${GOLD}12`, color: GOLD, border: `1px solid ${GOLD}30` }}>
+                        {dep.resultado_destaque}
+                      </span>
+                    </div>
+                  )}
+                  <p style={{ fontSize: 13, color: TEXT2, lineHeight: 1.75, flex: 1, fontStyle: "italic", marginBottom: 16 }}>
+                    &quot;{dep.depoimento}&quot;
+                  </p>
+                  <div className="flex items-center gap-2 pt-4" style={{ borderTop: `1px solid ${BORDER}` }}>
+                    <div style={{ width: 32, height: 32, borderRadius: "50%", background: `${GOLD}15`, border: `1px solid ${GOLD}30`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <span style={{ fontSize: 12, fontWeight: 800, color: GOLD }}>{dep.nome.charAt(0)}</span>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: DARK }}>{dep.nome}</div>
+                      <div style={{ fontSize: 10, color: MUTED, fontFamily: "monospace" }}>
+                        {dep.especialidade}{dep.cidade ? ` · ${dep.cidade}` : ""}{dep.estado ? `/${dep.estado}` : ""}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </FadeUp>
+            ))}
+          </div>
+        ) : (
+          <FadeUp>
+            <div className="text-center rounded-2xl p-12 md:p-16" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
+              <div style={{ fontSize: 48, marginBottom: 16 }}>🩺</div>
+              <p style={{ fontSize: 16, fontWeight: 600, color: DARK, marginBottom: 8 }}>
+                Seja um dos primeiros médicos a usar o PRAXIS e deixar sua marca nesta seção.
+              </p>
+              <p style={{ fontSize: 14, color: TEXT2, marginBottom: 28, lineHeight: 1.7 }}>
+                Estamos em fase de lançamento. Pioneiros ajudam a moldar o produto<br className="hidden md:block" />
+                e ganham acesso privilegiado às novas funcionalidades.
+              </p>
+              <Link href="/cadastro"
+                className="inline-flex items-center gap-2 rounded-xl font-bold transition-all hover:opacity-90"
+                style={{ padding: "14px 32px", fontSize: 14, background: GOLD, color: DARK }}>
+                Começar agora <ArrowRight style={{ width: 15, height: 15 }} />
+              </Link>
+            </div>
+          </FadeUp>
+        )}
       </section>
 
       {/* ── SEÇÃO 9.5 — COPILOTO DESTAQUE MÁXIMO ────────────────────────────── */}

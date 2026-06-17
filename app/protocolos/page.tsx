@@ -10,7 +10,7 @@ import {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type Especialidade = "Endocrinologia" | "Nutrologia" | "Cardiologia" | "Ginecologia" | "Reumatologia" | "Neurologia" | "Dermatologia" | "Geriatria" | "Medicina do Esporte" | "Geral"
+type Especialidade = "Endocrinologia" | "Nutrologia" | "Cardiologia" | "Ginecologia" | "Reumatologia" | "Neurologia" | "Dermatologia" | "Geriatria" | "Medicina do Esporte" | "Urologia" | "Otorrino" | "Geral"
 
 interface SecaoProtocolo {
   titulo: string
@@ -1288,6 +1288,214 @@ const PROTOCOLOS: Protocolo[] = [
       ],
     },
   },
+
+  // ── HPB ────────────────────────────────────────────────────────────────────
+  {
+    id: "hpb",
+    nome: "Hiperplasia Prostática Benigna (HPB)",
+    especialidade: "Urologia",
+    cor: "#3b82f6",
+    emoji: "🔵",
+    diagnostico: {
+      titulo: "Diagnóstico",
+      items: [
+        "Sintomas do trato urinário inferior (LUTS): frequência, urgência, noctúria, jato fraco, esforço miccional",
+        "IPSS (International Prostate Symptom Score): leve 0–7, moderado 8–19, grave 20–35",
+        "TR (toque retal): próstata aumentada, homogênea, lisa — exclui carcinoma grosseiro",
+        "PSA para rastreio de Ca próstata em homens >50 anos (ou >45 em alto risco)",
+        "Fluxometria: Qmax <15 mL/s sugere obstrução",
+        "USG próstata + resíduo pós-miccional: volume >80 mL e RPM >150 mL = fatores de risco para progressão",
+      ],
+    },
+    exames: {
+      titulo: "Exames",
+      items: [
+        "PSA total e livre — rastreio Ca próstata; PSA >4: considerar biópsia",
+        "Ureia, creatinina — avaliar repercussão renal",
+        "EAS + urocultura — descartar ITU ou hematúria",
+        "USG de vias urinárias com resíduo pós-miccional",
+        "Fluxometria urinária — Qmax",
+      ],
+    },
+    tratamento: {
+      titulo: "Tratamento",
+      items: [
+        "IPSS leve (0–7) + pouco incômodo: conduta expectante + medidas comportamentais",
+        "Alfabloqueador (1ª linha IPSS moderado/grave): tansulosina 0,4 mg/dia OU silodosina 8 mg/dia",
+        "Inibidor da 5-alfaredutase (próstata >40 mL): dutasterida 0,5 mg/dia OU finasterida 5 mg/dia",
+        "Terapia combinada (próstata grande + IPSS grave): alfabloqueador + 5-ARI (estudo CombAT)",
+        "Antimuscarínico/beta-3 agonista se componente hiperativo (OAB): mirabegron 50 mg/dia",
+        "Inibidor PDE5 (tadalafila 5 mg/dia): HPB + disfunção erétil",
+        "Indicação cirúrgica: RTU próstata, HOLEP ou cirurgia aberta — volume >80 mL, falha clínica, retenção urinária",
+      ],
+    },
+    acompanhamento: {
+      titulo: "Acompanhamento",
+      items: [
+        "Retorno 4–6 semanas: avaliação de resposta sintomática e efeitos adversos",
+        "PSA anual após início de 5-ARI: esperar redução ~50% em 6–12 meses (valor duplicar para comparação real)",
+        "Seguimento anual: IPSS, Qmax, RPM, PSA",
+        "Encaminhamento urologia: retenção urinária, hematúria, ITU recorrente, insuficiência renal, falha clínica",
+      ],
+    },
+  },
+
+  // ── Disfunção Erétil ───────────────────────────────────────────────────────
+  {
+    id: "disfuncao-eretil",
+    nome: "Disfunção Erétil",
+    especialidade: "Urologia",
+    cor: "#8b5cf6",
+    emoji: "💜",
+    diagnostico: {
+      titulo: "Diagnóstico",
+      items: [
+        "IIFE-5 (Índice Internacional de Função Erétil): 22–25 sem DE; 17–21 leve; 12–16 moderada; 5–11 grave",
+        "Investigar fatores de risco: DM, HAS, tabagismo, dislipidemia, sedentarismo, obesidade, depressão",
+        "Revisar medicamentos: anti-hipertensivos (betabloqueadores, diuréticos), antidepressivos, antipsicóticos",
+        "DE de início súbito + erções noturnas preservadas: componente psicogênico provável",
+        "DE progressiva em homem >50 com FR cardiovasculares: componente orgânico — avaliar risco CV antes de tratamento",
+        "Testosterona matinal: excluir hipogonadismo como causa",
+      ],
+    },
+    exames: {
+      titulo: "Exames",
+      items: [
+        "Testosterona total (coleta 7–10h) — excluir hipogonadismo",
+        "Glicemia jejum + HbA1c — DM como causa",
+        "Lipidograma + ApoB — dislipidemia",
+        "TSH — hipotireoidismo",
+        "PSA se >45 anos antes de TRT",
+        "Prolactina se suspeita de hiperprolactinemia",
+      ],
+    },
+    tratamento: {
+      titulo: "Tratamento",
+      items: [
+        "Tratar causa base: controle DM, HAS, dislipidemia, depressão, substituir medicamentos",
+        "Modificação estilo de vida: exercício aeróbico ≥150 min/semana reduz DE em 30–40%",
+        "Inibidores PDE5 (1ª linha): sildenafila 50 mg (conforme demanda), tadalafila 5 mg/dia (uso contínuo)",
+        "Vardenafila 10 mg ou avanafila 100 mg: alternativas com perfil de início de ação diferente",
+        "Hipogonadismo confirmado: TRT — melhora libido e potencializa resposta a PDE5",
+        "Falha PDE5: injeção intracavernosa (alprostadil), vacuoterapia, implante peneano",
+        "Componente psicogênico importante: encaminhar para psicoterapia / sexologia",
+      ],
+    },
+    acompanhamento: {
+      titulo: "Acompanhamento",
+      items: [
+        "Retorno 4–6 semanas: IIFE-5, tolerância, ajuste de dose",
+        "PDE5i + nitratos: contraindicação absoluta (hipotensão grave)",
+        "Doença cardiovascular instável: consultar cardiologia antes de PDE5i",
+        "Monitorar testosterona, hemograma, PSA em uso de TRT",
+        "Acompanhamento anual com perfil metabólico e IIFE-5",
+      ],
+    },
+  },
+
+  // ── Rinite Alérgica ────────────────────────────────────────────────────────
+  {
+    id: "rinite-alergica",
+    nome: "Rinite Alérgica",
+    especialidade: "Otorrino",
+    cor: "#06b6d4",
+    emoji: "🫁",
+    diagnostico: {
+      titulo: "Diagnóstico",
+      items: [
+        "Clínico: rinorreia aquosa + espirros + obstrução nasal + prurido nasal/ocular — ≥2 sintomas por >1h/dia",
+        "Classificação ARIA: intermitente (<4 dias/semana OU <4 semanas) vs. persistente",
+        "Gravidade: leve (sem comprometimento) vs. moderada/grave (distúrbio sono, trabalho, qualidade de vida)",
+        "Fatores desencadeantes: pólen, ácaro (Dermatophagoides), pelos de animais, fungos, baratas",
+        "Rinoscopia: mucosa pálida/azulada, edemaciada, secreção aquosa",
+        "Exames complementares: IgE total + IgE específica (RAST) ou teste cutâneo de leitura imediata",
+      ],
+    },
+    exames: {
+      titulo: "Exames",
+      items: [
+        "IgE total + IgE específica para aeroalérgenos (ácaro, pólen, epitélio animal, fungos)",
+        "Hemograma: eosinofilia periférica sugestiva de atopia",
+        "Citologia nasal: eosinófilos indicam rinite alérgica ou NARES",
+        "TC seios da face se suspeita de rinossinusite associada",
+      ],
+    },
+    tratamento: {
+      titulo: "Tratamento",
+      items: [
+        "Evicção do alérgeno (fundamental): capas impermeáveis, aspiração frequente, controle umidade",
+        "Corticoide intranasal (1ª linha sintomática): budesonida spray 256 µg/dia OU fluticasona 200 µg/dia",
+        "Anti-histamínico oral de 2ª geração: loratadina 10 mg/dia, cetirizina 10 mg/dia, fexofenadina 120–180 mg/dia",
+        "Anti-histamínico + corticoide intranasal: melhor controle que monoterapia",
+        "Descongestionante (uso curto <7 dias): oximetazolina 0,05% — evitar uso crônico (rinite medicamentosa)",
+        "Montelucaste: adjuvante em rinite + asma",
+        "Imunoterapia alérgeno-específica (SLIT/SCIT): indicada em refratários ou polissensibilizados — remissão a longo prazo",
+      ],
+    },
+    acompanhamento: {
+      titulo: "Acompanhamento",
+      items: [
+        "Retorno em 4–6 semanas: controle sintomático e aderência",
+        "Corticoide intranasal: efeito máximo em 2–4 semanas — orientar uso regular",
+        "Rastrear asma em todos os pacientes com rinite (conexão rinite-asma: ARIA)",
+        "Imunoterapia: duração 3–5 anos, reavaliação semestral",
+        "Encaminhar otorrino: desvio de septo, polipose nasal, falha ao tratamento clínico",
+      ],
+    },
+  },
+
+  // ── Sinusite Crônica ───────────────────────────────────────────────────────
+  {
+    id: "sinusite-cronica",
+    nome: "Rinossinusite Crônica",
+    especialidade: "Otorrino",
+    cor: "#10b981",
+    emoji: "🔬",
+    diagnostico: {
+      titulo: "Diagnóstico",
+      items: [
+        "Sintomas ≥12 semanas: obstrução/congestão nasal, rinorreia anterior/posterior, dor/pressão facial, hiposmia/anosmia",
+        "≥2 sintomas + evidência objetiva (rinoscopia ou TC)",
+        "Com pólipos (RSCcPN) vs. sem pólipos (RSCsPN): fenótipos distintos, tratamento diferente",
+        "TC seios da face: padrão ouro para diagnóstico e estadiamento (Lund-Mackay score)",
+        "Endoscopia nasal: avalia complexo ostiomeatal e presença de pólipos",
+        "Fatores contribuintes: rinite alérgica, DRGE, desvio septal, deficiência imune, AFRS, asma",
+      ],
+    },
+    exames: {
+      titulo: "Exames",
+      items: [
+        "TC seios da face (coronal): estadiamento de acometimento",
+        "Rinoscopia anterior ou endoscopia nasal",
+        "IgE total + painel alérgenos: excluir base alérgica",
+        "Culturas de secreção por endoscopia: em refratários ou suspeita de fungos/bactérias resistentes",
+        "Biópsia de mucosa/pólipo: excluir neoplasia se unilateral",
+        "IgA, IgG, IgM, subclasses IgG: deficiências imunes em sinusite recorrente",
+      ],
+    },
+    tratamento: {
+      titulo: "Tratamento",
+      items: [
+        "Irrigação nasal salina isotônica 2x/dia: clearance de muco, first-line adjuvante",
+        "Corticoide intranasal contínuo: budesonida 256 µg 2x/dia ou mometasona 200 µg/dia",
+        "RSCcPN moderada/grave: corticoide oral (prednisona 0,5–1 mg/kg/dia por 5–14 dias) para redução de pólipos",
+        "Antibiótico oral em surto agudo: amoxicilina-clavulanato 875/125 mg 12/12h por 10–14 dias",
+        "Antro-lavagem e CENS (cirurgia endoscópica nasal): refratários ao tratamento clínico",
+        "Biológico (dupilumabe 300 mg SC/2 semanas): RSCcPN grave refratária — aprovado ANVISA",
+        "DRGE associada: IBP + cabeceira elevada",
+      ],
+    },
+    acompanhamento: {
+      titulo: "Acompanhamento",
+      items: [
+        "Retorno 4–6 semanas: sintomas, rinoscopia, aderência ao corticoide intranasal",
+        "Manutenção com corticoide intranasal indefinidamente para prevenir recorrência pós-cirurgia",
+        "Dupilumabe: reavaliação clínica + endoscopia a cada 6 meses; suspensão se ausência de resposta em 4 meses",
+        "Encaminhamento otorrino: todos RSCcPN, falha clínica, suspeita de complicação (celulite orbitária, meningite)",
+        "Acompanhar asma associada: controle integrado rinite-asma-sinusite",
+      ],
+    },
+  },
 ]
 
 // ─── Components ───────────────────────────────────────────────────────────────
@@ -1303,6 +1511,8 @@ const ESP_CORES: Record<Especialidade, string> = {
   Dermatologia:        "#f472b6",
   Geriatria:           "#94a3b8",
   "Medicina do Esporte": "#22d3ee",
+  Urologia:            "#3b82f6",
+  Otorrino:            "#06b6d4",
   Geral:               "#7c85a0",
 }
 

@@ -185,19 +185,17 @@ export default function SobrePage() {
           <div className="rounded-2xl p-10 md:p-14" style={{ background: DARK }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
               <div style={{ width: 44, height: 44, borderRadius: "50%", background: `${GOLD}20`, border: `1px solid ${GOLD}40`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <span style={{ fontSize: 16, fontWeight: 800, color: GOLD }}>P</span>
+                <span style={{ fontSize: 16, fontWeight: 800, color: GOLD }}>B</span>
               </div>
               <div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: "#F5F0E8" }}>Equipe PRAXIS</div>
-                <div style={{ fontSize: 11, color: "rgba(245,240,232,0.50)" }}>Médicos · Desenvolvedores · Brasil</div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: "#F5F0E8" }}>Dr. Bruno Gustavo</div>
+                <div style={{ fontSize: 11, color: "rgba(245,240,232,0.50)" }}>Médico empreendedor e fundador do PRAXIS</div>
               </div>
             </div>
             <blockquote style={{ fontSize: 16, color: "rgba(245,240,232,0.85)", lineHeight: 1.85, fontStyle: "italic", borderLeft: `3px solid ${GOLD}60`, paddingLeft: 20 }}>
-              "O PRAXIS nasceu de uma frustração comum entre médicos: as ferramentas existentes eram genéricas, caras ou não entendiam a realidade da medicina brasileira. Tinham 5 assinaturas diferentes — e nenhuma conversava com a outra. Agências entregavam resultados genéricos. O ChatGPT não entendia medicina.
+              "Construí o PRAXIS para resolver problemas que enfrentei na prática: perder oportunidades por falta de acompanhamento, gastar horas com marketing sem previsibilidade e administrar a clínica sem indicadores claros.
               <br /><br />
-              Um grupo de médicos e desenvolvedores decidiu mudar isso. Uma plataforma que entende medicina, automatiza o administrativo e ainda ajuda a crescer — sem ferramentas fragmentadas, sem perder horas de consultório.
-              <br /><br />
-              O PRAXIS é o sistema que os médicos sempre quiseram ter."
+              Quando percebi que esses desafios eram comuns entre médicos empreendedores, decidi transformar a solução que funcionou para mim em uma plataforma completa."
             </blockquote>
           </div>
         </FadeUp>

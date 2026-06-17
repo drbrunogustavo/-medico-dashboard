@@ -1740,6 +1740,179 @@ const EXAMS: ExamData[] = [
     related: ["Hemograma (plaquetas, hematócrito)", "ALT/AST", "Hematócrito"],
     notes: "IgG positivo isolado sem IgM: infecção antiga ou vacinação. Não tratar como dengue aguda.",
   },
+
+  // ── Dermatologia / Imunologia ───────────────────────────────────────────────
+  {
+    id: "ige_total", name: "IgE Total", category: "Dermatologia / Imunologia",
+    range: {
+      lab: "<100 UI/mL", functional: "<100 UI/mL", unit: "UI/mL",
+      classifyFn: (v) => v < 100 ? "normal" : v <= 500 ? "elevado" : "muito_elevado",
+    },
+    correlations: ["IgE elevada: atopia, parasitoses, dermatite atópica, asma, síndrome Hyper-IgE", "IgE >500: dermatite atópica grave ou parasitose sistêmica (larva migrans, esquistossomose)", "IgE normal não exclui alergia — IgE específica necessária"],
+    conducts: ["IgE elevada: solicitar IgE específica (RAST/ImmunoCAP) para alérgenos suspeitos", "Descartar parasitoses: exame parasitológico + eosinófilos", "IgE >500 + eczema refratário: considerar dupilumabe"],
+    related: ["IgE Específica", "Hemograma (eosinófilos)", "Parasitológico de fezes"],
+    notes: "IgE total sozinha não define alergia. Correlacionar com IgE específica e quadro clínico.",
+  },
+  {
+    id: "ige_especifica", name: "IgE Específica (RAST / ImmunoCAP)", category: "Dermatologia / Imunologia",
+    range: {
+      lab: "<0,35 kUA/L (classe 0)", unit: "kUA/L",
+      classifyFn: (v) => v < 0.35 ? "normal" : v < 3.5 ? "limítrofe" : "elevado",
+    },
+    correlations: ["Classe 0 (<0,35): sensibilização improvável ao alérgeno testado", "Classe 1–2 (0,35–3,5): sensibilização leve/moderada — correlacionar com sintomas", "Classe 3–6 (>3,5): alta sensibilização, risco de reação clínica"],
+    conducts: ["Positivo + sintomas compatíveis: confirmar alergia e orientar evicção", "Alergia alimentar grave: prescrever adrenalina autoinjetável", "Candidato a imunoterapia (SLIT/SCIT): encaminhar alergista"],
+    related: ["IgE Total", "Hemograma", "Triptase sérica"],
+    notes: "Sensibilização (IgE positiva) ≠ alergia clínica. A correlação clínica é obrigatória.",
+  },
+  {
+    id: "zinco_serico", name: "Zinco Sérico", category: "Dermatologia / Imunologia",
+    range: {
+      lab: "60–120 µg/dL", functional: "70–120 µg/dL", unit: "µg/dL",
+      classifyFn: (v) => v < 60 ? "deficiente" : v < 70 ? "insuficiente" : v <= 120 ? "normal" : "elevado",
+    },
+    correlations: ["Zinco <60: deficiência — alopecia, acne, cicatrização prejudicada, imunidade reduzida", "Zinco 60–70: insuficiência — sintomas subclínicos", "Zinco >120: excesso por suplementação — inibe absorção de cobre"],
+    conducts: ["Deficiência: reposição VO 20–40 mg/dia de zinco elementar por 3 meses", "Monitorar cobre se uso prolongado (antagonismo Zn/Cu)", "Acne inflamatória + deficiência: zinco adjuvante ao tratamento dermatológico"],
+    related: ["Cobre sérico", "Ferritina", "Albumina"],
+    notes: "Zinco sérico subestima deficiência tecidual — valores normais não excluem depleção funcional em contexto sugestivo.",
+  },
+  {
+    id: "cobre_serico", name: "Cobre Sérico", category: "Dermatologia / Imunologia",
+    range: {
+      lab: "70–140 µg/dL", unit: "µg/dL",
+      classifyFn: (v) => v < 70 ? "deficiente" : v <= 140 ? "normal" : "elevado",
+    },
+    correlations: ["Cobre <70: deficiência — neuropatia, anemia, alterações ósseas", "Cobre elevado: inflamação aguda (reagente de fase aguda)", "Cobre muito elevado crônico + sinais neurológicos: doença de Wilson"],
+    conducts: ["Deficiência: investigar suplementação excessiva de zinco, síndrome disabsortiva", "Cobre muito elevado + neurológico: ceruloplasmina + cobre urinário 24h (doença de Wilson)"],
+    related: ["Zinco", "Ceruloplasmina", "Hemograma"],
+    notes: "Ceruloplasmina é melhor marcador de status de cobre que cobre sérico isolado.",
+  },
+
+  // ── Saúde da Mulher Avançada ────────────────────────────────────────────────
+  {
+    id: "beta_hcg_quantitativo", name: "Beta-HCG Quantitativo", category: "Saúde da Mulher Avançada",
+    range: {
+      lab: "<5 mUI/mL (não grávida)", unit: "mUI/mL",
+      classifyFn: (v) => v < 5 ? "normal" : v < 25 ? "limítrofe" : "elevado",
+    },
+    correlations: ["<5 mUI/mL: negativo para gestação", "5–25 mUI/mL: zona cinzenta — repetir em 48h", ">25 mUI/mL: gestação confirmada; ausência de duplicação em 48h sugere ectópica ou abortamento"],
+    conducts: ["HCG positivo: USG transvaginal para localização e viabilidade", "Não duplicação em 48h + HCG >1500: descartar ectópica", "Sangramento + HCG em queda: abortamento em curso"],
+    related: ["USG transvaginal", "Progesterona", "Hemograma"],
+    notes: "Monitoramento seriado (48h) é mais informativo que valor isolado no 1º trimestre.",
+  },
+  {
+    id: "progesterona", name: "Progesterona (Fase Lútea)", category: "Saúde da Mulher Avançada",
+    range: {
+      lab: ">10 ng/mL (D21, confirma ovulação)", unit: "ng/mL",
+      classifyFn: (v) => v < 3 ? "baixo" : v < 5 ? "insuficiente" : v < 10 ? "limítrofe" : v <= 30 ? "normal" : "elevado",
+    },
+    correlations: ["<3 ng/mL fase lútea: ciclo anovulatório", "5–10 ng/mL D21: ovulação duvidosa", ">10 ng/mL D21: ovulação confirmada", "<5 ng/mL em gestação 1º tri: risco de inviabilidade"],
+    conducts: ["Deficiência lútea: progesterona vaginal 200–400 mg/dia na 2ª fase", "Ciclo anovulatório: investigar SOP, hiperprolactinemia, tireoide", "Gestação + sangramento + P <5: suporte lúteo"],
+    related: ["LH", "FSH", "USG transvaginal", "Beta-HCG"],
+    notes: "Dosar na fase lútea (D21 de ciclo 28d). Em ciclos irregulares, coletar 7 dias após pico de LH.",
+  },
+  {
+    id: "estradiol", name: "Estradiol (E2)", category: "Saúde da Mulher Avançada",
+    range: {
+      lab: "20–400 pg/mL (fase folicular/pico)", unit: "pg/mL",
+      classifyFn: (v) => v < 20 ? "baixo" : v < 50 ? "insuficiente" : v <= 400 ? "normal" : "elevado",
+    },
+    correlations: ["E2 <20 em mulher em idade fértil: hipogonadismo, menopausa precoce (IOP)", "E2 >400 fase folicular: estimulação excessiva (FIV) ou cistos foliculares", "Pós-menopausa sem TRH: E2 <20 é esperado"],
+    conducts: ["E2 baixo + sintomas climatéricos: avaliar TRH", "E2 muito baixo em jovem + FSH >40: IOP — encaminhar reprodução assistida", "Correlacionar com FSH, LH e fase do ciclo"],
+    related: ["FSH", "LH", "Progesterona", "AMH"],
+    notes: "E2 isolado tem pouco valor — interpretar com perfil hormonal completo e fase do ciclo.",
+  },
+  {
+    id: "lh_fsh", name: "LH / FSH", category: "Saúde da Mulher Avançada",
+    range: {
+      lab: "2–15 mUI/mL (fase folicular)", unit: "mUI/mL",
+      classifyFn: (v) => v < 2 ? "baixo" : v <= 15 ? "normal" : v <= 40 ? "elevado" : "muito_elevado",
+    },
+    correlations: ["FSH >40 + E2 baixo: falência ovariana (IOP ou menopausa)", "LH/FSH >2,5 fase folicular: sugestivo de SOP", "FSH elevado em homem: falência testicular primária", "LH e FSH baixos: hipogonadismo hipogonadotrófico"],
+    conducts: ["SOP suspeito: testosterona livre, AMH, USG ovariana", "IOP: encaminhar reprodução assistida, TRH", "Homem FSH alto: espermograma + andrologia"],
+    related: ["Estradiol", "Progesterona", "Prolactina", "AMH", "Testosterona"],
+    notes: "Dosar na fase folicular precoce (D2–D5). Interpretar LH e FSH sempre em conjunto com E2.",
+  },
+  {
+    id: "prolactina", name: "Prolactina", category: "Saúde da Mulher Avançada",
+    range: {
+      lab: "<29 ng/mL (F) · <18 ng/mL (M)", unit: "ng/mL",
+      classifyFn: (v) => v < 18 ? "normal" : v <= 29 ? "limítrofe" : v <= 100 ? "elevado" : "muito_elevado",
+    },
+    correlations: ["Hiperprolactinemia leve (<100): fármacos (antipsicóticos, metoclopramida), hipotireoidismo, estresse", "Prolactina >100–150 ng/mL: suspeitar prolactinoma", "Macroprolactinemia: IgG-aggregated — sem repercussão clínica"],
+    conducts: ["Hiperprolactinemia confirmada: TSH, revisar medicações", "Prolactina >100 persistente: RM hipófise", "Prolactinoma: cabergolina 0,5–2 mg/semana (1ª linha)"],
+    related: ["TSH", "LH", "FSH", "RM hipófise"],
+    notes: "Coletar em jejum, evitar estímulo mamário nas 24h. Repetir se valor inesperado (macroprolactina).",
+  },
+
+  // ── Saúde do Homem ──────────────────────────────────────────────────────────
+  {
+    id: "testosterona_total", name: "Testosterona Total", category: "Saúde do Homem",
+    range: {
+      lab: "300–1000 ng/dL (H adulto)", functional: "400–800 ng/dL", unit: "ng/dL",
+      classifyFn: (v) => v < 300 ? "deficiente" : v < 400 ? "insuficiente" : v <= 800 ? "normal" : "elevado",
+    },
+    correlations: ["<300 ng/dL + sintomas (libido, energia, DE, sarcopenia): hipogonadismo masculino", "300–400 ng/dL: zona cinzenta — complementar com T livre e SHBG", ">800 ng/dL em TRT: dose excessiva, risco de policitemia"],
+    conducts: ["T total <300 + sintomas: LH, FSH para diferenciar hipogonadismo primário (LH alto) de secundário (LH baixo)", "TRT: undecilato testosterona IM, gel transdérmico ou pellets", "Antes de TRT: hemograma, PSA, hematócrito — excluir Ca próstata"],
+    related: ["Testosterona Livre", "SHBG", "LH", "FSH", "Hematócrito", "PSA"],
+    notes: "Coletar entre 7h–10h (pico matutino). Confirmar com dois valores baixos em dias diferentes.",
+  },
+  {
+    id: "testosterona_livre", name: "Testosterona Livre", category: "Saúde do Homem",
+    range: {
+      lab: "50–210 pg/mL (H adulto)", unit: "pg/mL",
+      classifyFn: (v) => v < 50 ? "deficiente" : v <= 210 ? "normal" : "elevado",
+    },
+    correlations: ["T livre <50 pg/mL + sintomas: deficiência androgênica mesmo com T total normal", "SHBG elevada causa T livre baixa com T total normal", "T livre calculada (Vermeulen) mais confiável que radioimunoensaio direto"],
+    conducts: ["T livre baixa + T total limítrofe: avaliar TRT conforme sintomas e SHBG", "SHBG muito elevada sem causa: investigar cirrose, hipertireoidismo"],
+    related: ["Testosterona Total", "SHBG", "Albumina", "LH"],
+    notes: "T livre calculada (Vermeulen) é mais confiável que dosagem direta por ensaio comercial.",
+  },
+  {
+    id: "shbg", name: "SHBG", category: "Saúde do Homem",
+    range: {
+      lab: "10–57 nmol/L (H adulto)", unit: "nmol/L",
+      classifyFn: (v) => v < 10 ? "baixo" : v <= 57 ? "normal" : "elevado",
+    },
+    correlations: ["SHBG baixa (<10): obesidade, DM2, síndrome metabólica — mais T biodisponível", "SHBG alta (>57): envelhecimento, cirrose, hipertireoidismo — menos T biodisponível", "SHBG modula T livre — essencial para calcular T livre pela fórmula Vermeulen"],
+    conducts: ["SHBG baixa + SOP em mulher: hiperandrogenismo funcional", "SHBG muito alta em homem: pode mascarar hipogonadismo"],
+    related: ["Testosterona Total", "Testosterona Livre", "Albumina"],
+    notes: "Calcular T livre via fórmula Vermeulen com T total, SHBG e albumina.",
+  },
+
+  // ── Longevidade / Medicina de Precisão ─────────────────────────────────────
+  {
+    id: "hba1c_glicemia_combo", name: "HbA1c (Hemoglobina Glicada)", category: "Longevidade / Medicina de Precisão",
+    range: {
+      lab: "<5,7% (normal)", functional: "<5,5% (ótimo)", unit: "%",
+      classifyFn: (v) => v < 5.5 ? "ótimo" : v < 5.7 ? "normal" : v < 6.5 ? "limítrofe" : "elevado",
+    },
+    correlations: ["HbA1c <5,7%: normal", "HbA1c 5,7–6,4%: pré-diabetes — intervenção obrigatória", "HbA1c ≥6,5%: diagnóstico de DM2 (confirmar em 2 dosagens)", "HbA1c reflete média glicêmica dos últimos 3 meses"],
+    conducts: ["Pré-diabetes: mudança estilo de vida (perda 5–7% peso, exercício ≥150 min/semana), metformina", "DM2 novo: metformina + estatina + controle PA + rastreio complicações", "Meta HbA1c: <7% maioria; <6,5% jovens; <8% idosos com comorbidades"],
+    related: ["Glicemia de jejum", "Insulina", "HOMA-IR", "Lipidograma", "Creatinina", "Microalbuminúria"],
+    notes: "HbA1c pode subestimar controle em anemia hemolítica ou hemoglobinopatias.",
+  },
+  {
+    id: "apolipoproteina_b", name: "Apolipoproteína B (ApoB)", category: "Longevidade / Medicina de Precisão",
+    range: {
+      lab: "<100 mg/dL (baixo risco)", functional: "<80 mg/dL (ótimo)", unit: "mg/dL",
+      classifyFn: (v) => v < 80 ? "ótimo" : v < 100 ? "normal" : v < 130 ? "elevado" : "muito_elevado",
+    },
+    correlations: ["ApoB <80: ótimo para prevenção CV primária", "ApoB >100 com LDL-c normal: padrão de partículas pequenas e densas — risco subestimado pelo LDL", "1 partícula LDL = 1 molécula ApoB — mede partículas aterogênicas totais"],
+    conducts: ["ApoB elevado + LDL-c normal: intensificar estatina + ezetimiba", "Alto risco CV: alvo ApoB <70 e LDL-c <70", "Persistência em alto risco: inibidores PCSK9"],
+    related: ["LDL-c", "HDL", "Triglicerídeos", "PCR ultrassensível", "Lp(a)"],
+    notes: "ApoB supera LDL-c como preditor de risco CV — especialmente em DM2, obesidade e hipertrigliceridemia.",
+  },
+  {
+    id: "homocisteina", name: "Homocisteína", category: "Longevidade / Medicina de Precisão",
+    range: {
+      lab: "<15 µmol/L", functional: "<10 µmol/L", unit: "µmol/L",
+      classifyFn: (v) => v < 10 ? "ótimo" : v < 15 ? "normal" : v < 30 ? "elevado" : "muito_elevado",
+    },
+    correlations: ["10–15 µmol/L: hiperhomocisteinemia leve — FR cardiovascular e neurodegenerativo", ">15 µmol/L: hiperhomocisteinemia — risco trombótico aumentado", ">30 µmol/L: grave — erro inato do metabolismo ou deficiências vitamínicas severas"],
+    conducts: ["Elevada: investigar deficiência de B12, B6 e folato", "Reposição: B12 1000 µg/dia, folato 0,4–5 mg/dia, B6 10–50 mg/dia", "Doença renal: causa frequente — correção vitamínica parcial"],
+    related: ["Vitamina B12", "Ácido fólico", "Vitamina B6", "Creatinina"],
+    notes: "Homocisteína >30 sem deficiência vitamínica: investigar homocistinúria (MTHFR, CBS).",
+  },
 ]
 
 // Group by category

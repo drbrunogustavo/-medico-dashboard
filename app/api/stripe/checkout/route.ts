@@ -75,6 +75,7 @@ export async function POST(req: NextRequest) {
         trial_period_days: 7,
         metadata:          { user_id: auth.userId, plano: planoDb },
       },
+      allow_promotion_codes: true,
       locale: "pt-BR",
     })
 

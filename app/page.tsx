@@ -291,6 +291,7 @@ const FAQ_ITEMS = [
   { q: "Como funciona o período de teste?", a: "7 dias para explorar todos os módulos do plano escolhido, sem restrições e sem necessidade de cartão de crédito." },
   { q: "Meus dados clínicos ficam seguros?", a: "Sim. A plataforma usa Supabase (PostgreSQL gerenciado) com Row Level Security — seus dados são isolados por usuário. Nenhum dado clínico é usado para treinar modelos de IA." },
   { q: "Posso cancelar a qualquer momento?", a: "Sim, com um clique nas configurações. Sem fidelidade, sem burocracia, sem multa. O acesso permanece ativo até o final do período pago." },
+  { q: "Como migro meus pacientes de outro sistema?", a: "Você pode exportar seus dados em CSV ou Excel do seu sistema atual e importar no PRAXIS através da nossa ferramenta de migração guiada, disponível na plataforma. O processo leva alguns minutos e mapeia automaticamente as colunas do seu arquivo." },
 ]
 
 // ─── Cell helper ──────────────────────────────────────────────────────────────
@@ -1429,6 +1430,52 @@ export default function LandingPage() {
               </div>
             </div>
           </div>
+        </FadeUp>
+      </section>
+
+      {/* ── SEÇÃO 11.5 — MIGRAÇÃO ────────────────────────────────────────────── */}
+      <section className="max-w-5xl mx-auto px-6 pb-24">
+        <FadeUp className="text-center mb-10">
+          <SLabel>MIGRAÇÃO</SLabel>
+          <h2 style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: "clamp(22px, 4vw, 38px)", fontWeight: 700, color: DARK }}>
+            Migrar é simples
+          </h2>
+          <p style={{ fontSize: 15, color: TEXT2, maxWidth: 560, margin: "12px auto 0" }}>
+            Já usa outro sistema? Importe seus pacientes em minutos com nossa ferramenta de migração guiada.
+            Seus dados continuam seus — exporte quando quiser.
+          </p>
+        </FadeUp>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
+          {[
+            { n: "1", icon: "📤", titulo: "Exporte do seu sistema atual", desc: "CSV ou Excel do seu prontuário, planilha ou qualquer outro CRM. Praticamente todos os sistemas suportam exportação." },
+            { n: "2", icon: "🔀", titulo: "Mapeie as colunas no PRAXIS",  desc: "Nossa ferramenta detecta automaticamente as colunas e sugere o mapeamento. Você ajusta em segundos." },
+            { n: "3", icon: "✅", titulo: "Pronto — seus pacientes migrados", desc: "Os dados entram no seu banco de pacientes e, se quiser, também no CRM de Leads para acompanhamento contínuo." },
+          ].map(step => (
+            <FadeUp key={step.n}>
+              <div className="relative rounded-2xl p-6 h-full" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
+                <div className="flex items-center gap-3 mb-4">
+                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: `${GOLD}12`, border: `1px solid ${GOLD}25`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <span style={{ fontSize: 13, fontWeight: 800, color: GOLD }}>{step.n}</span>
+                  </div>
+                  <span style={{ fontSize: 20 }}>{step.icon}</span>
+                </div>
+                <h3 style={{ fontSize: 15, fontWeight: 700, color: DARK, marginBottom: 8 }}>{step.titulo}</h3>
+                <p style={{ fontSize: 13, color: TEXT2, lineHeight: 1.7 }}>{step.desc}</p>
+              </div>
+            </FadeUp>
+          ))}
+        </div>
+
+        <FadeUp className="text-center">
+          <Link href="/cadastro"
+            className="inline-flex items-center gap-2 rounded-xl font-bold transition-all hover:opacity-90"
+            style={{ padding: "14px 32px", fontSize: 14, background: DARK, color: "#F5F0E8" }}>
+            Começar migração gratuita <ArrowRight style={{ width: 15, height: 15 }} />
+          </Link>
+          <p style={{ fontSize: 12, color: MUTED, marginTop: 10 }}>
+            Processamento 100% no navegador — nenhum dado de paciente trafega para servidores externos durante a importação.
+          </p>
         </FadeUp>
       </section>
 

@@ -15,7 +15,7 @@ import {
   RefreshCw, Map, BarChart2, Rocket,
   Instagram, Calculator, FileBarChart,
   FlaskConical, FileHeart, Pill,
-  BookOpen, Scale, Wand2, Store, Brain,
+  BookOpen, Scale, Wand2, Store, Brain, FileSpreadsheet,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useMenu } from "@/components/MobileMenuProvider"
@@ -91,6 +91,7 @@ const NAV: Record<AlaId, NavItem[]> = {
     { label: "Agenda Inteligente",      href: "/agenda",           icon: Calendar      },
     { label: "Copiloto de Consulta",    href: "/copiloto",         icon: Bot,           badge: "MAIS USADO" },
     { label: "Gestão de Pacientes",     href: "/pacientes",        icon: Users         },
+    { label: "Importar Pacientes",      href: "/importar",         icon: FileSpreadsheet, badge: "MIGRAÇÃO" },
     { label: "Pesquisa NPS",            href: "/nps",              icon: Star          },
     { label: "Programa de Indicações",  href: "/indicacoes",       icon: UserPlus      },
     { label: "Scripts de Atendimento",  href: "/scripts",          icon: MessageSquare },
@@ -145,6 +146,7 @@ const BADGE_STYLE: Record<string, string> = {
   "IA":         "bg-amber-500/10 text-amber-400 border border-amber-500/25",
   "MAIS USADO": "bg-[rgba(212,175,55,0.08)] text-[#d4af37] border border-[rgba(212,175,55,0.25)]",
   "NOVO":       "bg-accent-dim text-accent border border-accent-border",
+  "MIGRAÇÃO":   "bg-blue-500/10 text-blue-400 border border-blue-500/25",
 }
 
 const PLAN_UI = {

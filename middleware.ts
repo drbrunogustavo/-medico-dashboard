@@ -8,7 +8,13 @@ const PUBLIC_ROUTES = new Set([
 ])
 
 // Authenticated users may access without completing onboarding
-const ONBOARDING_EXEMPT = new Set(["/onboarding", "/dashboard"])
+const ONBOARDING_EXEMPT = new Set(["/onboarding"])
+
+// Routes accessible without an active paid plan (post-onboarding)
+const PAYMENT_EXEMPT_ROUTES = new Set([
+  "/planos", "/onboarding", "/configuracoes", "/configuracoes/membros",
+  "/tour", "/perfil", "/notificacoes", "/exportar", "/deletar-dados",
+])
 
 // Routes that require Pro or Elite plan
 const PRO_ROUTES = new Set(["/expansao", "/predicao", "/benchmark"])
@@ -68,9 +74,23 @@ export async function middleware(request: NextRequest) {
     if (!perfilError && !perfil?.onboarding_completo) {
       return NextResponse.redirect(new URL("/onboarding", request.url))
     }
+
+    // Payment gate — require an active plan after onboarding is complete
+    if (!PAYMENT_EXEMPT_ROUTES.has(pathname)) {
+      const { data: planoData } = await supabase
+        .from("user_planos")
+        .select("status")
+        .eq("user_id", session.user.id)
+        .maybeSingle()
+
+      const hasActivePlan = planoData?.status === "ativo"
+      if (!hasActivePlan) {
+        return NextResponse.redirect(new URL("/planos", request.url))
+      }
+    }
   }
 
-  // Plan guard — soft enforcement for premium routes
+  // Plan guard — tier enforcement for premium routes
   if (PRO_ROUTES.has(pathname) || ELITE_ROUTES.has(pathname)) {
     const { data: planoData } = await supabase
       .from("user_planos")

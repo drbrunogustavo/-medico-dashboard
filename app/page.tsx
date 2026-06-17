@@ -489,7 +489,7 @@ export default function LandingPage() {
               style={{ padding: "16px 36px", fontSize: 15, background: GOLD, color: DARK, boxShadow: `0 8px 40px ${GOLD}30` }}>
               Explorar a plataforma <ArrowRight style={{ width: 16, height: 16 }} />
             </Link>
-            <Link href="/sobre"
+            <Link href="/planos"
               onClick={() => track("cta_click", { button: "hero_ver_planos" })}
               className="inline-flex items-center gap-2 rounded-xl font-semibold text-[14px] transition-all hover:opacity-80"
               style={{ padding: "16px 28px", background: "rgba(13,27,42,0.06)", color: DARK, border: `1px solid ${BORDER}` }}>

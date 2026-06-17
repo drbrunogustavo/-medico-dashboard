@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
             stripe_subscription_id: sub.id,
             stripe_customer_id:     sub.customer as string,
             stripe_price_id:        priceId,
-            status:                 subStatus === "active" ? "ativo" : subStatus,
+            status:                 (subStatus === "active" || subStatus === "trialing") ? "ativo" : subStatus,
             assinatura_termina_em:  periodEnd,
             atualizado_em:          new Date().toISOString(),
           },

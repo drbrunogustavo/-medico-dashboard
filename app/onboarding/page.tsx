@@ -149,7 +149,7 @@ export default function OnboardingPage() {
           body: JSON.stringify({ nome: perfil.nome, email: perfil.email }),
         }).catch(() => null)
       }
-      router.push("/dashboard")
+      router.push("/planos")
     } catch {
       setErroMsg("Erro de conexão. Tente novamente.")
     } finally {
@@ -372,7 +372,7 @@ export default function OnboardingPage() {
                 Sua plataforma está configurada!
               </h2>
               <p className="text-[14px] max-w-sm mx-auto leading-relaxed" style={{ color: TEXT2 }}>
-                Acesso completo a todos os módulos por <strong style={{ color: DARK }}>7 dias</strong> — sem cartão de crédito.
+                Escolha seu plano e comece com <strong style={{ color: DARK }}>7 dias grátis</strong> — cancele quando quiser.
               </p>
             </div>
 
@@ -390,8 +390,8 @@ export default function OnboardingPage() {
                 className="w-full py-4 rounded-xl text-[15px] font-bold transition-all hover:opacity-90 disabled:opacity-50"
                 style={{ background: GOLD, color: "#fff", boxShadow: `0 4px 20px ${GOLD}44` }}>
                 {saving
-                  ? <span className="flex items-center justify-center gap-2"><Loader2 className="w-4 h-4 animate-spin" />Entrando...</span>
-                  : "Entrar na plataforma"}
+                  ? <span className="flex items-center justify-center gap-2"><Loader2 className="w-4 h-4 animate-spin" />Aguarde...</span>
+                  : "Escolher meu plano →"}
               </button>
               <Link href="/tour" className="block text-center text-[12px] underline underline-offset-4" style={{ color: MUTED }}>
                 Explorar o tour primeiro →

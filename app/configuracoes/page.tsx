@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils"
 import {
   Plug, Bell, Palette, Shield, Users, CreditCard,
   CheckCircle2, XCircle, ChevronRight, ExternalLink,
-  Eye, EyeOff, Loader2, AlertTriangle,
+  Eye, EyeOff, Loader2, AlertTriangle, Download,
 } from "lucide-react"
 import Link from "next/link"
 
@@ -223,12 +223,15 @@ function TabIntegracoes() {
 // ─── Tab: Notificações ────────────────────────────────────────────────────────
 
 const NOTIF_ITEMS = [
-  { id: "novo_lead",      label: "Novo lead captado",           sub: "Quando um novo lead entra no CRM" },
-  { id: "mensagem_wp",    label: "Mensagem no WhatsApp",        sub: "Resposta de lead via Zapi" },
-  { id: "nps_resposta",   label: "Resposta NPS recebida",       sub: "Paciente enviou avaliação" },
-  { id: "agendamento",    label: "Novo agendamento",            sub: "Consulta marcada na agenda" },
-  { id: "relatorio",      label: "Relatório semanal pronto",    sub: "Toda segunda às 8h" },
-  { id: "sistema",        label: "Atualizações do sistema",     sub: "Novidades e manutenções PRAXIS" },
+  { id: "novo_lead",       label: "Novo lead captado",            sub: "Quando um novo lead entra no CRM" },
+  { id: "mensagem_wp",     label: "Mensagem no WhatsApp",         sub: "Resposta de lead via Zapi" },
+  { id: "nps_resposta",    label: "Resposta NPS recebida",        sub: "Paciente enviou avaliação" },
+  { id: "nps_baixo",       label: "Alerta: NPS baixo (≤ 6)",     sub: "Email imediato quando paciente avalia com nota baixa" },
+  { id: "leads_parados",   label: "Leads sem follow-up",         sub: "Alerta diário de leads sem resposta há mais de 48h" },
+  { id: "agendamento",     label: "Novo agendamento",             sub: "Consulta marcada na agenda" },
+  { id: "relatorio",       label: "Relatório semanal pronto",     sub: "Toda segunda às 11h" },
+  { id: "trial_acabando",  label: "Trial expirando",              sub: "Lembrete 2 dias antes do trial expirar" },
+  { id: "sistema",         label: "Atualizações do sistema",      sub: "Novidades e manutenções PRAXIS" },
 ]
 
 function TabNotificacoes() {
@@ -665,6 +668,42 @@ function TabFaturamento() {
             </span>
           </div>
         ))}
+      </Card>
+
+      {/* Seus dados */}
+      <SectionTitle>Seus dados, sua decisão</SectionTitle>
+      <Card>
+        <div className="p-5">
+          <div className="flex items-start gap-3 mb-4">
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ background: "rgba(184,151,106,0.12)", border: "1px solid rgba(184,151,106,0.25)" }}
+            >
+              <Download className="w-4 h-4" style={{ color: "var(--accent)" }} />
+            </div>
+            <div>
+              <p className="text-[13px] font-semibold mb-1" style={{ color: "var(--text-primary)" }}>
+                Exporte todos os seus dados
+              </p>
+              <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                Você nunca fica preso à nossa plataforma. Exporte pacientes, leads, financeiro,
+                consultas e muito mais a qualquer momento, sem burocracia.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/exportar"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-[12px] font-semibold transition-all"
+            style={{
+              background:   "rgba(184,151,106,0.1)",
+              border:       "1px solid rgba(184,151,106,0.3)",
+              color:        "var(--accent)",
+            }}
+          >
+            <Download className="w-3.5 h-3.5" />
+            Exportar meus dados <ChevronRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
       </Card>
     </div>
   )

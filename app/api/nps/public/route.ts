@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
 
     const { data: pesquisa } = await supabase
       .from("nps_pesquisas")
-      .select("id, status")
+      .select("id, status, user_id, paciente_nome")
       .eq("token", token)
       .single()
 
@@ -46,6 +46,34 @@ export async function POST(req: NextRequest) {
       .update({ nota, comentario: comentario ?? null, status: "respondido", respondido_em: new Date().toISOString() })
       .eq("id", pesquisa.id)
     if (error) throw new Error(error.message)
+
+    // Fire nps-baixo email alert (best-effort, non-blocking)
+    if (nota <= 6 && pesquisa.user_id) {
+      void (async () => {
+        try {
+          const { data: authUser } = await supabase.auth.admin.getUserById(pesquisa.user_id)
+          const email = authUser?.user?.email
+          if (!email) return
+          const { data: perfil } = await supabase
+            .from("perfis")
+            .select("nome")
+            .eq("user_id", pesquisa.user_id)
+            .maybeSingle()
+          const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://praxisplataforma.com.br"
+          await fetch(`${appUrl}/api/email/nps-baixo`, {
+            method:  "POST",
+            headers: { "Content-Type": "application/json" },
+            body:    JSON.stringify({
+              email,
+              nome:         perfil?.nome ?? email.split("@")[0],
+              pacienteNome: pesquisa.paciente_nome ?? "Paciente",
+              nota,
+              comentario:   comentario ?? null,
+            }),
+          })
+        } catch { /* ignore email errors — NPS response was saved successfully */ }
+      })()
+    }
 
     return NextResponse.json({ ok: true, nota })
   } catch (e) {

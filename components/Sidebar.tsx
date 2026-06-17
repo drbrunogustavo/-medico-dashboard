@@ -16,6 +16,7 @@ import {
   Instagram, Calculator, FileBarChart,
   FlaskConical, FileHeart, Pill,
   BookOpen, Scale, Wand2, Store, Brain, FileSpreadsheet,
+  Download, Receipt, Gift,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useMenu } from "@/components/MobileMenuProvider"
@@ -92,6 +93,7 @@ const NAV: Record<AlaId, NavItem[]> = {
     { label: "Copiloto de Consulta",    href: "/copiloto",         icon: Bot,           badge: "MAIS USADO" },
     { label: "Gestão de Pacientes",     href: "/pacientes",        icon: Users         },
     { label: "Importar Pacientes",      href: "/importar",         icon: FileSpreadsheet, badge: "MIGRAÇÃO" },
+    { label: "Exportar Dados",          href: "/exportar",         icon: Download },
     { label: "Pesquisa NPS",            href: "/nps",              icon: Star          },
     { label: "Programa de Indicações",  href: "/indicacoes",       icon: UserPlus      },
     { label: "Scripts de Atendimento",  href: "/scripts",          icon: MessageSquare },
@@ -116,6 +118,8 @@ const NAV: Record<AlaId, NavItem[]> = {
     { label: "Metas e Planejamento",   href: "/metas",        icon: Target           },
     { label: "Relatório Mensal",        href: "/relatorio",    icon: FileBarChart     },
     { label: "Mapa de Objeções",       href: "/objecoes",     icon: ShieldQuestion   },
+    { label: "Notas Fiscais",          href: "/notas-fiscais", icon: Receipt,    badge: "BETA"      },
+    { label: "Programa de Afiliados",  href: "/afiliados",    icon: Gift,       badge: "Ganhe 20%" },
   ],
   ia: [
     { label: "Posicionamento Médico",     href: "/posicionamento",    icon: Target  },
@@ -147,6 +151,8 @@ const BADGE_STYLE: Record<string, string> = {
   "MAIS USADO": "bg-[rgba(212,175,55,0.08)] text-[#d4af37] border border-[rgba(212,175,55,0.25)]",
   "NOVO":       "bg-accent-dim text-accent border border-accent-border",
   "MIGRAÇÃO":   "bg-blue-500/10 text-blue-400 border border-blue-500/25",
+  "BETA":       "bg-amber-500/10 text-amber-400 border border-amber-500/25",
+  "Ganhe 20%":  "bg-emerald-500/10 text-emerald-400 border border-emerald-500/25",
 }
 
 const PLAN_UI = {

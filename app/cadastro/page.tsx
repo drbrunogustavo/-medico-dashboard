@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser"
 
 export default function CadastroPage() {
@@ -11,7 +11,14 @@ export default function CadastroPage() {
   const [confirmarSenha,  setConfirmarSenha]  = useState("")
   const [loading,         setLoading]         = useState(false)
   const [erro,            setErro]            = useState("")
-  const router = useRouter()
+  const router       = useRouter()
+  const searchParams = useSearchParams()
+
+  // Persist affiliate ref code so the checkout flow can send it to Stripe metadata
+  useEffect(() => {
+    const ref = searchParams.get("ref")
+    if (ref) sessionStorage.setItem("praxis_ref_afiliado", ref)
+  }, [searchParams])
 
   async function handleCadastro() {
     setErro("")

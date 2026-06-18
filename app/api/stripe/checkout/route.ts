@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
       payment_method_types: ["card"],
       line_items:           [{ price: priceId, quantity: 1 }],
       customer_email:       user?.email ?? undefined,
-      success_url:          `${origin}/planos?pagamento=sucesso`,
+      success_url:          `${origin}/planos?pagamento=sucesso&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url:           `${origin}/planos`,
       metadata:             { user_id: auth.userId, plano: planoDb },
       subscription_data: {

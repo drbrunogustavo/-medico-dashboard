@@ -36,13 +36,13 @@ const FEATURES = [
   { text: "Calendário Editorial",              starter: true,  pro: true,  elite: true  },
   { text: "CRM de Leads",                      starter: true,  pro: true,  elite: true  },
   { text: "Radar de Tendências (IA)",          starter: false, pro: true,  elite: true  },
-  { text: "Diretor Criativo (Imagens IA)",     starter: false, pro: true,  elite: true  },
   { text: "Copiloto de Consulta",              starter: false, pro: true,  elite: true  },
   { text: "Pesquisa NPS",                      starter: false, pro: true,  elite: true  },
   { text: "Precificação Inteligente",          starter: false, pro: true,  elite: true  },
   { text: "Indicadores da Clínica",            starter: false, pro: true,  elite: true  },
-  { text: "Metas e Planejamento",              starter: false, pro: true,  elite: true  },
-  { text: "Calculadoras Clínicas",             starter: false, pro: true,  elite: true  },
+  { text: "Diretor Criativo (Imagens IA)",     starter: false, pro: false, elite: true  },
+  { text: "Metas e Planejamento",              starter: false, pro: false, elite: true  },
+  { text: "Calculadoras Clínicas",             starter: false, pro: false, elite: true  },
   { text: "Painel Executivo",                  starter: false, pro: false, elite: true  },
   { text: "Consultor Estratégico IA",          starter: false, pro: false, elite: true  },
   { text: "Diagnóstico 360° da Clínica",       starter: false, pro: false, elite: true  },
@@ -187,11 +187,16 @@ export default function PlanosPage() {
   const [loading,     setLoading]     = useState<string | null>(null)
   const [stripeError, setStripeError] = useState<string | null>(null)
 
-  const isSuccess = typeof window !== "undefined"
-    ? new URLSearchParams(window.location.search).get("pagamento") === "sucesso"
-    : false
+  const searchParams = typeof window !== "undefined"
+    ? new URLSearchParams(window.location.search)
+    : null
 
-  const [pollDone, setPollDone] = useState(false)
+  const isSuccess  = searchParams?.get("pagamento") === "sucesso"
+  const sessionId  = searchParams?.get("session_id") ?? null
+
+  const [activating, setActivating] = useState(false)
+  const [activated,  setActivated]  = useState(false)
+  const [activateErr, setActivateErr] = useState<string | null>(null)
 
   // Derive authentication state from useAuth
   // null = still determining, true/false = resolved
@@ -208,30 +213,32 @@ export default function PlanosPage() {
       .finally(() => setPlanLoading(false))
   }, [user])
 
-  // After Stripe success redirect, poll until webhook has updated user_planos
+  // After Stripe redirect: call confirm-session to activate instantly, then go to dashboard
   useEffect(() => {
-    if (!isSuccess || !user) return
-    let attempts = 0
-    const maxAttempts = 10
-    const interval = setInterval(async () => {
-      attempts++
-      try {
-        const res = await fetch("/api/planos")
-        if (!res.ok) return
-        const data = await res.json() as UserPlan
-        if (data.status === "ativo" && data.hasStripe) {
-          clearInterval(interval)
-          router.replace("/dashboard")
-          return
+    if (!isSuccess || !user || !sessionId) return
+    if (activating || activated) return
+
+    setActivating(true)
+    fetch("/api/stripe/confirm-session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ session_id: sessionId }),
+    })
+      .then(r => r.json())
+      .then((data: { ok?: boolean; activated?: boolean; error?: string }) => {
+        if (data.ok) {
+          setActivated(true)
+          window.location.href = "/dashboard"
+        } else {
+          setActivateErr(data.error ?? "Aguardando confirmação do pagamento...")
+          setActivating(false)
         }
-      } catch { /* ignore — retry */ }
-      if (attempts >= maxAttempts) {
-        clearInterval(interval)
-        setPollDone(true)
-      }
-    }, 2000)
-    return () => clearInterval(interval)
-  }, [isSuccess, user, router])
+      })
+      .catch(() => {
+        setActivateErr("Erro de conexão. Tente novamente.")
+        setActivating(false)
+      })
+  }, [isSuccess, user, sessionId, activating, activated])
 
   async function handleCheckout(priceKey: string) {
     console.log("[planos] handleCheckout chamado, priceKey:", priceKey)
@@ -333,35 +340,43 @@ export default function PlanosPage() {
           <ArrowLeft className="w-3 h-3" /> Voltar
         </Link>
 
-        {/* Success banner — shown while webhook processes after Stripe redirect */}
+        {/* Success screen — shown after Stripe redirect, hides plan grid */}
         {isSuccess && (
-          <div className="rounded-xl p-4 flex items-center gap-3"
-            style={{ background: "rgba(184,151,106,0.08)", border: "1px solid rgba(184,151,106,0.30)" }}>
-            {pollDone ? (
-              <Check style={{ width: 16, height: 16, color: "#b8976a", flexShrink: 0 }} />
-            ) : (
-              <Loader2 style={{ width: 16, height: 16, color: "#b8976a", flexShrink: 0 }} className="animate-spin" />
-            )}
-            <div>
-              <p style={{ fontSize: 13, color: "#b8976a", fontWeight: 600 }}>
-                {pollDone
-                  ? "Pagamento confirmado! Clique abaixo para entrar."
-                  : "Pagamento confirmado! Ativando sua conta..."}
-              </p>
-              {pollDone && (
-                <button
-                  onClick={() => router.replace("/dashboard")}
-                  className="mt-1 text-[12px] underline underline-offset-2"
-                  style={{ color: "#b8976a" }}>
-                  Ir para o dashboard →
-                </button>
+          <div className="flex flex-col items-center justify-center py-16 space-y-6 text-center">
+            <div style={{
+              width: 64, height: 64, borderRadius: "50%",
+              background: "rgba(184,151,106,0.12)", border: "1.5px solid rgba(184,151,106,0.35)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              {activated ? (
+                <Check style={{ width: 28, height: 28, color: "#b8976a" }} />
+              ) : (
+                <Loader2 style={{ width: 28, height: 28, color: "#b8976a" }} className="animate-spin" />
               )}
             </div>
+            <div>
+              <p style={{ fontSize: 20, fontWeight: 700, color: "#0D1B2A", fontFamily: "var(--font-playfair), Georgia, serif" }}>
+                {activated ? "Conta ativada!" : "Ativando sua conta..."}
+              </p>
+              <p style={{ fontSize: 13, color: "#6a5a4a", marginTop: 6 }}>
+                {activated
+                  ? "Redirecionando para o dashboard..."
+                  : activateErr ?? "Verificando pagamento com o Stripe. Aguarde um instante."}
+              </p>
+            </div>
+            {activateErr && !activated && (
+              <button
+                onClick={() => { window.location.href = "/dashboard" }}
+                className="px-6 py-3 rounded-xl text-[13px] font-bold transition-all hover:opacity-90"
+                style={{ background: "#b8976a", color: "#fff" }}>
+                Ir para o dashboard →
+              </button>
+            )}
           </div>
         )}
 
-        {/* Stripe error banner */}
-        {stripeError && (
+        {/* Plans content — hidden after successful payment */}
+        {!isSuccess && stripeError && (
           <div className="rounded-xl p-4 flex items-start gap-3"
             style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)" }}>
             <span style={{ width: 16, height: 16, color: "#f87171", flexShrink: 0, marginTop: 1 }}>⚠</span>
@@ -372,6 +387,7 @@ export default function PlanosPage() {
           </div>
         )}
 
+        {!isSuccess && <>
         {/* Header */}
         <div className="text-center max-w-xl mx-auto">
           <div style={{ fontSize: 10, fontFamily: "monospace", color: "#b8976a", letterSpacing: "3px", textTransform: "uppercase", marginBottom: 16 }}>
@@ -478,6 +494,7 @@ export default function PlanosPage() {
         <p className="text-center" style={{ fontSize: 12, color: "#6a5a4a" }}>
           Acesso imediato após confirmação. 7 dias grátis em qualquer plano. Processado com segurança pelo Stripe.
         </p>
+        </>}
       </div>
 
       <footer className="relative px-6 py-6" style={{ borderTop: "1px solid rgba(13,27,42,0.08)" }}>

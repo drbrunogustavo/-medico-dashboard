@@ -20,7 +20,6 @@ interface PlanDef {
   priceDisplay: string
   priceSub:     string
   badge:        string | null
-  highlight:    boolean
   icon:         React.ElementType
   color:        string
   border:       string
@@ -56,8 +55,8 @@ const PLANS: PlanDef[] = [
   {
     id: "starter",      name: "Starter",
     priceDisplay: "R$ 97",   priceSub: "/mês",
-    badge: null,  highlight: false,
-    icon: Zap,   color: "#aaaaaa", border: "rgba(255,255,255,0.10)",
+    badge: null,
+    icon: Zap,   color: "#6b7280", border: "rgba(107,114,128,0.25)",
     limits:  "30 gerações/mês",
     support: "Suporte por email",
     priceKey: "starter",
@@ -65,7 +64,7 @@ const PLANS: PlanDef[] = [
   {
     id: "pro",          name: "Pro",
     priceDisplay: "R$ 197",  priceSub: "/mês",
-    badge: null,  highlight: false,
+    badge: null,
     icon: Star,  color: "#b8976a", border: "rgba(184,151,106,0.25)",
     limits:  "200 gerações/mês",
     support: "Suporte por WhatsApp",
@@ -74,7 +73,7 @@ const PLANS: PlanDef[] = [
   {
     id: "elite",        name: "Elite",
     priceDisplay: "R$ 397",  priceSub: "/mês",
-    badge: "MAIS POPULAR", highlight: true,
+    badge: "MAIS POPULAR",
     icon: Crown, color: "#d4af37", border: "rgba(212,175,55,0.30)",
     limits:  "Gerações ilimitadas",
     support: "WhatsApp prioritário + onboarding 1:1",
@@ -83,7 +82,7 @@ const PLANS: PlanDef[] = [
   {
     id: "elite_annual", name: "Elite Anual",
     priceDisplay: "R$ 2.997", priceSub: "/ano",
-    badge: "ECONOMIZE 37%", highlight: false,
+    badge: "ECONOMIZE 37%",
     icon: CalendarDays, color: "#a78bfa", border: "rgba(167,139,250,0.25)",
     limits:  "Gerações ilimitadas · 12 meses",
     support: "WhatsApp prioritário + onboarding 1:1",
@@ -154,11 +153,7 @@ function PlanCTA({
     return (
       <Link href="/cadastro"
         className="block text-center py-3.5 rounded-xl text-[13px] font-bold transition-all hover:opacity-90"
-        style={{
-          background: plan.highlight ? plan.color : `${plan.color}18`,
-          color:      plan.highlight ? "#0D1B2A" : plan.color,
-          border:     plan.highlight ? "none" : `1px solid ${plan.color}35`,
-        }}>
+        style={{ background: plan.color, color: "#fff", border: "none" }}>
         Começar 7 dias grátis
       </Link>
     )
@@ -170,11 +165,7 @@ function PlanCTA({
       onClick={() => onCheckout(plan.priceKey)}
       disabled={!!loading}
       className="block w-full text-center py-3.5 rounded-xl text-[13px] font-bold disabled:opacity-50 transition-all hover:opacity-90 active:scale-[0.98]"
-      style={{
-        background: plan.highlight ? plan.color : `${plan.color}18`,
-        color:      plan.highlight ? "#080808" : plan.color,
-        border:     plan.highlight ? "none" : `1px solid ${plan.color}35`,
-      }}>
+      style={{ background: plan.color, color: "#fff", border: "none" }}>
       {isLoading
         ? <Loader2 className="w-4 h-4 animate-spin mx-auto" />
         : "Começar 7 dias grátis"
@@ -408,14 +399,13 @@ export default function PlanosPage() {
                 style={{
                   background: "#FFFFFF",
                   border: `1px solid ${isCurrent ? plan.color + "66" : plan.border}`,
-                  boxShadow: plan.highlight ? `0 0 40px ${plan.color}18` : "none",
                 }}>
                 {(plan.badge || isCurrent) && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
                     <span style={{
                       display: "block", fontSize: 9, fontFamily: "monospace", fontWeight: 700,
                       padding: "3px 14px", borderRadius: 999, letterSpacing: "2px",
-                      background: plan.color, color: "#0D1B2A", whiteSpace: "nowrap",
+                      background: plan.color, color: "#fff", whiteSpace: "nowrap",
                     }}>
                       {isCurrent ? "PLANO ATUAL" : plan.badge}
                     </span>

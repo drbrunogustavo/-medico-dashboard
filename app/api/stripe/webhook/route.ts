@@ -143,6 +143,97 @@ export async function POST(req: NextRequest) {
         break
       }
 
+      case "invoice.paid": {
+        const invoice    = event.data.object as Stripe.Invoice
+        const customerId = typeof invoice.customer === "string"
+          ? invoice.customer
+          : (invoice.customer as Stripe.Customer | Stripe.DeletedCustomer | null)?.id ?? null
+        const amountPaid = invoice.amount_paid // cents
+
+        if (!customerId || amountPaid <= 0) break
+
+        // Affiliate commission — isolated try/catch, never blocks the webhook response
+        try {
+          // Resolve Supabase user from stripe_customer_id
+          const { data: planoRow } = await supabase
+            .from("user_planos")
+            .select("user_id")
+            .eq("stripe_customer_id", customerId)
+            .maybeSingle()
+
+          if (!planoRow?.user_id) break
+
+          const userId = planoRow.user_id
+
+          // Find pending referral for this user
+          const { data: indicacao } = await supabase
+            .from("afiliados_indicacoes")
+            .select("id, afiliado_id")
+            .eq("indicacoes_user_id", userId)
+            .eq("status", "pendente")
+            .maybeSingle()
+
+          if (!indicacao) break // user was not referred, or already processed
+
+          // Load affiliate
+          const { data: afiliado } = await supabase
+            .from("afiliados")
+            .select("id, status, stripe_customer_id, comissao_percentual, total_indicados, total_comissao_acumulada")
+            .eq("id", indicacao.afiliado_id)
+            .maybeSingle()
+
+          if (!afiliado) {
+            console.warn(`[stripe/webhook] Afiliado ${indicacao.afiliado_id} não encontrado para indicação ${indicacao.id}`)
+            break
+          }
+
+          if (afiliado.status !== "ativo" || !afiliado.stripe_customer_id) {
+            console.warn(`[stripe/webhook] Afiliado ${afiliado.id} inativo ou sem stripe_customer_id — indicação ${indicacao.id} aguarda processamento manual`)
+            break
+          }
+
+          // Calculate and credit commission
+          const percentual     = (afiliado.comissao_percentual as number) ?? 20
+          const comissaoCents  = Math.round(amountPaid * (percentual / 100))
+          const comissaoReais  = comissaoCents / 100
+
+          const balanceTx = await stripe.customers.createBalanceTransaction(
+            afiliado.stripe_customer_id as string,
+            {
+              amount:      -comissaoCents, // negative = credit in Stripe
+              currency:    "brl",
+              description: `Comissão de indicação #${indicacao.id}`,
+            }
+          )
+
+          const agora = new Date().toISOString()
+
+          await supabase
+            .from("afiliados_indicacoes")
+            .update({
+              status:                         "aplicada",
+              valor_comissao:                 comissaoReais,
+              stripe_balance_transaction_id:  balanceTx.id,
+              aplicado_em:                    agora,
+            })
+            .eq("id", indicacao.id)
+
+          await supabase
+            .from("afiliados")
+            .update({
+              total_indicados:          ((afiliado.total_indicados  as number) ?? 0) + 1,
+              total_comissao_acumulada: ((afiliado.total_comissao_acumulada as number) ?? 0) + comissaoReais,
+            })
+            .eq("id", afiliado.id)
+
+          console.log(`[stripe/webhook] Comissão aplicada — afiliado ${afiliado.id}, indicação ${indicacao.id}, R$${comissaoReais.toFixed(2)} (${percentual}% de R$${(amountPaid / 100).toFixed(2)})`)
+        } catch (comissaoErr) {
+          console.error("[stripe/webhook] Erro ao processar comissão de afiliado:", comissaoErr)
+          // intentionally swallowed — webhook must always return 200
+        }
+        break
+      }
+
       default:
         break
     }

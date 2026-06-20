@@ -14,10 +14,12 @@ export default function CadastroPage() {
   const router       = useRouter()
   const searchParams = useSearchParams()
 
-  // Persist affiliate ref code so the checkout flow can send it to Stripe metadata
+  // Persist affiliate ref code: sessionStorage for checkout flow + cookie for server-side indicação
   useEffect(() => {
     const ref = searchParams.get("ref")
-    if (ref) sessionStorage.setItem("praxis_ref_afiliado", ref)
+    if (!ref) return
+    sessionStorage.setItem("praxis_ref_afiliado", ref)
+    document.cookie = `praxis_ref=${encodeURIComponent(ref)}; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Lax`
   }, [searchParams])
 
   async function handleCadastro() {
@@ -65,6 +67,9 @@ export default function CadastroPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ nome: nome.trim() }),
     }).catch(() => null)
+
+    // Fire-and-forget — never blocks signup regardless of outcome
+    fetch("/api/afiliados/registrar-indicacao", { method: "POST" }).catch(() => null)
 
     router.push("/onboarding")
   }

@@ -1,23 +1,40 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { cookies } from "next/headers"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServiceClient } from "@/lib/supabase-service"
 
-// Called immediately after signup — registers an affiliate referral if praxis_ref cookie is present.
+// Called immediately after signup — registers an affiliate referral.
+// Priority: codigoManual (typed by user) > praxis_ref cookie (from ?ref= URL param).
 // Never throws or returns an error status that would block the signup flow.
-export async function POST() {
+export async function POST(req: NextRequest) {
   try {
     const auth = await checkAuth()
     if (!auth.authenticated) {
       return NextResponse.json({ ok: false, reason: "unauthenticated" })
     }
 
-    const cookieStore = cookies()
-    const refCookie   = cookieStore.get("praxis_ref")
-    const refCode     = refCookie?.value ? decodeURIComponent(refCookie.value).trim() : null
+    // Resolve the ref code: manual input wins over cookie
+    let refCode: string | null = null
+    let origem: "manual" | "automatica" = "automatica"
+
+    try {
+      const body = await req.json() as { codigoManual?: string | null }
+      const manual = body.codigoManual?.trim() || null
+      if (manual) {
+        refCode = manual
+        origem  = "manual"
+      }
+    } catch { /* body may be empty — fall through to cookie */ }
 
     if (!refCode) {
-      return NextResponse.json({ ok: false, reason: "no_ref_cookie" })
+      const cookieStore = cookies()
+      const refCookie   = cookieStore.get("praxis_ref")
+      refCode = refCookie?.value ? decodeURIComponent(refCookie.value).trim() : null
+      // origem stays "automatica"
+    }
+
+    if (!refCode) {
+      return NextResponse.json({ ok: false, reason: "no_ref_code" })
     }
 
     const supabase = createSupabaseServiceClient()
@@ -67,11 +84,11 @@ export async function POST() {
     const { error: insertErr } = await supabase
       .from("afiliados_indicacoes")
       .insert({
-        afiliado_id:       afiliado.id,
+        afiliado_id:        afiliado.id,
         indicacoes_user_id: auth.userId,
-        indicado_email:    email,
-        status:            "pendente",
-        origem:            "automatica",
+        indicado_email:     email,
+        status:             "pendente",
+        origem,
       })
 
     if (insertErr) {
@@ -79,8 +96,8 @@ export async function POST() {
       return NextResponse.json({ ok: false, reason: "insert_error" })
     }
 
-    console.log(`[registrar-indicacao] indicação registrada — afiliado ${afiliado.id}, user ${auth.userId}, ref: ${refCode}`)
-    return NextResponse.json({ ok: true })
+    console.log(`[registrar-indicacao] indicação registrada — afiliado ${afiliado.id}, user ${auth.userId}, ref: ${refCode}, origem: ${origem}`)
+    return NextResponse.json({ ok: true, origem })
 
   } catch (e) {
     console.error("[registrar-indicacao] erro inesperado:", e)

@@ -9,15 +9,18 @@ export default function CadastroPage() {
   const [email,           setEmail]           = useState("")
   const [senha,           setSenha]           = useState("")
   const [confirmarSenha,  setConfirmarSenha]  = useState("")
+  const [codigoIndicacao, setCodigoIndicacao] = useState("")
   const [loading,         setLoading]         = useState(false)
   const [erro,            setErro]            = useState("")
   const router       = useRouter()
   const searchParams = useSearchParams()
 
   // Persist affiliate ref code: sessionStorage for checkout flow + cookie for server-side indicação
+  // Also pre-fill the manual field so the user can see/edit it
   useEffect(() => {
     const ref = searchParams.get("ref")
     if (!ref) return
+    setCodigoIndicacao(ref)
     sessionStorage.setItem("praxis_ref_afiliado", ref)
     document.cookie = `praxis_ref=${encodeURIComponent(ref)}; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Lax`
   }, [searchParams])
@@ -69,7 +72,11 @@ export default function CadastroPage() {
     }).catch(() => null)
 
     // Fire-and-forget — never blocks signup regardless of outcome
-    fetch("/api/afiliados/registrar-indicacao", { method: "POST" }).catch(() => null)
+    fetch("/api/afiliados/registrar-indicacao", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ codigoManual: codigoIndicacao.trim() || null }),
+    }).catch(() => null)
 
     router.push("/onboarding")
   }
@@ -168,7 +175,7 @@ export default function CadastroPage() {
         </div>
 
         {/* Confirmar senha */}
-        <div style={{ marginBottom: "24px" }}>
+        <div style={{ marginBottom: "16px" }}>
           <label style={labelStyle}>Confirmar senha</label>
           <input
             type="password"
@@ -179,6 +186,22 @@ export default function CadastroPage() {
             onKeyDown={e => e.key === "Enter" && handleCadastro()}
             style={inputStyle}
           />
+        </div>
+
+        {/* Código de indicação (opcional) */}
+        <div style={{ marginBottom: "24px" }}>
+          <label style={labelStyle}>Código de quem te indicou (opcional)</label>
+          <input
+            type="text"
+            autoComplete="off"
+            placeholder="Ex: MEDC1234"
+            value={codigoIndicacao}
+            onChange={e => setCodigoIndicacao(e.target.value.toUpperCase())}
+            style={{ ...inputStyle, fontSize: "13px" }}
+          />
+          <p style={{ color: "#555", fontSize: "11px", marginTop: "6px", margin: "6px 0 0" }}>
+            Se alguém te indicou e você sabe o código dela, digite aqui.
+          </p>
         </div>
 
         {/* Erro / mensagem */}

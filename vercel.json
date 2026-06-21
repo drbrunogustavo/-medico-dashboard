@@ -1,6 +1,0 @@
-{
-  "crons": [
-    { "path": "/api/nurturing/processar",  "schedule": "0 * * * *" },
-    { "path": "/api/email/trial-acabando", "schedule": "0 9 * * *" }
-  ]
-}

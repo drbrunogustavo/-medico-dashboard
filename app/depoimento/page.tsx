@@ -64,7 +64,7 @@ export default function DepoimentoPage() {
       })
       .catch(() => null)
 
-    fetch("/api/depoimentos-praxis")
+    fetch("/api/depoimentos")
       .then(r => r.json())
       .then((list: unknown[]) => { if (list.length > 0) setJaEnviou(true) })
       .catch(() => null)
@@ -86,7 +86,7 @@ export default function DepoimentoPage() {
     setSaving(true)
     setErro("")
     try {
-      const res = await fetch("/api/depoimentos-praxis", {
+      const res = await fetch("/api/depoimentos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),

@@ -29,6 +29,25 @@ export async function POST(_req: NextRequest) {
       return NextResponse.json({ afiliado: existing })
     }
 
+    // Look up stripe_customer_id from an active subscription
+    let stripeCustomerId: string | null = null
+    let statusAfiliado: "ativo" | "pendente" = "pendente"
+
+    try {
+      const { data: planRow } = await supabase
+        .from("user_planos")
+        .select("stripe_customer_id, status")
+        .eq("user_id", auth.userId)
+        .maybeSingle()
+
+      if (planRow?.stripe_customer_id && planRow.status === "ativo") {
+        stripeCustomerId = planRow.stripe_customer_id
+        statusAfiliado   = "ativo"
+      }
+    } catch {
+      // treat as not found — statusAfiliado stays "pendente"
+    }
+
     // Generate unique code (retry up to 5 times on collision)
     let codigo = gerarCodigo(auth.userId)
     let data   = null
@@ -38,9 +57,11 @@ export async function POST(_req: NextRequest) {
       const result = await supabase
         .from("afiliados")
         .insert({
-          user_id:          auth.userId,
-          codigo_afiliado:  codigo,
+          user_id:             auth.userId,
+          codigo_afiliado:     codigo,
           comissao_percentual: 20,
+          status:              statusAfiliado,
+          ...(stripeCustomerId ? { stripe_customer_id: stripeCustomerId } : {}),
         })
         .select()
         .single()
@@ -54,6 +75,14 @@ export async function POST(_req: NextRequest) {
     }
 
     if (error) throw new Error(error.message)
+
+    if (statusAfiliado === "pendente") {
+      return NextResponse.json(
+        { afiliado: data, ok: true, status: "pendente", motivo: "sem_assinatura_ativa" },
+        { status: 201 },
+      )
+    }
+
     return NextResponse.json({ afiliado: data }, { status: 201 })
   } catch (e) {
     return NextResponse.json({ error: errMsg(e) }, { status: 500 })

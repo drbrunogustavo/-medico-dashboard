@@ -52,12 +52,14 @@ export default function AfiliadosPage() {
   const [loading,     setLoading]     = useState(true)
   const [gerando,     setGerando]     = useState(false)
   const [copied,      setCopied]      = useState(false)
+  const [pendente,    setPendente]    = useState(false)
 
   const fetchData = useCallback(async () => {
     const res  = await fetch("/api/afiliados")
     const data = await res.json()
     setAfiliado(data.afiliado    ?? null)
     setIndicacoes(data.indicacoes ?? [])
+    if (data.afiliado?.status === "pendente") setPendente(true)
     setLoading(false)
   }, [])
 
@@ -68,6 +70,7 @@ export default function AfiliadosPage() {
     const res  = await fetch("/api/afiliados/gerar-codigo", { method: "POST" })
     const data = await res.json()
     if (data.afiliado) setAfiliado(data.afiliado as AfiliadoData)
+    if (data.status === "pendente") setPendente(true)
     setGerando(false)
   }
 
@@ -198,6 +201,22 @@ export default function AfiliadosPage() {
                   Código: <span className="font-mono font-bold" style={{ color: GOLD }}>{afiliado.codigo_afiliado}</span>
                   {" · "}{afiliado.comissao_percentual}% de comissão recorrente
                 </p>
+                {pendente && (
+                  <div
+                    className="mt-3 rounded-lg border px-4 py-3 text-[12px] leading-relaxed"
+                    style={{
+                      background:  "rgba(251,191,36,0.07)",
+                      borderColor: "rgba(251,191,36,0.25)",
+                      color:       "#fbbf24",
+                    }}
+                  >
+                    <span className="font-semibold">Código gerado, mas comissão ainda não ativa.</span>{" "}
+                    Para receber comissões você precisa ter uma assinatura ativa no PRAXIS.{" "}
+                    <a href="/planos" style={{ color: GOLD, fontWeight: 600, textDecoration: "underline" }}>
+                      Escolher plano →
+                    </a>
+                  </div>
+                )}
               </div>
             )}
           </div>

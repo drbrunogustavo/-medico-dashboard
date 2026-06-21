@@ -140,6 +140,56 @@ export async function POST(req: NextRequest) {
 
         if (error) console.error("[stripe/webhook] Erro ao cancelar plano:", error)
         else console.log(`[stripe/webhook] Assinatura cancelada — user ${userId}`)
+
+        // Affiliate balance zeroing — isolated try/catch, never blocks webhook
+        try {
+          const customerId = typeof sub.customer === "string"
+            ? sub.customer
+            : (sub.customer as Stripe.Customer | Stripe.DeletedCustomer | null)?.id ?? null
+
+          if (!customerId) break
+
+          // Check if this customer is a registered affiliate
+          const { data: afiliado } = await supabase
+            .from("afiliados")
+            .select("id, stripe_customer_id")
+            .eq("stripe_customer_id", customerId)
+            .maybeSingle()
+
+          if (!afiliado) break // regular customer — nothing to do
+
+          // Fetch current Stripe balance (negative = available credit)
+          const customer = await stripe.customers.retrieve(customerId)
+          if (customer.deleted) break
+
+          const saldoAtual = (customer as Stripe.Customer).balance ?? 0
+
+          if (saldoAtual >= 0) {
+            console.log(`[stripe/webhook] Afiliado ${afiliado.id} cancelou — saldo já é zero ou positivo, nada a fazer`)
+            break
+          }
+
+          // saldoAtual is negative (credit) — create a positive transaction to zero it out
+          const valorAbsoluto = Math.abs(saldoAtual) // cents
+
+          const balanceTx = await stripe.customers.createBalanceTransaction(customerId, {
+            amount:      valorAbsoluto, // positive = debit, zeroes the negative balance
+            currency:    "brl",
+            description: "Estorno de saldo de comissão — cancelamento de assinatura",
+          })
+
+          await supabase.from("afiliados_saldo_perdido").insert({
+            afiliado_id:       afiliado.id,
+            valor_perdido:     valorAbsoluto / 100, // store as reais
+            stripe_customer_id: customerId,
+            motivo:            "cancelamento_assinatura",
+          })
+
+          console.log(`[stripe/webhook] Saldo de comissão zerado — afiliado ${afiliado.id}, R$${(valorAbsoluto / 100).toFixed(2)} perdidos, tx ${balanceTx.id}`)
+        } catch (afiliadoErr) {
+          console.error("[stripe/webhook] Erro ao zerar saldo do afiliado:", afiliadoErr)
+          // intentionally swallowed — webhook must always return 200
+        }
         break
       }
 

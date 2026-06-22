@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk"
 import { createClient } from "@supabase/supabase-js"
+import { AI_MODEL } from "@/lib/ai-config"
 
 const ai = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -18,7 +19,7 @@ export async function gerarNurturingInline(userId: string, leadId: string) {
   if (!lead) return
 
   const resp = await ai.messages.create({
-    model:      "claude-sonnet-4-6",
+    model:      AI_MODEL,
     max_tokens: 1500,
     messages: [{
       role: "user",

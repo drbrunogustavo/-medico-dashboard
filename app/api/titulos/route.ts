@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
+import { AI_MODEL } from "@/lib/ai-config"
 
 export async function POST(request: Request) {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
   const body = await request.json()
-  const safeBody = { ...body, model: "claude-sonnet-4-6" }
+  const safeBody = { ...body, model: AI_MODEL }
   try {
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",

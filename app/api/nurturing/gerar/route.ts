@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import Anthropic from "@anthropic-ai/sdk"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
+import { AI_MODEL } from "@/lib/ai-config"
 
 const ai = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -27,7 +28,7 @@ export async function POST(req: NextRequest) {
     if (!lead) return NextResponse.json({ error: "Lead não encontrado" }, { status: 404 })
 
     const resp = await ai.messages.create({
-      model:      "claude-sonnet-4-6",
+      model:      AI_MODEL,
       max_tokens: 1500,
       messages: [{
         role: "user",

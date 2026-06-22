@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import Anthropic from "@anthropic-ai/sdk"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
+import { AI_MODEL } from "@/lib/ai-config"
 
 function errMsg(e: unknown) { return e instanceof Error ? e.message : String(e) }
 
@@ -138,7 +139,7 @@ Gere o relatório EXATAMENTE neste formato JSON (sem markdown, apenas JSON puro)
   try {
     const client   = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
     const response = await client.messages.create({
-      model:      "claude-sonnet-4-6",
+      model:      AI_MODEL,
       max_tokens: 2000,
       messages:   [{ role: "user", content: prompt }],
     })

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import Anthropic from "@anthropic-ai/sdk"
 import { checkAuth } from "@/lib/auth-check"
+import { AI_MODEL } from "@/lib/ai-config"
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -266,7 +267,7 @@ export async function POST(req: NextRequest) {
     }
 
     const resp = await client.messages.create({
-      model:      "claude-sonnet-4-6",
+      model:      AI_MODEL,
       max_tokens: maxTokens,
       system,
       messages:   [{ role: "user", content: userMsg }],

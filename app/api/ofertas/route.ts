@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import Anthropic from "@anthropic-ai/sdk"
 import { checkAuth } from "@/lib/auth-check"
+import { AI_MODEL } from "@/lib/ai-config"
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -111,7 +112,7 @@ Retorne apenas JSON válido, sem markdown:
 }`
 
     const resp = await client.messages.create({
-      model: "claude-sonnet-4-6",
+      model: AI_MODEL,
       max_tokens: 4000,
       system: SYSTEM,
       messages: [{ role: "user", content: prompt }],

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import Anthropic from "@anthropic-ai/sdk"
 import { checkAuth } from "@/lib/auth-check"
+import { AI_MODEL } from "@/lib/ai-config"
 
 const ai = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 function errMsg(e: unknown) { return e instanceof Error ? e.message : String(e) }
@@ -20,7 +21,7 @@ export async function POST(req: NextRequest) {
     }
 
     const resp = await ai.messages.create({
-      model:      "claude-sonnet-4-6",
+      model:      AI_MODEL,
       max_tokens: 3000,
       system: `Você é o Consultor Estratégico do PRAXIS, especializado em planejamento financeiro e estratégico de clínicas médicas no Brasil. Crie planos de metas realistas e acionáveis. Retorne JSON puro.`,
       messages: [{

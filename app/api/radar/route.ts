@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import Anthropic from "@anthropic-ai/sdk"
 import { checkAuth } from "@/lib/auth-check"
+import { AI_MODEL } from "@/lib/ai-config"
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -70,7 +71,7 @@ export async function POST(req: NextRequest) {
     const { user, system } = buildPrompt(body.type, body.filters ?? {})
 
     const resp = await client.messages.create({
-      model:      "claude-sonnet-4-6",
+      model:      AI_MODEL,
       max_tokens: 4000,
       tools:      [{ type: "web_search_20250305" as const, name: "web_search" as const }],
       system,

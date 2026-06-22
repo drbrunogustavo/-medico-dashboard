@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import Anthropic from "@anthropic-ai/sdk"
 import { checkAuth } from "@/lib/auth-check"
+import { AI_MODEL } from "@/lib/ai-config"
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -15,7 +16,7 @@ export async function POST(req: NextRequest) {
     if (!tema?.trim()) return NextResponse.json({ error: "Tema é obrigatório" }, { status: 400 })
 
     const resp = await client.messages.create({
-      model: "claude-sonnet-4-6",
+      model: AI_MODEL,
       max_tokens: 2000,
       system: "Você é especialista em criação de Stories para médicos no Instagram. Retorne APENAS JSON válido, sem markdown.",
       messages: [{

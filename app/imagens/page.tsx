@@ -9,6 +9,7 @@ import {
   BookOpen, X, Search, Loader2, TrendingUp, Layers2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { AI_MODEL } from "@/lib/ai-config"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -334,7 +335,7 @@ Generate structured creative direction as JSON with exactly these fields:
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-6", max_tokens: 1400,
+          model: AI_MODEL, max_tokens: 1400,
           system: systemPrompt,
           messages: [{ role: "user", content: userMsg }],
         }),
@@ -458,7 +459,7 @@ Generate structured creative direction as JSON with exactly these fields:
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-6", max_tokens: 120,
+          model: AI_MODEL, max_tokens: 120,
           messages: [{
             role: "user",
             content: `You are a creative director comparing ${prompts.length} AI-generated medical image variations.
@@ -520,7 +521,7 @@ In 1-2 sentences in Brazilian Portuguese, recommend which variation is typically
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-6", max_tokens: 300,
+          model: AI_MODEL, max_tokens: 300,
           messages: [{
             role: "user",
             content: `You are a creative director reviewing an AI-generated medical image. Prompt used: "${prompt.slice(0, 500)}".
@@ -551,7 +552,7 @@ Provide a brief visual audit in Brazilian Portuguese (3-4 sentences). Start with
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-6",
+          model: AI_MODEL,
           max_tokens: 8000,
           system: `Você é o maior especialista em copywriting médico viral do Brasil, especializado em Endocrinologia, Nutrologia e Longevidade. Crie headlines que combinam autoridade científica com gatilhos emocionais para médicos no Instagram. Retorne SOMENTE JSON array, sem markdown.`,
           messages: [{

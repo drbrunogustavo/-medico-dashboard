@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { checkAuth } from '@/lib/auth-check'
+import { AI_MODEL } from "@/lib/ai-config"
 
 export async function POST(request: NextRequest) {
   const auth = await checkAuth()
@@ -24,7 +25,7 @@ export async function POST(request: NextRequest) {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
+        model: AI_MODEL,
         max_tokens: 3500,
         system: `Você é um especialista em medicina do estilo de vida, nutrologia e emagrecimento baseado em evidências.
 Analise os fatores de bloqueio ao emagrecimento de um paciente e gere um plano personalizado estruturado.

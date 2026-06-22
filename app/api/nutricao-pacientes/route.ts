@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import Anthropic from "@anthropic-ai/sdk"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
+import { AI_MODEL } from "@/lib/ai-config"
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -97,7 +98,7 @@ D-15 (15 dias antes do retorno):
     const contexto = body.contexto ? `\nContexto clínico: ${body.contexto}` : ""
 
     const resp = await client.messages.create({
-      model:      "claude-sonnet-4-6",
+      model:      AI_MODEL,
       max_tokens: 3000,
       messages: [{
         role:    "user",

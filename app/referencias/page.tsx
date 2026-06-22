@@ -5,6 +5,7 @@ import { TopBar } from "@/components/TopBar"
 import { StatCard } from "@/components/StatCard"
 import { Plus, Users, TrendingUp, Eye, Star, ExternalLink, Search, Instagram, Globe, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { AI_MODEL } from "@/lib/ai-config"
 
 const NICHOS    = ["Todos","Nutrologia","Endocrinologia","Longevidade","Metabolismo","Geral"]
 const RELEVANCIA = ["Todas","Alta","Media","Baixa"]
@@ -99,7 +100,7 @@ function AnaliseModal({ referencia, onClose }: { referencia: Referencia; onClose
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            model:      'claude-sonnet-4-6',
+            model:      AI_MODEL,
             max_tokens: 2000,
             messages:   [{ role: 'user', content: prompt }],
           }),

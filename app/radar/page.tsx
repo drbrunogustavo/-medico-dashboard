@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react"
 import { TopBar } from "@/components/TopBar"
 import { RefreshCw, Plus, Check, TrendingUp, Target, Play, ExternalLink, Sparkles, Radio, Zap, Microscope, X, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { AI_MODEL } from "@/lib/ai-config"
 
 // ─── SOURCES ────────────────────────────────────────────────────────────────
 
@@ -403,7 +404,7 @@ export default function RadarPage() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
+        model: AI_MODEL,
         max_tokens: 2000,
         system: `Você é um analista de conteúdo médico viral especializado em engenharia reversa de Reels. Retorne SOMENTE JSON, sem markdown.`,
         messages: [{

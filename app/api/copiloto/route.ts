@@ -3,6 +3,7 @@ import Anthropic from "@anthropic-ai/sdk"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
 import { inserirProntuario } from "@/lib/medx"
+import { AI_MODEL } from "@/lib/ai-config"
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -108,7 +109,7 @@ export async function POST(req: NextRequest) {
     const SYSTEM = SYSTEM_BASE + memoriaCtx
 
     const resp = await client.messages.create({
-      model:      "claude-sonnet-4-6",
+      model:      AI_MODEL,
       max_tokens: 7500,
       system:     SYSTEM,
       messages: [{

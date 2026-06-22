@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { checkAuth } from '@/lib/auth-check'
+import { AI_MODEL } from "@/lib/ai-config"
 
 export async function POST(request: NextRequest) {
   const auth = await checkAuth()
@@ -16,7 +17,7 @@ export async function POST(request: NextRequest) {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
+        model: AI_MODEL,
         max_tokens: 2000,
         system: `Você é um editor de vídeo especialista em Reels médicos para Instagram.
 

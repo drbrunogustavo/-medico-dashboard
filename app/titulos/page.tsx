@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { PautasModal } from '@/components/PautasModal'
 import { Toast } from '@/components/Toast'
+import { AI_MODEL } from "@/lib/ai-config"
 
 const D = {
   bg:'var(--background)',surface:'var(--surface)',card:'var(--surface-2)',border:'var(--border)',
@@ -56,7 +57,7 @@ export default function TitulosPage() {
         'REGRAS: diretos, sem enrolação, máx 12 palavras cada, sem clichês de IA.\n' +
         'Retorne SOMENTE JSON: {"titulos":[{"texto":"...","tipo":"' + obj?.l + '"}]}'
       const res  = await fetch('/api/titulos', { method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:1000, messages:[{role:'user',content:prompt}] }) })
+        body: JSON.stringify({ model:AI_MODEL, max_tokens:1000, messages:[{role:'user',content:prompt}] }) })
       const data = await res.json()
       const raw  = (data.content?.[0]?.text||'{}').replace(/```json/g,'').replace(/```/g,'').trim()
       const startIdx = raw.indexOf('{'); const jsonStr = startIdx >= 0 ? raw.slice(startIdx) : raw; const json = JSON.parse(jsonStr)

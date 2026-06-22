@@ -98,7 +98,6 @@ button, a, input, select, textarea, [role="button"] {
 }
 .animate-fade-in {
   animation: fadeIn 400ms ease-out;
-  will-change: transform, opacity;
 }
 
 @keyframes shimmer {

@@ -21,7 +21,7 @@ export function ConditionalLayout({ children }: { children: React.ReactNode }) {
     <MobileMenuProvider>
       <div className="flex min-h-screen">
         <Sidebar />
-        <main className="flex-1 min-h-screen bg-background flex flex-col md:ml-60">
+        <main className="flex-1 min-w-0 min-h-screen bg-background flex flex-col md:ml-60">
           <MobileNav />
           <div className="flex-1">{children}</div>
         </main>

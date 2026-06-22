@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
-
-function isAdmin(userId: string) {
-  return !!process.env.DOCTOR_USER_ID && userId === process.env.DOCTOR_USER_ID
-}
+import { isAdmin } from "@/lib/admin-auth"
 
 export async function GET(req: NextRequest) {
   const auth = await checkAuth()

@@ -286,9 +286,10 @@ export default function MemoriaPage() {
     setLoading(true)
     try {
       const res  = await fetch(`/api/memoria?tipo=${tipo}`)
+      if (!res.ok) throw new Error("API error")
       const data = await res.json()
-      if (tipo === "historico") setHistorico(data as HistoricoItem[])
-      else setItems(data as MemoriaItem[])
+      if (tipo === "historico") setHistorico(Array.isArray(data) ? data as HistoricoItem[] : [])
+      else setItems(Array.isArray(data) ? data as MemoriaItem[] : [])
     } catch {/* silent */}
     finally { setLoading(false) }
   }, [])

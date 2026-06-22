@@ -19,6 +19,7 @@ export async function GET(req: NextRequest) {
     let query = supabase
       .from("crm_leads")
       .select("*")
+      .eq("user_id", auth.userId)
       .order("created_at", { ascending: false })
 
     if (estagio) query = query.eq("estagio", estagio)

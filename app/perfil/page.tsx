@@ -120,9 +120,12 @@ export default function PerfilPage() {
   const [status,       setStatus]       = useState<Status>("idle")
   const [loading,      setLoading]      = useState(true)
   const [activeTab,    setActiveTab]    = useState<ActiveTab>("perfil")
-  const [uploadingLogo, setUploadingLogo] = useState(false)
-  const [integStatus,  setIntegStatus]  = useState<IntegStatus | null>(null)
-  const logoRef = useRef<HTMLInputElement>(null)
+  const [uploadingLogo,   setUploadingLogo]   = useState(false)
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const [avatarError,     setAvatarError]     = useState<string | null>(null)
+  const [integStatus,     setIntegStatus]     = useState<IntegStatus | null>(null)
+  const logoRef   = useRef<HTMLInputElement>(null)
+  const avatarRef = useRef<HTMLInputElement>(null)
 
   const load = useCallback(async () => {
     try {
@@ -195,6 +198,8 @@ export default function PerfilPage() {
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+    if (!file.type.startsWith("image/")) return
+    if (file.size > 5 * 1024 * 1024) return
     setUploadingLogo(true)
     try {
       const supabase = getSupabaseBrowserClient()
@@ -212,6 +217,41 @@ export default function PerfilPage() {
       console.error("[logo upload]", err)
     } finally {
       setUploadingLogo(false)
+      if (logoRef.current) logoRef.current.value = ""
+    }
+  }
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setAvatarError(null)
+    if (!file.type.startsWith("image/")) {
+      setAvatarError("Selecione um arquivo de imagem (JPG, PNG ou WEBP).")
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setAvatarError("Arquivo muito grande — máximo 5 MB.")
+      return
+    }
+    setUploadingAvatar(true)
+    try {
+      const supabase = getSupabaseBrowserClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error("não autenticado")
+      const path = `avatars/${user.id}/photo`
+      const { data, error } = await supabase.storage
+        .from("perfil-assets")
+        .upload(path, file, { upsert: true, contentType: file.type })
+      if (error) throw error
+      const { data: { publicUrl } } = supabase.storage
+        .from("perfil-assets")
+        .getPublicUrl(data.path)
+      setForm(f => ({ ...f, avatar_url: publicUrl }))
+    } catch {
+      setAvatarError("Erro ao enviar a imagem. Tente novamente.")
+    } finally {
+      setUploadingAvatar(false)
+      if (avatarRef.current) avatarRef.current.value = ""
     }
   }
 
@@ -387,19 +427,58 @@ export default function PerfilPage() {
               </Field>
             </div>
 
-            {/* Avatar URL */}
-            <div className="bg-surface border border-border rounded-xl p-6 space-y-5">
+            {/* Avatar upload */}
+            <div className="bg-surface border border-border rounded-xl p-6 space-y-4">
               <h2 className="text-[11px] font-mono text-text-muted tracking-[3px] uppercase">Foto de Perfil</h2>
-              <Field label="URL da foto" icon={User}>
-                <input
-                  value={form.avatar_url}
-                  onChange={set("avatar_url")}
-                  placeholder="https://..."
-                  className={inputCls}
-                  type="url"
-                />
-              </Field>
-              <p className="text-[10px] text-text-muted">Cole a URL de uma imagem pública (ex: do Google Drive, Notion ou Dropbox).</p>
+
+              <div className="flex items-center gap-5">
+                <div
+                  className="w-20 h-20 rounded-full flex items-center justify-center flex-shrink-0 text-[28px] font-bold text-accent overflow-hidden"
+                  style={{ background: "linear-gradient(135deg, rgba(0,192,127,0.25), rgba(0,192,127,0.08))", border: "2px solid rgba(0,192,127,0.25)" }}
+                >
+                  {form.avatar_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={form.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : initials}
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <button
+                    onClick={() => avatarRef.current?.click()}
+                    disabled={uploadingAvatar}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-[12px] font-semibold text-text-secondary hover:text-text-primary hover:border-border-hover transition-all disabled:opacity-50"
+                  >
+                    {uploadingAvatar
+                      ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Enviando...</>
+                      : <><Upload className="w-3.5 h-3.5" /> {form.avatar_url ? "Trocar foto" : "Enviar foto"}</>
+                    }
+                  </button>
+                  {form.avatar_url && (
+                    <button
+                      onClick={() => setForm(f => ({ ...f, avatar_url: "" }))}
+                      className="text-[11px] text-text-muted hover:text-red-400 transition-colors text-left"
+                    >
+                      Remover foto
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <input
+                ref={avatarRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarUpload}
+              />
+              <p className="text-[10px] text-text-muted">
+                JPG, PNG ou WEBP — máximo 5 MB. No celular, você pode tirar uma foto ou escolher da galeria.
+              </p>
+              {avatarError && (
+                <p className="text-[11px] text-red-400 flex items-center gap-1.5">
+                  <AlertCircle className="w-3 h-3 flex-shrink-0" /> {avatarError}
+                </p>
+              )}
             </div>
 
             {/* Danger zone */}

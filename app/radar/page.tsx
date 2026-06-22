@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
+import { useRouter } from "next/navigation"
 import { TopBar } from "@/components/TopBar"
 import { RefreshCw, Plus, Check, TrendingUp, Target, Play, ExternalLink, Sparkles, Radio, Zap, Microscope, X, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -238,6 +239,7 @@ function PlatformBadge({ platform }: { platform: string }) {
 // ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
 
 export default function RadarPage() {
+  const router = useRouter()
   const [activeTab, setActiveTab]         = useState<Tab>("radar")
   const [articles,  setArticles]          = useState<Article[]>([])
   const [reels,     setReels]             = useState<Reel[]>([])
@@ -257,6 +259,7 @@ export default function RadarPage() {
   const [reverseResult,  setReverseResult]  = useState<ReverseResult | null>(null)
   const [loadingReverse, setLoadingReverse] = useState(false)
   const [reverseSent,    setReverseSent]    = useState(false)
+  const [savedOpps,      setSavedOpps]      = useState<Set<number>>(new Set())
 
   const toastRef = useRef<ReturnType<typeof setTimeout>>()
 
@@ -394,6 +397,7 @@ export default function RadarPage() {
         }),
       })
       if (!res.ok) throw new Error()
+      setSavedOpps(prev => new Set(prev).add(opp.id))
       showToast("Oportunidade salva no banco de pautas!")
     } catch { showToast("Erro ao salvar pauta.") }
   }
@@ -468,12 +472,12 @@ Retorne um objeto JSON com:
     } catch { showToast("Erro ao salvar pauta.") }
   }
 
-  const copyAdaptedToRoteiros = () => {
+  const sendAdaptedToRoteiros = () => {
     if (!reverseResult) return
     const v    = reverseResult.versao_adaptada
     const text = `${v.titulo}\n\n${v.gancho}\n\n${v.estrutura.join('\n')}`
-    navigator.clipboard.writeText(text)
-    showToast("Estrutura copiada! Cole no Gerador de Roteiros.")
+    localStorage.setItem("praxis_roteiro_tema", text)
+    router.push("/roteiros")
   }
 
   const fmtTime = (d: Date | null) => d ? d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}) : "--:--"
@@ -877,9 +881,17 @@ Retorne um objeto JSON com:
 
                     <div className="pt-3 border-t border-border flex items-center justify-between">
                       <span className="text-[9px] font-mono text-text-muted">Tendência há {opp.trending_since}</span>
-                      <button onClick={()=>saveOpportunityAsPauta(opp)}
-                        className="flex items-center gap-1.5 text-[11px] font-medium px-3 py-1.5 rounded-lg border border-border text-text-muted hover:border-accent-border hover:text-accent transition-all">
-                        <Plus className="w-3 h-3"/>Criar Pauta
+                      <button
+                        onClick={() => !savedOpps.has(opp.id) && saveOpportunityAsPauta(opp)}
+                        disabled={savedOpps.has(opp.id)}
+                        className={cn(
+                          "flex items-center gap-1.5 text-[11px] font-medium px-3 py-1.5 rounded-lg border transition-all",
+                          savedOpps.has(opp.id)
+                            ? "bg-accent-dim border-accent-border text-accent cursor-default"
+                            : "border-border text-text-muted hover:border-accent-border hover:text-accent"
+                        )}>
+                        {savedOpps.has(opp.id) ? <Check className="w-3 h-3"/> : <Plus className="w-3 h-3"/>}
+                        {savedOpps.has(opp.id) ? "Na Pauta" : "Criar Pauta"}
                       </button>
                     </div>
                   </div>
@@ -892,7 +904,7 @@ Retorne um objeto JSON com:
       </div>
 
       {toast && (
-        <div className="fixed bottom-6 right-6 flex items-center gap-2 bg-card border border-accent-border text-accent text-[12px] px-4 py-3 rounded-lg shadow-xl animate-fade-in z-50">
+        <div className="fixed bottom-6 right-6 flex items-center gap-2 bg-card border border-accent-border text-accent text-[12px] px-4 py-3 rounded-lg shadow-xl animate-fade-in z-[200]">
           <Check className="w-3.5 h-3.5"/> {toast}
         </div>
       )}
@@ -1067,7 +1079,7 @@ Retorne um objeto JSON com:
                           {reverseSent ? "Salvo na Pauta" : "Enviar para Banco de Pautas"}
                         </button>
                         <button
-                          onClick={copyAdaptedToRoteiros}
+                          onClick={sendAdaptedToRoteiros}
                           className="flex items-center gap-1.5 text-[11px] font-medium px-3 py-2 rounded-lg border border-border text-text-muted hover:border-accent-border hover:text-accent transition-all"
                         >
                           <Zap className="w-3.5 h-3.5" /> Enviar para Gerador de Roteiros

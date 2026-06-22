@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createSupabaseServiceClient } from "@/lib/supabase-service"
+import { gerarNurturingInline } from "@/lib/nurturing"
 
 type Fields = Record<string, string>
 
@@ -64,13 +65,12 @@ export async function POST(req: NextRequest) {
 
     if (error) throw new Error(error.message)
 
-    if (lead?.id) {
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? req.nextUrl.origin
-      fetch(`${baseUrl}/api/nurturing/gerar`, {
-        method:  "POST",
-        headers: { "Content-Type": "application/json", "x-internal": "1" },
-        body:    JSON.stringify({ lead_id: lead.id }),
-      }).catch(() => {})
+    if (lead?.id && process.env.DOCTOR_USER_ID) {
+      const leadId = lead.id
+      const userId = process.env.DOCTOR_USER_ID
+      gerarNurturingInline(userId, leadId).catch(err =>
+        console.error("[leads/webhook] nurturing:", err)
+      )
     }
 
     return NextResponse.json({ ok: true })

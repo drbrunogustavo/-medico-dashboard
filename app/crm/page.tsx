@@ -740,11 +740,13 @@ function NurturingModal({
   leadNome: string
   onClose:  () => void
 }) {
-  const [seqs,    setSeqs]    = useState<NurturingSeq[]>([])
-  const [loading, setLoading] = useState(true)
-  const [editId,  setEditId]  = useState<string | null>(null)
-  const [editTxt, setEditTxt] = useState("")
-  const [saving,  setSaving]  = useState(false)
+  const [seqs,       setSeqs]       = useState<NurturingSeq[]>([])
+  const [loading,    setLoading]    = useState(true)
+  const [editId,     setEditId]     = useState<string | null>(null)
+  const [editTxt,    setEditTxt]    = useState("")
+  const [saving,     setSaving]     = useState(false)
+  const [generating, setGenerating] = useState(false)
+  const [genError,   setGenError]   = useState<string | null>(null)
 
   useEffect(() => {
     fetch(`/api/nurturing?lead_id=${leadId}`)
@@ -753,6 +755,30 @@ function NurturingModal({
       .catch(() => setSeqs([]))
       .finally(() => setLoading(false))
   }, [leadId])
+
+  async function gerarSequencia() {
+    setGenerating(true)
+    setGenError(null)
+    try {
+      const r = await fetch("/api/nurturing/gerar", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lead_id: leadId }),
+      })
+      if (!r.ok) {
+        const err = await r.json().catch(() => ({})) as { error?: string }
+        throw new Error(err.error ?? "Erro ao gerar sequência")
+      }
+      // Reload sequences after generation
+      const data = await fetch(`/api/nurturing?lead_id=${leadId}`)
+        .then(res => res.ok ? res.json() as Promise<NurturingSeq[]> : [])
+        .catch(() => [])
+      setSeqs(data)
+    } catch (e) {
+      setGenError(e instanceof Error ? e.message : "Erro ao gerar sequência")
+    } finally {
+      setGenerating(false)
+    }
+  }
 
   async function saveEdit(id: string) {
     setSaving(true)
@@ -791,9 +817,20 @@ function NurturingModal({
           {loading ? (
             <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-accent" /></div>
           ) : seqs.length === 0 ? (
-            <div className="text-center py-8 text-text-muted text-[13px]">
-              <Zap className="w-8 h-8 text-text-muted/30 mx-auto mb-2" />
-              Nenhuma sequência gerada ainda.
+            <div className="text-center py-10 space-y-3">
+              <Zap className="w-8 h-8 text-text-muted/30 mx-auto" />
+              <p className="text-[13px] text-text-muted">Nenhuma sequência gerada ainda.</p>
+              {genError && (
+                <p className="text-[11px] text-red-400 bg-red-950/30 border border-red-900/40 rounded-lg px-3 py-2">{genError}</p>
+              )}
+              <button
+                onClick={gerarSequencia}
+                disabled={generating}
+                className="inline-flex items-center gap-2 text-[12px] font-medium px-4 py-2 rounded-lg border border-accent-border bg-accent-dim text-accent hover:bg-accent/20 transition-colors disabled:opacity-50"
+              >
+                {generating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5" />}
+                {generating ? "Gerando sequência…" : "Gerar Sequência Agora"}
+              </button>
             </div>
           ) : (
             seqs.map(s => (

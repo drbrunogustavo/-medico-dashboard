@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
+        model: "claude-sonnet-4-6",
         max_tokens: 1500,
         system: "Você é um especialista em marketing médico digital para Instagram do médico usuário — Clínico-Geral, Endocrinologia e Nutrologia. Cria legendas profissionais, diretas e humanas. Responda sempre em português brasileiro. Nunca use inglês. Responda APENAS com JSON válido, sem markdown, sem texto antes ou depois.",
         messages: [{

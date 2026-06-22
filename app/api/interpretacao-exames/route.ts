@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
         max_tokens: 600,
         system: `Você é um especialista em medicina laboratorial e comunicação médica no Brasil.
 Sua tarefa é transformar um resultado de exame em uma explicação simples, clara e empática para o paciente leigo.

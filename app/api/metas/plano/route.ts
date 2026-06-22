@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     }
 
     const resp = await ai.messages.create({
-      model:      "claude-sonnet-4-20250514",
+      model:      "claude-sonnet-4-6",
       max_tokens: 3000,
       system: `Você é o Consultor Estratégico do PRAXIS, especializado em planejamento financeiro e estratégico de clínicas médicas no Brasil. Crie planos de metas realistas e acionáveis. Retorne JSON puro.`,
       messages: [{

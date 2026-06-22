@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
     }
 
     const resp = await ai.messages.create({
-      model:      "claude-sonnet-4-20250514",
+      model:      "claude-sonnet-4-6",
       max_tokens: 2000,
       system: `Você é especialista em recuperação de pacientes para clínicas médicas no Brasil. Crie campanhas de reativação éticas, empáticas e eficazes. Retorne JSON puro.`,
       messages: [{

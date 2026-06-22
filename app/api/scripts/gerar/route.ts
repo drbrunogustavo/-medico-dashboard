@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     }
 
     const resp = await ai.messages.create({
-      model:      "claude-sonnet-4-20250514",
+      model:      "claude-sonnet-4-6",
       max_tokens: 2000,
       system: `Você é um especialista em comunicação médica e gestão de consultórios no Brasil.
 Crie scripts profissionais, humanizados e prontos para uso imediato.

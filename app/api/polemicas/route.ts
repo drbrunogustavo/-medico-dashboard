@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
         max_tokens: 3500,
         system: `Você é um estrategista de conteúdo médico especialista em viralização ética para redes sociais, com foco em Endocrinologia, Nutrologia e Longevidade. Seu objetivo é gerar abordagens de conteúdo que equilibrem impacto viral com responsabilidade médica.
 

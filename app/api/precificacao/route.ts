@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
     const consultas_mes = body.consultas_dia * body.dias_mes
 
     const resp = await ai.messages.create({
-      model:      "claude-sonnet-4-20250514",
+      model:      "claude-sonnet-4-6",
       max_tokens: 4000,
       system: `Você é um consultor de gestão médica especializado em precificação estratégica de consultas no Brasil.
 Analise os dados financeiros e sugira preços estratégicos baseados no mercado real.

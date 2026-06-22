@@ -64,7 +64,7 @@ export default function HashtagsPage() {
         '- Foco em quem realmente segue conteúdo médico de qualidade\n\n' +
         'Retorne SOMENTE JSON: {"hashtags":[{"hashtag":"semcerquilha","motivo":"motivo em 1 frase","tipo":"nicho|alcance|engajamento|local"}]}'
       const res  = await fetch('/api/roteiros', { method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:800, messages:[{role:'user',content:prompt}] }) })
+        body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:800, messages:[{role:'user',content:prompt}] }) })
       const data = await res.json()
       const raw  = (data.content?.[0]?.text||'{}').replace(/```json/g,'').replace(/```/g,'').trim()
       const startIdx = raw.indexOf('{'); const jsonStr = startIdx >= 0 ? raw.slice(startIdx) : raw; const json = JSON.parse(jsonStr)

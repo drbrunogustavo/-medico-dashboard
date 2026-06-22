@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     }
 
     const resp = await ai.messages.create({
-      model:      "claude-sonnet-4-20250514",
+      model:      "claude-sonnet-4-6",
       max_tokens: 3000,
       system: `Você é especialista em jornada do paciente e funis de aquisição para clínicas médicas no Brasil. Analise o mapa de jornada e identifique lacunas, oportunidades e sugira melhorias práticas. Retorne JSON puro.`,
       messages: [{

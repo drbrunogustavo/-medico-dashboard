@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
     const formatosStr = formatos.join(", ")
 
     const resp = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-sonnet-4-6",
       max_tokens: 4000,
       system: "Você é especialista em repurposing de conteúdo médico para redes sociais. Retorne APENAS JSON válido, sem markdown.",
       messages: [{

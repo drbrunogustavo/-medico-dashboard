@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
         max_tokens: 4000,
         system: `Você é um especialista em comportamento do paciente e marketing médico no Brasil. Você conhece profundamente as objeções reais que pacientes têm em relação a tratamentos médicos, baseado em anos de consultório e pesquisa de comportamento.
 

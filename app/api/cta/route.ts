@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     if (!tema?.trim()) return NextResponse.json({ error: "Tema é obrigatório" }, { status: 400 })
 
     const resp = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-sonnet-4-6",
       max_tokens: 1500,
       system: "Você é especialista em copywriting médico para Instagram. Retorne APENAS JSON válido, sem markdown.",
       messages: [{

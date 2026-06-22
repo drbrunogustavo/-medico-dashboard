@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     if (!lead) return NextResponse.json({ error: "Lead não encontrado" }, { status: 404 })
 
     const resp = await ai.messages.create({
-      model:      "claude-sonnet-4-20250514",
+      model:      "claude-sonnet-4-6",
       max_tokens: 1500,
       messages: [{
         role: "user",

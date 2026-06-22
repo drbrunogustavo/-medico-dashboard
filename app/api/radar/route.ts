@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
     const { user, system } = buildPrompt(body.type, body.filters ?? {})
 
     const resp = await client.messages.create({
-      model:      "claude-sonnet-4-20250514",
+      model:      "claude-sonnet-4-6",
       max_tokens: 4000,
       tools:      [{ type: "web_search_20250305" as const, name: "web_search" as const }],
       system,

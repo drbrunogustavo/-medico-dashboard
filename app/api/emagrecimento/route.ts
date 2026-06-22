@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
         max_tokens: 3500,
         system: `Você é um especialista em medicina do estilo de vida, nutrologia e emagrecimento baseado em evidências.
 Analise os fatores de bloqueio ao emagrecimento de um paciente e gere um plano personalizado estruturado.

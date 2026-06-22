@@ -5,7 +5,7 @@ export async function POST(request: Request) {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
   const body = await request.json()
-  const safeBody = { ...body, model: "claude-sonnet-4-20250514" }
+  const safeBody = { ...body, model: "claude-sonnet-4-6" }
   try {
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",

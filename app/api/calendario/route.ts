@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     const mesNome = meses[(mes ?? 1) - 1] ?? "Janeiro"
 
     const resp = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-sonnet-4-6",
       max_tokens: 8000,
       system: "Você é especialista em calendário editorial médico para Instagram. Retorne APENAS JSON válido, sem markdown, sem texto adicional.",
       messages: [{

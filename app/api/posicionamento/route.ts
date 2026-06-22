@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     }
 
     const resp = await ai.messages.create({
-      model:      "claude-sonnet-4-20250514",
+      model:      "claude-sonnet-4-6",
       max_tokens: 5000,
       system: `Você é um consultor estratégico especializado em marketing médico e gestão de clínicas no Brasil.
 Analise o perfil deste médico e gere um relatório estratégico completo e acionável.

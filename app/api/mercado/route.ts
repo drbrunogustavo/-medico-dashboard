@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
 
     // Generate fresh intelligence
     const resp = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-sonnet-4-6",
       max_tokens: 4000,
       system: "Você é especialista em marketing médico e inteligência de mercado para médicos brasileiros. Retorne APENAS JSON válido, sem markdown.",
       messages: [{

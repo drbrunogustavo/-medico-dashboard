@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
         max_tokens: 3500,
         system: `Você é um estrategista de conteúdo médico especialista em transformar objeções de pacientes em conteúdo educativo e viral para Instagram. Você cria conteúdo empático, baseado em evidências, que educa sem diminuir o paciente.
 

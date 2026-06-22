@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
         max_tokens: 8000,
         system: `Você é o Agente Executivo de Conteúdo Médico do médico usuário. Você cria conteúdo médico de alta qualidade, baseado em evidências, que educa e converte no Instagram.
 

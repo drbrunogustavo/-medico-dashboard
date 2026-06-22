@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
         max_tokens: 4000,
         system: `Você é um psicólogo comportamental especialista em marketing médico e comportamento do paciente. Você entende profundamente as motivações, medos, desejos e padrões de linguagem de diferentes perfis de pacientes médicos no Brasil. Analise com precisão clínica e psicológica o perfil fornecido.
 

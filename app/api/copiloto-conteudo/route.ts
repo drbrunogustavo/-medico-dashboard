@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
     } catch { /* silent */ }
 
     const resp = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-sonnet-4-6",
       max_tokens: 6000,
       system: `Você é o melhor ghostwriter médico do Brasil, especializado em conteúdo de saúde para Instagram. Gera conteúdo que viraliza, educa e converte. Retorne APENAS JSON válido, sem markdown.`,
       messages: [{

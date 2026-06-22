@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
+import { useSearchParams } from "next/navigation"
 import { TopBar } from "@/components/TopBar"
 import { StatCard } from "@/components/StatCard"
 import { EmptyState } from "@/components/EmptyState"
@@ -150,6 +151,8 @@ function StatusBadge({ status }: { status: string }) {
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function NutricaoLeadsPage() {
+  const searchParams = useSearchParams()
+  const prefillDone  = useRef(false)
 
   // Leads list
   const [leads,       setLeads]       = useState<Lead[]>([])
@@ -168,6 +171,22 @@ export default function NutricaoLeadsPage() {
   const [generating, setGenerating] = useState(false)
   const [genError,   setGenError]   = useState("")
   const [trilha,     setTrilha]     = useState<ItemTrilha[] | null>(null)
+
+  // Pre-fill form from CRM lead via ?lead_id=
+  useEffect(() => {
+    const leadId = searchParams.get("lead_id")
+    if (!leadId || prefillDone.current) return
+    prefillDone.current = true
+    fetch(`/api/crm/${leadId}`)
+      .then(r => r.ok ? r.json() : null)
+      .then((lead: { nome?: string; telefone?: string | null; observacoes?: string | null } | null) => {
+        if (!lead) return
+        if (lead.nome)       setNome(lead.nome)
+        if (lead.telefone)   setTelefone(lead.telefone)
+        if (lead.observacoes) setPerfil(lead.observacoes)
+      })
+      .catch(() => {/* silent — form stays empty */})
+  }, [searchParams])
 
   // Saving
   const [saving,  setSaving]  = useState(false)

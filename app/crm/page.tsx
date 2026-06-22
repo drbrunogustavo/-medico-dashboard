@@ -590,7 +590,7 @@ function LeadDetailModal({
               Agendar
             </a>
             <a
-              href="/nutricao-leads"
+              href={`/nutricao-leads?lead_id=${lead.id}`}
               className="flex items-center justify-center gap-1.5 py-2 rounded-lg bg-purple-500/10 border border-purple-500/25 text-purple-400 text-[12px] font-medium hover:bg-purple-500/15 transition-colors"
             >
               <Sparkles className="w-3.5 h-3.5" />

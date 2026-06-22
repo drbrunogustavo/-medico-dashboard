@@ -8,6 +8,32 @@ function errMsg(e: unknown): string {
   return String(e)
 }
 
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const auth = await checkAuth()
+  if (!auth.authenticated) return auth.response
+
+  const { id } = params
+  if (!id) return NextResponse.json({ error: "id obrigatório" }, { status: 400 })
+
+  try {
+    const supabase = createSupabaseServerClient()
+    const { data, error } = await supabase
+      .from("crm_leads")
+      .select("*")
+      .eq("id", id)
+      .eq("user_id", auth.userId)
+      .single()
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 404 })
+    return NextResponse.json(data)
+  } catch (e) {
+    return NextResponse.json({ error: errMsg(e) }, { status: 500 })
+  }
+}
+
 export async function PATCH(
   req: NextRequest,
   { params }: { params: { id: string } }

@@ -669,7 +669,7 @@ Retorne um objeto JSON com:
         ══════════════════════════════════════════ */}
         {activeTab === "reels" && (
           <>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
                 <h2 className="text-[14px] font-semibold text-text-primary">Top Reels em Saúde</h2>
                 <p className="text-[11px] text-text-muted mt-0.5">Conteúdos com maior visualização e engajamento • Instagram, TikTok, YouTube</p>
@@ -698,35 +698,30 @@ Retorne um objeto JSON com:
             ) : (
               <div className="space-y-1.5">
                 {sortedReels.map((reel, idx) => (
-                  <div key={reel.id} className="bg-card border border-border rounded-lg px-4 py-3 flex items-center gap-4 hover:border-border-hover transition-all group">
+                  <div key={reel.id} className="bg-card border border-border rounded-lg px-4 py-3 flex items-center gap-3 hover:border-border-hover transition-all group">
                     <span className={cn(
-                      "text-[12px] font-mono font-bold w-7 flex-shrink-0 text-center tabular-nums",
+                      "text-[12px] font-mono font-bold w-6 flex-shrink-0 text-center tabular-nums",
                       idx===0&&"text-yellow-400", idx===1&&"text-slate-300", idx===2&&"text-amber-600", idx>2&&"text-text-muted"
                     )}>
                       {idx+1}
                     </span>
                     <div className="flex-1 min-w-0">
                       <p className="text-[12px] font-medium text-text-primary truncate">{reel.title}</p>
-                      <div className="flex items-center gap-2 mt-1">
+                      <div className="flex flex-wrap items-center gap-2 mt-1">
                         <PlatformBadge platform={reel.platform}/>
                         <span className="text-[9px] font-medium px-2 py-0.5 rounded bg-white/[0.04] border border-border text-text-muted">{reel.category}</span>
+                        <span className="text-[10px] font-mono font-bold text-text-primary tabular-nums">{reel.views} <span className="text-[10px] font-normal text-text-muted">views</span></span>
+                        <span className={cn("text-[10px] font-mono font-bold tabular-nums", parseFloat(reel.engagement)>15?"text-accent":"text-text-primary")}>{reel.engagement} <span className="text-[10px] font-normal text-text-muted">engaj.</span></span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4 flex-shrink-0">
-                      <div className="text-right">
-                        <div className="text-[13px] font-bold text-text-primary tabular-nums">{reel.views}</div>
-                        <div className="text-[8px] font-mono text-text-muted uppercase tracking-wider">views</div>
-                      </div>
-                      <div className="text-right">
-                        <div className={cn("text-[13px] font-bold tabular-nums", parseFloat(reel.engagement)>15?"text-accent":"text-text-primary")}>{reel.engagement}</div>
-                        <div className="text-[8px] font-mono text-text-muted uppercase tracking-wider">engaj.</div>
-                      </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
                       <button
                         onClick={() => openReverseModal(reel)}
                         title="Engenharia Reversa"
-                        className="flex items-center gap-1.5 text-[10px] px-2.5 py-1.5 rounded-lg border border-border text-text-muted hover:border-accent-border hover:text-accent transition-all opacity-0 group-hover:opacity-100 whitespace-nowrap"
+                        className="flex items-center gap-1.5 text-[10px] px-2.5 py-1.5 rounded-lg border border-border text-text-muted hover:border-accent-border hover:text-accent transition-all whitespace-nowrap"
                       >
-                        <Microscope className="w-3 h-3" /> Engenharia Reversa
+                        <Microscope className="w-3 h-3" />
+                        <span className="hidden sm:inline">Engenharia Reversa</span>
                       </button>
                       {reel.link && reel.link !== "#" ? (
                         <a href={reel.link} target="_blank" rel="noopener noreferrer">
@@ -1064,7 +1059,7 @@ Retorne um objeto JSON com:
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2 pt-3 border-t border-border">
+                      <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-border">
                         <button
                           onClick={sendAdaptedToPautas}
                           disabled={reverseSent}

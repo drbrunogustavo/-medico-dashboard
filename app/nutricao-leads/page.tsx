@@ -520,7 +520,7 @@ export default function NutricaoLeadsPage() {
                       <div key={i} className="bg-surface border border-border rounded-xl p-4 space-y-2">
                         {/* Header */}
                         <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2 flex-wrap">
+                          <div className="flex items-center gap-2 flex-wrap min-w-0">
                             <DayBadge dia={item.dia} />
                             <span className={cn(
                               "flex items-center gap-1 text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full border",
@@ -543,7 +543,7 @@ export default function NutricaoLeadsPage() {
                             </span>
                           </div>
                           {item.ehMensagem && (
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex items-center gap-1.5 shrink-0">
                               <CopyBtn text={item.texto} />
                               <EnviarBtn
                                 text={item.texto}
@@ -708,7 +708,7 @@ export default function NutricaoLeadsPage() {
                             return (
                               <div key={i} className="bg-surface border border-border rounded-lg p-3 space-y-1.5">
                                 <div className="flex items-center justify-between gap-2">
-                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                  <div className="flex items-center gap-1.5 flex-wrap min-w-0">
                                     <DayBadge dia={item.dia} />
                                     <span className={cn(
                                       "flex items-center gap-1 text-[8px] font-mono font-semibold px-1.5 py-0.5 rounded-full border",
@@ -730,7 +730,7 @@ export default function NutricaoLeadsPage() {
                                     </span>
                                   </div>
                                   {item.ehMensagem && (
-                                    <div className="flex items-center gap-1.5">
+                                    <div className="flex items-center gap-1.5 shrink-0">
                                       <CopyBtn text={item.texto} />
                                       <EnviarBtn
                                         text={item.texto}

@@ -256,7 +256,7 @@ function KanbanColumn({
   return (
     <div className={cn(
       "flex flex-col rounded-xl border transition-all flex-shrink-0",
-      "w-[280px] md:w-auto md:flex-1 min-h-[480px] max-h-[calc(100vh-220px)]",
+      "w-[260px] md:w-auto md:flex-1 min-h-[300px] md:min-h-[480px] max-h-[calc(100vh-220px)]",
       col.bg, col.border,
       isOver && "ring-2 ring-accent/40 border-accent/40"
     )}>
@@ -343,8 +343,8 @@ function LeadModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-md bg-surface border border-border rounded-xl shadow-2xl">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+      <div className="relative w-full max-w-md bg-surface border border-border rounded-xl shadow-2xl max-h-[90vh] flex flex-col">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border flex-shrink-0">
           <h2 className="text-[15px] font-semibold text-text-primary">
             {initial ? "Editar Lead" : "Novo Lead"}
           </h2>
@@ -353,7 +353,7 @@ function LeadModal({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-5 space-y-3.5">
+        <form onSubmit={handleSubmit} className="p-5 space-y-3.5 overflow-y-auto">
           {/* Nome */}
           <div>
             <label className="block text-[11px] font-mono text-text-muted mb-1.5 tracking-wider uppercase">
@@ -487,9 +487,9 @@ function LeadDetailModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-md bg-surface border border-border rounded-xl shadow-2xl">
+      <div className="relative w-full max-w-md bg-surface border border-border rounded-xl shadow-2xl max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-start justify-between px-5 py-4 border-b border-border">
+        <div className="flex items-start justify-between px-5 py-4 border-b border-border flex-shrink-0">
           <div className="min-w-0 flex-1">
             <h2 className="text-[16px] font-semibold text-text-primary truncate">{lead.nome}</h2>
             {col && (
@@ -504,7 +504,7 @@ function LeadDetailModal({
         </div>
 
         {/* Body */}
-        <div className="p-5 space-y-4">
+        <div className="p-5 space-y-4 overflow-y-auto">
           {/* Contact info */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="bg-background border border-border rounded-lg p-3">
@@ -618,7 +618,7 @@ function LeadDetailModal({
           </div>
 
           {/* Timestamps */}
-          <div className="flex items-center justify-between text-[10px] font-mono text-text-muted pt-1 border-t border-border">
+          <div className="flex flex-wrap gap-x-3 gap-y-0.5 items-center text-[10px] font-mono text-text-muted pt-1 border-t border-border">
             <span>Criado em {fmtDate(lead.created_at)}</span>
             <span>Atualizado em {fmtDate(lead.updated_at)}</span>
           </div>
@@ -800,8 +800,8 @@ function NurturingModal({
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-lg bg-surface border border-border rounded-xl shadow-2xl">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+      <div className="relative w-full max-w-lg bg-surface border border-border rounded-xl shadow-2xl max-h-[90vh] flex flex-col">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border flex-shrink-0">
           <div>
             <h2 className="text-[15px] font-semibold text-text-primary flex items-center gap-2">
               <Zap className="w-4 h-4 text-accent" /> Nurturing — {leadNome}
@@ -813,7 +813,7 @@ function NurturingModal({
           </button>
         </div>
 
-        <div className="p-5 space-y-3 max-h-[60vh] overflow-y-auto">
+        <div className="p-5 space-y-3 flex-1 overflow-y-auto">
           {loading ? (
             <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-accent" /></div>
           ) : seqs.length === 0 ? (

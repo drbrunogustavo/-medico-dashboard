@@ -63,6 +63,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.url))
   }
 
+  // Admin guard — /admin/* só acessível pelo DOCTOR_USER_ID
+  if (pathname.startsWith("/admin")) {
+    if (session.user.id !== process.env.DOCTOR_USER_ID) {
+      return NextResponse.redirect(new URL("/dashboard", request.url))
+    }
+    return supabaseResponse // admin bypassa onboarding e payment guards
+  }
+
   // Onboarding guard
   if (!ONBOARDING_EXEMPT.has(pathname)) {
     const { data: perfil, error: perfilError } = await supabase

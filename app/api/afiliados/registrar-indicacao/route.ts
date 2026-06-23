@@ -17,14 +17,20 @@ export async function POST(req: NextRequest) {
     let refCode: string | null = null
     let origem: "manual" | "automatica" = "automatica"
 
-    try {
-      const body = await req.json() as { codigoManual?: string | null }
-      const manual = body.codigoManual?.trim() || null
-      if (manual) {
-        refCode = manual
-        origem  = "manual"
+    const ct = req.headers.get("content-type") ?? ""
+    if (ct.includes("application/json")) {
+      try {
+        const body = await req.json() as { codigoManual?: string | null }
+        const manual = body.codigoManual?.trim() || null
+        if (manual) {
+          refCode = manual
+          origem  = "manual"
+        }
+      } catch (e) {
+        console.error("[afiliados/registrar-indicacao] erro ao parsear body JSON:", e)
+        /* fall through to cookie */
       }
-    } catch { /* body may be empty — fall through to cookie */ }
+    }
 
     if (!refCode) {
       const cookieStore = cookies()

@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
         method:  "POST",
         headers: { "Content-Type": "application/json", "x-internal": "1" },
         body:    JSON.stringify({ lead_id: lead.id }),
-      }).catch(() => {/* fire and forget */})
+      }).catch(e => console.error("[captacao] nurturing trigger falhou:", e))
     }
 
     return NextResponse.json({ ok: true })

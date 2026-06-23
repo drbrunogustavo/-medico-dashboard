@@ -71,7 +71,7 @@ Gere um plano de ação. Retorne JSON com EXATAMENTE esta estrutura:
         classificacao: plano.classificacao,
         plano_acao:    plano,
       })
-    } catch { /* non-critical */ }
+    } catch (e) { console.error("[diagnostico] erro ao salvar histórico de diagnóstico:", e) }
 
     return NextResponse.json(plano)
   } catch (e) {

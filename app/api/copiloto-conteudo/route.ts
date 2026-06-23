@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
       if (temas?.length) {
         temasCtx = "\n\nTEMAS FAVORITOS DO MÉDICO:\n" + temas.map(t => `• ${t.titulo}: ${t.conteudo.slice(0, 150)}`).join("\n")
       }
-    } catch { /* silent */ }
+    } catch (e) { console.error("[copiloto-conteudo] erro ao carregar temas da memória:", e) }
 
     const resp = await client.messages.create({
       model: AI_MODEL,

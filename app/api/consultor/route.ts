@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
       ])
       if (protocolos?.length) memoriaExtra += "\n\nPROTOCOLOS FAVORITOS:\n" + protocolos.map(d => `• ${d.titulo}: ${d.conteudo.slice(0, 200)}`).join("\n")
       if (historico?.length) memoriaExtra += "\n\nÚLTIMAS CONSULTAS:\n" + historico.map(h => `• ${h.tipo_consulta ?? "Consulta"} (${new Date(h.created_at).toLocaleDateString("pt-BR")})`).join("\n")
-    } catch { /* silent */ }
+    } catch (e) { console.error("[consultor] erro ao carregar contexto de memória:", e) }
 
     const systemFull = ctxTxt
       ? `${SYSTEM}\n\nDADOS DA CLÍNICA DO USUÁRIO:\n${ctxTxt}${memoriaExtra}`

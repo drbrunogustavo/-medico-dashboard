@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
               comentario:   comentario ?? null,
             }),
           })
-        } catch { /* ignore email errors — NPS response was saved successfully */ }
+        } catch (e) { console.error("[nps/public] erro ao disparar email de alerta NPS baixo:", e) }
       })()
     }
 

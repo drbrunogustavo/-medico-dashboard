@@ -177,6 +177,7 @@ export default function DiagnosticoPage() {
             <div>
               <h1 className="text-2xl font-bold text-text-primary">Diagnóstico 360°</h1>
               <p className="text-sm text-text-muted font-mono">PRAXIS IA · ANÁLISE COMPLETA</p>
+              <p className="text-[12px] text-text-secondary mt-1.5">Responda um questionário rápido e receba um diagnóstico completo da sua clínica com plano de ação.</p>
             </div>
           </div>
 

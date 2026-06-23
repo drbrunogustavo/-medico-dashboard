@@ -249,6 +249,7 @@ export default function ReativacaoPage() {
         <div>
           <h1 className="text-2xl font-bold text-text-primary tracking-tight">Reativação de Pacientes</h1>
           <p className="text-sm text-text-muted mt-1 font-mono">CONSULTÓRIO · RECUPERAR PACIENTES PERDIDOS</p>
+          <p className="text-[12px] text-text-secondary mt-1.5">Gere mensagens personalizadas para reconquistar pacientes que não retornam há um tempo.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           {selecionados.length > 0 && (

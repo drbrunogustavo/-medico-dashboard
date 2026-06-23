@@ -1074,6 +1074,7 @@ export default function CRMPage() {
       <TopBar
         title="CRM de Leads"
         subtitle="FUNIL DE PACIENTES · KANBAN"
+        tagline="Acompanhe e organize seus leads do primeiro contato até se tornarem pacientes ativos."
         actions={
           <button
             onClick={() => { setNewEstagio("novo"); setShowNew(true) }}

@@ -501,6 +501,7 @@ Retorne um objeto JSON com:
       <TopBar
         title="Radar de Tendências"
         subtitle={`NUTROLOGIA · ENDOCRINOLOGIA · LONGEVIDADE · Atualizado às ${fmtTime(lastUpdate)}`}
+        tagline="Descubra o que está funcionando nas redes antes da concorrência e transforme em conteúdo."
         actions={
           <button onClick={handleRefresh} disabled={currentLoading}
             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-accent-dim border border-accent-border text-accent text-[12px] font-medium hover:bg-accent/20 transition-colors disabled:opacity-50">

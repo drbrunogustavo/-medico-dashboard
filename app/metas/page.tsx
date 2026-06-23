@@ -175,6 +175,7 @@ export default function MetasPage() {
         <div>
           <h1 className="text-2xl font-bold text-text-primary tracking-tight">Metas e Planejamento</h1>
           <p className="text-sm text-text-muted mt-0.5 font-mono">EXECUTIVO · CRESCIMENTO</p>
+          <p className="text-[12px] text-text-secondary mt-1.5">Defina metas anuais e acompanhe seu progresso com planejamento de 90 dias.</p>
         </div>
       </div>
 

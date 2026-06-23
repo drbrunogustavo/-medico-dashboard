@@ -87,6 +87,7 @@ export default function FinanceiroAdminPage() {
       <TopBar
         title="Financeiro"
         subtitle="ADMIN · PRAXIS INTERNAL"
+        tagline="Acompanhe receita recorrente estimada e assinaturas em risco."
         actions={
           <button
             onClick={fetchData}

@@ -90,6 +90,7 @@ export default function JornadaPage() {
         <div>
           <h1 className="text-2xl font-bold text-text-primary tracking-tight">Jornada do Paciente</h1>
           <p className="text-sm text-text-muted mt-1 font-mono">CONSULTÓRIO · MAPA DE EXPERIÊNCIA</p>
+          <p className="text-[12px] text-text-secondary mt-1.5">Mapeie cada etapa da experiência do paciente, da descoberta ao pós-consulta.</p>
         </div>
         <div className="flex items-center gap-3">
           <div className="text-[11px] font-mono text-text-muted">

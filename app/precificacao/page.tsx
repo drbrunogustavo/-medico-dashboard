@@ -442,6 +442,7 @@ export default function PrecificacaoPage() {
           <div>
             <h1 className="text-2xl font-bold text-text-primary tracking-tight">Precificação Inteligente</h1>
             <p className="text-sm text-text-muted font-mono">EXECUTIVO · CALCULADORA ESTRATÉGICA</p>
+            <p className="text-[12px] text-text-secondary mt-1.5">Calcule o preço ideal dos seus procedimentos com base em custos e benchmark regional.</p>
           </div>
         </div>
       </div>

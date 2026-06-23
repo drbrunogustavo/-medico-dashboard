@@ -402,6 +402,9 @@ export default function PlanosPage() {
           <p style={{ fontSize: 14, color: "#6a5a4a", lineHeight: 1.8 }}>
             7 dias grátis em qualquer plano. Cancele quando quiser.
           </p>
+          <p style={{ fontSize: 11, color: "var(--text-secondary)", marginTop: 8 }}>
+            Veja os planos disponíveis e gerencie sua assinatura.
+          </p>
         </div>
 
         {/* Plans grid */}

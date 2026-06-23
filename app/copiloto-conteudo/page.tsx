@@ -307,6 +307,7 @@ export default function CopilotoConteudoPage() {
       <div className="px-8 pt-8 pb-5 border-b border-border">
         <h1 className="text-2xl font-bold text-text-primary tracking-tight">Copiloto de Conteúdo</h1>
         <p className="text-[11px] text-text-muted mt-1 font-mono uppercase tracking-widest">REEL · CARROSSEL · STORIES · LEGENDA EM 1 CLIQUE</p>
+        <p className="text-[12px] text-text-secondary mt-1.5">Tire dúvidas e peça sugestões de conteúdo em conversa direta com a IA.</p>
       </div>
 
       <div className="p-8 space-y-6">

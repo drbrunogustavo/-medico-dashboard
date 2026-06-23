@@ -106,7 +106,7 @@ export default function GanchosPage() {
       <div className="border-b border-border bg-surface" style={{ padding:'18px 32px', display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:12 }}>
         <div>
           <h1 style={{ fontSize:22, fontWeight:900, color:D.accent, letterSpacing:1, margin:0 }}>Biblioteca de Ganchos</h1>
-          <p style={{ fontSize:12, color:D.muted, margin:'4px 0 0' }}>Aberturas que param o scroll em 3 segundos</p>
+          <p style={{ fontSize:11, color:D.text2, margin:'4px 0 0', fontFamily:D.font }}>Gere aberturas que prendem a atenção nos primeiros segundos do seu conteúdo.</p>
         </div>
         <button onClick={gerar} disabled={loading||!tema.trim()||!tipos.length}
           style={{ background:tema.trim()&&tipos.length?D.accent:D.border, color:tema.trim()&&tipos.length?D.bg:D.muted, padding:'12px 28px', borderRadius:10, border:'none', fontWeight:900, fontSize:13, cursor:(tema.trim()&&tipos.length)?'pointer':'not-allowed', fontFamily:"'Inter'" }}>

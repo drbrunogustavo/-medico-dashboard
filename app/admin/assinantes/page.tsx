@@ -78,6 +78,7 @@ export default function AssinantesPage() {
       <TopBar
         title="Assinantes"
         subtitle="ADMIN · PRAXIS INTERNAL"
+        tagline="Veja todos os assinantes, planos e status de pagamento."
         actions={
           <button
             onClick={fetchData}

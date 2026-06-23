@@ -72,7 +72,7 @@ export default function RoteirosPage(){
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       {showPautas&&<PautasModal onSelect={(t)=>{setTema(t);setShowPautas(false)}} onClose={()=>setShowPautas(false)}/>}
       <div className="border-b border-border bg-surface" style={{padding:'16px 24px',display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:12}}>
-        <div><h1 style={{fontSize:17,fontWeight:700,color:D.text,margin:0}}>Gerador de Roteiros</h1><p style={{fontSize:10,color:D.muted,margin:'2px 0 0',fontFamily:D.mono,letterSpacing:1}}>ROTEIROS PARA REELS</p></div>
+        <div><h1 style={{fontSize:17,fontWeight:700,color:D.text,margin:0}}>Gerador de Roteiros</h1><p style={{fontSize:10,color:D.muted,margin:'2px 0 0',fontFamily:D.mono,letterSpacing:1}}>ROTEIROS PARA REELS</p><p style={{fontSize:11,color:D.text2,margin:'4px 0 0',fontFamily:D.font}}>Crie roteiros de vídeo prontos para gravar a partir de um tema ou referência.</p></div>
         <button onClick={gerar} disabled={loading||!tema.trim()} style={{background:tema.trim()?D.accent:'none',color:tema.trim()?D.bg:D.muted,border:`1px solid ${tema.trim()?D.accent:D.border}`,padding:'9px 20px',borderRadius:8,fontWeight:700,fontSize:13,cursor:tema.trim()?'pointer':'not-allowed',fontFamily:D.font}}>{loading?'⟳ Gerando...':'✦ Gerar Roteiro'}</button>
       </div>
       <div style={{display:'flex',height:isMob?'auto':'calc(100vh - 68px)',flexDirection:isMob?'column':'row'}}>

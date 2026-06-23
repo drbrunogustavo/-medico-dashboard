@@ -322,6 +322,7 @@ export default function NutricaoLeadsPage() {
       <TopBar
         title="Nutrição de Leads"
         subtitle="ALA CLÍNICA · TRILHAS DE CONVERSÃO"
+        tagline="Mantenha o relacionamento com futuros pacientes com trilhas de conteúdo personalizadas."
         actions={
           <button
             onClick={fetchLeads}

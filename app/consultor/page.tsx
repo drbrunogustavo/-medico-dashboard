@@ -214,6 +214,7 @@ export default function ConsultorPage() {
           <div>
             <h1 className="text-base font-bold text-text-primary">Consultor Estratégico</h1>
             <p className="text-[10px] font-mono text-text-muted">PRAXIS IA · GESTÃO DE CLÍNICAS</p>
+            <p className="text-[10px] text-text-secondary mt-0.5">Converse com a IA sobre estratégia de crescimento e gestão da sua clínica.</p>
           </div>
         </div>
         {messages.length > 0 && (

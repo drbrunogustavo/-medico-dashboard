@@ -262,7 +262,7 @@ export default function PerfilPage() {
   if (loading) {
     return (
       <div className="animate-fade-in">
-        <TopBar title="Meu Perfil" subtitle="PRAXIS · CONFIGURAÇÕES" />
+        <TopBar title="Meu Perfil" subtitle="PRAXIS · CONFIGURAÇÕES" tagline="Atualize seus dados, foto e informações profissionais." />
         <div className="flex items-center justify-center h-64">
           <div className="w-5 h-5 border-2 border-accent/30 border-t-accent rounded-full animate-spin" />
         </div>
@@ -275,6 +275,7 @@ export default function PerfilPage() {
       <TopBar
         title="Meu Perfil"
         subtitle="PRAXIS · CONFIGURAÇÕES"
+        tagline="Atualize seus dados, foto e informações profissionais."
         actions={
           <button
             onClick={save}
@@ -587,6 +588,7 @@ export default function PerfilPage() {
         {/* ── TAB: KIT DE MARCA ────────────────────────────────────────────── */}
         {activeTab === "marca" && (
           <>
+            <p className="text-[12px] text-text-secondary mb-2">Centralize logo, cores e identidade visual usados em seus materiais.</p>
             {/* Logo */}
             <div className="bg-surface border border-border rounded-xl p-6 space-y-4">
               <h2 className="text-[11px] font-mono text-text-muted tracking-[3px] uppercase">Logo da Marca</h2>

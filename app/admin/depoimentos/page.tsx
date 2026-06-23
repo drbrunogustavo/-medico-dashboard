@@ -80,6 +80,7 @@ export default function AdminDepoimentosPage() {
       <TopBar
         title="Moderação de Depoimentos"
         subtitle="ADMIN · PRAXIS INTERNAL"
+        tagline="Modere depoimentos enviados por assinantes antes de publicá-los na landing page."
         actions={
           <button
             onClick={() => fetchDeps(filtro)}

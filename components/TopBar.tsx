@@ -206,10 +206,11 @@ function BellMenu() {
 interface TopBarProps {
   title:     string
   subtitle?: string
+  tagline?:  string
   actions?:  React.ReactNode
 }
 
-export function TopBar({ title, subtitle, actions }: TopBarProps) {
+export function TopBar({ title, subtitle, tagline, actions }: TopBarProps) {
   const { openMenu } = useMenu()
 
   return (
@@ -239,6 +240,11 @@ export function TopBar({ title, subtitle, actions }: TopBarProps) {
         {subtitle && (
           <p className="hidden md:block text-[10px] font-mono text-text-muted mt-0.5 tracking-[2px] uppercase truncate">
             {subtitle}
+          </p>
+        )}
+        {tagline && (
+          <p className="hidden md:block text-[11px] text-text-secondary mt-0.5 leading-tight truncate">
+            {tagline}
           </p>
         )}
       </div>

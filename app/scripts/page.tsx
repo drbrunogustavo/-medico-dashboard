@@ -364,6 +364,7 @@ export default function ScriptsPage() {
           <div>
             <h1 className="text-2xl font-bold text-text-primary tracking-tight">Biblioteca de Scripts</h1>
             <p className="text-sm text-text-muted font-mono">CONSULTÓRIO · COMUNICAÇÃO</p>
+            <p className="text-[12px] text-text-secondary mt-1.5">Acesse roteiros prontos para recepção, captação e follow-up de pacientes.</p>
           </div>
         </div>
 

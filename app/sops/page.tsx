@@ -435,6 +435,7 @@ export default function SopsPage() {
           <div>
             <h1 className="text-2xl font-bold text-text-primary tracking-tight">Gerador de SOPs</h1>
             <p className="text-sm text-text-muted font-mono">CONSULTÓRIO · PROCESSOS OPERACIONAIS</p>
+            <p className="text-[12px] text-text-secondary mt-1.5">Crie procedimentos operacionais padrão para padronizar o atendimento da sua clínica.</p>
           </div>
         </div>
 

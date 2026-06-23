@@ -142,7 +142,7 @@ export default function DepoimentoPage() {
           </Link>
           <div>
             <h1 className="text-[18px] font-semibold text-text-primary">Deixar depoimento</h1>
-            <p className="text-[12px] text-text-muted">Sua experiência com o PRAXIS</p>
+            <p className="text-[12px] text-text-secondary">Compartilhe sua experiência com a plataforma.</p>
           </div>
         </div>
       </div>

@@ -329,6 +329,7 @@ export default function MemoriaPage() {
       <TopBar
         title="Memória Clínica"
         subtitle="PROTOCOLOS · SCRIPTS · CONSULTAS · TEMAS · BASE DE CONHECIMENTO"
+        tagline="Guarde protocolos, condutas e anotações clínicas para consultar rapidamente depois."
         actions={
           aba !== "historico" ? (
             <button

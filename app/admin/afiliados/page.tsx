@@ -89,6 +89,7 @@ export default function AfiliadosAdminPage() {
       <TopBar
         title="Afiliados"
         subtitle="ADMIN · PRAXIS INTERNAL"
+        tagline="Acompanhe indicações, conversões e comissões do programa de afiliados."
         actions={
           <button
             onClick={fetchData}

@@ -76,7 +76,7 @@ export default function TitulosPage() {
       <div className="border-b border-border bg-surface" style={{ padding:isMob?'14px 16px':'18px 32px', display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:12 }}>
         <div>
           <h1 style={{ fontSize:22, fontWeight:900, color:D.accent, letterSpacing:1, margin:0 }}>Gerador de Títulos</h1>
-          <p style={{ fontSize:12, color:D.muted, margin:'4px 0 0' }}>Headlines para posts e Reels</p>
+          <p style={{ fontSize:11, color:D.text2, margin:'4px 0 0', fontFamily:D.font }}>Encontre títulos com mais potencial de cliques para seus vídeos e posts.</p>
         </div>
         <button onClick={gerar} disabled={loading||!tema.trim()}
           style={{ background:tema.trim()?D.accent:D.border, color:tema.trim()?D.bg:D.muted, padding:'12px 28px', borderRadius:10, border:'none', fontWeight:900, fontSize:13, cursor:tema.trim()?'pointer':'not-allowed', fontFamily:"'Inter'", width:isMob?'100%':undefined }}>

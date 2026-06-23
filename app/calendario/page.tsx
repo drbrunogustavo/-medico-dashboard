@@ -431,6 +431,7 @@ export default function CalendarioPage() {
           <div>
             <h1 className="text-2xl font-bold text-text-primary tracking-tight">Calendário Editorial</h1>
             <p className="text-[11px] text-text-muted mt-1 font-mono uppercase tracking-widest">30 DIAS DE CONTEÚDO COM IA</p>
+            <p className="text-[12px] text-text-secondary mt-1.5">Organize e visualize todo o seu conteúdo planejado em um calendário mensal.</p>
           </div>
           {resultado && (
             <div className="flex items-center gap-2">

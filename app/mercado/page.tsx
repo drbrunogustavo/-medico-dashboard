@@ -142,6 +142,7 @@ export default function MercadoPage() {
       <div className="px-8 pt-8 pb-5 border-b border-border">
         <h1 className="text-2xl font-bold text-text-primary tracking-tight">Inteligência de Mercado</h1>
         <p className="text-[11px] text-text-muted mt-1 font-mono uppercase tracking-widest">ANÁLISE SEMANAL COM IA · CACHE 7 DIAS</p>
+        <p className="text-[12px] text-text-secondary mt-1.5">Acompanhe tendências do seu nicho e descubra oportunidades de conteúdo antes da concorrência.</p>
       </div>
 
       <div className="p-8 space-y-6">

@@ -101,7 +101,7 @@ export default function AfiliadosPage() {
   if (loading) {
     return (
       <div className="animate-fade-in">
-        <TopBar title="Programa de Afiliados" subtitle="GANHE 20% DE COMISSÃO" />
+        <TopBar title="Programa de Afiliados" subtitle="GANHE 20% DE COMISSÃO" tagline="Indique a plataforma e ganhe comissão por cada assinante que você trouxer." />
         <div className="flex items-center justify-center py-24">
           <Loader2 className="w-6 h-6 animate-spin" style={{ color: GOLD }} />
         </div>
@@ -111,7 +111,7 @@ export default function AfiliadosPage() {
 
   return (
     <div className="animate-fade-in">
-      <TopBar title="Programa de Afiliados" subtitle="GANHE 20% DE COMISSÃO RECORRENTE" />
+      <TopBar title="Programa de Afiliados" subtitle="GANHE 20% DE COMISSÃO RECORRENTE" tagline="Indique a plataforma e ganhe comissão por cada assinante que você trouxer." />
       <div className="p-6 max-w-3xl space-y-6">
 
         {/* Hero */}

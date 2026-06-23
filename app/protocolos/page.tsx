@@ -1549,7 +1549,6 @@ function SecaoItem({ titulo, items, cor }: { titulo: string; items: string[]; co
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ProtocolosPage() {
-  const [filtro,    setFiltro]   = useState<Especialidade | "Todos">("Todos")
   const [busca,     setBusca]    = useState("")
   const [selected,  setSelected] = useState<Protocolo | null>(null)
   const [loading,   setLoading]  = useState(false)
@@ -1559,12 +1558,10 @@ export default function ProtocolosPage() {
   const [copied,    setCopied]   = useState<"protocolo" | "ai" | null>(null)
 
   const protocolosFiltrados = useMemo(() => {
-    return PROTOCOLOS.filter(p => {
-      const matchEsp = filtro === "Todos" || p.especialidade === filtro
-      const matchBusca = !busca || p.nome.toLowerCase().includes(busca.toLowerCase())
-      return matchEsp && matchBusca
-    })
-  }, [filtro, busca])
+    return [...PROTOCOLOS]
+      .filter(p => !busca || p.nome.toLowerCase().includes(busca.toLowerCase()))
+      .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"))
+  }, [busca])
 
   const textoCompleto = (p: Protocolo) =>
     `PROTOCOLO: ${p.nome} (${p.especialidade})\n\n` +
@@ -1613,33 +1610,17 @@ export default function ProtocolosPage() {
       />
 
       <div className="p-4 md:p-8">
-        <div className="flex flex-col gap-3 mb-5">
+        <div className="mb-5">
           <input
             value={busca}
             onChange={e => setBusca(e.target.value)}
             placeholder="Buscar protocolo…"
-            className="flex-1 text-[12px] px-4 py-2.5 rounded-xl outline-none"
+            className="w-full text-[12px] px-4 py-2.5 rounded-xl outline-none"
             style={{
               background: "var(--surface)", border: "1px solid var(--border)",
               color: "var(--text-primary)",
             }}
           />
-          <div className="flex gap-1.5 flex-wrap items-center">
-            {(["Todos", ...ESPECIALIDADES] as const).map(e => (
-              <button
-                key={e}
-                onClick={() => setFiltro(e)}
-                className="text-[11px] px-3 py-2 rounded-xl transition-all"
-                style={{
-                  background: filtro === e ? (e === "Todos" ? "var(--accent-dim)" : `${ESP_CORES[e as Especialidade]}15`) : "var(--surface)",
-                  border: `1px solid ${filtro === e ? (e === "Todos" ? "var(--accent-border)" : `${ESP_CORES[e as Especialidade]}40`) : "var(--border)"}`,
-                  color: filtro === e ? (e === "Todos" ? "var(--accent)" : ESP_CORES[e as Especialidade]) : "var(--text-muted)",
-                }}
-              >
-                {e}
-              </button>
-            ))}
-          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">

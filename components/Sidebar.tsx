@@ -15,7 +15,7 @@ import {
   RefreshCw, Map, BarChart2, Rocket,
   Instagram, Calculator, FileBarChart,
   FlaskConical, FileHeart, Pill,
-  BookOpen, Scale, Wand2, Store, Brain, FileSpreadsheet,
+  BookOpen, Wand2, Store, Brain, FileSpreadsheet,
   Download, Receipt, Gift,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -105,7 +105,6 @@ const NAV: Record<AlaId, NavItem[]> = {
     { label: "Interpretação de Exames", href: "/interpretacao-exames",icon: FlaskConical },
     { label: "Relatório para Paciente", href: "/relatorio-paciente",  icon: FileHeart    },
     { label: "Prescrição Assistida",       href: "/prescricao",    icon: Pill         },
-    { label: "Inteligência Emagrecimento", href: "/emagrecimento", icon: Scale        },
     { label: "Protocolos Clínicos",        href: "/protocolos",    icon: ClipboardList},
   ],
   executivo: [

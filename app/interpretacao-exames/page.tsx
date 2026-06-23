@@ -1916,7 +1916,6 @@ const EXAMS: ExamData[] = [
 ]
 
 // Group by category
-const CATEGORIES = Array.from(new Set(EXAMS.map(e => e.category)))
 
 // ─── Components ───────────────────────────────────────────────────────────────
 
@@ -2160,9 +2159,6 @@ function ExamCard({
 
 export default function InterpretacaoExamesPage() {
   const [search, setSearch] = useState("")
-  const [openCats, setOpenCats] = useState<Record<string, boolean>>(
-    Object.fromEntries(CATEGORIES.map(c => [c, true]))
-  )
   const [copied, setCopied] = useState<string | null>(null)
 
   function copy(id: string, text: string) {
@@ -2172,26 +2168,17 @@ export default function InterpretacaoExamesPage() {
     })
   }
 
-  const filtered = useMemo(() => {
-    if (!search.trim()) return EXAMS
-    const q = search.toLowerCase()
-    return EXAMS.filter(e =>
-      e.name.toLowerCase().includes(q) ||
-      e.category.toLowerCase().includes(q) ||
-      e.correlations.some(c => c.toLowerCase().includes(q))
-    )
+  const sorted = useMemo(() => {
+    const q = search.toLowerCase().trim()
+    const base = q
+      ? EXAMS.filter(e =>
+          e.name.toLowerCase().includes(q) ||
+          e.category.toLowerCase().includes(q) ||
+          e.correlations.some(c => c.toLowerCase().includes(q))
+        )
+      : EXAMS
+    return [...base].sort((a, b) => a.name.localeCompare(b.name, "pt-BR"))
   }, [search])
-
-  const filteredByCategory = useMemo(
-    () => CATEGORIES.map(cat => ({
-      cat,
-      exams: filtered.filter(e => e.category === cat),
-    })).filter(x => x.exams.length > 0),
-    [filtered]
-  )
-
-  const toggleCat = (cat: string) =>
-    setOpenCats(prev => ({ ...prev, [cat]: !prev[cat] }))
 
   return (
     <div className="animate-fade-in">
@@ -2206,10 +2193,10 @@ export default function InterpretacaoExamesPage() {
         }
       />
 
-      <div className="p-4 md:p-8 space-y-5">
+      <div className="p-4 md:p-8 space-y-3">
 
         {/* Search */}
-        <div className="relative">
+        <div className="relative mb-2">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--text-muted)" }} />
           <input
             value={search}
@@ -2224,38 +2211,12 @@ export default function InterpretacaoExamesPage() {
           />
         </div>
 
-        {/* Accordion by category */}
-        {filteredByCategory.map(({ cat, exams }) => (
-          <div key={cat} className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
-            <button
-              onClick={() => toggleCat(cat)}
-              className="w-full flex items-center justify-between px-5 py-3.5 transition-colors hover:bg-white/[0.02]"
-              style={{ background: "var(--card)" }}
-            >
-              <div className="flex items-center gap-2.5">
-                <FlaskConical className="w-4 h-4" style={{ color: "var(--accent)" }} />
-                <span className="text-[13px] font-bold" style={{ color: "var(--text-primary)" }}>{cat}</span>
-                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded"
-                  style={{ background: "var(--surface)", color: "var(--text-muted)" }}>
-                  {exams.length}
-                </span>
-              </div>
-              {openCats[cat]
-                ? <ChevronDown className="w-4 h-4" style={{ color: "var(--text-muted)" }} />
-                : <ChevronRight className="w-4 h-4" style={{ color: "var(--text-muted)" }} />}
-            </button>
-
-            {openCats[cat] && (
-              <div className="p-4 space-y-3" style={{ background: "var(--background)", borderTop: "1px solid var(--border)" }}>
-                {exams.map(exam => (
-                  <ExamCard key={exam.id} exam={exam} copied={copied} onCopy={copy} />
-                ))}
-              </div>
-            )}
-          </div>
+        {/* Lista plana alfabética */}
+        {sorted.map(exam => (
+          <ExamCard key={exam.id} exam={exam} copied={copied} onCopy={copy} />
         ))}
 
-        {filtered.length === 0 && (
+        {sorted.length === 0 && (
           <div className="text-center py-16">
             <FlaskConical className="w-10 h-10 mx-auto mb-4" style={{ color: "var(--text-muted)" }} />
             <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>

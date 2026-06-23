@@ -1,7 +1,9 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, Suspense } from "react"
+import { useSearchParams, useRouter } from "next/navigation"
 import { TopBar } from "@/components/TopBar"
+import { EmagrecimentoTab } from "@/components/EmagrecimentoTab"
 import { cn } from "@/lib/utils"
 import {
   Pill, Search, ChevronDown, ChevronRight, Copy, Check,
@@ -1679,7 +1681,6 @@ const VIA_LABELS: Record<Via, string> = {
   Vaginal: "Vaginal", Transdérmica: "Transdérmica", Tópica: "Tópica", EV: "Endovenoso",
 }
 
-const CATEGORIAS = Array.from(new Set(DIAGNOSTICOS.map(d => d.categoria)))
 
 // ─── Components ───────────────────────────────────────────────────────────────
 
@@ -1891,13 +1892,18 @@ function MedCard({
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default function PrescricaoPage() {
+function PrescricaoContent() {
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const tab = searchParams.get("tab") === "emagrecimento" ? "emagrecimento" : "medicamentos"
+
+  function switchTab(t: "medicamentos" | "emagrecimento") {
+    router.replace(t === "emagrecimento" ? "/prescricao?tab=emagrecimento" : "/prescricao")
+  }
+
   const [search,   setSearch]   = useState("")
-  const [openDiag, setOpenDiag] = useState<Record<string, boolean>>(
-    Object.fromEntries(DIAGNOSTICOS.map(d => [d.id, true]))
-  )
+  const [openDiag, setOpenDiag] = useState<Record<string, boolean>>({})
   const [copied, setCopied] = useState<string | null>(null)
-  const [catFilter, setCatFilter] = useState<string>("Todos")
 
   function copy(id: string, text: string) {
     navigator.clipboard.writeText(text).then(() => {
@@ -1908,12 +1914,11 @@ export default function PrescricaoPage() {
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim()
-    return DIAGNOSTICOS
-      .filter(d => catFilter === "Todos" || d.categoria === catFilter)
+    if (!q) return []
+    return [...DIAGNOSTICOS]
       .map(d => ({
         ...d,
         medicamentos: d.medicamentos.filter(m =>
-          !q ||
           m.nome.toLowerCase().includes(q) ||
           m.nomesComerciais.some(n => n.toLowerCase().includes(q)) ||
           d.nome.toLowerCase().includes(q) ||
@@ -1921,7 +1926,8 @@ export default function PrescricaoPage() {
         ),
       }))
       .filter(d => d.medicamentos.length > 0)
-  }, [search, catFilter])
+      .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"))
+  }, [search])
 
   const totalMeds = DIAGNOSTICOS.reduce((s, d) => s + d.medicamentos.length, 0)
 
@@ -1931,45 +1937,50 @@ export default function PrescricaoPage() {
         title="Prescrição Assistida"
         subtitle="PROTOCOLOS CLÍNICOS · DOSES E TITULAÇÃO · CONTRAINDICAÇÕES E INTERAÇÕES"
         actions={
-          <span className="text-[10px] font-mono px-3 py-1.5 rounded-lg border"
-            style={{ background: "var(--surface)", borderColor: "var(--border)", color: "var(--text-muted)" }}>
-            {totalMeds} medicamentos · {DIAGNOSTICOS.length} diagnósticos
-          </span>
+          tab !== "emagrecimento" ? (
+            <span className="text-[10px] font-mono px-3 py-1.5 rounded-lg border"
+              style={{ background: "var(--surface)", borderColor: "var(--border)", color: "var(--text-muted)" }}>
+              {totalMeds} medicamentos · {DIAGNOSTICOS.length} diagnósticos
+            </span>
+          ) : undefined
         }
       />
 
+      {/* Tab bar */}
+      <div className="flex border-b border-border px-4 md:px-8">
+        {(["medicamentos", "emagrecimento"] as const).map(t => (
+          <button
+            key={t}
+            onClick={() => switchTab(t)}
+            className={cn(
+              "px-4 py-3 text-[12px] font-medium border-b-2 -mb-px transition-colors",
+              tab === t
+                ? "border-accent text-accent"
+                : "border-transparent text-text-muted hover:text-text-secondary"
+            )}
+          >
+            {t === "medicamentos" ? "Medicamentos" : "Emagrecimento"}
+          </button>
+        ))}
+      </div>
+
+      {tab === "emagrecimento" ? (
+        <EmagrecimentoTab />
+      ) : (
       <div className="p-4 md:p-8 space-y-5">
 
-        {/* Search + filter */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--text-muted)" }} />
-            <input
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Buscar diagnóstico ou medicamento…"
-              className="w-full pl-9 pr-4 py-2.5 rounded-xl text-[13px] outline-none"
-              style={{ background: "var(--card)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
-              onFocus={e => (e.currentTarget.style.borderColor = "var(--accent)")}
-              onBlur={e => (e.currentTarget.style.borderColor = "var(--border)")}
-            />
-          </div>
-          <div className="flex gap-1.5 flex-wrap">
-            {["Todos", ...CATEGORIAS].map(cat => (
-              <button
-                key={cat}
-                onClick={() => setCatFilter(cat)}
-                className="text-[11px] px-3 py-2 rounded-lg transition-all"
-                style={{
-                  background: catFilter === cat ? "var(--accent-dim)" : "var(--surface)",
-                  border: `1px solid ${catFilter === cat ? "var(--accent-border)" : "var(--border)"}`,
-                  color: catFilter === cat ? "var(--accent)" : "var(--text-muted)",
-                }}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
+        {/* Search */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--text-muted)" }} />
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Buscar diagnóstico ou medicamento…"
+            className="w-full pl-9 pr-4 py-2.5 rounded-xl text-[13px] outline-none"
+            style={{ background: "var(--card)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
+            onFocus={e => (e.currentTarget.style.borderColor = "var(--accent)")}
+            onBlur={e => (e.currentTarget.style.borderColor = "var(--border)")}
+          />
         </div>
 
         {/* Legend */}
@@ -2032,15 +2043,32 @@ export default function PrescricaoPage() {
           </div>
         ))}
 
-        {filtered.length === 0 && (
+        {search.trim() === "" && (
           <div className="text-center py-20">
             <Pill className="w-12 h-12 mx-auto mb-4" style={{ color: "var(--text-muted)" }} />
             <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
-              Nenhum medicamento encontrado para &quot;{search}&quot;
+              Busque por doença, medicamento ou indicação para começar
+            </p>
+          </div>
+        )}
+        {search.trim() !== "" && filtered.length === 0 && (
+          <div className="text-center py-20">
+            <Pill className="w-12 h-12 mx-auto mb-4" style={{ color: "var(--text-muted)" }} />
+            <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
+              Nenhum resultado para &quot;{search}&quot;
             </p>
           </div>
         )}
       </div>
+      )}
     </div>
+  )
+}
+
+export default function PrescricaoPage() {
+  return (
+    <Suspense>
+      <PrescricaoContent />
+    </Suspense>
   )
 }

@@ -147,7 +147,8 @@ export default function RaioXPage() {
       const data = await res.json()
       if (data.error) throw new Error(data.error)
       setResultado(data)
-    } catch {
+    } catch (e) {
+      console.error("[raio-x] erro ao analisar perfil:", e)
       setError("Erro ao analisar. Usando dados de demonstração.")
       setResultado(MOCK_RESULT)
     } finally {
@@ -187,7 +188,7 @@ export default function RaioXPage() {
           }),
         })
         saved++
-      } catch { /* continue */ }
+      } catch (e) { console.error("[raio-x] erro ao salvar pauta no calendário:", e) }
     }
     setSavingCal(false)
     setCalSaved(true)

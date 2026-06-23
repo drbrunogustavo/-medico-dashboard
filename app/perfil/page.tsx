@@ -164,7 +164,7 @@ export default function PerfilPage() {
     fetch("/api/integrations/status")
       .then(r => r.json())
       .then((d: IntegStatus) => setIntegStatus(d))
-      .catch(() => {/* silent */})
+      .catch(e => console.error("[perfil] erro ao carregar status de integrações:", e))
   }, [activeTab, integStatus])
 
   const set = (k: keyof PerfilForm) => (
@@ -181,7 +181,8 @@ export default function PerfilPage() {
       })
       setStatus(r.ok ? "saved" : "error")
       if (r.ok) setTimeout(() => setStatus("idle"), 3000)
-    } catch {
+    } catch (e) {
+      console.error("[perfil] erro ao salvar perfil:", e)
       setStatus("error")
     }
   }
@@ -247,7 +248,8 @@ export default function PerfilPage() {
         .from("perfil-assets")
         .getPublicUrl(data.path)
       setForm(f => ({ ...f, avatar_url: publicUrl }))
-    } catch {
+    } catch (e) {
+      console.error("[perfil] erro ao fazer upload do avatar:", e)
       setAvatarError("Erro ao enviar a imagem. Tente novamente.")
     } finally {
       setUploadingAvatar(false)

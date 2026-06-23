@@ -204,7 +204,8 @@ export default function PolemicasPage() {
       if (!res.ok) throw new Error()
       setSavedCards(prev => [...prev, idx])
       showToast("Abordagem salva no Banco de Pautas!")
-    } catch {
+    } catch (e) {
+      console.error("[polemicas] erro ao salvar abordagem:", e)
       showToast("Erro ao salvar. Tente novamente.")
     }
   }

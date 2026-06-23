@@ -783,7 +783,7 @@ export default function ExecutivoPage() {
     fetch("/api/executivo")
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d) setExec(d) })
-      .catch(() => {})
+      .catch(e => console.error("[executivo] erro ao carregar dados executivos:", e))
       .finally(() => setLoading(false))
   }, [])
 

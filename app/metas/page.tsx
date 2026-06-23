@@ -124,7 +124,8 @@ export default function MetasPage() {
       const data = await res.json()
       if (!res.ok || data.error) { setErrorPlano(data.error ?? "Erro"); return }
       setPlano(data as PlanoIA)
-    } catch {
+    } catch (e) {
+      console.error("[metas] erro ao gerar plano:", e)
       setErrorPlano("Erro de conexão.")
     } finally {
       setLoadingPlano(false)

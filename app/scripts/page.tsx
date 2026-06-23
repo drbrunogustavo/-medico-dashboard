@@ -334,7 +334,8 @@ export default function ScriptsPage() {
       const data = await res.json()
       if (!res.ok || data.error) { setError(data.error ?? "Erro ao gerar script"); return }
       setResultado(data.texto)
-    } catch {
+    } catch (e) {
+      console.error("[scripts] erro ao gerar script:", e)
       setError("Erro de conexão. Tente novamente.")
     } finally {
       setLoading(false)

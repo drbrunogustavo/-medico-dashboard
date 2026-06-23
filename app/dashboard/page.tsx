@@ -180,7 +180,7 @@ function AcademyMiniCard() {
     fetch("/api/academy/progresso")
       .then(r => r.ok ? r.json() : [])
       .then((d: unknown) => { if (Array.isArray(d)) setProgresso(d as AcademyProgresso[]) })
-      .catch(() => {})
+      .catch(e => console.error("[dashboard] erro ao carregar progresso da Academy:", e))
   }, [])
 
   const concluidas = progresso.filter(p => p.status === "concluida").length
@@ -289,7 +289,7 @@ export default function DashboardPage() {
           setRecentPautas((data as Pauta[]).slice(-3).reverse())
         }
       })
-      .catch(() => {})
+      .catch(e => console.error("[dashboard] erro ao carregar pautas recentes:", e))
 
     // Fetch executive metrics
     fetch("/api/executivo")
@@ -303,7 +303,7 @@ export default function DashboardPage() {
           })
         }
       })
-      .catch(() => {})
+      .catch(e => console.error("[dashboard] erro ao carregar métricas executivas:", e))
       .finally(() => setExecLoading(false))
   }, [])
 

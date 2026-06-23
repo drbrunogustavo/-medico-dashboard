@@ -290,7 +290,7 @@ export default function MemoriaPage() {
       const data = await res.json()
       if (tipo === "historico") setHistorico(Array.isArray(data) ? data as HistoricoItem[] : [])
       else setItems(Array.isArray(data) ? data as MemoriaItem[] : [])
-    } catch {/* silent */}
+    } catch (e) { console.error("[memoria] erro ao carregar dados:", e) }
     finally { setLoading(false) }
   }, [])
 

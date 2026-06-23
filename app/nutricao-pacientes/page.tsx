@@ -141,7 +141,7 @@ export default function NutricaoPacientesPage() {
       const res  = await fetch("/api/nutricao-pacientes")
       const data = await res.json()
       setTrilhas(Array.isArray(data) ? data : [])
-    } catch { /* ignore */ }
+    } catch (e) { console.error("[nutricao-pacientes] erro ao carregar trilhas:", e) }
     finally { setLoadingList(false) }
   }, [])
 
@@ -160,7 +160,7 @@ export default function NutricaoPacientesPage() {
         const res  = await fetch(`/api/pacientes?action=search&nome=${encodeURIComponent(q)}`)
         const data = await res.json()
         setSearchResults(Array.isArray(data) ? data.slice(0, 5) : [])
-      } catch { /* ignore */ }
+      } catch (e) { console.error("[nutricao-pacientes] erro na busca de pacientes:", e) }
       finally { setSearchLoading(false) }
     }, 400)
   }
@@ -241,7 +241,7 @@ export default function NutricaoPacientesPage() {
         body:    JSON.stringify({ id: trilha.id, status: novoStatus }),
       })
       setTrilhas(prev => prev.map(t => t.id === trilha.id ? { ...t, status: novoStatus } : t))
-    } catch { /* ignore */ }
+    } catch (e) { console.error("[nutricao-pacientes] erro ao atualizar status da trilha:", e) }
     finally { setUpdatingId(null) }
   }
 

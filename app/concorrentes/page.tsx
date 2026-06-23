@@ -692,7 +692,8 @@ export default function ConcorrentesPage() {
       })
       if (!res.ok) throw new Error()
       showToast("Salvo no banco de pautas!")
-    } catch {
+    } catch (e) {
+      console.error("[concorrentes] erro ao salvar recomendação:", e)
       showToast("Erro ao salvar. Tente novamente.", "error")
     } finally {
       setSavingId(null)

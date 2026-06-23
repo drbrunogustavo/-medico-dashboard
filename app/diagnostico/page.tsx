@@ -152,7 +152,8 @@ export default function DiagnosticoPage() {
       if (!res.ok || data.error) { setError(data.error ?? "Erro"); setStep(5); return }
       setResult({ ...data, _scores: scores, _scoreGeral: score_geral } as PlanoResult & { _scores: Record<string, number>; _scoreGeral: number })
       setStep(7)
-    } catch {
+    } catch (e) {
+      console.error("[diagnostico] erro ao gerar diagnóstico:", e)
       clearInterval(interval)
       setError("Erro de conexão.")
       setStep(5)

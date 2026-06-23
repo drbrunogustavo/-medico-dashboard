@@ -264,7 +264,8 @@ export default function PrecificacaoPage() {
       }
       setResult(data as PrecificacaoResult)
       setStep(3)
-    } catch {
+    } catch (e) {
+      console.error("[precificacao] erro ao calcular precificação:", e)
       clearInterval(interval)
       setError("Erro de conexão. Tente novamente.")
       setStep(1)

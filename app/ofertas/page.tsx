@@ -276,7 +276,8 @@ export default function OfertasPage() {
       await navigator.clipboard.writeText(text)
       setCopiedKey(key)
       setTimeout(() => setCopiedKey(null), 2000)
-    } catch {
+    } catch (e) {
+      console.error("[ofertas] erro ao copiar texto:", e)
       showToast("Erro ao copiar", "error")
     }
   }
@@ -306,7 +307,7 @@ export default function OfertasPage() {
       const r = await fetch("/api/pautas")
       const data = await r.json()
       if (Array.isArray(data)) setPautasList(data)
-    } catch {}
+    } catch (e) { console.error("[ofertas] erro ao carregar pautas:", e) }
     setLoadingPautas(false)
   }
 
@@ -340,7 +341,8 @@ export default function OfertasPage() {
       setShowHtmlEditor(false)
       landingGenRef.current += 1
       gerarLandingHtml(camp.landingPage, landingGenRef.current)
-    } catch {
+    } catch (e) {
+      console.error("[ofertas] erro ao gerar campanha:", e)
       const mockCamp: Campanha = { ...MOCK_P1, ...MOCK_P2 }
       setCampanha(mockCamp)
       setStage("resultado")
@@ -363,7 +365,7 @@ export default function OfertasPage() {
       try {
         await fetch("/api/pautas", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ titulo: r.titulo, categoria: "Oferta" }) })
         saved++
-      } catch {}
+      } catch (e) { console.error("[ofertas] erro ao salvar roteiro em pautas:", e) }
     }
     showToast(`${saved} roteiro${saved !== 1 ? "s" : ""} salvo${saved !== 1 ? "s" : ""} no Banco de Pautas!`, "success")
   }
@@ -410,7 +412,8 @@ export default function OfertasPage() {
     try {
       await navigator.clipboard.writeText(url)
       showToast("Link copiado! Válido nesta sessão do navegador.", "success")
-    } catch {
+    } catch (e) {
+      console.error("[ofertas] erro ao copiar link:", e)
       showToast("Erro ao copiar link", "error")
     }
   }
@@ -433,8 +436,8 @@ export default function OfertasPage() {
       setLandingHtml(html)
       setOriginalHtml(html)
       setEditedHtml(html)
-    } catch {
-      // silent — user still has roteiros / anúncios
+    } catch (e) {
+      console.error("[ofertas] erro ao gerar landing HTML:", e)
     } finally {
       if (landingGenRef.current === genId) setLoadingLanding(false)
     }

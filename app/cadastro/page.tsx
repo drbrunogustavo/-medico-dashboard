@@ -69,14 +69,14 @@ export default function CadastroPage() {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ nome: nome.trim() }),
-    }).catch(() => null)
+    }).catch(e => { console.error("[cadastro] erro ao salvar nome:", e); return null })
 
     // Fire-and-forget — never blocks signup regardless of outcome
     fetch("/api/afiliados/registrar-indicacao", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ codigoManual: codigoIndicacao.trim() || null }),
-    }).catch(() => null)
+    }).catch(e => { console.error("[cadastro] erro ao registrar indicação:", e); return null })
 
     router.push("/onboarding")
   }

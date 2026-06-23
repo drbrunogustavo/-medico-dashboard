@@ -277,7 +277,7 @@ export default function AgendaPage() {
             })))
           }
         }
-      } catch { /* non-critical */ }
+      } catch (e) { console.error("[agenda] erro ao carregar usuários da clínica:", e) }
     }
     load()
   }, [])
@@ -331,7 +331,7 @@ export default function AgendaPage() {
         const res  = await fetch(`/api/pacientes?action=search&nome=${encodeURIComponent(q)}`)
         const data = await res.json()
         setNovoPacRes(Array.isArray(data) ? data.slice(0, 6) : [])
-      } catch { /* ignore */ }
+      } catch (e) { console.error("[agenda] erro na busca de pacientes:", e) }
       finally { setNovoPacLoad(false) }
     }, 400)
   }
@@ -398,7 +398,7 @@ export default function AgendaPage() {
         setStatusUpdateOk(false)
         fetchAgenda()
       }, 1200)
-    } catch { /* ignore */ }
+    } catch (e) { console.error("[agenda] erro ao atualizar status do agendamento:", e) }
     finally { setUpdatingStatus(false) }
   }
 

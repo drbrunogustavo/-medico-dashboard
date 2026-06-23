@@ -117,7 +117,8 @@ export default function OportunidadesPage() {
       const data = await res.json()
       if (data.error) throw new Error(data.error)
       setResultado(data)
-    } catch {
+    } catch (e) {
+      console.error("[oportunidades] erro ao detectar oportunidades:", e)
       setError("Erro ao detectar oportunidades. Usando dados de demonstração.")
       setResultado(MOCK)
     } finally {
@@ -141,7 +142,8 @@ export default function OportunidadesPage() {
       })
       setSavedItems(prev => [...prev, key])
       showToast("Oportunidade salva no Banco de Pautas com prioridade Alta!")
-    } catch {
+    } catch (e) {
+      console.error("[oportunidades] erro ao salvar tendência:", e)
       showToast("Erro ao salvar. Tente novamente.")
     }
   }
@@ -162,7 +164,8 @@ export default function OportunidadesPage() {
       })
       setSavedItems(prev => [...prev, key])
       showToast("Conteúdo salvo no Banco de Pautas!")
-    } catch {
+    } catch (e) {
+      console.error("[oportunidades] erro ao salvar conteúdo do calendário:", e)
       showToast("Erro ao salvar. Tente novamente.")
     }
   }

@@ -139,7 +139,8 @@ function CampanhaModal({
       const data = await res.json()
       if (!res.ok || data.error) { setError(data.error ?? "Erro"); return }
       setMsgs(data.mensagens ?? [])
-    } catch {
+    } catch (e) {
+      console.error("[reativacao] erro ao gerar mensagens:", e)
       setError("Erro de conexão.")
     } finally {
       setLoading(false)

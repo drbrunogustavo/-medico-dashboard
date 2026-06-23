@@ -137,7 +137,8 @@ export default function RelatorioPage() {
       const data = await res.json()
       if (data.error) { setError(data.error); return }
       setRelatorio(data)
-    } catch {
+    } catch (e) {
+      console.error("[relatorio] erro ao gerar relatório:", e)
       setError("Erro de conexão. Tente novamente.")
     } finally {
       clearInterval(interval)

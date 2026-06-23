@@ -114,7 +114,7 @@ function DepoimentoModal({ nps, onClose }: { nps: NPS; onClose: () => void }) {
       })
       if (!r.ok) throw new Error()
       setResult(await r.json())
-    } catch { /* silent */ }
+    } catch (e) { console.error("[nps] erro ao gerar conteúdo IA:", e) }
     finally { setLoading(false) }
   }
 
@@ -138,7 +138,7 @@ function DepoimentoModal({ nps, onClose }: { nps: NPS; onClose: () => void }) {
         }),
       })
       if (r.ok) setSendOk(true)
-    } catch { /* silent */ }
+    } catch (e) { console.error("[nps] erro ao enviar aprovação:", e) }
     finally { setSending(false) }
   }
 

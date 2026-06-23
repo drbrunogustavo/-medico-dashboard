@@ -927,7 +927,8 @@ export default function CRMPage() {
       const res = await fetch("/api/crm")
       if (!res.ok) throw new Error("Erro ao buscar leads")
       setLeads(await res.json())
-    } catch {
+    } catch (e) {
+      console.error("[crm] erro ao carregar leads:", e)
       showToast("Erro ao carregar leads", "error")
     } finally {
       setLoading(false)
@@ -943,7 +944,7 @@ export default function CRMPage() {
         data.forEach(d => { map[d.lead_id] = true })
         setNurturingMap(map)
       })
-      .catch(() => {/* silent */})
+      .catch(e => console.error("[crm] erro ao carregar mapa de nurturing:", e))
   }, [fetchLeads])
 
   // ── CRUD ────────────────────────────────────────────────────────────────────
@@ -963,7 +964,8 @@ export default function CRMPage() {
       showToast("Lead criado com sucesso")
       // Mark nurturing as active optimistically (backend generates it async)
       if (novo?.id) setNurturingMap(m => ({ ...m, [novo.id]: true }))
-    } catch {
+    } catch (e) {
+      console.error("[crm] erro ao criar lead:", e)
       showToast("Erro ao criar lead", "error")
     } finally {
       setSaving(false)
@@ -984,7 +986,8 @@ export default function CRMPage() {
       setEditing(null)
       setExpanded(null)
       showToast("Lead atualizado")
-    } catch {
+    } catch (e) {
+      console.error("[crm] erro ao atualizar lead:", e)
       showToast("Erro ao atualizar lead", "error")
     } finally {
       setSaving(false)
@@ -1007,7 +1010,8 @@ export default function CRMPage() {
       const updated = await res.json() as Lead
       setLeads(prev => prev.map(l => l.id === id ? updated : l))
       showToast("Estágio atualizado")
-    } catch {
+    } catch (e) {
+      console.error("[crm] erro ao mover lead de estágio:", e)
       showToast("Erro ao mover lead", "error")
       await fetchLeads()
     } finally {
@@ -1024,7 +1028,8 @@ export default function CRMPage() {
       setLeads(prev => prev.filter(l => l.id !== id))
       setExpanded(null)
       showToast("Lead excluído")
-    } catch {
+    } catch (e) {
+      console.error("[crm] erro ao excluir lead:", e)
       showToast("Erro ao excluir lead", "error")
     } finally {
       setDeleting(false)

@@ -99,8 +99,8 @@ export default function IndicadoresPage() {
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/executivo").then(r => r.json()).catch(() => ({})),
-      fetch("/api/indicadores").then(r => r.json()).catch(() => ({})),
+      fetch("/api/executivo").then(r => r.json()).catch(e => { console.error("[indicadores] executivo falhou:", e); return {} }),
+      fetch("/api/indicadores").then(r => r.json()).catch(e => { console.error("[indicadores] indicadores falhou:", e); return {} }),
     ]).then(([e, i]) => {
       setExec(e ?? {})
       setInd(i ?? {})

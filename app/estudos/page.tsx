@@ -446,7 +446,8 @@ export default function EstudosPage() {
       const data = await res.json()
       if (data.error) throw new Error(data.error)
       setAiResult({ ...data, cor: "#a78bfa", id: `ai-${tema}` })
-    } catch {
+    } catch (e) {
+      console.error("[estudos] erro ao buscar estudos:", e)
       setError("Erro ao buscar estudos. Verifique sua conexão.")
     } finally {
       setLoading(false)

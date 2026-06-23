@@ -209,7 +209,7 @@ export default function PlanosPage() {
     fetch("/api/planos")
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d) setUserPlan(d) })
-      .catch(() => {})
+      .catch(e => console.error("[planos] erro ao carregar plano:", e))
       .finally(() => setPlanLoading(false))
   }, [user])
 
@@ -234,7 +234,8 @@ export default function PlanosPage() {
           setActivating(false)
         }
       })
-      .catch(() => {
+      .catch(e => {
+        console.error("[planos] erro ao confirmar sessão Stripe:", e)
         setActivateErr("Erro de conexão. Tente novamente.")
         setActivating(false)
       })

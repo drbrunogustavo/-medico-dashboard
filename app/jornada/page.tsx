@@ -73,7 +73,8 @@ export default function JornadaPage() {
       const data = await res.json()
       if (!res.ok || data.error) { setError(data.error ?? "Erro"); return }
       setAnalise(data as AnaliseIA)
-    } catch {
+    } catch (e) {
+      console.error("[jornada] erro ao analisar jornada:", e)
       setError("Erro de conexão.")
     } finally {
       setLoading(false)

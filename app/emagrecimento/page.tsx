@@ -482,7 +482,8 @@ export default function EmagrecimentoPage() {
       if (data.error) throw new Error(data.error)
       setResult(data)
       setFase("resultado")
-    } catch {
+    } catch (e) {
+      console.error("[emagrecimento] erro ao gerar análise:", e)
       setError("Erro ao gerar análise. Tente novamente.")
     } finally {
       setLoading(false)

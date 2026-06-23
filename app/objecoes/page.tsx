@@ -129,7 +129,8 @@ export default function ObecoesPage() {
       const data = await res.json()
       if (data.error) throw new Error(data.error)
       setObjecoes(data.objecoes ?? [])
-    } catch {
+    } catch (e) {
+      console.error("[objecoes] erro ao mapear objeções:", e)
       setError("Erro ao mapear. Usando dados de demonstração.")
       setObjecoes(MOCK_OBJECOES)
     } finally {
@@ -167,7 +168,8 @@ export default function ObecoesPage() {
       const data = await res.json()
       if (data.error) throw new Error(data.error)
       setTransformResult(data)
-    } catch {
+    } catch (e) {
+      console.error("[objecoes] erro ao transformar objeção:", e)
       setTransformResult({
         reel: {
           titulo: `Reel: Respondendo "${ob.texto}"`,
@@ -215,7 +217,8 @@ export default function ObecoesPage() {
       })
       setSavedFormats(prev => [...prev, formato])
       showToast("Salvo no Banco de Pautas!")
-    } catch {
+    } catch (e) {
+      console.error("[objecoes] erro ao salvar formato:", e)
       showToast("Erro ao salvar. Tente novamente.")
     }
   }
@@ -241,7 +244,7 @@ export default function ObecoesPage() {
         })
         setSavedIds(prev => [...prev, ob.id])
         saved++
-      } catch { /* continue */ }
+      } catch (e) { console.error("[objecoes] erro ao salvar objeção em lote:", e) }
     }
     setBulkLoading(false)
     showToast(`${saved} objeção${saved !== 1 ? "ões" : ""} salva${saved !== 1 ? "s" : ""} no Banco de Pautas!`)

@@ -118,7 +118,8 @@ function CopiloToDemo() {
       } else {
         setResponse("Copiloto disponível na sua conta PRAXIS. Crie sua conta para usar.")
       }
-    } catch {
+    } catch (e) {
+      console.error("[demo] erro ao chamar copiloto:", e)
       setResponse("Copiloto disponível na sua conta PRAXIS. Crie sua conta para usar.")
     } finally {
       setLoading(false)

@@ -416,7 +416,7 @@ export default function LandingPage() {
     fetch("/api/depoimentos/publicos")
       .then(r => r.json())
       .then((d: unknown) => { if (Array.isArray(d)) setDepoimentos(d) })
-      .catch(() => null)
+      .catch(e => { console.error("[landing] erro ao carregar depoimentos:", e); return null })
   }, [])
 
   return (

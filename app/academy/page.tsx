@@ -751,7 +751,7 @@ export default function AcademyPage() {
         body: JSON.stringify({ aula_id: aula.id, trilha_id: trilha.id, status: "concluida" }),
       })
       setProgresso(p => ({ ...p, [aula.id]: "concluida" }))
-    } catch { /* silently fail */ }
+    } catch (e) { console.error("[academy] erro ao marcar aula como concluída:", e) }
   }
 
   const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [

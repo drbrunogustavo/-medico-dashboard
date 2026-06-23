@@ -274,8 +274,8 @@ export default function CopilotoConteudoPage() {
       })
       setSalvouPauta(true)
       setTimeout(() => setSalvouPauta(false), 3000)
-    } catch {
-      // silently fail
+    } catch (e) {
+      console.error("[copiloto-conteudo] erro ao salvar pauta:", e)
     } finally {
       setSalvando(false)
     }

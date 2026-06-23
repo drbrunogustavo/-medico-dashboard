@@ -121,9 +121,9 @@ export default function ConsultorPage() {
   // Load context and history
   useEffect(() => {
     Promise.all([
-      fetch("/api/executivo").then(r => r.json()).catch(() => null),
-      fetch("/api/consultor/historico").then(r => r.json()).catch(() => []),
-      fetch("/api/perfil").then(r => r.json()).catch(() => null),
+      fetch("/api/executivo").then(r => r.json()).catch(e => { console.error("[consultor] ctx executivo falhou:", e); return null }),
+      fetch("/api/consultor/historico").then(r => r.json()).catch(e => { console.error("[consultor] histórico falhou:", e); return [] }),
+      fetch("/api/perfil").then(r => r.json()).catch(e => { console.error("[consultor] perfil falhou:", e); return null }),
     ]).then(([exec, hist, perfil]) => {
       setCtx({
         especialidade:   perfil?.especialidade,
@@ -188,7 +188,8 @@ export default function ConsultorPage() {
           return copy
         })
       }
-    } catch {
+    } catch (e) {
+      console.error("[consultor] erro ao enviar mensagem:", e)
       setMessages(prev => [...prev, { role: "assistant", content: "Erro ao conectar com o consultor. Tente novamente." }])
     } finally {
       setLoading(false)
@@ -197,7 +198,7 @@ export default function ConsultorPage() {
   }
 
   async function clearHistory() {
-    await fetch("/api/consultor/historico", { method: "DELETE" }).catch(() => {})
+    await fetch("/api/consultor/historico", { method: "DELETE" }).catch(e => console.error("[consultor] erro ao limpar histórico:", e))
     setMessages([])
   }
 

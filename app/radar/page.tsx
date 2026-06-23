@@ -298,7 +298,8 @@ export default function RadarPage() {
       const r = await callRadarAPI("radar")
       setArticles((r as Article[]).map((a, i) => ({ ...a, id: Date.now() + i })))
       setLastUpdate(new Date())
-    } catch {
+    } catch (e) {
+      console.error("[radar] erro ao buscar artigos:", e)
       setArticles(MOCK_TRENDS); setLastUpdate(new Date())
     }
     setLoadingRadar(false)

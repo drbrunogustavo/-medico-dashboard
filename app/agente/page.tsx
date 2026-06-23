@@ -189,7 +189,8 @@ export default function AgentePage() {
       const data = await res.json()
       if (data.error) throw new Error(data.error)
       setPlano(data)
-    } catch {
+    } catch (e) {
+      console.error("[agente] erro ao gerar plano:", e)
       setPlanoError("Erro ao gerar plano. Usando demonstração.")
       setPlano({ ...MOCK_PLANO, calendario: MOCK_PLANO.calendario.slice(0, volume) })
     } finally {
@@ -227,7 +228,8 @@ export default function AgentePage() {
           const data = await res.json() as { dias?: DiaConteudo[]; error?: string }
           if (data.error) throw new Error(data.error)
           allDias.push(...(data.dias ?? []))
-        } catch {
+        } catch (e) {
+          console.error("[agente] erro ao gerar lote de conteúdo:", e)
           const calItems = plano.calendario.filter(c => lote.includes(c.dia))
           lote.forEach(d => {
             const cal = calItems.find(c => c.dia === d)
@@ -267,7 +269,7 @@ export default function AgentePage() {
           }),
         })
         saved++
-      } catch { /* continue */ }
+      } catch (e) { console.error("[agente] erro ao salvar dia em pautas:", e) }
     }
     setSaving(false)
     setAllSaved(true)

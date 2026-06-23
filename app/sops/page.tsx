@@ -414,7 +414,8 @@ export default function SopsPage() {
       const data = await res.json()
       if (!res.ok || data.error) { setError(data.error ?? "Erro ao gerar SOP"); return }
       setResult(data as SopResult)
-    } catch {
+    } catch (e) {
+      console.error("[sops] erro ao gerar SOP:", e)
       setError("Erro de conexão. Tente novamente.")
     } finally {
       setLoading(false)

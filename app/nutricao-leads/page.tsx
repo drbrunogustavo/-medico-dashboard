@@ -185,7 +185,7 @@ export default function NutricaoLeadsPage() {
         if (lead.telefone)   setTelefone(lead.telefone)
         if (lead.observacoes) setPerfil(lead.observacoes)
       })
-      .catch(() => {/* silent — form stays empty */})
+      .catch(e => console.error("[nutricao-leads] erro ao carregar dados do lead:", e))
   }, [searchParams])
 
   // Saving
@@ -209,7 +209,7 @@ export default function NutricaoLeadsPage() {
       const res  = await fetch("/api/nutricao-leads")
       const data = await res.json()
       setLeads(Array.isArray(data) ? data : [])
-    } catch { /* ignore */ }
+    } catch (e) { console.error("[nutricao-leads] erro ao carregar leads:", e) }
     finally { setLoadingList(false) }
   }, [])
 
@@ -301,7 +301,7 @@ export default function NutricaoLeadsPage() {
         body:    JSON.stringify({ id: lead.id, status: novoStatus }),
       })
       setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, status: novoStatus } : l))
-    } catch { /* ignore */ }
+    } catch (e) { console.error("[nutricao-leads] erro ao atualizar status do lead:", e) }
     finally { setUpdatingId(null) }
   }
 

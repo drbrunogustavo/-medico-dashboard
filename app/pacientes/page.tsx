@@ -110,7 +110,7 @@ export default function PacientesPage() {
       await fetch(`/api/pacientes?id=${id}`, { method: "DELETE" })
       setLista(l => l.filter(p => getPacId(p) !== id))
       setResultados(r => r.filter(p => getPacId(p) !== id))
-    } catch { /* ignore */ }
+    } catch (e) { console.error("[pacientes] erro ao deletar paciente:", e) }
     finally { setDeletingId(null) }
   }
 
@@ -160,7 +160,7 @@ export default function PacientesPage() {
         const res  = await fetch(`/api/pacientes?action=search&nome=${encodeURIComponent(q)}`)
         const data = await res.json()
         setResultados(Array.isArray(data) ? data : [])
-      } catch { /* ignore */ }
+      } catch (e) { console.error("[pacientes] erro na busca de pacientes:", e) }
       finally { setSearching(false) }
     }, 400)
   }
@@ -185,7 +185,7 @@ export default function PacientesPage() {
       if (!res.ok) return
       const data = await res.json()
       setDrawerDetail(data && typeof data === "object" && !Array.isArray(data) ? data : null)
-    } catch { /* ignore */ }
+    } catch (e) { console.error("[pacientes] erro ao carregar detalhes do paciente:", e) }
     finally { setDrawerLoading(false) }
   }
 

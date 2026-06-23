@@ -304,7 +304,8 @@ function CopilotoContent() {
       if (!res.ok) throw new Error()
       setHistorico(prev => prev.filter(e => e.id !== id))
       showToast("Consulta removida do histórico")
-    } catch {
+    } catch (e) {
+      console.error("[copiloto] erro ao remover do histórico:", e)
       showToast("Erro ao remover do histórico", "error")
     } finally {
       setDeletingId(null)
@@ -335,7 +336,7 @@ function CopilotoContent() {
           setPatient(data as Paciente)
           setQuery(getPacNome(data as Paciente))
         }
-      } catch { /* non-critical */ }
+      } catch (e) { console.error("[copiloto] erro ao carregar paciente da URL:", e) }
     })()
   }, [pacienteIdParam])
 

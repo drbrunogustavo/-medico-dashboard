@@ -62,12 +62,12 @@ export default function DepoimentoPage() {
           crm:           p.crm           ?? f.crm,
         }))
       })
-      .catch(() => null)
+      .catch(e => { console.error("[depoimento] erro ao carregar perfil:", e); return null })
 
     fetch("/api/depoimentos-praxis")
       .then(r => r.json())
       .then((list: unknown[]) => { if (list.length > 0) setJaEnviou(true) })
-      .catch(() => null)
+      .catch(e => { console.error("[depoimento] erro ao verificar depoimento anterior:", e); return null })
   }, [])
 
   const set = (k: keyof typeof form) =>

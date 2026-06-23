@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useCallback, useRef } from "react"
+import { useEffect, useState, useCallback, useRef, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { TopBar } from "@/components/TopBar"
 import { StatCard } from "@/components/StatCard"
@@ -246,7 +246,7 @@ export default function AgendaPage() {
   const [mobileCalIdx, setMobileCalIdx] = useState(0)
 
   const dias    = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
-  const weekEnd = addDays(weekStart, 6)
+  const weekEnd = useMemo(() => addDays(weekStart, 6), [weekStart])
   const mesAno  = `${MESES[weekStart.getMonth()]} ${weekStart.getFullYear()}`
 
   // Fetch metadata once

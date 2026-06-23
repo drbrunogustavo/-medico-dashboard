@@ -48,7 +48,7 @@ function StatCard({
     )}>
       <div className="text-[10px] font-mono text-text-muted uppercase tracking-wider mb-1">{label}</div>
       <div className={cn(
-        "text-[22px] font-semibold",
+        "text-[18px] md:text-[22px] font-semibold",
         accent ? "text-accent" : warn ? "text-amber-400" : "text-text-primary"
       )}>
         {value}
@@ -121,7 +121,7 @@ export default function FinanceiroAdminPage() {
           <>
             {/* Alerta past_due */}
             {r.past_due > 0 && (
-              <div className="flex items-center gap-2 bg-amber-500/10 border border-amber-500/25 rounded-lg px-4 py-3 text-[12px] text-amber-400">
+              <div className="flex items-start gap-2 bg-amber-500/10 border border-amber-500/25 rounded-lg px-4 py-3 text-[12px] text-amber-400">
                 <AlertTriangle className="w-4 h-4 flex-shrink-0" />
                 {r.past_due} assinatura{r.past_due > 1 ? "s" : ""} com pagamento vencido (past_due) — verifique na tela de Assinantes.
               </div>

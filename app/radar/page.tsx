@@ -783,7 +783,7 @@ Retorne um objeto JSON com:
                           />
                         </div>
                       </div>
-                      <div className="flex items-center gap-5 flex-shrink-0">
+                      <div className="flex items-center gap-3 md:gap-5 flex-shrink-0">
                         <div className="text-right">
                           <div className={cn(
                             "text-[20px] font-bold tabular-nums leading-none",
@@ -794,15 +794,15 @@ Retorne um objeto JSON com:
                           )}>{item.score}</div>
                           <div className="text-[8px] font-mono text-text-muted uppercase tracking-wider">score</div>
                         </div>
-                        <div className="text-right">
+                        <div className="hidden sm:block text-right">
                           <div className="text-[13px] font-bold text-green-400 tabular-nums">{item.growth}</div>
                           <div className="text-[8px] font-mono text-text-muted uppercase tracking-wider">crescim.</div>
                         </div>
-                        <div className="text-right">
+                        <div className="hidden md:block text-right">
                           <div className="text-[13px] font-bold text-text-primary tabular-nums">{item.mentions.toLocaleString("pt-BR")}</div>
                           <div className="text-[8px] font-mono text-text-muted uppercase tracking-wider">menções</div>
                         </div>
-                        <div className="text-right">
+                        <div className="hidden md:block text-right">
                           <div className="text-[13px] font-bold text-blue-400 tabular-nums">{item.publications}</div>
                           <div className="text-[8px] font-mono text-text-muted uppercase tracking-wider">publicações</div>
                         </div>
@@ -820,10 +820,10 @@ Retorne um objeto JSON com:
         ══════════════════════════════════════════ */}
         {activeTab === "opportunities" && (
           <>
-            <div className="bg-gradient-to-r from-accent-dim/80 to-blue-950/30 border border-accent-border/50 rounded-lg p-4 flex items-start gap-3">
+            <div className="bg-card border border-border rounded-lg p-4 flex items-start gap-3">
               <Sparkles className="w-4 h-4 text-accent flex-shrink-0 mt-0.5"/>
               <div>
-                <h2 className="text-[13px] font-semibold text-accent mb-0.5">Oportunidades de Conteúdo para Seu Perfil</h2>
+                <h2 className="text-[13px] font-semibold text-text-primary mb-0.5">Oportunidades de Conteúdo para Seu Perfil</h2>
                 <p className="text-[11px] text-text-secondary">A IA analisa <strong className="text-text-primary">tendência crescente + baixa concorrência + alto engajamento</strong> e retorna os melhores gaps de conteúdo para explorar agora.</p>
               </div>
             </div>

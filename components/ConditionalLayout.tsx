@@ -5,7 +5,7 @@ import { Sidebar }            from "@/components/Sidebar"
 import { MobileMenuProvider } from "@/components/MobileMenuProvider"
 
 // Routes that must NOT render the Sidebar or trigger any auth hooks.
-const PUBLIC_PATHS = new Set(["/", "/login", "/cadastro", "/demo", "/planos", "/landing", "/onboarding", "/captacao", "/privacidade", "/deletar-dados", "/termos"])
+const PUBLIC_PATHS = new Set(["/", "/login", "/cadastro", "/demo", "/planos", "/landing", "/onboarding", "/captacao", "/privacidade", "/deletar-dados", "/termos", "/anunciar-curso"])
 const PUBLIC_PREFIXES = ["/nps/", "/indicar/"]
 
 export function ConditionalLayout({ children }: { children: React.ReactNode }) {

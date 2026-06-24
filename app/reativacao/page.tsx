@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { RefreshCw, MessageCircle, Plus, Loader2, Copy, Check, Users, X, Sparkles } from "lucide-react"
+import { RefreshCw, MessageCircle, Plus, Loader2, Copy, Check, Users, X, Sparkles, Download } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
 
@@ -192,18 +192,38 @@ function CampanhaModal({
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function ReativacaoPage() {
-  const [pacientes,   setPacientes]   = useState<Paciente[]>([])
-  const [loading,     setLoading]     = useState(true)
-  const [showAdd,     setShowAdd]     = useState(false)
-  const [selecionados,setSelecionados] = useState<string[]>([])
-  const [gerandoMsg,  setGerandoMsg]  = useState<string | null>(null)
-  const [showCampanha,setShowCampanha] = useState(false)
+  const [pacientes,    setPacientes]    = useState<Paciente[]>([])
+  const [loading,      setLoading]      = useState(true)
+  const [showAdd,      setShowAdd]      = useState(false)
+  const [selecionados, setSelecionados] = useState<string[]>([])
+  const [gerandoMsg,   setGerandoMsg]   = useState<string | null>(null)
+  const [showCampanha, setShowCampanha] = useState(false)
+  const [importando,   setImportando]   = useState(false)
+  const [importResult, setImportResult] = useState<{ importados: number; sem_telefone: number } | null>(null)
 
   useEffect(() => {
     fetch("/api/reativacao").then(r => r.json()).then(d => {
       setPacientes(Array.isArray(d) ? d : [])
     }).finally(() => setLoading(false))
   }, [])
+
+  async function handleImportarMedx() {
+    setImportando(true)
+    setImportResult(null)
+    try {
+      const res  = await fetch("/api/reativacao/importar-medx", { method: "POST" })
+      const data = await res.json()
+      if (!res.ok) { console.error("[importar-medx]", data.error); return }
+      setImportResult({ importados: data.importados, sem_telefone: data.sem_telefone })
+      // Recarrega lista para refletir os novos registros
+      const lista = await fetch("/api/reativacao").then(r => r.json())
+      setPacientes(Array.isArray(lista) ? lista : [])
+    } catch (e) {
+      console.error("[importar-medx]", e)
+    } finally {
+      setImportando(false)
+    }
+  }
 
   async function gerarMensagem(p: Paciente) {
     setGerandoMsg(p.id)
@@ -265,6 +285,14 @@ export default function ReativacaoPage() {
             </button>
           )}
           <button
+            onClick={handleImportarMedx}
+            disabled={importando}
+            className="flex items-center gap-1.5 text-xs font-semibold border border-[--border] text-text-muted px-3 py-2 rounded-lg hover:text-text-secondary hover:border-[--border-hover] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {importando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+            {importando ? "Importando…" : "Importar do MedX"}
+          </button>
+          <button
             onClick={() => setShowAdd(true)}
             className="flex items-center gap-1.5 text-xs font-semibold border border-[--border] text-text-muted px-3 py-2 rounded-lg hover:text-text-secondary hover:border-[--border-hover] transition-colors"
           >
@@ -273,6 +301,18 @@ export default function ReativacaoPage() {
           </button>
         </div>
       </div>
+
+      {importResult && (
+        <div className="mx-4 md:mx-8 mt-3 flex items-center justify-between gap-3 rounded-xl border border-accent/30 bg-accent/5 px-4 py-3">
+          <p className="text-xs text-text-secondary">
+            <span className="font-semibold text-accent">{importResult.importados} pacientes</span> importados do MedX
+            {importResult.sem_telefone > 0 && ` — ${importResult.sem_telefone} ignorados (sem telefone)`}
+          </p>
+          <button onClick={() => setImportResult(null)} className="text-text-muted hover:text-text-secondary flex-shrink-0">
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
 
       <div className="p-4 md:p-8 space-y-4">
         {pacientes.length === 0 && (

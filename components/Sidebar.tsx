@@ -105,7 +105,6 @@ const NAV: Record<AlaId, NavItem[]> = {
     { label: "Interpretação de Exames", href: "/interpretacao-exames",icon: FlaskConical },
     { label: "Relatório para Paciente", href: "/relatorio-paciente",  icon: FileHeart    },
     { label: "Prescrição Assistida",       href: "/prescricao",    icon: Pill         },
-    { label: "Protocolos Clínicos",        href: "/protocolos",    icon: ClipboardList},
   ],
   executivo: [
     { label: "Painel Executivo",       href: "/executivo",    icon: BarChart3        },

@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
+import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip,
   ResponsiveContainer, Cell,
@@ -812,6 +813,7 @@ export default function ExecutivoPage() {
 
   return (
     <div className="animate-fade-in">
+      <MobileOnlyHeader title="Painel Executivo" />
       {/* Header */}
       <div className="px-4 md:px-8 pt-4 md:pt-8 pb-5">
         <div className="flex items-start justify-between gap-3 flex-wrap">

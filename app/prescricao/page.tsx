@@ -4,6 +4,7 @@ import { useState, useMemo, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { TopBar } from "@/components/TopBar"
 import { EmagrecimentoTab } from "@/components/EmagrecimentoTab"
+import { ProtocolosTab } from "@/components/ProtocolosTab"
 import { cn } from "@/lib/utils"
 import {
   Pill, Search, ChevronDown, ChevronRight, Copy, Check,
@@ -1895,10 +1896,13 @@ function MedCard({
 function PrescricaoContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const tab = searchParams.get("tab") === "emagrecimento" ? "emagrecimento" : "medicamentos"
+  const rawTab = searchParams.get("tab")
+  const tab = rawTab === "emagrecimento" ? "emagrecimento"
+            : rawTab === "protocolos"    ? "protocolos"
+            : "medicamentos"
 
-  function switchTab(t: "medicamentos" | "emagrecimento") {
-    router.replace(t === "emagrecimento" ? "/prescricao?tab=emagrecimento" : "/prescricao")
+  function switchTab(t: "medicamentos" | "emagrecimento" | "protocolos") {
+    router.replace(t === "medicamentos" ? "/prescricao" : `/prescricao?tab=${t}`)
   }
 
   const [search,   setSearch]   = useState("")
@@ -1914,7 +1918,7 @@ function PrescricaoContent() {
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim()
-    if (!q) return []
+    if (!q) return [...DIAGNOSTICOS].sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"))
     return [...DIAGNOSTICOS]
       .map(d => ({
         ...d,
@@ -1937,7 +1941,7 @@ function PrescricaoContent() {
         title="Prescrição Assistida"
         subtitle="PROTOCOLOS CLÍNICOS · DOSES E TITULAÇÃO · CONTRAINDICAÇÕES E INTERAÇÕES"
         actions={
-          tab !== "emagrecimento" ? (
+          tab === "medicamentos" ? (
             <span className="text-[10px] font-mono px-3 py-1.5 rounded-lg border"
               style={{ background: "var(--surface)", borderColor: "var(--border)", color: "var(--text-muted)" }}>
               {totalMeds} medicamentos · {DIAGNOSTICOS.length} diagnósticos
@@ -1948,7 +1952,7 @@ function PrescricaoContent() {
 
       {/* Tab bar */}
       <div className="flex border-b border-border px-4 md:px-8">
-        {(["medicamentos", "emagrecimento"] as const).map(t => (
+        {(["medicamentos", "emagrecimento", "protocolos"] as const).map(t => (
           <button
             key={t}
             onClick={() => switchTab(t)}
@@ -1959,13 +1963,17 @@ function PrescricaoContent() {
                 : "border-transparent text-text-muted hover:text-text-secondary"
             )}
           >
-            {t === "medicamentos" ? "Medicamentos" : "Emagrecimento"}
+            {t === "medicamentos"  ? "Medicamentos"
+           : t === "emagrecimento" ? "Emagrecimento Inteligente"
+           :                         "Protocolos Clínicos"}
           </button>
         ))}
       </div>
 
       {tab === "emagrecimento" ? (
         <EmagrecimentoTab />
+      ) : tab === "protocolos" ? (
+        <ProtocolosTab />
       ) : (
       <div className="p-4 md:p-8 space-y-5">
 
@@ -2043,14 +2051,6 @@ function PrescricaoContent() {
           </div>
         ))}
 
-        {search.trim() === "" && (
-          <div className="text-center py-20">
-            <Pill className="w-12 h-12 mx-auto mb-4" style={{ color: "var(--text-muted)" }} />
-            <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
-              Busque por doença, medicamento ou indicação para começar
-            </p>
-          </div>
-        )}
         {search.trim() !== "" && filtered.length === 0 && (
           <div className="text-center py-20">
             <Pill className="w-12 h-12 mx-auto mb-4" style={{ color: "var(--text-muted)" }} />

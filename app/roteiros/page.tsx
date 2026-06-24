@@ -1,6 +1,7 @@
 // Salvar em: app/roteiros/page.tsx
 'use client'
 import { useState, useCallback, useEffect } from 'react'
+import { MobileOnlyHeader } from '@/components/MobileOnlyHeader'
 import { PautasModal } from '@/components/PautasModal'
 import { Toast } from '@/components/Toast'
 import { AI_MODEL } from "@/lib/ai-config"
@@ -69,6 +70,7 @@ export default function RoteirosPage(){
   const btnS=(a:boolean):React.CSSProperties=>({padding:'9px 12px',borderRadius:7,border:`1px solid ${a?D.aborder:D.border}`,cursor:'pointer',fontFamily:D.font,fontWeight:600,fontSize:12,background:a?D.adim:'none',color:a?D.atext:D.muted,transition:'all 0.15s',textAlign:'left' as const})
   return(
     <div className="min-h-screen" style={{fontFamily:D.font,color:D.text}}>
+      <MobileOnlyHeader title="Gerador de Roteiros" />
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       {showPautas&&<PautasModal onSelect={(t)=>{setTema(t);setShowPautas(false)}} onClose={()=>setShowPautas(false)}/>}
       <div className="border-b border-border bg-surface" style={{padding:'16px 24px',display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:12}}>

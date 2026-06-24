@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
 import {
   Calculator, Copy, Check, Scale, Activity, Flame,
   Droplets, Heart, Pill, Microscope, Ruler, AlertTriangle,
@@ -2261,7 +2262,9 @@ export default function CalculadorasPage() {
   }
 
   return (
-    <div className="p-4 md:p-8 space-y-6 animate-fade-in">
+    <div className="animate-fade-in">
+      <MobileOnlyHeader title="Calculadoras Clínicas" />
+      <div className="p-4 md:p-8 space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="w-8 h-8 rounded-xl flex items-center justify-center"
@@ -2368,6 +2371,7 @@ export default function CalculadorasPage() {
           <CalcMifflin        copied={copied} onCopy={copy} />
         </div>
       )}
+      </div>
     </div>
   )
 }

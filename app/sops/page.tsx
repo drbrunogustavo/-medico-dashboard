@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { ClipboardList, Sparkles, Copy, Check, X, Clock, Users, Wrench, AlertTriangle, BarChart2, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -426,6 +427,7 @@ export default function SopsPage() {
 
   return (
     <div className="animate-fade-in">
+      <MobileOnlyHeader title="Gerador de SOPs" />
       {sopModal && <SopModal sop={sopModal} onClose={() => setSopModal(null)} />}
 
       <div className="p-4 md:p-8 pb-0">

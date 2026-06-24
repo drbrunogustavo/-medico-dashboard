@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import { Lightbulb, Send, Trash2, Loader2, ChevronRight, User, Bot } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -206,6 +207,7 @@ export default function ConsultorPage() {
 
   return (
     <div className="animate-fade-in flex flex-col" style={{ height: "calc(100vh - 1px)" }}>
+      <MobileOnlyHeader title="Consultor Estratégico" />
       {/* Header */}
       <div className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-[--border] flex-shrink-0">
         <div className="flex items-center gap-3">

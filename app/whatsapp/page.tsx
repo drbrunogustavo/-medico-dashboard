@@ -1,6 +1,7 @@
 // Salvar em: app/whatsapp/page.tsx
 'use client'
 import { useState, useEffect } from 'react'
+import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
 
 const D = {
   bg:'var(--background)', surface:'var(--surface)', card:'var(--surface-2)', border:'var(--border)', bdHov:'var(--border-hover)',
@@ -109,6 +110,7 @@ export default function WhatsAppPage() {
 
   return (
     <div className="min-h-screen" style={{ fontFamily:D.font, color:D.text }}>
+      <MobileOnlyHeader title="Agente WhatsApp" />
       {/* Header */}
       <div className="border-b border-border bg-surface" style={{ padding:'16px 24px', display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:12 }}>
         <div style={{ display:'flex', alignItems:'center', gap:14 }}>

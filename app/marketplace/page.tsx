@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Search, Star, ExternalLink, Filter, Tag, Zap } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
 
 // ─── Types & Data ─────────────────────────────────────────────────────────────
 
@@ -175,6 +176,7 @@ export default function MarketplacePage() {
 
   return (
     <div className="animate-fade-in">
+      <MobileOnlyHeader title="Marketplace PRAXIS" />
       {/* Top banner */}
       <div className="bg-accent text-white px-8 py-4">
         <div className="flex items-center justify-between">

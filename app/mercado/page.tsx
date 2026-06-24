@@ -6,6 +6,7 @@ import {
   Lightbulb, MessageCircle, Users, ChevronRight, Zap,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -138,6 +139,7 @@ export default function MercadoPage() {
 
   return (
     <div className="animate-fade-in">
+      <MobileOnlyHeader title="Inteligência de Mercado" />
       {/* Header */}
       <div className="px-8 pt-8 pb-5 border-b border-border">
         <h1 className="text-2xl font-bold text-text-primary tracking-tight">Inteligência de Mercado</h1>

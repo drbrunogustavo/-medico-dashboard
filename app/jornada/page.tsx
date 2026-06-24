@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { MapPin, Sparkles, Loader2, ChevronRight, AlertTriangle, Zap, ArrowRight, Check } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -87,6 +88,7 @@ export default function JornadaPage() {
 
   return (
     <div className="animate-fade-in">
+      <MobileOnlyHeader title="Jornada do Paciente" />
       <div className="flex flex-col md:flex-row md:items-center md:justify-between p-4 md:p-8 pb-0 gap-3">
         <div>
           <h1 className="text-2xl font-bold text-text-primary tracking-tight">Jornada do Paciente</h1>

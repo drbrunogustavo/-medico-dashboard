@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
 import {
   FileBarChart, Play, Loader2, Download, TrendingUp,
   DollarSign, Users, Star, Lightbulb, AlertTriangle,
@@ -154,7 +155,9 @@ export default function RelatorioPage() {
   const m = r?.metricas
 
   return (
-    <div className="p-4 md:p-8 space-y-6 animate-fade-in print:p-4">
+    <div className="animate-fade-in">
+      <MobileOnlyHeader title="Relatório Mensal" />
+      <div className="p-4 md:p-8 space-y-6 print:p-4">
       {/* Header */}
       <div className="flex items-center justify-between print:hidden">
         <div className="flex items-center gap-3">
@@ -402,6 +405,7 @@ export default function RelatorioPage() {
           </p>
         </div>
       )}
+      </div>
     </div>
   )
 }

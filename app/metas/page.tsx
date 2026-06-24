@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react"
 import { Target, Loader2, Check, ChevronDown, ChevronUp, Sparkles, TrendingUp, AlertCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -169,6 +170,7 @@ export default function MetasPage() {
 
   return (
     <div className="animate-fade-in">
+      <MobileOnlyHeader title="Metas e Planejamento" />
       <div className="flex items-center gap-3 p-8 pb-0">
         <div className="w-9 h-9 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center">
           <Target className="w-5 h-5 text-accent" />

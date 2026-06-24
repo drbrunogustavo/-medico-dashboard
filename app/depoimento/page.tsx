@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Check, Loader2, Star } from "lucide-react"
+import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
 
 const ESPECIALIDADES = [
   "Clínica Geral", "Endocrinologia", "Nutrologia", "Cardiologia",
@@ -135,6 +136,7 @@ export default function DepoimentoPage() {
 
   return (
     <div className="animate-fade-in">
+      <MobileOnlyHeader title="Deixar depoimento" />
       <div className="px-4 py-6 border-b" style={{ borderColor: "var(--border)" }}>
         <div className="max-w-xl mx-auto flex items-center gap-3">
           <Link href="/dashboard" className="text-text-muted hover:text-text-primary transition-colors">

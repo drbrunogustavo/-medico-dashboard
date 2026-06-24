@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Calculator, TrendingUp, Target, Loader2, ChevronDown, ChevronUp, DollarSign, BarChart3, Lightbulb, AlertCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -435,6 +436,7 @@ export default function PrecificacaoPage() {
   // ── Step 1: Form ──
   return (
     <div className="animate-fade-in">
+      <MobileOnlyHeader title="Precificação Estratégica" />
       <div className="p-4 md:p-8 pb-0">
         <div className="flex items-center gap-3 mb-1">
           <div className="w-9 h-9 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center">

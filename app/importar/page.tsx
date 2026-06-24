@@ -8,6 +8,7 @@ import {
   ChevronDown, ChevronUp, FileSpreadsheet, Users, Loader2, RefreshCw,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -248,6 +249,7 @@ export default function ImportarPage() {
 
   return (
     <div className="animate-fade-in">
+      <MobileOnlyHeader title="Importar Pacientes" />
       {/* ── Header ── */}
       <div className="px-4 py-5 border-b" style={{ borderColor: "var(--border)" }}>
         <div className="max-w-3xl mx-auto flex items-center gap-3">

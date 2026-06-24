@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { FileText, Sparkles, Copy, Check, ChevronDown, ChevronUp, Loader2, MessageSquare, Phone, Clipboard, Smartphone, Users, ShieldQuestion, Heart } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -357,6 +358,7 @@ export default function ScriptsPage() {
 
   return (
     <div className="animate-fade-in">
+      <MobileOnlyHeader title="Biblioteca de Scripts" />
       <div className="p-4 md:p-8 pb-0">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-9 h-9 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">

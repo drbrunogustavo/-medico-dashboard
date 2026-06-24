@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { PautasModal } from '@/components/PautasModal'
 import { Toast } from '@/components/Toast'
 import { AI_MODEL } from "@/lib/ai-config"
+import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
 
 const D = {
   bg:'var(--background)',surface:'var(--surface)',card:'var(--surface-2)',border:'var(--border)',
@@ -88,6 +89,7 @@ export default function HashtagsPage() {
   return (
     <div className="min-h-screen" style={{ fontFamily:D.font, color:D.text }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800;900&display=swap'); *{box-sizing:border-box} @keyframes spin{to{transform:rotate(360deg)}}`}</style>
+      <MobileOnlyHeader title="Análise de Hashtags" />
       {showPautas && <PautasModal onSelect={(t)=>{setTema(t);setShowPautas(false)}} onClose={()=>setShowPautas(false)} />}
 
       {/* Header */}

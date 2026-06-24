@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { RefreshCw, MessageCircle, Plus, Loader2, Copy, Check, Users, X, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -233,6 +234,7 @@ export default function ReativacaoPage() {
 
   return (
     <div className="animate-fade-in">
+      <MobileOnlyHeader title="Reativação de Pacientes" />
       {showAdd && (
         <AddModal
           onAdd={p => {

@@ -5,6 +5,7 @@ import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, Tool
 import { Activity, TrendingUp, Users, Stethoscope, Sparkles, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
+import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -159,6 +160,7 @@ export default function IndicadoresPage() {
 
   return (
     <div className="animate-fade-in">
+      <MobileOnlyHeader title="Indicadores da Clínica" />
       <div className="flex flex-wrap items-center justify-between gap-3 p-4 md:p-8 pb-0">
         <div>
           <h1 className="text-2xl font-bold text-text-primary tracking-tight">Indicadores da Clínica</h1>

@@ -5,6 +5,7 @@ import { RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer } fro
 import { Activity, ChevronRight, Check, Loader2, Zap, Target, Calendar, ExternalLink } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
+import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -374,6 +375,7 @@ export default function DiagnosticoPage() {
 
   return (
     <div className="animate-fade-in">
+      <MobileOnlyHeader title="Diagnóstico 360°" />
       <div className="p-4 md:p-8 pb-0">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-8 h-8 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center">

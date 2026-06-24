@@ -7,6 +7,7 @@ import {
   Mail, Briefcase,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -315,6 +316,7 @@ export default function MembrosPage() {
 
   return (
     <div className="animate-fade-in">
+      <MobileOnlyHeader title="Membros da Equipe" />
       {/* Header */}
       <div className="px-4 md:px-8 pt-6 md:pt-8 pb-5 border-b border-border">
         <div className="flex items-start justify-between gap-4">

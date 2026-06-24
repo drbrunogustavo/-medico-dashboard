@@ -8,6 +8,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
+import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -425,6 +426,7 @@ export default function CalendarioPage() {
 
   return (
     <div className="animate-fade-in">
+      <MobileOnlyHeader title="Calendário Editorial" />
       {/* Header */}
       <div className="px-8 pt-8 pb-5 border-b border-border">
         <div className="flex items-center justify-between">

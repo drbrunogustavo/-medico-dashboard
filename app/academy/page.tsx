@@ -8,6 +8,7 @@ import {
   CheckCircle, BarChart2, Award, Star,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -766,6 +767,7 @@ export default function AcademyPage() {
 
   return (
     <div className="animate-fade-in">
+      <MobileOnlyHeader title="PRAXIS Academy" />
       {/* Header */}
       <div className="px-4 md:px-8 pt-6 md:pt-8 pb-0" style={{ borderBottom: "1px solid var(--border)" }}>
         <div className="flex items-start justify-between gap-4 mb-5">

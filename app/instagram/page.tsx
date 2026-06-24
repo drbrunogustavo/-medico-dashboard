@@ -9,6 +9,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
+import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -496,7 +497,9 @@ export default function InstagramPage() {
   // ── Connected ──────────────────────────────────────────────────────────────
 
   return (
-    <div className="p-4 md:p-8 space-y-8 animate-fade-in">
+    <div className="animate-fade-in">
+      <MobileOnlyHeader title="Instagram" />
+      <div className="p-4 md:p-8 space-y-8">
 
       {/* Toast */}
       {toast && (
@@ -733,6 +736,7 @@ export default function InstagramPage() {
         </div>
       </div>
 
+      </div>
     </div>
   )
 }

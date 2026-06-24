@@ -501,240 +501,240 @@ export default function InstagramPage() {
       <MobileOnlyHeader title="Instagram" />
       <div className="p-4 md:p-8 space-y-8">
 
-      {/* Toast */}
-      {toast && (
-        <div className="fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-2.5 rounded-xl text-[12px] font-semibold shadow-lg"
-          style={{ background: "rgba(0,192,127,0.12)", border: "1px solid rgba(0,192,127,0.3)", color: "#00c07f", backdropFilter: "blur(8px)" }}>
-          <CheckCircle2 style={{ width: 14, height: 14 }} />
-          {toast}
-        </div>
-      )}
-
-      {/* ── Header ────────────────────────────────────────────────────────── */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl flex items-center justify-center"
-            style={{ background: "rgba(225,48,108,0.12)", border: "1px solid rgba(225,48,108,0.25)" }}>
-            <Instagram style={{ width: 16, height: 16, color: "#e1306c" }} />
-          </div>
-          <div>
-            <h1 className="text-[17px] font-bold" style={{ color: "var(--text-primary)" }}>Instagram</h1>
-            <p className="text-[11px] font-mono tracking-wider uppercase" style={{ color: "var(--text-muted)" }}>
-              PRAXIS SOCIAL · ANALYTICS
-            </p>
-          </div>
-        </div>
-        <button
-          onClick={() => fetchData(true)}
-          disabled={syncing}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[12px] font-medium disabled:opacity-50 transition-all hover:opacity-80"
-          style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}>
-          <RefreshCw style={{ width: 13, height: 13 }} className={syncing ? "animate-spin" : ""} />
-          {syncing ? "Sincronizando..." : "Sincronizar agora"}
-        </button>
-      </div>
-
-      {/* ── SEÇÃO 1: Status ───────────────────────────────────────────────── */}
-      <div className="rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-4"
-        style={{ background: "rgba(0,192,127,0.06)", border: "1px solid rgba(0,192,127,0.2)" }}>
-        {metrics?.profilePic ? (
-          <img src={metrics.profilePic} alt={metrics.username}
-            className="w-12 h-12 rounded-full object-cover flex-shrink-0"
-            style={{ border: "2px solid rgba(225,48,108,0.4)" }} />
-        ) : (
-          <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
-            style={{ background: "rgba(225,48,108,0.12)", border: "2px solid rgba(225,48,108,0.3)" }}>
-            <Instagram style={{ width: 20, height: 20, color: "#e1306c" }} />
+        {/* Toast */}
+        {toast && (
+          <div className="fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-2.5 rounded-xl text-[12px] font-semibold shadow-lg"
+            style={{ background: "rgba(0,192,127,0.12)", border: "1px solid rgba(0,192,127,0.3)", color: "#00c07f", backdropFilter: "blur(8px)" }}>
+            <CheckCircle2 style={{ width: 14, height: 14 }} />
+            {toast}
           </div>
         )}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-0.5">
-            <span className="text-[14px] font-bold" style={{ color: "var(--text-primary)" }}>
-              @{metrics?.username}
-            </span>
-            <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded-full"
-              style={{ background: "rgba(0,192,127,0.12)", color: "#00c07f", border: "1px solid rgba(0,192,127,0.25)" }}>
-              CONECTADO
-            </span>
+
+        {/* ── Header ────────────────────────────────────────────────────────── */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center"
+              style={{ background: "rgba(225,48,108,0.12)", border: "1px solid rgba(225,48,108,0.25)" }}>
+              <Instagram style={{ width: 16, height: 16, color: "#e1306c" }} />
+            </div>
+            <div>
+              <h1 className="text-[17px] font-bold" style={{ color: "var(--text-primary)" }}>Instagram</h1>
+              <p className="text-[11px] font-mono tracking-wider uppercase" style={{ color: "var(--text-muted)" }}>
+                PRAXIS SOCIAL · ANALYTICS
+              </p>
+            </div>
           </div>
-          {metrics?.biography && (
-            <p className="text-[12px] truncate" style={{ color: "var(--text-muted)" }}>{metrics.biography}</p>
-          )}
+          <button
+            onClick={() => fetchData(true)}
+            disabled={syncing}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[12px] font-medium disabled:opacity-50 transition-all hover:opacity-80"
+            style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}>
+            <RefreshCw style={{ width: 13, height: 13 }} className={syncing ? "animate-spin" : ""} />
+            {syncing ? "Sincronizando..." : "Sincronizar agora"}
+          </button>
         </div>
-        <div className="text-left sm:text-right flex-shrink-0">
-          {lastSync && (
-            <p className="text-[10px] font-mono" style={{ color: "var(--text-muted)" }}>
-              Sync {lastSync.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
-            </p>
-          )}
-          {metrics?.website && (
-            <a href={metrics.website} target="_blank" rel="noopener noreferrer"
-              className="text-[11px] flex items-center gap-1 justify-start sm:justify-end mt-1 hover:opacity-80"
-              style={{ color: "#00c07f" }}>
-              Site <ExternalLink style={{ width: 10, height: 10 }} />
-            </a>
-          )}
-        </div>
-      </div>
 
-      {/* ── SEÇÃO 2: Métricas ─────────────────────────────────────────────── */}
-      <div>
-        <h2 className="text-[11px] font-mono font-semibold tracking-[2px] uppercase mb-3"
-          style={{ color: "var(--text-muted)" }}>
-          Métricas da Conta
-        </h2>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <MetricCard
-            icon={Users}
-            label="Seguidores"
-            value={fmt(metrics?.followers ?? 0)}
-            sub="total"
-            color="#e1306c"
-          />
-          <MetricCard
-            icon={Image}
-            label="Posts"
-            value={fmt(metrics?.mediaCount ?? 0)}
-            sub="publicados"
-            color="#3b7fff"
-          />
-          <MetricCard
-            icon={TrendingUp}
-            label="Alcance Médio"
-            value={fmt(avgArr(reach))}
-            sub="por dia (30d)"
-            color="#00c07f"
-          />
-          <MetricCard
-            icon={Heart}
-            label="Eng. Estimado"
-            value={`${avgEngRate}%`}
-            sub="likes+comentários/seg"
-            color="#d4af37"
-          />
+        {/* ── SEÇÃO 1: Status ───────────────────────────────────────────────── */}
+        <div className="rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-4"
+          style={{ background: "rgba(0,192,127,0.06)", border: "1px solid rgba(0,192,127,0.2)" }}>
+          {metrics?.profilePic ? (
+            <img src={metrics.profilePic} alt={metrics.username}
+              className="w-12 h-12 rounded-full object-cover flex-shrink-0"
+              style={{ border: "2px solid rgba(225,48,108,0.4)" }} />
+          ) : (
+            <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
+              style={{ background: "rgba(225,48,108,0.12)", border: "2px solid rgba(225,48,108,0.3)" }}>
+              <Instagram style={{ width: 20, height: 20, color: "#e1306c" }} />
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-0.5">
+              <span className="text-[14px] font-bold" style={{ color: "var(--text-primary)" }}>
+                @{metrics?.username}
+              </span>
+              <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded-full"
+                style={{ background: "rgba(0,192,127,0.12)", color: "#00c07f", border: "1px solid rgba(0,192,127,0.25)" }}>
+                CONECTADO
+              </span>
+            </div>
+            {metrics?.biography && (
+              <p className="text-[12px] truncate" style={{ color: "var(--text-muted)" }}>{metrics.biography}</p>
+            )}
+          </div>
+          <div className="text-left sm:text-right flex-shrink-0">
+            {lastSync && (
+              <p className="text-[10px] font-mono" style={{ color: "var(--text-muted)" }}>
+                Sync {lastSync.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+              </p>
+            )}
+            {metrics?.website && (
+              <a href={metrics.website} target="_blank" rel="noopener noreferrer"
+                className="text-[11px] flex items-center gap-1 justify-start sm:justify-end mt-1 hover:opacity-80"
+                style={{ color: "#00c07f" }}>
+                Site <ExternalLink style={{ width: 10, height: 10 }} />
+              </a>
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* ── SEÇÃO 3: Top Posts ────────────────────────────────────────────── */}
-      {posts.length > 0 && (
+        {/* ── SEÇÃO 2: Métricas ─────────────────────────────────────────────── */}
         <div>
           <h2 className="text-[11px] font-mono font-semibold tracking-[2px] uppercase mb-3"
             style={{ color: "var(--text-muted)" }}>
-            Últimos Posts
+            Métricas da Conta
           </h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
-            {posts.map(post => (
-              <PostCard key={post.id} post={post} onTransform={handleTransform} />
-            ))}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <MetricCard
+              icon={Users}
+              label="Seguidores"
+              value={fmt(metrics?.followers ?? 0)}
+              sub="total"
+              color="#e1306c"
+            />
+            <MetricCard
+              icon={Image}
+              label="Posts"
+              value={fmt(metrics?.mediaCount ?? 0)}
+              sub="publicados"
+              color="#3b7fff"
+            />
+            <MetricCard
+              icon={TrendingUp}
+              label="Alcance Médio"
+              value={fmt(avgArr(reach))}
+              sub="por dia (30d)"
+              color="#00c07f"
+            />
+            <MetricCard
+              icon={Heart}
+              label="Eng. Estimado"
+              value={`${avgEngRate}%`}
+              sub="likes+comentários/seg"
+              color="#d4af37"
+            />
           </div>
         </div>
-      )}
 
-      {/* ── SEÇÃO 4: Insights ─────────────────────────────────────────────── */}
-      {(totalImpressions > 0 || totalReach > 0 || totalProfileViews > 0) && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Insights de alcance */}
-          <div className="rounded-xl p-5 border"
-            style={{ background: "var(--card)", borderColor: "var(--border)" }}>
-            <h3 className="text-[12px] font-bold mb-4 flex items-center gap-2"
-              style={{ color: "var(--text-primary)" }}>
-              <Eye style={{ width: 14, height: 14, color: "#3b7fff" }} />
-              Insights (últimos 30 dias)
-            </h3>
-            <div className="space-y-4">
-              <InsightBar
-                label="Impressões totais"
-                value={totalImpressions}
-                max={insightMax}
-                color="#e1306c"
-              />
-              <InsightBar
-                label="Alcance total"
-                value={totalReach}
-                max={insightMax}
-                color="#3b7fff"
-              />
-              <InsightBar
-                label="Visualizações do perfil"
-                value={totalProfileViews}
-                max={insightMax}
-                color="#00c07f"
-              />
-            </div>
-          </div>
-
-          {/* Resumo numérico */}
-          <div className="rounded-xl p-5 border"
-            style={{ background: "var(--card)", borderColor: "var(--border)" }}>
-            <h3 className="text-[12px] font-bold mb-4 flex items-center gap-2"
-              style={{ color: "var(--text-primary)" }}>
-              <TrendingUp style={{ width: 14, height: 14, color: "#00c07f" }} />
-              Resumo do Mês
-            </h3>
-            <div className="space-y-3">
-              {[
-                { label: "Impressões",       value: fmt(totalImpressions),  color: "#e1306c" },
-                { label: "Alcance",          value: fmt(totalReach),        color: "#3b7fff" },
-                { label: "Vis. do perfil",   value: fmt(totalProfileViews), color: "#00c07f" },
-                { label: "Likes totais",     value: fmt(posts.reduce((s,p)=>s+p.like_count,0)),     color: "#d4af37" },
-                { label: "Comentários",      value: fmt(posts.reduce((s,p)=>s+p.comments_count,0)), color: "#a78bfa" },
-              ].map(item => (
-                <div key={item.label} className="flex items-center justify-between">
-                  <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>{item.label}</span>
-                  <span className="text-[13px] font-bold font-mono" style={{ color: item.color }}>{item.value}</span>
-                </div>
+        {/* ── SEÇÃO 3: Top Posts ────────────────────────────────────────────── */}
+        {posts.length > 0 && (
+          <div>
+            <h2 className="text-[11px] font-mono font-semibold tracking-[2px] uppercase mb-3"
+              style={{ color: "var(--text-muted)" }}>
+              Últimos Posts
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+              {posts.map(post => (
+                <PostCard key={post.id} post={post} onTransform={handleTransform} />
               ))}
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* ── SEÇÃO 5: Ações rápidas ────────────────────────────────────────── */}
-      <div>
-        <h2 className="text-[11px] font-mono font-semibold tracking-[2px] uppercase mb-3"
-          style={{ color: "var(--text-muted)" }}>
-          Ações Rápidas
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Link
-            href={`/diretor-criativo?contexto=instagram&username=${metrics?.username ?? ""}&topPost=${posts[0]?.permalink ?? ""}`}
-            className="flex items-center gap-3 p-4 rounded-xl border transition-all hover:opacity-80 group"
-            style={{ background: "var(--card)", borderColor: "var(--border)" }}>
-            <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
-              style={{ background: "rgba(212,175,55,0.12)", border: "1px solid rgba(212,175,55,0.25)" }}>
-              <Zap style={{ width: 16, height: 16, color: "#d4af37" }} />
-            </div>
-            <div>
-              <div className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>
-                Gerar conteúdo baseado no melhor post
+        {/* ── SEÇÃO 4: Insights ─────────────────────────────────────────────── */}
+        {(totalImpressions > 0 || totalReach > 0 || totalProfileViews > 0) && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Insights de alcance */}
+            <div className="rounded-xl p-5 border"
+              style={{ background: "var(--card)", borderColor: "var(--border)" }}>
+              <h3 className="text-[12px] font-bold mb-4 flex items-center gap-2"
+                style={{ color: "var(--text-primary)" }}>
+                <Eye style={{ width: 14, height: 14, color: "#3b7fff" }} />
+                Insights (últimos 30 dias)
+              </h3>
+              <div className="space-y-4">
+                <InsightBar
+                  label="Impressões totais"
+                  value={totalImpressions}
+                  max={insightMax}
+                  color="#e1306c"
+                />
+                <InsightBar
+                  label="Alcance total"
+                  value={totalReach}
+                  max={insightMax}
+                  color="#3b7fff"
+                />
+                <InsightBar
+                  label="Visualizações do perfil"
+                  value={totalProfileViews}
+                  max={insightMax}
+                  color="#00c07f"
+                />
               </div>
-              <div className="text-[11px]" style={{ color: "var(--text-muted)" }}>
-                Diretor Criativo IA com contexto do seu perfil
-              </div>
             </div>
-            <div className="ml-auto" style={{ color: "var(--text-muted)" }}>→</div>
-          </Link>
 
-          <Link
-            href="/radar"
-            className="flex items-center gap-3 p-4 rounded-xl border transition-all hover:opacity-80 group"
-            style={{ background: "var(--card)", borderColor: "var(--border)" }}>
-            <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
-              style={{ background: "rgba(0,192,127,0.10)", border: "1px solid rgba(0,192,127,0.2)" }}>
-              <TrendingUp style={{ width: 16, height: 16, color: "#00c07f" }} />
-            </div>
-            <div>
-              <div className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>
-                Radar de Tendências
+            {/* Resumo numérico */}
+            <div className="rounded-xl p-5 border"
+              style={{ background: "var(--card)", borderColor: "var(--border)" }}>
+              <h3 className="text-[12px] font-bold mb-4 flex items-center gap-2"
+                style={{ color: "var(--text-primary)" }}>
+                <TrendingUp style={{ width: 14, height: 14, color: "#00c07f" }} />
+                Resumo do Mês
+              </h3>
+              <div className="space-y-3">
+                {[
+                  { label: "Impressões",       value: fmt(totalImpressions),  color: "#e1306c" },
+                  { label: "Alcance",          value: fmt(totalReach),        color: "#3b7fff" },
+                  { label: "Vis. do perfil",   value: fmt(totalProfileViews), color: "#00c07f" },
+                  { label: "Likes totais",     value: fmt(posts.reduce((s,p)=>s+p.like_count,0)),     color: "#d4af37" },
+                  { label: "Comentários",      value: fmt(posts.reduce((s,p)=>s+p.comments_count,0)), color: "#a78bfa" },
+                ].map(item => (
+                  <div key={item.label} className="flex items-center justify-between">
+                    <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>{item.label}</span>
+                    <span className="text-[13px] font-bold font-mono" style={{ color: item.color }}>{item.value}</span>
+                  </div>
+                ))}
               </div>
-              <div className="text-[11px]" style={{ color: "var(--text-muted)" }}>
-                Descubra o que está em alta na sua área
-              </div>
             </div>
-            <div className="ml-auto" style={{ color: "var(--text-muted)" }}>→</div>
-          </Link>
+          </div>
+        )}
+
+        {/* ── SEÇÃO 5: Ações rápidas ────────────────────────────────────────── */}
+        <div>
+          <h2 className="text-[11px] font-mono font-semibold tracking-[2px] uppercase mb-3"
+            style={{ color: "var(--text-muted)" }}>
+            Ações Rápidas
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Link
+              href={`/diretor-criativo?contexto=instagram&username=${metrics?.username ?? ""}&topPost=${posts[0]?.permalink ?? ""}`}
+              className="flex items-center gap-3 p-4 rounded-xl border transition-all hover:opacity-80 group"
+              style={{ background: "var(--card)", borderColor: "var(--border)" }}>
+              <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                style={{ background: "rgba(212,175,55,0.12)", border: "1px solid rgba(212,175,55,0.25)" }}>
+                <Zap style={{ width: 16, height: 16, color: "#d4af37" }} />
+              </div>
+              <div>
+                <div className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>
+                  Gerar conteúdo baseado no melhor post
+                </div>
+                <div className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                  Diretor Criativo IA com contexto do seu perfil
+                </div>
+              </div>
+              <div className="ml-auto" style={{ color: "var(--text-muted)" }}>→</div>
+            </Link>
+
+            <Link
+              href="/radar"
+              className="flex items-center gap-3 p-4 rounded-xl border transition-all hover:opacity-80 group"
+              style={{ background: "var(--card)", borderColor: "var(--border)" }}>
+              <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                style={{ background: "rgba(0,192,127,0.10)", border: "1px solid rgba(0,192,127,0.2)" }}>
+                <TrendingUp style={{ width: 16, height: 16, color: "#00c07f" }} />
+              </div>
+              <div>
+                <div className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>
+                  Radar de Tendências
+                </div>
+                <div className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                  Descubra o que está em alta na sua área
+                </div>
+              </div>
+              <div className="ml-auto" style={{ color: "var(--text-muted)" }}>→</div>
+            </Link>
+          </div>
         </div>
-      </div>
 
       </div>
     </div>

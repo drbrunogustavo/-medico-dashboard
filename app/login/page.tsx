@@ -1,15 +1,32 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser"
+
+interface BannerAd {
+  id: string
+  titulo: string
+  chamada: string
+  link_destino: string
+  anunciante_nome: string
+  anunciante_foto_url: string | null
+}
 
 export default function LoginPage() {
   const [email,   setEmail]   = useState("")
   const [senha,   setSenha]   = useState("")
   const [loading, setLoading] = useState(false)
   const [erro,    setErro]    = useState("")
+  const [banner,  setBanner]  = useState<BannerAd | null>(null)
   const router = useRouter()
+
+  useEffect(() => {
+    fetch("/api/anuncios-cursos/publico")
+      .then(r => r.json())
+      .then((data: BannerAd[]) => { if (Array.isArray(data) && data.length > 0) setBanner(data[0]) })
+      .catch(() => {})
+  }, [])
 
   async function handleLogin() {
     setLoading(true)
@@ -43,10 +60,12 @@ export default function LoginPage() {
       minHeight: "100vh",
       backgroundColor: "#0a0a0a",
       display: "flex",
+      flexDirection: "column",
       alignItems: "center",
       justifyContent: "center",
       fontFamily: "Inter, sans-serif",
       padding: "20px",
+      gap: "16px",
     }}>
       <div style={{
         width: "100%",
@@ -153,6 +172,60 @@ export default function LoginPage() {
         </div>
 
       </div>
+
+      {banner && (
+        <a
+          href={banner.link_destino}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: "block",
+            width: "100%",
+            maxWidth: "420px",
+            backgroundColor: "#141414",
+            borderRadius: "16px",
+            padding: "16px 20px",
+            border: "1px solid #222",
+            textDecoration: "none",
+            cursor: "pointer",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" }}>
+            {banner.anunciante_foto_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={banner.anunciante_foto_url}
+                alt={banner.anunciante_nome}
+                style={{ width: "36px", height: "36px", borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
+              />
+            ) : (
+              <div style={{
+                width: "36px", height: "36px", borderRadius: "50%", background: "#1c1c1c",
+                border: "1px solid #333", display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: "14px", fontWeight: 700, color: "#888", flexShrink: 0,
+              }}>
+                {banner.anunciante_nome.charAt(0).toUpperCase()}
+              </div>
+            )}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ margin: 0, fontSize: "13px", fontWeight: 700, color: "#f5f5f5" }}>{banner.titulo}</p>
+              <p style={{ margin: "2px 0 0", fontSize: "12px", color: "#888" }}>{banner.anunciante_nome}</p>
+            </div>
+            <span style={{
+              fontSize: "11px", fontWeight: 600, color: "#00c07f",
+              background: "rgba(0,192,127,0.10)", border: "1px solid rgba(0,192,127,0.25)",
+              borderRadius: "20px", padding: "3px 10px", whiteSpace: "nowrap", flexShrink: 0,
+            }}>
+              Ver curso →
+            </span>
+          </div>
+          <p style={{ margin: 0, fontSize: "12px", color: "#999", lineHeight: "1.5" }}>{banner.chamada}</p>
+          <p style={{ margin: "10px 0 0", fontSize: "10px", color: "#444", fontFamily: "monospace" }}>
+            Espaço patrocinado
+          </p>
+        </a>
+      )}
+
     </div>
   )
 }

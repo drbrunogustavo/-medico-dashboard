@@ -36,7 +36,8 @@ export async function GET() {
       status:                pl.status       ?? "ativo",
       assinatura_termina_em: pl.assinatura_termina_em ?? null,
       trial_termina_em:      pl.trial_termina_em      ?? null,
-      tem_stripe:            !!pl.stripe_subscription_id,
+      tem_stripe:             !!pl.stripe_subscription_id,
+      stripe_subscription_id: pl.stripe_subscription_id ?? null,
       cadastro_em:           u.created_at,
       ultimo_acesso:         u.last_sign_in_at ?? null,
     }

@@ -121,7 +121,8 @@ export async function POST(req: NextRequest) {
         const periodEnd  = item?.current_period_end
           ? new Date(item.current_period_end * 1000).toISOString()
           : null
-        const subStatus  = sub.status
+        const subStatus         = sub.status
+        const cancelAtPeriodEnd = sub.cancel_at_period_end
 
         const { error } = await supabase.from("user_planos").upsert(
           {
@@ -129,7 +130,9 @@ export async function POST(req: NextRequest) {
             stripe_subscription_id: sub.id,
             stripe_customer_id:     sub.customer as string,
             stripe_price_id:        priceId,
-            status:                 (subStatus === "active" || subStatus === "trialing") ? "ativo" : subStatus,
+            status: (subStatus === "active" && cancelAtPeriodEnd)
+              ? "cancelado_fim_periodo"
+              : (subStatus === "active" || subStatus === "trialing") ? "ativo" : subStatus,
             assinatura_termina_em:  periodEnd,
             atualizado_em:          new Date().toISOString(),
           },

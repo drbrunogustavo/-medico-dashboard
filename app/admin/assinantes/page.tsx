@@ -1,22 +1,23 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Loader2, RefreshCw, AlertTriangle } from "lucide-react"
+import { useCallback, useEffect, useState } from "react"
+import { Loader2, RefreshCw, AlertTriangle, Ban } from "lucide-react"
 import { TopBar } from "@/components/TopBar"
 import { cn } from "@/lib/utils"
 
 interface Assinante {
-  id:                    string
-  email:                 string
-  nome:                  string | null
-  especialidade:         string | null
-  plano:                 string
-  status:                string
-  assinatura_termina_em: string | null
-  trial_termina_em:      string | null
-  tem_stripe:            boolean
-  cadastro_em:           string
-  ultimo_acesso:         string | null
+  id:                     string
+  email:                  string
+  nome:                   string | null
+  especialidade:          string | null
+  plano:                  string
+  status:                 string
+  assinatura_termina_em:  string | null
+  trial_termina_em:       string | null
+  tem_stripe:             boolean
+  stripe_subscription_id: string | null
+  cadastro_em:            string
+  ultimo_acesso:          string | null
 }
 
 type Filtro = "todos" | "ativo" | "atencao"
@@ -28,18 +29,20 @@ const PLANO_STYLE: Record<string, string> = {
   elite: "bg-purple-500/10 border-purple-500/25 text-purple-400",
 }
 const STATUS_LABEL: Record<string, string> = {
-  ativo:     "Ativo",
-  cancelado: "Cancelado",
-  past_due:  "Vencido",
+  ativo:                 "Ativo",
+  cancelado:             "Cancelado",
+  past_due:              "Vencido",
+  cancelado_fim_periodo: "Ativo até fim do período",
 }
 const STATUS_STYLE: Record<string, string> = {
-  ativo:     "bg-accent-dim border-accent-border text-accent",
-  cancelado: "bg-red-500/10 border-red-500/30 text-red-400",
-  past_due:  "bg-amber-500/10 border-amber-500/30 text-amber-400",
+  ativo:                 "bg-accent-dim border-accent-border text-accent",
+  cancelado:             "bg-red-500/10 border-red-500/30 text-red-400",
+  past_due:              "bg-amber-500/10 border-amber-500/30 text-amber-400",
+  cancelado_fim_periodo: "bg-amber-500/10 border-amber-500/30 text-amber-400",
 }
 
 function isProblematic(status: string) {
-  return status === "past_due" || status === "cancelado"
+  return status === "past_due" || status === "cancelado" || status === "cancelado_fim_periodo"
 }
 
 function fmt(iso: string | null) {
@@ -51,6 +54,7 @@ export default function AssinantesPage() {
   const [lista,   setLista]   = useState<Assinante[]>([])
   const [loading, setLoading] = useState(true)
   const [filtro,  setFiltro]  = useState<Filtro>("todos")
+  const [acting,  setActing]  = useState<Record<string, boolean>>({})
 
   async function fetchData() {
     setLoading(true)
@@ -64,6 +68,34 @@ export default function AssinantesPage() {
   }
 
   useEffect(() => { fetchData() }, [])
+
+  const cancelar = useCallback(async (userId: string, nome: string | null) => {
+    const label = nome ?? userId.slice(0, 8)
+    const ok = window.confirm(
+      `Cancelar assinatura de "${label}"?\n\n` +
+      `• O acesso continua até o fim do período pago\n` +
+      `• O último pagamento será estornado AUTOMATICAMENTE agora\n\n` +
+      `Esta ação não pode ser desfeita. Confirma?`
+    )
+    if (!ok) return
+    setActing(a => ({ ...a, [userId]: true }))
+    try {
+      const r    = await fetch("/api/admin/assinantes/cancelar", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ user_id: userId }),
+      })
+      const data = await r.json()
+      if (!r.ok) { alert(data.error ?? "Erro ao cancelar."); return }
+      setLista(prev => prev.map(a =>
+        a.id === userId ? { ...a, status: "cancelado_fim_periodo" } : a
+      ))
+    } catch {
+      alert("Erro de conexão. Tente novamente.")
+    } finally {
+      setActing(a => { const n = { ...a }; delete n[userId]; return n })
+    }
+  }, [])
 
   const filtrado = lista.filter(a => {
     if (filtro === "ativo")   return a.status === "ativo"
@@ -133,10 +165,10 @@ export default function AssinantesPage() {
           </div>
         ) : (
           <div className="bg-card border border-border rounded-xl overflow-x-auto">
-            <table className="w-full text-[12px] min-w-[700px]">
+            <table className="w-full text-[12px] min-w-[800px]">
               <thead>
                 <tr className="border-b border-border">
-                  {["Nome / Especialidade", "Email", "Plano", "Status", "Cadastro", "Último acesso", "Expira em"].map(h => (
+                  {["Nome / Especialidade", "Email", "Plano", "Status", "Cadastro", "Último acesso", "Expira em", "Ações"].map(h => (
                     <th key={h} className="text-left px-4 py-3 text-[10px] font-mono text-text-muted uppercase tracking-wider whitespace-nowrap">
                       {h}
                     </th>
@@ -146,7 +178,7 @@ export default function AssinantesPage() {
               <tbody>
                 {filtrado.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="text-center py-14 text-text-muted text-[13px]">
+                    <td colSpan={8} className="text-center py-14 text-text-muted text-[13px]">
                       Nenhum assinante encontrado.
                     </td>
                   </tr>
@@ -208,6 +240,22 @@ export default function AssinantesPage() {
                     {/* Expira em */}
                     <td className="px-4 py-3 font-mono text-[11px] text-text-muted whitespace-nowrap">
                       {fmt(a.assinatura_termina_em ?? a.trial_termina_em)}
+                    </td>
+
+                    {/* Ações */}
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      {a.status === "ativo" && a.tem_stripe && (
+                        <button
+                          onClick={() => cancelar(a.id, a.nome)}
+                          disabled={acting[a.id]}
+                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] border border-red-500/25 text-red-400 hover:bg-red-500/10 disabled:opacity-40 transition-all"
+                        >
+                          {acting[a.id]
+                            ? <Loader2 className="w-3 h-3 animate-spin" />
+                            : <Ban className="w-3 h-3" />}
+                          Cancelar
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}

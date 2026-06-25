@@ -11,7 +11,7 @@ import {
   TrendingUp, Heart, Calendar, Bot, Users, Star, UserPlus,
   MessageSquare, ShieldQuestion, ClipboardList, CircleDollarSign,
   Tag, Activity, Lightbulb, Layers, Layers2,
-  LogOut, CreditCard, Settings,
+  LogOut, CreditCard, Settings, ShieldCheck,
   RefreshCw, Map, BarChart2, Rocket,
   Instagram, Calculator, FileBarChart,
   FlaskConical, FileHeart, Pill,
@@ -186,6 +186,9 @@ function SidebarContent() {
   const { plano }     = usePlano()
   const { perfil }    = usePerfil()
 
+  const doctorId    = process.env.NEXT_PUBLIC_DOCTOR_USER_ID
+  const isAdminUser = !!user?.id && !!doctorId && user.id === doctorId
+
   const [ala, setAla] = useState<AlaId>("social")
 
   useEffect(() => {
@@ -296,6 +299,23 @@ function SidebarContent() {
 
       {/* ── Footer ── */}
       <div className="border-t border-border">
+        {/* Admin link — only rendered for DOCTOR_USER_ID, not present in HTML for others */}
+        {isAdminUser && (
+          <Link
+            href="/admin/depoimentos"
+            onClick={closeMenu}
+            className={cn(
+              "flex items-center gap-2 mx-3 mt-2 px-3 py-1.5 rounded-lg text-[11px] transition-colors",
+              pathname.startsWith("/admin")
+                ? "bg-red-500/10 text-red-400 border border-red-500/20"
+                : "text-text-muted hover:text-text-secondary hover:bg-surface-2"
+            )}
+          >
+            <ShieldCheck className="w-3.5 h-3.5 flex-shrink-0" />
+            <span>Painel Admin</span>
+          </Link>
+        )}
+
         {/* Dashboard quick link */}
         <Link
           href="/dashboard"

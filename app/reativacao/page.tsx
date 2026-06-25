@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { RefreshCw, MessageCircle, Plus, Loader2, Copy, Check, Users, X, Sparkles, Download } from "lucide-react"
+import { MessageCircle, Plus, Loader2, Copy, Check, Users, X, Sparkles, Download, AlertCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
 
@@ -200,6 +200,7 @@ export default function ReativacaoPage() {
   const [showCampanha, setShowCampanha] = useState(false)
   const [importando,   setImportando]   = useState(false)
   const [importResult, setImportResult] = useState<{ importados: number; sem_telefone: number } | null>(null)
+  const [importErro,   setImportErro]   = useState<string | null>(null)
 
   useEffect(() => {
     fetch("/api/reativacao").then(r => r.json()).then(d => {
@@ -210,16 +211,25 @@ export default function ReativacaoPage() {
   async function handleImportarMedx() {
     setImportando(true)
     setImportResult(null)
+    setImportErro(null)
     try {
       const res  = await fetch("/api/reativacao/importar-medx", { method: "POST" })
-      const data = await res.json()
-      if (!res.ok) { console.error("[importar-medx]", data.error); return }
-      setImportResult({ importados: data.importados, sem_telefone: data.sem_telefone })
-      // Recarrega lista para refletir os novos registros
+      let data: Record<string, unknown> = {}
+      try { data = await res.json() } catch { data = {} }
+
+      if (!res.ok) {
+        const msg = (data.error as string) ?? `Erro HTTP ${res.status}`
+        console.error("[importar-medx]", msg)
+        setImportErro(msg)
+        return
+      }
+      setImportResult({ importados: Number(data.importados ?? 0), sem_telefone: Number(data.sem_telefone ?? 0) })
       const lista = await fetch("/api/reativacao").then(r => r.json())
       setPacientes(Array.isArray(lista) ? lista : [])
     } catch (e) {
-      console.error("[importar-medx]", e)
+      const msg = e instanceof Error ? e.message : String(e)
+      console.error("[importar-medx]", msg)
+      setImportErro(msg)
     } finally {
       setImportando(false)
     }
@@ -301,6 +311,18 @@ export default function ReativacaoPage() {
           </button>
         </div>
       </div>
+
+      {importErro && (
+        <div className="mx-4 md:mx-8 mt-3 flex items-center justify-between gap-3 rounded-xl border border-red-500/30 bg-red-500/5 px-4 py-3">
+          <div className="flex items-center gap-2 min-w-0">
+            <AlertCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
+            <p className="text-xs text-red-400 truncate">Erro ao importar: {importErro}</p>
+          </div>
+          <button onClick={() => setImportErro(null)} className="text-text-muted hover:text-text-secondary flex-shrink-0">
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
 
       {importResult && (
         <div className="mx-4 md:mx-8 mt-3 flex items-center justify-between gap-3 rounded-xl border border-accent/30 bg-accent/5 px-4 py-3">

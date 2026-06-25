@@ -32,6 +32,31 @@ export async function POST(req: NextRequest) {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session
+
+        // ── Anúncio de curso (pagamento único) ──────────────────────────────
+        const anuncioId = session.metadata?.anuncio_id
+        if (anuncioId) {
+          const paymentIntentId = typeof session.payment_intent === "string"
+            ? session.payment_intent
+            : null
+          if (session.payment_status !== "paid") {
+            console.warn("[stripe/webhook] anuncio payment_status não é paid:", session.payment_status, anuncioId)
+            break
+          }
+          // TODO: checar count de linhas afetadas — se 0, o anuncio_id não existe na tabela
+          const { error } = await supabase
+            .from("anuncios_cursos")
+            .update({
+              status:                   "pendente",
+              stripe_payment_intent_id: paymentIntentId,
+            })
+            .eq("id", anuncioId)
+          if (error) console.error("[stripe/webhook] Erro ao ativar anúncio:", error)
+          else console.log(`[stripe/webhook] Anúncio ${anuncioId} ativado — PI: ${paymentIntentId}`)
+          break
+        }
+
+        // ── Assinatura (comportamento existente) ─────────────────────────────
         const userId  = session.metadata?.user_id
         const plano   = session.metadata?.plano
 

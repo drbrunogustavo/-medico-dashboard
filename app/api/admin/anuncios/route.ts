@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import Stripe from "stripe"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServiceClient } from "@/lib/supabase-service"
 import { isAdmin } from "@/lib/admin-auth"
@@ -31,11 +32,33 @@ export async function PATCH(req: NextRequest) {
   const { id, status, data_inicio, data_fim } = body
   if (!id || !status) return NextResponse.json({ error: "id e status obrigatórios" }, { status: 400 })
 
+  const supabase = createSupabaseServiceClient()
+
+  // Estorno automático quando admin rejeita anúncio já pago
+  if (status === "rejeitado") {
+    const { data: anuncio } = await supabase
+      .from("anuncios_cursos")
+      .select("stripe_payment_intent_id")
+      .eq("id", id)
+      .single()
+
+    const paymentIntentId = anuncio?.stripe_payment_intent_id as string | null
+    if (paymentIntentId && process.env.STRIPE_SECRET_KEY) {
+      try {
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
+        await stripe.refunds.create({ payment_intent: paymentIntentId })
+        console.log(`[admin/anuncios] Estorno realizado — PI: ${paymentIntentId}`)
+      } catch (e) {
+        console.error("[admin/anuncios] Erro ao estornar:", e)
+        return NextResponse.json({ error: "Erro ao processar estorno. Verifique o Stripe." }, { status: 500 })
+      }
+    }
+  }
+
   const updates: Record<string, unknown> = { status }
   if (data_inicio) updates.data_inicio = data_inicio
   if (data_fim)    updates.data_fim    = data_fim
 
-  const supabase = createSupabaseServiceClient()
   const { error } = await supabase.from("anuncios_cursos").update(updates).eq("id", id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ success: true })

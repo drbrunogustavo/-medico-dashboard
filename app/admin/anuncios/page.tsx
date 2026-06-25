@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
-import { Check, Trash2, Loader2, RefreshCw, ExternalLink, Mail, Phone, Calendar } from "lucide-react"
+import { Check, X, Trash2, Loader2, RefreshCw, ExternalLink, Mail, Phone, Calendar } from "lucide-react"
 import { TopBar } from "@/components/TopBar"
 import { cn } from "@/lib/utils"
 
@@ -79,6 +79,24 @@ export default function AdminAnunciosPage() {
       setAprovando(prev => { const n = { ...prev }; delete n[id]; return n })
     } catch (e) {
       console.error("[admin/anuncios] aprovar:", e)
+    } finally {
+      setActing(a => { const n = { ...a }; delete n[id]; return n })
+    }
+  }
+
+  async function rejeitar(id: string) {
+    if (!confirm("Rejeitar este anúncio? O pagamento será estornado automaticamente.")) return
+    setActing(a => ({ ...a, [id]: "rejeitando" }))
+    try {
+      const r = await fetch("/api/admin/anuncios", {
+        method:  "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ id, status: "rejeitado" }),
+      })
+      if (!r.ok) { const d = await r.json(); alert(d.error ?? "Erro ao rejeitar."); return }
+      setAnuncios(a => a.filter(x => x.id !== id))
+    } catch (e) {
+      console.error("[admin/anuncios] rejeitar:", e)
     } finally {
       setActing(a => { const n = { ...a }; delete n[id]; return n })
     }
@@ -262,13 +280,25 @@ export default function AdminAnunciosPage() {
 
                 <div className="flex items-center gap-2 pt-1 flex-wrap">
                   {an.status === "pendente" && !aprovando[an.id] && (
-                    <button
-                      onClick={() => iniciarAprovacao(an.id, an.periodo_dias)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold bg-accent text-background hover:bg-accent/90 transition-all"
-                    >
-                      <Check className="w-3.5 h-3.5" />
-                      Aprovar
-                    </button>
+                    <>
+                      <button
+                        onClick={() => iniciarAprovacao(an.id, an.periodo_dias)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold bg-accent text-background hover:bg-accent/90 transition-all"
+                      >
+                        <Check className="w-3.5 h-3.5" />
+                        Aprovar
+                      </button>
+                      <button
+                        onClick={() => rejeitar(an.id)}
+                        disabled={!!acting[an.id]}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] border border-red-500/30 text-red-400 hover:bg-red-500/10 disabled:opacity-50 transition-all"
+                      >
+                        {acting[an.id] === "rejeitando"
+                          ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          : <X className="w-3.5 h-3.5" />}
+                        Rejeitar
+                      </button>
+                    </>
                   )}
                   <button
                     onClick={() => excluir(an.id)}

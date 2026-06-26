@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
-import { sendZapi } from "@/lib/zapi"
+import { sendZapiForUser } from "@/lib/zapi"
 
 function errMsg(e: unknown) { return e instanceof Error ? e.message : String(e) }
 
@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
 
     let q = supabase
       .from("regua_relacionamento")
-      .select("id, paciente_nome, paciente_telefone, mensagem")
+      .select("id, paciente_nome, paciente_telefone, mensagem, user_id")
       .lte("agendado_para", now)
       .eq("status", "pendente")
       .eq("pausado", false)
@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
 
     let enviados = 0
     for (const row of data) {
-      const { ok } = await sendZapi(row.paciente_telefone, row.mensagem)
+      const { ok } = await sendZapiForUser(row.user_id as string, row.paciente_telefone, row.mensagem)
       if (ok) {
         await supabase
           .from("regua_relacionamento")
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
       .single()
     if (error || !data) throw new Error("Mensagem não encontrada")
 
-    const { ok, error: zapiErr } = await sendZapi(data.paciente_telefone, data.mensagem)
+    const { ok, error: zapiErr } = await sendZapiForUser(auth.userId, data.paciente_telefone, data.mensagem)
     if (!ok) throw new Error(zapiErr ?? "Erro ao enviar")
 
     await supabase

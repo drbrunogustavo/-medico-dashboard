@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
-import { sendZapi } from "@/lib/zapi"
+import { sendZapiForUser } from "@/lib/zapi"
 
 function errMsg(e: unknown) { return e instanceof Error ? e.message : String(e) }
 
@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
 
     let q = supabase
       .from("nps_pesquisas")
-      .select("id, paciente_nome, paciente_telefone, token")
+      .select("id, paciente_nome, paciente_telefone, token, user_id")
       .lte("agendado_para", now)
       .eq("status", "pendente")
     if (userId) q = q.eq("user_id", userId)
@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
     for (const row of data) {
       const link = `${appUrl}/nps/${row.token}`
       const msg  = `Olá, ${row.paciente_nome}! 👋\n\nSua opinião é muito importante para nós.\nComo foi sua última consulta com o médico usuário?\n\nResponda em menos de 1 minuto: ${link}\n\nObrigado pela confiança! 🙏`
-      const { ok } = await sendZapi(row.paciente_telefone, msg)
+      const { ok } = await sendZapiForUser(row.user_id as string, row.paciente_telefone, msg)
       if (ok) {
         await supabase
           .from("nps_pesquisas")

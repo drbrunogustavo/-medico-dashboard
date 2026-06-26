@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServiceClient } from "@/lib/supabase-service"
-import { sendZapi } from "@/lib/zapi"
+import { sendZapiForUser } from "@/lib/zapi"
 
 function errMsg(e: unknown) { return e instanceof Error ? e.message : String(e) }
 const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms))
@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
     {
       let q = supabase
         .from("nurturing_sequencias")
-        .select("id, lead_id, mensagem")
+        .select("id, lead_id, mensagem, user_id")
         .lte("agendado_para", now)
         .eq("status", "pendente")
       if (userId) q = q.eq("user_id", userId)
@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
           .from("crm_leads").select("telefone").eq("id", seq.lead_id).single()
         if (!lead?.telefone) continue
 
-        const { ok } = await sendZapi(lead.telefone, seq.mensagem)
+        const { ok } = await sendZapiForUser(seq.user_id as string, lead.telefone, seq.mensagem)
         if (ok) {
           await supabase
             .from("nurturing_sequencias")
@@ -60,7 +60,7 @@ export async function GET(req: NextRequest) {
     {
       let q = supabase
         .from("regua_relacionamento")
-        .select("id, paciente_telefone, mensagem")
+        .select("id, paciente_telefone, mensagem, user_id")
         .lte("agendado_para", now)
         .eq("status", "pendente")
         .eq("pausado", false)
@@ -68,7 +68,7 @@ export async function GET(req: NextRequest) {
 
       const { data: rows } = await q
       for (const row of rows ?? []) {
-        const { ok } = await sendZapi(row.paciente_telefone, row.mensagem)
+        const { ok } = await sendZapiForUser(row.user_id as string, row.paciente_telefone, row.mensagem)
         if (ok) {
           await supabase
             .from("regua_relacionamento")
@@ -85,7 +85,7 @@ export async function GET(req: NextRequest) {
       const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://praxisplataforma.com.br"
       let q = supabase
         .from("nps_pesquisas")
-        .select("id, paciente_nome, paciente_telefone, token")
+        .select("id, paciente_nome, paciente_telefone, token, user_id")
         .lte("agendado_para", now)
         .eq("status", "pendente")
       if (userId) q = q.eq("user_id", userId)
@@ -94,7 +94,7 @@ export async function GET(req: NextRequest) {
       for (const row of rows ?? []) {
         const link = `${appUrl}/nps/${row.token}`
         const msg  = `Olá, ${row.paciente_nome}! 👋\n\nSua opinião é muito importante para nós.\nComo foi sua última consulta com o médico usuário?\n\nResponda em menos de 1 minuto: ${link}\n\nObrigado pela confiança! 🙏`
-        const { ok } = await sendZapi(row.paciente_telefone, msg)
+        const { ok } = await sendZapiForUser(row.user_id as string, row.paciente_telefone, msg)
         if (ok) {
           await supabase.from("nps_pesquisas").update({ status: "enviado" }).eq("id", row.id)
           result.nps++
@@ -110,7 +110,7 @@ export async function GET(req: NextRequest) {
     {
       let q = supabase
         .from("pacientes_reativacao")
-        .select("id, telefone, mensagem_gerada")
+        .select("id, telefone, mensagem_gerada, user_id")
         .eq("status", "inativo")
         .not("mensagem_gerada", "is", null)
         .not("telefone", "is", null)
@@ -118,7 +118,7 @@ export async function GET(req: NextRequest) {
 
       const { data: rows } = await q
       for (const row of rows ?? []) {
-        const { ok } = await sendZapi(row.telefone as string, row.mensagem_gerada as string)
+        const { ok } = await sendZapiForUser(row.user_id as string, row.telefone as string, row.mensagem_gerada as string)
         if (ok) {
           await supabase
             .from("pacientes_reativacao")

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServiceClient } from "@/lib/supabase-service"
-import { getAgenda, getPacientes } from "@/lib/medx"
+import { getMedxClientForUser } from "@/lib/medx"
 
 // ⚠️  Status=11 usado como proxy de "consulta realizada".
 //    Correlação: todos os registros com Atendido_as preenchido tinham Status=11.
@@ -18,7 +18,8 @@ export async function POST() {
     const corte6m  = (() => { const d = new Date(); d.setMonth(d.getMonth() - 6);       return d.toISOString().split("T")[0] })()
 
     // 1. Agenda dos últimos 2 anos
-    const agenda = await getAgenda(inicio2a, hoje)
+    const medx   = await getMedxClientForUser(auth.userId)
+    const agenda = await medx.getAgenda(inicio2a, hoje)
 
     // 2. Última consulta realizada (Status=11) por paciente
     const ultimaConsulta: Record<string, string> = {}
@@ -45,7 +46,7 @@ export async function POST() {
     }
 
     // 4. Dados cadastrais dos pacientes (nome, telefone)
-    const pacientes = await getPacientes()
+    const pacientes = await medx.getPacientes()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const pacienteMap = new Map(pacientes.map((p: any) => [String(p.Id_do_Cliente), p]))
 

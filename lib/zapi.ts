@@ -1,8 +1,8 @@
-export async function sendZapi(phone: string, message: string): Promise<{ ok: boolean; error?: string }> {
-  const instanceId = process.env.ZAPI_INSTANCE_ID
-  const token      = process.env.ZAPI_TOKEN
-  if (!instanceId || !token) return { ok: false, error: "Z-API não configurada" }
+import { createSupabaseServiceClient } from "@/lib/supabase-service"
 
+type ZapiResult = { ok: boolean; error?: string }
+
+async function callZapiApi(instanceId: string, token: string, phone: string, message: string): Promise<ZapiResult> {
   try {
     const res = await fetch(
       `https://api.z-api.io/instances/${instanceId}/token/${token}/send-text`,
@@ -20,4 +20,29 @@ export async function sendZapi(phone: string, message: string): Promise<{ ok: bo
   } catch (e) {
     return { ok: false, error: String(e) }
   }
+}
+
+export async function sendZapi(phone: string, message: string): Promise<ZapiResult> {
+  const instanceId = process.env.ZAPI_INSTANCE_ID
+  const token      = process.env.ZAPI_TOKEN
+  if (!instanceId || !token) return { ok: false, error: "Z-API não configurada" }
+  return callZapiApi(instanceId, token, phone, message)
+}
+
+export async function sendZapiForUser(userId: string, phone: string, message: string): Promise<ZapiResult> {
+  const supabase = createSupabaseServiceClient()
+  const { data } = await supabase
+    .from("integracoes_usuario")
+    .select("config")
+    .eq("user_id", userId)
+    .eq("tipo", "zapi")
+    .eq("ativo", true)
+    .single()
+
+  const cfg        = data?.config as { instance_id?: string; token?: string } | null
+  const instanceId = cfg?.instance_id ?? process.env.ZAPI_INSTANCE_ID
+  const token      = cfg?.token       ?? process.env.ZAPI_TOKEN
+
+  if (!instanceId || !token) return { ok: false, error: "Z-API não configurada" }
+  return callZapiApi(instanceId, token, phone, message)
 }

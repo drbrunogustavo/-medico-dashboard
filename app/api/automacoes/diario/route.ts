@@ -1,0 +1,346 @@
+import { NextRequest, NextResponse } from "next/server"
+import { Resend } from "resend"
+import { createSupabaseServiceClient } from "@/lib/supabase-service"
+
+const resend     = new Resend(process.env.RESEND_API_KEY)
+const APP_URL    = process.env.NEXT_PUBLIC_APP_URL ?? "https://praxisplataforma.com.br"
+const FROM_EMAIL = process.env.EMAIL_FROM          ?? "PRAXIS <onboarding@resend.dev>"
+const REPLY_TO   = process.env.EMAIL_REPLY_TO      ?? "contato@praxisplataforma.com.br"
+
+function isCronAuthorized(req: NextRequest): boolean {
+  const secret = process.env.CRON_SECRET
+  if (!secret) return false
+  return req.headers.get("authorization") === `Bearer ${secret}`
+}
+
+// ── Email: trial acabando ─────────────────────────────────────────────────────
+
+function buildTrialEmail(nome: string, dias: number): string {
+  const primeiroNome = nome.replace(/^Dr\.?\s*/i, "").split(" ")[0] ?? nome
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="UTF-8"/><title>Seu trial expira em breve</title></head>
+<body style="margin:0;padding:0;background:#F5F0E8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#F5F0E8;padding:40px 0;">
+  <tr><td align="center">
+    <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+      <tr><td align="center" style="padding:0 0 24px 0;">
+        <div style="display:inline-block;background:#0D1B2A;border-radius:12px;padding:14px 28px;">
+          <span style="color:#b8976a;font-size:20px;font-weight:800;letter-spacing:0.1em;">PRAXIS</span>
+        </div>
+      </td></tr>
+      <tr><td style="background:#FFFFFF;border-radius:20px;border:1px solid #e8ddd0;overflow:hidden;">
+        <div style="background:linear-gradient(135deg,#b8976a,#d4af37);height:4px;"></div>
+        <table width="100%" cellpadding="0" cellspacing="0" style="padding:36px 40px 32px;">
+          <tr><td>
+            <h1 style="margin:0 0 8px;font-size:24px;font-weight:700;color:#0D1B2A;">
+              🔔 Seu trial expira em ${dias} dia${dias !== 1 ? "s" : ""}
+            </h1>
+            <p style="margin:0 0 24px;font-size:15px;color:#6a5a4a;line-height:1.7;">
+              Dr. ${primeiroNome}, seu período de trial gratuito está chegando ao fim.
+              Para continuar usando o PRAXIS sem interrupções, escolha seu plano agora.
+            </p>
+            <table cellpadding="0" cellspacing="0" style="margin:0 0 16px;">
+              <tr><td style="border-radius:12px;overflow:hidden;">
+                <a href="${APP_URL}/planos"
+                  style="display:inline-block;background:#b8976a;color:#fff;font-size:14px;font-weight:700;padding:14px 28px;text-decoration:none;border-radius:12px;">
+                  Escolher meu plano →
+                </a>
+              </td></tr>
+            </table>
+            <p style="margin:0;font-size:12px;color:#9a8a7a;">
+              Dúvidas? Escreva para
+              <a href="mailto:${REPLY_TO}" style="color:#b8976a;text-decoration:none;">${REPLY_TO}</a>
+            </p>
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>`
+}
+
+// ── Email: leads sem resposta ─────────────────────────────────────────────────
+
+function buildLeadEmail(nome: string, leads: Array<{ nome: string; horas: number }>): string {
+  const primeiroNome = nome.replace(/^Dr\.?\s*/i, "").split(" ")[0] ?? nome
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="UTF-8"/><title>Leads sem resposta</title></head>
+<body style="margin:0;padding:0;background:#F5F0E8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#F5F0E8;padding:40px 0;">
+  <tr><td align="center">
+    <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+      <tr><td align="center" style="padding:0 0 24px 0;">
+        <div style="display:inline-block;background:#0D1B2A;border-radius:12px;padding:14px 28px;">
+          <span style="color:#b8976a;font-size:20px;font-weight:800;letter-spacing:0.1em;">PRAXIS</span>
+        </div>
+      </td></tr>
+      <tr><td style="background:#FFFFFF;border-radius:20px;border:1px solid #e8ddd0;overflow:hidden;">
+        <div style="background:linear-gradient(135deg,#f59e0b,#d97706);height:4px;"></div>
+        <table width="100%" cellpadding="0" cellspacing="0" style="padding:36px 40px 32px;">
+          <tr><td>
+            <h1 style="margin:0 0 8px;font-size:24px;font-weight:700;color:#0D1B2A;">
+              ⏰ Leads aguardando resposta
+            </h1>
+            <p style="margin:0 0 24px;font-size:15px;color:#6a5a4a;line-height:1.7;">
+              Olá, Dr. ${primeiroNome}! Você tem <strong>${leads.length} lead${leads.length !== 1 ? "s" : ""}</strong> sem follow-up há mais de 48 horas.
+            </p>
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 28px;border:1px solid #e8ddd0;border-radius:12px;overflow:hidden;">
+              <tr style="background:#F8F5F0;">
+                <th style="text-align:left;padding:10px 16px;font-size:11px;color:#8a7a6a;font-weight:600;letter-spacing:1px;text-transform:uppercase;">Lead</th>
+                <th style="text-align:right;padding:10px 16px;font-size:11px;color:#8a7a6a;font-weight:600;letter-spacing:1px;text-transform:uppercase;">Aguardando</th>
+              </tr>
+              ${leads.slice(0, 10).map(l => `
+              <tr style="border-top:1px solid #e8ddd0;">
+                <td style="padding:12px 16px;font-size:13px;color:#0D1B2A;font-weight:500;">${l.nome}</td>
+                <td style="padding:12px 16px;font-size:12px;color:#d97706;font-weight:600;text-align:right;font-family:monospace;">${Math.round(l.horas)}h</td>
+              </tr>`).join("")}
+              ${leads.length > 10 ? `
+              <tr style="border-top:1px solid #e8ddd0;background:#F8F5F0;">
+                <td colspan="2" style="padding:10px 16px;font-size:12px;color:#8a7a6a;text-align:center;">
+                  + ${leads.length - 10} outros leads
+                </td>
+              </tr>` : ""}
+            </table>
+            <table cellpadding="0" cellspacing="0">
+              <tr><td style="border-radius:12px;overflow:hidden;">
+                <a href="${APP_URL}/crm"
+                  style="display:inline-block;background:#b8976a;color:#fff;font-size:14px;font-weight:700;padding:14px 28px;text-decoration:none;border-radius:12px;">
+                  Ver leads no CRM →
+                </a>
+              </td></tr>
+            </table>
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>`
+}
+
+// ── Email: relatório semanal ──────────────────────────────────────────────────
+
+interface RelatorioMetrics {
+  nome:          string
+  leads_novos:   number
+  leads_total:   number
+  consultas_mes: number
+  nps_score:     number | null
+  pautas_total:  number
+  receita_mes:   number
+}
+
+function buildRelatorioEmail(m: RelatorioMetrics): string {
+  const npsColor     = m.nps_score === null ? "#9a8a7a" : m.nps_score >= 8 ? "#10b981" : m.nps_score >= 6 ? "#f59e0b" : "#ef4444"
+  const primeiroNome = m.nome.replace(/^Dr\.?\s*/i, "").split(" ")[0] ?? m.nome
+  const semana       = new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })
+
+  const cards = [
+    { label: "Leads novos",    value: m.leads_novos.toString(),                            color: "#10b981" },
+    { label: "Total no CRM",   value: m.leads_total.toString(),                            color: "#b8976a" },
+    { label: "Consultas/mês",  value: m.consultas_mes.toString(),                          color: "#b8976a" },
+    { label: "NPS Score",      value: m.nps_score !== null ? m.nps_score.toString() : "—", color: npsColor  },
+    { label: "Pautas salvas",  value: m.pautas_total.toString(),                           color: "#b8976a" },
+    { label: "Receita do mês", value: `R$ ${m.receita_mes.toLocaleString("pt-BR")}`,       color: "#10b981" },
+  ]
+
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="UTF-8"/><title>Relatório Semanal PRAXIS</title></head>
+<body style="margin:0;padding:0;background:#F5F0E8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#F5F0E8;padding:40px 0;">
+  <tr><td align="center">
+    <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+      <tr><td align="center" style="padding:0 0 28px 0;">
+        <div style="display:inline-block;background:#0D1B2A;border-radius:12px;padding:14px 28px;">
+          <span style="color:#b8976a;font-size:20px;font-weight:800;letter-spacing:0.1em;">PRAXIS</span>
+        </div>
+      </td></tr>
+      <tr><td style="background:#FFFFFF;border-radius:20px;border:1px solid #e8ddd0;overflow:hidden;">
+        <div style="background:linear-gradient(135deg,#b8976a,#d4af37);height:4px;"></div>
+        <table width="100%" cellpadding="0" cellspacing="0" style="padding:36px 40px 32px;">
+          <tr><td>
+            <p style="margin:0 0 4px;font-size:11px;font-family:monospace;color:#9a8a7a;letter-spacing:2px;text-transform:uppercase;">
+              RELATÓRIO SEMANAL · ${semana}
+            </p>
+            <h1 style="margin:0 0 8px;font-size:24px;font-weight:700;color:#0D1B2A;">
+              Resumo da semana, Dr. ${primeiroNome}
+            </h1>
+            <p style="margin:0 0 32px;font-size:14px;color:#6a5a4a;line-height:1.6;">
+              Aqui está o resumo do desempenho da sua clínica nos últimos 7 dias.
+            </p>
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 32px;">
+              ${cards.reduce<string[]>((rows, card, i) => {
+                if (i % 2 === 0) rows.push(`<tr>`)
+                rows.push(`<td width="50%" style="padding:6px;"><div style="background:#F8F5F0;border-radius:12px;border:1px solid #e8ddd0;padding:18px 20px;"><div style="font-size:22px;font-weight:700;color:${card.color};margin-bottom:4px;">${card.value}</div><div style="font-size:11px;color:#9a8a7a;font-family:monospace;text-transform:uppercase;letter-spacing:1px;">${card.label}</div></div></td>`)
+                if (i % 2 === 1) rows.push(`</tr>`)
+                if (i === cards.length - 1 && i % 2 === 0) rows.push(`<td width="50%"></td></tr>`)
+                return rows
+              }, []).join("")}
+            </table>
+            <div style="border-top:1px solid #e8ddd0;margin:0 0 28px;"></div>
+            <table cellpadding="0" cellspacing="0">
+              <tr><td style="border-radius:12px;overflow:hidden;">
+                <a href="${APP_URL}/dashboard"
+                  style="display:inline-block;background:#b8976a;color:#ffffff;font-size:14px;font-weight:700;padding:14px 28px;text-decoration:none;border-radius:12px;">
+                  Acessar o dashboard →
+                </a>
+              </td></tr>
+            </table>
+          </td></tr>
+        </table>
+      </td></tr>
+      <tr><td align="center" style="padding:24px 0;">
+        <p style="margin:0;font-size:11px;color:#9a8a7a;">
+          Você recebe este relatório toda segunda-feira. Dúvidas?
+          <a href="mailto:${REPLY_TO}" style="color:#b8976a;text-decoration:none;">${REPLY_TO}</a>
+        </p>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>`
+}
+
+// ── Route handler ─────────────────────────────────────────────────────────────
+
+export async function GET(req: NextRequest) {
+  if (!isCronAuthorized(req)) {
+    return NextResponse.json({ error: "Não autorizado." }, { status: 401 })
+  }
+  if (!process.env.RESEND_API_KEY) {
+    return NextResponse.json({ error: "RESEND_API_KEY não configurado." }, { status: 503 })
+  }
+
+  const supabase = createSupabaseServiceClient()
+  const result: Record<string, unknown> = {}
+
+  // ── 1. Trial acabando ─────────────────────────────────────────────────────
+  {
+    const now     = new Date()
+    const daqui2d = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+    const daqui3d = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+
+    const { data: perfis } = await supabase
+      .from("perfis")
+      .select("user_id, nome, trial_termina_em")
+      .eq("plano", "trial")
+      .gte("trial_termina_em", daqui2d)
+      .lte("trial_termina_em", daqui3d)
+
+    let trialEnviados = 0
+    for (const perfil of perfis ?? []) {
+      const { data: authUser } = await supabase.auth.admin.getUserById(perfil.user_id)
+      const email = authUser?.user?.email
+      if (!email) continue
+
+      const dias = Math.ceil((new Date(perfil.trial_termina_em).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+      const { error } = await resend.emails.send({
+        from:    FROM_EMAIL,
+        to:      [email],
+        replyTo: REPLY_TO,
+        subject: `🔔 Seu trial PRAXIS expira em ${dias} dia${dias !== 1 ? "s" : ""}`,
+        html:    buildTrialEmail(perfil.nome ?? email.split("@")[0], dias),
+      })
+      if (!error) trialEnviados++
+    }
+    result.trial_acabando = trialEnviados
+  }
+
+  // ── 2. Leads sem resposta ─────────────────────────────────────────────────
+  {
+    const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString()
+
+    const { data: leads } = await supabase
+      .from("crm_leads")
+      .select("user_id, nome, updated_at")
+      .lt("updated_at", cutoff)
+      .not("estagio", "in", '("fechado","convertido","perdido")')
+      .order("updated_at", { ascending: true })
+
+    const byUser: Record<string, Array<{ nome: string; horas: number }>> = {}
+    for (const lead of leads ?? []) {
+      if (!byUser[lead.user_id]) byUser[lead.user_id] = []
+      byUser[lead.user_id].push({
+        nome:  lead.nome,
+        horas: (Date.now() - new Date(lead.updated_at).getTime()) / (1000 * 60 * 60),
+      })
+    }
+
+    let leadEnviados = 0
+    for (const [uid, userLeads] of Object.entries(byUser)) {
+      const { data: authUser } = await supabase.auth.admin.getUserById(uid)
+      const email = authUser?.user?.email
+      if (!email) continue
+
+      const { data: perfil } = await supabase
+        .from("perfis").select("nome").eq("user_id", uid).maybeSingle()
+      const nome = perfil?.nome ?? email.split("@")[0]
+
+      const { error } = await resend.emails.send({
+        from:    FROM_EMAIL,
+        to:      [email],
+        replyTo: REPLY_TO,
+        subject: `⏰ ${userLeads.length} lead${userLeads.length !== 1 ? "s" : ""} sem resposta há mais de 48h`,
+        html:    buildLeadEmail(nome, userLeads),
+      })
+      if (!error) leadEnviados++
+    }
+    result.lead_sem_resposta = leadEnviados
+  }
+
+  // ── 3. Relatório semanal (somente segunda-feira) ──────────────────────────
+  if (new Date().getDay() === 1) {
+    const { data: perfis } = await supabase
+      .from("perfis")
+      .select("user_id, nome, email")
+      .not("email", "is", null)
+
+    const resultados = await Promise.allSettled(
+      (perfis ?? []).map(async (perfil) => {
+        const [leadsRes, pautasRes] = await Promise.all([
+          supabase.from("leads").select("id, created_at").eq("user_id", perfil.user_id),
+          supabase.from("pautas").select("id").eq("user_id", perfil.user_id),
+        ])
+        const semanaAtras = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+        const leadsData   = leadsRes.data ?? []
+
+        const metrics: RelatorioMetrics = {
+          nome:          (perfil.nome as string) ?? "Médico",
+          leads_novos:   leadsData.filter(l => new Date(l.created_at) >= semanaAtras).length,
+          leads_total:   leadsData.length,
+          consultas_mes: 0,
+          nps_score:     null,
+          pautas_total:  pautasRes.data?.length ?? 0,
+          receita_mes:   0,
+        }
+
+        const email        = perfil.email as string
+        const nome         = (perfil.nome as string) ?? "Médico"
+        const primeiroNome = nome.replace(/^Dr\.?\s*/i, "").split(" ")[0] ?? nome
+
+        const { error } = await resend.emails.send({
+          from:    FROM_EMAIL,
+          to:      [email],
+          replyTo: REPLY_TO,
+          subject: `📊 Seu relatório semanal PRAXIS, Dr. ${primeiroNome}`,
+          html:    buildRelatorioEmail(metrics),
+        })
+        if (error) throw new Error(`Falha para ${email}: ${error.message}`)
+        return { email, ok: true }
+      })
+    )
+
+    const sent   = resultados.filter(r => r.status === "fulfilled").length
+    const failed = resultados.filter(r => r.status === "rejected").length
+    result.relatorio_semanal = { sent, failed }
+  }
+
+  return NextResponse.json({ ok: true, ...result })
+}

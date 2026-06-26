@@ -122,7 +122,7 @@ export async function GET(req: NextRequest) {
         if (ok) {
           await supabase
             .from("pacientes_reativacao")
-            .update({ status: "contatado" })
+            .update({ status: "contatado", enviado_automaticamente: true, enviado_automaticamente_em: new Date().toISOString() })
             .eq("id", row.id)
           result.reativacao++
         }

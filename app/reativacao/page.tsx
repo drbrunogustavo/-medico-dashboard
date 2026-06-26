@@ -15,6 +15,8 @@ interface Paciente {
   motivo_saida?:   string
   status:          string
   mensagem_gerada?: string
+  enviado_automaticamente?: boolean
+  enviado_automaticamente_em?: string
 }
 
 interface MsgCampanha {
@@ -201,10 +203,15 @@ export default function ReativacaoPage() {
   const [importando,   setImportando]   = useState(false)
   const [importResult, setImportResult] = useState<{ importados: number; sem_telefone: number } | null>(null)
   const [importErro,   setImportErro]   = useState<string | null>(null)
+  const [perfil,       setPerfil]       = useState<{ nome?: string; especialidade?: string } | null>(null)
 
   useEffect(() => {
-    fetch("/api/reativacao").then(r => r.json()).then(d => {
-      setPacientes(Array.isArray(d) ? d : [])
+    Promise.all([
+      fetch("/api/reativacao").then(r => r.json()),
+      fetch("/api/perfil").then(r => r.json()).catch(() => null),
+    ]).then(([pac, prf]) => {
+      setPacientes(Array.isArray(pac) ? pac : [])
+      setPerfil(prf)
     }).finally(() => setLoading(false))
   }, [])
 
@@ -241,7 +248,7 @@ export default function ReativacaoPage() {
       const res = await fetch("/api/reativacao", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "gerar_mensagem", id: p.id, nome: p.nome, ultimo_contato: p.ultimo_contato, motivo_saida: p.motivo_saida }),
+        body: JSON.stringify({ action: "gerar_mensagem", id: p.id, nome: p.nome, ultimo_contato: p.ultimo_contato, motivo_saida: p.motivo_saida, nome_medico: perfil?.nome, especialidade: perfil?.especialidade }),
       })
       const data = await res.json()
       if (data.texto) {
@@ -445,12 +452,30 @@ export default function ReativacaoPage() {
                   </div>
 
                   {p.mensagem_gerada && (
-                    <div className="mt-3 rounded-lg border border-accent/15 bg-accent/5 p-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-[10px] font-mono text-accent uppercase">Mensagem gerada</span>
-                        <CopyBtn text={p.mensagem_gerada} />
+                    <div className="mt-3 space-y-2">
+                      {p.enviado_automaticamente ? (
+                        <div className="flex items-center gap-2 rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-3 py-2">
+                          <Check className="w-3 h-3 text-emerald-400 flex-shrink-0" />
+                          <span className="text-[11px] text-emerald-400 font-mono">
+                            Enviado automaticamente via Z-API
+                            {p.enviado_automaticamente_em && ` · ${new Date(p.enviado_automaticamente_em).toLocaleString("pt-BR")}`}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2">
+                          <AlertCircle className="w-3 h-3 text-amber-400 flex-shrink-0" />
+                          <span className="text-[11px] text-amber-400 font-mono">
+                            Agendado para envio automático às 9h BRT — clicar em WhatsApp abaixo envia uma segunda mensagem manual
+                          </span>
+                        </div>
+                      )}
+                      <div className="rounded-lg border border-accent/15 bg-accent/5 p-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-[10px] font-mono text-accent uppercase">Mensagem gerada</span>
+                          <CopyBtn text={p.mensagem_gerada} />
+                        </div>
+                        <pre className="text-xs text-text-secondary font-sans whitespace-pre-wrap leading-relaxed">{p.mensagem_gerada}</pre>
                       </div>
-                      <pre className="text-xs text-text-secondary font-sans whitespace-pre-wrap leading-relaxed">{p.mensagem_gerada}</pre>
                     </div>
                   )}
                 </div>

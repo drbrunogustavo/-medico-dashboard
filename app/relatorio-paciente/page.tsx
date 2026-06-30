@@ -39,6 +39,7 @@ export default function RelatorioPacientePage() {
       if (data.error) throw new Error(data.error)
       setRelatorio(data.texto)
     } catch (e) {
+      console.error('[relatorio-paciente]', e)
       setError("Erro ao gerar relatório. Verifique sua conexão e tente novamente.")
     } finally {
       setLoading(false)

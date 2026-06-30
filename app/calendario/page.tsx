@@ -171,7 +171,7 @@ function DayModal({ post, onClose }: { post: Post; onClose: () => void }) {
     { id: "hashtags" as const, label: "Hashtags", icon: Hash       },
   ]
 
-  const allHashtags = (post.hashtags ?? []).map(h => `#${h}`).join(" ")
+  const allHashtags = (post.hashtags ?? []).map(h => '#' + h.replace(/^#/, '')).join(" ")
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-[2px]"
@@ -273,7 +273,7 @@ function DayModal({ post, onClose }: { post: Post; onClose: () => void }) {
               <div className="flex flex-wrap gap-1.5">
                 {(post.hashtags ?? []).map(h => (
                   <span key={h} className="text-[11px] font-mono px-2 py-1 rounded border border-accent-border bg-accent-dim text-accent">
-                    #{h}
+                    #{h.replace(/^#/, '')}
                   </span>
                 ))}
               </div>
@@ -412,7 +412,7 @@ export default function CalendarioPage() {
         `"${p.tema}"`, `"${p.gancho}"`,
         `"${(p.legenda ?? "").replace(/"/g, '""')}"`,
         `"${p.cta ?? ""}"`,
-        (p.hashtags ?? []).map(h => `#${h}`).join(" "),
+        (p.hashtags ?? []).map(h => '#' + h.replace(/^#/, '')).join(" "),
       ].join(",")
     )
     const blob = new Blob([[header, ...rows].join("\n")], { type: "text/csv;charset=utf-8;" })

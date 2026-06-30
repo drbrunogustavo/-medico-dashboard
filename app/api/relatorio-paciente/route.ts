@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { checkAuth } from '@/lib/auth-check'
 import { AI_MODEL } from "@/lib/ai-config"
 
+export const maxDuration = 60
+
 export async function POST(request: NextRequest) {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response

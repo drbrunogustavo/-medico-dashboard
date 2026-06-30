@@ -8,7 +8,7 @@ import { ProtocolosTab } from "@/components/ProtocolosTab"
 import { cn } from "@/lib/utils"
 import {
   Pill, Search, ChevronDown, ChevronRight, Copy, Check,
-  AlertTriangle, Info, Shield, Zap, Star,
+  AlertTriangle, Info, Shield, Zap, Star, ClipboardList,
 } from "lucide-react"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -1957,15 +1957,15 @@ function PrescricaoContent() {
             key={t}
             onClick={() => switchTab(t)}
             className={cn(
-              "px-4 py-3 text-[12px] font-medium border-b-2 -mb-px transition-colors",
+              "px-4 py-3 text-[12px] font-medium border-b-2 -mb-px transition-colors flex items-center gap-1.5",
               tab === t
                 ? "border-accent text-accent"
                 : "border-transparent text-text-muted hover:text-text-secondary"
             )}
           >
-            {t === "medicamentos"  ? "Medicamentos"
+            {t === "medicamentos"  ? <><Pill className="w-3.5 h-3.5" />Prescrição Rápida</>
            : t === "emagrecimento" ? "Emagrecimento Inteligente"
-           :                         "Protocolos Clínicos"}
+           :                         <><ClipboardList className="w-3.5 h-3.5" />Conduta Clínica</>}
           </button>
         ))}
       </div>
@@ -2046,6 +2046,13 @@ function PrescricaoContent() {
                 {diag.medicamentos.map(med => (
                   <MedCard key={med.id} med={med} copied={copied} onCopy={copy} />
                 ))}
+                <button
+                  onClick={() => router.replace("/prescricao?tab=protocolos")}
+                  className="flex items-center gap-1.5 text-[10px] font-mono text-text-muted hover:text-accent transition-colors pt-1"
+                >
+                  <ClipboardList className="w-3 h-3" />
+                  Ver conduta clínica completa →
+                </button>
               </div>
             )}
           </div>

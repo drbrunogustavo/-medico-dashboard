@@ -95,14 +95,14 @@ function ContentBlock({ label, value }: { label: string; value: string }) {
 }
 
 function HashtagBlock({ tags }: { tags: string[] }) {
-  const text = tags.map(h => `#${h}`).join(" ")
+  const text = tags.map(h => '#' + h.replace(/^#/, '')).join(" ")
   return (
     <div className="space-y-1.5">
       <p className="text-[10px] font-mono text-text-muted uppercase tracking-widest">Hashtags</p>
       <div className="flex flex-wrap gap-1.5">
         {tags.map(h => (
           <span key={h} className="text-[10px] font-mono px-2 py-0.5 rounded border border-accent-border bg-accent-dim text-accent">
-            #{h}
+            #{h.replace(/^#/, '')}
           </span>
         ))}
       </div>
@@ -114,7 +114,7 @@ function HashtagBlock({ tags }: { tags: string[] }) {
 // ─── Cards de conteúdo ────────────────────────────────────────────────────────
 
 function ReelCard({ data }: { data: ReelData }) {
-  const fullText = `${data.roteiro}\n\n${data.legenda}\n\n${data.cta}\n\n${data.hashtags.map(h => `#${h}`).join(" ")}`
+  const fullText = `${data.roteiro}\n\n${data.legenda}\n\n${data.cta}\n\n${data.hashtags.map(h => '#' + h.replace(/^#/, '')).join(" ")}`
   return (
     <div className="rounded-xl border border-red-200 bg-red-50 overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3 border-b border-red-200">
@@ -143,7 +143,7 @@ function ReelCard({ data }: { data: ReelData }) {
 
 function CarrosselCard({ data }: { data: CarrosselData }) {
   const allText = data.slides.map(s => `[Slide ${s.numero}] ${s.titulo}\n${s.texto}`).join("\n\n")
-  const fullText = `${allText}\n\n${data.legenda}\n\n${data.hashtags.map(h => `#${h}`).join(" ")}`
+  const fullText = `${allText}\n\n${data.legenda}\n\n${data.hashtags.map(h => '#' + h.replace(/^#/, '')).join(" ")}`
   return (
     <div className="rounded-xl border border-blue-200 bg-blue-50 overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3 border-b border-blue-200">
@@ -211,7 +211,7 @@ function StoriesCard({ data }: { data: StoriesData }) {
 }
 
 function LegendaAltCard({ data }: { data: LegendaAlt }) {
-  const fullText = `${data.versao}\n\n${data.cta}\n\n${data.hashtags.map(h => `#${h}`).join(" ")}`
+  const fullText = `${data.versao}\n\n${data.cta}\n\n${data.hashtags.map(h => '#' + h.replace(/^#/, '')).join(" ")}`
   return (
     <div className="rounded-xl border border-purple-200 bg-purple-50 overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3 border-b border-purple-200">

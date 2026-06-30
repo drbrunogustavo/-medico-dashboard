@@ -84,10 +84,10 @@ const ESTILOS: Record<EstiloId, { label: string; desc: string; prompt: string }>
   "autoridade":         { label:"Autoridade Médica",    desc:"Credibilidade, sofisticação, posicionamento de especialista", prompt:"medical expertise and authority, sophisticated positioning, specialist credibility, professional excellence" },
 }
 
-const MODELOS: Record<Modelo, { label: string; sub: string; note: string }> = {
-  "gpt-image": { label:"GPT Image",     sub:"OpenAI · gpt-image-1",         note:"Melhor qualidade geral"           },
-  "gemini":    { label:"Gemini Imagen", sub:"Google · imagen-3.0-generate",  note:"Ótimo para composições complexas" },
-  "flux":      { label:"Flux Schnell",  sub:"HuggingFace · FLUX.1-schnell",  note:"Rápido e eficiente"               },
+const MODELOS: Record<Modelo, { label: string; sub: string; note: string; available: boolean }> = {
+  "gpt-image": { label:"GPT Image",     sub:"OpenAI · gpt-image-1",         note:"Requer configuração de API Key",   available: false },
+  "gemini":    { label:"Gemini Imagen", sub:"Google · imagen-3.0-generate",  note:"Ótimo para composições complexas", available: true  },
+  "flux":      { label:"Flux Schnell",  sub:"HuggingFace · FLUX.1-schnell",  note:"Rápido e eficiente",               available: true  },
 }
 
 const PART_KEYS: (keyof Omit<PromptParts, "promptFinal">)[] = [
@@ -212,7 +212,7 @@ export default function DiretorCriativoPage() {
   const [formato,         setFormato]         = useState<Formato>("story")
   const [estilo,          setEstilo]          = useState<EstiloId>("card-premium")
   const [ideia,           setIdeia]           = useState("")
-  const [modelo,          setModelo]          = useState<Modelo>("gpt-image")
+  const [modelo,          setModelo]          = useState<Modelo>("gemini")
   const [promptParts,     setPromptParts]     = useState<PromptParts | null>(null)
   const [editedPrompt,    setEditedPrompt]    = useState("")
   const [editMode,        setEditMode]        = useState(false)
@@ -702,16 +702,19 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
               <div className="text-[9px] font-mono text-text-muted tracking-widest uppercase mb-3">4 — Modelo de Geração</div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 {(Object.entries(MODELOS) as [Modelo, typeof MODELOS[Modelo]][]).map(([id, m]) => (
-                  <button key={id} onClick={() => setModelo(id)}
+                  <button key={id} onClick={() => m.available && setModelo(id)}
                     className={cn(
                       "text-left px-3 py-2.5 rounded-md border transition-all flex items-start gap-3",
+                      !m.available && "opacity-50 cursor-not-allowed",
                       modelo === id ? "bg-accent-dim border-accent-border" : "border-border hover:bg-white/[0.03]"
                     )}>
                     <div className={cn("w-2 h-2 rounded-full flex-shrink-0 mt-[5px]", modelo === id ? "bg-accent" : "bg-text-muted/30")} />
                     <div>
                       <div className={cn("text-[12px] font-semibold", modelo === id ? "text-accent" : "text-text-primary")}>{m.label}</div>
                       <div className="text-[9px] font-mono text-text-muted">{m.sub}</div>
-                      <div className="text-[9px] text-text-muted mt-0.5">{m.note}</div>
+                      {m.available
+                        ? <div className="text-[9px] text-text-muted mt-0.5">{m.note}</div>
+                        : <div className="text-[9px] text-amber-500 font-mono mt-0.5">⚠ Indisponível no momento</div>}
                     </div>
                   </button>
                 ))}

@@ -97,7 +97,7 @@ export default function CarrosselPage() {
   const toFullText = (r: CarrosselResult) =>
     `CARROSSEL — ${r.titulo}\n${r.subtitulo}\n\n` +
     r.slides.map(s => `SLIDE ${s.numero}: ${s.titulo}\n${s.conteudo}`).join("\n\n") +
-    `\n\nCTA: ${r.cta}\n\nHASHTAGS: ${r.hashtags.map(h => "#" + h).join(" ")}\n\nLEGENDA:\n${r.legenda}`
+    `\n\nCTA: ${r.cta}\n\nHASHTAGS: ${r.hashtags.map(h => "#" + h.replace(/^#/, '')).join(" ")}\n\nLEGENDA:\n${r.legenda}`
 
   return (
     <div className="animate-fade-in">

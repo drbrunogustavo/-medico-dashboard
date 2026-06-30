@@ -123,6 +123,7 @@ export default function PerfilPage() {
   const [uploadingLogo,   setUploadingLogo]   = useState(false)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [avatarError,     setAvatarError]     = useState<string | null>(null)
+  const [logoError,       setLogoError]       = useState<string | null>(null)
   const [integStatus,     setIntegStatus]     = useState<IntegStatus | null>(null)
   const logoRef   = useRef<HTMLInputElement>(null)
   const avatarRef = useRef<HTMLInputElement>(null)
@@ -202,6 +203,7 @@ export default function PerfilPage() {
     if (!file.type.startsWith("image/")) return
     if (file.size > 5 * 1024 * 1024) return
     setUploadingLogo(true)
+    setLogoError(null)
     try {
       const supabase = getSupabaseBrowserClient()
       const ext  = file.name.split(".").pop() ?? "png"
@@ -214,8 +216,15 @@ export default function PerfilPage() {
         .from("perfil-assets")
         .getPublicUrl(data.path)
       setForm(f => ({ ...f, marca_logo_url: publicUrl }))
+      const r = await fetch("/api/perfil", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ marca_logo_url: publicUrl }),
+      })
+      if (!r.ok) throw new Error("Erro ao salvar logo no perfil.")
     } catch (err) {
       console.error("[logo upload]", err)
+      setLogoError("Erro ao enviar o logo. Tente novamente.")
     } finally {
       setUploadingLogo(false)
       if (logoRef.current) logoRef.current.value = ""
@@ -248,6 +257,12 @@ export default function PerfilPage() {
         .from("perfil-assets")
         .getPublicUrl(data.path)
       setForm(f => ({ ...f, avatar_url: publicUrl }))
+      const r = await fetch("/api/perfil", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ avatar_url: publicUrl }),
+      })
+      if (!r.ok) throw new Error("Erro ao salvar avatar no perfil.")
     } catch (e) {
       console.error("[perfil] erro ao fazer upload do avatar:", e)
       setAvatarError("Erro ao enviar a imagem. Tente novamente.")
@@ -640,6 +655,11 @@ export default function PerfilPage() {
                 >
                   Remover logo
                 </button>
+              )}
+              {logoError && (
+                <p className="flex items-center gap-1.5 text-[11px] text-red-400">
+                  <AlertCircle className="w-3 h-3 flex-shrink-0" /> {logoError}
+                </p>
               )}
             </div>
 

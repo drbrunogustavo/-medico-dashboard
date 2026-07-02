@@ -1,11 +1,39 @@
 import { NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
 import { createClient } from "@supabase/supabase-js"
+import { Resend } from "resend"
+import { buildBoasVindasHtml, FROM_EMAIL, REPLY_TO } from "@/lib/email-boas-vindas"
 
 function getSupabaseAdmin() {
   const url    = process.env.NEXT_PUBLIC_SUPABASE_URL!
   const svcKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   return createClient(url, svcKey, { auth: { persistSession: false } })
+}
+
+async function dispararEmailBoasVindas(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+  userId: string,
+  fallbackEmail: string | null | undefined,
+) {
+  const { data: authUser } = await supabase.auth.admin.getUserById(userId)
+  const email = authUser.user?.email ?? fallbackEmail
+  if (!email) return
+  const { data: perfilRow } = await supabase
+    .from("perfis")
+    .select("nome_completo")
+    .eq("user_id", userId)
+    .maybeSingle()
+  const nome = (perfilRow?.nome_completo as string | null) ?? email
+  const primeiroNome = nome.replace(/^Dr\.?\s*/i, "").split(" ")[0] ?? nome
+  const resend = new Resend(process.env.RESEND_API_KEY)
+  await resend.emails.send({
+    from:    FROM_EMAIL,
+    to:      [email],
+    replyTo: REPLY_TO,
+    subject: `Bem-vindo ao PRAXIS, Dr. ${primeiroNome}! 🎉`,
+    html:    buildBoasVindasHtml(nome),
+  })
+  console.log(`[stripe/webhook] E-mail de boas-vindas enviado — user ${userId} → ${email}`)
 }
 
 export async function POST(req: NextRequest) {
@@ -103,6 +131,15 @@ export async function POST(req: NextRequest) {
           .eq("user_id", userId)
 
         if (perfilError) console.error("[stripe/webhook] Erro ao marcar onboarding_completo:", perfilError)
+
+        // Fire-and-forget: falha no e-mail nunca trava nem reverte o webhook
+        if (process.env.RESEND_API_KEY) {
+          dispararEmailBoasVindas(
+            supabase,
+            userId,
+            session.customer_details?.email ?? session.customer_email,
+          ).catch((err) => console.error("[stripe/webhook] Falha ao enviar e-mail de boas-vindas:", err))
+        }
         break
       }
 

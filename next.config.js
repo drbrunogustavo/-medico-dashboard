@@ -23,8 +23,8 @@ const nextConfig = {
   async headers() {
     return [
       {
-        // Required for @ffmpeg/ffmpeg SharedArrayBuffer support (editor de vídeo)
-        source: "/(.*)",
+        // COEP/COOP required for SharedArrayBuffer — scoped to /imagens only
+        source: "/imagens",
         headers: [
           { key: "Cross-Origin-Opener-Policy",   value: "same-origin"  },
           { key: "Cross-Origin-Embedder-Policy",  value: "require-corp" },

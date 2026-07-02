@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { Resend } from "resend"
 import { createSupabaseServiceClient } from "@/lib/supabase-service"
+import { sendZapiForUser } from "@/lib/zapi"
 
 const resend     = new Resend(process.env.RESEND_API_KEY)
 const APP_URL    = process.env.NEXT_PUBLIC_APP_URL ?? "https://praxisplataforma.com.br"
@@ -219,89 +220,62 @@ export async function GET(req: NextRequest) {
   }
 
   const supabase = createSupabaseServiceClient()
-  const result: Record<string, unknown> = {}
+  const appUrl   = process.env.NEXT_PUBLIC_APP_URL ?? "https://praxisplataforma.com.br"
 
-  // ── 1. Trial acabando ─────────────────────────────────────────────────────
-  {
+  async function runTrialAcabando() {
     const now     = new Date()
     const daqui2d = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
     const daqui3d = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
-
     const { data: perfis } = await supabase
-      .from("perfis")
-      .select("user_id, nome, trial_termina_em")
-      .eq("plano", "trial")
-      .gte("trial_termina_em", daqui2d)
-      .lte("trial_termina_em", daqui3d)
-
-    let trialEnviados = 0
+      .from("perfis").select("user_id, nome, trial_termina_em")
+      .eq("plano", "trial").gte("trial_termina_em", daqui2d).lte("trial_termina_em", daqui3d)
+    let enviados = 0
     for (const perfil of perfis ?? []) {
       const { data: authUser } = await supabase.auth.admin.getUserById(perfil.user_id)
       const email = authUser?.user?.email
       if (!email) continue
-
       const dias = Math.ceil((new Date(perfil.trial_termina_em).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
       const { error } = await resend.emails.send({
-        from:    FROM_EMAIL,
-        to:      [email],
-        replyTo: REPLY_TO,
+        from: FROM_EMAIL, to: [email], replyTo: REPLY_TO,
         subject: `🔔 Seu trial PRAXIS expira em ${dias} dia${dias !== 1 ? "s" : ""}`,
-        html:    buildTrialEmail(perfil.nome ?? email.split("@")[0], dias),
+        html: buildTrialEmail(perfil.nome ?? email.split("@")[0], dias),
       })
-      if (!error) trialEnviados++
+      if (!error) enviados++
     }
-    result.trial_acabando = trialEnviados
+    return enviados
   }
 
-  // ── 2. Leads sem resposta ─────────────────────────────────────────────────
-  {
+  async function runLeadSemResposta() {
     const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString()
-
     const { data: leads } = await supabase
-      .from("crm_leads")
-      .select("user_id, nome, updated_at")
+      .from("crm_leads").select("user_id, nome, updated_at")
       .lt("updated_at", cutoff)
       .not("estagio", "in", '("fechado","convertido","perdido")')
       .order("updated_at", { ascending: true })
-
     const byUser: Record<string, Array<{ nome: string; horas: number }>> = {}
     for (const lead of leads ?? []) {
       if (!byUser[lead.user_id]) byUser[lead.user_id] = []
-      byUser[lead.user_id].push({
-        nome:  lead.nome,
-        horas: (Date.now() - new Date(lead.updated_at).getTime()) / (1000 * 60 * 60),
-      })
+      byUser[lead.user_id].push({ nome: lead.nome, horas: (Date.now() - new Date(lead.updated_at).getTime()) / 3600000 })
     }
-
-    let leadEnviados = 0
+    let enviados = 0
     for (const [uid, userLeads] of Object.entries(byUser)) {
       const { data: authUser } = await supabase.auth.admin.getUserById(uid)
       const email = authUser?.user?.email
       if (!email) continue
-
-      const { data: perfil } = await supabase
-        .from("perfis").select("nome").eq("user_id", uid).maybeSingle()
-      const nome = perfil?.nome ?? email.split("@")[0]
-
+      const { data: perfil } = await supabase.from("perfis").select("nome").eq("user_id", uid).maybeSingle()
       const { error } = await resend.emails.send({
-        from:    FROM_EMAIL,
-        to:      [email],
-        replyTo: REPLY_TO,
+        from: FROM_EMAIL, to: [email], replyTo: REPLY_TO,
         subject: `⏰ ${userLeads.length} lead${userLeads.length !== 1 ? "s" : ""} sem resposta há mais de 48h`,
-        html:    buildLeadEmail(nome, userLeads),
+        html: buildLeadEmail(perfil?.nome ?? email.split("@")[0], userLeads),
       })
-      if (!error) leadEnviados++
+      if (!error) enviados++
     }
-    result.lead_sem_resposta = leadEnviados
+    return enviados
   }
 
-  // ── 3. Relatório semanal (somente segunda-feira) ──────────────────────────
-  if (new Date().getDay() === 1) {
-    const { data: perfis } = await supabase
-      .from("perfis")
-      .select("user_id, nome, email")
-      .not("email", "is", null)
-
+  async function runRelatorioSemanal() {
+    if (new Date().getDay() !== 1) return null
+    const { data: perfis } = await supabase.from("perfis").select("user_id, nome, email").not("email", "is", null)
     const resultados = await Promise.allSettled(
       (perfis ?? []).map(async (perfil) => {
         const [leadsRes, pautasRes] = await Promise.all([
@@ -310,7 +284,6 @@ export async function GET(req: NextRequest) {
         ])
         const semanaAtras = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
         const leadsData   = leadsRes.data ?? []
-
         const metrics: RelatorioMetrics = {
           nome:          (perfil.nome as string) ?? "Médico",
           leads_novos:   leadsData.filter(l => new Date(l.created_at) >= semanaAtras).length,
@@ -320,27 +293,75 @@ export async function GET(req: NextRequest) {
           pautas_total:  pautasRes.data?.length ?? 0,
           receita_mes:   0,
         }
-
         const email        = perfil.email as string
         const nome         = (perfil.nome as string) ?? "Médico"
         const primeiroNome = nome.replace(/^Dr\.?\s*/i, "").split(" ")[0] ?? nome
-
         const { error } = await resend.emails.send({
-          from:    FROM_EMAIL,
-          to:      [email],
-          replyTo: REPLY_TO,
+          from: FROM_EMAIL, to: [email], replyTo: REPLY_TO,
           subject: `📊 Seu relatório semanal PRAXIS, Dr. ${primeiroNome}`,
-          html:    buildRelatorioEmail(metrics),
+          html: buildRelatorioEmail(metrics),
         })
         if (error) throw new Error(`Falha para ${email}: ${error.message}`)
         return { email, ok: true }
       })
     )
-
-    const sent   = resultados.filter(r => r.status === "fulfilled").length
-    const failed = resultados.filter(r => r.status === "rejected").length
-    result.relatorio_semanal = { sent, failed }
+    return { sent: resultados.filter(r => r.status === "fulfilled").length, failed: resultados.filter(r => r.status === "rejected").length }
   }
 
-  return NextResponse.json({ ok: true, ...result })
+  async function runRegua() {
+    const now = new Date().toISOString()
+    const { data } = await supabase
+      .from("regua_relacionamento")
+      .select("id, paciente_telefone, mensagem, user_id")
+      .lte("agendado_para", now).eq("status", "pendente").eq("pausado", false)
+    let enviados = 0
+    for (const row of data ?? []) {
+      const { ok } = await sendZapiForUser(row.user_id as string, row.paciente_telefone, row.mensagem)
+      if (ok) {
+        await supabase.from("regua_relacionamento")
+          .update({ status: "enviado", enviado_em: new Date().toISOString() }).eq("id", row.id)
+        enviados++
+      }
+    }
+    return enviados
+  }
+
+  async function runNps() {
+    const now = new Date().toISOString()
+    const { data } = await supabase
+      .from("nps_pesquisas")
+      .select("id, paciente_nome, paciente_telefone, token, user_id")
+      .lte("agendado_para", now).eq("status", "pendente")
+    let enviados = 0
+    for (const row of data ?? []) {
+      const link = `${appUrl}/nps/${row.token}`
+      const msg  = `Olá, ${row.paciente_nome}! 👋\n\nSua opinião é muito importante para nós.\nComo foi sua última consulta com o médico?\n\nResponda em menos de 1 minuto: ${link}\n\nObrigado pela confiança! 🙏`
+      const { ok } = await sendZapiForUser(row.user_id as string, row.paciente_telefone, msg)
+      if (ok) {
+        await supabase.from("nps_pesquisas").update({ status: "enviado" }).eq("id", row.id)
+        enviados++
+      }
+    }
+    return enviados
+  }
+
+  const pick = (r: PromiseSettledResult<unknown>) =>
+    r.status === "fulfilled" ? r.value : { error: String((r as PromiseRejectedResult).reason) }
+
+  const [trialR, leadR, relatorioR, reguaR, npsR] = await Promise.allSettled([
+    runTrialAcabando(),
+    runLeadSemResposta(),
+    runRelatorioSemanal(),
+    runRegua(),
+    runNps(),
+  ])
+
+  return NextResponse.json({
+    ok: true,
+    trial_acabando:    pick(trialR),
+    lead_sem_resposta: pick(leadR),
+    relatorio_semanal: pick(relatorioR),
+    regua:             pick(reguaR),
+    nps:               pick(npsR),
+  })
 }

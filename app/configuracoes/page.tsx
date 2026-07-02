@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { TopBar } from "@/components/TopBar"
 import { cn } from "@/lib/utils"
 import {
@@ -122,31 +122,70 @@ const INTEGRACOES = [
     fields: [{ key: "api_key",     label: "API Key",      placeholder: "re_xxxxxxxx", type: "password" },
              { key: "from_email",  label: "Email remetente", placeholder: "noreply@suaclinica.com.br" }],
   },
+  {
+    id: "medx",
+    name: "MedX",
+    desc: "Prontuário eletrônico e agenda de consultas",
+    connected: false,
+    color: "#3b7fff",
+    fields: [
+      { key: "url",               label: "URL do servidor",     placeholder: "https://medx65.azurewebsites.net" },
+      { key: "integration_token", label: "Token de integração", placeholder: "seu-token-aqui", type: "password" },
+    ],
+  },
 ]
 
 type IntegrationState = Record<string, Record<string, string>>
 
 function TabIntegracoes() {
-  const [values, setValues] = useState<IntegrationState>({})
-  const [show,   setShow]   = useState<Record<string, boolean>>({})
-  const [saving, setSaving] = useState<Record<string, boolean>>({})
-  const [saved,  setSaved]  = useState<Record<string, boolean>>({})
+  const [values,    setValues]    = useState<IntegrationState>({})
+  const [show,      setShow]      = useState<Record<string, boolean>>({})
+  const [saving,    setSaving]    = useState<Record<string, boolean>>({})
+  const [saved,     setSaved]     = useState<Record<string, boolean>>({})
+  const [connected, setConnected] = useState<Record<string, boolean>>({})
+  const [loading,   setLoading]   = useState(true)
+
+  useEffect(() => {
+    fetch("/api/integracoes")
+      .then(r => r.json())
+      .then((rows: Array<{ tipo: string; config: Record<string, string>; ativo: boolean }>) => {
+        const vals: IntegrationState = {}
+        const conn: Record<string, boolean> = {}
+        rows.forEach(row => { vals[row.tipo] = row.config; conn[row.tipo] = row.ativo })
+        setValues(vals)
+        setConnected(conn)
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [])
 
   const set = (id: string, key: string, val: string) =>
     setValues(v => ({ ...v, [id]: { ...(v[id] ?? {}), [key]: val } }))
 
   const save = async (id: string) => {
     setSaving(s => ({ ...s, [id]: true }))
-    await new Promise(r => setTimeout(r, 800))
+    const res = await fetch("/api/integracoes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tipo: id, config: values[id] ?? {} }),
+    })
     setSaving(s => ({ ...s, [id]: false }))
-    setSaved(s => ({ ...s, [id]: true }))
-    setTimeout(() => setSaved(s => ({ ...s, [id]: false })), 2000)
+    if (res.ok) {
+      setConnected(c => ({ ...c, [id]: true }))
+      setSaved(s => ({ ...s, [id]: true }))
+      setTimeout(() => setSaved(s => ({ ...s, [id]: false })), 2000)
+    }
   }
 
   return (
     <div className="space-y-5">
       <SectionTitle>Conexões Externas</SectionTitle>
-      {INTEGRACOES.map(integ => (
+      {loading ? (
+        <div className="flex items-center gap-2 py-8" style={{ color: "var(--text-muted)" }}>
+          <Loader2 className="w-4 h-4 animate-spin" />
+          <span className="text-[12px]">Carregando integrações...</span>
+        </div>
+      ) : INTEGRACOES.map(integ => (
         <Card key={integ.id}>
           {/* Header */}
           <div className="flex items-center gap-3 px-5 py-4 border-b" style={{ borderColor: "var(--border)" }}>
@@ -159,12 +198,12 @@ function TabIntegracoes() {
               <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{integ.desc}</p>
             </div>
             <div className="flex items-center gap-1.5">
-              {integ.connected
+              {connected[integ.id]
                 ? <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                 : <XCircle className="w-4 h-4" style={{ color: "var(--text-muted)" }} />}
               <span className="text-[11px] font-mono"
-                style={{ color: integ.connected ? "#10b981" : "var(--text-muted)" }}>
-                {integ.connected ? "Conectado" : "Desconectado"}
+                style={{ color: connected[integ.id] ? "#10b981" : "var(--text-muted)" }}>
+                {connected[integ.id] ? "Conectado" : "Desconectado"}
               </span>
             </div>
           </div>

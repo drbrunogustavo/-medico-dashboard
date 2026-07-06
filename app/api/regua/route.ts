@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
-import Anthropic from "@anthropic-ai/sdk"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
-import { AI_MODEL } from "@/lib/ai-config"
+import { AI_MODEL, getAnthropicClient } from "@/lib/ai-config"
 
-const ai = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 function errMsg(e: unknown) { return e instanceof Error ? e.message : String(e) }
 
@@ -30,7 +28,7 @@ export async function GET(_req: NextRequest) {
 export async function POST(req: NextRequest) {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
-
+  const ai = getAnthropicClient()
   const body = await req.json() as {
     paciente_nome:      string
     paciente_telefone:  string

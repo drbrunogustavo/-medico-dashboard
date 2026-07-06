@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
-import Anthropic from "@anthropic-ai/sdk"
 import { checkAuth } from "@/lib/auth-check"
-import { AI_MODEL } from "@/lib/ai-config"
+import { AI_MODEL, getAnthropicClient } from "@/lib/ai-config"
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 type RadarType = "radar" | "reels" | "velocity" | "opportunities"
 
@@ -61,7 +59,7 @@ function buildPrompt(type: RadarType, f: RadarFilters): { user: string; system: 
 export async function POST(req: NextRequest) {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
-
+  const client = getAnthropicClient()
   try {
     const body = await req.json() as {
       type:     RadarType

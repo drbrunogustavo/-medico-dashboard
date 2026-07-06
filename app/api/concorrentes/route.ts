@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
-import Anthropic from "@anthropic-ai/sdk"
 import { checkAuth } from "@/lib/auth-check"
-import { AI_MODEL } from "@/lib/ai-config"
+import { AI_MODEL, getAnthropicClient } from "@/lib/ai-config"
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 type TipoAnalise = "estrategia" | "posicionamento" | "pontos_fracos" | "completa" | "benchmark" | "crescimento_instagram"
 
@@ -242,7 +240,7 @@ Seja específico, prático e orientado a resultados. Evite conselhos genéricos.
 export async function POST(req: NextRequest) {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
-
+  const client = getAnthropicClient()
   try {
     const body = await req.json() as ConcorrentesRequest
     const { tipo } = body

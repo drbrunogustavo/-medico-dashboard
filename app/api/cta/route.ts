@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
-import Anthropic from "@anthropic-ai/sdk"
 import { checkAuth } from "@/lib/auth-check"
-import { AI_MODEL } from "@/lib/ai-config"
+import { AI_MODEL, getAnthropicClient } from "@/lib/ai-config"
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 export async function POST(req: NextRequest) {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
-
+  const client = getAnthropicClient()
   try {
     const { tema, objetivo = "agendar consulta", formato = "Reel", quantidade = 10 } = await req.json() as {
       tema: string; objetivo?: string; formato?: string; quantidade?: number

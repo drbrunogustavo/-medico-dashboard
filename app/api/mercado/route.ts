@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
-import Anthropic from "@anthropic-ai/sdk"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
-import { AI_MODEL } from "@/lib/ai-config"
+import { AI_MODEL, getAnthropicClient } from "@/lib/ai-config"
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 function getWeekKey() {
   const d = new Date()
@@ -16,7 +14,7 @@ function getWeekKey() {
 export async function POST(req: NextRequest) {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
-
+  const client = getAnthropicClient()
   try {
     const { especialidade = "Endocrinologia e Nutrologia" } = await req.json() as { especialidade?: string }
     const semana = getWeekKey()

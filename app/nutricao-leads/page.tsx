@@ -168,9 +168,10 @@ export default function NutricaoLeadsPage() {
   const [duracao,   setDuracao]   = useState<7 | 15 | 30>(15)
 
   // Generation
-  const [generating, setGenerating] = useState(false)
-  const [genError,   setGenError]   = useState("")
-  const [trilha,     setTrilha]     = useState<ItemTrilha[] | null>(null)
+  const [generating,      setGenerating]      = useState(false)
+  const [genError,        setGenError]        = useState("")
+  const [trilha,          setTrilha]          = useState<ItemTrilha[] | null>(null)
+  const [suggestingPerfil, setSuggestingPerfil] = useState(false)
 
   // Pre-fill form from CRM lead via ?lead_id=
   useEffect(() => {
@@ -214,6 +215,24 @@ export default function NutricaoLeadsPage() {
   }, [])
 
   useEffect(() => { fetchLeads() }, [fetchLeads])
+
+  // ── Sugerir perfil com IA ─────────────────────────────────────────────────────
+
+  const sugerirPerfil = async () => {
+    if (!nome.trim()) return
+    setSuggestingPerfil(true)
+    try {
+      const r = await fetch("/api/nutricao-leads?action=sugerir-perfil", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ nome, interesse }),
+      })
+      const d = await r.json() as { sugestao?: string }
+      if (d.sugestao) setPerfil(d.sugestao)
+    } finally {
+      setSuggestingPerfil(false)
+    }
+  }
 
   // ── Generate trilha ───────────────────────────────────────────────────────────
 
@@ -418,9 +437,21 @@ export default function NutricaoLeadsPage() {
 
               {/* Perfil */}
               <div>
-                <label className="text-[10px] font-mono text-text-muted uppercase tracking-widest block mb-1.5">
-                  Perfil do Lead *
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-[10px] font-mono text-text-muted uppercase tracking-widest">
+                    Perfil do Lead *
+                  </label>
+                  <button
+                    type="button"
+                    onClick={sugerirPerfil}
+                    disabled={suggestingPerfil || !nome.trim()}
+                    className="flex items-center gap-1 text-[10px] text-blue-400 hover:text-blue-300 disabled:opacity-40 transition-colors"
+                  >
+                    {suggestingPerfil
+                      ? <><Loader2 className="w-3 h-3 animate-spin" /> Sugerindo...</>
+                      : <><Sparkles className="w-3 h-3" /> Sugerir com IA</>}
+                  </button>
+                </div>
                 <textarea
                   value={perfil}
                   onChange={e => setPerfil(e.target.value)}
@@ -478,6 +509,11 @@ export default function NutricaoLeadsPage() {
                   : <><Sparkles className="w-4 h-4" /> Gerar Trilha</>
                 }
               </button>
+              {generating && (
+                <p className="text-center text-[10px] text-text-muted mt-1.5">
+                  A geração pode levar 30–60 segundos. Não feche a página.
+                </p>
+              )}
             </div>
 
             {/* Generated preview */}

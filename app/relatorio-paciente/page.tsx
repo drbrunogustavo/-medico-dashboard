@@ -205,6 +205,11 @@ export default function RelatorioPacientePage() {
                   ? <><Loader2 className="w-4 h-4 animate-spin" /> Gerando relatório...</>
                   : <><FileHeart className="w-4 h-4" /> Gerar Relatório para Paciente</>}
               </button>
+              {loading && (
+                <p className="text-center text-[10px] text-text-muted mt-1.5">
+                  A geração pode levar 30–60 segundos. Não feche a página.
+                </p>
+              )}
             </div>
 
             {error && (

@@ -216,17 +216,22 @@ export default function CtaPage() {
             )}
 
             {loading && (
-              <div className="space-y-2.5 animate-pulse">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <div key={i} className="bg-card border border-border rounded-lg p-4">
-                    <div className="h-4 bg-border rounded w-3/4 mb-2" />
-                    <div className="flex gap-2">
-                      <div className="h-3 bg-border rounded w-16" />
-                      <div className="h-3 bg-border rounded w-12" />
+              <>
+                <div className="space-y-2.5 animate-pulse">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <div key={i} className="bg-card border border-border rounded-lg p-4">
+                      <div className="h-4 bg-border rounded w-3/4 mb-2" />
+                      <div className="flex gap-2">
+                        <div className="h-3 bg-border rounded w-16" />
+                        <div className="h-3 bg-border rounded w-12" />
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+                <p className="text-center text-[10px] text-text-muted mt-3">
+                  A geração pode levar 30–60 segundos. Não feche a página.
+                </p>
+              </>
             )}
 
             {resultado && !loading && (

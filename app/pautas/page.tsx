@@ -1,10 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { TopBar } from "@/components/TopBar"
 import { StatCard } from "@/components/StatCard"
-import { Plus, FileText, Search, Filter, Tag, Clock, Star, ChevronRight, Pencil, Trash2 } from "lucide-react"
+import { Plus, FileText, Search, Filter, Tag, Clock, Star, ChevronDown, Pencil, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const CATEGORIAS = ["Todas","Nutrologia","Endocrinologia","Longevidade","Metabolismo","Microbioma","Hormônios","Anti-aging","Genômica"]
@@ -53,6 +53,8 @@ export default function PautasPage() {
   const [newNota, setNewNota]     = useState("")
   const [newFonte, setNewFonte]   = useState("")
   const [toast, setToast]         = useState<string | null>(null)
+  const [openMenu, setOpenMenu]   = useState<string | null>(null)
+  const menuRef                   = useRef<HTMLDivElement>(null)
 
   const showToast = (msg: string) => {
     setToast(msg)
@@ -72,6 +74,14 @@ export default function PautasPage() {
   }
 
   useEffect(() => { fetchPautas() }, [])
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setOpenMenu(null)
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
 
   const filtered = pautas.filter(p => {
     if (filterCat !== "Todas" && p.categoria !== filterCat) return false
@@ -254,27 +264,40 @@ export default function PautasPage() {
                       </div>
                     )}
                   </div>
-                  <div className="flex flex-wrap items-center gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex-shrink-0">
-                    <button
-                      onClick={() => router.push('/imagens?tema=' + encodeURIComponent(p.titulo))}
-                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-md border border-border text-text-muted hover:text-accent hover:border-accent-border text-[10px] font-mono transition-colors whitespace-nowrap">
-                      📸 Imagens
-                    </button>
-                    <button
-                      onClick={() => router.push('/roteiros?tema=' + encodeURIComponent(p.titulo))}
-                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-md border border-border text-text-muted hover:text-accent hover:border-accent-border text-[10px] font-mono transition-colors whitespace-nowrap">
-                      🎬 Roteiro
-                    </button>
-                    <button
-                      onClick={() => router.push('/legendas?tema=' + encodeURIComponent(p.titulo))}
-                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-md border border-border text-text-muted hover:text-accent hover:border-accent-border text-[10px] font-mono transition-colors whitespace-nowrap">
-                      ✍️ Legenda
-                    </button>
+                  <div className="flex items-center gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex-shrink-0">
+                    {/* Dropdown de formatos */}
+                    <div className="relative" ref={openMenu === p.id ? menuRef : undefined}>
+                      <button
+                        onClick={() => setOpenMenu(openMenu === p.id ? null : p.id)}
+                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-md border border-border text-text-muted hover:text-accent hover:border-accent-border text-[10px] font-mono transition-colors whitespace-nowrap"
+                      >
+                        Formatos <ChevronDown className="w-3 h-3" />
+                      </button>
+                      {openMenu === p.id && (
+                        <div className="absolute right-0 top-full mt-1 z-50 bg-card border border-border rounded-lg shadow-xl py-1 min-w-[160px]">
+                          {([
+                            { label: "📸 Imagens",   path: "/imagens"   },
+                            { label: "🎬 Roteiro",   path: "/roteiros"  },
+                            { label: "📊 Carrossel", path: "/carrossel" },
+                            { label: "🎭 Reels",     path: "/reels"     },
+                            { label: "📱 Stories",   path: "/stories"   },
+                            { label: "✍️ Legenda",   path: "/legendas"  },
+                          ] as { label: string; path: string }[]).map(({ label, path }) => (
+                            <button
+                              key={path}
+                              onClick={() => { router.push(path + "?tema=" + encodeURIComponent(p.titulo)); setOpenMenu(null) }}
+                              className="w-full text-left px-3 py-2 text-[11px] text-text-secondary hover:text-text-primary hover:bg-white/[0.04] transition-colors"
+                            >
+                              {label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                     <button onClick={() => removePauta(p.id)}
                       className="w-7 h-7 rounded-md border border-border flex items-center justify-center text-text-muted hover:text-red-400 hover:border-red-500/40 transition-colors">
                       <Trash2 className="w-3 h-3" />
                     </button>
-                    <ChevronRight className="w-4 h-4 text-text-muted" />
                   </div>
                 </div>
                 <div className="mt-3 pt-3 border-t border-border">

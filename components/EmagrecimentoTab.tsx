@@ -613,6 +613,11 @@ export function EmagrecimentoTab() {
                   : <><Zap className="w-4 h-4" /> Gerar Análise IA</>}
               </button>
             )}
+            {loading && (
+              <p className="text-center text-[10px] text-text-muted mt-1.5">
+                A geração pode levar 30–60 segundos. Não feche a página.
+              </p>
+            )}
           </div>
 
           {!todasRespondidas && fatorIdx === FATORES.length - 1 && (

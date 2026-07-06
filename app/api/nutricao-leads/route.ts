@@ -70,6 +70,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(data)
     }
 
+    // ── Sugerir perfil do lead ────────────────────────────────────────────────
+    if (action === "sugerir-perfil") {
+      const { nome, interesse } = body as unknown as { nome: string; interesse: string }
+      const r = await client.messages.create({
+        model:      AI_MODEL,
+        max_tokens: 300,
+        messages: [{
+          role:    "user",
+          content: `Gere uma descrição de lead de 3-4 linhas para alguém chamado "${nome}" com interesse em "${interesse}". Infira: perfil socioeconômico provável, motivação para buscar tratamento e abordagem de comunicação recomendada. Seja objetivo e clínico. Retorne apenas o texto da descrição, sem títulos ou markdown.`,
+        }],
+      })
+      const sugestao = r.content[0]?.type === "text" ? r.content[0].text.trim() : ""
+      return NextResponse.json({ sugestao })
+    }
+
     // ── Gerar trilha com Claude ──────────────────────────────────────────────
     const dias = body.duracaoDias === 7  ? CRONOGRAMA.filter(d => d.dia <= 7)
                : body.duracaoDias === 15 ? CRONOGRAMA.filter(d => d.dia <= 15)

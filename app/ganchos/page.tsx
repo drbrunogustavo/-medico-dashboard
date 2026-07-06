@@ -183,6 +183,7 @@ export default function GanchosPage() {
                 <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'50vh', gap:16 }}>
                   <div style={{ width:44, height:44, border:'3px solid rgba(200,168,76,0.2)', borderTop:`3px solid ${D.accent}`, borderRadius:'50%', animation:'spin 0.8s linear infinite' }} />
                   <div style={{ color:D.accent, fontSize:13, fontWeight:700, letterSpacing:2 }}>CRIANDO GANCHOS...</div>
+                  <div style={{ color:'#7c85a0', fontSize:10, marginTop:6, letterSpacing:0.5 }}>A geração pode levar 30–60 segundos. Não feche a página.</div>
                 </div>
               )}
               {!loading && (

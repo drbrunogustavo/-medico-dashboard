@@ -18,15 +18,22 @@ interface Anuncio {
   periodo_dias: number
   data_inicio: string | null
   data_fim: string | null
-  status: "pendente" | "aprovado" | "expirado"
+  status: "aguardando_pagamento" | "pendente" | "aprovado" | "rejeitado" | "expirado"
 }
 
-type Filtro = "pendente" | "aprovado" | "expirado" | "all"
+type Filtro = "pendente" | "aprovado" | "inativos" | "all"
 const FILTRO_LABELS: Record<Filtro, string> = {
   pendente: "Pendentes",
   aprovado: "Aprovados",
-  expirado: "Expirados",
+  inativos: "Inativos",
   all:      "Todos",
+}
+// Maps UI filter → comma-separated status values sent to the API
+const FILTRO_STATUS: Record<Filtro, string> = {
+  pendente: "pendente,aguardando_pagamento",
+  aprovado: "aprovado",
+  inativos: "expirado,rejeitado",
+  all:      "all",
 }
 
 export default function AdminAnunciosPage() {
@@ -39,7 +46,7 @@ export default function AdminAnunciosPage() {
   const fetchAnuncios = useCallback(async (f: Filtro) => {
     setLoading(true)
     try {
-      const r    = await fetch(`/api/admin/anuncios?status=${f}`)
+      const r    = await fetch(`/api/admin/anuncios?status=${FILTRO_STATUS[f]}`)
       const data = await r.json()
       setAnuncios(Array.isArray(data) ? data : [])
     } catch (e) {
@@ -134,7 +141,7 @@ export default function AdminAnunciosPage() {
 
       <div className="p-6 md:p-8 space-y-6">
         <div className="flex gap-2 flex-wrap">
-          {(["pendente", "aprovado", "expirado", "all"] as Filtro[]).map(f => (
+          {(["pendente", "aprovado", "inativos", "all"] as Filtro[]).map(f => (
             <button
               key={f}
               onClick={() => setFiltro(f)}
@@ -156,7 +163,7 @@ export default function AdminAnunciosPage() {
           </div>
         ) : anuncios.length === 0 ? (
           <div className="text-center py-20 text-[13px] text-text-muted">
-            {filtro === "pendente" ? "Nenhum anúncio pendente de revisão." : "Nenhum anúncio encontrado."}
+            {filtro === "pendente" ? "Nenhum anúncio pendente de revisão ou aguardando pagamento." : "Nenhum anúncio encontrado."}
           </div>
         ) : (
           <div className="space-y-4">
@@ -181,9 +188,11 @@ export default function AdminAnunciosPage() {
                       <span className="text-[14px] font-semibold text-text-primary">{an.anunciante_nome}</span>
                       <span className={cn(
                         "text-[9px] font-mono font-bold px-2 py-0.5 rounded-full border",
-                        an.status === "pendente" && "bg-amber-500/10 border-amber-500/30 text-amber-400",
-                        an.status === "aprovado" && "bg-accent-dim border-accent-border text-accent",
-                        an.status === "expirado" && "bg-border/40 border-border text-text-muted",
+                        an.status === "pendente"              && "bg-amber-500/10  border-amber-500/30  text-amber-400",
+                        an.status === "aguardando_pagamento" && "bg-blue-500/10   border-blue-500/30   text-blue-400",
+                        an.status === "aprovado"             && "bg-accent-dim    border-accent-border  text-accent",
+                        an.status === "rejeitado"            && "bg-red-500/10    border-red-500/30    text-red-400",
+                        an.status === "expirado"             && "bg-border/40     border-border        text-text-muted",
                       )}>
                         {an.status.toUpperCase()}
                       </span>

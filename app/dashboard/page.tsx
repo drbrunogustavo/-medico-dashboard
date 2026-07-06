@@ -218,30 +218,30 @@ function AcademyMiniCard() {
   )
 }
 
-interface Pauta { id: number | string; titulo: string; categoria: string }
+interface Pauta { id: number | string; titulo: string; categoria: string; estagio?: string }
 
 // ─── Metric card ─────────────────────────────────────────────────────────────
 
-function MetricCard({ label, value, sub, accent = false, loading = false }: {
-  label: string; value: string | number; sub: string; accent?: boolean; loading?: boolean
+function MetricCard({ label, value, sub, topColor = "#00c07f", loading = false }: {
+  label: string; value: string | number; sub: string; topColor?: string; loading?: boolean
 }) {
   const numericTarget = typeof value === "number" ? value : 0
   const animated      = useCounter(numericTarget)
   const display       = typeof value === "number" ? animated : value
 
   return (
-    <div className={cn(
-      "bg-surface border rounded-xl p-4 md:p-5 transition-all hover:-translate-y-0.5 hover:border-border-hover",
-      accent ? "border-accent-border" : "border-border"
-    )}>
+    <div
+      className="bg-surface border border-border rounded-xl p-4 md:p-5 transition-all hover:-translate-y-0.5 hover:border-border-hover overflow-hidden relative"
+      style={{ borderTop: `3px solid ${topColor}` }}
+    >
       {loading ? (
         <div className="space-y-2">
-          <div className="h-7 w-16 bg-border/40 rounded animate-pulse" />
+          <div className="h-10 w-20 bg-border/40 rounded animate-pulse" />
           <div className="h-3 w-20 bg-border/30 rounded animate-pulse" />
         </div>
       ) : (
         <>
-          <div className={cn("text-[26px] md:text-[30px] font-bold leading-none mb-1", accent ? "text-accent" : "text-text-primary")}>
+          <div className="text-[36px] md:text-[40px] font-bold leading-none mb-1.5 tabular-nums" style={{ color: topColor }}>
             {display}
           </div>
           <div className="text-[11px] font-semibold text-text-primary mb-0.5">{label}</div>
@@ -256,6 +256,7 @@ function MetricCard({ label, value, sub, accent = false, loading = false }: {
 
 export default function DashboardPage() {
   const [pautasCount,  setPautasCount]  = useState<number>(0)
+  const [postsCount,   setPostsCount]   = useState<number>(0)
   const [recentPautas, setRecentPautas] = useState<Pauta[]>([])
   const [lastAccess,   setLastAccess]   = useState<string | null>(null)
   const [execMetrics,  setExecMetrics]  = useState<ExecMetrics | null>(null)
@@ -285,8 +286,10 @@ export default function DashboardPage() {
       .then(r => r.json())
       .then((data: unknown) => {
         if (Array.isArray(data)) {
-          setPautasCount(data.length)
-          setRecentPautas((data as Pauta[]).slice(-3).reverse())
+          const pautas = data as Pauta[]
+          setPautasCount(pautas.length)
+          setPostsCount(pautas.filter(p => p.estagio === "Publicado").length)
+          setRecentPautas(pautas.slice(-3).reverse())
         }
       })
       .catch(e => console.error("[dashboard] erro ao carregar pautas recentes:", e))
@@ -335,6 +338,30 @@ export default function DashboardPage() {
 
       <div className="p-4 md:p-8 space-y-6">
 
+        {/* ── KPIs em destaque — primeira coisa visível ───────────────────── */}
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
+          <MetricCard
+            label="Leads no CRM"     value={execMetrics?.leads_total ?? 0}
+            sub="total captados"     topColor="#00c07f" loading={execLoading}
+          />
+          <MetricCard
+            label="Consultas/mês"    value={execMetrics?.consultas_mes ?? 0}
+            sub="mês atual"          topColor="#3b7fff" loading={execLoading}
+          />
+          <MetricCard
+            label="NPS Score"        value={npsDisplay}
+            sub="satisfação"         topColor="#c084fc" loading={execLoading}
+          />
+          <MetricCard
+            label="Banco de Pautas"  value={pautasCount}
+            sub="ideias salvas"      topColor="#f59e0b"
+          />
+          <MetricCard
+            label="Posts publicados" value={postsCount}
+            sub="conteúdos no ar"    topColor="#f472b6"
+          />
+        </div>
+
         {/* ── Banner depoimento ───────────────────────────────────────────── */}
         <div className="flex items-start justify-between gap-4 px-5 py-4 rounded-xl border"
           style={{ background: "rgba(184,151,106,0.06)", borderColor: "rgba(184,151,106,0.2)" }}>
@@ -366,7 +393,7 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* ── SEÇÃO 1: Saudação + métricas ───────────────────────────────── */}
+        {/* ── SEÇÃO 1: Saudação ──────────────────────────────────────────── */}
         <div className="bg-surface border border-border rounded-xl p-6 md:p-8 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-accent/[0.03] rounded-full blur-3xl pointer-events-none" />
           <div className="relative">
@@ -390,26 +417,6 @@ export default function DashboardPage() {
             <span className="w-1.5 h-1.5 rounded-full bg-accent animate-blink" />
             <span className="text-[10px] font-mono text-accent tracking-widest">PRAXIS ONLINE</span>
           </div>
-        </div>
-
-        {/* ── 3 métricas rápidas ─────────────────────────────────────────── */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <MetricCard
-            label="Leads no CRM"    value={execMetrics?.leads_total ?? 0}
-            sub="total de leads"    accent loading={execLoading}
-          />
-          <MetricCard
-            label="Consultas/mês"   value={execMetrics?.consultas_mes ?? 0}
-            sub="mês atual"         loading={execLoading}
-          />
-          <MetricCard
-            label="NPS Score"       value={npsDisplay}
-            sub="satisfação"        loading={execLoading}
-          />
-          <MetricCard
-            label="Banco de Pautas" value={pautasCount}
-            sub="ideias salvas"     accent
-          />
         </div>
 
         {/* ── Alerta IA ───────────────────────────────────────────────────── */}

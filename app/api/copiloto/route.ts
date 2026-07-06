@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
-import Anthropic from "@anthropic-ai/sdk"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
 import { inserirProntuario } from "@/lib/medx"
-import { AI_MODEL } from "@/lib/ai-config"
-
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+import { AI_MODEL, getAnthropicClient } from "@/lib/ai-config"
 
 const SYSTEM_BASE = `Você é o Copiloto de Consulta do PRAXIS — assistente clínico especialista em Endocrinologia, Nutrologia e Longevidade.
 Retorne APENAS JSON válido, sem markdown, sem texto antes ou depois do JSON.`
@@ -21,7 +18,7 @@ async function getMemoriaContext(userId: string): Promise<string> {
     if (conhecimento?.length) parts.push("BASE DE CONHECIMENTO:\n" + conhecimento.map(d => `• ${d.titulo}: ${d.conteudo.slice(0, 300)}`).join("\n"))
     if (protocolos?.length) parts.push("PROTOCOLOS ATIVOS:\n" + protocolos.map(d => `• ${d.titulo}: ${d.conteudo.slice(0, 200)}`).join("\n"))
     return parts.length ? "\n\n" + parts.join("\n\n") : ""
-  } catch { return "" }
+  } catch (e) { console.error("[copiloto/route] getMemoriaContext falhou:", e); return "" }
 }
 
 function errMsg(e: unknown): string {
@@ -79,6 +76,7 @@ export async function DELETE(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
+  const client = getAnthropicClient()
 
   const action = req.nextUrl.searchParams.get("action") ?? "gerar"
 

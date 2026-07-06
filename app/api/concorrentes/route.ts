@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
-import { AI_MODEL, getAnthropicClient } from "@/lib/ai-config"
+import { AI_MODEL } from "@/lib/ai-config"
+import { getAnthropicClient } from "@/lib/anthropic"
 
 
 type TipoAnalise = "estrategia" | "posicionamento" | "pontos_fracos" | "completa" | "benchmark" | "crescimento_instagram"

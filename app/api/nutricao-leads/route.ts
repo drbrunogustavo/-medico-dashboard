@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
-import { AI_MODEL, getAnthropicClient } from "@/lib/ai-config"
+import { AI_MODEL } from "@/lib/ai-config"
+import { getAnthropicClient } from "@/lib/anthropic"
 
 const CRONOGRAMA = [
   { dia: 1,  tipo: "Story",    titulo: "Conexão — identificação com a dor" },

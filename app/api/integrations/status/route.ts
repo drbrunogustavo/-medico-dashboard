@@ -7,7 +7,7 @@ export async function GET() {
 
   return NextResponse.json({
     medx:      !!(process.env.MEDX_URL && process.env.MEDX_INTEGRATION_TOKEN),
-    zapi:      !!(process.env.ZAPI_INSTANCE_ID && process.env.ZAPI_CLIENT_TOKEN),
+    zapi:      !!(process.env.ZAPI_INSTANCE_ID && process.env.ZAPI_TOKEN),
     instagram: !!(process.env.META_ACCESS_TOKEN && process.env.META_IG_USER_ID),
     stripe:    !!(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_PRICE_STARTER_MONTHLY),
   })

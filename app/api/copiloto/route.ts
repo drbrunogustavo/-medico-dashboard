@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
 import { inserirProntuario } from "@/lib/medx"
-import { AI_MODEL, getAnthropicClient } from "@/lib/ai-config"
+import { AI_MODEL } from "@/lib/ai-config"
+import { getAnthropicClient } from "@/lib/anthropic"
 
 const SYSTEM_BASE = `Você é o Copiloto de Consulta do PRAXIS — assistente clínico especialista em Endocrinologia, Nutrologia e Longevidade.
 Retorne APENAS JSON válido, sem markdown, sem texto antes ou depois do JSON.`

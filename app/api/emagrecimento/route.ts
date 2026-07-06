@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { checkAuth } from '@/lib/auth-check'
 import { AI_MODEL } from "@/lib/ai-config"
+import { getAnthropicClient } from "@/lib/anthropic"
+
+export const maxDuration = 60
 
 export async function POST(request: NextRequest) {
   const auth = await checkAuth()
@@ -17,17 +20,11 @@ export async function POST(request: NextRequest) {
     .join('\n')
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY || '',
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: AI_MODEL,
-        max_tokens: 3500,
-        system: `Você é um especialista em medicina do estilo de vida, nutrologia e emagrecimento baseado em evidências.
+    const client = getAnthropicClient()
+    const data = await client.messages.create({
+      model: AI_MODEL,
+      max_tokens: 3500,
+      system: `Você é um especialista em medicina do estilo de vida, nutrologia e emagrecimento baseado em evidências.
 Analise os fatores de bloqueio ao emagrecimento de um paciente e gere um plano personalizado estruturado.
 
 Retorne APENAS um JSON válido. Formato exato:
@@ -49,22 +46,19 @@ Retorne APENAS um JSON válido. Formato exato:
   "textoParaPaciente": "string",
   "resumoMedico": "string"
 }`,
-        messages: [{
-          role: 'user',
-          content: `Avaliação dos fatores de bloqueio ao emagrecimento:
+      messages: [{
+        role: 'user',
+        content: `Avaliação dos fatores de bloqueio ao emagrecimento:
 
 ${fatoresText}
 
 Score total: ${total}/100
 
 Identifique os 3 fatores com maior score (maior bloqueio), explique o mecanismo fisiopatológico de cada um, liste exames específicos a solicitar e intervenções práticas. Gere um plano de 90 dias progressivo e um texto simples para compartilhar com o paciente.`,
-        }],
-      }),
+      }],
     })
 
-    if (!res.ok) throw new Error(`API error: ${res.status}`)
-    const data = await res.json()
-    const text = data.content?.[0]?.text ?? '{}'
+    const text = data.content?.[0]?.type === 'text' ? data.content[0].text : '{}'
     const parsed = JSON.parse(text)
     return NextResponse.json(parsed)
   } catch (e) {

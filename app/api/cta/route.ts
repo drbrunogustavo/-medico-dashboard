@@ -3,12 +3,13 @@ import { checkAuth } from "@/lib/auth-check"
 import { AI_MODEL } from "@/lib/ai-config"
 import { getAnthropicClient } from "@/lib/anthropic"
 
+export const maxDuration = 60
 
 export async function POST(req: NextRequest) {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
-  const client = getAnthropicClient()
   try {
+    const client = getAnthropicClient()
     const { tema, objetivo = "agendar consulta", formato = "Reel", quantidade = 10 } = await req.json() as {
       tema: string; objetivo?: string; formato?: string; quantidade?: number
     }

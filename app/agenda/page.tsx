@@ -6,7 +6,7 @@ import { TopBar } from "@/components/TopBar"
 import { StatCard } from "@/components/StatCard"
 import { cn } from "@/lib/utils"
 import {
-  ChevronLeft, ChevronRight, Calendar, List,
+  ArrowLeft, ChevronLeft, ChevronRight, Calendar, List,
   Clock, RefreshCw, Filter, User, Plus,
   Search, Loader2, X, Check, Bot, Stethoscope,
   AlertCircle,
@@ -68,12 +68,12 @@ const MESES        = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out
 const MESES_LONG   = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"]
 
 const TIPOS_CONSULTA = [
-  "Consulta de Endocrinologia",
-  "Consulta de Nutrologia",
-  "Consulta de Longevidade",
+  "Primeira Consulta",
   "Retorno",
+  "Nova Consulta - Paciente Antigo",
+  "Procedimento",
+  "Administração EV/IM",
   "Bioimpedância",
-  "Exames",
   "Outro",
 ]
 
@@ -425,6 +425,12 @@ export default function AgendaPage() {
         subtitle="ALA CLÍNICA · MEDX"
         actions={
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => router.back()}
+              className="flex items-center gap-1 text-[11px] border border-border text-text-muted rounded-lg px-2.5 py-1.5 hover:border-border-hover hover:text-text-secondary transition-colors"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" /> Voltar
+            </button>
             {/* View toggle */}
             <div className="flex gap-0.5 bg-surface border border-border rounded-lg p-0.5">
               <button

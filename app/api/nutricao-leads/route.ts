@@ -4,6 +4,8 @@ import { createSupabaseServerClient } from "@/lib/supabase-server"
 import { AI_MODEL } from "@/lib/ai-config"
 import { getAnthropicClient } from "@/lib/anthropic"
 
+export const maxDuration = 60
+
 const CRONOGRAMA = [
   { dia: 1,  tipo: "Story",    titulo: "Conexão — identificação com a dor" },
   { dia: 3,  tipo: "Vídeo",    titulo: "Conteúdo educativo de valor"       },
@@ -18,12 +20,12 @@ const CRONOGRAMA = [
 export async function POST(req: NextRequest) {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
-  const client = getAnthropicClient()
 
   const { searchParams } = req.nextUrl
   const action = searchParams.get("action") ?? "gerar"
 
   try {
+    const client = getAnthropicClient()
     const body = await req.json() as {
       perfil:      string
       interesse:   string

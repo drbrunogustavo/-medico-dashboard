@@ -275,9 +275,12 @@ export async function GET(req: NextRequest) {
 
   async function runRelatorioSemanal() {
     if (new Date().getDay() !== 1) return null
-    const { data: perfis } = await supabase.from("perfis").select("user_id, nome, email").not("email", "is", null)
+    const { data: perfis } = await supabase.from("perfis").select("user_id, nome")
     const resultados = await Promise.allSettled(
       (perfis ?? []).map(async (perfil) => {
+        const { data: authUser } = await supabase.auth.admin.getUserById(perfil.user_id as string)
+        const email = authUser?.user?.email
+        if (!email) throw new Error(`sem email — user ${perfil.user_id}`)
         const [leadsRes, pautasRes] = await Promise.all([
           supabase.from("leads").select("id, created_at").eq("user_id", perfil.user_id),
           supabase.from("pautas").select("id").eq("user_id", perfil.user_id),
@@ -293,7 +296,6 @@ export async function GET(req: NextRequest) {
           pautas_total:  pautasRes.data?.length ?? 0,
           receita_mes:   0,
         }
-        const email        = perfil.email as string
         const nome         = (perfil.nome as string) ?? "Médico"
         const primeiroNome = nome.replace(/^Dr\.?\s*/i, "").split(" ")[0] ?? nome
         const { error } = await resend.emails.send({

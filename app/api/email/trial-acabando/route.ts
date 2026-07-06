@@ -101,30 +101,38 @@ export async function GET(req: NextRequest) {
     const daqui2d  = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
     const daqui3d  = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
 
-    const { data: perfis } = await supabase
-      .from("perfis")
-      .select("user_id, nome, trial_termina_em")
+    const { data: planos } = await supabase
+      .from("user_planos")
+      .select("user_id, trial_termina_em")
       .eq("plano", "trial")
+      .eq("status", "ativo")
       .gte("trial_termina_em", daqui2d)
       .lte("trial_termina_em", daqui3d)
 
-    if (!perfis || perfis.length === 0) {
+    if (!planos || planos.length === 0) {
       return NextResponse.json({ ok: true, enviados: 0 })
     }
 
+    const { data: perfisRows } = await supabase
+      .from("perfis")
+      .select("user_id, nome")
+      .in("user_id", planos.map(p => p.user_id))
+    const nomeByUserId = Object.fromEntries((perfisRows ?? []).map(p => [p.user_id as string, p.nome as string | null]))
+
     let enviados = 0
-    for (const perfil of perfis) {
-      const { data: auth_user } = await supabase.auth.admin.getUserById(perfil.user_id)
+    for (const plano of planos) {
+      const { data: auth_user } = await supabase.auth.admin.getUserById(plano.user_id)
       const email = auth_user?.user?.email
       if (!email) continue
 
-      const dias = diasRestantes(perfil.trial_termina_em)
+      const dias    = diasRestantes(plano.trial_termina_em)
+      const nomeRaw = nomeByUserId[plano.user_id] ?? email.split("@")[0]
       const { error } = await resend.emails.send({
         from:    FROM_EMAIL,
         to:      [email],
         replyTo: REPLY_TO,
         subject: `🔔 Seu trial PRAXIS expira em ${dias} dia${dias !== 1 ? "s" : ""}`,
-        html:    buildHtml(perfil.nome ?? email.split("@")[0], dias),
+        html:    buildHtml(nomeRaw, dias),
       })
       if (!error) enviados++
     }

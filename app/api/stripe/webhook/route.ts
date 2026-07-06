@@ -20,10 +20,10 @@ async function dispararEmailBoasVindas(
   if (!email) return
   const { data: perfilRow } = await supabase
     .from("perfis")
-    .select("nome_completo")
+    .select("nome")
     .eq("user_id", userId)
     .maybeSingle()
-  const nome = (perfilRow?.nome_completo as string | null) ?? email
+  const nome = (perfilRow?.nome as string | null) ?? email
   const primeiroNome = nome.replace(/^Dr\.?\s*/i, "").split(" ")[0] ?? nome
   const resend = new Resend(process.env.RESEND_API_KEY)
   await resend.emails.send({

@@ -725,7 +725,7 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
             <button
               onClick={gerarPrompt}
               disabled={anyLoading || !ideia.trim()}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-accent text-background text-[13px] font-bold hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[48px]"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-accent text-background text-[14px] font-bold hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[48px]"
             >
               {loadingPrompt ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
               {loadingPrompt ? "Elaborando direção..." : "Elaborar Direção Criativa"}

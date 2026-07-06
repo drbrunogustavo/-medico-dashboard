@@ -461,9 +461,9 @@ export default function AgendaPage() {
 
             <button
               onClick={() => openNovo()}
-              className="flex items-center gap-1.5 text-[11px] bg-blue-500 text-white font-semibold rounded-lg px-3 py-1.5 hover:bg-blue-600 transition-colors"
+              className="flex items-center gap-1.5 text-[14px] bg-blue-500 text-white font-semibold rounded-lg px-5 py-3 hover:bg-blue-600 transition-colors min-h-[44px]"
             >
-              <Plus className="w-3.5 h-3.5" />
+              <Plus className="w-4 h-4" />
               <span className="hidden sm:inline">Agendamento</span>
             </button>
 

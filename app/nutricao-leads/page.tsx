@@ -498,7 +498,7 @@ export default function NutricaoLeadsPage() {
                 onClick={gerar}
                 disabled={generating || !perfil.trim()}
                 className={cn(
-                  "w-full flex items-center justify-center gap-2 text-[12px] font-semibold rounded-xl py-3 transition-all",
+                  "w-full flex items-center justify-center gap-2 text-[14px] font-semibold rounded-xl py-3 min-h-[44px] transition-all",
                   generating
                     ? "bg-blue-500/10 border border-blue-500/30 text-blue-400 cursor-wait"
                     : "bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-40"

@@ -297,9 +297,9 @@ export default function NPSPage() {
         actions={
           <button
             onClick={() => setShowAdd(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-accent text-background text-[12px] font-semibold rounded-lg hover:bg-accent/90 transition-colors"
+            className="flex items-center gap-1.5 px-5 py-3 bg-accent text-background text-[14px] font-semibold rounded-lg hover:bg-accent/90 transition-colors min-h-[44px]"
           >
-            <Plus className="w-3.5 h-3.5" /> Nova Pesquisa
+            <Plus className="w-4 h-4" /> Nova Pesquisa
           </button>
         }
       />

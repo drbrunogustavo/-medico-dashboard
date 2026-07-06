@@ -9,10 +9,11 @@ export async function POST(request: NextRequest) {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
 
-  const { fatores, scores, total } = await request.json() as {
+  const { fatores, scores, total, sexo } = await request.json() as {
     fatores: { id: string; nome: string; score: number; maxScore: number }[]
     scores: Record<string, number>
     total: number
+    sexo?: "M" | "F" | null
   }
 
   const fatoresText = fatores
@@ -53,6 +54,7 @@ Retorne APENAS um JSON válido. Formato exato:
 ${fatoresText}
 
 Score total: ${total}/100
+Sexo do paciente: ${sexo === "F" ? "Feminino" : sexo === "M" ? "Masculino" : "Não informado"}
 
 Identifique os 3 fatores com maior score (maior bloqueio), explique o mecanismo fisiopatológico de cada um, liste exames específicos a solicitar e intervenções práticas. Gere um plano de 90 dias progressivo e um texto simples para compartilhar com o paciente.`,
       }],

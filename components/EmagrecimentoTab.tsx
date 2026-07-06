@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   Loader2, AlertCircle, ChevronRight, ChevronLeft,
   Copy, Check, RotateCcw, Zap,
@@ -424,17 +424,24 @@ function RadarLabel({ x, y, payload }: { x?: number; y?: number; payload?: { val
 export function EmagrecimentoTab() {
   const [respostas, setRespostas] = useState<Record<string, number>>({})
   const [fase,    setFase]   = useState<"form" | "resultado">("form")
+  const [sexo,    setSexo]   = useState<"M" | "F" | null>(null)
   const [loading, setLoading] = useState(false)
   const [error,   setError]  = useState<string | null>(null)
   const [result,  setResult] = useState<AiResult | null>(null)
   const [copied,  setCopied] = useState<"medico" | "paciente" | null>(null)
   const [fatorIdx, setFatorIdx] = useState(0)
 
+  // Resetar para fator 1 ao mudar sexo (evita index out of bounds)
+  useEffect(() => { setFatorIdx(0) }, [sexo])
+
+  // Menopausa/Andropausa só obrigatória para Feminino
+  const fatoresVisiveis = FATORES.filter(f => sexo === "F" ? true : f.id !== "hormonal")
+
   const responder = (perguntaId: string, score: number) => {
     setRespostas(prev => ({ ...prev, [perguntaId]: score }))
   }
 
-  const fatoresComScore = FATORES.map(f => {
+  const fatoresComScore = fatoresVisiveis.map(f => {
     const maxScore = f.perguntas.reduce((s, p) => s + Math.max(...p.opcoes.map(o => o.score)), 0)
     const score    = f.perguntas.reduce((s, p) => s + (respostas[p.id] ?? 0), 0)
     return { ...f, score, maxScore, pct: Math.round((score / maxScore) * 100) }
@@ -444,8 +451,8 @@ export function EmagrecimentoTab() {
     fatoresComScore.reduce((s, f) => s + (f.score / f.maxScore) * 10, 0)
   )
 
-  const perguntasRespondidas = FATORES.flatMap(f => f.perguntas).filter(p => p.id in respostas).length
-  const totalPerguntas       = FATORES.flatMap(f => f.perguntas).length
+  const perguntasRespondidas = fatoresVisiveis.flatMap(f => f.perguntas).filter(p => p.id in respostas).length
+  const totalPerguntas       = fatoresVisiveis.flatMap(f => f.perguntas).length
 
   const radarData = fatoresComScore.map(f => ({
     fator:  f.nome.split(" ")[0],
@@ -469,6 +476,7 @@ export function EmagrecimentoTab() {
         fatores: fatoresComScore.map(f => ({ id: f.id, nome: f.nome, score: f.score, maxScore: f.maxScore })),
         scores: respostas,
         total: totalScore,
+        sexo,
       }
       const res  = await fetch("/api/emagrecimento", {
         method:  "POST",
@@ -491,19 +499,57 @@ export function EmagrecimentoTab() {
     setRespostas({}); setFase("form"); setResult(null); setFatorIdx(0)
   }
 
-  const fatorAtual = FATORES[fatorIdx]
-  const todasRespondidas = FATORES.every(f => f.perguntas.every(p => p.id in respostas))
+  const fatorAtual = fatoresVisiveis[fatorIdx] ?? fatoresVisiveis[0]
+  const todasRespondidas = fatoresVisiveis.every(f => f.perguntas.every(p => p.id in respostas))
 
   return (
     <div className="p-4 md:p-8 space-y-5 max-w-4xl mx-auto w-full">
 
       {fase === "form" && (
         <>
+          {/* Sexo do paciente */}
+          <div className="rounded-xl p-4" style={{ background: "var(--card)", border: "1px solid var(--border)" }}>
+            <div className="text-[10px] font-mono uppercase tracking-widest mb-3" style={{ color: "var(--text-muted)" }}>
+              Sexo do Paciente
+            </div>
+            <div className="flex items-center gap-2">
+              {([{ v: "F", l: "Feminino" }, { v: "M", l: "Masculino" }] as { v: "F" | "M"; l: string }[]).map(op => (
+                <button
+                  key={op.v}
+                  onClick={() => setSexo(op.v)}
+                  className="px-4 py-1.5 rounded-full text-[11px] border transition-all"
+                  style={{
+                    background:  sexo === op.v ? "var(--accent-dim)"    : "var(--surface)",
+                    borderColor: sexo === op.v ? "var(--accent-border)" : "var(--border)",
+                    color:       sexo === op.v ? "var(--accent-text)"   : "var(--text-muted)",
+                    fontWeight:  sexo === op.v ? 600 : 400,
+                  }}
+                >
+                  {op.l}
+                </button>
+              ))}
+              {sexo && (
+                <button
+                  onClick={() => setSexo(null)}
+                  className="px-2.5 py-1.5 rounded-full text-[10px] border transition-all"
+                  style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+            {sexo !== "F" && (
+              <p className="text-[10px] mt-2" style={{ color: "var(--text-muted)" }}>
+                Seção "Menopausa / Andropausa" oculta — selecione Feminino para incluir.
+              </p>
+            )}
+          </div>
+
           {/* Progress */}
           <div className="rounded-xl p-4" style={{ background: "var(--card)", border: "1px solid var(--border)" }}>
             <div className="flex items-center justify-between mb-2">
               <span className="text-[12px] font-semibold" style={{ color: "var(--text-primary)" }}>
-                {fatorIdx + 1} de {FATORES.length} fatores — {fatorAtual.nome}
+                {fatorIdx + 1} de {fatoresVisiveis.length} fatores — {fatorAtual.nome}
               </span>
               <span className="text-[11px] font-mono" style={{ color: "var(--text-muted)" }}>
                 {perguntasRespondidas}/{totalPerguntas} perguntas
@@ -512,14 +558,14 @@ export function EmagrecimentoTab() {
             <div className="h-1.5 rounded-full" style={{ background: "var(--surface)" }}>
               <div
                 className="h-1.5 rounded-full transition-all"
-                style={{ width: `${((fatorIdx + 1) / FATORES.length) * 100}%`, background: fatorAtual.cor }}
+                style={{ width: `${((fatorIdx + 1) / fatoresVisiveis.length) * 100}%`, background: fatorAtual.cor }}
               />
             </div>
           </div>
 
           {/* Factor tabs — scrollable */}
           <div className="flex gap-1.5 overflow-x-auto scrollbar-none pb-1">
-            {FATORES.map((f, i) => {
+            {fatoresVisiveis.map((f, i) => {
               const allAnswered = f.perguntas.every(p => p.id in respostas)
               return (
                 <button
@@ -593,9 +639,9 @@ export function EmagrecimentoTab() {
               <ChevronLeft className="w-4 h-4" /> Anterior
             </button>
 
-            {fatorIdx < FATORES.length - 1 ? (
+            {fatorIdx < fatoresVisiveis.length - 1 ? (
               <button
-                onClick={() => setFatorIdx(i => Math.min(FATORES.length - 1, i + 1))}
+                onClick={() => setFatorIdx(i => Math.min(fatoresVisiveis.length - 1, i + 1))}
                 className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-[12px] font-bold transition-all"
                 style={{ background: fatorAtual.cor, color: "#080808" }}
               >
@@ -620,7 +666,7 @@ export function EmagrecimentoTab() {
             )}
           </div>
 
-          {!todasRespondidas && fatorIdx === FATORES.length - 1 && (
+          {!todasRespondidas && fatorIdx === fatoresVisiveis.length - 1 && (
             <p className="text-center text-[11px]" style={{ color: "var(--text-muted)" }}>
               Responda todas as perguntas para gerar a análise
             </p>

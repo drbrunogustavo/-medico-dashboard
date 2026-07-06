@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
           perfil:       body.perfil,
           interesse:    body.interesse,
           duracao_dias: body.duracaoDias,
-          telefone:     body.telefone ?? null,
+          telefone:     body.telefone ? body.telefone.replace(/\D/g, "") || null : null,
           trilha:       body.trilha,
           status:       "ativa",
           user_id:      auth.userId,

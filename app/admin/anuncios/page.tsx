@@ -212,10 +212,10 @@ export default function AdminAnunciosPage() {
                     href={an.link_destino}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-[11px] text-accent hover:underline"
+                    className="flex items-center gap-1 text-[11px] text-accent hover:underline max-w-full min-w-0"
                   >
-                    <ExternalLink className="w-3 h-3" />
-                    {an.link_destino}
+                    <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                    <span className="truncate">{an.link_destino}</span>
                   </a>
                 </div>
 

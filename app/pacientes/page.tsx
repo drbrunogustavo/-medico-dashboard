@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils"
 import {
   Users, Search, Plus, X, Loader2, Bot, Calendar,
   FileText, Phone, Mail, User, ChevronRight, Check,
-  AlertCircle, ClipboardList, RefreshCw, Trash2, Database,
+  AlertCircle, ClipboardList, RefreshCw, Trash2, Database, Sparkles,
 } from "lucide-react"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -153,6 +153,34 @@ export default function PacientesPage() {
   const [novoError,  setNovoError]  = useState("")
   const [novoOk,     setNovoOk]     = useState(false)
 
+  // Semantic search
+  const [semanticMode,        setSemanticMode]        = useState(false)
+  const [semanticQuery,       setSemanticQuery]       = useState("")
+  const [semanticLoading,     setSemanticLoading]     = useState(false)
+  const [semanticResults,     setSemanticResults]     = useState<Paciente[]>([])
+  const [semanticExplanation, setSemanticExplanation] = useState("")
+
+  const runSemanticSearch = useCallback(async () => {
+    if (!semanticQuery.trim()) return
+    setSemanticLoading(true)
+    setSemanticResults([])
+    setSemanticExplanation("")
+    try {
+      const res = await fetch("/api/pacientes/buscar", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ query: semanticQuery }),
+      })
+      const data = await res.json() as { patients: Paciente[]; explanation: string }
+      setSemanticResults(data.patients ?? [])
+      setSemanticExplanation(data.explanation ?? "")
+    } catch (e) {
+      console.error("[buscar semântico]", e)
+    } finally {
+      setSemanticLoading(false)
+    }
+  }, [semanticQuery])
+
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // ── Load initial list ────────────────────────────────────────────────────────
@@ -191,7 +219,9 @@ export default function PacientesPage() {
     }, 400)
   }
 
-  const exibidos = query.trim() ? resultados : lista
+  const exibidos = semanticMode
+    ? semanticResults
+    : (query.trim() ? resultados : lista)
 
   // ── Open drawer ──────────────────────────────────────────────────────────────
 
@@ -311,6 +341,20 @@ export default function PacientesPage() {
             </div>
 
             <button
+              onClick={() => { setSemanticMode(m => !m); setSemanticResults([]); setSemanticExplanation("") }}
+              className={cn(
+                "flex items-center gap-1.5 text-[11px] font-semibold rounded-lg px-3 py-1.5 border transition-all",
+                semanticMode
+                  ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                  : "border-border text-text-muted hover:border-border-hover hover:text-text-secondary"
+              )}
+              title="Busca semântica com IA"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">IA</span>
+            </button>
+
+            <button
               onClick={fetchLista}
               disabled={loading}
               className="flex items-center gap-1.5 text-[11px] border border-border text-text-secondary rounded-lg px-3 py-1.5 hover:border-border-hover transition-colors"
@@ -355,6 +399,58 @@ export default function PacientesPage() {
             accent="amber"
           />
         </div>
+
+        {/* Semantic search panel */}
+        {semanticMode && (
+          <div className="rounded-2xl p-4 space-y-3"
+            style={{ background: "rgba(0,192,127,0.05)", border: "1px solid rgba(0,192,127,0.25)" }}>
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 flex-shrink-0" style={{ color: "var(--accent)" }} />
+              <span className="text-[12px] font-semibold" style={{ color: "var(--accent)" }}>
+                Busca Semântica com IA
+              </span>
+            </div>
+            <div className="flex gap-2">
+              <input
+                value={semanticQuery}
+                onChange={e => setSemanticQuery(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && runSemanticSearch()}
+                placeholder='ex: "pacientes com HbA1c acima de 7", "inativos há mais de 6 meses"…'
+                className="flex-1 rounded-xl px-4 py-2.5 text-[13px] outline-none"
+                style={{
+                  background: "var(--card)",
+                  border: "1px solid rgba(0,192,127,0.3)",
+                  color: "var(--text-primary)",
+                }}
+              />
+              <button
+                onClick={runSemanticSearch}
+                disabled={semanticLoading || !semanticQuery.trim()}
+                className={cn(
+                  "flex items-center gap-1.5 text-[12px] font-semibold px-4 py-2.5 rounded-xl transition-all",
+                  semanticLoading || !semanticQuery.trim()
+                    ? "opacity-50 cursor-not-allowed bg-emerald-500/10 border border-emerald-500/20 text-emerald-400"
+                    : "bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/30"
+                )}
+              >
+                {semanticLoading
+                  ? <Loader2 className="w-4 h-4 animate-spin" />
+                  : <Search className="w-4 h-4" />}
+                {semanticLoading ? "Buscando…" : "Buscar"}
+              </button>
+            </div>
+            {semanticExplanation && (
+              <p className="text-[11px] font-mono" style={{ color: "var(--text-muted)" }}>
+                {semanticExplanation}
+              </p>
+            )}
+            {!semanticLoading && semanticResults.length === 0 && semanticExplanation && (
+              <p className="text-[12px] text-center py-4" style={{ color: "var(--text-muted)" }}>
+                Nenhum paciente encontrado para esta busca.
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Mobile search */}
         <div className="relative md:hidden">
@@ -446,6 +542,12 @@ export default function PacientesPage() {
                         {nasc && (
                           <div className="text-[10px] text-text-muted mt-0.5">{calcIdade(nasc)}</div>
                         )}
+                        {semanticMode && pac._matchContext ? (
+                          <div className="text-[9px] font-mono mt-0.5 px-1.5 py-0.5 rounded-full inline-block"
+                            style={{ background: "rgba(0,192,127,0.12)", color: "var(--accent)", border: "1px solid rgba(0,192,127,0.3)" }}>
+                            {String(pac._matchContext)}
+                          </div>
+                        ) : null}
                         {/* Mobile: show tel/email below name */}
                         <div className="md:hidden flex gap-3 mt-0.5">
                           {tel  && <span className="text-[10px] text-text-muted">{tel}</span>}

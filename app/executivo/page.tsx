@@ -780,6 +780,10 @@ export default function ExecutivoPage() {
   const [analiseMes,     setAnaliseMes]     = useState<string | null>(null)
   const [loadingAnalise, setLoadingAnalise] = useState(false)
 
+  const [insights,      setInsights]      = useState<{ tipo: "ok"|"warn"|"info"; titulo: string; descricao: string }[]>([])
+  const [insightsLoad,  setInsightsLoad]  = useState(false)
+  const [insightsDone,  setInsightsDone]  = useState(false)
+
   useEffect(() => {
     setMktg(getLocalStorage("exec_mktg", MKTG_DEFAULT))
     setOps(getLocalStorage("exec_ops", OPS_DEFAULT))
@@ -791,6 +795,28 @@ export default function ExecutivoPage() {
       .catch(e => console.error("[executivo] erro ao carregar dados executivos:", e))
       .finally(() => setLoading(false))
   }, [])
+
+  useEffect(() => {
+    if (loading || insightsDone) return
+    if ((exec.faturamento_mes ?? 0) === 0 && (exec.consultas_mes ?? 0) === 0) return
+    setInsightsDone(true)
+    setInsightsLoad(true)
+    fetch("/api/executivo/insights", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        faturamento_mes: exec.faturamento_mes ?? 0,
+        consultas_mes:   exec.consultas_mes ?? 0,
+        leads_total:     exec.leads_total ?? 0,
+        leads_semana:    exec.leads_semana ?? 0,
+        nps_score:       exec.nps_score ?? null,
+      }),
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.insights) setInsights(d.insights) })
+      .catch(e => console.error("[executivo] insights:", e))
+      .finally(() => setInsightsLoad(false))
+  }, [loading, exec, insightsDone])
 
   const gerarAnalise = async () => {
     setLoadingAnalise(true)
@@ -874,6 +900,38 @@ export default function ExecutivoPage() {
           <StatCard label="Seguidores"      value={mktg.seguidores.toLocaleString("pt-BR")} sub={`+${mktg.ganho_semanal}/semana`} icon={TrendingUp} color="text-pink-600" />
         </div>
       </div>
+
+      {/* Insights automáticos */}
+      {(insightsLoad || insights.length > 0) && (
+        <div className="px-4 md:px-8 pb-4">
+          {insightsLoad ? (
+            <div className="flex items-center gap-2 text-[11px] text-text-muted font-mono">
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-accent" />
+              Gerando insights do mês...
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {insights.map((ins, i) => {
+                const cfg = {
+                  ok:   { bg: "bg-emerald-500/8 border-emerald-500/25", text: "text-emerald-400", icon: Check },
+                  warn: { bg: "bg-amber-500/8 border-amber-500/25",    text: "text-amber-400",   icon: AlertCircle },
+                  info: { bg: "bg-blue-500/8 border-blue-500/25",      text: "text-blue-400",    icon: Zap },
+                }[ins.tipo]
+                const Icon = cfg.icon
+                return (
+                  <div key={i} className={cn("rounded-lg border p-3.5 flex items-start gap-3", cfg.bg)}>
+                    <Icon className={cn("w-4 h-4 flex-shrink-0 mt-0.5", cfg.text)} />
+                    <div>
+                      <p className={cn("text-[12px] font-semibold leading-snug", cfg.text)}>{ins.titulo}</p>
+                      <p className="text-[11px] text-text-secondary mt-0.5 leading-relaxed">{ins.descricao}</p>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Tab pills */}
       <div className="px-4 md:px-8 pb-2">

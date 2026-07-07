@@ -1,8 +1,9 @@
 "use client"
 
-import { useEffect, useState, useCallback, useRef } from "react"
+import { useEffect, useState, useCallback, useRef, useMemo } from "react"
 import { useRouter, useParams } from "next/navigation"
 import Link from "next/link"
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 import { TopBar } from "@/components/TopBar"
 import { cn } from "@/lib/utils"
 import {
@@ -101,6 +102,81 @@ function getMetricValue(pac: PacienteLocal, field: string): string {
   if (field === "imc") return calcIMC(pac.peso, pac.altura)
   const v = (pac as unknown as Record<string, unknown>)[field]
   return typeof v === "number" ? String(v) : "—"
+}
+
+// ── EvolucaoChart ─────────────────────────────────────────────────────────────
+
+interface PesoPoint { data: string; peso: number }
+
+function EvolucaoChart({ exames, pacPeso }: { exames: Exame[]; pacPeso?: number | null }) {
+  const pontos = useMemo((): PesoPoint[] => {
+    const fromExames: PesoPoint[] = exames
+      .filter(e => /^peso$/i.test(e.nome.trim()) && !isNaN(parseFloat(e.valor)))
+      .map(e => ({
+        data: (e.data_coleta ?? e.criado_em).split("T")[0],
+        peso: parseFloat(e.valor),
+      }))
+
+    // Inclui o peso atual do perfil como ponto "hoje" se não houver entrada nos últimos 7 dias
+    if (pacPeso) {
+      const hoje   = new Date()
+      const cutoff = new Date(hoje.getTime() - 7 * 86_400_000).toISOString().split("T")[0]
+      const temRecente = fromExames.some(p => p.data >= cutoff)
+      if (!temRecente) {
+        fromExames.push({ data: hoje.toISOString().split("T")[0], peso: pacPeso })
+      }
+    }
+
+    return fromExames.sort((a, b) => a.data.localeCompare(b.data))
+  }, [exames, pacPeso])
+
+  if (pontos.length < 2) {
+    return (
+      <div className="flex flex-col items-center justify-center py-8 gap-2 text-center">
+        <TrendingUp className="w-6 h-6 text-text-muted/30" />
+        <p className="text-[12px] text-text-muted">
+          Adicione mais consultas para ver a evolução de peso.
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <ResponsiveContainer width="100%" height={180}>
+      <LineChart data={pontos} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+        <XAxis
+          dataKey="data"
+          tick={{ fontSize: 9, fill: "var(--text-muted)" }}
+          tickFormatter={fmtDateISO}
+        />
+        <YAxis
+          tick={{ fontSize: 9, fill: "var(--text-muted)" }}
+          domain={["auto", "auto"]}
+          unit=" kg"
+        />
+        <Tooltip
+          contentStyle={{
+            background: "var(--card)",
+            border: "1px solid var(--border)",
+            borderRadius: 8,
+            fontSize: 11,
+            color: "var(--text-primary)",
+          }}
+          formatter={(v) => [`${v} kg`, "Peso"]}
+          labelFormatter={(l) => fmtDateISO(String(l))}
+        />
+        <Line
+          type="monotone"
+          dataKey="peso"
+          stroke="#00c07f"
+          strokeWidth={2}
+          dot={{ fill: "#00c07f", r: 3, strokeWidth: 0 }}
+          activeDot={{ r: 5, fill: "#00c07f" }}
+        />
+      </LineChart>
+    </ResponsiveContainer>
+  )
 }
 
 // ── SectionCard ───────────────────────────────────────────────────────────────
@@ -756,7 +832,14 @@ export default function PacienteDashboard() {
               </div>
             </SectionCard>
 
-            {/* ── SEÇÃO 5: Histórico de consultas (timeline) ───────────────── */}
+            {/* ── SEÇÃO 5: Evolução de peso ────────────────────────────────── */}
+            <SectionCard title="Evolução de Peso" icon={TrendingUp} iconColor="text-accent">
+              <div className="mt-2">
+                <EvolucaoChart exames={exames} pacPeso={pac?.peso} />
+              </div>
+            </SectionCard>
+
+            {/* ── SEÇÃO 6: Histórico de consultas (timeline) ───────────────── */}
             <SectionCard title="Histórico de Consultas" icon={Clock} iconColor="text-blue-400">
               <div className="mt-1">
                 {historico.length === 0 ? (

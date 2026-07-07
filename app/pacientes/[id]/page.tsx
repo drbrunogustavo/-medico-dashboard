@@ -10,7 +10,7 @@ import {
   ArrowLeft, Bot, Phone, Mail, Calendar, Loader2, Plus, X,
   AlertCircle, ClipboardList, Clock, FlaskConical, Pill, Camera,
   TrendingUp, TrendingDown, Minus, Check, Trash2, ChevronUp, ChevronDown,
-  Edit3, FileUp,
+  Edit3, FileUp, Sparkles, Zap,
 } from "lucide-react"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -49,6 +49,13 @@ interface HistoricoEntry {
   relato:         string
   resultado?:     { resumo?: string } | null
   created_at:     string
+}
+
+interface AlertaIA {
+  tipo:      string
+  titulo:    string
+  descricao: string
+  urgencia:  "alta" | "media" | "baixa"
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -297,6 +304,8 @@ export default function PacienteDashboard() {
   const [pac,           setPac]           = useState<PacienteLocal | null>(null)
   const [exames,        setExames]        = useState<Exame[]>([])
   const [historico,     setHistorico]     = useState<HistoricoEntry[]>([])
+  const [alertas,       setAlertas]       = useState<AlertaIA[]>([])
+  const [loadingAlertas, setLoadingAlertas] = useState(false)
   const [saving,        setSaving]        = useState(false)
   const [editMetrica,   setEditMetrica]   = useState<string | null>(null)
   const [editValue,     setEditValue]     = useState("")
@@ -327,7 +336,18 @@ export default function PacienteDashboard() {
     } finally { setLoading(false) }
   }, [id])
 
+  const loadAlertas = useCallback(async () => {
+    setLoadingAlertas(true)
+    try {
+      const res  = await fetch(`/api/pacientes/${id}/alertas-ia`)
+      const data = await res.json() as { alertas?: AlertaIA[] }
+      setAlertas(data.alertas ?? [])
+    } catch { /* non-blocking */ }
+    finally { setLoadingAlertas(false) }
+  }, [id])
+
   useEffect(() => { load() }, [load])
+  useEffect(() => { if (!loading && pac) { loadAlertas() } }, [loading, pac, loadAlertas])
   useEffect(() => { if (editMetrica && editRef.current) editRef.current.focus() }, [editMetrica])
 
   const patch = async (updates: Record<string, unknown>) => {
@@ -551,6 +571,47 @@ export default function PacienteDashboard() {
                 </div>
               </div>
             </div>
+
+            {/* ── Alertas IA ──────────────────────────────────────────────── */}
+            {(loadingAlertas || alertas.length > 0) && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-3.5 h-3.5 text-accent" />
+                  <span className="text-[10px] font-mono font-semibold text-text-muted uppercase tracking-widest">Insights IA</span>
+                </div>
+
+                {loadingAlertas ? (
+                  <div className="flex items-center gap-2 bg-card border border-border rounded-xl px-4 py-3">
+                    <Loader2 className="w-3.5 h-3.5 text-accent animate-spin flex-shrink-0" />
+                    <span className="text-[12px] text-text-muted">Analisando dados do paciente...</span>
+                  </div>
+                ) : (
+                  <div className="grid gap-2">
+                    {alertas.map((a, i) => {
+                      const uCls = {
+                        alta:  { ring: "border-red-500/40 bg-red-500/5",    icon: "text-red-400",    badge: "bg-red-500/15 text-red-400 border-red-500/30"    },
+                        media: { ring: "border-amber-500/40 bg-amber-500/5", icon: "text-amber-400",  badge: "bg-amber-500/15 text-amber-400 border-amber-500/30" },
+                        baixa: { ring: "border-blue-500/30 bg-blue-500/5",  icon: "text-blue-400",   badge: "bg-blue-500/15 text-blue-400 border-blue-500/30"   },
+                      }[a.urgencia]
+                      return (
+                        <div key={i} className={cn("flex items-start gap-3 rounded-xl border px-4 py-3", uCls.ring)}>
+                          <Zap className={cn("w-3.5 h-3.5 flex-shrink-0 mt-0.5", uCls.icon)} />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-[12px] font-semibold text-text-primary">{a.titulo}</span>
+                              <span className={cn("text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded-full border", uCls.badge)}>
+                                {a.urgencia === "alta" ? "URGENTE" : a.urgencia === "media" ? "ATENÇÃO" : "INFO"}
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-text-secondary mt-0.5 leading-relaxed">{a.descricao}</p>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* ── SEÇÃO 2: Métricas rápidas ────────────────────────────────── */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

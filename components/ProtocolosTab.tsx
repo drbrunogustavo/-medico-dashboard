@@ -4,7 +4,8 @@ import { useState, useMemo } from "react"
 import { cn } from "@/lib/utils"
 import {
   X, ChevronDown, ChevronUp, Copy, Check, Wand2, Loader2,
-  BookMarked, AlertCircle,
+  BookMarked, AlertCircle, Stethoscope, FlaskConical, Pill,
+  Activity, ArrowDown,
 } from "lucide-react"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -1545,6 +1546,82 @@ function SecaoItem({ titulo, items, cor }: { titulo: string; items: string[]; co
   )
 }
 
+// ─── Stepper ──────────────────────────────────────────────────────────────────
+
+const ETAPAS = [
+  { key: "diagnostico",    label: "Diagnóstico",  icon: Stethoscope  },
+  { key: "exames",         label: "Exames",       icon: FlaskConical },
+  { key: "tratamento",     label: "Tratamento",   icon: Pill         },
+  { key: "acompanhamento", label: "Seguimento",   icon: Activity     },
+] as const
+
+function ProtocoloStepper({ protocolo }: { protocolo: Protocolo }) {
+  return (
+    <div className="px-5 pt-4 pb-2 space-y-0">
+      {ETAPAS.map((etapa, i) => {
+        const secao  = protocolo[etapa.key]
+        const Icon   = etapa.icon
+        const isLast = i === ETAPAS.length - 1
+        return (
+          <div key={etapa.key} className="relative flex gap-4">
+            {/* Coluna esquerda: ícone + linha conectora */}
+            <div className="flex flex-col items-center">
+              <div
+                className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 z-10"
+                style={{ background: `${protocolo.cor}18`, border: `2px solid ${protocolo.cor}50` }}
+              >
+                <Icon className="w-3.5 h-3.5" style={{ color: protocolo.cor }} />
+              </div>
+              {!isLast && (
+                <div className="w-px flex-1 my-1" style={{ background: `${protocolo.cor}25`, minHeight: "24px" }} />
+              )}
+            </div>
+
+            {/* Coluna direita: conteúdo */}
+            <div className={cn("flex-1 min-w-0 pb-5", isLast && "pb-2")}>
+              <div className="flex items-center gap-2 mb-2.5 mt-1">
+                <span
+                  className="text-[11px] font-mono font-bold uppercase tracking-widest"
+                  style={{ color: protocolo.cor }}
+                >
+                  {etapa.label}
+                </span>
+                <span
+                  className="text-[9px] font-mono px-2 py-0.5 rounded-full"
+                  style={{
+                    background: `${protocolo.cor}12`,
+                    color:      protocolo.cor,
+                    border:     `1px solid ${protocolo.cor}30`,
+                  }}
+                >
+                  {secao.items.length} item{secao.items.length !== 1 ? "s" : ""}
+                </span>
+              </div>
+
+              <div className="space-y-1.5">
+                {secao.items.map((item, j) => (
+                  <div key={j} className="flex items-start gap-2">
+                    <span className="text-[8px] mt-[5px] flex-shrink-0" style={{ color: protocolo.cor }}>▸</span>
+                    <span className="text-[12px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                      {item}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {!isLast && (
+                <div className="flex items-center gap-1.5 mt-3">
+                  <ArrowDown className="w-3 h-3" style={{ color: `${protocolo.cor}55` }} />
+                </div>
+              )}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export function ProtocolosTab() {
@@ -1685,13 +1762,8 @@ export function ProtocolosTab() {
               </div>
             </div>
 
-            {/* Sections */}
-            <div className="p-5 space-y-3">
-              <SecaoItem titulo={selected.diagnostico.titulo} items={selected.diagnostico.items} cor={selected.cor} />
-              <SecaoItem titulo={selected.exames.titulo}      items={selected.exames.items}      cor={selected.cor} />
-              <SecaoItem titulo={selected.tratamento.titulo}  items={selected.tratamento.items}  cor={selected.cor} />
-              <SecaoItem titulo={selected.acompanhamento.titulo} items={selected.acompanhamento.items} cor={selected.cor} />
-            </div>
+            {/* Stepper visual */}
+            <ProtocoloStepper protocolo={selected} />
 
             {/* AI Personalização */}
             <div className="px-5 pb-5 space-y-3">

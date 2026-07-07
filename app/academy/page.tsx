@@ -41,7 +41,7 @@ interface Trilha {
 }
 
 type ProgressoMap = Record<string, "nao_iniciada" | "em_andamento" | "concluida">
-type Tab = "trilhas" | "aulas" | "comunidade" | "progresso"
+type Tab = "trilhas" | "aulas" | "comunidade" | "progresso" | "casos"
 
 // ─── Dados ────────────────────────────────────────────────────────────────────
 
@@ -208,6 +208,142 @@ const NIVEL_STYLE: Record<string, string> = {
   "Iniciante":     "bg-green-50 border-green-200 text-green-700",
   "Intermediário": "bg-blue-50  border-blue-200  text-blue-700",
   "Avançado":      "bg-purple-50 border-purple-200 text-purple-700",
+}
+
+// ─── Casos Clínicos ───────────────────────────────────────────────────────────
+
+interface CasoClinico {
+  id:           string
+  especialidade: string
+  titulo:       string
+  contexto:     string
+  decisao:      string
+  resultado:    string
+  aprendizado:  string
+  dificuldade:  "Iniciante" | "Intermediário" | "Avançado"
+}
+
+const CASOS: CasoClinico[] = [
+  {
+    id: "caso-1",
+    especialidade: "Nutrologia",
+    titulo: "Resistência insulínica mascarada em paciente normoglicêmico",
+    contexto: "Homem, 42 anos, IMC 27, glicemia de jejum 94 mg/dL (normal). Queixa de fadiga crônica, ganho de 4 kg em 1 ano sem mudança de dieta. HbA1c: 5.4%. Médico anterior descartou diabetes.",
+    decisao: "Solicitar HOMA-IR e curva glicoinsulinêmica de 2h. HOMA-IR = 3.8 (resistência). Insulina de jejum: 18 µUI/mL. Iniciou protocolo low-carb + metformina 500mg/dia + berberina 500mg 2x/dia.",
+    resultado: "Em 12 semanas: perda de 5 kg, HOMA-IR 1.9, energia normalizada. Paciente evitou progressão para pré-diabetes.",
+    aprendizado: "Glicemia de jejum normal não descarta resistência insulínica. HOMA-IR e insulinemia de jejum devem ser rotina em pacientes com fadiga e ganho ponderal inexplicado.",
+    dificuldade: "Intermediário",
+  },
+  {
+    id: "caso-2",
+    especialidade: "Longevidade",
+    titulo: "Paciente de 58 anos com 'exames normais' e senescência celular precoce",
+    contexto: "Mulher, 58 anos, TSH 2.8, vitamina D 32 ng/mL (normal pelo lab). Queixa de perda de massa muscular, unhas quebradiças, cognição reduzida. Médico anterior disse que 'está tudo bem'.",
+    decisao: "Referenciar vitamina D funcional ≥ 60 ng/mL para longevidade. Iniciar reposição vitamina D3 10.000 UI + K2 200 mcg. Avaliar zinco, ferritina sérica, IGF-1 e testosterona livre.",
+    resultado: "Em 6 meses: vitamina D 68 ng/mL, melhora do sono e cognição, ganho de 1.2 kg de massa magra (DEXA). Zinco estava em 68 mcg/dL — suplementação iniciada.",
+    aprendizado: "Valores 'normais' de laboratório foram estabelecidos para evitar doenças agudas, não para otimizar função. Médicos de longevidade trabalham com faixas funcionais, não apenas de referência.",
+    dificuldade: "Avançado",
+  },
+  {
+    id: "caso-3",
+    especialidade: "Endocrinologia",
+    titulo: "TSH 'normal' com hipotireoidismo subclínico sintomático",
+    contexto: "Mulher, 35 anos, TSH 3.9 mUI/L (lab informa normal < 4.5). Queixa clássica: fadiga, ganho de peso, queda de cabelo, constipação, pele seca. T4L no limite inferior. Anti-TPO: 380 UI/mL.",
+    decisao: "Diagnóstico de Tireoidite de Hashimoto + hipotireoidismo subclínico sintomático. Iniciar levotiroxina 25 mcg com titulação até TSH 1–1.5. Dieta sem glúten por 3 meses (impacto em anti-TPO).",
+    resultado: "TSH 1.2 após 8 semanas. Sintomas resolvidos em 90%. Anti-TPO caiu 40% em 6 meses com dieta e selênio 200 mcg/dia.",
+    aprendizado: "TSH ideal para qualidade de vida é 0.5–2.0, não 0.5–4.5. Anti-TPO elevado indica processo autoimune ativo mesmo com TSH 'normal'. Abordagem funcional muda o prognóstico.",
+    dificuldade: "Intermediário",
+  },
+  {
+    id: "caso-4",
+    especialidade: "Metabolismo",
+    titulo: "Esteatose hepática revertida com intervenção nutricional precisa",
+    contexto: "Homem, 49 anos, diagnóstico de esteatose hepática grau 2 (USG). Consumo de álcool negado. TGO 48, TGP 67. Triglicerídeos 280 mg/dL, HDL 38. IMC 31. Cardiologista prescreveu estatina.",
+    decisao: "Interromper estatina (hepatotóxica na esteatose). Protocolo: jejum intermitente 16:8, frutose < 15g/dia, ômega-3 4g/dia, colina 500 mg/dia, perda de 7–10% do peso corporal.",
+    resultado: "Em 16 semanas: peso −8.5 kg, TGP 28, TGO 24, triglicerídeos 145, HDL 52. USG controle: esteatose leve/ausente.",
+    aprendizado: "Frutose é o principal driver da esteatose não alcoólica — não a gordura alimentar. Colina e ômega-3 têm evidência robusta. Perda de 7-10% do peso é o maior preditor de reversão.",
+    dificuldade: "Avançado",
+  },
+  {
+    id: "caso-5",
+    especialidade: "Nutrologia",
+    titulo: "Criança com déficit de crescimento por deficiência de zinco não investigada",
+    contexto: "Menina, 8 anos, altura no percentil 10 (pais no P50). Apetite reduzido, infecções respiratórias frequentes (4-5/ano). Pediatra propôs GH. Ferritina e hemograma normais.",
+    decisao: "Zinco sérico: 54 mcg/dL (deficiência). Suplementar zinco quelado 10 mg/dia por 3 meses. Reavaliar apetite em 4 semanas.",
+    resultado: "Apetite normalizado em 3 semanas. Após 6 meses: ganho de 3.2 cm (velocidade de crescimento dobrou). Infecções: 1 episódio no semestre. GH não necessário.",
+    aprendizado: "Zinco é cofator de +300 enzimas, incluindo IGF-1 e imunidade. Deficiência é subestimada na pediatria. Antes de GH, investigar micronutrientes.",
+    dificuldade: "Iniciante",
+  },
+]
+
+const DIFICULDADE_STYLE: Record<string, string> = {
+  "Iniciante":     "bg-emerald-500/10 border-emerald-500/25 text-emerald-400",
+  "Intermediário": "bg-blue-500/10 border-blue-500/25 text-blue-400",
+  "Avançado":      "bg-violet-500/10 border-violet-500/25 text-violet-400",
+}
+
+function AbaCasos() {
+  const [aberto, setAberto] = useState<string | null>(null)
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-[11px] font-mono text-text-muted uppercase tracking-widest">
+          {CASOS.length} casos reais documentados
+        </p>
+      </div>
+      {CASOS.map(caso => {
+        const isOpen = aberto === caso.id
+        const iniciais = caso.titulo.split(" ").slice(0, 2).map(w => w[0].toUpperCase()).join("")
+        return (
+          <div
+            key={caso.id}
+            className="bg-card border border-border rounded-xl overflow-hidden transition-all duration-200 hover:border-border-hover"
+          >
+            <button
+              className="w-full flex items-start gap-4 p-5 text-left"
+              onClick={() => setAberto(isOpen ? null : caso.id)}
+            >
+              {/* Avatar */}
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 font-bold text-[13px] text-accent bg-accent-dim border border-accent-border">
+                {iniciais}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap mb-1">
+                  <span className="text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full border bg-accent-dim border-accent-border text-accent">
+                    {caso.especialidade}
+                  </span>
+                  <span className={cn("text-[9px] font-mono px-2 py-0.5 rounded-full border", DIFICULDADE_STYLE[caso.dificuldade])}>
+                    {caso.dificuldade}
+                  </span>
+                </div>
+                <p className="text-[13px] font-semibold text-text-primary leading-snug">{caso.titulo}</p>
+              </div>
+              <ChevronDown className={cn("w-4 h-4 text-text-muted flex-shrink-0 mt-1 transition-transform", isOpen && "rotate-180")} />
+            </button>
+
+            {isOpen && (
+              <div className="px-5 pb-5 space-y-4 border-t border-border pt-4 animate-fade-in">
+                {[
+                  { label: "Contexto",    text: caso.contexto   },
+                  { label: "Decisão",     text: caso.decisao    },
+                  { label: "Resultado",   text: caso.resultado  },
+                ].map(({ label, text }) => (
+                  <div key={label}>
+                    <p className="text-[9px] font-mono text-text-muted uppercase tracking-widest mb-1">{label}</p>
+                    <p className="text-[12px] text-text-secondary leading-relaxed">{text}</p>
+                  </div>
+                ))}
+                <div className="rounded-lg border border-accent-border bg-accent-dim p-3.5">
+                  <p className="text-[9px] font-mono text-accent uppercase tracking-widest mb-1">Aprendizado-chave</p>
+                  <p className="text-[12px] text-text-primary leading-relaxed font-medium">{caso.aprendizado}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
 }
 
 function totalAulas(t: Trilha)  { return t.modulos.reduce((s, m) => s + m.aulas.length, 0) }
@@ -802,6 +938,7 @@ export default function AcademyPage() {
   const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
     { id: "trilhas",    label: "Trilhas",       icon: BookOpen    },
     { id: "aulas",      label: "Aulas",         icon: Play        },
+    { id: "casos",      label: "Casos Reais",   icon: Star        },
     { id: "comunidade", label: "Comunidade",    icon: Users       },
     { id: "progresso",  label: "Meu Progresso", icon: BarChart2   },
   ]
@@ -861,6 +998,9 @@ export default function AcademyPage() {
                   : { borderColor: "transparent", color: "var(--text-muted)" }}>
                 <Icon className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">{t.label}</span>
+                {t.id === "casos" && (
+                  <span className="hidden sm:inline text-[8px] font-mono font-semibold px-1.5 py-0.5 rounded-full bg-accent-dim border border-accent-border text-accent">NOVO</span>
+                )}
               </button>
             )
           })}
@@ -876,6 +1016,7 @@ export default function AcademyPage() {
           <>
             {tab === "trilhas"    && <AbaTrilhas    progresso={progresso} onMarcarConcluida={marcarConcluida} />}
             {tab === "aulas"      && <AbaAulas      progresso={progresso} onMarcarConcluida={marcarConcluida} />}
+            {tab === "casos"      && <AbaCasos />}
             {tab === "comunidade" && <AbaComunidade />}
             {tab === "progresso"  && <AbaProgresso  progresso={progresso} />}
           </>

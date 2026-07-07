@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useCallback } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useCallback, useEffect, Suspense } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { TopBar } from "@/components/TopBar"
 import { cn } from "@/lib/utils"
 import {
@@ -97,16 +97,25 @@ function SecaoCard({ secao, texto, onUsarNoCopiloto }: { secao: Secao; texto: st
   )
 }
 
-export default function ConversaPage() {
-  const router = useRouter()
+function ConversaInner() {
+  const router       = useRouter()
+  const searchParams = useSearchParams()
 
-  const [relato,       setRelato]       = useState("")
-  const [dados,        setDados]        = useState("")
-  const [nomePaciente, setNomePaciente] = useState("")
-  const [tipoConsulta, setTipoConsulta] = useState("")
+  const [relato,       setRelato]       = useState(searchParams.get("relato")        ?? "")
+  const [dados,        setDados]        = useState(searchParams.get("dados")         ?? "")
+  const [nomePaciente, setNomePaciente] = useState(searchParams.get("nomePaciente") ?? "")
+  const [tipoConsulta, setTipoConsulta] = useState(searchParams.get("tipoConsulta") ?? "")
   const [loading,      setLoading]      = useState(false)
   const [caso,         setCaso]         = useState<Partial<CasoClinico> | null>(null)
   const [erro,         setErro]         = useState("")
+
+  // Auto-submit if relato was pre-filled from URL
+  useEffect(() => {
+    if (searchParams.get("relato")?.trim() && searchParams.get("autosubmit") === "1") {
+      analisar()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const analisar = useCallback(async () => {
     if (!relato.trim()) return
@@ -257,5 +266,13 @@ export default function ConversaPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function ConversaPage() {
+  return (
+    <Suspense>
+      <ConversaInner />
+    </Suspense>
   )
 }

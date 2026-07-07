@@ -11,6 +11,7 @@ import {
   Copy, Check, Bot, RefreshCw, Plus,
   AlertCircle, ChevronDown, ChevronUp, Send,
   Clock, Trash2, FlaskConical, Mic, MicOff, ShieldCheck, Brain,
+  Pill, CalendarDays, Mail, ArrowRight,
 } from "lucide-react"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -1169,6 +1170,52 @@ function CopilotoContent() {
                   <p className="text-[12px] text-text-secondary leading-relaxed whitespace-pre-line">{result.conteudo}</p>
                 </SectionCard>
               )}
+
+              {/* ── Ações rápidas pós-prontuário ──────────────────────── */}
+              <div className="border border-border rounded-xl p-4 bg-surface/40 space-y-2">
+                <p className="text-[9px] font-mono text-text-muted uppercase tracking-widest">Próximos passos</p>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    {
+                      icon: Pill, label: "Prescrever",
+                      onClick: () => {
+                        const id = patient ? getPacId(patient) : ""
+                        router.push(id ? `/prescricao?pacienteId=${id}` : "/prescricao")
+                      },
+                      cls: "text-green-400 bg-green-500/10 border-green-500/25 hover:bg-green-500/20",
+                    },
+                    {
+                      icon: FlaskConical, label: "Interpretar exames",
+                      onClick: () => router.push("/interpretacao-exames"),
+                      cls: "text-violet-400 bg-violet-500/10 border-violet-500/25 hover:bg-violet-500/20",
+                    },
+                    {
+                      icon: Mail, label: "Gerar carta ao paciente",
+                      onClick: () => {
+                        const params = new URLSearchParams()
+                        if (relato)            params.set("relato", relato.slice(0, 2000))
+                        if (dados)             params.set("dados", dados.slice(0, 1000))
+                        if (patient)           params.set("nomePaciente", getPacNome(patient))
+                        if (tipoConsulta)      params.set("tipoConsulta", tipoConsulta)
+                        router.push(`/conversa?${params.toString()}`)
+                      },
+                      cls: "text-accent bg-accent-dim border-accent-border hover:bg-accent/20",
+                    },
+                    {
+                      icon: CalendarDays, label: "Agendar retorno",
+                      onClick: () => router.push("/agenda"),
+                      cls: "text-blue-400 bg-blue-500/10 border-blue-500/25 hover:bg-blue-500/20",
+                    },
+                  ].map(a => (
+                    <button key={a.label} onClick={a.onClick}
+                      className={cn("flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-lg border transition-all", a.cls)}>
+                      <a.icon className="w-3 h-3 flex-shrink-0" />
+                      {a.label}
+                      <ArrowRight className="w-2.5 h-2.5 opacity-50" />
+                    </button>
+                  ))}
+                </div>
+              </div>
 
               {/* 7. Prontuário */}
               {result.prontuario && (

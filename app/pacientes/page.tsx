@@ -397,7 +397,7 @@ export default function PacientesPage() {
                 return (
                   <button
                     key={i}
-                    onClick={() => openDrawer(pac)}
+                    onClick={() => pac._fonte === "local" ? router.push(`/pacientes/${getPacId(pac)}`) : openDrawer(pac)}
                     className="w-full text-left px-5 py-3.5 hover:bg-blue-500/[0.03] hover:border-l-2 hover:border-l-blue-500/40 transition-all group flex items-center gap-4 md:grid md:grid-cols-[1fr_160px_200px_140px_40px]"
                   >
                     {/* Avatar + Nome */}

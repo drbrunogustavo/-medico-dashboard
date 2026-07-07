@@ -209,6 +209,74 @@ function buildRelatorioEmail(m: RelatorioMetrics): string {
 </html>`
 }
 
+// ── Email: auditoria Instagram ────────────────────────────────────────────────
+
+function buildAuditoriaEmail(nome: string, dados: {
+  diasSemPost: number | null
+  semPost: boolean
+  pautasParadas: Array<{ titulo?: string | null }>
+}): string {
+  const primeiroNome = nome.replace(/^Dr\.?\s*/i, "").split(" ")[0] ?? nome
+  const linhasSemPost = dados.semPost
+    ? `<tr><td style="padding:0 0 16px 0;">
+        <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:16px 20px;">
+          <p style="margin:0 0 4px;font-size:14px;font-weight:700;color:#9a3412;">⚠️ ${dados.diasSemPost != null ? `Você ficou ${dados.diasSemPost} dias sem publicar` : "Nenhum post publicado ainda"}</p>
+          <p style="margin:0;font-size:13px;color:#c2410c;">A consistência é chave para o crescimento. Publique hoje!</p>
+        </div>
+      </td></tr>` : ""
+  const linhasPautas = dados.pautasParadas.length > 0
+    ? `<tr><td style="padding:0 0 16px 0;">
+        <div style="background:#fefce8;border:1px solid #fde68a;border-radius:12px;padding:16px 20px;">
+          <p style="margin:0 0 8px;font-size:14px;font-weight:700;color:#92400e;">📋 ${dados.pautasParadas.length} pauta${dados.pautasParadas.length !== 1 ? "s" : ""} parada${dados.pautasParadas.length !== 1 ? "s" : ""} há mais de 7 dias</p>
+          <ul style="margin:0;padding-left:16px;">
+            ${dados.pautasParadas.slice(0, 5).map(p => `<li style="font-size:12px;color:#78350f;margin-bottom:4px;">${p.titulo ?? "Sem título"}</li>`).join("")}
+            ${dados.pautasParadas.length > 5 ? `<li style="font-size:12px;color:#78350f;">… e mais ${dados.pautasParadas.length - 5}</li>` : ""}
+          </ul>
+        </div>
+      </td></tr>` : ""
+
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="UTF-8"/><title>Auditoria de conteúdo</title></head>
+<body style="margin:0;padding:0;background:#F5F0E8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#F5F0E8;padding:40px 0;">
+  <tr><td align="center">
+    <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+      <tr><td align="center" style="padding:0 0 24px 0;">
+        <div style="display:inline-block;background:#0D1B2A;border-radius:12px;padding:14px 28px;">
+          <span style="color:#b8976a;font-size:20px;font-weight:800;letter-spacing:0.1em;">PRAXIS</span>
+        </div>
+      </td></tr>
+      <tr><td style="background:#FFFFFF;border-radius:20px;border:1px solid #e8ddd0;overflow:hidden;">
+        <div style="background:linear-gradient(135deg,#8b5cf6,#6d28d9);height:4px;"></div>
+        <table width="100%" cellpadding="0" cellspacing="0" style="padding:36px 40px 32px;">
+          <tr><td>
+            <h1 style="margin:0 0 4px;font-size:22px;font-weight:700;color:#0D1B2A;">📱 Auditoria de Conteúdo</h1>
+            <p style="margin:0 0 24px;font-size:14px;color:#6a5a4a;">Dr. ${primeiroNome}, aqui está o resumo desta semana:</p>
+          </td></tr>
+          ${linhasSemPost}
+          ${linhasPautas}
+          <tr><td>
+            <a href="${APP_URL}/pautas"
+              style="display:inline-block;background:#6d28d9;color:#fff;font-size:14px;font-weight:700;padding:14px 28px;text-decoration:none;border-radius:12px;">
+              Ir para Banco de Pautas →
+            </a>
+          </td></tr>
+          <tr><td style="padding-top:24px;">
+            <p style="margin:0;font-size:11px;color:#9a8a7a;">
+              Auditoria semanal PRAXIS. Dúvidas?
+              <a href="mailto:${REPLY_TO}" style="color:#b8976a;text-decoration:none;">${REPLY_TO}</a>
+            </p>
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>`
+}
+
 // ── Route handler ─────────────────────────────────────────────────────────────
 
 export async function GET(req: NextRequest) {
@@ -347,23 +415,87 @@ export async function GET(req: NextRequest) {
     return enviados
   }
 
+  // ── Auditoria Instagram (quinta-feira) ───────────────────────────────────────
+  async function runAuditoriaInstagram() {
+    if (new Date().getDay() !== 4) return null   // executa apenas às quintas
+
+    const { data: perfis } = await supabase
+      .from("perfis").select("user_id, nome")
+    if (!perfis?.length) return { emails_enviados: 0 }
+
+    const now         = new Date()
+    const cutoff4dias = new Date(now.getTime() - 4  * 86_400_000)
+    const cutoff7dias = new Date(now.getTime() - 7  * 86_400_000)
+
+    let emailsEnviados = 0
+
+    for (const perfil of perfis) {
+      const { data: authUser } = await supabase.auth.admin.getUserById(perfil.user_id as string)
+      const email = authUser?.user?.email
+      if (!email) continue
+
+      // Último post publicado
+      const { data: ultimoPost } = await supabase
+        .from("pautas")
+        .select("updated_at")
+        .eq("user_id", perfil.user_id)
+        .eq("estagio", "Publicado")
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      const dataUltimoPost = ultimoPost?.updated_at ? new Date(ultimoPost.updated_at) : null
+      const diasSemPost    = dataUltimoPost
+        ? Math.floor((now.getTime() - dataUltimoPost.getTime()) / 86_400_000)
+        : null
+      const semPost = !dataUltimoPost || dataUltimoPost < cutoff4dias
+
+      // Pautas paradas há > 7 dias
+      const { data: pautasParadas } = await supabase
+        .from("pautas")
+        .select("titulo")
+        .eq("user_id", perfil.user_id)
+        .not("estagio", "in", '("Publicado","Pronto")')
+        .lt("created_at", cutoff7dias.toISOString())
+        .limit(20)
+
+      if (!semPost && !(pautasParadas?.length)) continue
+
+      const { error } = await resend.emails.send({
+        from: FROM_EMAIL, to: [email], replyTo: REPLY_TO,
+        subject: semPost
+          ? `📱 Você ficou ${diasSemPost ?? "vários"} dias sem publicar`
+          : `📋 ${pautasParadas!.length} pauta${pautasParadas!.length !== 1 ? "s" : ""} parada${pautasParadas!.length !== 1 ? "s" : ""} — auditoria semanal`,
+        html: buildAuditoriaEmail(
+          (perfil.nome as string | null) ?? email.split("@")[0],
+          { diasSemPost, semPost, pautasParadas: pautasParadas ?? [] }
+        ),
+      })
+      if (!error) emailsEnviados++
+    }
+
+    return { emails_enviados: emailsEnviados }
+  }
+
   const pick = (r: PromiseSettledResult<unknown>) =>
     r.status === "fulfilled" ? r.value : { error: String((r as PromiseRejectedResult).reason) }
 
-  const [trialR, leadR, relatorioR, reguaR, npsR] = await Promise.allSettled([
+  const [trialR, leadR, relatorioR, reguaR, npsR, auditoriaR] = await Promise.allSettled([
     runTrialAcabando(),
     runLeadSemResposta(),
     runRelatorioSemanal(),
     runRegua(),
     runNps(),
+    runAuditoriaInstagram(),
   ])
 
   return NextResponse.json({
     ok: true,
-    trial_acabando:    pick(trialR),
-    lead_sem_resposta: pick(leadR),
-    relatorio_semanal: pick(relatorioR),
-    regua:             pick(reguaR),
-    nps:               pick(npsR),
+    trial_acabando:       pick(trialR),
+    lead_sem_resposta:    pick(leadR),
+    relatorio_semanal:    pick(relatorioR),
+    regua:                pick(reguaR),
+    nps:                  pick(npsR),
+    auditoria_instagram:  pick(auditoriaR),
   })
 }

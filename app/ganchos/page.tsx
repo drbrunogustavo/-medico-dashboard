@@ -24,7 +24,14 @@ const TIPOS = [
 
 const FORMATOS = ['Reel','Carrossel','Feed','Stories']
 
-interface Gancho { texto: string; tipo: string; cor: string }
+interface Gancho { texto: string; tipo: string; cor: string; impacto?: string }
+
+const IMPACTO_CONFIG: Record<string, { emoji: string; label: string; bg: string; border: string; color: string }> = {
+  viral:     { emoji:'🔥', label:'Viral',     bg:'rgba(239,68,68,0.15)',  border:'rgba(239,68,68,0.4)',  color:'#f87171' },
+  conversao: { emoji:'⭐', label:'Conversão', bg:'rgba(234,179,8,0.15)', border:'rgba(234,179,8,0.4)',  color:'#facc15' },
+  educativo: { emoji:'🧠', label:'Educativo', bg:'rgba(59,130,246,0.15)',border:'rgba(59,130,246,0.4)', color:'#60a5fa' },
+  vendas:    { emoji:'💰', label:'Vendas',    bg:'rgba(34,197,94,0.15)', border:'rgba(34,197,94,0.4)',  color:'#4ade80' },
+}
 
 function CopyBtn({ text }: { text:string }) {
   const [ok, setOk] = useState(false)
@@ -38,14 +45,14 @@ function CopyBtn({ text }: { text:string }) {
 
 // Ganchos da biblioteca estática (usados antes da IA)
 const BIBLIOTECA_FIXA: Gancho[] = [
-  { texto:'95% das pessoas que fazem dieta recuperam tudo em 2 anos. Isso não é falta de vontade.', tipo:'Dado Chocante', cor:'rgba(96,165,250,0.85)' },
-  { texto:'O que a balança mostra não é o que importa. Te explico por quê.', tipo:'Contra-intuitivo', cor:'rgba(251,191,36,0.85)' },
-  { texto:'Médico, te faço uma pergunta: você trata o sintoma ou a causa?', tipo:'Pergunta', cor:'rgba(167,139,250,0.85)' },
-  { texto:'Depois de 10 anos atendendo pacientes com obesidade, aprendi uma coisa:', tipo:'Autoridade', cor:'rgba(245,101,101,0.85)' },
-  { texto:'Parar de comer não emagrece. E eu posso provar com dados.', tipo:'Afirmação Polêmica', cor:'rgba(251,146,60,0.85)' },
-  { texto:'Tem uma informação sobre tireoide que a maioria dos médicos ignora.', tipo:'Segredo Revelado', cor:'rgba(52,211,153,0.85)' },
-  { texto:'O exame voltou normal. O paciente continua com todos os sintomas. Por quê?', tipo:'Pergunta', cor:'rgba(167,139,250,0.85)' },
-  { texto:'Insulina alta em jejum com glicose normal: o sinal que ninguém vê.', tipo:'Dado Chocante', cor:'rgba(96,165,250,0.85)' },
+  { texto:'95% das pessoas que fazem dieta recuperam tudo em 2 anos. Isso não é falta de vontade.', tipo:'Dado Chocante', cor:'rgba(96,165,250,0.85)', impacto:'viral' },
+  { texto:'O que a balança mostra não é o que importa. Te explico por quê.', tipo:'Contra-intuitivo', cor:'rgba(251,191,36,0.85)', impacto:'educativo' },
+  { texto:'Médico, te faço uma pergunta: você trata o sintoma ou a causa?', tipo:'Pergunta', cor:'rgba(167,139,250,0.85)', impacto:'conversao' },
+  { texto:'Depois de 10 anos atendendo pacientes com obesidade, aprendi uma coisa:', tipo:'Autoridade', cor:'rgba(245,101,101,0.85)', impacto:'educativo' },
+  { texto:'Parar de comer não emagrece. E eu posso provar com dados.', tipo:'Afirmação Polêmica', cor:'rgba(251,146,60,0.85)', impacto:'viral' },
+  { texto:'Tem uma informação sobre tireoide que a maioria dos médicos ignora.', tipo:'Segredo Revelado', cor:'rgba(52,211,153,0.85)', impacto:'educativo' },
+  { texto:'O exame voltou normal. O paciente continua com todos os sintomas. Por quê?', tipo:'Pergunta', cor:'rgba(167,139,250,0.85)', impacto:'conversao' },
+  { texto:'Insulina alta em jejum com glicose normal: o sinal que ninguém vê.', tipo:'Dado Chocante', cor:'rgba(96,165,250,0.85)', impacto:'educativo' },
 ]
 
 export default function GanchosPage() {
@@ -78,18 +85,21 @@ export default function GanchosPage() {
         '- Máx 2 frases por gancho — para o dedo no scroll em 3 segundos\n' +
         '- Tom: médico que fala como amigo, direto, sem academicismo\n' +
         '- Proibido: "Você sabia que", "Neste vídeo", "Hoje vou falar"\n' +
-        '- Distribua os tipos solicitados entre os 8 ganchos\n\n' +
-        'Retorne SOMENTE JSON: {"ganchos":[{"texto":"...","tipo":"nome do tipo"}]}'
+        '- Distribua os tipos solicitados entre os 8 ganchos\n' +
+        '- Para cada gancho, classifique o campo "impacto" com UM dos valores: viral | conversao | educativo | vendas\n' +
+        '  viral=alto potencial de compartilhamento/provocação, conversao=leva ao agendamento/ação, educativo=ensina/conscientiza, vendas=oferta direta\n\n' +
+        'Retorne SOMENTE JSON: {"ganchos":[{"texto":"...","tipo":"nome do tipo","impacto":"viral|conversao|educativo|vendas"}]}'
       const res  = await fetch('/api/ganchos', { method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ model:AI_MODEL, max_tokens:1200, messages:[{role:'user',content:prompt}] }) })
       const data = await res.json()
       const raw  = (data.content?.[0]?.text||'{}').replace(/```json/g,'').replace(/```/g,'').trim()
       const startIdx = raw.indexOf('{'); const jsonStr = startIdx >= 0 ? raw.slice(startIdx) : raw; const json = JSON.parse(jsonStr)
       if (!json.ganchos){console.error('API response:',json);throw new Error('Resposta inesperada da IA. Tente novamente.')}
-      const mapped: Gancho[] = json.ganchos.map((g: {texto:string; tipo:string}) => ({
-        texto: g.texto,
-        tipo:  g.tipo,
-        cor:   TIPOS.find(t=>t.l===g.tipo)?.cor || D.accent,
+      const mapped: Gancho[] = json.ganchos.map((g: {texto:string; tipo:string; impacto?:string}) => ({
+        texto:   g.texto,
+        tipo:    g.tipo,
+        cor:     TIPOS.find(t=>t.l===g.tipo)?.cor || D.accent,
+        impacto: g.impacto,
       }))
       setGanchos(mapped)
       setAba('gerar')
@@ -191,8 +201,11 @@ export default function GanchosPage() {
                     <div key={i} style={{ background:D.card, border:`1px solid ${D.border}`, borderRadius:10, padding:'18px 20px', borderLeft:`3px solid ${g.cor}` }}>
                       <div style={{ display:'flex', alignItems:'flex-start', gap:12 }}>
                         <div style={{ flex:1 }}>
-                          <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:10 }}>
+                          <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:10, flexWrap:'wrap' }}>
                             <span style={{ fontSize:10, fontWeight:700, padding:'2px 8px', borderRadius:99, color:g.cor, background:'rgba(0,0,0,0.4)', border:`1px solid ${g.cor}` }}>{g.tipo}</span>
+                            {g.impacto && IMPACTO_CONFIG[g.impacto] && (() => { const ic = IMPACTO_CONFIG[g.impacto!]; return (
+                              <span style={{ fontSize:10, fontWeight:700, padding:'2px 8px', borderRadius:99, color:ic.color, background:ic.bg, border:`1px solid ${ic.border}` }}>{ic.emoji} {ic.label}</span>
+                            )})()}
                           </div>
                           <div className="font-playfair" style={{ color:D.text, fontSize:15, lineHeight:1.65, fontStyle:'italic' }}>
                             "{g.texto}"
@@ -227,8 +240,11 @@ export default function GanchosPage() {
                     <div key={i} style={{ background:D.card, border:`1px solid ${D.border}`, borderRadius:10, padding:'18px 20px', borderLeft:`3px solid ${g.cor}` }}>
                       <div style={{ display:'flex', alignItems:'flex-start', gap:12 }}>
                         <div style={{ flex:1 }}>
-                          <div style={{ marginBottom:8 }}>
+                          <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8, flexWrap:'wrap' }}>
                             <span style={{ fontSize:10, fontWeight:700, padding:'2px 8px', borderRadius:99, color:g.cor, background:'rgba(0,0,0,0.4)', border:`1px solid ${g.cor}` }}>{g.tipo}</span>
+                            {g.impacto && IMPACTO_CONFIG[g.impacto] && (() => { const ic = IMPACTO_CONFIG[g.impacto!]; return (
+                              <span style={{ fontSize:10, fontWeight:700, padding:'2px 8px', borderRadius:99, color:ic.color, background:ic.bg, border:`1px solid ${ic.border}` }}>{ic.emoji} {ic.label}</span>
+                            )})()}
                           </div>
                           <div className="font-playfair" style={{ color:D.text, fontSize:15, lineHeight:1.65, fontStyle:'italic' }}>
                             "{g.texto}"

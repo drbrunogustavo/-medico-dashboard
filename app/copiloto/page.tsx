@@ -85,6 +85,57 @@ function parseFollowup(f?: string | FollowupMessages): FollowupMessages | null {
   return { d1: s, d7: "", d30: "" }
 }
 
+// ── Prontuário parser ─────────────────────────────────────────────────────────
+
+interface ProntuarioBloco { key: string; label: string; content: string }
+
+const PRONTUARIO_SECTIONS = [
+  { key: "queixa",       label: "Queixa Principal",         iconColor: "text-blue-400",    patterns: ["QUEIXA PRINCIPAL"] },
+  { key: "hda",          label: "História da Doença Atual", iconColor: "text-indigo-400",  patterns: ["HISTÓRIA DA DOENÇA ATUAL", "HISTORIA DA DOENÇA ATUAL", "HDA"] },
+  { key: "antecedentes", label: "Antecedentes",             iconColor: "text-violet-400",  patterns: ["ANTECEDENTES"] },
+  { key: "exame",        label: "Exame Físico",             iconColor: "text-cyan-400",    patterns: ["EXAME FÍSICO", "EXAME FISICO"] },
+  { key: "hipoteses",    label: "Hipótese Diagnóstica",     iconColor: "text-purple-400",  patterns: ["HIPÓTESES DIAGNÓSTICAS", "HIPOTESES DIAGNOSTICAS", "HIPÓTESE DIAGNÓSTICA", "HIPOTESE DIAGNOSTICA"] },
+  { key: "conduta",      label: "Plano / Conduta",          iconColor: "text-emerald-400", patterns: ["CONDUTA", "PLANO TERAPÊUTICO", "PLANO TERAPEUTICO", "PLANO"] },
+  { key: "orientacoes",  label: "Orientações",              iconColor: "text-green-400",   patterns: ["ORIENTAÇÕES", "ORIENTACOES"] },
+  { key: "retorno",      label: "Retorno",                  iconColor: "text-amber-400",   patterns: ["RETORNO"] },
+]
+
+function getProntuarioIcon(key: string): React.ElementType {
+  switch (key) {
+    case "queixa":       return MessageCircle
+    case "hda":          return FileText
+    case "antecedentes": return BookOpen
+    case "exame":        return Stethoscope
+    case "hipoteses":    return FlaskConical
+    case "conduta":      return ClipboardList
+    case "orientacoes":  return BookOpen
+    case "retorno":      return Clock
+    default:             return FileText
+  }
+}
+
+function parseProntuario(text: string): ProntuarioBloco[] | null {
+  if (!text?.trim()) return null
+  const lines = text.split('\n')
+  const found: Array<{ lineIdx: number; sectionKey: string; label: string }> = []
+
+  for (let i = 0; i < lines.length; i++) {
+    const clean = lines[i].replace(/:\s*$/, '').trim()
+    const section = PRONTUARIO_SECTIONS.find(s =>
+      s.patterns.some(p => p.toUpperCase() === clean.toUpperCase())
+    )
+    if (section) found.push({ lineIdx: i, sectionKey: section.key, label: section.label })
+  }
+
+  if (found.length < 3) return null
+
+  return found.map((curr, i) => {
+    const nextLine = i < found.length - 1 ? found[i + 1].lineIdx : lines.length
+    const content  = lines.slice(curr.lineIdx + 1, nextLine).join('\n').trim()
+    return { key: curr.sectionKey, label: curr.label, content }
+  })
+}
+
 const TIPOS = ["Primeira consulta", "Retorno", "Urgência", "Teleconsulta"]
 
 const FOLLOWUP_META = {
@@ -256,7 +307,9 @@ function CopilotoContent() {
   const [sendingWA, setSendingWA] = useState({ d1: false, d7: false, d30: false })
 
   // MedX
-  const [sendingMedx, setSendingMedx] = useState(false)
+  const [sendingMedx,        setSendingMedx]        = useState(false)
+  const [prontuarioBlocos,   setProntuarioBlocos]   = useState<ProntuarioBloco[] | null>(null)
+  const [editedProntuario,   setEditedProntuario]   = useState<Record<string, string>>({})
 
   // History
   const [historico,        setHistorico]        = useState<HistoricoEntry[]>([])
@@ -289,6 +342,15 @@ function CopilotoContent() {
     setEditedPlano(result?.plano ?? "")
     setEditedOrientacoes(result?.orientacoes ?? "")
     setCheckedExames(new Set())
+    if (result?.prontuario) {
+      const blocos = parseProntuario(result.prontuario)
+      setProntuarioBlocos(blocos)
+      if (blocos) {
+        const map: Record<string, string> = {}
+        blocos.forEach(b => { map[b.key] = b.content })
+        setEditedProntuario(map)
+      } else { setEditedProntuario({}) }
+    } else { setProntuarioBlocos(null); setEditedProntuario({}) }
   }, [result])
 
   // ── History ─────────────────────────────────────────────────────────────────
@@ -499,7 +561,10 @@ function CopilotoContent() {
   // ── Send prontuário to MedX ──────────────────────────────────────────────────
 
   const enviarMedx = async () => {
-    if (!result?.prontuario) return
+    const prontuarioTexto = prontuarioBlocos && Object.keys(editedProntuario).length > 0
+      ? prontuarioBlocos.map(b => `${b.label.toUpperCase()}:\n${editedProntuario[b.key] ?? b.content}`).join('\n\n')
+      : result?.prontuario ?? ''
+    if (!prontuarioTexto) return
     const idPaciente = patient ? getPacId(patient) : ""
     if (!idPaciente) { showToast("Selecione um paciente para enviar ao MedX.", "error"); return }
     setSendingMedx(true)
@@ -507,7 +572,7 @@ function CopilotoContent() {
       const res  = await fetch("/api/copiloto?action=prontuario", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prontuario: result.prontuario, idPaciente }),
+        body: JSON.stringify({ prontuario: prontuarioTexto, idPaciente }),
       })
       const data = await res.json()
       if (!res.ok || (data as { error?: string }).error)
@@ -547,6 +612,7 @@ function CopilotoContent() {
     setResult(null); setGenError(""); setPhase("idle")
     setEditedResumo(""); setEditedPlano(""); setEditedOrientacoes("")
     setCheckedExames(new Set()); setSendingWA({ d1: false, d7: false, d30: false })
+    setProntuarioBlocos(null); setEditedProntuario({})
   }
 
   // ── Render ───────────────────────────────────────────────────────────────────
@@ -1004,7 +1070,11 @@ function CopilotoContent() {
                   iconColor="text-blue-400"
                   extra={
                     <div className="flex gap-2 flex-wrap">
-                      <CopyBtn text={result.prontuario} />
+                      <CopyBtn text={
+                        prontuarioBlocos && Object.keys(editedProntuario).length > 0
+                          ? prontuarioBlocos.map(b => `${b.label.toUpperCase()}:\n${editedProntuario[b.key] ?? b.content}`).join('\n\n')
+                          : result.prontuario
+                      } />
                       <button
                         onClick={enviarMedx}
                         disabled={sendingMedx}
@@ -1021,13 +1091,38 @@ function CopilotoContent() {
                     </div>
                   }
                 >
-                  <textarea
-                    readOnly
-                    value={result.prontuario}
-                    rows={14}
-                    onClick={e => (e.target as HTMLTextAreaElement).select()}
-                    className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3 text-[11px] text-text-secondary leading-relaxed font-mono resize-y outline-none cursor-text"
-                  />
+                  {prontuarioBlocos ? (
+                    <div className="space-y-3">
+                      {prontuarioBlocos.map(bloco => {
+                        const Icon      = getProntuarioIcon(bloco.key)
+                        const section   = PRONTUARIO_SECTIONS.find(s => s.key === bloco.key)
+                        const iconColor = section?.iconColor ?? "text-blue-400"
+                        return (
+                          <div key={bloco.key} className="border border-border rounded-lg overflow-hidden">
+                            <div className="flex items-center gap-2 px-4 py-2 bg-surface-2 border-b border-border">
+                              <Icon className={cn("w-3 h-3 flex-shrink-0", iconColor)} />
+                              <span className="text-[10px] font-mono font-semibold text-text-muted uppercase tracking-widest">
+                                {bloco.label}
+                              </span>
+                            </div>
+                            <AutoTextarea
+                              value={editedProntuario[bloco.key] ?? bloco.content}
+                              onChange={v => setEditedProntuario(prev => ({ ...prev, [bloco.key]: v }))}
+                              className="px-4 py-3"
+                            />
+                          </div>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    <textarea
+                      readOnly
+                      value={result.prontuario}
+                      rows={14}
+                      onClick={e => (e.target as HTMLTextAreaElement).select()}
+                      className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3 text-[11px] text-text-secondary leading-relaxed font-mono resize-y outline-none cursor-text"
+                    />
+                  )}
                 </SectionCard>
               )}
             </div>

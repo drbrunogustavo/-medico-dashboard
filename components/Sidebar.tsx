@@ -16,7 +16,7 @@ import {
   Instagram, Calculator, FileBarChart,
   FlaskConical, FileHeart, Pill,
   BookOpen, Wand2, Store, Brain, FileSpreadsheet,
-  Download, Receipt, Gift,
+  Download, Receipt, Gift, Command,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useMenu } from "@/components/MobileMenuProvider"
@@ -383,6 +383,19 @@ function SidebarContent() {
             </div>
           </div>
         </Link>
+
+        {/* Copilot hint */}
+        <div className="px-3 pb-1">
+          <button
+            onClick={() => window.dispatchEvent(new Event("open-copilot"))}
+            className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] text-text-muted hover:text-text-secondary hover:bg-surface transition-colors"
+          >
+            <Command className="w-3 h-3 flex-shrink-0" />
+            <span>K</span>
+            <span className="text-text-muted/50 mx-0.5">·</span>
+            <span>Acesso rápido</span>
+          </button>
+        </div>
 
         {/* Depoimento CTA */}
         <div className="px-3 pb-2">

@@ -34,10 +34,11 @@ export function PraxisCopilot() {
   const router   = useRouter()
   const pathname = usePathname()
 
-  const [open,    setOpen]    = useState(false)
-  const [query,   setQuery]   = useState("")
-  const [loading, setLoading] = useState(false)
-  const [result,  setResult]  = useState<CopilotResult | null>(null)
+  const [open,     setOpen]     = useState(false)
+  const [query,    setQuery]    = useState("")
+  const [loading,  setLoading]  = useState(false)
+  const [result,   setResult]   = useState<CopilotResult | null>(null)
+  const [showHint, setShowHint] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
   const suggestions = ROUTE_SUGGESTIONS[pathname] ?? DEFAULT_SUGGESTIONS
@@ -45,7 +46,20 @@ export function PraxisCopilot() {
   const openCopilot  = useCallback(() => { setOpen(true); setQuery(""); setResult(null) }, [])
   const closeCopilot = useCallback(() => { setOpen(false); setQuery(""); setResult(null); setLoading(false) }, [])
 
-  // Keyboard shortcuts
+  const dismissHint = useCallback(() => {
+    setShowHint(false)
+    if (typeof window !== "undefined") localStorage.setItem("copilot_hint_shown", "1")
+  }, [])
+
+  // Onboarding hint — show once after 2 s if never seen
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    if (localStorage.getItem("copilot_hint_shown")) return
+    const t = setTimeout(() => setShowHint(true), 2000)
+    return () => clearTimeout(t)
+  }, [])
+
+  // Keyboard shortcuts + custom event from sidebar
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
@@ -55,9 +69,14 @@ export function PraxisCopilot() {
       }
       if (e.key === "Escape" && open) closeCopilot()
     }
+    function onOpenEvent() { openCopilot(); dismissHint() }
     window.addEventListener("keydown", onKey)
-    return () => window.removeEventListener("keydown", onKey)
-  }, [open, openCopilot, closeCopilot])
+    window.addEventListener("open-copilot", onOpenEvent)
+    return () => {
+      window.removeEventListener("keydown", onKey)
+      window.removeEventListener("open-copilot", onOpenEvent)
+    }
+  }, [open, openCopilot, closeCopilot, dismissHint])
 
   // Focus input when opened
   useEffect(() => {
@@ -93,9 +112,30 @@ export function PraxisCopilot() {
 
   return (
     <>
+      {/* Onboarding hint tooltip */}
+      {showHint && (
+        <div className="fixed bottom-20 right-4 z-50 animate-fade-in pointer-events-none">
+          <div className="relative bg-card border border-accent-border rounded-xl shadow-2xl px-4 py-3 max-w-[230px] pointer-events-auto">
+            {/* Arrow pointing down-right toward the FAB */}
+            <div className="absolute bottom-[-7px] right-[22px] w-3.5 h-3.5 rotate-45 bg-card border-r border-b border-accent-border" />
+            <p className="text-[12px] text-text-primary leading-relaxed">
+              Pressione{" "}
+              <span className="font-mono text-accent bg-accent-dim border border-accent-border rounded px-1 py-0.5 text-[10px]">⌘K</span>
+              {" "}ou clique no botão para acessar qualquer funcionalidade rapidamente.
+            </p>
+            <button
+              onClick={dismissHint}
+              className="mt-2.5 text-[10px] font-mono text-text-muted hover:text-text-secondary transition-colors flex items-center gap-1"
+            >
+              Entendi <X className="w-2.5 h-2.5" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* FAB trigger */}
       <button
-        onClick={openCopilot}
+        onClick={() => { dismissHint(); openCopilot() }}
         className="fixed bottom-5 right-5 z-40 w-12 h-12 rounded-full bg-card border border-accent-border shadow-xl flex items-center justify-center hover:bg-accent-dim transition-all group"
         title="Praxis Copilot (⌘K)"
       >

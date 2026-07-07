@@ -53,7 +53,8 @@ export default function PautasPage() {
   const [newNota, setNewNota]     = useState("")
   const [newFonte, setNewFonte]   = useState("")
   const [toast, setToast]         = useState<string | null>(null)
-  const [openMenu, setOpenMenu]   = useState<string | null>(null)
+  const [openMenu, setOpenMenu]           = useState<string | null>(null)
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
   const menuRef                   = useRef<HTMLDivElement>(null)
 
   const showToast = (msg: string) => {
@@ -139,6 +140,7 @@ export default function PautasPage() {
     producao:   pautas.filter(p => p.estagio === "Em produção").length,
     publicados: pautas.filter(p => p.estagio === "Publicado").length,
   }
+  const advancedCount = (filterCat !== "Todas" ? 1 : 0) + (filterPri !== "Todas" ? 1 : 0)
 
   return (
     <div className="animate-fade-in">
@@ -197,35 +199,74 @@ export default function PautasPage() {
         )}
 
         <div className="bg-card border border-border rounded-lg p-5 space-y-3">
-          <div className="flex items-center gap-3 mb-1">
-            <Search className="w-3.5 h-3.5 text-text-muted" />
+          {/* Search */}
+          <div className="flex items-center gap-3">
+            <Search className="w-3.5 h-3.5 text-text-muted flex-shrink-0" />
             <input value={search} onChange={e => setSearch(e.target.value)}
               placeholder="Buscar pauta..."
               className="flex-1 bg-transparent text-[13px] text-text-primary placeholder:text-text-muted outline-none" />
-            <Filter className="w-3.5 h-3.5 text-text-muted" />
           </div>
+
           <div className="border-t border-border pt-3 space-y-2.5">
-            {[
-              { label:"Categoria",  items:CATEGORIAS, value:filterCat, set:setFilterCat },
-              { label:"Prioridade", items:PRIORIDADES, value:filterPri, set:setFilterPri },
-              { label:"Estágio",    items:ESTAGIOS,   value:filterEst, set:setFilterEst },
-            ].map(g => (
-              <div key={g.label} className="flex items-center gap-3">
-                <span className="text-[9px] font-mono text-text-muted tracking-widest uppercase w-16 flex-shrink-0">{g.label}</span>
-                <div className="flex flex-wrap gap-1.5">
-                  {g.items.map(item => (
-                    <button key={item} onClick={() => g.set(item)}
-                      className={cn("text-[10px] px-2.5 py-0.5 rounded-full border transition-all",
-                        g.value === item
-                          ? "bg-accent-dim border-accent-border text-accent-text font-medium"
-                          : "border-border text-text-muted hover:text-text-secondary hover:border-border-hover"
-                      )}>
-                      {item}
-                    </button>
-                  ))}
-                </div>
+            {/* Estágio — sempre visível */}
+            <div className="flex items-center gap-3">
+              <span className="text-[9px] font-mono text-text-muted tracking-widest uppercase w-16 flex-shrink-0">Estágio</span>
+              <div className="flex flex-wrap gap-1.5 flex-1">
+                {ESTAGIOS.map(item => (
+                  <button key={item} onClick={() => setFilterEst(item)}
+                    className={cn("text-[10px] px-2.5 py-0.5 rounded-full border transition-all",
+                      filterEst === item
+                        ? "bg-accent-dim border-accent-border text-accent-text font-medium"
+                        : "border-border text-text-muted hover:text-text-secondary hover:border-border-hover"
+                    )}>
+                    {item}
+                  </button>
+                ))}
               </div>
-            ))}
+              <button
+                onClick={() => setShowAdvancedFilters(v => !v)}
+                className={cn(
+                  "flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-full border transition-all flex-shrink-0",
+                  showAdvancedFilters || advancedCount > 0
+                    ? "bg-accent-dim border-accent-border text-accent"
+                    : "border-border text-text-muted hover:text-text-secondary"
+                )}
+              >
+                Filtros
+                {advancedCount > 0 && (
+                  <span className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-accent text-background text-[8px] font-bold">
+                    {advancedCount}
+                  </span>
+                )}
+                <ChevronDown className={cn("w-3 h-3 transition-transform", showAdvancedFilters && "rotate-180")} />
+              </button>
+            </div>
+
+            {/* Categoria + Prioridade — recolhidos por padrão */}
+            {showAdvancedFilters && (
+              <>
+                {[
+                  { label:"Categoria",  items:CATEGORIAS, value:filterCat, set:setFilterCat },
+                  { label:"Prioridade", items:PRIORIDADES, value:filterPri, set:setFilterPri },
+                ].map(g => (
+                  <div key={g.label} className="flex items-center gap-3">
+                    <span className="text-[9px] font-mono text-text-muted tracking-widest uppercase w-16 flex-shrink-0">{g.label}</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {g.items.map(item => (
+                        <button key={item} onClick={() => g.set(item)}
+                          className={cn("text-[10px] px-2.5 py-0.5 rounded-full border transition-all",
+                            g.value === item
+                              ? "bg-accent-dim border-accent-border text-accent-text font-medium"
+                              : "border-border text-text-muted hover:text-text-secondary hover:border-border-hover"
+                          )}>
+                          {item}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
           </div>
         </div>
 

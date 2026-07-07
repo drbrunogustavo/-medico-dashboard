@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { TopBar } from "@/components/TopBar"
-import { RefreshCw, Plus, Check, TrendingUp, Target, Play, ExternalLink, Sparkles, Radio, Zap, Microscope, X, Loader2 } from "lucide-react"
+import { RefreshCw, Plus, Check, TrendingUp, Target, Play, ExternalLink, Sparkles, Radio, Zap, Microscope, X, Loader2, ChevronDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { AI_MODEL } from "@/lib/ai-config"
 
@@ -260,6 +260,7 @@ export default function RadarPage() {
   const [loadingReverse, setLoadingReverse] = useState(false)
   const [reverseSent,    setReverseSent]    = useState(false)
   const [savedOpps,      setSavedOpps]      = useState<Set<number>>(new Set())
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
 
   const toastRef = useRef<ReturnType<typeof setTimeout>>()
 
@@ -490,6 +491,8 @@ Retorne um objeto JSON com:
     {id:"opportunities" as Tab, label:"Oportunidades",      icon:Target,     },
   ]
 
+  const advancedCount = (filters.topic !== "Todos" ? 1 : 0) + (filters.source !== "Todos" ? 1 : 0) + (filters.category !== "Todos" ? 1 : 0)
+
   const filterPill = (active: boolean, onClick: ()=>void, label: string, size="text-[11px] px-3 py-1") => (
     <button onClick={onClick} className={cn(
       size,"rounded-full border transition-all",
@@ -533,75 +536,97 @@ Retorne um objeto JSON com:
         {/* ── FILTERS ── */}
         <div className="bg-card border border-border rounded-lg p-5 space-y-3">
 
-          {/* Period */}
+          {/* Período — sempre visível + toggle "Filtros ▾" */}
           <div className="flex items-center gap-4">
             <span className="text-[9px] font-mono text-text-muted tracking-widest uppercase w-16 flex-shrink-0">Período</span>
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-1.5 flex-1">
               {PERIODS.map(p => filterPill(filters.period===p.value, ()=>setFilters(f=>({...f,period:p.value})), p.label))}
             </div>
+            <button
+              onClick={() => setShowAdvancedFilters(v => !v)}
+              className={cn(
+                "flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-full border transition-all flex-shrink-0",
+                showAdvancedFilters || advancedCount > 0
+                  ? "bg-accent-dim border-accent-border text-accent"
+                  : "border-border text-text-muted hover:text-text-secondary"
+              )}
+            >
+              Filtros
+              {advancedCount > 0 && (
+                <span className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-accent text-background text-[8px] font-bold">
+                  {advancedCount}
+                </span>
+              )}
+              <ChevronDown className={cn("w-3 h-3 transition-transform", showAdvancedFilters && "rotate-180")} />
+            </button>
           </div>
 
-          {/* Topics */}
-          <div className="flex items-start gap-4">
-            <span className="text-[9px] font-mono text-text-muted tracking-widest uppercase w-16 flex-shrink-0 pt-1">Tópico</span>
-            <div className="flex flex-wrap gap-1.5">
-              {TOPIC_FILTERS.map(t => (
-                <button key={t} onClick={() => setFilters(f=>({...f,topic:t}))}
-                  className={cn(
-                    "text-[10px] px-2.5 py-0.5 rounded-full border transition-all",
-                    filters.topic===t ? "bg-blue-50 border-blue-300 text-blue-700 font-medium" : "border-border text-text-muted hover:text-text-secondary hover:border-border-hover"
-                  )}>{t}</button>
-              ))}
-            </div>
-          </div>
-
-          {/* Sources — grouped */}
-          <div className="flex items-start gap-4">
-            <span className="text-[9px] font-mono text-text-muted tracking-widest uppercase w-16 flex-shrink-0 pt-1">Fonte</span>
-            <div className="flex flex-col gap-2 flex-1">
-              <div className="flex flex-wrap gap-1.5">
-                {filterPill(filters.source==="Todos", ()=>setFilters(f=>({...f,source:"Todos"})), "Todos")}
+          {/* Tópico + Fonte + Categoria + Search — recolhidos */}
+          {showAdvancedFilters && (
+            <div className="border-t border-border pt-3 space-y-3">
+              {/* Topics */}
+              <div className="flex items-start gap-4">
+                <span className="text-[9px] font-mono text-text-muted tracking-widest uppercase w-16 flex-shrink-0 pt-1">Tópico</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {TOPIC_FILTERS.map(t => (
+                    <button key={t} onClick={() => setFilters(f=>({...f,topic:t}))}
+                      className={cn(
+                        "text-[10px] px-2.5 py-0.5 rounded-full border transition-all",
+                        filters.topic===t ? "bg-blue-50 border-blue-300 text-blue-700 font-medium" : "border-border text-text-muted hover:text-text-secondary hover:border-border-hover"
+                      )}>{t}</button>
+                  ))}
+                </div>
               </div>
-              {Object.entries(SOURCE_GROUPS).map(([group, srcs]) => (
-                <div key={group} className="flex items-start gap-2">
-                  <span className="text-[8px] font-mono text-text-muted/50 uppercase w-14 flex-shrink-0 pt-1 tracking-wider">{group}</span>
+
+              {/* Sources — grouped */}
+              <div className="flex items-start gap-4">
+                <span className="text-[9px] font-mono text-text-muted tracking-widest uppercase w-16 flex-shrink-0 pt-1">Fonte</span>
+                <div className="flex flex-col gap-2 flex-1">
                   <div className="flex flex-wrap gap-1.5">
-                    {srcs.map(s => (
-                      <button key={s} onClick={()=>setFilters(f=>({...f,source:s}))}
+                    {filterPill(filters.source==="Todos", ()=>setFilters(f=>({...f,source:"Todos"})), "Todos")}
+                  </div>
+                  {Object.entries(SOURCE_GROUPS).map(([group, srcs]) => (
+                    <div key={group} className="flex items-start gap-2">
+                      <span className="text-[8px] font-mono text-text-muted/50 uppercase w-14 flex-shrink-0 pt-1 tracking-wider">{group}</span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {srcs.map(s => (
+                          <button key={s} onClick={()=>setFilters(f=>({...f,source:s}))}
+                            className={cn(
+                              "text-[10px] px-2.5 py-0.5 rounded-full border transition-all",
+                              filters.source===s ? "bg-accent-dim border-accent-border text-accent font-medium" : "border-border text-text-muted hover:text-text-secondary hover:border-border-hover"
+                            )}>{s}</button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Category — only radar tab */}
+              {activeTab === "radar" && (
+                <div className="flex items-start gap-4">
+                  <span className="text-[9px] font-mono text-text-muted tracking-widest uppercase w-16 flex-shrink-0 pt-1">Categoria</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {CATEGORIES_LIST.map(c => (
+                      <button key={c} onClick={()=>setFilters(f=>({...f,category:c}))}
                         className={cn(
                           "text-[10px] px-2.5 py-0.5 rounded-full border transition-all",
-                          filters.source===s ? "bg-accent-dim border-accent-border text-accent font-medium" : "border-border text-text-muted hover:text-text-secondary hover:border-border-hover"
-                        )}>{s}</button>
+                          filters.category===c ? "bg-accent-dim border-accent-border text-accent font-medium" : "border-border text-text-muted hover:text-text-secondary hover:border-border-hover"
+                        )}>{c}</button>
                     ))}
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
+              )}
 
-          {/* Category — only radar tab */}
-          {activeTab === "radar" && (
-            <div className="flex items-start gap-4">
-              <span className="text-[9px] font-mono text-text-muted tracking-widest uppercase w-16 flex-shrink-0 pt-1">Categoria</span>
-              <div className="flex flex-wrap gap-1.5">
-                {CATEGORIES_LIST.map(c => (
-                  <button key={c} onClick={()=>setFilters(f=>({...f,category:c}))}
-                    className={cn(
-                      "text-[10px] px-2.5 py-0.5 rounded-full border transition-all",
-                      filters.category===c ? "bg-accent-dim border-accent-border text-accent font-medium" : "border-border text-text-muted hover:text-text-secondary hover:border-border-hover"
-                    )}>{c}</button>
-                ))}
+              {/* Search */}
+              <div className="pt-1">
+                <input value={search} onChange={e=>setSearch(e.target.value)}
+                  placeholder="Buscar por tema ou palavra-chave..."
+                  className="w-full bg-background border border-border rounded-lg px-4 py-2 text-[13px] text-text-primary placeholder:text-text-muted outline-none focus:border-accent/40 transition-colors"
+                />
               </div>
             </div>
           )}
-
-          {/* Search */}
-          <div className="pt-1">
-            <input value={search} onChange={e=>setSearch(e.target.value)}
-              placeholder="Buscar por tema ou palavra-chave..."
-              className="w-full bg-background border border-border rounded-lg px-4 py-2 text-[13px] text-text-primary placeholder:text-text-muted outline-none focus:border-accent/40 transition-colors"
-            />
-          </div>
         </div>
 
         {/* ══════════════════════════════════════════

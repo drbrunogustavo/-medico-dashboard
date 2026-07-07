@@ -7,8 +7,9 @@ import {
   Clapperboard, Upload, Play, Pause, Download,
   BookOpen, X, Search, Loader2,
   AlertCircle, ChevronRight, Layers, Type,
-  Video, ImageIcon, Sliders, RefreshCw,
+  Video, ImageIcon, Sliders, RefreshCw, Sparkles,
 } from "lucide-react"
+import { AI_MODEL } from "@/lib/ai-config"
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -104,6 +105,9 @@ export default function EditorPage() {
   const [pautas,         setPautas]         = useState<Pauta[]>([])
   const [loadingPautas,  setLoadingPautas]  = useState(false)
   const [pautaSearch,    setPautaSearch]    = useState("")
+  const [showGerarModal, setShowGerarModal] = useState(false)
+  const [temaRoteiro,    setTemaRoteiro]    = useState("")
+  const [gerandoRoteiro, setGerandoRoteiro] = useState(false)
 
   const videoRef    = useRef<HTMLVideoElement>(null)
   const canvasRef   = useRef<HTMLCanvasElement>(null)
@@ -311,6 +315,26 @@ export default function EditorPage() {
     }
   }
 
+  const gerarRoteiro = async () => {
+    if (!temaRoteiro.trim()) return
+    setGerandoRoteiro(true)
+    try {
+      const prompt =
+        'Crie um roteiro para Reel médico sobre: "' + temaRoteiro + '"\n\n' +
+        'Formato: timecodes para vídeo de 45-60 segundos, tom médico direto e sem academicismo.\n' +
+        'Use exatamente este formato:\n[0-3s] gancho de abertura\n[3-10s] desenvolvimento 1\n[10-25s] desenvolvimento 2\n[25-40s] desenvolvimento 3\n[40-55s] CTA final\n\n' +
+        'Retorne SOMENTE o roteiro com timecodes, sem explicações adicionais.'
+      const res = await fetch('/api/roteiros', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: AI_MODEL, max_tokens: 600, messages: [{ role: 'user', content: prompt }] })
+      })
+      const data = await res.json()
+      const text = data.content?.[0]?.text || ''
+      if (text) { setRoteiro(text.trim()); setShowGerarModal(false); setTemaRoteiro('') }
+    } catch(e) { console.error(e) }
+    setGerandoRoteiro(false)
+  }
+
   // ── Pauta modal ──────────────────────────────────────────────────────────────
 
   const abrirModal = async () => {
@@ -514,6 +538,43 @@ export default function EditorPage() {
 
   return (
     <div className="animate-fade-in">
+      {/* Modal — Gerar Roteiro com IA */}
+      {showGerarModal && (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onClick={() => setShowGerarModal(false)}>
+          <div className="bg-surface border border-border rounded-xl p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <div className="text-[10px] font-mono text-text-muted tracking-widest uppercase mb-0.5">IA · Roteiro</div>
+                <h3 className="text-[15px] font-semibold text-text-primary">✨ Gerar Roteiro</h3>
+              </div>
+              <button onClick={() => setShowGerarModal(false)} className="text-text-muted hover:text-text-primary transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="space-y-3">
+              <input
+                value={temaRoteiro}
+                onChange={e => setTemaRoteiro(e.target.value)}
+                placeholder="Tema do vídeo... Ex: Resistência à insulina"
+                className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-[13px] text-text-primary placeholder:text-text-muted outline-none focus:border-accent/40 transition-colors"
+                onKeyDown={e => e.key === 'Enter' && !gerandoRoteiro && gerarRoteiro()}
+                autoFocus
+              />
+              <button
+                onClick={gerarRoteiro}
+                disabled={gerandoRoteiro || !temaRoteiro.trim()}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-accent text-background text-[13px] font-bold hover:bg-accent/90 transition-colors disabled:opacity-50"
+              >
+                {gerandoRoteiro
+                  ? <><Loader2 className="w-4 h-4 animate-spin" /> Gerando... (30–60s)</>
+                  : <><Sparkles className="w-4 h-4" /> Gerar Roteiro</>}
+              </button>
+              <p className="text-[10px] text-text-muted text-center">O roteiro gerado já vem no formato com timecodes prontos para análise</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <TopBar
         title="Editor de Vídeo"
         subtitle="TIMELINE · SOBREPOSIÇÕES · EXPORT REEL 9:16"
@@ -572,12 +633,20 @@ export default function EditorPage() {
             <div className="bg-card border border-border rounded-lg p-5">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-[13px] font-semibold text-text-primary">Roteiro do Vídeo</h3>
-                <button
-                  onClick={abrirModal}
-                  className="flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-md border border-border text-text-muted hover:border-accent-border hover:text-[#00c07f] transition-all"
-                >
-                  <BookOpen className="w-3.5 h-3.5" /> Importar Pauta
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setShowGerarModal(true)}
+                    className="flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-md border border-accent-border text-accent bg-accent-dim hover:bg-accent/20 transition-all"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" /> Gerar roteiro
+                  </button>
+                  <button
+                    onClick={abrirModal}
+                    className="flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-md border border-border text-text-muted hover:border-accent-border hover:text-[#00c07f] transition-all"
+                  >
+                    <BookOpen className="w-3.5 h-3.5" /> Importar Pauta
+                  </button>
+                </div>
               </div>
               <textarea
                 value={roteiro}

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { TopBar } from "@/components/TopBar"
 import { StatCard } from "@/components/StatCard"
-import { Plus, Users, TrendingUp, Eye, Star, ExternalLink, Search, Instagram, Globe, Trash2 } from "lucide-react"
+import { Plus, Users, TrendingUp, Eye, Star, ExternalLink, Search, Instagram, Globe, Trash2, Sparkles, X, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { AI_MODEL } from "@/lib/ai-config"
 
@@ -323,6 +323,33 @@ export default function ReferenciasPage() {
   const [toast, setToast]             = useState<string | null>(null)
   const [editRef, setEditRef]         = useState<Referencia | null>(null)
   const [analiseRef, setAnaliseRef]   = useState<Referencia | null>(null)
+  const [showInflModal,  setShowInflModal]  = useState(false)
+  const [inflEsp,        setInflEsp]        = useState("Endocrinologia")
+  const [loadingInfl,    setLoadingInfl]    = useState(false)
+  const [inflResults,    setInflResults]    = useState<Array<{nome:string;instagram:string;especialidade:string;seguidores:string;tema_principal:string;por_que_seguir:string}>>([])
+
+  const buscarInfluencers = async () => {
+    if (!inflEsp.trim()) return
+    setLoadingInfl(true); setInflResults([])
+    try {
+      const prompt =
+        'Você é especialista em marketing médico. Liste 5 médicos brasileiros influentes no Instagram na área de ' + inflEsp + '.\n\n' +
+        'Retorne SOMENTE JSON válido:\n' +
+        '{"influencers":[{"nome":"Dr. Nome","instagram":"@handle","especialidade":"' + inflEsp + '","seguidores":"Xk","tema_principal":"tema dominante","por_que_seguir":"motivo estratégico em 1 frase"}]}'
+      const res = await fetch('/api/roteiros', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: AI_MODEL, max_tokens: 800, messages: [{ role: 'user', content: prompt }] })
+      })
+      const data = await res.json()
+      const text = (data.content?.[0]?.text || '').replace(/```json\n?/g,'').replace(/```\n?/g,'').trim()
+      const idx = text.indexOf('{'); const end = text.lastIndexOf('}')
+      if (idx !== -1 && end !== -1) {
+        const json = JSON.parse(text.slice(idx, end + 1))
+        setInflResults(json.influencers || [])
+      }
+    } catch(e) { console.error(e) }
+    setLoadingInfl(false)
+  }
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2600) }
 
@@ -391,12 +418,71 @@ export default function ReferenciasPage() {
     <div className="animate-fade-in">
       {analiseRef && <AnaliseModal referencia={analiseRef} onClose={() => setAnaliseRef(null)} />}
 
+      {/* Modal — Buscar Influencers com IA */}
+      {showInflModal && (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onClick={() => setShowInflModal(false)}>
+          <div className="bg-surface border border-border rounded-xl w-full max-w-lg max-h-[85vh] flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-5 border-b border-border flex-shrink-0">
+              <div>
+                <div className="text-[9px] font-mono text-text-muted tracking-widest uppercase mb-0.5">IA · Descoberta</div>
+                <h3 className="text-[15px] font-semibold text-text-primary">✨ Buscar Influencers</h3>
+              </div>
+              <button onClick={() => setShowInflModal(false)} className="text-text-muted hover:text-text-primary transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-5 space-y-3 flex-shrink-0">
+              <div className="flex gap-2">
+                <input
+                  value={inflEsp}
+                  onChange={e => setInflEsp(e.target.value)}
+                  placeholder="Especialidade... Ex: Endocrinologia"
+                  className="flex-1 bg-background border border-border rounded-lg px-4 py-2.5 text-[13px] text-text-primary placeholder:text-text-muted outline-none focus:border-accent/40 transition-colors"
+                  onKeyDown={e => e.key === 'Enter' && !loadingInfl && buscarInfluencers()}
+                />
+                <button
+                  onClick={buscarInfluencers}
+                  disabled={loadingInfl || !inflEsp.trim()}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-accent text-background text-[13px] font-bold hover:bg-accent/90 transition-colors disabled:opacity-50 flex-shrink-0"
+                >
+                  {loadingInfl ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                  {loadingInfl ? 'Buscando...' : 'Buscar'}
+                </button>
+              </div>
+            </div>
+            {inflResults.length > 0 && (
+              <div className="overflow-y-auto flex-1 px-5 pb-5 space-y-3">
+                {inflResults.map((inf, i) => (
+                  <div key={i} className="bg-card border border-border rounded-lg p-4">
+                    <div className="flex items-start justify-between gap-3 mb-2">
+                      <div>
+                        <div className="text-[13px] font-semibold text-text-primary">{inf.nome}</div>
+                        <div className="text-[11px] text-accent">{inf.instagram}</div>
+                      </div>
+                      <span className="text-[10px] font-mono text-text-muted bg-background border border-border rounded px-2 py-0.5 flex-shrink-0">{inf.seguidores}</span>
+                    </div>
+                    <div className="text-[11px] text-text-muted mb-1"><span className="text-text-secondary font-medium">Tema:</span> {inf.tema_principal}</div>
+                    <div className="text-[11px] text-text-muted"><span className="text-text-secondary font-medium">Por quê seguir:</span> {inf.por_que_seguir}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <TopBar title="Monitor de Referencias" subtitle="MEDICOS INFLUENTES NO SEU NICHO"
         actions={
-          <button onClick={() => setShowForm(v => !v)}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-accent-dim border border-accent-border text-accent text-[12px] font-medium hover:bg-accent/20 transition-colors">
-            <Plus className="w-3.5 h-3.5" /> Adicionar Referencia
-          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setShowInflModal(true)}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border text-text-muted text-[12px] hover:border-accent-border hover:text-accent transition-colors">
+              <Sparkles className="w-3.5 h-3.5" /> Buscar influencers
+            </button>
+            <button onClick={() => setShowForm(v => !v)}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-accent-dim border border-accent-border text-accent text-[12px] font-medium hover:bg-accent/20 transition-colors">
+              <Plus className="w-3.5 h-3.5" /> Adicionar Referencia
+            </button>
+          </div>
         }
       />
       <div className="p-4 md:p-8 space-y-6">

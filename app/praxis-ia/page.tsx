@@ -36,6 +36,7 @@ const CATEGORIAS: Categoria[] = [
     bg:     "bg-blue-500/6",
     ferramentas: [
       { icon: Bot,          titulo: "Copiloto de Consulta",        desc: "Prontuário estruturado + gravação de voz",              href: "/copiloto",              badge: "MAIS USADO" },
+      { icon: MessageSquare, titulo: "Conversa Clínica",            desc: "Análise completa do caso: exames, prescrição e carta",   href: "/conversa",              badge: "NOVO" },
       { icon: FlaskConical, titulo: "Interpretação de Exames",     desc: "TSH, ferritina, vitamina D e 60+ exames",               href: "/interpretacao-exames"  },
       { icon: Stethoscope,  titulo: "Emagrecimento Inteligente",   desc: "Análise metabólica personalizada por perfil",           href: "/emagrecimento"         },
       { icon: FileSearch,   titulo: "Prescrição Assistida",        desc: "Sugestão de medicamentos baseada no diagnóstico",       href: "/prescricao"            },

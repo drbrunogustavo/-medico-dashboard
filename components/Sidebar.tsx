@@ -91,6 +91,7 @@ const NAV: Record<AlaId, NavItem[]> = {
     { label: "Régua de Relacionamento", href: "/regua",            icon: Heart         },
     { label: "Agenda Inteligente",      href: "/agenda",           icon: Calendar      },
     { label: "Copiloto de Consulta",    href: "/copiloto",         icon: Bot,           badge: "MAIS USADO" },
+    { label: "Conversa Clínica",        href: "/conversa",         icon: MessageSquare, badge: "NOVO" },
     { label: "Gestão de Pacientes",     href: "/pacientes",        icon: Users         },
     { label: "Importar Pacientes",      href: "/importar",         icon: FileSpreadsheet, badge: "MIGRAÇÃO" },
     { label: "Exportar Dados",          href: "/exportar",         icon: Download },

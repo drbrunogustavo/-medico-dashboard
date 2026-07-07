@@ -9,7 +9,7 @@ import {
   Lightbulb, Users, TrendingUp,
   Megaphone, BarChart3, Sparkles, GraduationCap,
   FileText, Stethoscope, Check, Star, AlertTriangle,
-  BookOpen, Trophy,
+  BookOpen, Trophy, Loader2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { usePerfil } from "@/hooks/usePerfil"
@@ -220,6 +220,60 @@ function AcademyMiniCard() {
 
 interface Pauta { id: number | string; titulo: string; categoria: string; estagio?: string }
 
+interface SugestaoIA { titulo: string; descricao: string; href: string; categoria: string }
+
+// ─── Sugestões IA card ────────────────────────────────────────────────────────
+
+const CATEGORIA_STYLE: Record<string, { color: string; bg: string; border: string; dot: string }> = {
+  social:  { color: "#00c07f", bg: "rgba(0,192,127,0.07)",    border: "rgba(0,192,127,0.22)",  dot: "#00c07f" },
+  clinica: { color: "#60a5fa", bg: "rgba(96,165,250,0.07)",   border: "rgba(96,165,250,0.22)", dot: "#60a5fa" },
+  ia:      { color: "#f59e0b", bg: "rgba(245,158,11,0.07)",   border: "rgba(245,158,11,0.22)", dot: "#f59e0b" },
+}
+
+function SugestoesIA({ sugestoes, loading }: { sugestoes: SugestaoIA[]; loading: boolean }) {
+  if (!loading && sugestoes.length === 0) return null
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-3">
+        <Sparkles className="w-3 h-3 text-accent" />
+        <span className="text-[9px] font-mono text-text-muted tracking-[3px] uppercase">Sugestões PRAXIS IA</span>
+        <div className="h-px flex-1 bg-border" />
+        {loading && <Loader2 className="w-3 h-3 text-text-muted animate-spin" />}
+      </div>
+
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {[0, 1].map(i => (
+            <div key={i} className="h-[72px] rounded-xl border border-border bg-surface animate-pulse" />
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {sugestoes.map((s, i) => {
+            const st = CATEGORIA_STYLE[s.categoria] ?? CATEGORIA_STYLE.ia
+            return (
+              <Link key={i} href={s.href}
+                className="flex items-center gap-4 px-4 py-3.5 rounded-xl border transition-all hover:-translate-y-0.5 group"
+                style={{ background: st.bg, borderColor: st.border }}>
+                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: st.dot }} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[12px] font-semibold leading-snug mb-0.5 truncate" style={{ color: st.color }}>
+                    {s.titulo}
+                  </p>
+                  <p className="text-[11px] text-text-secondary leading-relaxed line-clamp-2">{s.descricao}</p>
+                </div>
+                <ArrowRight className="w-3.5 h-3.5 flex-shrink-0 transition-transform group-hover:translate-x-0.5"
+                  style={{ color: st.color }} />
+              </Link>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Metric card ─────────────────────────────────────────────────────────────
 
 function MetricCard({ label, value, sub, topColor = "#00c07f", loading = false }: {
@@ -255,14 +309,16 @@ function MetricCard({ label, value, sub, topColor = "#00c07f", loading = false }
 // ─── Page ────────────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
-  const [pautasCount,  setPautasCount]  = useState<number>(0)
-  const [postsCount,   setPostsCount]   = useState<number>(0)
-  const [recentPautas, setRecentPautas] = useState<Pauta[]>([])
-  const [lastAccess,   setLastAccess]   = useState<string | null>(null)
-  const [execMetrics,  setExecMetrics]  = useState<ExecMetrics | null>(null)
-  const [execLoading,  setExecLoading]  = useState(true)
-  const [greet]                         = useState(greeting)
-  const [dateStr]                       = useState(fmtDate)
+  const [pautasCount,    setPautasCount]    = useState<number>(0)
+  const [postsCount,     setPostsCount]     = useState<number>(0)
+  const [recentPautas,   setRecentPautas]   = useState<Pauta[]>([])
+  const [lastAccess,     setLastAccess]     = useState<string | null>(null)
+  const [execMetrics,    setExecMetrics]    = useState<ExecMetrics | null>(null)
+  const [execLoading,    setExecLoading]    = useState(true)
+  const [sugestoesIA,    setSugestoesIA]    = useState<SugestaoIA[]>([])
+  const [sugestoesLoad,  setSugestoesLoad]  = useState(true)
+  const [greet]                             = useState(greeting)
+  const [dateStr]                           = useState(fmtDate)
   const { perfil, loading: perfilLoading } = usePerfil()
   const router       = useRouter()
   const searchParams = useSearchParams()
@@ -309,6 +365,29 @@ export default function DashboardPage() {
       .catch(e => console.error("[dashboard] erro ao carregar métricas executivas:", e))
       .finally(() => setExecLoading(false))
   }, [])
+
+  useEffect(() => {
+    if (execLoading || perfilLoading) return
+    fetch("/api/dashboard/sugestoes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        especialidade: perfil?.especialidade ?? "",
+        pautas: recentPautas.map(p => p.titulo),
+        metrics: {
+          leads:     execMetrics?.leads_total   ?? 0,
+          consultas: execMetrics?.consultas_mes ?? 0,
+          nps:       execMetrics?.nps_score     ?? null,
+          posts:     postsCount,
+        },
+      }),
+    })
+      .then(r => r.ok ? r.json() : { sugestoes: [] })
+      .then((d: { sugestoes?: SugestaoIA[] }) => setSugestoesIA(d.sugestoes ?? []))
+      .catch(() => setSugestoesIA([]))
+      .finally(() => setSugestoesLoad(false))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [execLoading, perfilLoading])
 
   const npsDisplay = execMetrics?.nps_score !== null && execMetrics?.nps_score !== undefined
     ? execMetrics.nps_score
@@ -361,6 +440,9 @@ export default function DashboardPage() {
             sub="conteúdos no ar"    topColor="#f472b6"
           />
         </div>
+
+        {/* ── Sugestões PRAXIS IA ─────────────────────────────────────────── */}
+        <SugestoesIA sugestoes={sugestoesIA} loading={sugestoesLoad} />
 
         {/* ── Banner depoimento ───────────────────────────────────────────── */}
         <div className="flex items-start justify-between gap-4 px-5 py-4 rounded-xl border"

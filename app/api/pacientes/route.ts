@@ -21,9 +21,22 @@ export async function GET(req: NextRequest) {
 
   try {
     if (medxConfigured()) {
+      const supabaseMx = createSupabaseServiceClient()
       switch (action) {
-        case "list":
-          return NextResponse.json(await getPacientes())
+        case "list": {
+          const [medxPacs, { data: localPacs }] = await Promise.all([
+            getPacientes().catch(() => [] as Record<string, unknown>[]),
+            supabaseMx
+              .from("pacientes_local")
+              .select("*")
+              .eq("user_id", auth.userId)
+              .order("created_at", { ascending: false }),
+          ])
+          return NextResponse.json([
+            ...(localPacs ?? []).map(p => ({ ...p, _fonte: "local" })),
+            ...medxPacs,
+          ])
+        }
         case "get": {
           const id = searchParams.get("id") ?? ""
           if (!id) return NextResponse.json({ error: "id obrigatório" }, { status: 400 })
@@ -32,7 +45,19 @@ export async function GET(req: NextRequest) {
         case "search": {
           const nome = searchParams.get("nome") ?? searchParams.get("q") ?? ""
           if (!nome.trim()) return NextResponse.json([])
-          return NextResponse.json(await buscarPaciente(nome))
+          const [medxRes, { data: localRes }] = await Promise.all([
+            buscarPaciente(nome).catch(() => [] as Record<string, unknown>[]),
+            supabaseMx
+              .from("pacientes_local")
+              .select("*")
+              .eq("user_id", auth.userId)
+              .ilike("nome", `%${nome}%`)
+              .limit(20),
+          ])
+          return NextResponse.json([
+            ...(localRes ?? []).map(p => ({ ...p, _fonte: "local" })),
+            ...medxRes,
+          ])
         }
         default:
           return NextResponse.json({ error: "Action inválida" }, { status: 400 })

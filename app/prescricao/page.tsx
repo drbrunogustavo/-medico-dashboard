@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, Suspense } from "react"
+import { useState, useMemo, useEffect, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { TopBar } from "@/components/TopBar"
 import { EmagrecimentoTab } from "@/components/EmagrecimentoTab"
@@ -8,7 +8,7 @@ import { ProtocolosTab } from "@/components/ProtocolosTab"
 import { cn } from "@/lib/utils"
 import {
   Pill, Search, ChevronDown, ChevronRight, Copy, Check,
-  AlertTriangle, Info, Shield, Zap, Star, ClipboardList,
+  AlertTriangle, Info, Shield, Zap, Star, ClipboardList, Sparkles, User, Loader2,
 } from "lucide-react"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -1893,21 +1893,82 @@ function MedCard({
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
+interface PacienteBanner {
+  id: string
+  nome: string
+  peso?: number | null
+  altura?: number | null
+  sexo?: string | null
+  data_nascimento?: string | null
+}
+
+interface MedicamentoSugestao { nome: string; dose: string; ajuste?: string }
+interface SugestaoResult {
+  justificativa: string
+  medicamentos1aLinha: MedicamentoSugestao[]
+  examesRecomendados: string[]
+  alertas: string[]
+  retornoPrevisto: string
+}
+
+function calcIdade(dn: string | null | undefined): number | null {
+  if (!dn) return null
+  const n = new Date(dn), h = new Date()
+  const a = h.getFullYear() - n.getFullYear()
+  return (h.getMonth() > n.getMonth() || (h.getMonth() === n.getMonth() && h.getDate() >= n.getDate())) ? a : a - 1
+}
+function calcIMC(peso: number | null | undefined, altura: number | null | undefined): number | null {
+  if (!peso || !altura) return null
+  return Math.round(peso / ((altura / 100) ** 2) * 10) / 10
+}
+
 function PrescricaoContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const rawTab = searchParams.get("tab")
+  const pacienteId = searchParams.get("pacienteId")
   const tab = rawTab === "emagrecimento" ? "emagrecimento"
             : rawTab === "protocolos"    ? "protocolos"
             : "medicamentos"
 
   function switchTab(t: "medicamentos" | "emagrecimento" | "protocolos") {
-    router.replace(t === "medicamentos" ? "/prescricao" : `/prescricao?tab=${t}`)
+    const base = t === "medicamentos" ? "/prescricao" : `/prescricao?tab=${t}`
+    router.replace(pacienteId ? `${base}${t === "medicamentos" ? "?" : "&"}pacienteId=${pacienteId}` : base)
   }
 
   const [search,   setSearch]   = useState("")
   const [openDiag, setOpenDiag] = useState<Record<string, boolean>>({})
   const [copied, setCopied] = useState<string | null>(null)
+
+  const [paciente,        setPaciente]        = useState<PacienteBanner | null>(null)
+  const [sugestoes,       setSugestoes]       = useState<Record<string, SugestaoResult>>({})
+  const [loadingSugestao, setLoadingSugestao] = useState<Record<string, boolean>>({})
+
+  useEffect(() => {
+    if (!pacienteId) return
+    fetch(`/api/pacientes/${pacienteId}`)
+      .then(r => r.json())
+      .then(d => { if (d.paciente) setPaciente(d.paciente as PacienteBanner) })
+      .catch(() => {})
+  }, [pacienteId])
+
+  async function gerarSugestao(diag: Diagnostico) {
+    if (!pacienteId) return
+    setLoadingSugestao(prev => ({ ...prev, [diag.id]: true }))
+    try {
+      const res = await fetch("/api/prescricao/sugestao", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pacienteId, diagnosticoId: diag.id, diagnosticoNome: diag.nome }),
+      })
+      const data = await res.json() as SugestaoResult
+      setSugestoes(prev => ({ ...prev, [diag.id]: data }))
+    } catch {
+      /* silently fail */
+    } finally {
+      setLoadingSugestao(prev => ({ ...prev, [diag.id]: false }))
+    }
+  }
 
   function copy(id: string, text: string) {
     navigator.clipboard.writeText(text).then(() => {
@@ -1969,6 +2030,30 @@ function PrescricaoContent() {
           </button>
         ))}
       </div>
+
+      {/* Patient banner */}
+      {pacienteId && paciente && (
+        <div className="mx-4 md:mx-8 mt-4 flex items-center gap-3 rounded-xl px-4 py-3"
+          style={{ background: "rgba(59,127,255,0.07)", border: "1px solid rgba(59,127,255,0.25)" }}>
+          <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-[11px] font-bold text-blue-400"
+            style={{ background: "rgba(59,127,255,0.15)" }}>
+            <User className="w-4 h-4" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-[13px] font-semibold text-blue-300 truncate">{paciente.nome}</div>
+            <div className="text-[10px] font-mono text-blue-400/70 flex flex-wrap gap-x-3 mt-0.5">
+              {calcIdade(paciente.data_nascimento) && <span>{calcIdade(paciente.data_nascimento)} anos</span>}
+              {paciente.sexo && <span>{paciente.sexo === "M" ? "Masc." : paciente.sexo === "F" ? "Fem." : "Outro"}</span>}
+              {paciente.peso && <span>{paciente.peso} kg</span>}
+              {paciente.altura && <span>{paciente.altura} cm</span>}
+              {calcIMC(paciente.peso, paciente.altura) && <span>IMC {calcIMC(paciente.peso, paciente.altura)} kg/m²</span>}
+            </div>
+          </div>
+          <span className="text-[9px] font-mono px-2 py-0.5 rounded-full text-blue-400 bg-blue-500/10 border border-blue-500/20 flex-shrink-0">
+            PERSONALIZADO
+          </span>
+        </div>
+      )}
 
       {tab === "emagrecimento" ? (
         <EmagrecimentoTab />
@@ -2046,6 +2131,113 @@ function PrescricaoContent() {
                 {diag.medicamentos.map(med => (
                   <MedCard key={med.id} med={med} copied={copied} onCopy={copy} />
                 ))}
+
+                {/* Sugestão Personalizada ✨ */}
+                {pacienteId && (
+                  <div className="pt-1 space-y-3">
+                    {!sugestoes[diag.id] && (
+                      <button
+                        onClick={() => gerarSugestao(diag)}
+                        disabled={loadingSugestao[diag.id]}
+                        className={cn(
+                          "flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-lg border transition-all",
+                          loadingSugestao[diag.id]
+                            ? "opacity-60 cursor-not-allowed border-border text-text-muted"
+                            : "bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20"
+                        )}
+                      >
+                        {loadingSugestao[diag.id]
+                          ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          : <Sparkles className="w-3.5 h-3.5" />}
+                        {loadingSugestao[diag.id] ? "Gerando sugestão…" : "Sugestão Personalizada ✨"}
+                      </button>
+                    )}
+
+                    {sugestoes[diag.id] && (
+                      <div className="rounded-xl p-4 space-y-3"
+                        style={{ background: "rgba(0,192,127,0.05)", border: "1px solid rgba(0,192,127,0.25)" }}>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Sparkles className="w-3.5 h-3.5" style={{ color: "var(--accent)" }} />
+                            <span className="text-[11px] font-semibold" style={{ color: "var(--accent)" }}>
+                              Sugestão Personalizada — {paciente?.nome}
+                            </span>
+                          </div>
+                          <button
+                            onClick={() => setSugestoes(prev => { const n = { ...prev }; delete n[diag.id]; return n })}
+                            className="text-[9px] font-mono text-text-muted hover:text-text-secondary transition-colors"
+                          >
+                            fechar
+                          </button>
+                        </div>
+
+                        <p className="text-[11px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                          {sugestoes[diag.id].justificativa}
+                        </p>
+
+                        {sugestoes[diag.id].medicamentos1aLinha.length > 0 && (
+                          <div>
+                            <div className="text-[9px] font-mono font-semibold mb-1.5 uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
+                              Medicamentos 1ª Linha
+                            </div>
+                            <div className="space-y-1.5">
+                              {sugestoes[diag.id].medicamentos1aLinha.map((m, i) => (
+                                <div key={i} className="flex items-start gap-2 text-[11px]">
+                                  <span className="text-accent font-semibold min-w-0 flex-shrink-0">•</span>
+                                  <span style={{ color: "var(--text-primary)" }}>
+                                    <strong>{m.nome}</strong> — {m.dose}
+                                    {m.ajuste && <span className="text-amber-400"> ({m.ajuste})</span>}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {sugestoes[diag.id].examesRecomendados.length > 0 && (
+                          <div>
+                            <div className="text-[9px] font-mono font-semibold mb-1 uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
+                              Exames Recomendados
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                              {sugestoes[diag.id].examesRecomendados.map((e, i) => (
+                                <span key={i} className="text-[10px] px-2 py-0.5 rounded-full border text-blue-400 bg-blue-500/10 border-blue-500/20">
+                                  {e}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {sugestoes[diag.id].alertas.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5">
+                            {sugestoes[diag.id].alertas.map((a, i) => (
+                              <div key={i} className="flex items-start gap-1 text-[10px] text-amber-400">
+                                <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5" />
+                                <span>{a}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        <div className="flex items-center gap-1.5 text-[10px]" style={{ color: "var(--text-muted)" }}>
+                          <Info className="w-3 h-3" />
+                          <span>Retorno previsto: <strong style={{ color: "var(--text-secondary)" }}>{sugestoes[diag.id].retornoPrevisto}</strong></span>
+                        </div>
+
+                        <button
+                          onClick={() => gerarSugestao(diag)}
+                          disabled={loadingSugestao[diag.id]}
+                          className="flex items-center gap-1 text-[9px] font-mono text-text-muted hover:text-accent transition-colors"
+                        >
+                          {loadingSugestao[diag.id] ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : <Sparkles className="w-2.5 h-2.5" />}
+                          Regerar
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <button
                   onClick={() => router.replace("/prescricao?tab=protocolos")}
                   className="flex items-center gap-1.5 text-[10px] font-mono text-text-muted hover:text-accent transition-colors pt-1"

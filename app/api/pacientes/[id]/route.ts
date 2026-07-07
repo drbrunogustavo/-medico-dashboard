@@ -51,7 +51,7 @@ export async function GET(
 
 const ALLOWED_PATCH = [
   "peso", "altura", "circunferencia_ab", "medicamentos",
-  "pendencias", "protocolo_ativo",
+  "pendencias", "protocolo_ativo", "sexo",
 ] as const
 
 export async function PATCH(

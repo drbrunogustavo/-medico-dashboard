@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils"
 import {
   Plug, Bell, Palette, Shield, Users, CreditCard,
   CheckCircle2, XCircle, ChevronRight, ExternalLink,
-  Eye, EyeOff, Loader2, AlertTriangle, Download,
+  Eye, EyeOff, Loader2, AlertTriangle, Download, Wifi,
 } from "lucide-react"
 import Link from "next/link"
 
@@ -137,13 +137,17 @@ const INTEGRACOES = [
 
 type IntegrationState = Record<string, Record<string, string>>
 
+interface ZapiTestResult { ok: boolean; connected?: boolean; smartphoneConnected?: boolean; error?: string }
+
 function TabIntegracoes() {
-  const [values,    setValues]    = useState<IntegrationState>({})
-  const [show,      setShow]      = useState<Record<string, boolean>>({})
-  const [saving,    setSaving]    = useState<Record<string, boolean>>({})
-  const [saved,     setSaved]     = useState<Record<string, boolean>>({})
-  const [connected, setConnected] = useState<Record<string, boolean>>({})
-  const [loading,   setLoading]   = useState(true)
+  const [values,         setValues]         = useState<IntegrationState>({})
+  const [show,           setShow]           = useState<Record<string, boolean>>({})
+  const [saving,         setSaving]         = useState<Record<string, boolean>>({})
+  const [saved,          setSaved]          = useState<Record<string, boolean>>({})
+  const [connected,      setConnected]      = useState<Record<string, boolean>>({})
+  const [loading,        setLoading]        = useState(true)
+  const [zapiTesting,    setZapiTesting]    = useState(false)
+  const [zapiTestResult, setZapiTestResult] = useState<ZapiTestResult | null>(null)
 
   useEffect(() => {
     fetch("/api/integracoes")
@@ -175,6 +179,17 @@ function TabIntegracoes() {
       setSaved(s => ({ ...s, [id]: true }))
       setTimeout(() => setSaved(s => ({ ...s, [id]: false })), 2000)
     }
+  }
+
+  const testZapi = async () => {
+    setZapiTesting(true)
+    setZapiTestResult(null)
+    try {
+      const res  = await fetch("/api/integrations/zapi-test", { method: "POST" })
+      const data = await res.json() as ZapiTestResult
+      setZapiTestResult(data)
+    } catch { setZapiTestResult({ ok: false, error: "Erro de conexão" }) }
+    finally   { setZapiTesting(false) }
   }
 
   return (
@@ -240,18 +255,57 @@ function TabIntegracoes() {
                 </div>
               </div>
             ))}
-            <button
-              onClick={() => save(integ.id)}
-              disabled={saving[integ.id]}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-[11px] font-semibold transition-all"
-              style={{
-                background: saved[integ.id] ? "rgba(16,185,129,0.12)" : "var(--accent-dim)",
-                border: `1px solid ${saved[integ.id] ? "rgba(16,185,129,0.3)" : "var(--accent-border)"}`,
-                color: saved[integ.id] ? "#10b981" : "var(--accent)",
-              }}>
-              {saving[integ.id] ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
-              {saved[integ.id] ? "Salvo!" : saving[integ.id] ? "Salvando..." : "Salvar credenciais"}
-            </button>
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={() => save(integ.id)}
+                disabled={saving[integ.id]}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-[11px] font-semibold transition-all"
+                style={{
+                  background: saved[integ.id] ? "rgba(16,185,129,0.12)" : "var(--accent-dim)",
+                  border: `1px solid ${saved[integ.id] ? "rgba(16,185,129,0.3)" : "var(--accent-border)"}`,
+                  color: saved[integ.id] ? "#10b981" : "var(--accent)",
+                }}>
+                {saving[integ.id] ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
+                {saved[integ.id] ? "Salvo!" : saving[integ.id] ? "Salvando..." : "Salvar credenciais"}
+              </button>
+
+              {integ.id === "zapi" && (
+                <button
+                  onClick={testZapi}
+                  disabled={zapiTesting}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-[11px] font-semibold border border-border text-text-muted hover:text-text-secondary transition-all"
+                >
+                  {zapiTesting
+                    ? <Loader2 className="w-3 h-3 animate-spin" />
+                    : <Wifi className="w-3 h-3" />}
+                  {zapiTesting ? "Testando..." : "Testar conexão"}
+                </button>
+              )}
+            </div>
+
+            {integ.id === "zapi" && zapiTestResult && (
+              <div className={cn(
+                "mt-2 flex items-start gap-2 rounded-lg border px-3 py-2 text-[11px]",
+                zapiTestResult.ok && zapiTestResult.connected
+                  ? "bg-green-500/10 border-green-500/25 text-green-400"
+                  : zapiTestResult.ok && !zapiTestResult.connected
+                  ? "bg-amber-500/10 border-amber-500/25 text-amber-400"
+                  : "bg-red-500/10 border-red-500/25 text-red-400"
+              )}>
+                {zapiTestResult.ok && zapiTestResult.connected
+                  ? <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+                  : zapiTestResult.ok
+                  ? <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+                  : <XCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />}
+                <span>
+                  {zapiTestResult.ok && zapiTestResult.connected
+                    ? `WhatsApp conectado${zapiTestResult.smartphoneConnected ? " · smartphone pareado" : " · smartphone não detectado"}`
+                    : zapiTestResult.ok && !zapiTestResult.connected
+                    ? "Instância encontrada mas WhatsApp desconectado. Escaneie o QR code no painel Z-API."
+                    : zapiTestResult.error ?? "Erro desconhecido"}
+                </span>
+              </div>
+            )}
           </div>
         </Card>
       ))}

@@ -70,6 +70,12 @@ function fmtDate(s: string) {
   const d = new Date(s)
   return `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`
 }
+function fmtDateLong(s: string) {
+  if (!s) return "—"
+  const d = new Date(s)
+  const months = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"]
+  return `${String(d.getDate()).padStart(2,"0")} ${months[d.getMonth()]} ${d.getFullYear()}`
+}
 
 function parseFollowup(f?: string | FollowupMessages): FollowupMessages | null {
   if (!f) return null
@@ -617,6 +623,10 @@ function CopilotoContent() {
 
   // ── Render ───────────────────────────────────────────────────────────────────
 
+  const historicoFiltrado = patient
+    ? historico.filter(e => e.paciente_nome === getPacNome(patient))
+    : historico
+
   return (
     <div className="animate-fade-in">
       <TopBar
@@ -661,13 +671,58 @@ function CopilotoContent() {
             <div className="flex items-center justify-center py-6">
               <Loader2 className="w-4 h-4 text-text-muted animate-spin" />
             </div>
-          ) : historico.length === 0 ? (
+          ) : historicoFiltrado.length === 0 ? (
             <div className="px-6 py-5 text-[12px] text-text-muted text-center">
-              Nenhuma consulta salva ainda. Gere a primeira!
+              {patient
+                ? `Nenhuma consulta salva para ${getPacNome(patient)}.`
+                : "Nenhuma consulta salva ainda. Gere a primeira!"}
+            </div>
+          ) : patient ? (
+            /* Timeline view for selected patient */
+            <div className="px-5 pt-3 pb-4 max-h-72 overflow-y-auto">
+              <div className="text-[9px] font-mono text-text-muted tracking-widest uppercase mb-3">
+                Histórico · {getPacNome(patient)}
+              </div>
+              <div className="relative pl-6 space-y-4">
+                <div className="absolute left-2 top-0 bottom-0 w-px bg-border pointer-events-none" />
+                {historicoFiltrado.map(entry => (
+                  <div key={entry.id} className="relative group">
+                    <div className="absolute -left-[18px] top-1.5 w-2.5 h-2.5 rounded-full bg-blue-500/30 border-2 border-blue-500/50" />
+                    <div className="flex items-start gap-2">
+                      <button onClick={() => loadFromHistorico(entry)} className="flex-1 text-left min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                          <span className="text-[12px] font-semibold text-text-primary">
+                            {fmtDateLong(entry.created_at)}
+                          </span>
+                          {entry.tipo_consulta && (
+                            <span className="text-[9px] font-mono bg-blue-500/10 border border-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded-full">
+                              {entry.tipo_consulta}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-text-muted leading-relaxed line-clamp-2">
+                          {(entry.resultado?.resumo ?? entry.relato).slice(0, 180)}
+                        </p>
+                      </button>
+                      <button
+                        onClick={() => deleteHistorico(entry.id)}
+                        disabled={deletingId === entry.id}
+                        className="w-6 h-6 rounded flex items-center justify-center text-text-muted hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0 mt-0.5"
+                        aria-label="Excluir"
+                      >
+                        {deletingId === entry.id
+                          ? <Loader2 className="w-3 h-3 animate-spin" />
+                          : <Trash2 className="w-3 h-3" />}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           ) : (
+            /* Flat list when no patient selected */
             <div className="divide-y divide-border max-h-56 overflow-y-auto">
-              {historico.map(entry => (
+              {historicoFiltrado.map(entry => (
                 <div key={entry.id} className="flex items-start gap-3 px-5 py-3 hover:bg-surface-2 transition-colors group">
                   <button
                     onClick={() => loadFromHistorico(entry)}

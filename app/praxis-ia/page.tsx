@@ -1,167 +1,163 @@
-import type { Metadata } from "next"
+"use client"
+
+import Link from "next/link"
+import { TopBar } from "@/components/TopBar"
 import {
-  Brain, BookOpen, FlaskConical, Compass, TrendingUp, Bot, Database, Sparkles, Repeat,
+  Bot, FlaskConical, Stethoscope, FileSearch, Brain,
+  BarChart3, Sparkles, TrendingUp, Users, Search,
+  FileUp, Lightbulb, Calendar, MessageSquare,
+  Zap, BookOpen, Target, Wand2,
 } from "lucide-react"
-import {
-  ModulePageShell, ModuleHero, ProblemBlock,
-  FeatureGrid, ModuleFinalCTA, ModuleFAQ, SectionLabel,
-  type FeatureItem, type FAQItem,
-} from "@/components/modules/shared"
-import { DARK, TEXT2, CARD, GOLD, MUTED, BORDER } from "@/lib/module-tokens"
+import { cn } from "@/lib/utils"
 
-const ACCENT = "#a78bfa"
-
-export const metadata: Metadata = {
-  title: "PRAXIS IA — Inteligência artificial especializada em medicina",
-  description:
-    "Não é ChatGPT para médicos. A IA do PRAXIS aprende o contexto da sua especialidade, dos seus pacientes e da sua clínica — e fica mais personalizada com o tempo.",
-  keywords: [
-    "IA para médicos", "inteligência artificial medicina", "memória clínica IA",
-    "interpretação de exames IA", "consultor estratégico IA", "PRAXIS IA",
-  ],
-  alternates: { canonical: "/praxis-ia" },
-  openGraph: {
-    title: "PRAXIS IA — Inteligência artificial especializada em medicina",
-    description: "IA que aprende com sua clínica — não uma IA genérica.",
-    url: "/praxis-ia",
-    type: "website",
-  },
+interface Ferramenta {
+  icon:   React.ElementType
+  titulo: string
+  desc:   string
+  href:   string
+  badge?: string
 }
 
-const FEATURES: FeatureItem[] = [
-  { icon: Brain,        title: "Memória Clínica",            desc: "Aprende sobre sua clínica e personaliza tudo." },
-  { icon: BookOpen,     title: "Banco de Estudos",            desc: "Principais estudos científicos curados." },
-  { icon: FlaskConical, title: "Interpretação de Exames",      desc: "TSH, ferritina, vitamina D e 60+ exames." },
-  { icon: Compass,      title: "Posicionamento Médico",        desc: "Descubra seu nicho e diferencial." },
-  { icon: TrendingUp,   title: "Inteligência de Mercado",      desc: "Trending topics médicos em tempo real." },
-  { icon: Bot,          title: "Consultor Estratégico",        desc: "Análise baseada nos dados reais." },
+interface Categoria {
+  id:          string
+  label:       string
+  cor:         string
+  border:      string
+  bg:          string
+  ferramentas: Ferramenta[]
+}
+
+const CATEGORIAS: Categoria[] = [
+  {
+    id:     "clinico",
+    label:  "Clínico",
+    cor:    "text-blue-400",
+    border: "border-blue-500/20",
+    bg:     "bg-blue-500/6",
+    ferramentas: [
+      { icon: Bot,          titulo: "Copiloto de Consulta",        desc: "Prontuário estruturado + gravação de voz",              href: "/copiloto",              badge: "MAIS USADO" },
+      { icon: FlaskConical, titulo: "Interpretação de Exames",     desc: "TSH, ferritina, vitamina D e 60+ exames",               href: "/interpretacao-exames"  },
+      { icon: Stethoscope,  titulo: "Emagrecimento Inteligente",   desc: "Análise metabólica personalizada por perfil",           href: "/emagrecimento"         },
+      { icon: FileSearch,   titulo: "Prescrição Assistida",        desc: "Sugestão de medicamentos baseada no diagnóstico",       href: "/prescricao"            },
+      { icon: FileUp,       titulo: "Importar Exames PDF",         desc: "Extrai valores de laudos com IA automaticamente",       href: "/pacientes",            badge: "NOVO" },
+      { icon: Brain,        titulo: "Memória Clínica",             desc: "Contexto da sua especialidade e protocolos",            href: "/memoria"               },
+    ],
+  },
+  {
+    id:     "social",
+    label:  "Social",
+    cor:    "text-pink-400",
+    border: "border-pink-500/20",
+    bg:     "bg-pink-500/6",
+    ferramentas: [
+      { icon: Wand2,        titulo: "Copiloto de Conteúdo",        desc: "Cria posts, roteiros e legendas com IA",                href: "/copiloto-conteudo"     },
+      { icon: Lightbulb,    titulo: "Ideias do Consultório",       desc: "Gera pautas baseadas nos seus casos reais",             href: "/pautas",               badge: "NOVO" },
+      { icon: TrendingUp,   titulo: "Radar de Tendências",         desc: "Tópicos médicos em alta para criar conteúdo",           href: "/radar"                 },
+      { icon: Target,       titulo: "Posicionamento",              desc: "Descubra e refine seu nicho e diferencial",             href: "/posicionamento"        },
+      { icon: Zap,          titulo: "Ganchos",                     desc: "Frases de impacto classificadas por emoção",            href: "/ganchos"               },
+      { icon: BookOpen,     titulo: "Diretor Criativo",            desc: "Gera temas, ângulos e formatos por especialidade",      href: "/diretor-criativo"      },
+    ],
+  },
+  {
+    id:     "executivo",
+    label:  "Executivo",
+    cor:    "text-accent",
+    border: "border-accent/20",
+    bg:     "bg-accent/6",
+    ferramentas: [
+      { icon: BarChart3,    titulo: "Análise do Mês",              desc: "Insights executivos sobre faturamento e crescimento",   href: "/executivo",            badge: "NOVO" },
+      { icon: Sparkles,     titulo: "Sugestões no Dashboard",      desc: "Cards IA contextuais ao abrir o sistema",               href: "/dashboard",            badge: "NOVO" },
+      { icon: MessageSquare,titulo: "NPS + Régua de Relacionamento", desc: "Automatiza seguimento pós-consulta com IA",           href: "/nps"                   },
+      { icon: Users,        titulo: "Nutrição de Leads",           desc: "Sequência de conteúdo personalizada por perfil",        href: "/nutricao-leads"        },
+      { icon: Target,       titulo: "Diagnóstico 360°",            desc: "Saúde completa do consultório em um painel",            href: "/diagnostico"           },
+      { icon: BookOpen,     titulo: "Scripts de Vendas",           desc: "Objeções, scripts e CTA gerados por IA",               href: "/scripts"               },
+    ],
+  },
+  {
+    id:     "pacientes",
+    label:  "Pacientes",
+    cor:    "text-violet-400",
+    border: "border-violet-500/20",
+    bg:     "bg-violet-500/6",
+    ferramentas: [
+      { icon: Search,       titulo: "Busca Semântica",             desc: "Encontra pacientes por queixas, exames ou diagnósticos", href: "/pacientes",            badge: "NOVO" },
+      { icon: Calendar,     titulo: "Briefing do Dia",             desc: "Resumo IA dos agendamentos antes de começar",           href: "/agenda",               badge: "NOVO" },
+      { icon: FlaskConical, titulo: "Gráfico de Peso",             desc: "Evolução visual de exames por paciente",                href: "/pacientes",            badge: "NOVO" },
+      { icon: FileSearch,   titulo: "Prontuário Inteligente",      desc: "Parser automático de seções no Copiloto",               href: "/copiloto"              },
+      { icon: Stethoscope,  titulo: "Protocolos Clínicos",         desc: "Stepper visual de diagnóstico → seguimento",            href: "/protocolos"            },
+      { icon: Wand2,        titulo: "Relatório do Paciente",       desc: "Gera relatório PDF completo para o paciente",           href: "/relatorio-paciente"    },
+    ],
+  },
 ]
 
-const FAQ_ITEMS: FAQItem[] = [
-  {
-    q: "Os dados da minha clínica são usados para treinar a IA?",
-    a: "Não. Nenhum dado da sua clínica, dos seus pacientes ou dos seus conteúdos é usado para treinar modelos de IA. Cada conta é isolada por Row Level Security no banco de dados.",
-  },
-  {
-    q: "Qual a diferença do PRAXIS IA para o ChatGPT?",
-    a: "O ChatGPT é genérico. O PRAXIS IA é instruído com o contexto da medicina, da sua especialidade e da sua clínica. Além disso, está integrado ao seu CRM, financeiro e indicadores — gerando análises com dados reais, não exemplos fictícios.",
-  },
-  {
-    q: "A IA comete erros nas sugestões clínicas?",
-    a: "Sim — como qualquer ferramenta de IA. O PRAXIS é projetado como suporte à decisão médica, não substituto. Todo output é revisável e você, como médico, mantém responsabilidade total pelas condutas.",
-  },
-  {
-    q: "Funciona sem internet?",
-    a: "Não. As funções de IA requerem conexão com a internet para processar as requisições. O restante da plataforma (CRM, financeiro, calendário) funciona normalmente com conexão intermitente.",
-  },
-]
-
-const COMP_ROWS = [
-  { feature: "Contexto médico especializado",   chatgpt: false, praxis: true  },
-  { feature: "Integrado ao CRM e financeiro",   chatgpt: false, praxis: true  },
-  { feature: "Memória da clínica e protocolos", chatgpt: false, praxis: true  },
-  { feature: "Dados reais da sua clínica",       chatgpt: false, praxis: true  },
-  { feature: "Análise de tendências médicas",    chatgpt: "~",   praxis: true  },
-  { feature: "Geração de conteúdo",              chatgpt: true,  praxis: true  },
-  { feature: "Resposta a perguntas gerais",      chatgpt: true,  praxis: true  },
-  { feature: "Privacidade dos dados",            chatgpt: "~",   praxis: true  },
-]
-
-const PASSOS = [
-  { n: 1, icon: Database,  titulo: "Você usa a plataforma",                          desc: "Cada interação — conteúdo, consulta, indicador — alimenta o sistema." },
-  { n: 2, icon: Sparkles,  titulo: "O PRAXIS aprende seus protocolos e preferências", desc: "A IA identifica padrões no seu jeito de atender e de se comunicar." },
-  { n: 3, icon: Repeat,    titulo: "Tudo fica mais personalizado com o tempo",        desc: "Sugestões, textos e análises cada vez mais alinhados à sua clínica." },
-]
+const BADGE_STYLE: Record<string, string> = {
+  "NOVO":       "bg-accent-dim border-accent-border text-accent",
+  "MAIS USADO": "bg-blue-500/12 border-blue-500/30 text-blue-400",
+}
 
 export default function PraxisIaPage() {
   return (
-    <ModulePageShell active="PRAXIS IA">
-      <ModuleHero
-        badge="IA que aprende com sua clínica"
-        title="PRAXIS IA"
-        accent={ACCENT}
-        subtitle="Inteligência artificial especializada em medicina — integrada a todas as áreas da sua clínica."
+    <div className="animate-fade-in">
+      <TopBar
+        title="Hub de IA"
+        subtitle="FERRAMENTAS DE INTELIGÊNCIA ARTIFICIAL · PRAXIS"
       />
+      <div className="p-4 md:p-8 space-y-8">
 
-      <ProblemBlock label="O DIFERENCIAL" color={ACCENT}>
-        Não é ChatGPT para médicos. É uma IA treinada com o contexto da sua especialidade,
-        dos seus pacientes e da sua clínica.
-      </ProblemBlock>
-
-      <FeatureGrid
-        items={FEATURES}
-        color={ACCENT}
-        title="IA integrada a cada módulo do PRAXIS"
-      />
-
-      {/* ── COMO A MEMÓRIA CLÍNICA FUNCIONA ─────────────────────────────────── */}
-      <section className="max-w-5xl mx-auto px-6 pb-24">
-        <div className="text-center mb-12 animate-fade-in">
-          <SectionLabel color={ACCENT}>COMO FUNCIONA</SectionLabel>
-          <h2 style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: "clamp(22px, 4vw, 38px)", fontWeight: 700, color: DARK }}>
-            Como a memória clínica funciona
-          </h2>
+        {/* Intro */}
+        <div className="bg-card border border-accent-border rounded-lg p-5">
+          <div className="flex items-center gap-2 mb-1">
+            <Sparkles className="w-4 h-4 text-accent" />
+            <span className="text-[11px] font-mono text-accent tracking-widest uppercase">Inteligência Artificial</span>
+          </div>
+          <p className="text-[13px] text-text-secondary leading-relaxed mt-1">
+            Todas as ferramentas de IA da plataforma organizadas por área. Cada uma usa Claude com contexto da sua especialidade e dados reais da sua clínica.
+          </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {PASSOS.map(({ n, icon: Icon, titulo, desc }) => (
-            <div key={n} className="rounded-2xl p-6 h-full flex flex-col animate-fade-in" style={{ background: CARD, border: `1px solid ${ACCENT}20`, position: "relative" }}>
-              <div style={{ width: 32, height: 32, borderRadius: 10, background: `${ACCENT}14`, border: `1px solid ${ACCENT}30`, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
-                <Icon style={{ width: 15, height: 15, color: ACCENT }} />
-              </div>
-              <div style={{ position: "absolute", top: 16, right: 16, fontSize: 28, fontWeight: 800, color: `${ACCENT}1a`, fontFamily: "monospace" }}>{n}</div>
-              <h3 style={{ fontSize: 13, fontWeight: 700, color: DARK, marginBottom: 8, lineHeight: 1.3 }}>{titulo}</h3>
-              <p style={{ fontSize: 12, color: TEXT2, lineHeight: 1.65 }}>{desc}</p>
+
+        {/* Categorias */}
+        {CATEGORIAS.map(cat => (
+          <section key={cat.id}>
+            <div className="flex items-center gap-2 mb-4">
+              <span className={cn("text-[10px] font-mono font-semibold tracking-widest uppercase", cat.cor)}>{cat.label}</span>
+              <div className="flex-1 h-px bg-border" />
+              <span className="text-[10px] font-mono text-text-muted">{cat.ferramentas.length} ferramentas</span>
             </div>
-          ))}
-        </div>
-      </section>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {cat.ferramentas.map(f => {
+                const Icon = f.icon
+                return (
+                  <Link
+                    key={f.href + f.titulo}
+                    href={f.href}
+                    className={cn(
+                      "group flex items-start gap-3.5 p-4 rounded-lg border transition-all duration-150 hover:border-opacity-60",
+                      cat.bg, cat.border,
+                      "hover:scale-[1.01]"
+                    )}
+                  >
+                    <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-background border", cat.border)}>
+                      <Icon className={cn("w-4 h-4", cat.cor)} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                        <span className="text-[13px] font-semibold text-text-primary group-hover:text-white transition-colors leading-snug">{f.titulo}</span>
+                        {f.badge && (
+                          <span className={cn("text-[8px] font-mono font-semibold px-1.5 py-0.5 rounded-full border", BADGE_STYLE[f.badge] ?? BADGE_STYLE["NOVO"])}>
+                            {f.badge}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-text-muted leading-relaxed">{f.desc}</p>
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
+          </section>
+        ))}
 
-      {/* ── PRAXIS IA vs ChatGPT ──────────────────────────────────────────────── */}
-      <section className="max-w-4xl mx-auto px-6 pb-24 animate-fade-in">
-        <div className="text-center mb-10">
-          <SectionLabel color={ACCENT}>COMPARATIVO</SectionLabel>
-          <h2 style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: "clamp(22px, 4vw, 36px)", fontWeight: 700, color: DARK }}>
-            PRAXIS IA vs ChatGPT
-          </h2>
-          <p style={{ fontSize: 14, color: TEXT2, marginTop: 10 }}>Não é um wrapper. É uma IA integrada ao seu negócio.</p>
-        </div>
-        <div className="overflow-x-auto rounded-2xl" style={{ border: `1px solid ${BORDER}` }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", background: CARD }}>
-            <thead>
-              <tr style={{ borderBottom: `1px solid ${BORDER}` }}>
-                <th style={{ padding: "14px 20px", textAlign: "left", fontSize: 11, fontFamily: "monospace", color: MUTED, letterSpacing: "1px", fontWeight: 600 }}>RECURSO</th>
-                {["ChatGPT", "PRAXIS IA"].map((h, i) => (
-                  <th key={h} style={{ padding: "14px 16px", textAlign: "center", fontSize: 12, fontWeight: 700, color: i === 1 ? ACCENT : TEXT2, background: i === 1 ? `${ACCENT}06` : "transparent" }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {COMP_ROWS.map(({ feature, chatgpt, praxis }, ri) => (
-                <tr key={feature} style={{ borderBottom: ri < COMP_ROWS.length - 1 ? `1px solid ${BORDER}` : "none" }}>
-                  <td style={{ padding: "12px 20px", fontSize: 13, color: TEXT2 }}>{feature}</td>
-                  <td style={{ padding: "12px 16px", textAlign: "center" }}>
-                    {chatgpt === true  ? <span style={{ fontSize: 16 }}>✓</span>
-                    : chatgpt === false ? <span style={{ color: "#dc2626", fontSize: 14, fontWeight: 700 }}>✗</span>
-                    : <span style={{ color: "#d97706" }}>~</span>}
-                  </td>
-                  <td style={{ padding: "12px 16px", textAlign: "center", background: `${ACCENT}05` }}>
-                    {praxis === true ? <span style={{ color: ACCENT, fontSize: 16 }}>✓</span> : <span style={{ color: "#dc2626" }}>✗</span>}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <ModuleFAQ items={FAQ_ITEMS} color={ACCENT} />
-
-      <ModuleFinalCTA
-        title="Quanto mais cedo começar, mais personalizada fica"
-        subtitle="A memória clínica do PRAXIS começa a aprender desde o primeiro dia de uso."
-        ctaLabel="Começar grátis"
-        ctaHref="/cadastro"
-      />
-    </ModulePageShell>
+      </div>
+    </div>
   )
 }

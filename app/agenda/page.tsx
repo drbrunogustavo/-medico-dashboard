@@ -9,7 +9,7 @@ import {
   ArrowLeft, ChevronLeft, ChevronRight, Calendar, List,
   Clock, RefreshCw, Filter, User, Plus,
   Search, Loader2, X, Check, Bot, Stethoscope,
-  AlertCircle,
+  AlertCircle, Sparkles,
 } from "lucide-react"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -240,6 +240,9 @@ export default function AgendaPage() {
     observacao:   "",
   })
   const [novoSaving, setNovoSaving] = useState(false)
+
+  const [resumoDia,     setResumoDia]     = useState<string | null>(null)
+  const [loadingResumo, setLoadingResumo] = useState(false)
   const [novoError,  setNovoError]  = useState("")
   const [novoOk,     setNovoOk]     = useState(false)
   const debounceRef    = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -334,6 +337,16 @@ export default function AgendaPage() {
       } catch (e) { console.error("[agenda] erro na busca de pacientes:", e) }
       finally { setNovoPacLoad(false) }
     }, 400)
+  }
+
+  const gerarBriefing = async () => {
+    setLoadingResumo(true)
+    try {
+      const res  = await fetch("/api/agenda/resumo-dia", { method: "POST" })
+      const data = await res.json() as { resumo?: string }
+      setResumoDia(data.resumo ?? "")
+    } catch (e) { console.error("[agenda] gerarBriefing:", e) }
+    finally { setLoadingResumo(false) }
   }
 
   const openNovo = (dataInicial?: string) => {
@@ -431,6 +444,14 @@ export default function AgendaPage() {
             >
               <ArrowLeft className="w-3.5 h-3.5" /> Voltar
             </button>
+            <button
+              onClick={gerarBriefing}
+              disabled={loadingResumo}
+              className="flex items-center gap-1.5 text-[11px] border border-border text-text-secondary rounded-lg px-3 py-1.5 hover:border-accent-border hover:text-accent transition-colors disabled:opacity-50"
+            >
+              {loadingResumo ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 text-accent" />}
+              <span className="hidden sm:inline">Briefing do dia</span>
+            </button>
             {/* View toggle */}
             <div className="flex gap-0.5 bg-surface border border-border rounded-lg p-0.5">
               <button
@@ -480,6 +501,21 @@ export default function AgendaPage() {
       />
 
       <div className="p-4 md:p-8 space-y-5">
+
+        {resumoDia !== null && (
+          <div className="bg-card border border-accent-border rounded-lg p-5 animate-fade-in">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <Sparkles className="w-4 h-4 text-accent" />
+                <span className="text-[11px] font-mono text-accent tracking-widest uppercase">Briefing do dia</span>
+              </div>
+              <button onClick={() => setResumoDia(null)} className="text-text-muted hover:text-text-secondary transition-colors flex-shrink-0">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <p className="mt-3 text-[13px] text-text-primary leading-relaxed">{resumoDia}</p>
+          </div>
+        )}
 
         {/* KPIs */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

@@ -12,6 +12,7 @@ import {
   ArrowDown, ChevronRight, UserPlus, AlertCircle, Zap,
   Edit3, Check, RefreshCw, MessageSquare, ThumbsUp,
   DollarSign, Clock, Repeat, Activity, Eye, Camera,
+  Sparkles, X,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
@@ -776,6 +777,9 @@ export default function ExecutivoPage() {
   const [ops,     setOps]     = useState<OperacaoManual>(OPS_DEFAULT)
   const [aut,     setAut]     = useState<AutoridadeManual>(AUT_DEFAULT)
 
+  const [analiseMes,     setAnaliseMes]     = useState<string | null>(null)
+  const [loadingAnalise, setLoadingAnalise] = useState(false)
+
   useEffect(() => {
     setMktg(getLocalStorage("exec_mktg", MKTG_DEFAULT))
     setOps(getLocalStorage("exec_ops", OPS_DEFAULT))
@@ -787,6 +791,16 @@ export default function ExecutivoPage() {
       .catch(e => console.error("[executivo] erro ao carregar dados executivos:", e))
       .finally(() => setLoading(false))
   }, [])
+
+  const gerarAnalise = async () => {
+    setLoadingAnalise(true)
+    try {
+      const res  = await fetch("/api/executivo/analise-mes", { method: "POST" })
+      const data = await res.json() as { analise?: string }
+      setAnaliseMes(data.analise ?? "")
+    } catch (e) { console.error("[executivo] gerarAnalise:", e) }
+    finally { setLoadingAnalise(false) }
+  }
 
   const saveMktg = useCallback((m: MarketingManual) => {
     setMktg(m)
@@ -821,11 +835,36 @@ export default function ExecutivoPage() {
             <h1 className="text-2xl font-bold text-text-primary tracking-tight">Centro de Comando</h1>
             <p className="text-[11px] text-text-muted mt-1 font-mono capitalize">{getNow()}</p>
           </div>
-          <Link href="/diagnostico"
-            className="text-[12px] px-3 py-1.5 rounded-lg border border-border text-text-muted hover:text-text-primary transition-colors flex items-center gap-1.5">
-            <Activity className="w-3.5 h-3.5" /> Diagnóstico 360°
-          </Link>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={gerarAnalise}
+              disabled={loadingAnalise}
+              className="flex items-center gap-1.5 text-[12px] px-3 py-1.5 rounded-lg border border-border text-text-secondary hover:border-accent-border hover:text-accent transition-colors disabled:opacity-50"
+            >
+              {loadingAnalise ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 text-accent" />}
+              Analisar mês
+            </button>
+            <Link href="/diagnostico"
+              className="text-[12px] px-3 py-1.5 rounded-lg border border-border text-text-muted hover:text-text-primary transition-colors flex items-center gap-1.5">
+              <Activity className="w-3.5 h-3.5" /> Diagnóstico 360°
+            </Link>
+          </div>
         </div>
+
+        {analiseMes !== null && (
+          <div className="mt-4 bg-card border border-accent-border rounded-lg p-5 animate-fade-in">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-accent" />
+                <span className="text-[11px] font-mono text-accent tracking-widest uppercase">Análise do mês</span>
+              </div>
+              <button onClick={() => setAnaliseMes(null)} className="text-text-muted hover:text-text-secondary transition-colors flex-shrink-0">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <p className="mt-3 text-[13px] text-text-primary leading-relaxed whitespace-pre-line">{analiseMes}</p>
+          </div>
+        )}
 
         {/* KPIs rápidos */}
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 mt-5">

@@ -24,7 +24,7 @@ export default function LoginPage() {
   useEffect(() => {
     fetch("/api/anuncios-cursos/publico")
       .then(r => r.json())
-      .then((data: BannerAd[]) => { if (Array.isArray(data) && data.length > 0) setBanner(data[0]) })
+      .then((data: { anuncio: BannerAd | null }) => { if (data?.anuncio) setBanner(data.anuncio) })
       .catch(() => {})
   }, [])
 

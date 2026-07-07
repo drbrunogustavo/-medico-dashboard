@@ -9,7 +9,7 @@ import {
   ArrowLeft, Bot, Phone, Mail, Calendar, Loader2, Plus, X,
   AlertCircle, ClipboardList, Clock, FlaskConical, Pill, Camera,
   TrendingUp, TrendingDown, Minus, Check, Trash2, ChevronUp, ChevronDown,
-  Edit3,
+  Edit3, FileUp,
 } from "lucide-react"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -229,11 +229,13 @@ export default function PacienteDashboard() {
   const [showAddExame,  setShowAddExame]  = useState(false)
   const [savingExame,   setSavingExame]   = useState(false)
   const [uploadingFoto, setUploadingFoto] = useState(false)
+  const [uploadingPDF,  setUploadingPDF]  = useState(false)
   const [exameForm,     setExameForm]     = useState({
     nome: "", valor: "", unidade: "", referencia: "", tendencia: "stable", data_coleta: "",
   })
 
-  const editRef = useRef<HTMLInputElement>(null)
+  const editRef   = useRef<HTMLInputElement>(null)
+  const pdfInputRef = useRef<HTMLInputElement>(null)
 
   const load = useCallback(async () => {
     setLoading(true); setError("")
@@ -319,6 +321,31 @@ export default function PacienteDashboard() {
     } catch (e) { console.error("[paciente dash] uploadFoto:", e) }
     finally { setUploadingFoto(false) }
   }
+
+  const importarPDF = useCallback(async (file: File) => {
+    setUploadingPDF(true)
+    try {
+      const form = new FormData(); form.append("file", file)
+      const res  = await fetch("/api/exames/upload", { method: "POST", body: form })
+      if (!res.ok) throw new Error(`Erro ${res.status}`)
+      const { exames: extraidos } = await res.json() as {
+        exames: Array<{ nome: string; valor: string; unidade?: string; referencia?: string; tendencia?: string }>
+      }
+      for (const ex of extraidos) {
+        await fetch(`/api/pacientes/${id}/exames`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(ex),
+        })
+      }
+      const r = await fetch(`/api/pacientes/${id}`)
+      if (r.ok) { const d = await r.json(); setExames(d.exames ?? []) }
+    } catch (e) { console.error("[paciente dash] importarPDF:", e) }
+    finally {
+      setUploadingPDF(false)
+      if (pdfInputRef.current) pdfInputRef.current.value = ""
+    }
+  }, [id])
 
   return (
     <div className="animate-fade-in">
@@ -699,13 +726,32 @@ export default function PacienteDashboard() {
                 )}
 
                 {!showAddExame && (
-                  <button
-                    onClick={() => setShowAddExame(true)}
-                    className="flex items-center gap-1.5 text-[11px] text-text-muted hover:text-text-secondary transition-colors"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    Adicionar exame
-                  </button>
+                  <div className="flex items-center gap-4">
+                    <button
+                      onClick={() => setShowAddExame(true)}
+                      className="flex items-center gap-1.5 text-[11px] text-text-muted hover:text-text-secondary transition-colors"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      Adicionar exame
+                    </button>
+                    <button
+                      onClick={() => pdfInputRef.current?.click()}
+                      disabled={uploadingPDF}
+                      className="flex items-center gap-1.5 text-[11px] text-purple-400 hover:text-purple-300 disabled:opacity-50 transition-colors"
+                    >
+                      {uploadingPDF
+                        ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        : <FileUp className="w-3.5 h-3.5" />}
+                      {uploadingPDF ? "Extraindo…" : "Importar PDF"}
+                    </button>
+                    <input
+                      ref={pdfInputRef}
+                      type="file"
+                      accept=".pdf"
+                      className="hidden"
+                      onChange={e => e.target.files?.[0] && importarPDF(e.target.files[0])}
+                    />
+                  </div>
                 )}
               </div>
             </SectionCard>

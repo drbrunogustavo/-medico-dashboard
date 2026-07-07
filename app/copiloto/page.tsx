@@ -10,7 +10,7 @@ import {
   FileText, Stethoscope, BookOpen, MessageCircle, Sparkles, ClipboardList,
   Copy, Check, Bot, RefreshCw, Plus,
   AlertCircle, ChevronDown, ChevronUp, Send,
-  Clock, Trash2, FlaskConical, Mic, MicOff, ShieldCheck,
+  Clock, Trash2, FlaskConical, Mic, MicOff, ShieldCheck, Brain,
 } from "lucide-react"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -325,6 +325,9 @@ function CopilotoContent() {
 
   // Toast
   const [toast,     setToast]     = useState<{ msg: string; type: "success" | "error" } | null>(null)
+
+  const [memoriaChips,    setMemoriaChips]    = useState<{ tipo: string; texto: string }[]>([])
+  const [loadingMemoria,  setLoadingMemoria]  = useState(false)
   const toastTimer                = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Voice
@@ -520,11 +523,28 @@ function CopilotoContent() {
     debounceRef.current = setTimeout(() => searchPatients(v), 400)
   }
 
+  const fetchMemoriaPadrao = useCallback(async (paciente_nome: string) => {
+    setMemoriaChips([])
+    setLoadingMemoria(true)
+    try {
+      const res  = await fetch("/api/copiloto/memoria-padrao", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paciente_nome }),
+      })
+      const data = await res.json() as { chips?: { tipo: string; texto: string }[] }
+      setMemoriaChips(data.chips ?? [])
+    } catch (e) { console.error("[copiloto] memoria:", e) }
+    finally { setLoadingMemoria(false) }
+  }, [])
+
   const selectPatient = (p: Paciente) => {
     setPatient(p); setQuery(getPacNome(p)); setShowDrop(false); setResults([])
+    fetchMemoriaPadrao(getPacNome(p))
   }
   const clearPatient = () => {
     setPatient(null); setQuery(""); setResults([]); setShowDrop(false)
+    setMemoriaChips([]); setLoadingMemoria(false)
   }
 
   // ── Generate ─────────────────────────────────────────────────────────────────
@@ -923,6 +943,39 @@ function CopilotoContent() {
                 placeholder="Sinais vitais, resultados de exames, medicamentos atuais, alergias, peso/altura..."
                 className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3 text-[12px] text-text-primary placeholder:text-text-muted focus:border-blue-500/40 outline-none resize-none transition-colors leading-relaxed"
               />
+
+              {/* Memória clínica proativa */}
+              {(loadingMemoria || memoriaChips.length > 0) && (
+                <div className="space-y-2 animate-fade-in mt-2">
+                  <div className="flex items-center gap-1.5">
+                    <Brain className="w-3 h-3 text-accent" />
+                    <span className="text-[9px] font-mono text-text-muted uppercase tracking-widest">
+                      {loadingMemoria ? "Buscando padrões..." : "Padrões dos atendimentos anteriores"}
+                    </span>
+                    {loadingMemoria && <Loader2 className="w-3 h-3 text-accent animate-spin" />}
+                  </div>
+                  {!loadingMemoria && (
+                    <div className="flex flex-wrap gap-2">
+                      {memoriaChips.map((chip, i) => {
+                        const style = {
+                          exame:       "bg-blue-500/10 border-blue-500/25 text-blue-400",
+                          medicamento: "bg-green-500/10 border-green-500/25 text-green-400",
+                          diagnostico: "bg-amber-500/10 border-amber-500/25 text-amber-400",
+                        }[chip.tipo] ?? "bg-surface border-border text-text-secondary"
+                        return (
+                          <button key={i}
+                            onClick={() => setDados(prev => prev ? prev + "\n" + chip.texto : chip.texto)}
+                            className={cn("flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-lg border transition-all hover:opacity-80", style)}
+                          >
+                            <Plus className="w-2.5 h-2.5 flex-shrink-0" />
+                            {chip.texto}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {genError && (

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
+import { createSupabaseServerClient } from "@/lib/supabase-server"
 import { AI_MODEL } from "@/lib/ai-config"
 import { getAnthropicClient } from "@/lib/anthropic"
 
@@ -14,13 +15,32 @@ export async function POST(req: NextRequest) {
     }
     if (!tema?.trim()) return NextResponse.json({ error: "Tema é obrigatório" }, { status: 400 })
 
+    // Brand kit context
+    let brandCtx = ""
+    try {
+      const supabase = createSupabaseServerClient()
+      const { data: perfil } = await supabase
+        .from("perfis")
+        .select("nome, especialidade, publico_alvo, marca_slogan, marca_tom_voz")
+        .eq("user_id", auth.userId)
+        .maybeSingle()
+      if (perfil) {
+        const parts: string[] = []
+        if (perfil.especialidade) parts.push(`Especialidade: ${perfil.especialidade}`)
+        if (perfil.publico_alvo)  parts.push(`Público-alvo: ${perfil.publico_alvo}`)
+        if (perfil.marca_slogan)  parts.push(`Slogan: "${perfil.marca_slogan}"`)
+        if (perfil.marca_tom_voz) parts.push(`Tom de voz: ${perfil.marca_tom_voz}`)
+        if (parts.length) brandCtx = "\n\nMARCA DO MÉDICO:\n" + parts.join("\n")
+      }
+    } catch { /* non-blocking */ }
+
     const resp = await client.messages.create({
       model: AI_MODEL,
       max_tokens: 3000,
       system: "Você é especialista em criação de carrosséis para Instagram de médicos no Brasil. Retorne APENAS JSON válido, sem markdown, sem texto antes ou depois.",
       messages: [{
         role: "user",
-        content: `Crie um carrossel do Instagram para o médico usuário.
+        content: `Crie um carrossel do Instagram para o médico usuário.${brandCtx}
 
 TEMA: ${tema}
 NÚMERO DE SLIDES: ${slides}

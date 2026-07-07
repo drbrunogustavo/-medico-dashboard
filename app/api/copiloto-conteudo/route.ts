@@ -20,12 +20,13 @@ export async function POST(req: NextRequest) {
     const supabase = createSupabaseServerClient()
     const { data: perfil } = await supabase
       .from("perfis")
-      .select("nome, especialidade, cidade, estado, nicho, publico_alvo, tom_voz")
+      .select("nome, especialidade, cidade, estado, nicho, publico_alvo, tom_voz, marca_slogan, marca_tom_voz")
       .eq("user_id", auth.userId)
       .maybeSingle()
 
+    const tomVoz = perfil?.marca_tom_voz ?? perfil?.tom_voz ?? "didático, acolhedor e confiante"
     const perfilCtx = perfil
-      ? `Médico: ${perfil.nome ?? "o médico usuário"}. Especialidade: ${perfil.especialidade ?? "não informada"}. Cidade: ${perfil.cidade ?? "não informada"}${perfil.estado ? `, ${perfil.estado}` : ""}. Público: ${perfil.publico_alvo ?? "adultos preocupados com saúde e longevidade"}. Tom: ${perfil.tom_voz ?? "didático, acolhedor e confiante"}.`
+      ? `Médico: ${perfil.nome ?? "o médico usuário"}. Especialidade: ${perfil.especialidade ?? "não informada"}. Cidade: ${perfil.cidade ?? "não informada"}${perfil.estado ? `, ${perfil.estado}` : ""}. Público: ${perfil.publico_alvo ?? "adultos preocupados com saúde e longevidade"}. Tom de voz: ${tomVoz}.${perfil.marca_slogan ? ` Slogan da marca: "${perfil.marca_slogan}".` : ""}`
       : "Médico: o médico usuário. Especialidade: não informada. Cidade: não informada. Tom: didático, acolhedor e confiante."
 
     // Inject temas favoritos from memoria

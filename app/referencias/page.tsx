@@ -479,8 +479,8 @@ export default function ReferenciasPage() {
               <Sparkles className="w-3.5 h-3.5" /> Buscar influencers
             </button>
             <button onClick={() => setShowForm(v => !v)}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-accent-dim border border-accent-border text-accent text-[12px] font-medium hover:bg-accent/20 transition-colors">
-              <Plus className="w-3.5 h-3.5" /> Adicionar Referencia
+              className="flex items-center gap-2 px-5 py-3 rounded-lg bg-accent-dim border border-accent-border text-accent text-[14px] font-semibold hover:bg-accent/20 transition-colors min-h-[44px]">
+              <Plus className="w-4 h-4" /> Adicionar
             </button>
           </div>
         }

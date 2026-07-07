@@ -508,9 +508,9 @@ Retorne um objeto JSON com:
         tagline="Descubra o que está funcionando nas redes antes da concorrência e transforme em conteúdo."
         actions={
           <button onClick={handleRefresh} disabled={currentLoading}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-accent-dim border border-accent-border text-accent text-[12px] font-medium hover:bg-accent/20 transition-colors disabled:opacity-50">
-            <RefreshCw className={cn("w-3.5 h-3.5",currentLoading&&"animate-spin")} />
-            {currentLoading ? "Escaneando..." : "Atualizar"}
+            className="flex items-center gap-2 px-5 py-3 rounded-lg bg-accent-dim border border-accent-border text-accent text-[14px] font-semibold hover:bg-accent/20 transition-colors disabled:opacity-50 min-h-[44px]">
+            <RefreshCw className={cn("w-4 h-4",currentLoading&&"animate-spin")} />
+            {currentLoading ? "Escaneando..." : "Buscar Tendências"}
           </button>
         }
       />

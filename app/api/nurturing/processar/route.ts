@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServiceClient } from "@/lib/supabase-service"
 import { sendZapiForUser } from "@/lib/zapi"
+import { logAutomacao } from "@/lib/automacoes-log"
 
 function errMsg(e: unknown) { return e instanceof Error ? e.message : String(e) }
 const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms))
@@ -130,8 +131,10 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    await logAutomacao("nurturing", "ok", result as Record<string, unknown>)
     return NextResponse.json({ ok: true, ...result })
   } catch (e) {
+    await logAutomacao("nurturing", "erro", { error: errMsg(e) })
     return NextResponse.json({ error: errMsg(e) }, { status: 500 })
   }
 }

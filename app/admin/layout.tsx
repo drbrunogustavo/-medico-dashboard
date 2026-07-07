@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { MessageSquare, Users, CreditCard, Share2, Megaphone } from "lucide-react"
+import { MessageSquare, Users, CreditCard, Share2, Megaphone, Activity } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const NAV = [
@@ -11,6 +11,7 @@ const NAV = [
   { href: "/admin/financeiro",  label: "Financeiro",   icon: CreditCard    },
   { href: "/admin/afiliados",   label: "Afiliados",    icon: Share2        },
   { href: "/admin/anuncios",    label: "Anúncios",     icon: Megaphone     },
+  { href: "/admin/automacoes",  label: "Automações",   icon: Activity      },
 ]
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

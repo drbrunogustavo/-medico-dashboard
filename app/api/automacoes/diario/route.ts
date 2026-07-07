@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { Resend } from "resend"
 import { createSupabaseServiceClient } from "@/lib/supabase-service"
 import { sendZapiForUser } from "@/lib/zapi"
+import { logAutomacao } from "@/lib/automacoes-log"
 
 const resend     = new Resend(process.env.RESEND_API_KEY)
 const APP_URL    = process.env.NEXT_PUBLIC_APP_URL ?? "https://praxisplataforma.com.br"
@@ -489,13 +490,18 @@ export async function GET(req: NextRequest) {
     runAuditoriaInstagram(),
   ])
 
-  return NextResponse.json({
-    ok: true,
+  const results = {
     trial_acabando:       pick(trialR),
     lead_sem_resposta:    pick(leadR),
     relatorio_semanal:    pick(relatorioR),
     regua:                pick(reguaR),
     nps:                  pick(npsR),
     auditoria_instagram:  pick(auditoriaR),
-  })
+  }
+
+  const erros   = [trialR, leadR, relatorioR, reguaR, npsR, auditoriaR].filter(r => r.status === "rejected").length
+  const logStatus = erros === 6 ? "erro" : erros > 0 ? "parcial" : "ok"
+  await logAutomacao("diario", logStatus, results as Record<string, unknown>)
+
+  return NextResponse.json({ ok: true, ...results })
 }

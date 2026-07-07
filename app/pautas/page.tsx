@@ -265,16 +265,16 @@ export default function PautasPage() {
               className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-[13px] text-text-primary placeholder:text-text-muted outline-none focus:border-accent/40" />
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <select value={newCat} onChange={e => setNewCat(e.target.value)}
-                className="bg-background border border-border rounded-lg px-3 py-2 text-[12px] text-text-primary outline-none focus:border-accent/40">
+                className="min-w-0 w-full bg-background border border-border rounded-lg px-3 py-2 text-[12px] text-text-primary outline-none focus:border-accent/40 truncate">
                 {CATEGORIAS.filter(c => c !== "Todas").map(c => <option key={c}>{c}</option>)}
               </select>
               <select value={newPri} onChange={e => setNewPri(e.target.value)}
-                className="bg-background border border-border rounded-lg px-3 py-2 text-[12px] text-text-primary outline-none focus:border-accent/40">
+                className="min-w-0 w-full bg-background border border-border rounded-lg px-3 py-2 text-[12px] text-text-primary outline-none focus:border-accent/40">
                 {["Alta","Média","Baixa"].map(p => <option key={p}>{p}</option>)}
               </select>
               <input value={newFonte} onChange={e => setNewFonte(e.target.value)}
                 placeholder="Fonte (ex: PubMed)"
-                className="bg-background border border-border rounded-lg px-3 py-2 text-[12px] text-text-primary placeholder:text-text-muted outline-none focus:border-accent/40" />
+                className="min-w-0 w-full bg-background border border-border rounded-lg px-3 py-2 text-[12px] text-text-primary placeholder:text-text-muted outline-none focus:border-accent/40" />
             </div>
             <textarea value={newNota} onChange={e => setNewNota(e.target.value)}
               placeholder="Notas, referências, ideias de formato..."
@@ -304,19 +304,21 @@ export default function PautasPage() {
 
           <div className="border-t border-border pt-3 space-y-2.5">
             {/* Estágio — sempre visível */}
-            <div className="flex items-center gap-3">
-              <span className="text-[9px] font-mono text-text-muted tracking-widest uppercase w-16 flex-shrink-0">Estágio</span>
-              <div className="flex flex-wrap gap-1.5 flex-1">
-                {ESTAGIOS.map(item => (
-                  <button key={item} onClick={() => setFilterEst(item)}
-                    className={cn("text-[10px] px-2.5 py-0.5 rounded-full border transition-all",
-                      filterEst === item
-                        ? "bg-accent-dim border-accent-border text-accent-text font-medium"
-                        : "border-border text-text-muted hover:text-text-secondary hover:border-border-hover"
-                    )}>
-                    {item}
-                  </button>
-                ))}
+            <div className="flex items-start gap-2">
+              <span className="text-[9px] font-mono text-text-muted tracking-widest uppercase w-14 flex-shrink-0 pt-1">Estágio</span>
+              <div className="flex-1 min-w-0 overflow-x-auto scrollbar-none">
+                <div className="flex gap-1.5 pb-0.5">
+                  {ESTAGIOS.map(item => (
+                    <button key={item} onClick={() => setFilterEst(item)}
+                      className={cn("text-[10px] px-2.5 py-0.5 rounded-full border transition-all whitespace-nowrap",
+                        filterEst === item
+                          ? "bg-accent-dim border-accent-border text-accent-text font-medium"
+                          : "border-border text-text-muted hover:text-text-secondary hover:border-border-hover"
+                      )}>
+                      {item}
+                    </button>
+                  ))}
+                </div>
               </div>
               <button
                 onClick={() => setShowAdvancedFilters(v => !v)}
@@ -389,8 +391,8 @@ export default function PautasPage() {
                       </span>
                       {p.fonte && <span className="text-[9px] font-mono text-text-muted">via {p.fonte}</span>}
                     </div>
-                    <h3 className="text-[14px] font-semibold text-text-primary leading-snug mb-2">{p.titulo}</h3>
-                    {p.nota && <p className="text-[11px] text-text-secondary leading-relaxed mb-3">{p.nota}</p>}
+                    <h3 className="text-[14px] font-semibold text-text-primary leading-snug mb-2 break-words">{p.titulo}</h3>
+                    {p.nota && <p className="text-[11px] text-text-secondary leading-relaxed mb-3 break-words">{p.nota}</p>}
                     {p.tags && p.tags.length > 0 && (
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <Tag className="w-3 h-3 text-text-muted" />
@@ -400,7 +402,7 @@ export default function PautasPage() {
                       </div>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex-shrink-0">
+                  <div className="flex items-center gap-2 flex-shrink-0">
                     {/* Dropdown de formatos */}
                     <div className="relative" ref={openMenu === p.id ? menuRef : undefined}>
                       <button
@@ -410,7 +412,7 @@ export default function PautasPage() {
                         Formatos <ChevronDown className="w-3 h-3" />
                       </button>
                       {openMenu === p.id && (
-                        <div className="absolute right-0 top-full mt-1 z-50 bg-card border border-border rounded-lg shadow-xl py-1 min-w-[160px]">
+                        <div className="absolute left-0 sm:left-auto sm:right-0 top-full mt-1 z-50 bg-card border border-border rounded-lg shadow-xl py-1 min-w-[160px] max-w-[min(220px,90vw)]">
                           {([
                             { label: "📸 Imagens",   path: "/imagens"   },
                             { label: "🎬 Roteiro",   path: "/roteiros"  },

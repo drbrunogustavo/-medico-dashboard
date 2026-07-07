@@ -5,7 +5,7 @@ import {
   GraduationCap, Megaphone, BarChart3, TrendingUp, Rocket,
   Users, Check, Clock, Search, X, ChevronDown, ChevronRight,
   BookOpen, Play, Circle, Loader2, ArrowRight, ExternalLink,
-  CheckCircle, BarChart2, Award, Star,
+  CheckCircle, BarChart2, Award, Star, Trophy,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
@@ -216,6 +216,47 @@ function concluidasT(t: Trilha, p: ProgressoMap) {
 }
 function todasAulasList() {
   return TRILHAS.flatMap(t => t.modulos.flatMap(m => m.aulas.map(a => ({ aula: a, trilha: t }))))
+}
+
+// ─── Sistema de níveis ────────────────────────────────────────────────────────
+
+const NIVEIS = [
+  { label: "Bronze",  min: 0,  max: 25,  cor: "#cd7f32", textCls: "text-amber-600",  bgCls: "bg-amber-900/20",   borderCls: "border-amber-700/40" },
+  { label: "Prata",   min: 26, max: 50,  cor: "#94a3b8", textCls: "text-slate-400",  bgCls: "bg-slate-400/15",   borderCls: "border-slate-400/35" },
+  { label: "Ouro",    min: 51, max: 75,  cor: "#f59e0b", textCls: "text-yellow-400", bgCls: "bg-yellow-400/15",  borderCls: "border-yellow-400/35" },
+  { label: "Diamond", min: 76, max: 100, cor: "#a78bfa", textCls: "text-violet-400", bgCls: "bg-violet-400/15",  borderCls: "border-violet-400/35" },
+]
+
+function getNivel(pct: number) {
+  return NIVEIS.find(n => pct <= n.max) ?? NIVEIS[NIVEIS.length - 1]
+}
+
+function NivelBadge({ done, total }: { done: number; total: number }) {
+  const pct   = total > 0 ? Math.round(done / total * 100) : 0
+  const nivel = getNivel(pct)
+  const next  = NIVEIS.find(n => n.min > pct)
+  return (
+    <div className={cn("flex items-center gap-3 px-4 py-3 rounded-xl border", nivel.bgCls, nivel.borderCls)}>
+      <Trophy className={cn("w-5 h-5 flex-shrink-0", nivel.textCls)} />
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1.5">
+          <span className={cn("text-[13px] font-bold", nivel.textCls)}>{nivel.label}</span>
+          <span className="text-[10px] font-mono text-text-muted">{pct}% concluído</span>
+          {next && (
+            <span className="text-[10px] font-mono text-text-muted ml-auto">
+              próximo: {next.label} ({next.min}%)
+            </span>
+          )}
+        </div>
+        <div className="w-full h-1.5 bg-black/20 rounded-full overflow-hidden">
+          <div
+            className="h-full rounded-full transition-all duration-700"
+            style={{ width: `${pct}%`, background: nivel.cor }}
+          />
+        </div>
+      </div>
+    </div>
+  )
 }
 
 // ─── Modal de aula ────────────────────────────────────────────────────────────
@@ -730,6 +771,7 @@ export default function AcademyPage() {
   const [tab,         setTab]         = useState<Tab>("trilhas")
   const [progresso,   setProgresso]   = useState<ProgressoMap>({})
   const [loadingProg, setLoadingProg] = useState(true)
+  const [celebrando,  setCelebrando]  = useState(false)
 
   const fetchProgresso = useCallback(async () => {
     try {
@@ -752,6 +794,8 @@ export default function AcademyPage() {
         body: JSON.stringify({ aula_id: aula.id, trilha_id: trilha.id, status: "concluida" }),
       })
       setProgresso(p => ({ ...p, [aula.id]: "concluida" }))
+      setCelebrando(true)
+      setTimeout(() => setCelebrando(false), 1800)
     } catch (e) { console.error("[academy] erro ao marcar aula como concluída:", e) }
   }
 
@@ -768,9 +812,19 @@ export default function AcademyPage() {
   return (
     <div className="animate-fade-in">
       <MobileOnlyHeader title="PRAXIS Academy" />
+
+      {/* Celebração */}
+      {celebrando && (
+        <div className="fixed inset-0 z-[60] pointer-events-none flex items-end justify-center pb-24">
+          <div className="flex items-center gap-2.5 bg-emerald-500/90 text-white text-[13px] font-semibold px-5 py-3 rounded-full shadow-2xl animate-fade-in">
+            <CheckCircle className="w-4 h-4" /> Aula concluída!
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="px-4 md:px-8 pt-6 md:pt-8 pb-0" style={{ borderBottom: "1px solid var(--border)" }}>
-        <div className="flex items-start justify-between gap-4 mb-5">
+        <div className="flex items-start justify-between gap-4 mb-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <GraduationCap className="w-5 h-5" style={{ color: "var(--accent)" }} />
@@ -787,6 +841,13 @@ export default function AcademyPage() {
             <div className="text-[10px] font-mono" style={{ color: "var(--text-muted)" }}>AULAS CONCLUÍDAS</div>
           </div>
         </div>
+
+        {/* Nível badge */}
+        {!loadingProg && (
+          <div className="mb-4">
+            <NivelBadge done={doneGeral} total={totalGeral} />
+          </div>
+        )}
 
         {/* Tabs */}
         <div className="flex">

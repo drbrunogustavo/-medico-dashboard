@@ -123,6 +123,44 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
 
+    // Always uses pacientes_local — works with or without MedX
+    if (action === "medx-link") {
+      const { nome, telefone, email, dataNascimento } = body as {
+        nome?: string; telefone?: string; email?: string; dataNascimento?: string
+      }
+      const supabaseMx = createSupabaseServiceClient()
+      const telNorm = (telefone ?? "").replace(/\D/g, "")
+
+      // Find existing patient by last 9 digits of phone
+      if (telNorm.length >= 8) {
+        const suffix = telNorm.slice(-9)
+        const { data: existing } = await supabaseMx
+          .from("pacientes_local")
+          .select("id")
+          .eq("user_id", auth.userId)
+          .ilike("telefone", `%${suffix}`)
+          .maybeSingle()
+        if (existing?.id) {
+          return NextResponse.json({ id: existing.id, created: false })
+        }
+      }
+
+      // Create new local patient from MedX data
+      const { data: created, error: createErr } = await supabaseMx
+        .from("pacientes_local")
+        .insert({
+          user_id:         auth.userId,
+          nome:            nome ?? "",
+          telefone:        telNorm || null,
+          email:           email   || null,
+          data_nascimento: dataNascimento || null,
+        })
+        .select("id")
+        .single()
+      if (createErr) throw new Error(createErr.message)
+      return NextResponse.json({ id: created.id, created: true })
+    }
+
     if (medxConfigured()) {
       switch (action) {
         case "contato":

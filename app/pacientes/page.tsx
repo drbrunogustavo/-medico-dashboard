@@ -99,6 +99,32 @@ export default function PacientesPage() {
 
   // Delete local patient
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [linkingId,  setLinkingId]  = useState<string | null>(null)
+
+  // MedX → local: find-or-create then navigate to dashboard
+  const handleMedXClick = useCallback(async (pac: Paciente) => {
+    const key = getPacId(pac) || getPacNome(pac)
+    setLinkingId(key)
+    try {
+      const res = await fetch("/api/pacientes?action=medx-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nome:            getPacNome(pac),
+          telefone:        getPacTelefone(pac),
+          email:           getPacEmail(pac),
+          dataNascimento:  getPacNasc(pac),
+        }),
+      })
+      if (!res.ok) throw new Error("link falhou")
+      const data = await res.json() as { id: string }
+      router.push(`/pacientes/${data.id}`)
+    } catch {
+      openDrawer(pac)
+    } finally {
+      setLinkingId(null)
+    }
+  }, [router])  // openDrawer is defined below but stable
 
   const deletePaciente = async (pac: Paciente, e: React.MouseEvent) => {
     e.stopPropagation()
@@ -397,7 +423,7 @@ export default function PacientesPage() {
                 return (
                   <button
                     key={i}
-                    onClick={() => pac._fonte === "local" ? router.push(`/pacientes/${getPacId(pac)}`) : openDrawer(pac)}
+                    onClick={() => pac._fonte === "local" ? router.push(`/pacientes/${getPacId(pac)}`) : handleMedXClick(pac)}
                     className="w-full text-left px-5 py-3.5 hover:bg-blue-500/[0.03] hover:border-l-2 hover:border-l-blue-500/40 transition-all group flex items-center gap-4 md:grid md:grid-cols-[1fr_160px_200px_140px_40px]"
                   >
                     {/* Avatar + Nome */}
@@ -475,7 +501,10 @@ export default function PacientesPage() {
                           }
                         </button>
                       )}
-                      <ChevronRight className="w-4 h-4 text-text-muted group-hover:text-blue-400 group-hover:translate-x-0.5 transition-all" />
+                      {linkingId === (getPacId(pac) || getPacNome(pac))
+                        ? <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />
+                        : <ChevronRight className="w-4 h-4 text-text-muted group-hover:text-blue-400 group-hover:translate-x-0.5 transition-all" />
+                      }
                     </div>
                   </button>
                 )

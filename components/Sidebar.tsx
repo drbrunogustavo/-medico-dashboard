@@ -131,6 +131,7 @@ const NAV: Record<AlaId, NavItem[]> = {
   ],
   academy: [
     { label: "PRAXIS Academy",    href: "/academy",  icon: GraduationCap                   },
+    { label: "Comunidade",        href: "/comunidade", icon: MessageSquare, badge: "NOVO"  },
     { label: "Trilha Marketing",  href: "/academy",  icon: Megaphone,  badge: "EM BREVE"   },
     { label: "Trilha Gestão",     href: "/academy",  icon: BarChart3,  badge: "EM BREVE"   },
     { label: "Trilha Comercial",  href: "/academy",  icon: TrendingUp, badge: "EM BREVE"   },

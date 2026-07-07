@@ -57,6 +57,7 @@ const CATEGORIAS: Categoria[] = [
       { icon: Target,       titulo: "Posicionamento",              desc: "Descubra e refine seu nicho e diferencial",             href: "/posicionamento"        },
       { icon: Zap,          titulo: "Ganchos",                     desc: "Frases de impacto classificadas por emoção",            href: "/ganchos"               },
       { icon: BookOpen,     titulo: "Diretor Criativo",            desc: "Gera temas, ângulos e formatos por especialidade",      href: "/diretor-criativo"      },
+      { icon: MessageSquare, titulo: "Comunidade",                 desc: "Troca de protocolos e experiências entre médicos",       href: "/comunidade",            badge: "NOVO" },
     ],
   },
   {

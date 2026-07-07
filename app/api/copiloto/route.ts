@@ -165,6 +165,35 @@ Retorne um JSON com exatamente estas 7 chaves:
       console.error("[api/copiloto] Falha ao salvar histórico:", saveErr)
     }
 
+    // Fire-and-forget: Primeira Consulta → schedule NPS + indicação D+1
+    if (body.tipoConsulta === "Primeira Consulta" && body.nomePaciente) {
+      ;(async () => {
+        try {
+          const sbFF = createSupabaseServerClient()
+          const d1   = new Date()
+          d1.setDate(d1.getDate() + 1)
+          const at = d1.toISOString()
+          await sbFF.from("nps_pesquisas").insert({
+            user_id:           auth.userId,
+            paciente_nome:     body.nomePaciente,
+            paciente_telefone: null,
+            agendado_para:     at,
+          })
+          const indicacao = `Olá, ${body.nomePaciente}! Foi um prazer ter você em consulta. Se você conhece alguém que também pode se beneficiar do nosso cuidado, agradeço muito a sua indicação. Qualquer dúvida, estou à disposição!`
+          await sbFF.from("nurturing_sequencias").insert({
+            user_id:       auth.userId,
+            lead_id:       null,
+            dia:           1,
+            mensagem:      indicacao,
+            status:        "pendente",
+            agendado_para: at,
+          })
+        } catch (e) {
+          console.error("[copiloto] primeira-consulta automations:", e)
+        }
+      })()
+    }
+
     return NextResponse.json(parsed)
   } catch (e) {
     console.error("[api/copiloto]", e)

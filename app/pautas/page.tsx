@@ -4,12 +4,20 @@ import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { TopBar } from "@/components/TopBar"
 import { StatCard } from "@/components/StatCard"
-import { Plus, FileText, Search, Filter, Tag, Clock, Star, ChevronDown, Pencil, Trash2 } from "lucide-react"
+import { Plus, FileText, Search, Filter, Tag, Clock, Star, ChevronDown, Pencil, Trash2,
+  Sparkles, Loader2, Clapperboard, LayoutGrid, AlignLeft, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const CATEGORIAS = ["Todas","Nutrologia","Endocrinologia","Longevidade","Metabolismo","Microbioma","Hormônios","Anti-aging","Genômica"]
 const PRIORIDADES = ["Todas","Alta","Média","Baixa"]
 const ESTAGIOS = ["Todos","Ideia","Em produção","Revisão","Pronto","Publicado"]
+
+interface IdeiaConsultorio {
+  titulo:        string
+  formato:       "reel" | "carrossel" | "post"
+  categoria:     string
+  justificativa: string
+}
 
 interface Pauta {
   id: string
@@ -46,7 +54,11 @@ export default function PautasPage() {
   const [filterCat, setFilterCat] = useState("Todas")
   const [filterPri, setFilterPri] = useState("Todas")
   const [filterEst, setFilterEst] = useState("Todos")
-  const [showForm, setShowForm]   = useState(false)
+  const [showForm, setShowForm]       = useState(false)
+  const [showIdeias, setShowIdeias]   = useState(false)
+  const [ideias, setIdeias]           = useState<IdeiaConsultorio[]>([])
+  const [loadingIdeias, setLoadingIdeias] = useState(false)
+  const [adicionando, setAdicionando] = useState<string | null>(null)
   const [newTitulo, setNewTitulo] = useState("")
   const [newCat, setNewCat]       = useState("Nutrologia")
   const [newPri, setNewPri]       = useState("Média")
@@ -133,6 +145,36 @@ export default function PautasPage() {
     }
   }
 
+  const gerarIdeias = async () => {
+    setLoadingIdeias(true)
+    try {
+      const res  = await fetch("/api/pautas/ideias-consultorio", { method: "POST" })
+      const data = await res.json() as { sugestoes?: IdeiaConsultorio[]; aviso?: string }
+      if (data.aviso) { showToast(data.aviso); return }
+      setIdeias(data.sugestoes ?? [])
+      setShowIdeias(true)
+    } catch (e) { console.error("[pautas] gerarIdeias:", e) }
+    finally { setLoadingIdeias(false) }
+  }
+
+  const adicionarIdeia = async (ideia: IdeiaConsultorio) => {
+    setAdicionando(ideia.titulo)
+    try {
+      await fetch('/api/pautas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          titulo: ideia.titulo, categoria: ideia.categoria,
+          prioridade: "Média", estagio: "Ideia",
+          notas: `[${ideia.formato.toUpperCase()}] ${ideia.justificativa}`,
+        }),
+      })
+      showToast("Pauta adicionada!")
+      await fetchPautas()
+    } catch (e) { console.error("[pautas] adicionarIdeia:", e) }
+    finally { setAdicionando(null) }
+  }
+
   const fmtData = (d: string) => new Date(d).toLocaleDateString("pt-BR")
   const stats = {
     total:      pautas.length,
@@ -148,10 +190,22 @@ export default function PautasPage() {
         title="Banco de Pautas"
         subtitle="REPOSITÓRIO DE IDEIAS CLÍNICAS"
         actions={
-          <button onClick={() => setShowForm(v => !v)}
-            className="flex items-center gap-2 px-5 py-3 rounded-lg bg-accent-dim border border-accent-border text-accent text-[14px] font-semibold hover:bg-accent/20 transition-colors min-h-[44px]">
-            <Plus className="w-4 h-4" /> Nova Pauta
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={gerarIdeias}
+              disabled={loadingIdeias}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-border text-text-secondary text-[13px] font-medium hover:text-text-primary hover:border-border-hover transition-colors disabled:opacity-50"
+            >
+              {loadingIdeias
+                ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                : <Sparkles className="w-3.5 h-3.5 text-accent" />}
+              Ideias do consultório
+            </button>
+            <button onClick={() => setShowForm(v => !v)}
+              className="flex items-center gap-2 px-5 py-3 rounded-lg bg-accent-dim border border-accent-border text-accent text-[14px] font-semibold hover:bg-accent/20 transition-colors min-h-[44px]">
+              <Plus className="w-4 h-4" /> Nova Pauta
+            </button>
+          </div>
         }
       />
       <div className="p-4 md:p-8 space-y-6">
@@ -161,6 +215,47 @@ export default function PautasPage() {
           <StatCard label="Em Produção"     value={stats.producao}   sub="sendo trabalhadas" icon={Pencil}   accent="blue"  />
           <StatCard label="Publicadas"      value={stats.publicados} sub="concluídas"        icon={Clock}    accent="amber" />
         </div>
+
+        {showIdeias && ideias.length > 0 && (
+          <div className="bg-card border border-accent-border rounded-lg p-5 animate-fade-in">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-accent" />
+                <span className="text-[11px] font-mono text-accent tracking-widest uppercase">Ideias do consultório</span>
+                <span className="text-[9px] font-mono text-text-muted px-1.5 py-0.5 rounded bg-white/[0.04] border border-border">{ideias.length} sugestões</span>
+              </div>
+              <button onClick={() => setShowIdeias(false)} className="text-text-muted hover:text-text-secondary transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {ideias.map((ideia, i) => {
+                const fmtIcon = ideia.formato === "reel" ? <Clapperboard className="w-3 h-3" /> : ideia.formato === "carrossel" ? <LayoutGrid className="w-3 h-3" /> : <AlignLeft className="w-3 h-3" />
+                const isAdding = adicionando === ideia.titulo
+                return (
+                  <div key={i} className="bg-background border border-border rounded-lg p-4 space-y-2.5">
+                    <div className="flex items-center gap-1.5">
+                      <span className="flex items-center gap-1 text-[9px] font-mono px-2 py-0.5 rounded-full border border-accent-border bg-accent-dim text-accent">
+                        {fmtIcon} {ideia.formato}
+                      </span>
+                      <span className="text-[9px] font-medium px-2 py-0.5 rounded bg-white/[0.04] border border-border text-text-muted">{ideia.categoria}</span>
+                    </div>
+                    <p className="text-[13px] font-medium text-text-primary leading-snug">{ideia.titulo}</p>
+                    <p className="text-[11px] text-text-muted leading-relaxed">{ideia.justificativa}</p>
+                    <button
+                      onClick={() => adicionarIdeia(ideia)}
+                      disabled={isAdding || adicionando !== null}
+                      className="flex items-center gap-1.5 text-[11px] font-medium text-accent hover:text-accent/80 disabled:opacity-50 transition-colors"
+                    >
+                      {isAdding ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
+                      {isAdding ? "Adicionando..." : "Adicionar ao banco"}
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         {showForm && (
           <div className="bg-card border border-accent-border rounded-lg p-6 space-y-4 animate-fade-in">

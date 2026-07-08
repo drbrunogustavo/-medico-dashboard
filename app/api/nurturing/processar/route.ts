@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
 
   const supabase = createSupabaseServiceClient()
   const now      = new Date().toISOString()
-  const result   = { nurturing: 0, regua: 0, nps: 0, reativacao: 0 }
+  const result   = { nurturing: 0, reativacao: 0 }
 
   try {
 
@@ -57,54 +57,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // ── 2. Régua de relacionamento ────────────────────────────────────────────
-    {
-      let q = supabase
-        .from("regua_relacionamento")
-        .select("id, paciente_telefone, mensagem, user_id")
-        .lte("agendado_para", now)
-        .eq("status", "pendente")
-        .eq("pausado", false)
-      if (userId) q = q.eq("user_id", userId)
-
-      const { data: rows } = await q
-      for (const row of rows ?? []) {
-        const { ok } = await sendZapiForUser(row.user_id as string, row.paciente_telefone, row.mensagem)
-        if (ok) {
-          await supabase
-            .from("regua_relacionamento")
-            .update({ status: "enviado", enviado_em: new Date().toISOString() })
-            .eq("id", row.id)
-          result.regua++
-        }
-        await sleep(150)
-      }
-    }
-
-    // ── 3. NPS pesquisas ──────────────────────────────────────────────────────
-    {
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://praxisplataforma.com.br"
-      let q = supabase
-        .from("nps_pesquisas")
-        .select("id, paciente_nome, paciente_telefone, token, user_id")
-        .lte("agendado_para", now)
-        .eq("status", "pendente")
-      if (userId) q = q.eq("user_id", userId)
-
-      const { data: rows } = await q
-      for (const row of rows ?? []) {
-        const link = `${appUrl}/nps/${row.token}`
-        const msg  = `Olá, ${row.paciente_nome}! 👋\n\nSua opinião é muito importante para nós.\nComo foi sua última consulta com o médico usuário?\n\nResponda em menos de 1 minuto: ${link}\n\nObrigado pela confiança! 🙏`
-        const { ok } = await sendZapiForUser(row.user_id as string, row.paciente_telefone, msg)
-        if (ok) {
-          await supabase.from("nps_pesquisas").update({ status: "enviado" }).eq("id", row.id)
-          result.nps++
-        }
-        await sleep(150)
-      }
-    }
-
-    // ── 4. Reativação de pacientes ────────────────────────────────────────────
+    // ── 2. Reativação de pacientes ────────────────────────────────────────────
     // Envia mensagem_gerada (gerada pela IA) para pacientes status='inativo'.
     // Pré-condição: médico deve ter gerado a mensagem antes via /reativacao.
     // Após envio: status → 'contatado' (guarda de idempotência — nunca reenvia).

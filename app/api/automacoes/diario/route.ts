@@ -4,6 +4,8 @@ import { createSupabaseServiceClient } from "@/lib/supabase-service"
 import { sendZapiForUser } from "@/lib/zapi"
 import { logAutomacao } from "@/lib/automacoes-log"
 
+const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms))
+
 const resend     = new Resend(process.env.RESEND_API_KEY)
 const APP_URL    = process.env.NEXT_PUBLIC_APP_URL ?? "https://praxisplataforma.com.br"
 const FROM_EMAIL = process.env.EMAIL_FROM          ?? "PRAXIS <onboarding@resend.dev>"
@@ -351,7 +353,7 @@ export async function GET(req: NextRequest) {
         const email = authUser?.user?.email
         if (!email) throw new Error(`sem email — user ${perfil.user_id}`)
         const [leadsRes, pautasRes] = await Promise.all([
-          supabase.from("leads").select("id, created_at").eq("user_id", perfil.user_id),
+          supabase.from("crm_leads").select("id, created_at").eq("user_id", perfil.user_id),
           supabase.from("pautas").select("id").eq("user_id", perfil.user_id),
         ])
         const semanaAtras = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
@@ -393,6 +395,7 @@ export async function GET(req: NextRequest) {
           .update({ status: "enviado", enviado_em: new Date().toISOString() }).eq("id", row.id)
         enviados++
       }
+      await sleep(150)
     }
     return enviados
   }
@@ -412,6 +415,7 @@ export async function GET(req: NextRequest) {
         await supabase.from("nps_pesquisas").update({ status: "enviado" }).eq("id", row.id)
         enviados++
       }
+      await sleep(150)
     }
     return enviados
   }

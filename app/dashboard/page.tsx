@@ -29,6 +29,10 @@ function fmtDate() {
   })
 }
 
+function fmtBRL(v: number) {
+  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v)
+}
+
 function useCounter(target: number, duration = 800) {
   const [value, setValue] = useState(0)
   const raf = useRef<number>()
@@ -119,9 +123,12 @@ const ACOES_DIA = [
 ]
 
 interface ExecMetrics {
-  leads_total:   number
-  nps_score:     number | null
-  consultas_mes: number
+  leads_total:     number
+  leads_semana:    number
+  nps_score:       number | null
+  consultas_mes:   number
+  faturamento_mes: number
+  leads_origem:    { origem: string; count: number }[]
 }
 
 interface AcademyProgresso { aula_id: string; status: string }
@@ -315,8 +322,9 @@ export default function DashboardPage() {
   const [lastAccess,     setLastAccess]     = useState<string | null>(null)
   const [execMetrics,    setExecMetrics]    = useState<ExecMetrics | null>(null)
   const [execLoading,    setExecLoading]    = useState(true)
-  const [sugestoesIA,    setSugestoesIA]    = useState<SugestaoIA[]>([])
-  const [sugestoesLoad,  setSugestoesLoad]  = useState(true)
+  const [sugestoesIA,      setSugestoesIA]      = useState<SugestaoIA[]>([])
+  const [sugestoesLoad,    setSugestoesLoad]    = useState(true)
+  const [semRetornoCount,  setSemRetornoCount]  = useState<number | null>(null)
   const [greet]                             = useState(greeting)
   const [dateStr]                           = useState(fmtDate)
   const { perfil, loading: perfilLoading } = usePerfil()
@@ -356,14 +364,26 @@ export default function DashboardPage() {
       .then((data) => {
         if (data) {
           setExecMetrics({
-            leads_total:   data.leads_total   ?? 0,
-            nps_score:     data.nps_score     ?? null,
-            consultas_mes: data.consultas_mes ?? 0,
+            leads_total:     data.leads_total     ?? 0,
+            leads_semana:    data.leads_semana    ?? 0,
+            nps_score:       data.nps_score       ?? null,
+            consultas_mes:   data.consultas_mes   ?? 0,
+            faturamento_mes: data.faturamento_mes ?? 0,
+            leads_origem:    data.leads_origem    ?? [],
           })
         }
       })
       .catch(e => console.error("[dashboard] erro ao carregar métricas executivas:", e))
       .finally(() => setExecLoading(false))
+
+    // Sem retorno — fire-and-forget, secondary info
+    fetch("/api/pacientes/sem-retorno-count")
+      .then(r => r.ok ? r.json() : null)
+      .then((d: unknown) => {
+        if (d && typeof d === "object" && "count" in d)
+          setSemRetornoCount((d as { count: number }).count)
+      })
+      .catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -393,6 +413,10 @@ export default function DashboardPage() {
     ? execMetrics.nps_score
     : "—"
 
+  const topOrigem = (execMetrics?.leads_origem ?? [])
+    .filter(o => o.count > 0)
+    .sort((a, b) => b.count - a.count)[0] ?? null
+
   const activityFeed = [
     ...(recentPautas.map(p => ({
       icon: FileText, color: "text-accent",
@@ -417,7 +441,58 @@ export default function DashboardPage() {
 
       <div className="p-4 md:p-8 space-y-6">
 
-        {/* ── KPIs em destaque — primeira coisa visível ───────────────────── */}
+        {/* ── Resumo narrativo ─────────────────────────────────────────────── */}
+        <div className="bg-surface border border-border rounded-xl px-6 py-5">
+          <p className="text-[11px] font-mono text-text-muted tracking-widest uppercase mb-2">{dateStr}</p>
+          {(execLoading || perfilLoading) ? (
+            <div className="space-y-2 py-1">
+              <div className="h-6 w-52 rounded bg-border/40 animate-pulse" />
+              <div className="h-4 w-3/4 rounded bg-border/30 animate-pulse mt-3" />
+              <div className="h-4 w-2/3 rounded bg-border/30 animate-pulse" />
+              <div className="h-4 w-1/2 rounded bg-border/30 animate-pulse" />
+            </div>
+          ) : (
+            <>
+              <h2
+                className="text-[22px] md:text-[26px] font-semibold text-text-primary mb-4 leading-tight"
+                style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}
+              >
+                {greet}, {perfil?.nome ? perfil.nome.replace(/^Dr\.?\s*/i, "Dr. ") : "Doutor"}.
+              </h2>
+              <div className="space-y-2">
+                <p className="text-[14px] text-text-secondary leading-relaxed">
+                  {execMetrics && execMetrics.leads_semana > 0 ? (
+                    <>↑ <span className="text-text-primary font-medium">{execMetrics.leads_semana} novo{execMetrics.leads_semana !== 1 ? "s leads entraram" : " lead entrou"}</span> no CRM esta semana.</>
+                  ) : (
+                    <span className="text-text-muted">Nenhum lead novo esta semana ainda.</span>
+                  )}
+                </p>
+                {execMetrics && execMetrics.faturamento_mes > 0 && (
+                  <p className="text-[14px] text-text-secondary leading-relaxed">
+                    💰 Você faturou <span className="text-text-primary font-medium">{fmtBRL(execMetrics.faturamento_mes)}</span> em consultas este mês.
+                  </p>
+                )}
+                {topOrigem && (
+                  <p className="text-[14px] text-text-secondary leading-relaxed">
+                    📸 <span className="text-text-primary font-medium">{topOrigem.origem}</span> trouxe{" "}
+                    <span className="text-text-primary font-medium">{topOrigem.count} lead{topOrigem.count !== 1 ? "s" : ""}</span> no total.
+                  </p>
+                )}
+                {semRetornoCount !== null && semRetornoCount > 0 && (
+                  <p className="text-[14px] text-text-secondary leading-relaxed">
+                    ⚠{" "}
+                    <Link href="/pacientes" className="text-text-primary font-medium hover:text-amber-400 transition-colors">
+                      {semRetornoCount} paciente{semRetornoCount !== 1 ? "s" : ""}
+                    </Link>{" "}
+                    {semRetornoCount !== 1 ? "estão" : "está"} sem retorno há mais de 6 meses.
+                  </p>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* ── KPIs em destaque ─────────────────────────────────────────────── */}
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
           <MetricCard
             label="Leads no CRM"     value={execMetrics?.leads_total ?? 0}
@@ -475,27 +550,19 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* ── SEÇÃO 1: Saudação ──────────────────────────────────────────── */}
-        <div className="bg-surface border border-border rounded-xl p-6 md:p-8 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-accent/[0.03] rounded-full blur-3xl pointer-events-none" />
-          <div className="relative">
-            <p className="text-[11px] font-mono text-text-muted tracking-widest uppercase mb-2">{dateStr}</p>
-            <h2 className="text-[24px] md:text-[32px] font-semibold text-text-primary leading-tight mb-2"
-              style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}>
-              {greet}, {perfil?.nome ? perfil.nome.replace(/^Dr\.?\s*/i, "Dr. ") : "Doutor"}.
-            </h2>
-            <p className="text-[13px] md:text-[14px] text-text-secondary">
-              {perfil?.especialidade && (
-                <span className="text-text-muted font-mono text-[11px] uppercase tracking-wider mr-2">
-                  {perfil.especialidade} ·
-                </span>
-              )}
-              Você tem{" "}
-              <span className="text-text-primary font-medium">{pautasCount} pauta{pautasCount !== 1 ? "s" : ""}</span>{" "}
-              salvas e 36+ módulos prontos para criar.
-            </p>
+        {/* ── Status bar ──────────────────────────────────────────────────── */}
+        <div className="flex items-center justify-between px-5 py-3 bg-surface border border-border rounded-xl">
+          <div className="flex items-center gap-3">
+            {perfil?.especialidade && (
+              <span className="text-[10px] font-mono text-text-muted uppercase tracking-widest">{perfil.especialidade}</span>
+            )}
+            {perfil?.especialidade && <span className="text-border text-[11px]">·</span>}
+            <span className="text-[12px] text-text-secondary">
+              <span className="text-text-primary font-medium">{pautasCount}</span>{" "}
+              pauta{pautasCount !== 1 ? "s" : ""} salvas
+            </span>
           </div>
-          <div className="mt-4 flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-accent animate-blink" />
             <span className="text-[10px] font-mono text-accent tracking-widest">PRAXIS ONLINE</span>
           </div>

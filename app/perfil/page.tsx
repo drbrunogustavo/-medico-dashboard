@@ -7,7 +7,7 @@ import {
   User, Save, RefreshCw, CheckCircle, AlertCircle,
   Instagram, MapPin, Stethoscope, Hash, Target, Sparkles,
   Palette, Type, MessageSquare, Upload, ImageIcon, Loader2,
-  Link2, CheckCircle2, XCircle,
+  Link2, CheckCircle2, XCircle, Copy, Trash2, Images,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser"
@@ -30,6 +30,14 @@ const TONS_VOZ = [
   { v: "motivacional", l: "Motivacional" },
   { v: "educativo",    l: "Educativo"    },
 ]
+
+interface MarcaAsset {
+  id:            string
+  arquivo_url:   string
+  nome_arquivo:  string | null
+  tamanho_bytes: number | null
+  criado_em:     string
+}
 
 interface PerfilForm {
   nome: string
@@ -120,13 +128,18 @@ export default function PerfilPage() {
   const [status,       setStatus]       = useState<Status>("idle")
   const [loading,      setLoading]      = useState(true)
   const [activeTab,    setActiveTab]    = useState<ActiveTab>("perfil")
-  const [uploadingLogo,   setUploadingLogo]   = useState(false)
-  const [uploadingAvatar, setUploadingAvatar] = useState(false)
-  const [avatarError,     setAvatarError]     = useState<string | null>(null)
-  const [logoError,       setLogoError]       = useState<string | null>(null)
-  const [integStatus,     setIntegStatus]     = useState<IntegStatus | null>(null)
-  const logoRef   = useRef<HTMLInputElement>(null)
-  const avatarRef = useRef<HTMLInputElement>(null)
+  const [uploadingLogo,    setUploadingLogo]    = useState(false)
+  const [uploadingAvatar,  setUploadingAvatar]  = useState(false)
+  const [avatarError,      setAvatarError]      = useState<string | null>(null)
+  const [logoError,        setLogoError]        = useState<string | null>(null)
+  const [integStatus,      setIntegStatus]      = useState<IntegStatus | null>(null)
+  const [imagens,          setImagens]          = useState<MarcaAsset[]>([])
+  const [loadingImagens,   setLoadingImagens]   = useState(false)
+  const [uploadingImagens, setUploadingImagens] = useState(false)
+  const [copiedId,         setCopiedId]         = useState<string | null>(null)
+  const logoRef    = useRef<HTMLInputElement>(null)
+  const avatarRef  = useRef<HTMLInputElement>(null)
+  const imagensRef = useRef<HTMLInputElement>(null)
 
   const load = useCallback(async () => {
     try {
@@ -159,6 +172,18 @@ export default function PerfilPage() {
   }, [])
 
   useEffect(() => { load() }, [load])
+
+  const loadImagens = useCallback(async () => {
+    setLoadingImagens(true)
+    try {
+      const res = await fetch("/api/marca-assets")
+      if (res.ok) setImagens(await res.json())
+    } catch { /* non-blocking */ } finally { setLoadingImagens(false) }
+  }, [])
+
+  useEffect(() => {
+    if (activeTab === "marca") loadImagens()
+  }, [activeTab, loadImagens])
 
   useEffect(() => {
     if (activeTab !== "integracoes" || integStatus) return
@@ -270,6 +295,47 @@ export default function PerfilPage() {
       setUploadingAvatar(false)
       if (avatarRef.current) avatarRef.current.value = ""
     }
+  }
+
+  const handleImagensUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? [])
+    if (!files.length) return
+    setUploadingImagens(true)
+    try {
+      const supabase = getSupabaseBrowserClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error("não autenticado")
+      for (const file of files) {
+        if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) continue
+        if (file.size > 5 * 1024 * 1024) continue
+        const ext  = file.name.split(".").pop() ?? "jpg"
+        const path = `imagens/${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+        const { data: uploaded, error: uploadErr } = await supabase.storage
+          .from("perfil-assets")
+          .upload(path, file, { upsert: false, contentType: file.type })
+        if (uploadErr) continue
+        const { data: { publicUrl } } = supabase.storage
+          .from("perfil-assets")
+          .getPublicUrl(uploaded.path)
+        const saved = await fetch("/api/marca-assets", {
+          method:  "POST",
+          headers: { "Content-Type": "application/json" },
+          body:    JSON.stringify({ arquivo_url: publicUrl, nome_arquivo: file.name, tamanho_bytes: file.size }),
+        })
+        if (saved.ok) {
+          const asset: MarcaAsset = await saved.json()
+          setImagens(prev => [asset, ...prev])
+        }
+      }
+    } catch { /* non-blocking */ } finally {
+      setUploadingImagens(false)
+      if (imagensRef.current) imagensRef.current.value = ""
+    }
+  }
+
+  const handleDeleteImagem = async (id: string) => {
+    await fetch(`/api/marca-assets/${id}`, { method: "DELETE" })
+    setImagens(prev => prev.filter(a => a.id !== id))
   }
 
   const initials = form.nome
@@ -785,6 +851,94 @@ export default function PerfilPage() {
                   </span>
                 </div>
               </div>
+            </div>
+
+            {/* Banco de Imagens */}
+            <div className="bg-surface border border-border rounded-xl p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-[11px] font-mono text-text-muted tracking-[3px] uppercase flex items-center gap-2">
+                  <Images className="w-3.5 h-3.5" /> Banco de Imagens
+                </h2>
+                <button
+                  onClick={() => imagensRef.current?.click()}
+                  disabled={uploadingImagens}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-[11px] font-semibold text-text-secondary hover:text-text-primary hover:border-border-hover transition-all disabled:opacity-50"
+                >
+                  {uploadingImagens
+                    ? <><Loader2 className="w-3 h-3 animate-spin" /> Enviando...</>
+                    : <><Upload className="w-3 h-3" /> Adicionar imagens</>
+                  }
+                </button>
+              </div>
+
+              <input
+                ref={imagensRef}
+                type="file"
+                multiple
+                className="hidden"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handleImagensUpload}
+              />
+
+              {loadingImagens ? (
+                <div className="flex items-center gap-2 text-[12px] text-text-muted py-4">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" /> Carregando...
+                </div>
+              ) : imagens.length === 0 ? (
+                <div className="border-2 border-dashed border-border rounded-xl p-8 flex flex-col items-center gap-2 text-center">
+                  <Images className="w-7 h-7 text-text-muted/30" />
+                  <p className="text-[12px] text-text-muted">
+                    Nenhuma imagem ainda — adicione fotos do consultório, de procedimentos
+                    ou do médico para reuso nos seus posts.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {imagens.map(img => (
+                    <div
+                      key={img.id}
+                      className="group relative rounded-xl overflow-hidden border border-border bg-background aspect-square"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={img.arquivo_url}
+                        alt={img.nome_arquivo ?? "imagem"}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-end gap-1.5 p-2">
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(img.arquivo_url)
+                            setCopiedId(img.id)
+                            setTimeout(() => setCopiedId(null), 1800)
+                          }}
+                          className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-[10px] font-semibold transition-all"
+                        >
+                          {copiedId === img.id
+                            ? <><CheckCircle2 className="w-3 h-3" /> Copiado</>
+                            : <><Copy className="w-3 h-3" /> URL</>
+                          }
+                        </button>
+                        <button
+                          onClick={() => handleDeleteImagem(img.id)}
+                          className="p-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/40 text-red-400 transition-all"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                      {img.nome_arquivo && (
+                        <p className="absolute bottom-0 left-0 right-0 px-2 py-1 text-[9px] text-white/60 truncate bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {img.nome_arquivo}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <p className="text-[10px] text-text-muted">
+                JPG, PNG ou WEBP · Máx. 5 MB por arquivo · Copie a URL para usar no Canva ou em seus posts
+              </p>
             </div>
           </>
         )}

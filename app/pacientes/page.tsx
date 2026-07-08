@@ -6,6 +6,7 @@ import { TopBar } from "@/components/TopBar"
 import { StatCard } from "@/components/StatCard"
 import { EmptyState } from "@/components/EmptyState"
 import { cn } from "@/lib/utils"
+import { calcIdadeAnos, bucketConsulta } from "@/lib/pacientes-helpers"
 import {
   Users, Search, Plus, X, Loader2, Bot, Calendar,
   FileText, Phone, Mail, User, ChevronRight, Check,
@@ -160,6 +161,11 @@ export default function PacientesPage() {
   const [semanticResults,     setSemanticResults]     = useState<Paciente[]>([])
   const [semanticExplanation, setSemanticExplanation] = useState("")
 
+  const [filtroIdade,      setFiltroIdade]      = useState("")
+  const [filtroConsulta,   setFiltroConsulta]   = useState("")
+  const [historicoMap,     setHistoricoMap]      = useState<Record<string, string>>({})
+  const [historicoLoading, setHistoricoLoading]  = useState(false)
+
   const runSemanticSearch = useCallback(async () => {
     if (!semanticQuery.trim()) return
     setSemanticLoading(true)
@@ -202,6 +208,15 @@ export default function PacientesPage() {
 
   useEffect(() => { fetchLista() }, [fetchLista])
 
+  useEffect(() => {
+    setHistoricoLoading(true)
+    fetch("/api/pacientes/historico-datas")
+      .then(r => r.ok ? r.json() : {})
+      .then((d: unknown) => setHistoricoMap(d && typeof d === "object" ? d as Record<string, string> : {}))
+      .catch(() => {})
+      .finally(() => setHistoricoLoading(false))
+  }, [])
+
   // ── Live search ──────────────────────────────────────────────────────────────
 
   const handleSearch = (q: string) => {
@@ -219,9 +234,25 @@ export default function PacientesPage() {
     }, 400)
   }
 
-  const exibidos = semanticMode
+  const base = semanticMode
     ? semanticResults
     : (query.trim() ? resultados : lista)
+
+  const exibidos = base.filter(pac => {
+    if (filtroIdade) {
+      const anos = calcIdadeAnos(getPacNasc(pac))
+      if (anos === null) return false
+      if (filtroIdade === "0-18"  && anos > 18)                return false
+      if (filtroIdade === "19-40" && (anos < 19 || anos > 40)) return false
+      if (filtroIdade === "41-60" && (anos < 41 || anos > 60)) return false
+      if (filtroIdade === "60+"   && anos <= 60)               return false
+    }
+    if (filtroConsulta) {
+      const key = getPacNome(pac).toLowerCase().trim()
+      if (bucketConsulta(historicoMap[key] ?? null) !== filtroConsulta) return false
+    }
+    return true
+  })
 
   // ── Open drawer ──────────────────────────────────────────────────────────────
 
@@ -386,8 +417,8 @@ export default function PacientesPage() {
           />
           <StatCard
             label="Resultados"
-            value={query ? (searching ? "…" : resultados.length) : lista.length}
-            sub={query ? `para "${query}"` : "todos"}
+            value={loading || searching ? "…" : exibidos.length}
+            sub={(query || filtroIdade || filtroConsulta) ? "filtrado" : "todos"}
             icon={Search}
             accent="blue"
           />
@@ -472,6 +503,68 @@ export default function PacientesPage() {
           />
         </div>
 
+        {/* Advanced filters */}
+        {!semanticMode && (
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-[9px] font-mono text-text-muted uppercase tracking-widest whitespace-nowrap">Idade</span>
+              {(["0-18", "19-40", "41-60", "60+"] as const).map(v => (
+                <button
+                  key={v}
+                  onClick={() => setFiltroIdade(filtroIdade === v ? "" : v)}
+                  className={cn(
+                    "text-[10px] px-2.5 py-0.5 rounded-full border transition-all",
+                    filtroIdade === v
+                      ? "bg-accent-dim border-accent-border text-accent font-medium"
+                      : "border-border text-text-muted hover:text-text-secondary hover:border-border-hover"
+                  )}
+                >
+                  {v === "60+" ? "60+ anos" : `${v} anos`}
+                </button>
+              ))}
+            </div>
+            <div className="w-px h-4 bg-border hidden sm:block" />
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-[9px] font-mono text-text-muted uppercase tracking-widest whitespace-nowrap">Última consulta</span>
+              {([
+                { v: "0-30",   label: "≤ 30 dias" },
+                { v: "31-90",  label: "31–90 dias" },
+                { v: "91-180", label: "91–180 dias" },
+                { v: "180+",   label: "> 180 dias" },
+                { v: "nunca",  label: "Nunca" },
+              ]).map(({ v, label }) => (
+                <button
+                  key={v}
+                  onClick={() => setFiltroConsulta(filtroConsulta === v ? "" : v)}
+                  disabled={historicoLoading}
+                  className={cn(
+                    "text-[10px] px-2.5 py-0.5 rounded-full border transition-all",
+                    filtroConsulta === v
+                      ? "bg-accent-dim border-accent-border text-accent font-medium"
+                      : "border-border text-text-muted hover:text-text-secondary hover:border-border-hover",
+                    historicoLoading && "opacity-40 cursor-wait"
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+              {historicoLoading && <Loader2 className="w-3 h-3 text-text-muted animate-spin" />}
+            </div>
+            {(filtroIdade || filtroConsulta) && (
+              <button
+                onClick={() => { setFiltroIdade(""); setFiltroConsulta("") }}
+                className="flex items-center gap-1 text-[10px] text-text-muted hover:text-text-primary border border-border hover:border-border-hover rounded-full px-2 py-0.5 transition-colors ml-auto sm:ml-0"
+              >
+                <X className="w-3 h-3" />
+                Limpar
+                <span className="ml-1 text-[9px] font-mono bg-accent-dim border border-accent-border text-accent px-1 rounded-full leading-tight">
+                  {[filtroIdade, filtroConsulta].filter(Boolean).length}
+                </span>
+              </button>
+            )}
+          </div>
+        )}
+
         {error && (
           <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl px-4 py-3 text-[12px]">
             <AlertCircle className="w-4 h-4 flex-shrink-0" />
@@ -489,13 +582,19 @@ export default function PacientesPage() {
         ) : exibidos.length === 0 ? (
           <EmptyState
             icon={Users}
-            title={query ? "Nenhum paciente encontrado" : "Nenhum paciente cadastrado"}
+            title={query || filtroIdade || filtroConsulta ? "Nenhum paciente encontrado" : "Nenhum paciente cadastrado"}
             subtitle={
               query
                 ? `Não encontramos resultados para "${query}". Tente um nome diferente.`
-                : "Os pacientes cadastrados no MedX aparecerão aqui."
+                : (filtroIdade || filtroConsulta)
+                  ? "Nenhum paciente corresponde aos filtros selecionados."
+                  : "Os pacientes cadastrados no MedX aparecerão aqui."
             }
-            action={query ? { label: "Limpar busca", onClick: () => handleSearch("") } : undefined}
+            action={
+              (query || filtroIdade || filtroConsulta)
+                ? { label: "Limpar filtros", onClick: () => { handleSearch(""); setFiltroIdade(""); setFiltroConsulta("") } }
+                : undefined
+            }
           />
         ) : (
           <div className="bg-surface border border-border rounded-xl overflow-hidden">
@@ -618,6 +717,8 @@ export default function PacientesPage() {
               <span className="text-[10px] font-mono text-text-muted">
                 {exibidos.length} paciente{exibidos.length !== 1 ? "s" : ""}
                 {query && ` · busca: "${query}"`}
+                {filtroIdade && ` · idade: ${filtroIdade} anos`}
+                {filtroConsulta && ` · consulta: ${filtroConsulta}`}
               </span>
             </div>
           </div>

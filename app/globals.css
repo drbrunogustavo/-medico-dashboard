@@ -208,3 +208,14 @@ input:-webkit-autofill:active {
   -webkit-text-fill-color: #0D1B2A !important;
   transition: background-color 9999s ease-in-out 0s;
 }
+
+/* ── Modo Consulta ── oculta Sidebar e colapsa margem sem mudar arquitetura */
+body.consulta-focus aside {
+  width: 0 !important;
+  overflow: hidden;
+  transition: width 200ms ease;
+}
+body.consulta-focus main {
+  margin-left: 0 !important;
+  transition: margin-left 200ms ease;
+}

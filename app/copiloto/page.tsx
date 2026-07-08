@@ -78,6 +78,16 @@ function fmtDateLong(s: string) {
   return `${String(d.getDate()).padStart(2,"0")} ${months[d.getMonth()]} ${d.getFullYear()}`
 }
 
+function fmtTimer(secs: number): string {
+  const h = Math.floor(secs / 3600)
+  const m = Math.floor((secs % 3600) / 60)
+  const s = secs % 60
+  const mm = String(m).padStart(2, "0")
+  const ss = String(s).padStart(2, "0")
+  if (h > 0) return `${String(h).padStart(2, "0")}:${mm}:${ss}`
+  return `${mm}:${ss}`
+}
+
 function parseFollowup(f?: string | FollowupMessages): FollowupMessages | null {
   if (!f) return null
   if (typeof f === "object" && "d1" in f) return f as FollowupMessages
@@ -349,6 +359,11 @@ function CopilotoContent() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef   = useRef<Blob[]>([])
 
+  // Focus mode
+  const [focusMode, setFocusMode] = useState(false)
+  const [timerSecs, setTimerSecs] = useState(0)
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
   function showToast(msg: string, type: "success" | "error" = "success") {
     if (toastTimer.current) clearTimeout(toastTimer.current)
     setToast({ msg, type })
@@ -408,6 +423,22 @@ function CopilotoContent() {
       })
       .catch(() => setVoiceConsent(false))
   }, [])
+
+  // ── Focus mode: body class + consultation timer ────────────────────────────
+  useEffect(() => {
+    if (focusMode) {
+      document.body.classList.add("consulta-focus")
+      setTimerSecs(0)
+      timerRef.current = setInterval(() => setTimerSecs(s => s + 1), 1000)
+    } else {
+      document.body.classList.remove("consulta-focus")
+      if (timerRef.current) clearInterval(timerRef.current)
+    }
+    return () => {
+      document.body.classList.remove("consulta-focus")
+      if (timerRef.current) clearInterval(timerRef.current)
+    }
+  }, [focusMode])
 
   async function aceitarConsentimento() {
     await fetch("/api/perfil", {
@@ -706,40 +737,80 @@ function CopilotoContent() {
 
   return (
     <div className="animate-fade-in">
-      <TopBar
-        title="Copiloto de Consulta"
-        subtitle="ALA CLÍNICA · ASSISTÊNCIA IA"
-        actions={
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowHistorico(v => !v)}
-              className={cn(
-                "flex items-center gap-1.5 text-[11px] border rounded-lg px-3 py-1.5 transition-colors",
-                showHistorico
-                  ? "bg-blue-500/10 border-blue-500/30 text-blue-400"
-                  : "border-border text-text-secondary hover:border-border-hover"
-              )}
-            >
-              <Clock className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Histórico</span>
-              {historico.length > 0 && (
-                <span className="text-[9px] font-mono bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded-full">
-                  {historico.length}
-                </span>
-              )}
-            </button>
-            {phase === "done" && (
-              <button
-                onClick={novaConsulta}
-                className="flex items-center gap-1.5 text-[11px] border border-border text-text-secondary rounded-lg px-3 py-1.5 hover:border-border-hover transition-colors"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Nova</span>
-              </button>
-            )}
+      {focusMode ? (
+        /* ── Mini-header em modo foco ────────────────────────────────────── */
+        <header
+          className="flex items-center gap-3 px-4 md:px-8 border-b border-border sticky top-0 z-30 backdrop-blur-sm"
+          style={{ height: 60, background: "var(--topbar-bg)" }}
+        >
+          <div className="flex items-center gap-2.5 flex-1 min-w-0">
+            <span
+              className="w-2 h-2 rounded-full bg-accent flex-shrink-0 animate-pulse"
+            />
+            <span className="text-[14px] font-semibold text-text-primary truncate">
+              {patient ? getPacNome(patient) : "Modo Consulta"}
+            </span>
+            <span className="hidden sm:block text-[9px] font-mono border border-accent-border text-accent px-2 py-0.5 rounded-full bg-accent-dim">
+              EM ATENDIMENTO
+            </span>
           </div>
-        }
-      />
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <span className="text-[16px] font-mono font-semibold text-accent tabular-nums">
+              {fmtTimer(timerSecs)}
+            </span>
+            <button
+              onClick={() => setFocusMode(false)}
+              className="flex items-center gap-1.5 text-[11px] border border-border text-text-secondary rounded-lg px-3 py-1.5 hover:border-border-hover transition-colors"
+            >
+              <X className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Sair do Foco</span>
+            </button>
+          </div>
+        </header>
+      ) : (
+        /* ── TopBar normal ───────────────────────────────────────────────── */
+        <TopBar
+          title="Copiloto de Consulta"
+          subtitle="ALA CLÍNICA · ASSISTÊNCIA IA"
+          actions={
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setFocusMode(true)}
+                className="flex items-center gap-1.5 text-[11px] bg-accent-dim border border-accent-border text-accent font-semibold rounded-lg px-3 py-1.5 hover:opacity-80 transition-all"
+              >
+                <Stethoscope className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Iniciar Consulta</span>
+              </button>
+              <button
+                onClick={() => setShowHistorico(v => !v)}
+                className={cn(
+                  "flex items-center gap-1.5 text-[11px] border rounded-lg px-3 py-1.5 transition-colors",
+                  showHistorico
+                    ? "bg-blue-500/10 border-blue-500/30 text-blue-400"
+                    : "border-border text-text-secondary hover:border-border-hover"
+                )}
+              >
+                <Clock className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Histórico</span>
+                {historico.length > 0 && (
+                  <span className="text-[9px] font-mono bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded-full">
+                    {historico.length}
+                  </span>
+                )}
+              </button>
+              {phase === "done" && (
+                <button
+                  onClick={novaConsulta}
+                  className="flex items-center gap-1.5 text-[11px] border border-border text-text-secondary rounded-lg px-3 py-1.5 hover:border-border-hover transition-colors"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Nova</span>
+                </button>
+              )}
+            </div>
+          }
+        />
+      )}
 
       {/* History panel — full-width strip below TopBar */}
       {showHistorico && (

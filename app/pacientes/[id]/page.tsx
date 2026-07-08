@@ -443,6 +443,13 @@ export default function PacienteDashboard() {
     }
   }, [id])
 
+  const examesAlterados = exames.filter(e => e.tendencia === "up" || e.tendencia === "down")
+
+  const URGENCIA_ORDER: Record<string, number> = { alta: 0, media: 1, baixa: 2 }
+  const topAlerta: AlertaIA | null = (!loadingAlertas && alertas.length > 0)
+    ? ([...alertas].sort((a, b) => (URGENCIA_ORDER[a.urgencia] ?? 3) - (URGENCIA_ORDER[b.urgencia] ?? 3))[0] ?? null)
+    : null
+
   return (
     <div className="animate-fade-in">
       <TopBar
@@ -571,6 +578,104 @@ export default function PacienteDashboard() {
                 </div>
               </div>
             </div>
+
+            {/* ── Visão Clínica Rápida ─────────────────────────────────────── */}
+            <SectionCard title="Visão Clínica Rápida" icon={Sparkles} iconColor="text-accent" defaultOpen={true}>
+              <div className="space-y-3 mt-1">
+
+                {/* Peso · IMC · Protocolo */}
+                {(pac.peso || pac.protocolo_ativo) && (
+                  <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5">
+                    {pac.peso && (
+                      <span className="flex items-center gap-1.5">
+                        <span className="text-[9px] font-mono text-text-muted uppercase tracking-widest">Peso</span>
+                        <span className="text-[13px] font-semibold text-text-primary">{pac.peso} kg</span>
+                      </span>
+                    )}
+                    {calcIMC(pac.peso, pac.altura) !== "—" && (
+                      <span className="flex items-center gap-1.5">
+                        <span className="text-[9px] font-mono text-text-muted uppercase tracking-widest">IMC</span>
+                        <span className="text-[13px] font-semibold text-text-primary">{calcIMC(pac.peso, pac.altura)}</span>
+                      </span>
+                    )}
+                    {pac.protocolo_ativo && (
+                      <span className="flex items-center gap-1.5 min-w-0">
+                        <span className="text-[9px] font-mono text-text-muted uppercase tracking-widest flex-shrink-0">Protocolo</span>
+                        <span className="text-[12px] text-text-secondary truncate max-w-[220px]">{pac.protocolo_ativo}</span>
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {/* Medicamentos */}
+                <div className="flex items-start gap-2">
+                  <Pill className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-[12px] text-text-secondary leading-relaxed">
+                    {(pac.medicamentos ?? []).length > 0
+                      ? (pac.medicamentos ?? []).join(" · ")
+                      : <span className="text-text-muted italic">Nenhum medicamento registrado.</span>
+                    }
+                  </p>
+                </div>
+
+                {/* Exames alterados */}
+                <div className="flex items-start gap-2">
+                  <FlaskConical className="w-3.5 h-3.5 text-purple-400 flex-shrink-0 mt-0.5" />
+                  {examesAlterados.length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5">
+                      {examesAlterados.map(ex => (
+                        <span
+                          key={ex.id}
+                          className={cn(
+                            "inline-flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 rounded-full border",
+                            ex.tendencia === "up"
+                              ? "bg-red-500/10 border-red-500/30 text-red-400"
+                              : "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                          )}
+                        >
+                          {ex.tendencia === "up"
+                            ? <TrendingUp   className="w-3 h-3 flex-shrink-0" />
+                            : <TrendingDown className="w-3 h-3 flex-shrink-0" />
+                          }
+                          {ex.nome}{ex.valor ? ` ${ex.valor}${ex.unidade ? ` ${ex.unidade}` : ""}` : ""}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-[12px] text-text-muted italic">Nenhuma alteração recente.</p>
+                  )}
+                </div>
+
+                {/* Alerta de maior urgência */}
+                {topAlerta && (
+                  <div className={cn(
+                    "flex items-start gap-2.5 px-3.5 py-2.5 rounded-xl border",
+                    topAlerta.urgencia === "alta"  && "bg-red-500/5 border-red-500/30",
+                    topAlerta.urgencia === "media" && "bg-amber-500/5 border-amber-500/30",
+                    topAlerta.urgencia === "baixa" && "bg-blue-500/5 border-blue-500/20",
+                  )}>
+                    <Zap className={cn("w-3.5 h-3.5 flex-shrink-0 mt-0.5",
+                      topAlerta.urgencia === "alta"  && "text-red-400",
+                      topAlerta.urgencia === "media" && "text-amber-400",
+                      topAlerta.urgencia === "baixa" && "text-blue-400",
+                    )} />
+                    <div className="min-w-0 text-[12px]">
+                      <span className={cn("font-semibold",
+                        topAlerta.urgencia === "alta"  && "text-red-400",
+                        topAlerta.urgencia === "media" && "text-amber-400",
+                        topAlerta.urgencia === "baixa" && "text-text-secondary",
+                      )}>
+                        {topAlerta.titulo}
+                      </span>
+                      {topAlerta.descricao && (
+                        <span className="text-text-muted"> — {topAlerta.descricao}</span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+              </div>
+            </SectionCard>
 
             {/* ── Alertas IA ──────────────────────────────────────────────── */}
             {(loadingAlertas || alertas.length > 0) && (

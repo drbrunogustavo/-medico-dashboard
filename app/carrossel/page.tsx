@@ -349,7 +349,7 @@ export default function CarrosselPage() {
                 </div>
 
                 {/* Copiar tudo */}
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <div className="flex rounded-lg border border-border overflow-hidden text-[10px] font-mono flex-shrink-0">
                     <button type="button"
                       onClick={() => setExportFmt("canva")}

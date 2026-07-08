@@ -189,7 +189,7 @@ export default function FinanceiroPage() {
               <button onClick={prevMonth} className="text-text-muted hover:text-text-primary transition-colors p-0.5">
                 <ChevronLeft className="w-3.5 h-3.5" />
               </button>
-              <span className="text-[11px] font-mono text-text-secondary min-w-[110px] text-center">
+              <span className="text-[11px] font-mono text-text-secondary whitespace-nowrap text-center">
                 {MESES[currentMonth]} {currentYear}
               </span>
               <button onClick={nextMonth} className="text-text-muted hover:text-text-primary transition-colors p-0.5">

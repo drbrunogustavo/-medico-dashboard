@@ -905,14 +905,19 @@ export default function PerfilPage() {
                         alt={img.nome_arquivo ?? "imagem"}
                         className="w-full h-full object-cover"
                       />
-                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-end gap-1.5 p-2">
+                      <div className="absolute bottom-0 left-0 right-0 flex items-center gap-1.5 p-2 bg-gradient-to-t from-black/80 to-transparent">
+                        {img.nome_arquivo && (
+                          <p className="flex-1 text-[9px] text-white/70 truncate min-w-0">
+                            {img.nome_arquivo}
+                          </p>
+                        )}
                         <button
                           onClick={() => {
                             navigator.clipboard.writeText(img.arquivo_url)
                             setCopiedId(img.id)
                             setTimeout(() => setCopiedId(null), 1800)
                           }}
-                          className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-[10px] font-semibold transition-all"
+                          className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 active:bg-white/30 text-white text-[10px] font-semibold transition-all flex-shrink-0"
                         >
                           {copiedId === img.id
                             ? <><CheckCircle2 className="w-3 h-3" /> Copiado</>
@@ -921,16 +926,11 @@ export default function PerfilPage() {
                         </button>
                         <button
                           onClick={() => handleDeleteImagem(img.id)}
-                          className="p-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/40 text-red-400 transition-all"
+                          className="p-1.5 rounded-lg bg-red-500/25 hover:bg-red-500/50 active:bg-red-500/60 text-red-400 transition-all flex-shrink-0"
                         >
                           <Trash2 className="w-3 h-3" />
                         </button>
                       </div>
-                      {img.nome_arquivo && (
-                        <p className="absolute bottom-0 left-0 right-0 px-2 py-1 text-[9px] text-white/60 truncate bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
-                          {img.nome_arquivo}
-                        </p>
-                      )}
                     </div>
                   ))}
                 </div>

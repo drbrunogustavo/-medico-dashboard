@@ -1130,17 +1130,20 @@ export default function CRMPage() {
           </div>
         ) : (
           <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-            <div className="flex gap-3 overflow-x-auto pb-4 -mx-1 px-1">
-              {COLUMNS.map(col => (
-                <KanbanColumn
-                  key={col.id}
-                  col={col}
-                  leads={leads.filter(l => l.estagio === col.id)}
-                  onExpand={setExpanded}
-                  onAddLead={stage => { setNewEstagio(stage); setShowNew(true) }}
-                  nurturingMap={nurturingMap}
-                />
-              ))}
+            <div className="relative">
+              <div className="flex gap-3 overflow-x-auto pb-4 -mx-1 px-1">
+                {COLUMNS.map(col => (
+                  <KanbanColumn
+                    key={col.id}
+                    col={col}
+                    leads={leads.filter(l => l.estagio === col.id)}
+                    onExpand={setExpanded}
+                    onAddLead={stage => { setNewEstagio(stage); setShowNew(true) }}
+                    nurturingMap={nurturingMap}
+                  />
+                ))}
+              </div>
+              <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-background to-transparent" />
             </div>
 
             <DragOverlay>

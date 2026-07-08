@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, useMemo } from "react"
 import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip,
@@ -23,6 +23,7 @@ type AbaId = "marketing" | "comercial" | "operacao" | "autoridade"
 
 interface ExecData {
   faturamento_mes:    number
+  faturamento_6m:     { mes: string; valor: number }[]
   leads_total:        number
   leads_semana:       number
   leads_por_estagio:  { estagio: string; count: number }[]
@@ -780,10 +781,6 @@ export default function ExecutivoPage() {
   const [analiseMes,     setAnaliseMes]     = useState<string | null>(null)
   const [loadingAnalise, setLoadingAnalise] = useState(false)
 
-  const [insights,      setInsights]      = useState<{ tipo: "ok"|"warn"|"info"; titulo: string; descricao: string }[]>([])
-  const [insightsLoad,  setInsightsLoad]  = useState(false)
-  const [insightsDone,  setInsightsDone]  = useState(false)
-
   useEffect(() => {
     setMktg(getLocalStorage("exec_mktg", MKTG_DEFAULT))
     setOps(getLocalStorage("exec_ops", OPS_DEFAULT))
@@ -796,27 +793,58 @@ export default function ExecutivoPage() {
       .finally(() => setLoading(false))
   }, [])
 
-  useEffect(() => {
-    if (loading || insightsDone) return
-    if ((exec.faturamento_mes ?? 0) === 0 && (exec.consultas_mes ?? 0) === 0) return
-    setInsightsDone(true)
-    setInsightsLoad(true)
-    fetch("/api/executivo/insights", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        faturamento_mes: exec.faturamento_mes ?? 0,
-        consultas_mes:   exec.consultas_mes ?? 0,
-        leads_total:     exec.leads_total ?? 0,
-        leads_semana:    exec.leads_semana ?? 0,
-        nps_score:       exec.nps_score ?? null,
-      }),
-    })
-      .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d?.insights) setInsights(d.insights) })
-      .catch(e => console.error("[executivo] insights:", e))
-      .finally(() => setInsightsLoad(false))
-  }, [loading, exec, insightsDone])
+  // ─── Sinais do mês — calculados no client, sem IA, sem especulação ──────────
+  const sinais = useMemo(() => {
+    const items: { tipo: "ok" | "warn" | "info"; texto: string }[] = []
+
+    // 1. Ticket médio estimado
+    const fat = exec.faturamento_mes ?? 0
+    const con = exec.consultas_mes   ?? 0
+    if (fat > 0 && con > 0) {
+      items.push({
+        tipo:  "info",
+        texto: `Ticket estimado: ${fmt(Math.round(fat / con))}/consulta — ${fmt(fat)} de receita em ${con} consulta${con !== 1 ? "s" : ""}`,
+      })
+    }
+
+    // 2. Leads parados no funil (Contato Feito + Qualificado)
+    const parados = (exec.leads_por_estagio ?? [])
+      .filter(e => e.estagio === "Contato Feito" || e.estagio === "Qualificado")
+      .reduce((s, e) => s + e.count, 0)
+    if (parados > 0) {
+      items.push({
+        tipo:  "warn",
+        texto: `${parados} lead${parados !== 1 ? "s" : ""} parado${parados !== 1 ? "s" : ""} no funil — "Contato Feito" ou "Qualificado" sem avançar`,
+      })
+    } else if ((exec.leads_total ?? 0) > 0) {
+      items.push({ tipo: "ok", texto: "Nenhum lead parado no funil — cadência de follow-up em dia" })
+    }
+
+    // 3. Principal origem de leads
+    const totalLeads = exec.leads_total ?? 0
+    const topOrigem  = [...(exec.leads_origem ?? [])]
+      .filter(o => o.count > 0)
+      .sort((a, b) => b.count - a.count)[0]
+    if (topOrigem && totalLeads > 0) {
+      const pct = Math.round(topOrigem.count / totalLeads * 100)
+      items.push({
+        tipo:  "info",
+        texto: `${topOrigem.origem} é sua principal origem de leads — ${topOrigem.count} de ${totalLeads} (${pct}%)`,
+      })
+    }
+
+    // 4. Taxa de conversão lead→paciente
+    const pacientes = (exec.leads_por_estagio ?? []).find(e => e.estagio === "Paciente")?.count ?? 0
+    if (totalLeads > 0) {
+      const conv = Math.round(pacientes / totalLeads * 100)
+      items.push({
+        tipo:  conv >= 15 ? "ok" : conv >= 8 ? "info" : "warn",
+        texto: `Conversão lead→paciente: ${conv}% — ${pacientes} de ${totalLeads} lead${totalLeads !== 1 ? "s" : ""} convertido${pacientes !== 1 ? "s" : ""}`,
+      })
+    }
+
+    return items
+  }, [exec])
 
   const gerarAnalise = async () => {
     setLoadingAnalise(true)
@@ -901,37 +929,62 @@ export default function ExecutivoPage() {
         </div>
       </div>
 
-      {/* Insights automáticos */}
-      {(insightsLoad || insights.length > 0) && (
-        <div className="px-4 md:px-8 pb-4">
-          {insightsLoad ? (
-            <div className="flex items-center gap-2 text-[11px] text-text-muted font-mono">
-              <Loader2 className="w-3.5 h-3.5 animate-spin text-accent" />
-              Gerando insights do mês...
+      {/* ── Sinais do mês (calculados, sem IA) + tendência de receita ──────── */}
+      <div className="px-4 md:px-8 pb-4 space-y-4">
+
+        {/* Sinais do mês */}
+        {sinais.length > 0 && (
+          <div className="rounded-xl border border-border bg-surface p-4">
+            <p className="text-[9px] font-mono text-text-muted uppercase tracking-widest mb-3">Sinais do mês</p>
+            <div className="space-y-2">
+              {sinais.map((s, i) => (
+                <InsightBullet key={i} text={s.texto} type={s.tipo} />
+              ))}
             </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {insights.map((ins, i) => {
-                const cfg = {
-                  ok:   { bg: "bg-emerald-500/8 border-emerald-500/25", text: "text-emerald-400", icon: Check },
-                  warn: { bg: "bg-amber-500/8 border-amber-500/25",    text: "text-amber-400",   icon: AlertCircle },
-                  info: { bg: "bg-blue-500/8 border-blue-500/25",      text: "text-blue-400",    icon: Zap },
-                }[ins.tipo]
-                const Icon = cfg.icon
-                return (
-                  <div key={i} className={cn("rounded-lg border p-3.5 flex items-start gap-3", cfg.bg)}>
-                    <Icon className={cn("w-4 h-4 flex-shrink-0 mt-0.5", cfg.text)} />
-                    <div>
-                      <p className={cn("text-[12px] font-semibold leading-snug", cfg.text)}>{ins.titulo}</p>
-                      <p className="text-[11px] text-text-secondary mt-0.5 leading-relaxed">{ins.descricao}</p>
-                    </div>
-                  </div>
-                )
-              })}
+          </div>
+        )}
+
+        {/* Tendência de receita — faturamento_6m */}
+        {(exec.faturamento_6m ?? []).some(m => m.valor > 0) && (
+          <div className="rounded-xl border border-border bg-surface p-4">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-[9px] font-mono text-text-muted uppercase tracking-widest">Receita — últimos 6 meses</p>
+              <p className="text-[11px] font-mono font-semibold text-text-primary">
+                {fmt(exec.faturamento_mes ?? 0)}
+                <span className="text-text-muted font-normal"> este mês</span>
+              </p>
             </div>
-          )}
-        </div>
-      )}
+            <ResponsiveContainer width="100%" height={88}>
+              <BarChart data={exec.faturamento_6m ?? []} barSize={18}>
+                <XAxis
+                  dataKey="mes"
+                  tick={{ fill: "var(--text-muted)", fontSize: 9, fontFamily: "monospace" }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis hide domain={[0, "auto"]} />
+                <Tooltip
+                  contentStyle={{
+                    background: "var(--surface)",
+                    border: "1px solid var(--border)",
+                    borderRadius: 8,
+                    fontSize: 11,
+                  }}
+                  formatter={(v) => [typeof v === "number" ? fmt(v) : "—", "Receita"]}
+                />
+                <Bar dataKey="valor" radius={[4, 4, 0, 0]}>
+                  {(exec.faturamento_6m ?? []).map((entry, i, arr) => (
+                    <Cell
+                      key={i}
+                      fill={i === arr.length - 1 ? "var(--accent)" : "var(--border-hover)"}
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+      </div>
 
       {/* Tab pills */}
       <div className="px-4 md:px-8 pb-2">

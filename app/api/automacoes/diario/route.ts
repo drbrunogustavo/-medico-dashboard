@@ -221,6 +221,68 @@ function buildRelatorioEmail(m: RelatorioMetrics): string {
 </html>`
 }
 
+// ── Email: alerta pacientes sem retorno ──────────────────────────────────────
+
+function buildAlertaSemRetornoEmail(nome: string, pacientes: string[]): string {
+  const primeiroNome = nome.replace(/^Dr\.?\s*/i, "").split(" ")[0] ?? nome
+  const lista = pacientes.slice(0, 10).map(n =>
+    `<li style="font-size:13px;color:#b91c1c;margin-bottom:6px;padding:8px 12px;background:#fef2f2;border-radius:8px;">${n}</li>`
+  ).join("")
+  const extra = pacientes.length > 10
+    ? `<li style="font-size:12px;color:#9a8a7a;margin-top:4px;">… e mais ${pacientes.length - 10} pacientes</li>`
+    : ""
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="UTF-8"/><title>Pacientes sem retorno</title></head>
+<body style="margin:0;padding:0;background:#F5F0E8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#F5F0E8;padding:40px 0;">
+  <tr><td align="center">
+    <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+      <tr><td align="center" style="padding:0 0 24px 0;">
+        <div style="display:inline-block;background:#0D1B2A;border-radius:12px;padding:14px 28px;">
+          <span style="color:#b8976a;font-size:20px;font-weight:800;letter-spacing:0.1em;">PRAXIS</span>
+        </div>
+      </td></tr>
+      <tr><td style="background:#FFFFFF;border-radius:20px;border:1px solid #e8ddd0;overflow:hidden;">
+        <div style="background:linear-gradient(135deg,#ef4444,#dc2626);height:4px;"></div>
+        <table width="100%" cellpadding="0" cellspacing="0" style="padding:36px 40px 32px;">
+          <tr><td>
+            <p style="margin:0 0 4px;font-size:11px;font-family:monospace;color:#9a8a7a;letter-spacing:2px;text-transform:uppercase;">
+              ALERTA DE RETORNO · QUINTA-FEIRA
+            </p>
+            <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#0D1B2A;">
+              ⚠️ ${pacientes.length} paciente${pacientes.length !== 1 ? "s" : ""} sem retorno
+            </h1>
+            <p style="margin:0 0 24px;font-size:14px;color:#6a5a4a;line-height:1.6;">
+              Dr. ${primeiroNome}, os pacientes abaixo não têm consulta registrada nos últimos 180 dias.
+            </p>
+            <ul style="margin:0 0 24px;padding:0;list-style:none;">
+              ${lista}${extra}
+            </ul>
+            <table cellpadding="0" cellspacing="0">
+              <tr><td style="border-radius:12px;overflow:hidden;">
+                <a href="${APP_URL}/pacientes"
+                  style="display:inline-block;background:#b8976a;color:#fff;font-size:14px;font-weight:700;padding:14px 28px;text-decoration:none;border-radius:12px;">
+                  Ver pacientes →
+                </a>
+              </td></tr>
+            </table>
+          </td></tr>
+        </table>
+      </td></tr>
+      <tr><td align="center" style="padding:24px 0;">
+        <p style="margin:0;font-size:11px;color:#9a8a7a;">
+          Você recebe este alerta toda quinta-feira quando há pacientes sem retorno. Dúvidas?
+          <a href="mailto:${REPLY_TO}" style="color:#b8976a;text-decoration:none;">${REPLY_TO}</a>
+        </p>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>`
+}
+
 // ── Email: auditoria Instagram ────────────────────────────────────────────────
 
 function buildAuditoriaEmail(nome: string, dados: {
@@ -353,6 +415,17 @@ export async function GET(req: NextRequest) {
     return enviados
   }
 
+  // match aproximado por string (lowercase+trim), não por FK — débito técnico
+  async function calcSemRetorno(userId: string): Promise<string[]> {
+    const cento80diasAtras = new Date(Date.now() - 180 * 24 * 60 * 60 * 1000).toISOString()
+    const [{ data: historico }, { data: pacientes }] = await Promise.all([
+      supabase.from("copiloto_historico").select("paciente_nome").eq("user_id", userId).gte("created_at", cento80diasAtras),
+      supabase.from("pacientes_local").select("nome").eq("user_id", userId),
+    ])
+    const comConsulta = new Set((historico ?? []).map(h => (h.paciente_nome as string).toLowerCase().trim()))
+    return (pacientes ?? []).map(p => p.nome as string).filter(n => !comConsulta.has(n.toLowerCase().trim()))
+  }
+
   async function runRelatorioSemanal() {
     if (new Date().getDay() !== 1) return null
     const { data: perfis } = await supabase.from("perfis").select("user_id, nome")
@@ -361,19 +434,13 @@ export async function GET(req: NextRequest) {
         const { data: authUser } = await supabase.auth.admin.getUserById(perfil.user_id as string)
         const email = authUser?.user?.email
         if (!email) throw new Error(`sem email — user ${perfil.user_id}`)
-        const cento80diasAtras = new Date(Date.now() - 180 * 24 * 60 * 60 * 1000).toISOString()
-        const [leadsRes, pautasRes, historicoRes] = await Promise.all([
+        const [leadsRes, pautasRes, semRetorno] = await Promise.all([
           supabase.from("crm_leads").select("id, created_at").eq("user_id", perfil.user_id),
           supabase.from("pautas").select("id").eq("user_id", perfil.user_id),
-          supabase.from("copiloto_historico").select("paciente_nome").eq("user_id", perfil.user_id).gte("created_at", cento80diasAtras),
+          calcSemRetorno(perfil.user_id as string),
         ])
         const semanaAtras = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
         const leadsData   = leadsRes.data ?? []
-
-        // match aproximado por string (lowercase+trim), não por FK — débito técnico
-        const nomesComConsulta = new Set((historicoRes.data ?? []).map(h => (h.paciente_nome as string).toLowerCase().trim()))
-        const { data: todosPacientes } = await supabase.from("pacientes_local").select("nome").eq("user_id", perfil.user_id)
-        const semRetorno = (todosPacientes ?? []).map(p => p.nome as string).filter(n => !nomesComConsulta.has(n.toLowerCase().trim()))
 
         const metrics: RelatorioMetrics = {
           nome:          (perfil.nome as string) ?? "Médico",
@@ -397,6 +464,27 @@ export async function GET(req: NextRequest) {
       })
     )
     return { sent: resultados.filter(r => r.status === "fulfilled").length, failed: resultados.filter(r => r.status === "rejected").length }
+  }
+
+  async function runAlertaSemRetorno() {
+    if (new Date().getDay() !== 4) return null  // só quinta-feira
+    const { data: perfis } = await supabase.from("perfis").select("user_id, nome")
+    let enviados = 0
+    for (const perfil of perfis ?? []) {
+      const semRetorno = await calcSemRetorno(perfil.user_id as string)
+      if (semRetorno.length === 0) continue
+      const { data: authUser } = await supabase.auth.admin.getUserById(perfil.user_id as string)
+      const email = authUser?.user?.email
+      if (!email) continue
+      const nome = (perfil.nome as string) ?? "Médico"
+      const { error } = await resend.emails.send({
+        from: FROM_EMAIL, to: [email], replyTo: REPLY_TO,
+        subject: `⚠️ ${semRetorno.length} paciente${semRetorno.length !== 1 ? "s" : ""} sem retorno há +180 dias`,
+        html: buildAlertaSemRetornoEmail(nome, semRetorno),
+      })
+      if (!error) enviados++
+    }
+    return { enviados }
   }
 
   async function runRegua() {
@@ -503,13 +591,14 @@ export async function GET(req: NextRequest) {
   const pick = (r: PromiseSettledResult<unknown>) =>
     r.status === "fulfilled" ? r.value : { error: String((r as PromiseRejectedResult).reason) }
 
-  const [trialR, leadR, relatorioR, reguaR, npsR, auditoriaR] = await Promise.allSettled([
+  const [trialR, leadR, relatorioR, reguaR, npsR, auditoriaR, alertaRetornoR] = await Promise.allSettled([
     runTrialAcabando(),
     runLeadSemResposta(),
     runRelatorioSemanal(),
     runRegua(),
     runNps(),
     runAuditoriaInstagram(),
+    runAlertaSemRetorno(),
   ])
 
   const results = {
@@ -519,9 +608,10 @@ export async function GET(req: NextRequest) {
     regua:                pick(reguaR),
     nps:                  pick(npsR),
     auditoria_instagram:  pick(auditoriaR),
+    alerta_sem_retorno:   pick(alertaRetornoR),
   }
 
-  const erros   = [trialR, leadR, relatorioR, reguaR, npsR, auditoriaR].filter(r => r.status === "rejected").length
+  const erros   = [trialR, leadR, relatorioR, reguaR, npsR, auditoriaR, alertaRetornoR].filter(r => r.status === "rejected").length
   const logStatus = erros === 6 ? "erro" : erros > 0 ? "parcial" : "ok"
   await logAutomacao("diario", logStatus, results as Record<string, unknown>)
 

@@ -406,7 +406,7 @@ function SidebarContent() {
         {/* Copilot hint */}
         <div className="px-3 pb-1">
           <button
-            onClick={() => window.dispatchEvent(new Event("open-copilot"))}
+            onClick={() => document.dispatchEvent(new CustomEvent("praxis:cmd-open"))}
             className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] text-text-muted hover:text-text-secondary hover:bg-surface transition-colors"
           >
             <Command className="w-3 h-3 flex-shrink-0" />

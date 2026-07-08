@@ -62,11 +62,6 @@ export function PraxisCopilot() {
   // Keyboard shortcuts + custom event from sidebar
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-        e.preventDefault()
-        if (open) closeCopilot()
-        else openCopilot()
-      }
       if (e.key === "Escape" && open) closeCopilot()
     }
     function onOpenEvent() { openCopilot(); dismissHint() }

@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation"
 import { Sidebar }            from "@/components/Sidebar"
 import { MobileMenuProvider } from "@/components/MobileMenuProvider"
 import { PraxisCopilot }      from "@/components/PraxisCopilot"
+import { CommandBar }          from "@/components/CommandBar"
 
 // Routes that must NOT render the Sidebar or trigger any auth hooks.
 const PUBLIC_PATHS = new Set(["/", "/login", "/cadastro", "/demo", "/planos", "/landing", "/onboarding", "/captacao", "/privacidade", "/deletar-dados", "/termos", "/anunciar-curso"])
@@ -26,6 +27,7 @@ export function ConditionalLayout({ children }: { children: React.ReactNode }) {
         </main>
       </div>
       <PraxisCopilot />
+      <CommandBar />
     </MobileMenuProvider>
   )
 }

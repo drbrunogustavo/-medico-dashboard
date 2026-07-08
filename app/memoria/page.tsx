@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import { TopBar } from "@/components/TopBar"
 import { cn } from "@/lib/utils"
 import {
-  Brain, BookOpen, Star, History, Tag, Database,
+  Brain, BookOpen, Star, History, Tag, Database, Info,
   Plus, Trash2, Edit2, Check, X, Loader2, Heart,
   Copy, Search, ChevronDown, ChevronRight,
 } from "lucide-react"
@@ -398,6 +398,13 @@ export default function MemoriaPage() {
                 <div className="text-[10px] font-mono text-text-muted uppercase tracking-wide">{s.label}</div>
               </div>
             ))}
+          </div>
+        )}
+
+        {aba === "protocolo" && (
+          <div className="flex items-start gap-2 px-3.5 py-2.5 rounded-xl border border-blue-500/20 bg-blue-500/8 text-[11px] text-blue-400">
+            <Info className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+            <span>Protocolos marcados como favoritos <Heart className="w-3 h-3 inline fill-current text-[#d4af37]" /> são injetados automaticamente no Copiloto de Consulta ao gerar a conduta.</span>
           </div>
         )}
 

@@ -17,7 +17,7 @@ async function getMemoriaContext(userId: string): Promise<string> {
     ])
     const parts: string[] = []
     if (conhecimento?.length) parts.push("BASE DE CONHECIMENTO:\n" + conhecimento.map(d => `• ${d.titulo}: ${d.conteudo.slice(0, 300)}`).join("\n"))
-    if (protocolos?.length) parts.push("PROTOCOLOS ATIVOS:\n" + protocolos.map(d => `• ${d.titulo}: ${d.conteudo.slice(0, 200)}`).join("\n"))
+    if (protocolos?.length) parts.push("PROTOCOLOS ATIVOS:\n" + protocolos.map(d => `• ${d.titulo}: ${d.conteudo.slice(0, 600)}`).join("\n"))
     return parts.length ? "\n\n" + parts.join("\n\n") : ""
   } catch (e) { console.error("[copiloto/route] getMemoriaContext falhou:", e); return "" }
 }

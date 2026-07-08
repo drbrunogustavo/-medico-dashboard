@@ -132,7 +132,7 @@ export function PraxisCopilot() {
       <button
         onClick={() => { dismissHint(); openCopilot() }}
         className="fixed bottom-5 right-5 z-40 w-12 h-12 rounded-full bg-card border border-accent-border shadow-xl flex items-center justify-center hover:bg-accent-dim transition-all group"
-        title="Praxis Copilot (⌘K)"
+        title="Praxis Copilot"
       >
         <Sparkles className="w-5 h-5 text-accent group-hover:scale-110 transition-transform" />
       </button>

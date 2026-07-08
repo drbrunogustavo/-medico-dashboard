@@ -48,7 +48,8 @@ export function CommandBar() {
   const [query,     setQuery]     = useState("")
   const [pacientes, setPacientes] = useState<Paciente[]>([])
   const [loading,   setLoading]   = useState(false)
-  const [activeIdx, setActiveIdx] = useState(0)
+  const [activeIdx,    setActiveIdx]    = useState(0)
+  const [isFirstOpen,  setIsFirstOpen]  = useState(false)
 
   const inputRef    = useRef<HTMLInputElement>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout>>()
@@ -80,6 +81,10 @@ export function CommandBar() {
       setLoading(false)
       setActiveIdx(0)
       setTimeout(() => inputRef.current?.focus(), 50)
+      if (typeof window !== "undefined" && !localStorage.getItem("cmd_bar_seen")) {
+        setIsFirstOpen(true)
+        localStorage.setItem("cmd_bar_seen", "1")
+      }
     }
   }, [open])
 
@@ -275,6 +280,13 @@ export function CommandBar() {
               </p>
             )}
           </div>
+
+          {/* One-time migration hint */}
+          {isFirstOpen && (
+            <div className="border-t border-border px-4 py-2.5 text-[11px] text-text-muted bg-surface/50">
+              Para o Copiloto IA, use o botão ✨ no canto inferior direito.
+            </div>
+          )}
 
           {/* Footer — keyboard hints */}
           <div className="border-t border-border px-4 py-2 flex items-center gap-4 text-[10px] text-text-muted">

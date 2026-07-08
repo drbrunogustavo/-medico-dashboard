@@ -332,6 +332,7 @@ function CopilotoContent() {
   const [cids,            setCids]            = useState<{ codigo: string; descricao: string; justificativa: string }[]>([])
   const [loadingCids,     setLoadingCids]     = useState(false)
   const [copiedCid,       setCopiedCid]       = useState<string | null>(null)
+  const [docModal,        setDocModal]        = useState<{ tipo: "carta" | "atestado"; texto: string; loading: boolean } | null>(null)
   const toastTimer                = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Voice
@@ -658,6 +659,29 @@ function CopilotoContent() {
     setCheckedExames(new Set()); setSendingWA({ d1: false, d7: false, d30: false })
     setProntuarioBlocos(null); setEditedProntuario({})
     setCids([]); setLoadingCids(false)
+  }
+
+  // ── Document generator (carta / atestado) ───────────────────────────────────
+
+  const openDocumento = async (tipo: "carta" | "atestado") => {
+    if (!result?.resumo) return
+    setDocModal({ tipo, texto: "", loading: true })
+    try {
+      const res  = await fetch("/api/copiloto/documento", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({
+          tipo,
+          resumo:       editedResumo || result.resumo,
+          plano:        editedPlano  || result.plano,
+          nomePaciente: patient ? getPacNome(patient) : undefined,
+        }),
+      })
+      const data = await res.json() as { texto?: string; error?: string }
+      setDocModal({ tipo, texto: data.texto ?? "", loading: false })
+    } catch {
+      setDocModal({ tipo, texto: "", loading: false })
+    }
   }
 
   // ── Render ───────────────────────────────────────────────────────────────────
@@ -1262,6 +1286,16 @@ function CopilotoContent() {
                       onClick: () => router.push("/agenda"),
                       cls: "text-blue-400 bg-blue-500/10 border-blue-500/25 hover:bg-blue-500/20",
                     },
+                    {
+                      icon: FileText, label: "Carta de encaminhamento",
+                      onClick: () => openDocumento("carta"),
+                      cls: "text-amber-400 bg-amber-500/10 border-amber-500/25 hover:bg-amber-500/20",
+                    },
+                    {
+                      icon: ClipboardList, label: "Gerar atestado",
+                      onClick: () => openDocumento("atestado"),
+                      cls: "text-text-secondary bg-surface border-border hover:border-border-hover",
+                    },
                   ].map(a => (
                     <button key={a.label} onClick={a.onClick}
                       className={cn("flex items-center gap-1.5 text-[11px] font-semibold px-3 py-2.5 sm:py-1.5 rounded-lg border transition-all min-h-[44px] sm:min-h-0", a.cls)}>
@@ -1408,6 +1442,71 @@ function CopilotoContent() {
       )}
 
       {toast && <Toast message={toast.msg} type={toast.type} />}
+
+      {/* ── Documento Modal (carta / atestado) ─────────────────────────────── */}
+      {docModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-surface border border-border rounded-2xl w-full max-w-2xl shadow-2xl max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border flex-shrink-0">
+              <div className="flex items-center gap-2">
+                <FileText className="w-4 h-4 text-amber-400" />
+                <span className="text-[14px] font-semibold text-text-primary">
+                  {docModal.tipo === "carta" ? "Carta de Encaminhamento" : "Atestado Médico"}
+                </span>
+              </div>
+              <button onClick={() => setDocModal(null)} className="w-7 h-7 rounded-lg flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-5">
+              {docModal.loading ? (
+                <div className="flex flex-col items-center justify-center py-16 gap-3">
+                  <Loader2 className="w-6 h-6 animate-spin text-accent" />
+                  <p className="text-[12px] text-text-muted">
+                    {docModal.tipo === "carta" ? "Gerando carta de encaminhamento..." : "Gerando atestado..."}
+                  </p>
+                </div>
+              ) : (
+                <textarea
+                  value={docModal.texto}
+                  onChange={e => setDocModal(m => m ? { ...m, texto: e.target.value } : null)}
+                  rows={20}
+                  className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3 text-[12px] text-text-primary leading-relaxed font-mono resize-y outline-none focus:border-blue-500/40 transition-colors"
+                />
+              )}
+            </div>
+
+            {!docModal.loading && docModal.texto && (
+              <div className="flex items-center gap-2 px-5 py-4 border-t border-border flex-shrink-0">
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(docModal.texto)
+                    showToast("Documento copiado!")
+                  }}
+                  className="flex items-center gap-1.5 text-[12px] font-semibold px-4 py-2 rounded-lg bg-accent text-background hover:bg-accent/90 transition-all"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                  Copiar documento
+                </button>
+                <button
+                  onClick={() => {
+                    const w = window.open("", "_blank")
+                    if (!w) return
+                    w.document.write(`<html><head><title>${docModal.tipo === "carta" ? "Carta de Encaminhamento" : "Atestado"}</title><style>body{font-family:Arial,sans-serif;font-size:13px;line-height:1.7;margin:60px 80px;white-space:pre-wrap}</style></head><body>${docModal.texto}</body></html>`)
+                    w.document.close()
+                    w.print()
+                  }}
+                  className="flex items-center gap-1.5 text-[12px] font-semibold px-4 py-2 rounded-lg border border-border text-text-secondary hover:text-text-primary hover:border-border-hover transition-all"
+                >
+                  <ArrowRight className="w-3.5 h-3.5" />
+                  Imprimir
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

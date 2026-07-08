@@ -543,7 +543,7 @@ export default function PerfilPage() {
                     key: "zapi" as const,
                     label: "Z-API (WhatsApp)",
                     desc: "Envio automático de mensagens via WhatsApp Business",
-                    docsKey: "ZAPI_INSTANCE_ID + ZAPI_CLIENT_TOKEN",
+                    docsKey: "ZAPI_INSTANCE_ID + ZAPI_TOKEN",
                   },
                   {
                     key: "instagram" as const,

@@ -35,7 +35,7 @@ export async function GET(
         .eq("user_id", auth.userId)
         .ilike("paciente_nome", pac.nome)
         .order("created_at", { ascending: false })
-        .limit(5),
+        .limit(20),
     ])
 
     return NextResponse.json({

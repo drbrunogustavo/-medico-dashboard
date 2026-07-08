@@ -47,9 +47,13 @@ interface HistoricoEntry {
   id:             string
   tipo_consulta?: string | null
   relato:         string
-  resultado?:     { resumo?: string } | null
+  resultado?:     { resumo?: string; plano?: string; exames_solicitados?: string[] } | null
   created_at:     string
 }
+
+type TimelineEvent =
+  | { kind: "consulta"; id: string; date: string; entry: HistoricoEntry }
+  | { kind: "exame";    id: string; date: string; exame: Exame }
 
 interface AlertaIA {
   tipo:      string
@@ -318,6 +322,7 @@ export default function PacienteDashboard() {
   const [exameForm,     setExameForm]     = useState({
     nome: "", valor: "", unidade: "", referencia: "", tendencia: "stable", data_coleta: "",
   })
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
 
   const editRef   = useRef<HTMLInputElement>(null)
   const pdfInputRef = useRef<HTMLInputElement>(null)
@@ -449,6 +454,29 @@ export default function PacienteDashboard() {
   const topAlerta: AlertaIA | null = (!loadingAlertas && alertas.length > 0)
     ? ([...alertas].sort((a, b) => (URGENCIA_ORDER[a.urgencia] ?? 3) - (URGENCIA_ORDER[b.urgencia] ?? 3))[0] ?? null)
     : null
+
+  const timelineEvents = useMemo((): TimelineEvent[] => {
+    const consultas: TimelineEvent[] = historico.map(e => ({
+      kind: "consulta", id: e.id, date: e.created_at, entry: e,
+    }))
+    const exameEvs: TimelineEvent[] = exames.map(e => ({
+      kind: "exame", id: e.id, date: e.data_coleta ?? e.criado_em, exame: e,
+    }))
+    return [...consultas, ...exameEvs].sort((a, b) => b.date.localeCompare(a.date))
+  }, [historico, exames])
+
+  const byMonth = useMemo((): { monthLabel: string; events: TimelineEvent[] }[] => {
+    const groups: { monthLabel: string; events: TimelineEvent[] }[] = []
+    for (const ev of timelineEvents) {
+      const d     = new Date(ev.date)
+      const raw   = d.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })
+      const label = raw.charAt(0).toUpperCase() + raw.slice(1)
+      const last  = groups[groups.length - 1]
+      if (!last || last.monthLabel !== label) groups.push({ monthLabel: label, events: [ev] })
+      else last.events.push(ev)
+    }
+    return groups
+  }, [timelineEvents])
 
   return (
     <div className="animate-fade-in">
@@ -1005,37 +1033,141 @@ export default function PacienteDashboard() {
               </div>
             </SectionCard>
 
-            {/* ── SEÇÃO 6: Histórico de consultas (timeline) ───────────────── */}
-            <SectionCard title="Histórico de Consultas" icon={Clock} iconColor="text-blue-400">
+            {/* ── SEÇÃO 6: Timeline Clínica ────────────────────────────────── */}
+            <SectionCard
+              title="Timeline Clínica"
+              icon={Clock}
+              iconColor="text-blue-400"
+              extra={
+                timelineEvents.length > 0
+                  ? <span className="text-[9px] font-mono text-text-muted mr-1">{timelineEvents.length} evento{timelineEvents.length !== 1 ? "s" : ""}</span>
+                  : undefined
+              }
+            >
               <div className="mt-1">
-                {historico.length === 0 ? (
+                {timelineEvents.length === 0 ? (
                   <p className="text-[12px] text-text-muted">
-                    Nenhuma consulta registrada no Copiloto para este paciente.
+                    Nenhuma consulta ou exame registrado para este paciente.
                   </p>
                 ) : (
-                  <div className="relative pl-6 space-y-4">
+                  <div className="relative pl-6">
                     <div className="absolute left-2 top-0 bottom-0 w-px bg-border pointer-events-none" />
-                    {historico.map(entry => (
-                      <div key={entry.id} className="relative group">
-                        <div className="absolute -left-[18px] top-1.5 w-2.5 h-2.5 rounded-full bg-blue-500/30 border-2 border-blue-500/50" />
-                        <Link
-                          href={`/copiloto?pacienteId=${id}`}
-                          className="flex-1 block min-w-0"
-                        >
-                          <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                            <span className="text-[12px] font-semibold text-text-primary group-hover:text-blue-400 transition-colors">
-                              {fmtDateLong(entry.created_at)}
-                            </span>
-                            {entry.tipo_consulta && (
-                              <span className="text-[9px] font-mono bg-blue-500/10 border border-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded-full">
-                                {entry.tipo_consulta}
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-[11px] text-text-muted leading-relaxed line-clamp-2">
-                            {(entry.resultado?.resumo ?? entry.relato).slice(0, 200)}
-                          </p>
-                        </Link>
+                    {byMonth.map(({ monthLabel, events }, mIdx) => (
+                      <div key={monthLabel}>
+                        {/* Month separator */}
+                        <div className={cn("flex items-center gap-3 -ml-6 mb-3", mIdx > 0 ? "mt-5" : "mt-0")}>
+                          <div className="h-px flex-1 bg-border" />
+                          <span className="text-[9px] font-mono text-text-muted uppercase tracking-widest whitespace-nowrap px-1">
+                            {monthLabel}
+                          </span>
+                          <div className="h-px flex-1 bg-border" />
+                        </div>
+                        <div className="space-y-3">
+                          {events.map(ev => {
+                            if (ev.kind === "consulta") {
+                              const entry    = ev.entry
+                              const expanded = expandedIds.has(ev.id)
+                              const temPlano  = !!entry.resultado?.plano
+                              const temExames = (entry.resultado?.exames_solicitados?.length ?? 0) > 0
+                              const hasExtra  = temPlano || temExames
+                              return (
+                                <div key={ev.id} className="relative">
+                                  <div className="absolute -left-[18px] top-3 w-2.5 h-2.5 rounded-full bg-blue-500/30 border-2 border-blue-500/60" />
+                                  <div
+                                    className={cn(
+                                      "rounded-xl border border-border overflow-hidden",
+                                      hasExtra && "cursor-pointer hover:border-blue-500/30 transition-colors"
+                                    )}
+                                    onClick={hasExtra ? () => setExpandedIds(prev => {
+                                      const next = new Set(prev)
+                                      next.has(ev.id) ? next.delete(ev.id) : next.add(ev.id)
+                                      return next
+                                    }) : undefined}
+                                  >
+                                    <div className="flex items-start justify-between gap-2 px-4 py-2.5">
+                                      <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                                          <span className="text-[12px] font-semibold text-text-primary">
+                                            {fmtDateLong(entry.created_at)}
+                                          </span>
+                                          {entry.tipo_consulta && (
+                                            <span className="text-[9px] font-mono bg-blue-500/10 border border-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded-full">
+                                              {entry.tipo_consulta}
+                                            </span>
+                                          )}
+                                        </div>
+                                        <p className="text-[11px] text-text-muted leading-relaxed line-clamp-2">
+                                          {(entry.resultado?.resumo ?? entry.relato ?? "").slice(0, 220)}
+                                        </p>
+                                      </div>
+                                      {hasExtra && (
+                                        expanded
+                                          ? <ChevronUp   className="w-3.5 h-3.5 text-text-muted flex-shrink-0 mt-0.5" />
+                                          : <ChevronDown className="w-3.5 h-3.5 text-text-muted flex-shrink-0 mt-0.5" />
+                                      )}
+                                    </div>
+                                    {expanded && (
+                                      <div className="border-t border-border px-4 py-3 space-y-2.5 bg-surface/50">
+                                        {temPlano && (
+                                          <div>
+                                            <p className="text-[9px] font-mono text-text-muted uppercase tracking-widest mb-1">Conduta</p>
+                                            <p className="text-[11px] text-text-secondary leading-relaxed">{entry.resultado!.plano}</p>
+                                          </div>
+                                        )}
+                                        {temExames && (
+                                          <div>
+                                            <p className="text-[9px] font-mono text-text-muted uppercase tracking-widest mb-1.5">Exames solicitados</p>
+                                            <div className="flex flex-wrap gap-1.5">
+                                              {(entry.resultado?.exames_solicitados ?? []).map((ex, i) => (
+                                                <span key={i} className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400">
+                                                  {ex}
+                                                </span>
+                                              ))}
+                                            </div>
+                                          </div>
+                                        )}
+                                        <Link
+                                          href={`/copiloto?pacienteId=${id}`}
+                                          className="inline-flex items-center gap-1 text-[10px] font-mono text-blue-400 hover:text-blue-300 transition-colors"
+                                          onClick={e => e.stopPropagation()}
+                                        >
+                                          Abrir no Copiloto →
+                                        </Link>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )
+                            }
+
+                            // Exame node
+                            const ex = ev.exame
+                            return (
+                              <div key={ev.id} className="relative">
+                                <div className="absolute -left-[18px] top-2.5 w-2.5 h-2.5 rounded-full border-2 border-purple-500/50 bg-card" />
+                                <div className="flex items-center gap-2 py-1.5 min-w-0">
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center flex-wrap gap-x-2 gap-y-0.5">
+                                      <span className="text-[11px] font-medium text-text-secondary">{ex.nome}</span>
+                                      <span className="text-[12px] font-mono font-semibold text-text-primary">
+                                        {ex.valor}{ex.unidade ? ` ${ex.unidade}` : ""}
+                                      </span>
+                                      {ex.referencia && (
+                                        <span className="text-[10px] text-text-muted">ref: {ex.referencia}</span>
+                                      )}
+                                      {ex.tendencia === "up"     && <TrendingUp   className="w-3 h-3 text-red-400"     />}
+                                      {ex.tendencia === "down"   && <TrendingDown  className="w-3 h-3 text-emerald-400" />}
+                                      {ex.tendencia === "stable" && <Minus         className="w-3 h-3 text-text-muted"  />}
+                                    </div>
+                                    <p className="text-[10px] font-mono text-text-muted mt-0.5">
+                                      {fmtDateISO(ex.data_coleta ?? ex.criado_em)}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
                       </div>
                     ))}
                   </div>

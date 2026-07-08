@@ -137,6 +137,7 @@ interface RelatorioMetrics {
   nps_score:     number | null
   pautas_total:  number
   receita_mes:   number
+  sem_retorno?:  string[]
 }
 
 function buildRelatorioEmail(m: RelatorioMetrics): string {
@@ -187,6 +188,14 @@ function buildRelatorioEmail(m: RelatorioMetrics): string {
                 return rows
               }, []).join("")}
             </table>
+            ${m.sem_retorno && m.sem_retorno.length > 0 ? `
+            <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:16px 20px;margin-bottom:24px;">
+              <p style="margin:0 0 8px;font-size:14px;font-weight:700;color:#991b1b;">⚠️ ${m.sem_retorno.length} paciente${m.sem_retorno.length !== 1 ? "s" : ""} sem retorno nos últimos 180 dias</p>
+              <ul style="margin:0;padding-left:16px;">
+                ${m.sem_retorno.slice(0, 5).map(n => `<li style="font-size:12px;color:#b91c1c;margin-bottom:4px;">${n}</li>`).join("")}
+                ${m.sem_retorno.length > 5 ? `<li style="font-size:12px;color:#b91c1c;">… e mais ${m.sem_retorno.length - 5}</li>` : ""}
+              </ul>
+            </div>` : ""}
             <div style="border-top:1px solid #e8ddd0;margin:0 0 28px;"></div>
             <table cellpadding="0" cellspacing="0">
               <tr><td style="border-radius:12px;overflow:hidden;">
@@ -352,12 +361,20 @@ export async function GET(req: NextRequest) {
         const { data: authUser } = await supabase.auth.admin.getUserById(perfil.user_id as string)
         const email = authUser?.user?.email
         if (!email) throw new Error(`sem email — user ${perfil.user_id}`)
-        const [leadsRes, pautasRes] = await Promise.all([
+        const cento80diasAtras = new Date(Date.now() - 180 * 24 * 60 * 60 * 1000).toISOString()
+        const [leadsRes, pautasRes, historicoRes] = await Promise.all([
           supabase.from("crm_leads").select("id, created_at").eq("user_id", perfil.user_id),
           supabase.from("pautas").select("id").eq("user_id", perfil.user_id),
+          supabase.from("copiloto_historico").select("paciente_nome").eq("user_id", perfil.user_id).gte("created_at", cento80diasAtras),
         ])
         const semanaAtras = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
         const leadsData   = leadsRes.data ?? []
+
+        // match aproximado por string (lowercase+trim), não por FK — débito técnico
+        const nomesComConsulta = new Set((historicoRes.data ?? []).map(h => (h.paciente_nome as string).toLowerCase().trim()))
+        const { data: todosPacientes } = await supabase.from("pacientes_local").select("nome").eq("user_id", perfil.user_id)
+        const semRetorno = (todosPacientes ?? []).map(p => p.nome as string).filter(n => !nomesComConsulta.has(n.toLowerCase().trim()))
+
         const metrics: RelatorioMetrics = {
           nome:          (perfil.nome as string) ?? "Médico",
           leads_novos:   leadsData.filter(l => new Date(l.created_at) >= semanaAtras).length,
@@ -366,6 +383,7 @@ export async function GET(req: NextRequest) {
           nps_score:     null,
           pautas_total:  pautasRes.data?.length ?? 0,
           receita_mes:   0,
+          sem_retorno:   semRetorno,
         }
         const nome         = (perfil.nome as string) ?? "Médico"
         const primeiroNome = nome.replace(/^Dr\.?\s*/i, "").split(" ")[0] ?? nome

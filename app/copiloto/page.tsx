@@ -360,9 +360,13 @@ function CopilotoContent() {
   const audioChunksRef   = useRef<Blob[]>([])
 
   // Focus mode
-  const [focusMode, setFocusMode] = useState(false)
-  const [timerSecs, setTimerSecs] = useState(0)
+  const [focusMode,      setFocusMode]      = useState(false)
+  const [timerSecs,      setTimerSecs]      = useState(0)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  // Pós-consulta modal
+  const [showPostModal,  setShowPostModal]  = useState(false)
+  const [consultDuration, setConsultDuration] = useState(0)
 
   function showToast(msg: string, type: "success" | "error" = "success") {
     if (toastTimer.current) clearTimeout(toastTimer.current)
@@ -759,7 +763,13 @@ function CopilotoContent() {
               {fmtTimer(timerSecs)}
             </span>
             <button
-              onClick={() => setFocusMode(false)}
+              onClick={() => {
+                if (result !== null) {
+                  setConsultDuration(timerSecs)
+                  setShowPostModal(true)
+                }
+                setFocusMode(false)
+              }}
               className="flex items-center gap-1.5 text-[11px] border border-border text-text-secondary rounded-lg px-3 py-1.5 hover:border-border-hover transition-colors"
             >
               <X className="w-3.5 h-3.5" />
@@ -1549,6 +1559,153 @@ function CopilotoContent() {
                 className="flex-1 text-[12px] py-2 rounded-xl bg-blue-500 text-white font-semibold hover:bg-blue-600 transition-colors"
               >
                 Autorizar e gravar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Pós-consulta modal ─────────────────────────────────────────────── */}
+      {showPostModal && (
+        <div className="fixed inset-0 z-[55] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="bg-surface border border-border rounded-2xl w-full max-w-md shadow-2xl animate-fade-in">
+
+            {/* Header */}
+            <div className="px-5 py-4 border-b border-border">
+              <div className="flex items-center justify-between mb-1">
+                <h3 className="text-[15px] font-semibold text-text-primary">Consulta finalizada</h3>
+                <button
+                  onClick={() => setShowPostModal(false)}
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <p className="text-[11px] text-text-muted font-mono">
+                {patient ? getPacNome(patient) : "Paciente"} · {fmtTimer(consultDuration)}
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div className="p-4 space-y-2">
+              <p className="text-[9px] font-mono text-text-muted uppercase tracking-widest mb-3">O que fazer agora?</p>
+
+              {/* ① WhatsApp D+1 */}
+              {(() => {
+                const msgs = parseFollowup(result?.followup)
+                if (!msgs?.d1) return null
+                return (
+                  <button
+                    onClick={() => { enviarWhatsApp(msgs.d1, "d1"); setShowPostModal(false) }}
+                    className="w-full flex items-center gap-3 text-left px-4 py-3 rounded-xl border border-emerald-500/25 bg-emerald-500/10 hover:bg-emerald-500/15 text-emerald-400 transition-all"
+                  >
+                    <Send className="w-4 h-4 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] font-semibold">Enviar mensagem D+1</p>
+                      <p className="text-[10px] text-emerald-400/70">WhatsApp automático de acompanhamento</p>
+                    </div>
+                  </button>
+                )
+              })()}
+
+              {/* ② Gerar carta ao paciente */}
+              <button
+                onClick={() => {
+                  const params = new URLSearchParams()
+                  if (relato)       params.set("relato", relato.slice(0, 2000))
+                  if (dados)        params.set("dados", dados.slice(0, 1000))
+                  if (patient)      params.set("nomePaciente", getPacNome(patient))
+                  if (tipoConsulta) params.set("tipoConsulta", tipoConsulta)
+                  router.push(`/conversa?${params.toString()}`)
+                  setShowPostModal(false)
+                }}
+                className="w-full flex items-center gap-3 text-left px-4 py-3 rounded-xl border border-border hover:border-border-hover text-text-secondary hover:text-text-primary transition-all"
+              >
+                <Mail className="w-4 h-4 flex-shrink-0 text-accent" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-semibold">Gerar carta ao paciente</p>
+                  <p className="text-[10px] text-text-muted">Texto personalizado com resumo da consulta</p>
+                </div>
+              </button>
+
+              {/* ③ Prescrever */}
+              <button
+                onClick={() => {
+                  const id = patient ? getPacId(patient) : ""
+                  router.push(id ? `/prescricao?pacienteId=${id}` : "/prescricao")
+                  setShowPostModal(false)
+                }}
+                className="w-full flex items-center gap-3 text-left px-4 py-3 rounded-xl border border-border hover:border-border-hover text-text-secondary hover:text-text-primary transition-all"
+              >
+                <Pill className="w-4 h-4 flex-shrink-0 text-green-400" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-semibold">Prescrever</p>
+                  <p className="text-[10px] text-text-muted">Abrir prescrição assistida</p>
+                </div>
+              </button>
+
+              {/* ④ Criar carrossel */}
+              <button
+                onClick={() => {
+                  router.push(`/carrossel?tema=${encodeURIComponent(tipoConsulta)}`)
+                  setShowPostModal(false)
+                }}
+                className="w-full flex items-center gap-3 text-left px-4 py-3 rounded-xl border border-border hover:border-border-hover text-text-secondary hover:text-text-primary transition-all"
+              >
+                <Sparkles className="w-4 h-4 flex-shrink-0 text-purple-400" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-semibold">Criar carrossel</p>
+                  <p className="text-[10px] text-text-muted truncate">Tema: {tipoConsulta}</p>
+                </div>
+              </button>
+
+              {/* ⑤ Agendar retorno */}
+              <button
+                onClick={() => {
+                  const id   = patient ? getPacId(patient) : ""
+                  const nome = patient ? encodeURIComponent(getPacNome(patient)) : ""
+                  router.push(id ? `/agenda?pacienteId=${id}&pacienteNome=${nome}` : "/agenda")
+                  setShowPostModal(false)
+                }}
+                className="w-full flex items-center gap-3 text-left px-4 py-3 rounded-xl border border-border hover:border-border-hover text-text-secondary hover:text-text-primary transition-all"
+              >
+                <CalendarDays className="w-4 h-4 flex-shrink-0 text-blue-400" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-semibold">Agendar retorno</p>
+                  <p className="text-[10px] text-text-muted">
+                    {patient ? `${getPacNome(patient)} pré-preenchido` : "Abrir agenda"}
+                  </p>
+                </div>
+              </button>
+
+              {/* ⑥ Copiar lista de exames */}
+              {result?.exames_solicitados && result.exames_solicitados.length > 0 && (
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(result!.exames_solicitados!.join("\n"))
+                    showToast("Lista de exames copiada!")
+                    setShowPostModal(false)
+                  }}
+                  className="w-full flex items-center gap-3 text-left px-4 py-3 rounded-xl border border-border hover:border-border-hover text-text-secondary hover:text-text-primary transition-all"
+                >
+                  <FlaskConical className="w-4 h-4 flex-shrink-0 text-violet-400" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-semibold">Copiar exames solicitados</p>
+                    <p className="text-[10px] text-text-muted">
+                      {result.exames_solicitados.length} exame{result.exames_solicitados.length !== 1 ? "s" : ""} na lista
+                    </p>
+                  </div>
+                </button>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-5 py-3.5 border-t border-border">
+              <button
+                onClick={() => { setShowPostModal(false); router.push("/dashboard") }}
+                className="w-full text-[12px] text-text-muted hover:text-text-secondary transition-colors py-1"
+              >
+                Fechar e ir ao início
               </button>
             </div>
           </div>

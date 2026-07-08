@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { TopBar } from "@/components/TopBar"
 import { EmptyState } from "@/components/EmptyState"
 import { Toast } from "@/components/Toast"
@@ -62,6 +62,12 @@ function CopyBtn({ text, className }: { text: string; className?: string }) {
 export default function CarrosselPage() {
   const [tema,        setTema]        = useState("")
   const [slides,      setSlides]      = useState(7)
+
+  // Pre-fill tema from ?tema= URL param (set by modal pós-consulta)
+  useEffect(() => {
+    const t = new URLSearchParams(window.location.search).get("tema")
+    if (t) setTema(t)
+  }, [])
   const [objetivo,    setObjetivo]    = useState("Educativo")
   const [tom,         setTom]         = useState("Profissional")
   const [showPautas,  setShowPautas]  = useState(false)

@@ -252,6 +252,18 @@ export default function AgendaPage() {
   const weekEnd = useMemo(() => addDays(weekStart, 6), [weekStart])
   const mesAno  = `${MESES[weekStart.getMonth()]} ${weekStart.getFullYear()}`
 
+  // Pre-fill patient from ?pacienteId=&pacienteNome= (set by modal pós-consulta)
+  useEffect(() => {
+    const sp    = new URLSearchParams(window.location.search)
+    const pacId = sp.get("pacienteId")
+    const pacNm = sp.get("pacienteNome")
+    if (pacId && pacNm) {
+      setNovoPacSel({ id: pacId, nome: pacNm } as PacienteResult)
+      setNovoPacQ(pacNm)
+      setNovoOpen(true)
+    }
+  }, [])
+
   // Fetch metadata once
   useEffect(() => {
     const load = async () => {

@@ -8,16 +8,29 @@ import { getAnthropicClient } from "@/lib/anthropic"
 const SYSTEM_BASE = `Você é o Copiloto de Consulta do PRAXIS — assistente clínico especialista em Endocrinologia, Nutrologia e Longevidade.
 Retorne APENAS JSON válido, sem markdown, sem texto antes ou depois do JSON.`
 
-async function getMemoriaContext(userId: string): Promise<string> {
+async function getMemoriaContext(userId: string, protocoloId?: string): Promise<string> {
   try {
     const supabase = createSupabaseServerClient()
-    const [{ data: conhecimento }, { data: protocolos }] = await Promise.all([
-      supabase.from("memoria_clinica").select("titulo,conteudo").eq("user_id", userId).eq("tipo", "conhecimento").limit(5),
-      supabase.from("memoria_clinica").select("titulo,conteudo").eq("user_id", userId).eq("tipo", "protocolo").eq("favorito", true).limit(3),
-    ])
     const parts: string[] = []
-    if (conhecimento?.length) parts.push("BASE DE CONHECIMENTO:\n" + conhecimento.map(d => `• ${d.titulo}: ${d.conteudo.slice(0, 300)}`).join("\n"))
-    if (protocolos?.length) parts.push("PROTOCOLOS ATIVOS:\n" + protocolos.map(d => `• ${d.titulo}: ${d.conteudo.slice(0, 600)}`).join("\n"))
+
+    if (protocoloId) {
+      // Protocolo específico selecionado — injeta com prioridade, substitui favoritos automáticos
+      const [{ data: protocolo }, { data: conhecimento }] = await Promise.all([
+        supabase.from("memoria_clinica").select("titulo,conteudo").eq("id", protocoloId).eq("user_id", userId).single(),
+        supabase.from("memoria_clinica").select("titulo,conteudo").eq("user_id", userId).eq("tipo", "conhecimento").limit(5),
+      ])
+      if (protocolo) parts.push(`PROTOCOLO APLICADO — ${(protocolo as { titulo: string; conteudo: string }).titulo}:\n${(protocolo as { titulo: string; conteudo: string }).conteudo.slice(0, 1500)}`)
+      if (conhecimento?.length) parts.push("BASE DE CONHECIMENTO:\n" + conhecimento.map(d => `• ${(d as { titulo: string; conteudo: string }).titulo}: ${(d as { titulo: string; conteudo: string }).conteudo.slice(0, 300)}`).join("\n"))
+    } else {
+      // Comportamento padrão: todos os favoritos (limite 600 chars)
+      const [{ data: conhecimento }, { data: protocolos }] = await Promise.all([
+        supabase.from("memoria_clinica").select("titulo,conteudo").eq("user_id", userId).eq("tipo", "conhecimento").limit(5),
+        supabase.from("memoria_clinica").select("titulo,conteudo").eq("user_id", userId).eq("tipo", "protocolo").eq("favorito", true).limit(3),
+      ])
+      if (conhecimento?.length) parts.push("BASE DE CONHECIMENTO:\n" + conhecimento.map(d => `• ${(d as { titulo: string; conteudo: string }).titulo}: ${(d as { titulo: string; conteudo: string }).conteudo.slice(0, 300)}`).join("\n"))
+      if (protocolos?.length) parts.push("PROTOCOLOS ATIVOS:\n" + protocolos.map(d => `• ${(d as { titulo: string; conteudo: string }).titulo}: ${(d as { titulo: string; conteudo: string }).conteudo.slice(0, 600)}`).join("\n"))
+    }
+
     return parts.length ? "\n\n" + parts.join("\n\n") : ""
   } catch (e) { console.error("[copiloto/route] getMemoriaContext falhou:", e); return "" }
 }
@@ -100,11 +113,12 @@ export async function POST(req: NextRequest) {
       dados?:         string
       tipoConsulta?:  string
       nomePaciente?:  string
+      protocoloId?:   string
     }
 
     const nome = body.nomePaciente ?? "paciente"
     const tipo = body.tipoConsulta ?? "Consulta"
-    const memoriaCtx = await getMemoriaContext(auth.userId)
+    const memoriaCtx = await getMemoriaContext(auth.userId, body.protocoloId)
     const SYSTEM = SYSTEM_BASE + memoriaCtx
 
     const resp = await client.messages.create({

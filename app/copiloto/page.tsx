@@ -336,6 +336,10 @@ function CopilotoContent() {
   const toastTimer                = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Voice
+  // Protocol picker
+  const [protocoloId,    setProtocoloId]    = useState<string | null>(null)
+  const [protocolosList, setProtocolosList] = useState<{ id: string; titulo: string }[]>([])
+
   const [voiceConsent,     setVoiceConsent]     = useState<boolean | null>(null)
   const [showConsentModal, setShowConsentModal]  = useState(false)
   const [isRecording,      setIsRecording]       = useState(false)
@@ -381,6 +385,13 @@ function CopilotoContent() {
   }, [])
 
   useEffect(() => { fetchHistorico() }, [fetchHistorico])
+
+  useEffect(() => {
+    fetch("/api/memoria?tipo=protocolo")
+      .then(r => r.ok ? r.json() : [])
+      .then((d: { id: string; titulo: string }[]) => setProtocolosList(d ?? []))
+      .catch(() => {})
+  }, [])
 
   // ── Voice recording setup ────────────────────────────────────────────────────
 
@@ -569,6 +580,7 @@ function CopilotoContent() {
           dados:        dados || undefined,
           tipoConsulta,
           nomePaciente: patient ? getPacNome(patient) : undefined,
+          protocoloId:  protocoloId ?? undefined,
         }),
       })
 
@@ -653,7 +665,7 @@ function CopilotoContent() {
   // ── Reset ────────────────────────────────────────────────────────────────────
 
   const novaConsulta = () => {
-    setRelato(""); setDados(""); setTipoConsulta("Primeira consulta")
+    setRelato(""); setDados(""); setTipoConsulta("Primeira consulta"); setProtocoloId(null)
     setResult(null); setGenError(""); setPhase("idle")
     setEditedResumo(""); setEditedPlano(""); setEditedOrientacoes("")
     setCheckedExames(new Set()); setSendingWA({ d1: false, d7: false, d30: false })
@@ -927,6 +939,23 @@ function CopilotoContent() {
                 ))}
               </div>
             </div>
+
+            {/* Protocolo */}
+            {protocolosList.length > 0 && (
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-mono text-text-muted uppercase tracking-widest">Protocolo Clínico</label>
+                <select
+                  value={protocoloId ?? ""}
+                  onChange={e => setProtocoloId(e.target.value || null)}
+                  className="w-full rounded-xl px-3 py-2.5 text-[12px] text-text-primary bg-card border border-border outline-none focus:border-accent/40 transition-colors appearance-none"
+                >
+                  <option value="">Nenhum — usar protocolos favoritos (padrão)</option>
+                  {protocolosList.map(p => (
+                    <option key={p.id} value={p.id}>{p.titulo}</option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {/* Relato */}
             <div className="space-y-1.5">

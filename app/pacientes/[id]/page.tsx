@@ -481,7 +481,7 @@ export default function PacienteDashboard() {
         {loading && (
           <div className="space-y-4">
             <div className="h-[110px] rounded-2xl bg-card border border-border shimmer" />
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {[0,1,2,3].map(i => <div key={i} className="h-[72px] rounded-xl bg-card border border-border shimmer" />)}
             </div>
             <div className="h-32 rounded-2xl bg-card border border-border shimmer" />

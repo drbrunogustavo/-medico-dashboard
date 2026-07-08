@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils"
 import {
   Search, Loader2, X, User, Phone,
   FileText, Stethoscope, BookOpen, MessageCircle, Sparkles, ClipboardList,
-  Copy, Check, Bot, RefreshCw, Plus,
+  Copy, Check, Bot, RefreshCw, Plus, Tag,
   AlertCircle, ChevronDown, ChevronUp, Send,
   Clock, Trash2, FlaskConical, Mic, MicOff, ShieldCheck, Brain,
   Pill, CalendarDays, Mail, ArrowRight,
@@ -329,6 +329,9 @@ function CopilotoContent() {
 
   const [memoriaChips,    setMemoriaChips]    = useState<{ tipo: string; texto: string }[]>([])
   const [loadingMemoria,  setLoadingMemoria]  = useState(false)
+  const [cids,            setCids]            = useState<{ codigo: string; descricao: string; justificativa: string }[]>([])
+  const [loadingCids,     setLoadingCids]     = useState(false)
+  const [copiedCid,       setCopiedCid]       = useState<string | null>(null)
   const toastTimer                = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Voice
@@ -578,7 +581,21 @@ function CopilotoContent() {
       if (!res.ok || data.error) throw new Error(data.error ?? `HTTP ${res.status}`)
       setResult(data)
       setPhase("done")
-      fetchHistorico() // refresh history after save
+      fetchHistorico()
+      // Fire-and-forget: fetch CID suggestions based on resumo
+      if (data.resumo) {
+        setCids([])
+        setLoadingCids(true)
+        fetch("/api/copiloto/sugerir-cid", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ resumo: data.resumo, plano: data.plano }),
+        })
+          .then(r => r.json())
+          .then((d: { cids?: { codigo: string; descricao: string; justificativa: string }[] }) => setCids(d.cids ?? []))
+          .catch(() => {})
+          .finally(() => setLoadingCids(false))
+      }
     } catch (e) {
       setGenError(e instanceof Error ? e.message : String(e))
       setPhase("idle")
@@ -640,6 +657,7 @@ function CopilotoContent() {
     setEditedResumo(""); setEditedPlano(""); setEditedOrientacoes("")
     setCheckedExames(new Set()); setSendingWA({ d1: false, d7: false, d30: false })
     setProntuarioBlocos(null); setEditedProntuario({})
+    setCids([]); setLoadingCids(false)
   }
 
   // ── Render ───────────────────────────────────────────────────────────────────
@@ -1043,6 +1061,44 @@ function CopilotoContent() {
                 >
                   <AutoTextarea value={editedResumo} onChange={setEditedResumo} />
                 </SectionCard>
+              )}
+
+              {/* CIDs Sugeridos */}
+              {(loadingCids || cids.length > 0) && (
+                <div className="border border-border rounded-xl p-4 bg-surface/40 space-y-2">
+                  <div className="flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-violet-400" />
+                    <span className="text-[10px] font-mono font-semibold text-text-muted uppercase tracking-widest">CID-10 Sugeridos</span>
+                    {loadingCids && <Loader2 className="w-3 h-3 animate-spin text-text-muted ml-1" />}
+                  </div>
+                  {cids.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {cids.map((c, i) => (
+                        <button
+                          key={c.codigo}
+                          title={c.justificativa}
+                          onClick={() => {
+                            navigator.clipboard.writeText(c.codigo).then(() => {
+                              setCopiedCid(c.codigo)
+                              setTimeout(() => setCopiedCid(null), 2000)
+                            })
+                          }}
+                          className={cn(
+                            "flex items-center gap-1.5 text-[11px] font-mono font-semibold px-2.5 py-1.5 rounded-lg border transition-all",
+                            i === 0 ? "bg-violet-500/10 border-violet-500/30 text-violet-300 hover:bg-violet-500/20"
+                                    : "bg-surface border-border text-text-secondary hover:border-border-hover"
+                          )}
+                        >
+                          {copiedCid === c.codigo
+                            ? <Check className="w-3 h-3 flex-shrink-0 text-accent" />
+                            : <Copy className="w-3 h-3 flex-shrink-0 opacity-50" />}
+                          <span>{c.codigo}</span>
+                          <span className="text-[10px] font-sans font-normal opacity-75 hidden sm:inline">{c.descricao}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               )}
 
               {/* 2. Plano Terapêutico — editable */}

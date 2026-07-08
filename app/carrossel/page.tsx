@@ -94,10 +94,25 @@ export default function CarrosselPage() {
     }
   }
 
-  const toFullText = (r: CarrosselResult) =>
+  const [exportFmt, setExportFmt] = useState<"canva" | "briefing">("canva")
+
+  const toCanva = (r: CarrosselResult) =>
     `CARROSSEL — ${r.titulo}\n${r.subtitulo}\n\n` +
-    r.slides.map(s => `SLIDE ${s.numero}: ${s.titulo}\n${s.conteudo}`).join("\n\n") +
-    `\n\nCTA: ${r.cta}\n\nHASHTAGS: ${r.hashtags.map(h => "#" + h.replace(/^#/, '')).join(" ")}\n\nLEGENDA:\n${r.legenda}`
+    r.slides.map(s => `SLIDE ${s.numero} • ${s.titulo}\n${s.conteudo}`).join("\n\n") +
+    `\n\n——————————\nCTA: ${r.cta}\nHASHTAGS: ${r.hashtags.map(h => "#" + h.replace(/^#/, "")).join(" ")}\n\nLEGENDA:\n${r.legenda}`
+
+  const toBriefing = (r: CarrosselResult) => {
+    const n = r.slides.length
+    const slideBlocks = r.slides.map(s => {
+      const lines = [`═══ SLIDE ${s.numero} DE ${n} ═══`, `[TÍTULO] ${s.titulo}`, `[CORPO] ${s.conteudo}`]
+      if (s.dica_visual?.trim()) lines.push(`[VISUAL] ${s.dica_visual}`)
+      return lines.join("\n")
+    })
+    return slideBlocks.join("\n\n") +
+      `\n\n[CTA] ${r.cta}\n[HASHTAGS] ${r.hashtags.map(h => "#" + h.replace(/^#/, "")).join(" ")}\n[LEGENDA] ${r.legenda}`
+  }
+
+  const toFullText = (r: CarrosselResult) => exportFmt === "canva" ? toCanva(r) : toBriefing(r)
 
   return (
     <div className="animate-fade-in">
@@ -334,13 +349,24 @@ export default function CarrosselPage() {
                 </div>
 
                 {/* Copiar tudo */}
-                <button
-                  type="button"
-                  onClick={() => { navigator.clipboard.writeText(toFullText(resultado)); showToast("Carrossel completo copiado!") }}
-                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-accent-border text-accent text-[13px] font-medium hover:bg-accent-dim transition-all"
-                >
-                  <Copy className="w-4 h-4" /> Copiar Carrossel Completo
-                </button>
+                <div className="flex items-center gap-2">
+                  <div className="flex rounded-lg border border-border overflow-hidden text-[10px] font-mono flex-shrink-0">
+                    <button type="button"
+                      onClick={() => setExportFmt("canva")}
+                      className={cn("px-2.5 py-1.5 transition-all", exportFmt === "canva" ? "bg-accent text-background font-semibold" : "text-text-muted hover:text-text-secondary")}
+                    >CANVA</button>
+                    <button type="button"
+                      onClick={() => setExportFmt("briefing")}
+                      className={cn("px-2.5 py-1.5 transition-all border-l border-border", exportFmt === "briefing" ? "bg-accent text-background font-semibold" : "text-text-muted hover:text-text-secondary")}
+                    >BRIEFING</button>
+                  </div>
+                  <button type="button"
+                    onClick={() => { navigator.clipboard.writeText(toFullText(resultado!)); showToast("Carrossel completo copiado!") }}
+                    className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-accent-border text-accent text-[13px] font-medium hover:bg-accent-dim transition-all"
+                  >
+                    <Copy className="w-4 h-4" /> Copiar Carrossel Completo
+                  </button>
+                </div>
               </div>
             )}
           </div>

@@ -937,6 +937,7 @@ export default function CRMPage() {
 
   useEffect(() => {
     fetchLeads()
+    fetch("/api/crm/nao-lidos", { method: "PATCH" }).catch(() => {})
     fetch("/api/nurturing")
       .then(r => r.ok ? r.json() as Promise<{ lead_id: string }[]> : [])
       .then(data => {

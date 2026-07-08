@@ -192,11 +192,23 @@ function SidebarContent() {
   const isAdminUser = !!user?.id && !!doctorId && user.id === doctorId
 
   const [ala, setAla] = useState<AlaId>("social")
+  const [leadsNaoLidos, setLeadsNaoLidos] = useState(0)
 
   useEffect(() => {
     const saved = localStorage.getItem("praxis_ala_v2") as AlaId | null
     const valid: AlaId[] = ["social","consultorio","executivo","ia","academy"]
     if (saved && valid.includes(saved)) setAla(saved)
+  }, [])
+
+  useEffect(() => {
+    const check = () =>
+      fetch("/api/crm/nao-lidos")
+        .then(r => r.ok ? r.json() as Promise<{ count: number }> : { count: 0 })
+        .then(d => setLeadsNaoLidos(d.count ?? 0))
+        .catch(() => {})
+    check()
+    const id = setInterval(check, 30_000)
+    return () => clearInterval(id)
   }, [])
 
   const switchAla = (next: AlaId) => {
@@ -291,6 +303,11 @@ function SidebarContent() {
                     BADGE_STYLE[item.badge] ?? BADGE_STYLE["PRO"]
                   )}>
                     {item.badge}
+                  </span>
+                )}
+                {item.href === "/crm" && leadsNaoLidos > 0 && (
+                  <span className="min-w-[16px] h-[16px] flex items-center justify-center text-[9px] font-bold bg-red-500 text-white rounded-full px-1 flex-shrink-0">
+                    {leadsNaoLidos > 99 ? "99+" : leadsNaoLidos}
                   </span>
                 )}
               </Link>

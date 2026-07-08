@@ -67,14 +67,14 @@ function AddModal({ onSave, onClose }: { onSave: (f: Record<string, string>) => 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-md bg-surface border border-border rounded-xl shadow-2xl">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+      <div className="relative w-full max-w-md bg-surface border border-border rounded-xl shadow-2xl max-h-[90vh] flex flex-col">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border flex-shrink-0">
           <h2 className="text-[15px] font-semibold text-text-primary">Adicionar à Régua</h2>
           <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors">
             <X className="w-4 h-4" />
           </button>
         </div>
-        <form onSubmit={submit} className="p-5 space-y-3.5">
+        <form onSubmit={submit} className="p-5 space-y-3.5 overflow-y-auto flex-1">
           <div>
             <label className="block text-[11px] font-mono text-text-muted mb-1.5 uppercase tracking-wider">Nome *</label>
             <input value={form.paciente_nome} onChange={e => set("paciente_nome", e.target.value)} required placeholder="Nome do paciente" className={inputCls} />

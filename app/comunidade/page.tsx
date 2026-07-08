@@ -240,15 +240,15 @@ function NovoPostModal({ onClose, onCreated }: { onClose: () => void; onCreated:
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="w-full max-w-lg bg-card border border-border rounded-2xl shadow-2xl animate-fade-in">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+      <div className="w-full max-w-lg bg-card border border-border rounded-2xl shadow-2xl animate-fade-in flex flex-col max-h-[90vh]">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border flex-shrink-0">
           <span className="text-[13px] font-semibold text-text-primary">Novo post na comunidade</span>
           <button onClick={onClose} className="text-text-muted hover:text-text-secondary transition-colors">
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="p-5 space-y-4">
+        <div className="p-5 space-y-4 overflow-y-auto flex-1">
           <div className="space-y-1.5">
             <label className="text-[10px] font-mono text-text-muted uppercase tracking-widest">Categoria</label>
             <div className="flex flex-wrap gap-2">

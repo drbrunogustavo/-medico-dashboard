@@ -1208,7 +1208,7 @@ function CopilotoContent() {
                     },
                   ].map(a => (
                     <button key={a.label} onClick={a.onClick}
-                      className={cn("flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-lg border transition-all", a.cls)}>
+                      className={cn("flex items-center gap-1.5 text-[11px] font-semibold px-3 py-2.5 sm:py-1.5 rounded-lg border transition-all min-h-[44px] sm:min-h-0", a.cls)}>
                       <a.icon className="w-3 h-3 flex-shrink-0" />
                       {a.label}
                       <ArrowRight className="w-2.5 h-2.5 opacity-50" />

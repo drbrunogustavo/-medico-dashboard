@@ -223,7 +223,7 @@ export default function AfiliadosPage() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {[
             { label: "Total indicados",       value: afiliado?.total_indicados ?? 0,          icon: Users,       fmt: (v: number) => v.toString() },
             { label: "Comissão acumulada",    value: afiliado?.total_comissao_acumulada ?? 0, icon: DollarSign,  fmt: (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) },
@@ -264,7 +264,8 @@ export default function AfiliadosPage() {
               </p>
             </div>
           ) : (
-            <table className="w-full">
+            <div className="overflow-x-auto">
+            <table className="w-full min-w-[440px]">
               <thead>
                 <tr className="border-b" style={{ borderColor: "var(--border)" }}>
                   {["Email","Plano","Status","Comissão"].map(h => (
@@ -304,6 +305,7 @@ export default function AfiliadosPage() {
                 })}
               </tbody>
             </table>
+            </div>
           )}
         </div>
 

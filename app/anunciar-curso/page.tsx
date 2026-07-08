@@ -9,6 +9,15 @@ const PERIODOS = [
   { dias: 30, label: "30 dias", preco: "R$ 400" },
 ]
 
+const TIPOS_PRODUTO = [
+  { value: "curso",       label: "Curso",        emoji: "🎓" },
+  { value: "livro",       label: "Livro",        emoji: "📚" },
+  { value: "equipamento", label: "Equipamento",  emoji: "🔬" },
+  { value: "suplemento",  label: "Suplemento",   emoji: "💊" },
+  { value: "mentoria",    label: "Mentoria",     emoji: "🤝" },
+  { value: "ferramenta",  label: "Ferramenta",   emoji: "⚙️" },
+]
+
 export default function AnunciarCursoPage() {
   const [form, setForm] = useState({
     titulo:              "",
@@ -19,6 +28,7 @@ export default function AnunciarCursoPage() {
     contato_email:       "",
     contato_telefone:    "",
     periodo_dias:        15,
+    tipo_produto:        "curso",
   })
   const [loading,       setLoading]       = useState(false)
   const [sucesso,       setSucesso]       = useState(false)
@@ -107,21 +117,43 @@ export default function AnunciarCursoPage() {
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <span style={{ fontSize: 15, fontWeight: 700, color: "#00c07f" }}>PRAXIS</span>
           <span style={{ width: 1, height: 14, background: "#1c1d2a" }} />
-          <span style={{ fontSize: 11, color: "#474f66", fontFamily: "JetBrains Mono, monospace", letterSpacing: 1 }}>ANUNCIE SEU CURSO</span>
+          <span style={{ fontSize: 11, color: "#474f66", fontFamily: "JetBrains Mono, monospace", letterSpacing: 1 }}>ANUNCIE NO MARKETPLACE</span>
         </div>
         <Link href="/login" style={{ fontSize: 12, color: "#7c85a0", textDecoration: "none" }}>← Voltar ao login</Link>
       </div>
 
       <div style={{ maxWidth: 580, margin: "0 auto", padding: "40px 24px 80px" }}>
-        <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>Anuncie seu curso médico</h1>
+        <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>Anuncie no Marketplace Praxis</h1>
         <p style={{ fontSize: 14, color: "#7c85a0", marginBottom: 36, lineHeight: 1.7 }}>
           Seu anúncio aparece no banner da tela de login da PRAXIS — vista diariamente por médicos assinantes.
           Pagamento único, sem recorrência. O período começa após aprovação do admin.
         </p>
 
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 28 }}>
-          {/* Curso */}
-          <Section label="SOBRE O CURSO">
+          {/* Tipo de produto */}
+          <Section label="TIPO DE PRODUTO">
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {TIPOS_PRODUTO.map(t => {
+                const ativo = form.tipo_produto === t.value
+                return (
+                  <button key={t.value} type="button" onClick={() => set("tipo_produto", t.value)}
+                    style={{
+                      padding: "8px 14px", borderRadius: 8, cursor: "pointer",
+                      border: `1px solid ${ativo ? "rgba(0,192,127,0.4)" : "#1c1d2a"}`,
+                      background: ativo ? "rgba(0,192,127,0.08)" : "#13141d",
+                      color: ativo ? "#00c07f" : "#7c85a0",
+                      fontFamily: "inherit", fontSize: 13, fontWeight: ativo ? 600 : 400,
+                      transition: "all 0.15s", display: "flex", alignItems: "center", gap: 6,
+                    }}>
+                    <span>{t.emoji}</span> {t.label}
+                  </button>
+                )
+              })}
+            </div>
+          </Section>
+
+          {/* Produto */}
+          <Section label={`SOBRE O ${TIPOS_PRODUTO.find(t => t.value === form.tipo_produto)?.label.toUpperCase() ?? "PRODUTO"}`}>
             <Field label="Título do curso *" value={form.titulo} onChange={v => set("titulo", v)}
               placeholder="Ex: Masterclass de Emagrecimento Funcional" />
             <Field label="Chamada / call to action *" value={form.chamada} onChange={v => set("chamada", v)}

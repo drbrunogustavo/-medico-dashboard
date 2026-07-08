@@ -28,6 +28,7 @@ export async function POST(req: NextRequest) {
     contato_email: string
     contato_telefone?: string
     periodo_dias: number
+    tipo_produto?: string
   }
 
   try {
@@ -64,6 +65,7 @@ export async function POST(req: NextRequest) {
       contato_email,
       contato_telefone:     body.contato_telefone ?? null,
       periodo_dias,
+      tipo_produto:         body.tipo_produto ?? "curso",
       status:               "aguardando_pagamento",
     })
     .select("id")

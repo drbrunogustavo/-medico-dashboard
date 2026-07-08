@@ -19,6 +19,7 @@ interface Anuncio {
   data_inicio: string | null
   data_fim: string | null
   status: "aguardando_pagamento" | "pendente" | "aprovado" | "rejeitado" | "expirado"
+  tipo_produto: string | null
 }
 
 type Filtro = "pendente" | "aprovado" | "inativos" | "all"
@@ -28,7 +29,6 @@ const FILTRO_LABELS: Record<Filtro, string> = {
   inativos: "Inativos",
   all:      "Todos",
 }
-// Maps UI filter → comma-separated status values sent to the API
 const FILTRO_STATUS: Record<Filtro, string> = {
   pendente: "pendente,aguardando_pagamento",
   aprovado: "aprovado",
@@ -36,17 +36,29 @@ const FILTRO_STATUS: Record<Filtro, string> = {
   all:      "all",
 }
 
+const TIPOS_PRODUTO = [
+  { value: "",            label: "Todos os tipos" },
+  { value: "curso",       label: "🎓 Curso"        },
+  { value: "livro",       label: "📚 Livro"        },
+  { value: "equipamento", label: "🔬 Equipamento"  },
+  { value: "suplemento",  label: "💊 Suplemento"   },
+  { value: "mentoria",    label: "🤝 Mentoria"     },
+  { value: "ferramenta",  label: "⚙️ Ferramenta"   },
+]
+
 export default function AdminAnunciosPage() {
   const [anuncios,  setAnuncios]  = useState<Anuncio[]>([])
   const [loading,   setLoading]   = useState(true)
   const [filtro,    setFiltro]    = useState<Filtro>("pendente")
+  const [filtroTipo, setFiltroTipo] = useState("")
   const [acting,    setActing]    = useState<Record<string, string>>({})
   const [aprovando, setAprovando] = useState<Record<string, { dataInicio: string; dataFim: string }>>({})
 
-  const fetchAnuncios = useCallback(async (f: Filtro) => {
+  const fetchAnuncios = useCallback(async (f: Filtro, tipo: string) => {
     setLoading(true)
     try {
-      const r    = await fetch(`/api/admin/anuncios?status=${FILTRO_STATUS[f]}`)
+      const qs   = tipo ? `&tipo=${tipo}` : ""
+      const r    = await fetch(`/api/admin/anuncios?status=${FILTRO_STATUS[f]}${qs}`)
       const data = await r.json()
       setAnuncios(Array.isArray(data) ? data : [])
     } catch (e) {
@@ -57,7 +69,7 @@ export default function AdminAnunciosPage() {
     }
   }, [])
 
-  useEffect(() => { fetchAnuncios(filtro) }, [filtro, fetchAnuncios])
+  useEffect(() => { fetchAnuncios(filtro, filtroTipo) }, [filtro, filtroTipo, fetchAnuncios])
 
   function iniciarAprovacao(id: string, perioDias: number) {
     const inicio = new Date()
@@ -130,7 +142,7 @@ export default function AdminAnunciosPage() {
         tagline="Revise e aprove anúncios de cursos submetidos por interessados."
         actions={
           <button
-            onClick={() => fetchAnuncios(filtro)}
+            onClick={() => fetchAnuncios(filtro, filtroTipo)}
             className="flex items-center gap-1.5 px-3 py-1.5 border border-border rounded-lg text-[12px] text-text-muted hover:text-text-primary hover:border-border-hover transition-all"
           >
             <RefreshCw className="w-3.5 h-3.5" />
@@ -140,21 +152,39 @@ export default function AdminAnunciosPage() {
       />
 
       <div className="p-6 md:p-8 space-y-6">
-        <div className="flex gap-2 flex-wrap">
-          {(["pendente", "aprovado", "inativos", "all"] as Filtro[]).map(f => (
-            <button
-              key={f}
-              onClick={() => setFiltro(f)}
-              className={cn(
-                "text-[11px] px-3 py-1.5 rounded-full border transition-all",
-                filtro === f
-                  ? "bg-accent-dim border-accent-border text-accent font-semibold"
-                  : "border-border text-text-muted hover:text-text-secondary"
-              )}
-            >
-              {FILTRO_LABELS[f]}
-            </button>
-          ))}
+        <div className="space-y-2">
+          <div className="flex gap-2 flex-wrap">
+            {(["pendente", "aprovado", "inativos", "all"] as Filtro[]).map(f => (
+              <button
+                key={f}
+                onClick={() => setFiltro(f)}
+                className={cn(
+                  "text-[11px] px-3 py-1.5 rounded-full border transition-all",
+                  filtro === f
+                    ? "bg-accent-dim border-accent-border text-accent font-semibold"
+                    : "border-border text-text-muted hover:text-text-secondary"
+                )}
+              >
+                {FILTRO_LABELS[f]}
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            {TIPOS_PRODUTO.map(t => (
+              <button
+                key={t.value}
+                onClick={() => setFiltroTipo(t.value)}
+                className={cn(
+                  "text-[11px] px-3 py-1 rounded-full border transition-all",
+                  filtroTipo === t.value
+                    ? "bg-blue-500/10 border-blue-500/30 text-blue-400 font-semibold"
+                    : "border-border text-text-muted hover:text-text-secondary"
+                )}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {loading ? (
@@ -196,6 +226,11 @@ export default function AdminAnunciosPage() {
                       )}>
                         {an.status.toUpperCase()}
                       </span>
+                      {an.tipo_produto && an.tipo_produto !== "curso" && (
+                        <span className="text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full border bg-violet-500/10 border-violet-500/30 text-violet-400">
+                          {TIPOS_PRODUTO.find(t => t.value === an.tipo_produto)?.label ?? an.tipo_produto}
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-center gap-3 mt-1 text-[11px] text-text-muted flex-wrap">
                       <span className="flex items-center gap-1">

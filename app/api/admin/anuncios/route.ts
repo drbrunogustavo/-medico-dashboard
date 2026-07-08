@@ -9,11 +9,13 @@ export async function GET(req: NextRequest) {
   if (!auth.authenticated) return auth.response
   if (!isAdmin(auth.userId)) return NextResponse.json({ error: "Forbidden" }, { status: 403 })
 
-  const statusParam = new URL(req.url).searchParams.get("status") ?? "pendente"
+  const url         = new URL(req.url)
+  const statusParam = url.searchParams.get("status") ?? "pendente"
+  const tipoParam   = url.searchParams.get("tipo")
   const supabase = createSupabaseServiceClient()
   let query = supabase
     .from("anuncios_cursos")
-    .select("id, created_at, titulo, chamada, link_destino, anunciante_nome, anunciante_foto_url, contato_email, contato_telefone, periodo_dias, data_inicio, data_fim, status")
+    .select("id, created_at, titulo, chamada, link_destino, anunciante_nome, anunciante_foto_url, contato_email, contato_telefone, periodo_dias, data_inicio, data_fim, status, tipo_produto")
     .order("created_at", { ascending: false })
 
   if (statusParam !== "all") {
@@ -22,6 +24,7 @@ export async function GET(req: NextRequest) {
       ? query.eq("status", statuses[0])
       : query.in("status", statuses)
   }
+  if (tipoParam) query = query.eq("tipo_produto", tipoParam)
 
   const { data, error } = await query
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

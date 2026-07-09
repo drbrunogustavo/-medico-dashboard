@@ -1,11 +1,11 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import {
   GraduationCap, Megaphone, BarChart3, TrendingUp, Rocket,
   Users, Check, Clock, Search, X, ChevronDown, ChevronRight,
   BookOpen, Play, Circle, Loader2, ArrowRight, ExternalLink,
-  CheckCircle, BarChart2, Award, Star, Trophy,
+  CheckCircle, BarChart2, Award, Star, Trophy, Zap, Flame,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
@@ -367,21 +367,30 @@ function getNivel(pct: number) {
   return NIVEIS.find(n => pct <= n.max) ?? NIVEIS[NIVEIS.length - 1]
 }
 
-function NivelBadge({ done, total }: { done: number; total: number }) {
-  const pct   = total > 0 ? Math.round(done / total * 100) : 0
-  const nivel = getNivel(pct)
-  const next  = NIVEIS.find(n => n.min > pct)
+const XP_POR_NIVEL: Record<string, number> = { "Iniciante": 10, "Intermediário": 15, "Avançado": 20 }
+function xpAula(a: Aula) { return XP_POR_NIVEL[a.nivel] ?? 10 }
+const XP_TOTAL = TRILHAS.flatMap(t => t.modulos.flatMap(m => m.aulas)).reduce((s, a) => s + xpAula(a), 0)
+
+function NivelBadge({ done, total, xp, xpMax }: { done: number; total: number; xp: number; xpMax: number }) {
+  const pct    = total > 0 ? Math.round(done / total * 100) : 0
+  const nivel  = getNivel(pct)
+  const next   = NIVEIS.find(n => n.min > pct)
+  const xpProx = next ? Math.ceil(xpMax * next.min / 100) : xpMax
   return (
     <div className={cn("flex items-center gap-3 px-4 py-3 rounded-xl border", nivel.bgCls, nivel.borderCls)}>
       <Trophy className={cn("w-5 h-5 flex-shrink-0", nivel.textCls)} />
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1.5">
+        <div className="flex items-center gap-2 mb-1.5 flex-wrap">
           <span className={cn("text-[13px] font-bold", nivel.textCls)}>{nivel.label}</span>
-          <span className="text-[10px] font-mono text-text-muted">{pct}% concluído</span>
-          {next && (
-            <span className="text-[10px] font-mono text-text-muted ml-auto">
-              próximo: {next.label} ({next.min}%)
+          <span className="text-[10px] font-mono" style={{ color: "var(--text-muted)" }}>
+            {xp} / {xpProx} XP
+          </span>
+          {next ? (
+            <span className="text-[10px] font-mono ml-auto" style={{ color: "var(--text-muted)" }}>
+              próximo: <span className={next.textCls}>{next.label}</span>
             </span>
+          ) : (
+            <span className="text-[10px] font-mono ml-auto" style={{ color: "var(--text-muted)" }}>nível máximo</span>
           )}
         </div>
         <div className="w-full h-1.5 bg-black/20 rounded-full overflow-hidden">
@@ -806,10 +815,21 @@ function AbaComunidade() {
 
 // ─── ABA PROGRESSO ────────────────────────────────────────────────────────────
 
-function AbaProgresso({ progresso }: { progresso: ProgressoMap }) {
-  const totalGeral  = TRILHAS.reduce((s, t) => s + totalAulas(t), 0)
-  const doneGeral   = Object.values(progresso).filter(s => s === "concluida").length
-  const pctGeral    = totalGeral > 0 ? Math.round((doneGeral / totalGeral) * 100) : 0
+function AbaProgresso({ progresso, xpGanho, xpMax, aulasNaSemana }: {
+  progresso: ProgressoMap; xpGanho: number; xpMax: number; aulasNaSemana: number
+}) {
+  const totalGeral = TRILHAS.reduce((s, t) => s + totalAulas(t), 0)
+  const doneGeral  = Object.values(progresso).filter(s => s === "concluida").length
+  const pctGeral   = totalGeral > 0 ? Math.round((doneGeral / totalGeral) * 100) : 0
+  const nivel      = getNivel(pctGeral)
+
+  const trilhaMaisAvancada = TRILHAS.reduce<{ trilha: Trilha; pct: number } | null>((best, t) => {
+    const tot  = totalAulas(t)
+    const done = concluidasT(t, progresso)
+    const pct  = tot > 0 ? Math.round((done / tot) * 100) : 0
+    if (!best || pct > best.pct) return { trilha: t, pct }
+    return best
+  }, null)
 
   const proxima = (() => {
     for (const t of TRILHAS) {
@@ -824,19 +844,59 @@ function AbaProgresso({ progresso }: { progresso: ProgressoMap }) {
 
   return (
     <div className="space-y-6">
-      {/* Resumo */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {[
-          { label: "Conclusão geral", value: `${pctGeral}%`, sub: "do conteúdo concluído", color: "var(--accent)" },
-          { label: "Aulas concluídas", value: `${doneGeral}`, sub: `de ${totalGeral} aulas`,  color: "#10b981" },
-          { label: "Trilhas disponíveis", value: `${TRILHAS.length}`, sub: "para explorar", color: "#3b82f6" },
-        ].map((s, i) => (
-          <div key={i} className="rounded-2xl p-5 text-center" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-            <div className="text-[32px] font-bold mb-1" style={{ color: s.color, fontFamily: "var(--font-playfair), Georgia, serif" }}>{s.value}</div>
-            <div className="text-[12px] font-semibold mb-0.5" style={{ color: "var(--text-primary)" }}>{s.label}</div>
-            <div className="text-[11px]" style={{ color: "var(--text-muted)" }}>{s.sub}</div>
+      {/* Gamificação */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {/* XP */}
+        <div className="rounded-2xl p-4 flex flex-col items-center text-center" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center mb-2" style={{ background: "var(--accent-dim)", border: "1px solid var(--accent-border)" }}>
+            <Zap className="w-4 h-4" style={{ color: "var(--accent)" }} />
           </div>
-        ))}
+          <div className="text-[28px] font-bold leading-none mb-1" style={{ color: "var(--accent)", fontFamily: "var(--font-playfair), Georgia, serif" }}>{xpGanho}</div>
+          <div className="text-[11px] font-semibold mb-0.5" style={{ color: "var(--text-primary)" }}>XP total</div>
+          <div className="text-[10px] font-mono" style={{ color: "var(--text-muted)" }}>de {xpMax} possíveis</div>
+        </div>
+
+        {/* Nível */}
+        <div className={cn("rounded-2xl p-4 flex flex-col items-center text-center border", nivel.bgCls, nivel.borderCls)}>
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center mb-2" style={{ background: "rgba(0,0,0,0.10)" }}>
+            <Trophy className={cn("w-4 h-4", nivel.textCls)} />
+          </div>
+          <div className={cn("text-[28px] font-bold leading-none mb-1", nivel.textCls)} style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}>{nivel.label}</div>
+          <div className="text-[11px] font-semibold mb-0.5" style={{ color: "var(--text-primary)" }}>Nível atual</div>
+          <div className="text-[10px] font-mono" style={{ color: "var(--text-muted)" }}>{pctGeral}% concluído</div>
+        </div>
+
+        {/* Semana */}
+        <div className="rounded-2xl p-4 flex flex-col items-center text-center" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center mb-2"
+            style={{ background: "rgba(251,146,60,0.12)", border: "1px solid rgba(251,146,60,0.25)" }}>
+            <Flame className="w-4 h-4" style={{ color: "#fb923c" }} />
+          </div>
+          <div className="text-[28px] font-bold leading-none mb-1" style={{ color: "#fb923c", fontFamily: "var(--font-playfair), Georgia, serif" }}>{aulasNaSemana}</div>
+          <div className="text-[11px] font-semibold mb-0.5" style={{ color: "var(--text-primary)" }}>Aulas esta semana</div>
+          <div className="text-[10px] font-mono" style={{ color: "var(--text-muted)" }}>últimos 7 dias</div>
+        </div>
+
+        {/* Trilha mais avançada */}
+        {(() => {
+          if (!trilhaMaisAvancada) return null
+          const Icon = trilhaMaisAvancada.trilha.icon
+          return (
+            <div className="rounded-2xl p-4 flex flex-col items-center text-center" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center mb-2"
+                style={{ background: trilhaMaisAvancada.trilha.bg, border: `1px solid ${trilhaMaisAvancada.trilha.border}` }}>
+                <Icon className="w-4 h-4" style={{ color: trilhaMaisAvancada.trilha.color }} />
+              </div>
+              <div className="text-[28px] font-bold leading-none mb-1" style={{ color: trilhaMaisAvancada.trilha.color, fontFamily: "var(--font-playfair), Georgia, serif" }}>
+                {trilhaMaisAvancada.pct}%
+              </div>
+              <div className="text-[11px] font-semibold mb-0.5 leading-tight px-1" style={{ color: "var(--text-primary)" }}>
+                {trilhaMaisAvancada.trilha.titulo}
+              </div>
+              <div className="text-[10px] font-mono" style={{ color: "var(--text-muted)" }}>mais avançada</div>
+            </div>
+          )
+        })()}
       </div>
 
       {/* Próxima aula */}
@@ -908,15 +968,21 @@ export default function AcademyPage() {
   const [progresso,   setProgresso]   = useState<ProgressoMap>({})
   const [loadingProg, setLoadingProg] = useState(true)
   const [celebrando,  setCelebrando]  = useState(false)
+  const [aulasDatas,  setAulasDatas]  = useState<Record<string, string>>({})
 
   const fetchProgresso = useCallback(async () => {
     try {
       const res  = await fetch("/api/academy/progresso")
       if (!res.ok) return
-      const data = await res.json() as Array<{ aula_id: string; status: string }>
+      const data = await res.json() as Array<{ aula_id: string; status: string; concluida_em?: string }>
       const map: ProgressoMap = {}
-      data.forEach(r => { map[r.aula_id] = r.status as ProgressoMap[string] })
+      const datas: Record<string, string> = {}
+      data.forEach(r => {
+        map[r.aula_id] = r.status as ProgressoMap[string]
+        if (r.concluida_em) datas[r.aula_id] = r.concluida_em
+      })
       setProgresso(map)
+      setAulasDatas(datas)
     } finally { setLoadingProg(false) }
   }, [])
 
@@ -930,6 +996,7 @@ export default function AcademyPage() {
         body: JSON.stringify({ aula_id: aula.id, trilha_id: trilha.id, status: "concluida" }),
       })
       setProgresso(p => ({ ...p, [aula.id]: "concluida" }))
+      setAulasDatas(d => ({ ...d, [aula.id]: new Date().toISOString() }))
       setCelebrando(true)
       setTimeout(() => setCelebrando(false), 1800)
     } catch (e) { console.error("[academy] erro ao marcar aula como concluída:", e) }
@@ -945,6 +1012,13 @@ export default function AcademyPage() {
 
   const totalGeral  = TRILHAS.reduce((s, t) => s + totalAulas(t), 0)
   const doneGeral   = Object.values(progresso).filter(s => s === "concluida").length
+  const xpGanho     = useMemo(() =>
+    todasAulasList().filter(({ aula }) => progresso[aula.id] === "concluida").reduce((s, { aula }) => s + xpAula(aula), 0)
+  , [progresso])
+  const aulasNaSemana = useMemo(() => {
+    const limite = new Date(); limite.setDate(limite.getDate() - 7)
+    return Object.values(aulasDatas).filter(d => new Date(d) >= limite).length
+  }, [aulasDatas])
 
   return (
     <div className="animate-fade-in">
@@ -982,7 +1056,7 @@ export default function AcademyPage() {
         {/* Nível badge */}
         {!loadingProg && (
           <div className="mb-4">
-            <NivelBadge done={doneGeral} total={totalGeral} />
+            <NivelBadge done={doneGeral} total={totalGeral} xp={xpGanho} xpMax={XP_TOTAL} />
           </div>
         )}
 
@@ -1018,7 +1092,7 @@ export default function AcademyPage() {
             {tab === "aulas"      && <AbaAulas      progresso={progresso} onMarcarConcluida={marcarConcluida} />}
             {tab === "casos"      && <AbaCasos />}
             {tab === "comunidade" && <AbaComunidade />}
-            {tab === "progresso"  && <AbaProgresso  progresso={progresso} />}
+            {tab === "progresso"  && <AbaProgresso  progresso={progresso} xpGanho={xpGanho} xpMax={XP_TOTAL} aulasNaSemana={aulasNaSemana} />}
           </>
         )}
       </div>

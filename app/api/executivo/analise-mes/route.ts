@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
 import { getAnthropicClient } from "@/lib/anthropic"
@@ -10,9 +10,15 @@ function startOfMonth(offset = 0) {
   return new Date(d.getFullYear(), d.getMonth() - offset, 1).toISOString()
 }
 
-export async function POST() {
+export async function POST(req: NextRequest) {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
+
+  let pergunta: string | undefined
+  try {
+    const body = await req.json() as { pergunta?: string }
+    pergunta = body.pergunta?.trim() || undefined
+  } catch { /* body opcional */ }
 
   const supabase = createSupabaseServerClient()
   const now = new Date().toISOString()
@@ -60,7 +66,7 @@ DADOS DO MÊS:
 - Consultas realizadas: ${consultas_mes}
 - Leads no CRM: ${leads_total} (${leads_novos} novos leads)
 - NPS: ${nps_score !== null ? nps_score : "sem dados suficientes"}
-
+${pergunta ? `\nPERGUNTA / CONTEXTO ADICIONAL DO MÉDICO:\n${pergunta}` : ""}
 Responda em texto corrido com 2-3 parágrafos curtos, sem listas, sem markdown.`,
     }],
   })

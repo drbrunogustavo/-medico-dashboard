@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useCallback, useMemo } from "react"
+import { useEffect, useState, useCallback, useMemo, useRef } from "react"
 import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip,
@@ -12,7 +12,7 @@ import {
   ArrowDown, ChevronRight, UserPlus, AlertCircle, Zap,
   Edit3, Check, RefreshCw, MessageSquare, ThumbsUp,
   DollarSign, Clock, Repeat, Activity, Eye, Camera,
-  Sparkles, X,
+  Sparkles, X, Mic, MicOff, ShieldCheck,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
@@ -781,6 +781,15 @@ export default function ExecutivoPage() {
   const [analiseMes,     setAnaliseMes]     = useState<string | null>(null)
   const [loadingAnalise, setLoadingAnalise] = useState(false)
 
+  const [pergunta,         setPergunta]         = useState("")
+  const [voiceConsent,     setVoiceConsent]     = useState<boolean | null>(null)
+  const [showConsentModal, setShowConsentModal] = useState(false)
+  const [isRecording,      setIsRecording]      = useState(false)
+  const [isTranscribing,   setIsTranscribing]   = useState(false)
+  const [hasMediaRecorder, setHasMediaRecorder] = useState(false)
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const audioChunksRef   = useRef<Blob[]>([])
+
   useEffect(() => {
     setMktg(getLocalStorage("exec_mktg", MKTG_DEFAULT))
     setOps(getLocalStorage("exec_ops", OPS_DEFAULT))
@@ -791,6 +800,18 @@ export default function ExecutivoPage() {
       .then(d => { if (d) setExec(d) })
       .catch(e => console.error("[executivo] erro ao carregar dados executivos:", e))
       .finally(() => setLoading(false))
+  }, [])
+
+  useEffect(() => {
+    setHasMediaRecorder(
+      typeof MediaRecorder !== "undefined" && !!navigator?.mediaDevices?.getUserMedia
+    )
+    fetch("/api/perfil")
+      .then(r => r.ok ? r.json() : null)
+      .then((p: { voz_gravacao_autorizada?: boolean } | null) => {
+        setVoiceConsent(p?.voz_gravacao_autorizada ?? false)
+      })
+      .catch(() => setVoiceConsent(false))
   }, [])
 
   // ─── Sinais do mês — calculados no client, sem IA, sem especulação ──────────
@@ -849,11 +870,77 @@ export default function ExecutivoPage() {
   const gerarAnalise = async () => {
     setLoadingAnalise(true)
     try {
-      const res  = await fetch("/api/executivo/analise-mes", { method: "POST" })
+      const res  = await fetch("/api/executivo/analise-mes", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ pergunta: pergunta.trim() || undefined }),
+      })
       const data = await res.json() as { analise?: string }
       setAnaliseMes(data.analise ?? "")
     } catch (e) { console.error("[executivo] gerarAnalise:", e) }
     finally { setLoadingAnalise(false) }
+  }
+
+  async function aceitarConsentimento() {
+    await fetch("/api/perfil", {
+      method:  "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify({ voz_gravacao_autorizada: true }),
+    }).catch(() => {})
+    setVoiceConsent(true)
+    setShowConsentModal(false)
+    iniciarGravacao()
+  }
+
+  function handleMicClick() {
+    if (isRecording) { pararGravacao(); return }
+    if (!voiceConsent) { setShowConsentModal(true); return }
+    iniciarGravacao()
+  }
+
+  async function iniciarGravacao() {
+    try {
+      const stream   = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+        ? "audio/webm;codecs=opus"
+        : MediaRecorder.isTypeSupported("audio/webm")
+          ? "audio/webm"
+          : MediaRecorder.isTypeSupported("audio/mp4")
+            ? "audio/mp4"
+            : ""
+      const rec = new MediaRecorder(stream, mimeType ? { mimeType } : undefined)
+      audioChunksRef.current = []
+      rec.ondataavailable = e => { if (e.data.size > 0) audioChunksRef.current.push(e.data) }
+      rec.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop())
+        const blob = new Blob(audioChunksRef.current, { type: rec.mimeType || "audio/webm" })
+        await transcrever(blob)
+      }
+      rec.start()
+      mediaRecorderRef.current = rec
+      setIsRecording(true)
+    } catch (e) { console.error("[executivo] microfone:", e) }
+  }
+
+  function pararGravacao() {
+    mediaRecorderRef.current?.stop()
+    setIsRecording(false)
+  }
+
+  async function transcrever(blob: Blob) {
+    setIsTranscribing(true)
+    try {
+      const mimeType = blob.type || "audio/webm"
+      const ext      = mimeType.includes("mp4") ? "mp4" : "webm"
+      const form     = new FormData()
+      form.append("audio", blob, `gravacao.${ext}`)
+      const res  = await fetch("/api/copiloto/transcricao", { method: "POST", body: form })
+      const data = await res.json() as { text?: string; error?: string }
+      if (!res.ok || data.error) throw new Error(data.error ?? "Erro na transcrição")
+      const texto = data.text?.trim() ?? ""
+      if (texto) setPergunta(prev => prev ? prev + " " + texto : texto)
+    } catch (e) { console.error("[executivo] transcrição:", e) }
+    finally { setIsTranscribing(false) }
   }
 
   const saveMktg = useCallback((m: MarketingManual) => {
@@ -902,6 +989,42 @@ export default function ExecutivoPage() {
               className="text-[12px] px-3 py-1.5 rounded-lg border border-border text-text-muted hover:text-text-primary transition-colors flex items-center gap-1.5">
               <Activity className="w-3.5 h-3.5" /> Diagnóstico 360°
             </Link>
+          </div>
+        </div>
+
+        {/* Pergunta / contexto para análise */}
+        <div className="mt-3 flex items-center gap-2">
+          <div className="flex-1 flex items-center gap-2 bg-card border border-border rounded-xl px-3 py-2 focus-within:border-accent/40 transition-colors">
+            <input
+              type="text"
+              value={pergunta}
+              onChange={e => setPergunta(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter" && !loadingAnalise) gerarAnalise() }}
+              placeholder="Adicione contexto ou pergunta para a análise (opcional)..."
+              className="flex-1 bg-transparent text-[12px] text-text-primary placeholder:text-text-muted outline-none"
+            />
+            {isTranscribing && (
+              <span className="text-[10px] text-blue-400 flex items-center gap-1 flex-shrink-0">
+                <Loader2 className="w-3 h-3 animate-spin" /> transcrevendo...
+              </span>
+            )}
+            {hasMediaRecorder && (
+              <button
+                onClick={handleMicClick}
+                disabled={isTranscribing}
+                title={isRecording ? "Parar gravação" : "Gravar pergunta por voz"}
+                className={cn(
+                  "flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg border transition-all flex-shrink-0",
+                  isRecording
+                    ? "bg-red-500/15 border-red-500/40 text-red-400 animate-pulse"
+                    : "border-border text-text-muted hover:border-blue-500/30 hover:text-blue-400 disabled:opacity-40"
+                )}
+              >
+                {isRecording
+                  ? <><MicOff className="w-3 h-3" /> Parar</>
+                  : <><Mic className="w-3 h-3" /> Gravar</>}
+              </button>
+            )}
           </div>
         </div>
 
@@ -1017,6 +1140,46 @@ export default function ExecutivoPage() {
         {aba === "operacao"   && <AbaOperacao ops={ops} onSave={saveOps} exec={exec} />}
         {aba === "autoridade" && <AbaAutoridade exec={exec} aut={aut} onSave={saveAut} />}
       </div>
+
+      {/* Voice consent modal */}
+      {showConsentModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-surface border border-border rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center flex-shrink-0">
+                <ShieldCheck className="w-5 h-5 text-blue-400" />
+              </div>
+              <div>
+                <h3 className="text-[14px] font-semibold text-text-primary">Autorizar gravação de voz</h3>
+                <p className="text-[11px] text-text-muted">Consentimento LGPD — leia antes de prosseguir</p>
+              </div>
+            </div>
+            <p className="text-[12px] text-text-secondary leading-relaxed">
+              Sua fala será enviada ao serviço{" "}
+              <strong className="text-text-primary">Groq Whisper</strong> para transcrição automática.
+              O áudio <strong className="text-text-primary">não é armazenado</strong> — somente o texto
+              transcrito é utilizado como contexto da análise.
+            </p>
+            <p className="text-[11px] text-text-muted leading-relaxed">
+              Você pode revogar este consentimento a qualquer momento nas Configurações do perfil.
+            </p>
+            <div className="flex gap-2 pt-1">
+              <button
+                onClick={() => setShowConsentModal(false)}
+                className="flex-1 text-[12px] py-2 rounded-xl border border-border text-text-muted hover:border-border-hover transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={aceitarConsentimento}
+                className="flex-1 text-[12px] py-2 rounded-xl bg-blue-500 text-white font-semibold hover:bg-blue-600 transition-colors"
+              >
+                Autorizar e gravar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

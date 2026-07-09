@@ -153,15 +153,19 @@ export default function MercadoPage() {
           <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4">
             <div className="flex-1 space-y-2">
               <label className="text-[10px] font-mono text-text-muted uppercase tracking-widest">Especialidade</label>
-              <select
+              <input
+                type="text"
+                list="especialidades-list"
                 value={especialidade}
                 onChange={e => setEspecialidade(e.target.value)}
+                placeholder="Ex: Endocrinologia, Dermatologia..."
                 className="w-full sm:w-72 bg-background border border-border rounded-lg px-3 py-2 text-[13px] text-text-primary focus:outline-none focus:border-accent/50 transition-colors"
-              >
-                {ESPECIALIDADES.map(e => <option key={e}>{e}</option>)}
-              </select>
+              />
+              <datalist id="especialidades-list">
+                {ESPECIALIDADES.map(e => <option key={e} value={e} />)}
+              </datalist>
             </div>
-            <button onClick={analisar} disabled={loading}
+            <button onClick={analisar} disabled={loading || !especialidade.trim()}
               className="flex items-center gap-2 bg-accent text-white font-semibold text-[13px] px-5 py-2.5 rounded-xl hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
               {loading
                 ? <><Loader2 className="w-4 h-4 animate-spin" /> Analisando...</>

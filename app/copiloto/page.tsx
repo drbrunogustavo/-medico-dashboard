@@ -1023,35 +1023,6 @@ function CopilotoContent() {
               </div>
             </div>
 
-            {/* Protocolo */}
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-mono text-text-muted uppercase tracking-widest">Protocolo Clínico</label>
-              <select
-                value={protocoloId ?? ""}
-                onChange={e => setProtocoloId(e.target.value || null)}
-                disabled={protocolosLoading || protocolosList.length === 0}
-                className="w-full rounded-xl px-3 py-2.5 text-[12px] text-text-primary bg-card border border-border outline-none focus:border-accent/40 transition-colors appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {protocolosLoading ? (
-                  <option value="">Carregando protocolos…</option>
-                ) : protocolosList.length === 0 ? (
-                  <option value="">Nenhum protocolo cadastrado</option>
-                ) : (
-                  <>
-                    <option value="">Nenhum — usar protocolos favoritos (padrão)</option>
-                    {protocolosList.map(p => (
-                      <option key={p.id} value={p.id}>{p.titulo}</option>
-                    ))}
-                  </>
-                )}
-              </select>
-              {!protocolosLoading && protocolosList.length === 0 && (
-                <a href="/memoria" className="text-[10px] text-blue-400 hover:text-blue-300 transition-colors">
-                  Criar protocolos em Memória Clínica →
-                </a>
-              )}
-            </div>
-
             {/* Relato */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
@@ -1098,6 +1069,35 @@ function CopilotoContent() {
                 placeholder="Descreva as queixas do paciente, exame físico, hipóteses diagnósticas, conduta discutida..."
                 className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3 text-[12px] text-text-primary placeholder:text-text-muted focus:border-blue-500/40 outline-none resize-none transition-colors leading-relaxed"
               />
+            </div>
+
+            {/* Protocolo */}
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-mono text-text-muted uppercase tracking-widest">Protocolo Clínico</label>
+              <select
+                value={protocoloId ?? ""}
+                onChange={e => setProtocoloId(e.target.value || null)}
+                disabled={protocolosLoading || protocolosList.length === 0}
+                className="w-full rounded-xl px-3 py-2.5 text-[12px] text-text-primary bg-card border border-border outline-none focus:border-accent/40 transition-colors appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {protocolosLoading ? (
+                  <option value="">Carregando protocolos…</option>
+                ) : protocolosList.length === 0 ? (
+                  <option value="">Nenhum protocolo cadastrado</option>
+                ) : (
+                  <>
+                    <option value="">Nenhum — usar protocolos favoritos (padrão)</option>
+                    {protocolosList.map(p => (
+                      <option key={p.id} value={p.id}>{p.titulo}</option>
+                    ))}
+                  </>
+                )}
+              </select>
+              {!protocolosLoading && protocolosList.length === 0 && (
+                <a href="/memoria" className="text-[10px] text-blue-400 hover:text-blue-300 transition-colors">
+                  Criar protocolos em Memória Clínica →
+                </a>
+              )}
             </div>
 
             {/* Dados objetivos */}
@@ -1181,7 +1181,7 @@ function CopilotoContent() {
         </div>
 
         {/* ── RIGHT: Output ─────────────────────────────────────────────────── */}
-        <div className="p-5 md:p-8 md:overflow-y-auto">
+        <div className={cn("p-5 md:p-8 md:overflow-y-auto", phase === "done" && "pb-28 md:pb-8")}>
           {phase === "idle" && !result && <RightPanelEmpty />}
           {phase === "loading" && <Skeleton />}
 

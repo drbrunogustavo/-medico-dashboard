@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer } from "recharts"
-import { Activity, ChevronRight, Check, Loader2, Zap, Target, Calendar, ExternalLink } from "lucide-react"
+import { Activity, ChevronRight, Check, Loader2, Zap, Target, Calendar, ExternalLink, ArrowLeft } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
@@ -172,6 +172,9 @@ export default function DiagnosticoPage() {
     return (
       <div className="animate-fade-in">
         <div className="p-4 md:p-8 max-w-2xl">
+          <Link href="/dashboard" className="inline-flex items-center gap-1.5 text-[11px] font-mono text-text-muted hover:text-text-primary transition-colors mb-5">
+            <ArrowLeft className="w-3.5 h-3.5" /> Dashboard
+          </Link>
           <div className="flex items-center gap-3 mb-6">
             <div className="w-9 h-9 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center">
               <Activity className="w-5 h-5 text-accent" />
@@ -377,6 +380,9 @@ export default function DiagnosticoPage() {
     <div className="animate-fade-in">
       <MobileOnlyHeader title="Diagnóstico 360°" />
       <div className="p-4 md:p-8 pb-0">
+        <Link href="/dashboard" className="inline-flex items-center gap-1.5 text-[11px] font-mono text-text-muted hover:text-text-primary transition-colors mb-3">
+          <ArrowLeft className="w-3.5 h-3.5" /> Dashboard
+        </Link>
         <div className="flex items-center gap-3 mb-4">
           <div className="w-8 h-8 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center">
             <Activity className="w-4 h-4 text-accent" />

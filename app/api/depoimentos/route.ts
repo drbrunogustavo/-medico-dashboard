@@ -4,6 +4,18 @@ import { sendZapi } from "@/lib/zapi"
 import { AI_MODEL } from "@/lib/ai-config"
 import { getAnthropicClient } from "@/lib/anthropic"
 
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function parseAIJson(text: string): any {
+  try { return JSON.parse(text) } catch { /* continua */ }
+  const stripped = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/i, "").trim()
+  try { return JSON.parse(stripped) } catch { /* continua */ }
+  const m1 = stripped.match(/\{[\s\S]*\}/)
+  if (m1) { try { return JSON.parse(m1[0]) } catch { /* continua */ } }
+  const m2 = stripped.match(/\[[\s\S]*\]/)
+  if (m2) { try { return JSON.parse(m2[0]) } catch { /* continua */ } }
+  throw new Error(`IA retornou resposta n\u00e3o parse\u00e1vel como JSON: ${text.slice(0, 120)}\u2026`)
+}
 export const maxDuration = 60
 
 
@@ -68,7 +80,7 @@ Retorne APENAS JSON:
     const clean = raw.replace(/```json/g, "").replace(/```/g, "").trim()
     const s = clean.indexOf("{"); const e = clean.lastIndexOf("}")
     if (s === -1) throw new Error("JSON inválido")
-    const result = JSON.parse(clean.slice(s, e + 1)) as { instagram: string; google: string }
+    const result = parseAIJson(clean.slice(s, e + 1)) as { instagram: string; google: string }
 
     return NextResponse.json(result)
   } catch (e) {

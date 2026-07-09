@@ -2,6 +2,18 @@ import { NextRequest, NextResponse } from 'next/server'
 import { checkAuth } from '@/lib/auth-check'
 import { AI_MODEL } from "@/lib/ai-config"
 
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function parseAIJson(text: string): any {
+  try { return JSON.parse(text) } catch { /* continua */ }
+  const stripped = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/i, "").trim()
+  try { return JSON.parse(stripped) } catch { /* continua */ }
+  const m1 = stripped.match(/\{[\s\S]*\}/)
+  if (m1) { try { return JSON.parse(m1[0]) } catch { /* continua */ } }
+  const m2 = stripped.match(/\[[\s\S]*\]/)
+  if (m2) { try { return JSON.parse(m2[0]) } catch { /* continua */ } }
+  throw new Error(`IA retornou resposta n\u00e3o parse\u00e1vel como JSON: ${text.slice(0, 120)}\u2026`)
+}
 export async function POST(request: NextRequest) {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
@@ -56,7 +68,7 @@ Retorne apenas o JSON array com os 50 objetos.`,
     const end   = clean.lastIndexOf(']')
     const json  = start >= 0 && end >= 0 ? clean.slice(start, end + 1) : '[]'
 
-    return NextResponse.json({ objecoes: JSON.parse(json) })
+    return NextResponse.json({ objecoes: parseAIJson(json) })
   } catch (e) {
     console.error('[objecoes/mapear]', e)
     return NextResponse.json({ error: String(e) }, { status: 500 })

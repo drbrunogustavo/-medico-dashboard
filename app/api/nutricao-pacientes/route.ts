@@ -4,6 +4,18 @@ import { createSupabaseServerClient } from "@/lib/supabase-server"
 import { AI_MODEL } from "@/lib/ai-config"
 import { getAnthropicClient } from "@/lib/anthropic"
 
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function parseAIJson(text: string): any {
+  try { return JSON.parse(text) } catch { /* continua */ }
+  const stripped = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/i, "").trim()
+  try { return JSON.parse(stripped) } catch { /* continua */ }
+  const m1 = stripped.match(/\{[\s\S]*\}/)
+  if (m1) { try { return JSON.parse(m1[0]) } catch { /* continua */ } }
+  const m2 = stripped.match(/\[[\s\S]*\]/)
+  if (m2) { try { return JSON.parse(m2[0]) } catch { /* continua */ } }
+  throw new Error(`IA retornou resposta n\u00e3o parse\u00e1vel como JSON: ${text.slice(0, 120)}\u2026`)
+}
 export const maxDuration = 60
 
 const ASSINATURA = `Nossa equipe médica
@@ -127,7 +139,7 @@ Retorne APENAS o JSON array, sem markdown.`,
     const raw  = (resp.content.find(b => b.type === "text") as { text: string } | undefined)?.text ?? "[]"
     const clean = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim()
     const idx   = clean.indexOf("[")
-    const msgs  = JSON.parse(idx >= 0 ? clean.slice(idx) : clean)
+    const msgs  = parseAIJson(idx >= 0 ? clean.slice(idx) : clean)
     return NextResponse.json({ mensagens: msgs })
   } catch (e) {
     console.error("[api/nutricao-pacientes]", e)

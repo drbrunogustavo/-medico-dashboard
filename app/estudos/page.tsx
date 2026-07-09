@@ -402,11 +402,12 @@ function EstudoCard({ estudo, copied, onCopy }: {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function EstudosPage() {
-  const [search,  setSearch]  = useState("")
-  const [loading, setLoading] = useState(false)
-  const [aiResult, setAiResult] = useState<TemaEstudo | null>(null)
-  const [error,   setError]   = useState<string | null>(null)
-  const [copied,  setCopied]  = useState<string | null>(null)
+  const [search,    setSearch]    = useState("")
+  const [anos,      setAnos]      = useState<number | null>(5)
+  const [loading,   setLoading]   = useState(false)
+  const [aiResult,  setAiResult]  = useState<TemaEstudo | null>(null)
+  const [error,     setError]     = useState<string | null>(null)
+  const [copied,    setCopied]    = useState<string | null>(null)
   const [openTemas, setOpenTemas] = useState<Record<string, boolean>>(
     Object.fromEntries(DATABASE.map(t => [t.id, false]))
   )
@@ -441,7 +442,7 @@ export default function EstudosPage() {
       const res  = await fetch("/api/estudos", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ tema }),
+        body:    JSON.stringify({ tema, anos }),
       })
       const data = await res.json()
       if (data.error) throw new Error(data.error)
@@ -511,6 +512,34 @@ export default function EstudosPage() {
                 {s}
               </button>
             ))}
+          </div>
+
+          {/* Período */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[10px] font-mono" style={{ color: "var(--text-muted)" }}>PERÍODO:</span>
+            {([
+              { label: "2 anos",  value: 2    },
+              { label: "5 anos",  value: 5    },
+              { label: "10 anos", value: 10   },
+              { label: "Todos",   value: null },
+            ] as { label: string; value: number | null }[]).map(p => {
+              const ativo = anos === p.value
+              return (
+                <button
+                  key={p.label}
+                  onClick={() => setAnos(p.value)}
+                  className="text-[11px] px-2.5 py-1 rounded-full border transition-all"
+                  style={{
+                    background:  ativo ? "rgba(59,127,255,0.12)" : "var(--surface)",
+                    borderColor: ativo ? "rgba(59,127,255,0.3)"  : "var(--border)",
+                    color:       ativo ? "#3b7fff"                : "var(--text-muted)",
+                    fontWeight:  ativo ? 600 : 400,
+                  }}
+                >
+                  {p.label}
+                </button>
+              )
+            })}
           </div>
         </div>
 

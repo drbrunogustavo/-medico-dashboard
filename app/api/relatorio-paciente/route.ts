@@ -39,6 +39,7 @@ Regras:
 - Transmita segurança, parceria e esperança
 - Use "você" para se dirigir ao paciente
 - Escreva em português brasileiro
+- Escreva em prosa corrida, como uma carta médica. Sem emojis, hashtags, asteriscos ou qualquer marcação markdown. Não use listas com marcadores — integre tudo em parágrafos fluidos, como um médico humano escrevendo diretamente ao paciente.
 
 Tom de comunicação: ${tomMap[tom] ?? tomMap.Simples}`,
         messages: [{

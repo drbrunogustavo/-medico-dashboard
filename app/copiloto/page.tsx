@@ -358,6 +358,10 @@ function CopilotoContent() {
   const [hasMediaRecorder, setHasMediaRecorder]  = useState(false)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef   = useRef<Blob[]>([])
+  const [isRecordingDados,    setIsRecordingDados]    = useState(false)
+  const [isTranscribingDados, setIsTranscribingDados] = useState(false)
+  const mediaRecorderDadosRef = useRef<MediaRecorder | null>(null)
+  const audioChunksDadosRef   = useRef<Blob[]>([])
 
   // Focus mode
   const [focusMode,      setFocusMode]      = useState(false)
@@ -509,6 +513,63 @@ function CopilotoContent() {
       showToast(e instanceof Error ? e.message : "Falha na transcrição.", "error")
     } finally {
       setIsTranscribing(false)
+    }
+  }
+
+  function handleMicDadosClick() {
+    if (isRecordingDados) { pararGravacaoDados(); return }
+    if (!voiceConsent) { setShowConsentModal(true); return }
+    iniciarGravacaoDados()
+  }
+
+  async function iniciarGravacaoDados() {
+    try {
+      const stream   = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+        ? "audio/webm;codecs=opus"
+        : MediaRecorder.isTypeSupported("audio/webm")
+          ? "audio/webm"
+          : MediaRecorder.isTypeSupported("audio/mp4")
+            ? "audio/mp4"
+            : ""
+      const rec = new MediaRecorder(stream, mimeType ? { mimeType } : undefined)
+      audioChunksDadosRef.current = []
+      rec.ondataavailable = e => { if (e.data.size > 0) audioChunksDadosRef.current.push(e.data) }
+      rec.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop())
+        const blob = new Blob(audioChunksDadosRef.current, { type: rec.mimeType || "audio/webm" })
+        await transcreverDados(blob)
+      }
+      rec.start()
+      mediaRecorderDadosRef.current = rec
+      setIsRecordingDados(true)
+    } catch {
+      showToast("Não foi possível acessar o microfone.", "error")
+    }
+  }
+
+  function pararGravacaoDados() {
+    mediaRecorderDadosRef.current?.stop()
+    setIsRecordingDados(false)
+  }
+
+  async function transcreverDados(blob: Blob) {
+    setIsTranscribingDados(true)
+    try {
+      const mimeType = blob.type || "audio/webm"
+      const ext      = mimeType.includes("mp4") ? "mp4" : "webm"
+      const form     = new FormData()
+      form.append("audio", blob, `gravacao.${ext}`)
+      const res  = await fetch("/api/copiloto/transcricao", { method: "POST", body: form })
+      const data = await res.json() as { text?: string; error?: string }
+      if (!res.ok || data.error) throw new Error(data.error ?? "Erro na transcrição")
+      const texto = data.text?.trim() ?? ""
+      if (texto) setDados(prev => prev ? prev + "\n" + texto : texto)
+      showToast("Transcrição concluída.")
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : "Falha na transcrição.", "error")
+    } finally {
+      setIsTranscribingDados(false)
     }
   }
 
@@ -1039,7 +1100,7 @@ function CopilotoContent() {
                     <button
                       type="button"
                       onClick={handleMicClick}
-                      disabled={isTranscribing}
+                      disabled={isTranscribing || isRecordingDados}
                       title={isRecording ? "Parar gravação" : "Gravar relato por voz"}
                       className={cn(
                         "flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-lg border transition-all",
@@ -1102,7 +1163,38 @@ function CopilotoContent() {
 
             {/* Dados objetivos */}
             <div className="space-y-1.5">
-              <label className="text-[10px] font-mono text-text-muted uppercase tracking-widest">Dados Objetivos</label>
+              <div className="flex items-center justify-between">
+                <label className="text-[10px] font-mono text-text-muted uppercase tracking-widest">Dados Objetivos</label>
+                <div className="flex items-center gap-2">
+                  {isTranscribingDados && (
+                    <span className="text-[10px] text-blue-400 flex items-center gap-1">
+                      <Loader2 className="w-3 h-3 animate-spin" /> transcrevendo...
+                    </span>
+                  )}
+                  {hasMediaRecorder ? (
+                    <button
+                      type="button"
+                      onClick={handleMicDadosClick}
+                      disabled={isTranscribingDados || isRecording}
+                      title={isRecordingDados ? "Parar gravação" : "Gravar dados objetivos por voz"}
+                      className={cn(
+                        "flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-lg border transition-all",
+                        isRecordingDados
+                          ? "bg-red-500/15 border-red-500/40 text-red-400 animate-pulse"
+                          : "border-border text-text-muted hover:border-blue-500/30 hover:text-blue-400 disabled:opacity-40"
+                      )}
+                    >
+                      {isRecordingDados
+                        ? <><MicOff className="w-3 h-3" /> Parar</>
+                        : <><Mic className="w-3 h-3" /> Gravar</>}
+                    </button>
+                  ) : voiceConsent !== null && (
+                    <span title="Gravação de voz não disponível neste navegador" className="text-text-muted">
+                      <MicOff className="w-3.5 h-3.5" />
+                    </span>
+                  )}
+                </div>
+              </div>
               <textarea
                 value={dados}
                 onChange={e => setDados(e.target.value)}

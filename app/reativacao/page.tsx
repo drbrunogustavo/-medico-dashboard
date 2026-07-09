@@ -20,6 +20,8 @@ interface Paciente {
   mensagem_gerada?:            string
   enviado_automaticamente?:    boolean
   enviado_automaticamente_em?: string
+  sexo?:                       string | null
+  data_nascimento?:            string | null
 }
 
 interface MsgCampanha {
@@ -39,6 +41,17 @@ interface Perfil {
 function diasInativos(ultimo?: string) {
   if (!ultimo) return 999
   return Math.floor((Date.now() - new Date(ultimo).getTime()) / 86400000)
+}
+
+function calcularIdade(dataNasc?: string | null): number | null {
+  if (!dataNasc) return null
+  const nasc = new Date(dataNasc)
+  if (isNaN(nasc.getTime())) return null
+  const hoje = new Date()
+  let idade = hoje.getFullYear() - nasc.getFullYear()
+  const m = hoje.getMonth() - nasc.getMonth()
+  if (m < 0 || (m === 0 && hoje.getDate() < nasc.getDate())) idade--
+  return idade
 }
 
 function urgenciaBadge(dias: number) {
@@ -233,11 +246,13 @@ function AddModal({
   onAdd:   (p: Omit<Paciente, "id" | "status">) => void
   onClose: () => void
 }) {
-  const [nome,     setNome]     = useState("")
-  const [telefone, setTelefone] = useState("")
-  const [ultimo,   setUltimo]   = useState("")
-  const [motivo,   setMotivo]   = useState("")
-  const [saving,   setSaving]   = useState(false)
+  const [nome,          setNome]          = useState("")
+  const [telefone,      setTelefone]      = useState("")
+  const [ultimo,        setUltimo]        = useState("")
+  const [motivo,        setMotivo]        = useState("")
+  const [sexo,          setSexo]          = useState("")
+  const [dataNasc,      setDataNasc]      = useState("")
+  const [saving,        setSaving]        = useState(false)
 
   async function salvar() {
     if (!nome.trim() || !telefone.trim()) return
@@ -245,11 +260,25 @@ function AddModal({
     await fetch("/api/reativacao", {
       method:  "POST",
       headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify({ nome, telefone, ultimo_contato: ultimo || null, motivo_saida: motivo }),
+      body:    JSON.stringify({
+        nome, telefone,
+        ultimo_contato:  ultimo   || null,
+        motivo_saida:    motivo   || null,
+        sexo:            sexo     || null,
+        data_nascimento: dataNasc || null,
+      }),
     })
-    onAdd({ nome, telefone, ultimo_contato: ultimo || undefined, motivo_saida: motivo || undefined })
+    onAdd({
+      nome, telefone,
+      ultimo_contato:  ultimo   || undefined,
+      motivo_saida:    motivo   || undefined,
+      sexo:            sexo     || null,
+      data_nascimento: dataNasc || null,
+    })
     setSaving(false)
   }
+
+  const inputCls = "w-full bg-[--surface] border border-[--border] rounded-lg px-3 py-2.5 text-sm text-text-primary focus:outline-none focus:border-accent/50 transition-colors placeholder:text-text-muted"
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -270,15 +299,26 @@ function AddModal({
           ].map(f => (
             <div key={f.label} className="space-y-1">
               <label className="text-[11px] font-mono text-text-muted uppercase">{f.label}</label>
-              <input
-                type={f.type}
-                value={f.val}
-                onChange={e => f.set(e.target.value)}
-                placeholder={f.ph}
-                className="w-full bg-[--surface] border border-[--border] rounded-lg px-3 py-2.5 text-sm text-text-primary focus:outline-none focus:border-accent/50 transition-colors placeholder:text-text-muted"
-              />
+              <input type={f.type} value={f.val} onChange={e => f.set(e.target.value)}
+                placeholder={f.ph} className={inputCls} />
             </div>
           ))}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label className="text-[11px] font-mono text-text-muted uppercase">Sexo</label>
+              <select value={sexo} onChange={e => setSexo(e.target.value)}
+                className={inputCls + " appearance-none"}>
+                <option value="">Não informado</option>
+                <option value="M">Masculino</option>
+                <option value="F">Feminino</option>
+              </select>
+            </div>
+            <div className="space-y-1">
+              <label className="text-[11px] font-mono text-text-muted uppercase">Nascimento</label>
+              <input type="date" value={dataNasc} onChange={e => setDataNasc(e.target.value)}
+                className={inputCls} />
+            </div>
+          </div>
         </div>
         <button
           onClick={salvar}
@@ -405,6 +445,8 @@ export default function ReativacaoPage() {
   const [importErro,           setImportErro]           = useState<string | null>(null)
   const [perfil,               setPerfil]               = useState<Perfil | null>(null)
   const [filtroInatividade,    setFiltroInatividade]    = useState<"todos" | "30-60" | "60-90" | "90+">("todos")
+  const [filtroSexo,           setFiltroSexo]           = useState<"todos" | "M" | "F">("todos")
+  const [filtroFaixaEtaria,    setFiltroFaixaEtaria]    = useState<"todos" | "0-18" | "19-40" | "41-60" | "60+">("todos")
 
   useEffect(() => {
     Promise.all([
@@ -468,15 +510,25 @@ export default function ReativacaoPage() {
   }
 
   const pacientesFiltrados = useMemo(() => {
-    if (filtroInatividade === "todos") return pacientes
     return pacientes.filter(p => {
-      const d = diasInativos(p.ultimo_contato)
-      if (filtroInatividade === "30-60") return d >= 30 && d < 60
-      if (filtroInatividade === "60-90") return d >= 60 && d < 90
-      if (filtroInatividade === "90+")   return d >= 90
+      if (filtroInatividade !== "todos") {
+        const d = diasInativos(p.ultimo_contato)
+        if (filtroInatividade === "30-60" && !(d >= 30 && d < 60)) return false
+        if (filtroInatividade === "60-90" && !(d >= 60 && d < 90)) return false
+        if (filtroInatividade === "90+"   && d < 90)                return false
+      }
+      if (filtroSexo !== "todos" && p.sexo !== filtroSexo) return false
+      if (filtroFaixaEtaria !== "todos") {
+        const idade = calcularIdade(p.data_nascimento)
+        if (idade === null)                                                          return false
+        if (filtroFaixaEtaria === "0-18"  && idade > 18)                            return false
+        if (filtroFaixaEtaria === "19-40" && !(idade >= 19 && idade <= 40))         return false
+        if (filtroFaixaEtaria === "41-60" && !(idade >= 41 && idade <= 60))         return false
+        if (filtroFaixaEtaria === "60+"   && idade <= 60)                           return false
+      }
       return true
     })
-  }, [pacientes, filtroInatividade])
+  }, [pacientes, filtroInatividade, filtroSexo, filtroFaixaEtaria])
 
   const pacSelecionados = pacientes.filter(p => selecionados.includes(p.id))
 
@@ -607,31 +659,104 @@ export default function ReativacaoPage() {
             { key: "60-90",  label: "60–90 dias", color: "text-red-400",       activeCls: "bg-red-500/10 border-red-500/30 text-red-400",                 count: pacientes.filter(p => { const d = diasInativos(p.ultimo_contato); return d >= 60 && d < 90 }).length },
             { key: "90+",    label: "+90 dias",   color: "text-neutral-400",   activeCls: "bg-neutral-500/10 border-neutral-500/30 text-neutral-300",      count: pacientes.filter(p => diasInativos(p.ultimo_contato) >= 90).length },
           ]
+          const hasSexo        = pacientes.some(p => p.sexo)
+          const hasFaixaEtaria = pacientes.some(p => p.data_nascimento)
+
+          const PILLS_SEXO: { key: "todos" | "M" | "F"; label: string; count: number }[] = [
+            { key: "todos", label: "Todos sexos", count: pacientes.length },
+            { key: "M",     label: "Masc.",       count: pacientes.filter(p => p.sexo === "M").length },
+            { key: "F",     label: "Fem.",         count: pacientes.filter(p => p.sexo === "F").length },
+          ]
+
+          const PILLS_FAIXA: { key: "todos" | "0-18" | "19-40" | "41-60" | "60+"; label: string; count: number }[] = [
+            { key: "todos",  label: "Todas idades", count: pacientes.length },
+            { key: "0-18",   label: "≤ 18 anos",    count: pacientes.filter(p => { const i = calcularIdade(p.data_nascimento); return i !== null && i <= 18 }).length },
+            { key: "19-40",  label: "19–40 anos",   count: pacientes.filter(p => { const i = calcularIdade(p.data_nascimento); return i !== null && i >= 19 && i <= 40 }).length },
+            { key: "41-60",  label: "41–60 anos",   count: pacientes.filter(p => { const i = calcularIdade(p.data_nascimento); return i !== null && i >= 41 && i <= 60 }).length },
+            { key: "60+",    label: "+60 anos",     count: pacientes.filter(p => { const i = calcularIdade(p.data_nascimento); return i !== null && i > 60 }).length },
+          ]
+
           return (
-            <div className="flex flex-wrap gap-2">
-              {PILLS.map(pill => {
-                const ativo = filtroInatividade === pill.key
-                return (
-                  <button
-                    key={pill.key}
-                    onClick={() => { setFiltroInatividade(pill.key); setSelecionados([]) }}
-                    className={cn(
-                      "flex items-center gap-2 px-3 py-2 rounded-xl border text-[11px] font-mono font-semibold transition-all",
-                      ativo
-                        ? pill.activeCls
-                        : "border-[--border] text-text-muted hover:text-text-secondary hover:border-[--border-hover]"
-                    )}
-                  >
-                    <span>{pill.label}</span>
-                    <span className={cn(
-                      "text-[10px] px-1.5 py-0.5 rounded-full border font-bold tabular-nums",
-                      ativo ? pill.activeCls : "border-[--border] text-text-muted"
-                    )}>
-                      {pill.count}
-                    </span>
-                  </button>
-                )
-              })}
+            <div className="space-y-2">
+              <div className="flex flex-wrap gap-2">
+                {PILLS.map(pill => {
+                  const ativo = filtroInatividade === pill.key
+                  return (
+                    <button
+                      key={pill.key}
+                      onClick={() => { setFiltroInatividade(pill.key); setSelecionados([]) }}
+                      className={cn(
+                        "flex items-center gap-2 px-3 py-2 rounded-xl border text-[11px] font-mono font-semibold transition-all",
+                        ativo
+                          ? pill.activeCls
+                          : "border-[--border] text-text-muted hover:text-text-secondary hover:border-[--border-hover]"
+                      )}
+                    >
+                      <span>{pill.label}</span>
+                      <span className={cn(
+                        "text-[10px] px-1.5 py-0.5 rounded-full border font-bold tabular-nums",
+                        ativo ? pill.activeCls : "border-[--border] text-text-muted"
+                      )}>
+                        {pill.count}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+
+              {hasSexo && (
+                <div className="flex flex-wrap gap-2">
+                  {PILLS_SEXO.map(pill => {
+                    const ativo = filtroSexo === pill.key
+                    const actCls = "bg-blue-500/10 border-blue-500/30 text-blue-400"
+                    return (
+                      <button
+                        key={pill.key}
+                        onClick={() => { setFiltroSexo(pill.key); setSelecionados([]) }}
+                        className={cn(
+                          "flex items-center gap-2 px-3 py-2 rounded-xl border text-[11px] font-mono font-semibold transition-all",
+                          ativo ? actCls : "border-[--border] text-text-muted hover:text-text-secondary hover:border-[--border-hover]"
+                        )}
+                      >
+                        <span>{pill.label}</span>
+                        <span className={cn(
+                          "text-[10px] px-1.5 py-0.5 rounded-full border font-bold tabular-nums",
+                          ativo ? actCls : "border-[--border] text-text-muted"
+                        )}>
+                          {pill.count}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+
+              {hasFaixaEtaria && (
+                <div className="flex flex-wrap gap-2">
+                  {PILLS_FAIXA.map(pill => {
+                    const ativo  = filtroFaixaEtaria === pill.key
+                    const actCls = "bg-violet-500/10 border-violet-500/30 text-violet-400"
+                    return (
+                      <button
+                        key={pill.key}
+                        onClick={() => { setFiltroFaixaEtaria(pill.key); setSelecionados([]) }}
+                        className={cn(
+                          "flex items-center gap-2 px-3 py-2 rounded-xl border text-[11px] font-mono font-semibold transition-all",
+                          ativo ? actCls : "border-[--border] text-text-muted hover:text-text-secondary hover:border-[--border-hover]"
+                        )}
+                      >
+                        <span>{pill.label}</span>
+                        <span className={cn(
+                          "text-[10px] px-1.5 py-0.5 rounded-full border font-bold tabular-nums",
+                          ativo ? actCls : "border-[--border] text-text-muted"
+                        )}>
+                          {pill.count}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
             </div>
           )
         })()}
@@ -652,9 +777,13 @@ export default function ReativacaoPage() {
 
         {pacientesFiltrados.length === 0 && pacientes.length > 0 && (
           <div className="flex flex-col items-center justify-center py-10 gap-2">
-            <p className="text-sm text-text-muted">Nenhum paciente nesta faixa de inatividade.</p>
-            <button onClick={() => setFiltroInatividade("todos")} className="text-xs text-accent hover:underline">
-              Ver todos
+            <p className="text-sm text-text-muted">Nenhum paciente para os filtros selecionados.</p>
+            <button onClick={() => {
+              setFiltroInatividade("todos")
+              setFiltroSexo("todos")
+              setFiltroFaixaEtaria("todos")
+            }} className="text-xs text-accent hover:underline">
+              Limpar filtros
             </button>
           </div>
         )}
@@ -720,6 +849,14 @@ export default function ReativacaoPage() {
                         Último contato: {new Date(p.ultimo_contato).toLocaleDateString("pt-BR")} ({dias} dias)
                       </span>
                     )}
+                    {p.sexo && (
+                      <span className="text-[11px] text-text-muted font-mono">
+                        {p.sexo === "F" ? "Feminino" : "Masculino"}
+                      </span>
+                    )}
+                    {(() => { const i = calcularIdade(p.data_nascimento); return i !== null ? (
+                      <span className="text-[11px] text-text-muted font-mono">{i} anos</span>
+                    ) : null })()}
                     {p.motivo_saida && (
                       <span className="text-[11px] text-text-muted">Motivo: {p.motivo_saida}</span>
                     )}

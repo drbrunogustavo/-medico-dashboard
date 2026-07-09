@@ -4,7 +4,7 @@ import * as XLSX from "xlsx"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServiceClient } from "@/lib/supabase-service"
 
-type FieldKey = "nome" | "telefone" | "ultimo_contato" | "motivo_saida"
+type FieldKey = "nome" | "telefone" | "ultimo_contato" | "motivo_saida" | "sexo" | "data_nascimento"
 
 const ALIASES: Record<string, FieldKey> = {
   nome: "nome", name: "nome", paciente: "nome", patient: "nome",
@@ -19,6 +19,10 @@ const ALIASES: Record<string, FieldKey> = {
   motivo: "motivo_saida", motivosaida: "motivo_saida", reason: "motivo_saida",
   observacao: "motivo_saida", obs: "motivo_saida", observacoes: "motivo_saida",
   anotacao: "motivo_saida",
+  sexo: "sexo", genero: "sexo", gender: "sexo", sex: "sexo",
+  datanascimento: "data_nascimento", nascimento: "data_nascimento",
+  dtnascimento: "data_nascimento", datadenascimento: "data_nascimento",
+  birthday: "data_nascimento", datanasc: "data_nascimento",
 }
 
 function normalizeKey(s: string): string {
@@ -47,6 +51,15 @@ interface RowParsed {
   telefone?: string
   ultimo_contato?: string
   motivo_saida?: string
+  sexo?: string
+  data_nascimento?: string
+}
+
+function normalizeSexo(v: string): string | null {
+  const s = v.trim().toUpperCase()
+  if (s.startsWith("F")) return "F"
+  if (s.startsWith("M")) return "M"
+  return null
 }
 
 function mapRow(headers: string[], values: string[]): RowParsed {
@@ -120,8 +133,10 @@ export async function POST(req: NextRequest) {
     const payload = {
       nome,
       telefone,
-      ultimo_contato: p.ultimo_contato ? parseDate(p.ultimo_contato) : null,
-      motivo_saida:   p.motivo_saida?.trim() || null,
+      ultimo_contato:  p.ultimo_contato  ? parseDate(p.ultimo_contato)  : null,
+      motivo_saida:    p.motivo_saida?.trim()  || null,
+      sexo:            p.sexo            ? normalizeSexo(p.sexo)        : null,
+      data_nascimento: p.data_nascimento ? parseDate(p.data_nascimento) : null,
     }
 
     const { data: existing, error: selErr } = await supabase

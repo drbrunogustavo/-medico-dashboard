@@ -66,13 +66,27 @@ export async function POST() {
 
       if (!telefone) { semTelefone++; continue }
 
+      const sexoRaw = (p.Sexo ?? p.Genero ?? "") as string
+      const sexo = sexoRaw
+        ? (sexoRaw.trim().toUpperCase().startsWith("F") ? "F" : sexoRaw.trim().toUpperCase().startsWith("M") ? "M" : null)
+        : null
+
+      const dataNascRaw = (p.DataNascimento ?? p.Data_Nascimento ?? "") as string
+      let dataNasc: string | null = null
+      if (dataNascRaw) {
+        const d = new Date(dataNascRaw)
+        if (!isNaN(d.getTime())) dataNasc = d.toISOString().split("T")[0]
+      }
+
       rows.push({
-        user_id:        auth.userId,
-        medx_id:        medxId,
-        nome:           ((p.Nome_Social || p.Nome) as string ?? "").trim(),
+        user_id:         auth.userId,
+        medx_id:         medxId,
+        nome:            ((p.Nome_Social || p.Nome) as string ?? "").trim(),
         telefone,
-        ultimo_contato: ultimaConsulta[medxId].split("T")[0],  // só a data
-        status:         "inativo",
+        ultimo_contato:  ultimaConsulta[medxId].split("T")[0],
+        status:          "inativo",
+        sexo:            sexo,
+        data_nascimento: dataNasc,
         // motivo_saida e mensagem_gerada NÃO enviados → preservados em re-importação
       })
     }

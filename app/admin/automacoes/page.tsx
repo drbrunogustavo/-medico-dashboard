@@ -111,7 +111,7 @@ export default function AdminAutomacoesPage() {
 
       <div className="p-6 md:p-8 space-y-5">
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-2 md:gap-3">
           {[
             { label: "Sucesso",  count: stats.ok,      cls: "text-green-400 bg-green-500/10 border-green-500/20" },
             { label: "Parcial",  count: stats.parcial,  cls: "text-amber-400 bg-amber-500/10 border-amber-500/20" },

@@ -143,15 +143,19 @@ function fmtPhone(v: string) {
 function LeadCard({
   lead,
   onExpand,
+  onMoveStage,
   isDragOverlay = false,
   hasNurturing  = false,
 }: {
   lead: Lead
   onExpand: (l: Lead) => void
+  onMoveStage?: (leadId: string, newEstagio: string) => void
   isDragOverlay?: boolean
   hasNurturing?: boolean
 }) {
+  const [showMoveMenu, setShowMoveMenu] = useState(false)
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: lead.id })
+  const otherCols = COLUMNS.filter(c => c.id !== lead.estagio)
 
   const style = isDragOverlay
     ? { transform: CSS.Translate.toString(transform) }
@@ -178,10 +182,11 @@ function LeadCard({
           <GripVertical className="w-3.5 h-3.5" />
         </button>
 
-        <button
-          onClick={() => onExpand(lead)}
-          className="flex-1 min-w-0 text-left"
-        >
+        <div className="flex-1 min-w-0">
+          <button
+            onClick={() => onExpand(lead)}
+            className="w-full text-left"
+          >
           <div className="flex items-start justify-between gap-2 mb-2">
             <span className="text-[13px] font-semibold text-text-primary leading-tight truncate">
               {lead.nome}
@@ -230,7 +235,47 @@ function LeadCard({
               {lead.motivo_perda}
             </div>
           )}
-        </button>
+          </button>
+
+          {/* Mobile stage mover — inline pills, avoids overflow clipping */}
+          {onMoveStage && !isDragOverlay && (
+            <div className="md:hidden">
+              {!showMoveMenu ? (
+                <button
+                  onClick={e => { e.stopPropagation(); setShowMoveMenu(true) }}
+                  className="mt-1.5 flex items-center gap-1 text-[10px] text-text-muted hover:text-text-primary transition-colors"
+                >
+                  <ChevronDown className="w-3 h-3" /> Mover para
+                </button>
+              ) : (
+                <div className="mt-1.5 flex flex-wrap gap-1.5 items-center">
+                  {otherCols.map(col => (
+                    <button
+                      key={col.id}
+                      onClick={e => {
+                        e.stopPropagation()
+                        onMoveStage(lead.id, col.id)
+                        setShowMoveMenu(false)
+                      }}
+                      className={cn(
+                        "text-[10px] font-mono px-2 py-0.5 rounded-full border transition-colors",
+                        col.color, col.border
+                      )}
+                    >
+                      {col.emoji} {col.label.split(" ")[0]}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => setShowMoveMenu(false)}
+                    className="text-[10px] text-text-muted hover:text-text-primary transition-colors px-1"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
@@ -244,12 +289,14 @@ function KanbanColumn({
   onExpand,
   onAddLead,
   nurturingMap,
+  onMoveStage,
 }: {
   col: typeof COLUMNS[number]
   leads: Lead[]
   onExpand: (l: Lead) => void
   onAddLead: (estagio: string) => void
   nurturingMap: Record<string, boolean>
+  onMoveStage: (leadId: string, newEstagio: string) => void
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: col.id })
 
@@ -292,7 +339,7 @@ function KanbanColumn({
           </div>
         )}
         {leads.map(lead => (
-          <LeadCard key={lead.id} lead={lead} onExpand={onExpand} hasNurturing={nurturingMap[lead.id] === true} />
+          <LeadCard key={lead.id} lead={lead} onExpand={onExpand} onMoveStage={onMoveStage} hasNurturing={nurturingMap[lead.id] === true} />
         ))}
       </div>
     </div>
@@ -1063,6 +1110,17 @@ export default function CRMPage() {
     }
   }
 
+  function handleMoveStage(leadId: string, newEstagio: string) {
+    const lead = leads.find(l => l.id === leadId)
+    if (!lead || lead.estagio === newEstagio) return
+    if (newEstagio === "perdido") {
+      setPendingMove({ id: leadId, estagio: "perdido" })
+    } else {
+      setLeads(prev => prev.map(l => l.id === leadId ? { ...l, estagio: newEstagio } : l))
+      moveLeadToEstagio(leadId, newEstagio)
+    }
+  }
+
   // ── Metrics ─────────────────────────────────────────────────────────────────
 
   const total        = leads.length
@@ -1140,6 +1198,7 @@ export default function CRMPage() {
                     onExpand={setExpanded}
                     onAddLead={stage => { setNewEstagio(stage); setShowNew(true) }}
                     nurturingMap={nurturingMap}
+                    onMoveStage={handleMoveStage}
                   />
                 ))}
               </div>

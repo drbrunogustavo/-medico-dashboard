@@ -124,6 +124,7 @@ export default function AfiliadosAdminPage() {
           </div>
         ) : (
           <div className="bg-card border border-border rounded-xl overflow-hidden">
+            <div className="overflow-x-auto">
             {/* Table header */}
             <div className="grid grid-cols-[1fr_auto_auto_auto_auto_auto_auto_auto] gap-x-4 items-center px-4 py-2.5 border-b border-border bg-background/40 min-w-[760px]">
               {["Afiliado", "Código", "Status", "Indicados", "Convertidos", "Pendentes", "Comissão", ""].map(h => (
@@ -133,7 +134,7 @@ export default function AfiliadosAdminPage() {
               ))}
             </div>
 
-            <div className="min-w-[760px] overflow-x-auto">
+            <div className="min-w-[760px]">
               {afiliados.map((a, i) => {
                 const isOpen = expanded.has(a.id)
                 const isLast = i === afiliados.length - 1
@@ -252,6 +253,7 @@ export default function AfiliadosAdminPage() {
                   </div>
                 )
               })}
+            </div>
             </div>
           </div>
         )}

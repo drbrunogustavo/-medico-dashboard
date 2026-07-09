@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { TopBar } from "@/components/TopBar"
 import { cn } from "@/lib/utils"
 import {
@@ -278,12 +278,41 @@ const DATABASE: TemaEstudo[] = [
   },
 ]
 
-// ─── Quick suggestions ────────────────────────────────────────────────────────
+// ─── Sugestões por especialidade ─────────────────────────────────────────────
 
-const SUGESTOES = [
-  "Semaglutida", "Tirzepatida", "Vitamina D", "Testosterona",
-  "Metformina", "Ômega-3", "Berberina", "TRH Menopausa", "GH", "Ferro EV",
+const SUGESTOES_ESP: Record<string, string[]> = {
+  Endocrinologia: ["Semaglutida", "Tirzepatida", "Metformina", "Vitamina D", "Testosterona", "GH", "Resistência à insulina", "Hipotireoidismo"],
+  Ginecologia:    ["TRH Menopausa", "SOP", "Endometriose", "Progesterona", "HPV", "Anticoncepcional oral", "Mioma uterino", "Câncer de mama"],
+  Nutrologia:     ["Vitamina D", "Ômega-3", "Ferro EV", "Berberina", "Metformina", "Vitamina B12", "Magnésio", "Jejum intermitente"],
+  Cardiologia:    ["Estatinas", "Hipertensão arterial", "Fibrilação atrial", "Anticoagulação", "Insuficiência cardíaca", "IECA", "Betabloqueadores", "AVC prevenção"],
+  Pneumologia:    ["Asma grave", "DPOC", "Apneia do sono", "Corticoides inalatórios", "Broncodilatadores LABA", "Pneumonia", "Fibrose pulmonar", "Tabagismo cessação"],
+  Ortopedia:      ["Osteoporose", "Artrose joelho", "Lesão LCA", "Lombalgia crônica", "Ácido hialurônico", "PRP ortopedia", "Sarcopenia", "Fratura de quadril"],
+  Dermatologia:   ["Isotretinoína acne", "Psoríase biologics", "Dermatite atópica dupilumab", "Melanoma imunoterapia", "Rosácea", "Vitiligo", "Carcinoma basocelular", "Alopecia androgenética"],
+  Psiquiatria:    ["ISRS depressão", "Bupropiona", "TDAH adulto", "Transtorno bipolar", "Ansiedade generalizada", "Insônia", "Cetamina depressão", "Antipsicóticos"],
+  Pediatria:      ["Vacinas rotavírus", "Aleitamento materno", "TDAH metilfenidato", "Asma infantil", "Vitamina D pediátrica", "Obesidade infantil", "Antibiótico otite", "Febre manejo"],
+  Neurologia:     ["AVC trombólise", "Alzheimer donepezil", "Epilepsia levetiracetam", "Enxaqueca preventiva", "Parkinson levodopa", "Esclerose múltipla", "Demência vascular", "Enxaqueca CGRP"],
+}
+
+const SUGESTOES_FALLBACK = [
+  "Metformina", "Vitamina D", "Estatinas", "Hipertensão arterial",
+  "Diabetes tipo 2", "Asma", "Antibióticos", "Osteoporose", "Ômega-3", "Antidepressivos ISRS",
 ]
+
+function sugestoesPorEsp(esp?: string | null): string[] {
+  if (!esp) return SUGESTOES_FALLBACK
+  const e = esp.toLowerCase()
+  if (e.includes("endocrin")) return SUGESTOES_ESP.Endocrinologia
+  if (e.includes("nutrol"))   return SUGESTOES_ESP.Nutrologia
+  if (e.includes("gineco") || e.includes("obstet")) return SUGESTOES_ESP.Ginecologia
+  if (e.includes("cardio"))   return SUGESTOES_ESP.Cardiologia
+  if (e.includes("pneumo") || e.includes("pulmo"))  return SUGESTOES_ESP.Pneumologia
+  if (e.includes("ortoped") || e.includes("traumato")) return SUGESTOES_ESP.Ortopedia
+  if (e.includes("dermato"))  return SUGESTOES_ESP.Dermatologia
+  if (e.includes("psiquiat")) return SUGESTOES_ESP.Psiquiatria
+  if (e.includes("pediatr"))  return SUGESTOES_ESP.Pediatria
+  if (e.includes("neurolog")) return SUGESTOES_ESP.Neurologia
+  return SUGESTOES_FALLBACK
+}
 
 // ─── Config maps ──────────────────────────────────────────────────────────────
 
@@ -402,15 +431,24 @@ function EstudoCard({ estudo, copied, onCopy }: {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function EstudosPage() {
-  const [search,    setSearch]    = useState("")
-  const [anos,      setAnos]      = useState<number | null>(5)
-  const [loading,   setLoading]   = useState(false)
-  const [aiResult,  setAiResult]  = useState<TemaEstudo | null>(null)
-  const [error,     setError]     = useState<string | null>(null)
-  const [copied,    setCopied]    = useState<string | null>(null)
+  const [search,         setSearch]    = useState("")
+  const [anos,           setAnos]      = useState<number | null>(5)
+  const [loading,        setLoading]   = useState(false)
+  const [aiResult,       setAiResult]  = useState<TemaEstudo | null>(null)
+  const [error,          setError]     = useState<string | null>(null)
+  const [copied,         setCopied]    = useState<string | null>(null)
+  const [especialidade,  setEspecialidade] = useState<string | null>(null)
   const [openTemas, setOpenTemas] = useState<Record<string, boolean>>(
     Object.fromEntries(DATABASE.map(t => [t.id, false]))
   )
+
+  useEffect(() => {
+    fetch("/api/perfil").then(r => r.ok ? r.json() : null)
+      .then(p => { if (p?.especialidade) setEspecialidade(p.especialidade as string) })
+      .catch(() => {})
+  }, [])
+
+  const SUGESTOES = useMemo(() => sugestoesPorEsp(especialidade), [especialidade])
 
   function copy(id: string, text: string) {
     navigator.clipboard.writeText(text).then(() => {

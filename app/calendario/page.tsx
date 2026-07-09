@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import {
   Loader2, CalendarDays, Sparkles, ChevronRight,
   Copy, Check, X, Film, LayoutGrid, BookOpen, Hash,
@@ -49,20 +49,19 @@ const ESPECIALIDADES = [
   "Medicina Geral",
 ]
 
-const TEMAS_SUGERIDOS = [
-  "Emagrecimento saudável",
-  "Resistência à insulina",
-  "Tireoide e hormônios",
-  "Longevidade e aging",
-  "Nutrição funcional",
-  "Exercício e saúde",
-  "Saúde da mulher",
-  "Prevenção de doenças",
-  "Sono e bem-estar",
-  "Suplementação",
-  "Estresse e cortisol",
-  "Check-up anual",
-]
+const TEMAS_ESP: Record<string, string[]> = {
+  "Endocrinologia e Nutrologia": ["Emagrecimento saudável", "Resistência à insulina", "Tireoide e hormônios", "Longevidade e aging", "Suplementação", "Estresse e cortisol", "Diabetes tipo 2", "Hormônios e qualidade de vida"],
+  "Cardiologia":    ["Hipertensão arterial", "Colesterol alto", "Coração saudável", "Prevenção de infarto", "Atividade física e coração", "Alimentação cardioprotetora", "Arritmia", "Insuficiência cardíaca"],
+  "Dermatologia":   ["Cuidados com a pele", "Acne: mitos e verdades", "Envelhecimento cutâneo", "Protetor solar", "Queda de cabelo", "Manchas solares", "Psoríase", "Dermatite atópica"],
+  "Ginecologia":    ["Saúde da mulher", "Menopausa e TRH", "SOP", "Endometriose", "Rastreio de câncer de mama", "HPV e prevenção", "Contracepção", "Gravidez saudável"],
+  "Ortopedia":      ["Dor nas costas", "Artrose e qualidade de vida", "Osteoporose", "Lesões esportivas", "Postura no trabalho", "Sarcopenia", "Dor no joelho", "Exercício e articulações"],
+  "Pediatria":      ["Saúde infantil", "Vacinação infantil", "Alimentação da criança", "Febre: quando ir ao médico", "Sono do bebê", "TDAH na escola", "Amamentação", "Desenvolvimento infantil"],
+  "Psiquiatria":    ["Saúde mental", "Ansiedade no dia a dia", "Burnout profissional", "Qualidade do sono", "Depressão: sinais de alerta", "TDAH no adulto", "Relacionamentos e saúde mental", "Mindfulness"],
+  "Neurologia":     ["Enxaqueca", "AVC: sinais de alerta", "Alzheimer", "Parkinson", "Epilepsia", "Saúde do cérebro", "Sono e neurologia", "Prevenção de demência"],
+  "Oncologia":      ["Prevenção do câncer", "Rastreio oncológico", "Imunoterapia", "Qualidade de vida no câncer", "Alimentação e câncer", "Diagnóstico precoce", "Câncer de pele", "Suporte ao paciente oncológico"],
+  "Medicina Geral": ["Prevenção de doenças", "Check-up anual", "Saúde e bem-estar", "Atividade física", "Sono saudável", "Alimentação equilibrada", "Saúde mental", "Vacinação adulto"],
+}
+const TEMAS_FALLBACK = ["Prevenção de doenças", "Check-up anual", "Saúde e bem-estar", "Atividade física", "Sono saudável", "Alimentação equilibrada", "Saúde mental", "Qualidade de vida", "Vacinação", "Estresse e saúde"]
 
 // Reel=roxo, Carrossel=azul, Stories=âmbar, Foto/Feed=verde
 const FORMATO_STYLE: Record<string, string> = {
@@ -365,6 +364,7 @@ export default function CalendarioPage() {
   const [ano,           setAno]           = useState(today.getFullYear())
   const [especialidade, setEspecialidade] = useState(ESPECIALIDADES[0])
   const [frequencia,    setFrequencia]    = useState(5)
+  const temasSugeridos = useMemo(() => TEMAS_ESP[especialidade] ?? TEMAS_FALLBACK, [especialidade])
   const [temasSel,      setTemasSel]      = useState<string[]>([])
   const [mixPct,        setMixPct]        = useState<MixPct>({ reel: 40, carrossel: 30, stories: 20, foto: 10 })
   const [resultado,     setResultado]     = useState<CalendarioResult | null>(null)
@@ -538,7 +538,7 @@ export default function CalendarioPage() {
               <span className="text-text-muted normal-case font-sans text-[10px]">(opcional — até 4)</span>
             </label>
             <div className="flex flex-wrap gap-2">
-              {TEMAS_SUGERIDOS.map(t => (
+              {temasSugeridos.map(t => (
                 <Pill key={t} label={t} active={temasSel.includes(t)}
                   onClick={() => {
                     if (temasSel.includes(t)) toggleTema(t)

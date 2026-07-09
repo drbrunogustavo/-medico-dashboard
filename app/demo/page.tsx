@@ -91,9 +91,9 @@ function CopiloToDemo() {
   const [sent,     setSent]     = useState(false)
 
   const SUGESTOES = [
-    "Como abordar a resistência à insulina em consulta?",
-    "Roteiro para Reel sobre diabetes tipo 2",
-    "Como falar de preço sem desvalorizar?",
+    "Como explicar um diagnóstico difícil ao paciente?",
+    "Roteiro para Reel educativo sobre minha especialidade",
+    "Como falar de preço sem desvalorizar meu trabalho?",
   ]
 
   const send = async (q?: string) => {
@@ -109,7 +109,7 @@ function CopiloToDemo() {
         body: JSON.stringify({
           mensagem: pergunta,
           contexto: "demo",
-          especialidade: "Endocrinologia",
+          especialidade: "Clínica Médica",
         }),
       })
       if (res.ok) {

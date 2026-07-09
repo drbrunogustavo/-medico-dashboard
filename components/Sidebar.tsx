@@ -14,7 +14,7 @@ import {
   LogOut, CreditCard, Settings, ShieldCheck,
   RefreshCw, Map, BarChart2, Rocket,
   Instagram, Calculator, FileBarChart,
-  FlaskConical, FileHeart, Pill,
+  FlaskConical, FileHeart, Pill, Gauge,
   BookOpen, Wand2, Store, Brain, FileSpreadsheet,
   Download, Receipt, Gift, Command,
 } from "lucide-react"
@@ -93,6 +93,7 @@ const NAV: Record<AlaId, NavItem[]> = {
     { label: "Copiloto de Consulta",    href: "/copiloto",         icon: Bot,           badge: "MAIS USADO" },
     { label: "Conversa Clínica",        href: "/conversa",         icon: MessageSquare, badge: "NOVO" },
     { label: "Gestão de Pacientes",     href: "/pacientes",        icon: Users         },
+    { label: "Radar da Clínica",        href: "/radar-clinica",    icon: Gauge, badge: "NOVO" },
     { label: "Importar Pacientes",      href: "/importar",         icon: FileSpreadsheet, badge: "MIGRAÇÃO" },
     { label: "Exportar Dados",          href: "/exportar",         icon: Download },
     { label: "Pesquisa NPS",            href: "/nps",              icon: Star          },

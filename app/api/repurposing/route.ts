@@ -3,6 +3,8 @@ import { checkAuth } from "@/lib/auth-check"
 import { AI_MODEL } from "@/lib/ai-config"
 import { getAnthropicClient } from "@/lib/anthropic"
 
+export const maxDuration = 60
+
 
 export async function POST(req: NextRequest) {
   const auth = await checkAuth()

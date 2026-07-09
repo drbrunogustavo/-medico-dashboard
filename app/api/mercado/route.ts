@@ -4,6 +4,8 @@ import { createSupabaseServerClient } from "@/lib/supabase-server"
 import { AI_MODEL } from "@/lib/ai-config"
 import { getAnthropicClient } from "@/lib/anthropic"
 
+export const maxDuration = 60
+
 
 function getWeekKey() {
   const d = new Date()

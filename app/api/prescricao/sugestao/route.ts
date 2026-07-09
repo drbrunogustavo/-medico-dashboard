@@ -3,6 +3,8 @@ import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServiceClient } from "@/lib/supabase-service"
 import { getAnthropicClient } from "@/lib/anthropic"
 
+export const maxDuration = 60
+
 interface MedicamentoSugestao {
   nome: string
   dose: string

@@ -3,6 +3,8 @@ import { checkAuth } from "@/lib/auth-check"
 import { AI_MODEL } from "@/lib/ai-config"
 import { getAnthropicClient } from "@/lib/anthropic"
 
+export const maxDuration = 60
+
 
 const SYSTEM = `Você é um copywriter médico especialista em campanhas de alto desempenho para médicos brasileiros.
 Crie conteúdo profissional, ético, persuasivo e altamente eficaz.

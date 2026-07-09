@@ -5,6 +5,8 @@ import { inserirProntuario } from "@/lib/medx"
 import { AI_MODEL } from "@/lib/ai-config"
 import { getAnthropicClient } from "@/lib/anthropic"
 
+export const maxDuration = 60
+
 const SYSTEM_BASE = `Você é o Copiloto de Consulta do PRAXIS — assistente clínico especialista em Endocrinologia, Nutrologia e Longevidade.
 Retorne APENAS JSON válido, sem markdown, sem texto antes ou depois do JSON.`
 

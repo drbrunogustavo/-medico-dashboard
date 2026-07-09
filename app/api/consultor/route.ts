@@ -4,6 +4,8 @@ import { createSupabaseServerClient } from "@/lib/supabase-server"
 import { AI_MODEL } from "@/lib/ai-config"
 import { getAnthropicClient } from "@/lib/anthropic"
 
+export const maxDuration = 60
+
 function errMsg(e: unknown) { return e instanceof Error ? e.message : String(e) }
 
 const SYSTEM = `Você é o Consultor Estratégico do PRAXIS, especializado em gestão, marketing e escalabilidade de clínicas médicas no Brasil. Você conhece profundamente o mercado médico brasileiro, estratégias de precificação, marketing digital para médicos, gestão financeira de clínicas e estratégias de crescimento. Analise os dados da clínica fornecidos e dê direcionamentos específicos, práticos e acionáveis. Nunca dê respostas genéricas. Sempre baseie suas análises nos dados reais da clínica. Responda em português brasileiro.`

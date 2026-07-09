@@ -244,11 +244,17 @@ export default function AssinantesPage() {
 
                     {/* Ações */}
                     <td className="px-4 py-3 whitespace-nowrap">
-                      {a.status === "ativo" && a.tem_stripe && (
+                      {a.status === "ativo" && (
                         <button
-                          onClick={() => cancelar(a.id, a.nome)}
-                          disabled={acting[a.id]}
-                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] border border-red-500/25 text-red-400 hover:bg-red-500/10 disabled:opacity-40 transition-all"
+                          onClick={() => a.tem_stripe ? cancelar(a.id, a.nome) : undefined}
+                          disabled={acting[a.id] || !a.tem_stripe}
+                          title={!a.tem_stripe ? "Assinante sem cobrança via Stripe ativa — cancelamento automático não disponível" : undefined}
+                          className={cn(
+                            "flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] border transition-all",
+                            a.tem_stripe
+                              ? "border-red-500/25 text-red-400 hover:bg-red-500/10 disabled:opacity-40"
+                              : "border-[--border] text-text-muted cursor-not-allowed opacity-40"
+                          )}
                         >
                           {acting[a.id]
                             ? <Loader2 className="w-3 h-3 animate-spin" />

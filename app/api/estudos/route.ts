@@ -4,6 +4,8 @@ import { getAnthropicClient } from "@/lib/anthropic"
 import { createSupabaseServiceClient } from "@/lib/supabase-service"
 import { AI_MODEL } from "@/lib/ai-config"
 
+export const maxDuration = 60
+
 const NCBI_BASE = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
 const CACHE_DAYS = 7
 
@@ -87,6 +89,18 @@ function normalizarEstudos(estudos: Estudo[]): Estudo[] {
   }))
 }
 
+function parseClaudeJSON(text: string): ResultadoEstudos {
+  // Tentativa 1: parse direto
+  try { return JSON.parse(text) as ResultadoEstudos } catch { /* continua */ }
+  // Tentativa 2: remove code fences (```json ... ``` ou ``` ... ```)
+  const stripped = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/i, "").trim()
+  try { return JSON.parse(stripped) as ResultadoEstudos } catch { /* continua */ }
+  // Tentativa 3: extrai primeiro bloco { ... } do texto
+  const match = text.match(/\{[\s\S]*\}/)
+  if (match) { try { return JSON.parse(match[0]) as ResultadoEstudos } catch { /* continua */ } }
+  throw new Error(`Claude retornou resposta não parseável como JSON: ${text.slice(0, 120)}…`)
+}
+
 async function classificarComClaude(tema: string, abstracts: string): Promise<ResultadoEstudos> {
   const anthropic = getAnthropicClient()
   const msg = await anthropic.messages.create({
@@ -141,7 +155,7 @@ Extraia SOMENTE os estudos presentes nos abstracts acima. Não acrescente nenhum
   })
 
   const text   = msg.content.find(b => b.type === "text")?.text ?? "{}"
-  const parsed = JSON.parse(text) as ResultadoEstudos
+  const parsed = parseClaudeJSON(text)
   parsed.estudos = normalizarEstudos(parsed.estudos)
   return parsed
 }
@@ -235,7 +249,7 @@ export async function POST(request: NextRequest) {
         messages: [{ role: "user", content: `Liste 4-6 estudos clínicos principais sobre: ${tema}` }],
       })
       const text = msg.content.find(b => b.type === "text")?.text ?? "{}"
-      resultado  = JSON.parse(text) as ResultadoEstudos
+      resultado  = parseClaudeJSON(text)
       resultado.fonte   = "fallback-ia"
       resultado.estudos = normalizarEstudos(resultado.estudos)
     }

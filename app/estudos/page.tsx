@@ -477,17 +477,37 @@ export default function EstudosPage() {
     setSearch(tema)
     setLoading(true); setError(null); setAiResult(null)
     try {
-      const res  = await fetch("/api/estudos", {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ tema, anos }),
-      })
-      const data = await res.json()
-      if (data.error) throw new Error(data.error)
-      setAiResult({ ...data, cor: "#a78bfa", id: `ai-${tema}` })
+      let res: Response
+      try {
+        res = await fetch("/api/estudos", {
+          method:  "POST",
+          headers: { "Content-Type": "application/json" },
+          body:    JSON.stringify({ tema, anos }),
+        })
+      } catch {
+        // fetch rejeitado antes de qualquer resposta (sem rede, DNS, CORS)
+        setError("Sem conexão com o servidor. Verifique sua internet e tente novamente.")
+        return
+      }
+      if (res.status === 504 || res.status === 408) {
+        setError("A busca demorou mais que o esperado. Tente novamente em alguns segundos.")
+        return
+      }
+      let data: Record<string, unknown>
+      try {
+        data = await res.json()
+      } catch {
+        setError(`Erro inesperado do servidor (HTTP ${res.status}). Tente novamente.`)
+        return
+      }
+      if (data.error) {
+        setError(`Erro ao buscar estudos: ${String(data.error)}`)
+        return
+      }
+      setAiResult({ ...(data as unknown as TemaEstudo), cor: "#a78bfa", id: `ai-${tema}` })
     } catch (e) {
-      console.error("[estudos] erro ao buscar estudos:", e)
-      setError("Erro ao buscar estudos. Verifique sua conexão.")
+      console.error("[estudos] erro inesperado:", e)
+      setError("Erro inesperado. Tente novamente.")
     } finally {
       setLoading(false)
     }

@@ -3,6 +3,7 @@ import { Resend } from "resend"
 import { createSupabaseServiceClient } from "@/lib/supabase-service"
 import { sendZapiForUser } from "@/lib/zapi"
 import { logAutomacao } from "@/lib/automacoes-log"
+import { getAgenda } from "@/lib/medx"
 
 const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms))
 
@@ -127,17 +128,22 @@ function buildLeadEmail(nome: string, leads: Array<{ nome: string; horas: number
 </html>`
 }
 
-// ── Email: relatório semanal ──────────────────────────────────────────────────
+// ── Email: diagnóstico executivo semanal ──────────────────────────────────────
 
 interface RelatorioMetrics {
-  nome:          string
-  leads_novos:   number
-  leads_total:   number
-  consultas_mes: number
-  nps_score:     number | null
-  pautas_total:  number
-  receita_mes:   number
-  sem_retorno?:  string[]
+  nome:                    string
+  leads_novos:             number
+  leads_total:             number
+  consultas_mes:           number
+  nps_score:               number | null
+  pautas_total:            number
+  receita_mes:             number
+  receita_ant:             number
+  sem_retorno_critico:     { nome: string; dias: number }[]
+  sem_retorno_atencao:     { nome: string; dias: number }[]
+  exames_pendentes_count:  number
+  leads_origem_principal:  { origem: string; count: number } | null
+  agenda_semana:           { total: number; dias: { data: string; count: number }[] } | null
 }
 
 function buildRelatorioEmail(m: RelatorioMetrics): string {
@@ -145,18 +151,72 @@ function buildRelatorioEmail(m: RelatorioMetrics): string {
   const primeiroNome = m.nome.replace(/^Dr\.?\s*/i, "").split(" ")[0] ?? m.nome
   const semana       = new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })
 
+  const variacao = m.receita_ant > 0
+    ? Math.round(((m.receita_mes - m.receita_ant) / m.receita_ant) * 100)
+    : null
+
   const cards = [
     { label: "Leads novos",    value: m.leads_novos.toString(),                            color: "#10b981" },
-    { label: "Total no CRM",   value: m.leads_total.toString(),                            color: "#b8976a" },
     { label: "Consultas/mês",  value: m.consultas_mes.toString(),                          color: "#b8976a" },
+    { label: "Receita do mês", value: `R$ ${m.receita_mes.toLocaleString("pt-BR")}`,       color: "#10b981" },
     { label: "NPS Score",      value: m.nps_score !== null ? m.nps_score.toString() : "—", color: npsColor  },
     { label: "Pautas salvas",  value: m.pautas_total.toString(),                           color: "#b8976a" },
-    { label: "Receita do mês", value: `R$ ${m.receita_mes.toLocaleString("pt-BR")}`,       color: "#10b981" },
+    { label: "Total no CRM",   value: m.leads_total.toString(),                            color: "#b8976a" },
   ]
+
+  const secFinanceiro = variacao !== null ? `
+<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:14px 20px;margin-bottom:16px;">
+  <p style="margin:0;font-size:13px;color:#166534;">
+    ${variacao >= 0 ? "↑" : "↓"} <strong>${Math.abs(variacao)}%</strong> vs. mês anterior
+    <span style="color:#6b7280;font-family:monospace;"> · R$ ${m.receita_ant.toLocaleString("pt-BR")}</span>
+  </p>
+</div>` : ""
+
+  const secCritico = m.sem_retorno_critico.length > 0 ? `
+<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:16px 20px;margin-bottom:16px;">
+  <p style="margin:0 0 8px;font-size:14px;font-weight:700;color:#991b1b;">⚠️ ${m.sem_retorno_critico.length} paciente${m.sem_retorno_critico.length !== 1 ? "s" : ""} sem retorno há +180 dias</p>
+  <ul style="margin:0;padding-left:16px;">
+    ${m.sem_retorno_critico.slice(0, 5).map(p => `<li style="font-size:12px;color:#b91c1c;margin-bottom:4px;">${p.nome} <span style="font-family:monospace;">(${p.dias === 9999 ? "nunca consultou" : p.dias + "d"})</span></li>`).join("")}
+    ${m.sem_retorno_critico.length > 5 ? `<li style="font-size:12px;color:#b91c1c;">… e mais ${m.sem_retorno_critico.length - 5}</li>` : ""}
+  </ul>
+</div>` : ""
+
+  const secAtencao = m.sem_retorno_atencao.length > 0 ? `
+<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:16px 20px;margin-bottom:16px;">
+  <p style="margin:0 0 8px;font-size:14px;font-weight:700;color:#92400e;">⚡ ${m.sem_retorno_atencao.length} paciente${m.sem_retorno_atencao.length !== 1 ? "s" : ""} sem retorno há 90–180 dias</p>
+  <ul style="margin:0;padding-left:16px;">
+    ${m.sem_retorno_atencao.slice(0, 5).map(p => `<li style="font-size:12px;color:#b45309;margin-bottom:4px;">${p.nome} <span style="font-family:monospace;">(${p.dias}d)</span></li>`).join("")}
+    ${m.sem_retorno_atencao.length > 5 ? `<li style="font-size:12px;color:#b45309;">… e mais ${m.sem_retorno_atencao.length - 5}</li>` : ""}
+  </ul>
+</div>` : ""
+
+  const secExames = m.exames_pendentes_count > 0 ? `
+<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:14px 20px;margin-bottom:16px;">
+  <p style="margin:0;font-size:14px;color:#1e40af;">🧪 <strong>${m.exames_pendentes_count}</strong> paciente${m.exames_pendentes_count !== 1 ? "s" : ""} com exames aguardando resultado</p>
+</div>` : ""
+
+  const secOrigem = m.leads_origem_principal ? `
+<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:14px 20px;margin-bottom:16px;">
+  <p style="margin:0;font-size:14px;color:#166534;">📊 Origem principal esta semana: <strong>${m.leads_origem_principal.origem}</strong> (${m.leads_origem_principal.count} lead${m.leads_origem_principal.count !== 1 ? "s" : ""})</p>
+</div>` : ""
+
+  const agendaDiasHtml = m.agenda_semana
+    ? m.agenda_semana.dias.map(d => {
+        const label = new Date(d.data + "T12:00:00").toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "short" })
+        return `<p style="margin:2px 0;font-size:12px;color:#7c3aed;font-family:monospace;">${label}: ${d.count} consulta${d.count !== 1 ? "s" : ""}</p>`
+      }).join("")
+    : ""
+  const secAgenda = m.agenda_semana && m.agenda_semana.total > 0 ? `
+<div style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:12px;padding:14px 20px;margin-bottom:16px;">
+  <p style="margin:0 0 8px;font-size:14px;font-weight:700;color:#6d28d9;">🗓️ ${m.agenda_semana.total} consulta${m.agenda_semana.total !== 1 ? "s" : ""} nos próximos 5 dias</p>
+  ${agendaDiasHtml}
+</div>` : ""
+
+  const hasSections = !!(secFinanceiro || secCritico || secAtencao || secExames || secOrigem || secAgenda)
 
   return `<!DOCTYPE html>
 <html lang="pt-BR">
-<head><meta charset="UTF-8"/><title>Relatório Semanal PRAXIS</title></head>
+<head><meta charset="UTF-8"/><title>Diagnóstico Executivo Semanal PRAXIS</title></head>
 <body style="margin:0;padding:0;background:#F5F0E8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#F5F0E8;padding:40px 0;">
   <tr><td align="center">
@@ -171,15 +231,15 @@ function buildRelatorioEmail(m: RelatorioMetrics): string {
         <table width="100%" cellpadding="0" cellspacing="0" style="padding:36px 40px 32px;">
           <tr><td>
             <p style="margin:0 0 4px;font-size:11px;font-family:monospace;color:#9a8a7a;letter-spacing:2px;text-transform:uppercase;">
-              RELATÓRIO SEMANAL · ${semana}
+              DIAGNÓSTICO EXECUTIVO · ${semana}
             </p>
             <h1 style="margin:0 0 8px;font-size:24px;font-weight:700;color:#0D1B2A;">
               Resumo da semana, Dr. ${primeiroNome}
             </h1>
             <p style="margin:0 0 32px;font-size:14px;color:#6a5a4a;line-height:1.6;">
-              Aqui está o resumo do desempenho da sua clínica nos últimos 7 dias.
+              Desempenho da sua clínica nos últimos 7 dias.
             </p>
-            <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 32px;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
               ${cards.reduce<string[]>((rows, card, i) => {
                 if (i % 2 === 0) rows.push(`<tr>`)
                 rows.push(`<td width="50%" style="padding:6px;"><div style="background:#F8F5F0;border-radius:12px;border:1px solid #e8ddd0;padding:18px 20px;"><div style="font-size:22px;font-weight:700;color:${card.color};margin-bottom:4px;">${card.value}</div><div style="font-size:11px;color:#9a8a7a;font-family:monospace;text-transform:uppercase;letter-spacing:1px;">${card.label}</div></div></td>`)
@@ -188,15 +248,14 @@ function buildRelatorioEmail(m: RelatorioMetrics): string {
                 return rows
               }, []).join("")}
             </table>
-            ${m.sem_retorno && m.sem_retorno.length > 0 ? `
-            <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:16px 20px;margin-bottom:24px;">
-              <p style="margin:0 0 8px;font-size:14px;font-weight:700;color:#991b1b;">⚠️ ${m.sem_retorno.length} paciente${m.sem_retorno.length !== 1 ? "s" : ""} sem retorno nos últimos 180 dias</p>
-              <ul style="margin:0;padding-left:16px;">
-                ${m.sem_retorno.slice(0, 5).map(n => `<li style="font-size:12px;color:#b91c1c;margin-bottom:4px;">${n}</li>`).join("")}
-                ${m.sem_retorno.length > 5 ? `<li style="font-size:12px;color:#b91c1c;">… e mais ${m.sem_retorno.length - 5}</li>` : ""}
-              </ul>
-            </div>` : ""}
-            <div style="border-top:1px solid #e8ddd0;margin:0 0 28px;"></div>
+            ${hasSections ? `<div style="border-top:1px solid #e8ddd0;margin:0 0 20px;"></div>` : ""}
+            ${secFinanceiro}
+            ${secCritico}
+            ${secAtencao}
+            ${secExames}
+            ${secOrigem}
+            ${secAgenda}
+            <div style="border-top:1px solid #e8ddd0;margin:${hasSections ? "8" : "0"}px 0 28px;"></div>
             <table cellpadding="0" cellspacing="0">
               <tr><td style="border-radius:12px;overflow:hidden;">
                 <a href="${APP_URL}/dashboard"
@@ -210,7 +269,7 @@ function buildRelatorioEmail(m: RelatorioMetrics): string {
       </td></tr>
       <tr><td align="center" style="padding:24px 0;">
         <p style="margin:0;font-size:11px;color:#9a8a7a;">
-          Você recebe este relatório toda segunda-feira. Dúvidas?
+          Você recebe este diagnóstico toda segunda-feira. Dúvidas?
           <a href="mailto:${REPLY_TO}" style="color:#b8976a;text-decoration:none;">${REPLY_TO}</a>
         </p>
       </td></tr>
@@ -426,37 +485,161 @@ export async function GET(req: NextRequest) {
     return (pacientes ?? []).map(p => p.nome as string).filter(n => !comConsulta.has(n.toLowerCase().trim()))
   }
 
+  interface RetornoData {
+    critico:                { nome: string; dias: number }[]
+    atencao:                { nome: string; dias: number }[]
+    exames_pendentes_count: number
+    consultas_mes:          number
+  }
+
+  async function calcRetornoEExames(userId: string): Promise<RetornoData> {
+    const agora = Date.now()
+    const som   = new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime()
+
+    const [{ data: historico }, { data: pacientes }] = await Promise.all([
+      supabase
+        .from("copiloto_historico")
+        .select("paciente_nome, resultado, created_at")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false }),
+      supabase.from("pacientes_local").select("nome").eq("user_id", userId),
+    ])
+
+    const latestDateByName = new Map<string, string>()
+    const latestHistByName = new Map<string, { resultado: unknown }>()
+    let consultas_mes = 0
+
+    for (const h of (historico ?? [])) {
+      const k = (h.paciente_nome as string).toLowerCase().trim()
+      if (!latestDateByName.has(k)) {
+        latestDateByName.set(k, h.created_at as string)
+        latestHistByName.set(k, { resultado: h.resultado })
+      }
+      if (new Date(h.created_at as string).getTime() >= som) consultas_mes++
+    }
+
+    const critico: { nome: string; dias: number }[] = []
+    const atencao: { nome: string; dias: number }[] = []
+
+    for (const p of (pacientes ?? [])) {
+      const k     = (p.nome as string).toLowerCase().trim()
+      const ultima = latestDateByName.get(k) ?? null
+      const dias   = ultima ? Math.floor((agora - new Date(ultima).getTime()) / 86_400_000) : 9999
+      if (dias > 180)      critico.push({ nome: p.nome as string, dias })
+      else if (dias > 90)  atencao.push({ nome: p.nome as string, dias })
+    }
+
+    critico.sort((a, b) => b.dias - a.dias)
+    atencao.sort((a, b) => b.dias - a.dias)
+
+    let exames_pendentes_count = 0
+    for (const [, entry] of Array.from(latestHistByName.entries())) {
+      const res    = entry.resultado as Record<string, unknown> | null
+      const exames = (res?.exames_solicitados ?? []) as unknown[]
+      if (Array.isArray(exames) && exames.length > 0) exames_pendentes_count++
+    }
+
+    return { critico, atencao, exames_pendentes_count, consultas_mes }
+  }
+
   async function runRelatorioSemanal() {
     if (new Date().getDay() !== 1) return null
     const { data: perfis } = await supabase.from("perfis").select("user_id, nome")
+
+    const now      = new Date()
+    const nowIso   = now.toISOString()
+    const som      = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+    const prevStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString()
+    const prevEnd   = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59).toISOString()
+    const semanaAtras = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+
+    // próximos 5 dias (seg–sex) para agenda MedX
+    const temMedx  = !!(process.env.MEDX_URL && process.env.MEDX_INTEGRATION_TOKEN)
+    const hojeStr  = now.toISOString().split("T")[0]
+    const sexStr   = new Date(now.getTime() + 4 * 86_400_000).toISOString().split("T")[0]
+
     const resultados = await Promise.allSettled(
       (perfis ?? []).map(async (perfil) => {
-        const { data: authUser } = await supabase.auth.admin.getUserById(perfil.user_id as string)
+        const userId = perfil.user_id as string
+        const { data: authUser } = await supabase.auth.admin.getUserById(userId)
         const email = authUser?.user?.email
-        if (!email) throw new Error(`sem email — user ${perfil.user_id}`)
-        const [leadsRes, pautasRes, semRetorno] = await Promise.all([
-          supabase.from("crm_leads").select("id, created_at").eq("user_id", perfil.user_id),
-          supabase.from("pautas").select("id").eq("user_id", perfil.user_id),
-          calcSemRetorno(perfil.user_id as string),
-        ])
-        const semanaAtras = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-        const leadsData   = leadsRes.data ?? []
+        if (!email) throw new Error(`sem email — user ${userId}`)
 
-        const metrics: RelatorioMetrics = {
-          nome:          (perfil.nome as string) ?? "Médico",
-          leads_novos:   leadsData.filter(l => new Date(l.created_at) >= semanaAtras).length,
-          leads_total:   leadsData.length,
-          consultas_mes: 0,
-          nps_score:     null,
-          pautas_total:  pautasRes.data?.length ?? 0,
-          receita_mes:   0,
-          sem_retorno:   semRetorno,
+        const [leadsRes, pautasRes, retornoData, lancMesRes, lancAntRes, npsRes] = await Promise.all([
+          supabase.from("crm_leads").select("id, created_at, origem").eq("user_id", userId),
+          supabase.from("pautas").select("id").eq("user_id", userId),
+          calcRetornoEExames(userId),
+          supabase.from("financeiro_lancamentos").select("valor").eq("user_id", userId).eq("tipo", "receita").gte("data", som).lte("data", nowIso),
+          supabase.from("financeiro_lancamentos").select("valor").eq("user_id", userId).eq("tipo", "receita").gte("data", prevStart).lte("data", prevEnd),
+          supabase.from("nps_respostas").select("nota").eq("user_id", userId).order("created_at", { ascending: false }).limit(100),
+        ])
+
+        const leadsData  = leadsRes.data ?? []
+        const leadsNovos = leadsData.filter(l => new Date(l.created_at as string) >= semanaAtras)
+
+        const receita_mes = (lancMesRes.data ?? []).reduce((s, l) => s + ((l.valor as number) ?? 0), 0)
+        const receita_ant = (lancAntRes.data ?? []).reduce((s, l) => s + ((l.valor as number) ?? 0), 0)
+
+        const npsData = (npsRes.data ?? []) as { nota: number }[]
+        const nps_score = npsData.length === 0 ? null : (() => {
+          const prom = npsData.filter(r => r.nota >= 9).length
+          const det  = npsData.filter(r => r.nota <= 6).length
+          return Math.round((prom - det) / npsData.length * 100)
+        })()
+
+        const origensCount: Record<string, number> = {}
+        for (const l of leadsNovos) {
+          const o = (l.origem as string | null) ?? "Outro"
+          origensCount[o] = (origensCount[o] ?? 0) + 1
         }
+        const leads_origem_principal = Object.keys(origensCount).length > 0
+          ? Object.entries(origensCount)
+              .map(([origem, count]) => ({ origem, count }))
+              .sort((a, b) => b.count - a.count)[0]
+          : null
+
+        let agenda_semana: { total: number; dias: { data: string; count: number }[] } | null = null
+        if (temMedx) {
+          try {
+            const raw = await getAgenda(hojeStr, sexStr)
+            if (Array.isArray(raw)) {
+              const byDay: Record<string, number> = {}
+              for (const appt of raw as Record<string, unknown>[]) {
+                const d = String(appt.data ?? appt.dataInicio ?? appt.horaInicio ?? "").slice(0, 10)
+                if (d) byDay[d] = (byDay[d] ?? 0) + 1
+              }
+              agenda_semana = {
+                total: raw.length,
+                dias: Object.entries(byDay)
+                  .sort(([a], [b]) => a.localeCompare(b))
+                  .map(([data, count]) => ({ data, count })),
+              }
+            }
+          } catch { /* MedX indisponível — omitir silenciosamente */ }
+        }
+
         const nome         = (perfil.nome as string) ?? "Médico"
         const primeiroNome = nome.replace(/^Dr\.?\s*/i, "").split(" ")[0] ?? nome
+
+        const metrics: RelatorioMetrics = {
+          nome,
+          leads_novos:             leadsNovos.length,
+          leads_total:             leadsData.length,
+          consultas_mes:           retornoData.consultas_mes,
+          nps_score,
+          pautas_total:            pautasRes.data?.length ?? 0,
+          receita_mes,
+          receita_ant,
+          sem_retorno_critico:     retornoData.critico,
+          sem_retorno_atencao:     retornoData.atencao,
+          exames_pendentes_count:  retornoData.exames_pendentes_count,
+          leads_origem_principal,
+          agenda_semana,
+        }
+
         const { error } = await resend.emails.send({
           from: FROM_EMAIL, to: [email], replyTo: REPLY_TO,
-          subject: `📊 Seu relatório semanal PRAXIS, Dr. ${primeiroNome}`,
+          subject: `📊 Seu diagnóstico executivo semanal, Dr. ${primeiroNome}`,
           html: buildRelatorioEmail(metrics),
         })
         if (error) throw new Error(`Falha para ${email}: ${error.message}`)

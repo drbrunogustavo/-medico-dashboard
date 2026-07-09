@@ -5,6 +5,15 @@ import { getAnthropicClient } from "@/lib/anthropic"
 
 export const maxDuration = 60
 
+function parseAIJson(text: string): unknown {
+  try { return JSON.parse(text) } catch { /* continua */ }
+  const stripped = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/i, "").trim()
+  try { return JSON.parse(stripped) } catch { /* continua */ }
+  const match = stripped.match(/\{[\s\S]*\}/)
+  if (match) { try { return JSON.parse(match[0]) } catch { /* continua */ } }
+  throw new Error(`IA retornou resposta não parseável como JSON: ${text.slice(0, 120)}…`)
+}
+
 export async function POST(request: NextRequest) {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
@@ -61,8 +70,7 @@ Identifique os 3 fatores com maior score (maior bloqueio), explique o mecanismo 
     })
 
     const text = data.content?.[0]?.type === 'text' ? data.content[0].text : '{}'
-    const parsed = JSON.parse(text)
-    return NextResponse.json(parsed)
+    return NextResponse.json(parseAIJson(text))
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 })
   }

@@ -2,6 +2,17 @@ import { NextRequest, NextResponse } from 'next/server'
 import { checkAuth } from '@/lib/auth-check'
 import { AI_MODEL } from "@/lib/ai-config"
 
+export const maxDuration = 60
+
+function parseAIJson(text: string): unknown {
+  try { return JSON.parse(text) } catch { /* continua */ }
+  const stripped = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/i, "").trim()
+  try { return JSON.parse(stripped) } catch { /* continua */ }
+  const match = stripped.match(/\{[\s\S]*\}/)
+  if (match) { try { return JSON.parse(match[0]) } catch { /* continua */ } }
+  throw new Error(`IA retornou resposta não parseável como JSON: ${text.slice(0, 120)}…`)
+}
+
 export async function POST(request: NextRequest) {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
@@ -46,13 +57,8 @@ Retorne apenas o JSON puro.`,
     }
     if (data.error) throw new Error(data.error.message)
 
-    const text  = data.content?.[0]?.text ?? '{}'
-    const clean = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
-    const start = clean.indexOf('{')
-    const end   = clean.lastIndexOf('}')
-    const json  = start >= 0 && end >= 0 ? clean.slice(start, end + 1) : '{}'
-
-    return NextResponse.json(JSON.parse(json))
+    const text = data.content?.[0]?.text ?? '{}'
+    return NextResponse.json(parseAIJson(text))
   } catch (e) {
     console.error('[raio-x]', e)
     return NextResponse.json({ error: String(e) }, { status: 500 })

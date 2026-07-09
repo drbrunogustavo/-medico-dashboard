@@ -5,6 +5,15 @@ import { getAnthropicClient } from "@/lib/anthropic"
 
 export const maxDuration = 60
 
+function parseAIJson<T>(text: string): T {
+  try { return JSON.parse(text) as T } catch { /* continua */ }
+  const stripped = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/i, "").trim()
+  try { return JSON.parse(stripped) as T } catch { /* continua */ }
+  const match = stripped.match(/\{[\s\S]*\}/)
+  if (match) { try { return JSON.parse(match[0]) as T } catch { /* continua */ } }
+  throw new Error(`IA retornou resposta não parseável como JSON: ${text.slice(0, 120)}…`)
+}
+
 interface MedicamentoSugestao {
   nome: string
   dose: string
@@ -105,9 +114,9 @@ Responda APENAS com um JSON válido, sem markdown, no seguinte formato:
     const text = message.content.find(b => b.type === "text")?.text ?? ""
     let resultado: ResultadoSugestao
     try {
-      resultado = JSON.parse(text) as ResultadoSugestao
+      resultado = parseAIJson<ResultadoSugestao>(text)
     } catch {
-      return NextResponse.json({ error: "IA retornou formato inválido", raw: text }, { status: 500 })
+      return NextResponse.json({ error: "IA retornou formato inválido", raw: text.slice(0, 200) }, { status: 500 })
     }
 
     const { data: saved, error: saveErr } = await supabase

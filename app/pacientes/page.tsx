@@ -694,7 +694,7 @@ export default function PacientesPage() {
                         <button
                           onClick={e => deletePaciente(pac, e)}
                           disabled={deletingId === getPacId(pac)}
-                          className="w-7 h-7 flex items-center justify-center rounded-lg text-text-muted hover:text-red-400 hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100"
+                          className="w-7 h-7 flex items-center justify-center rounded-lg text-text-muted hover:text-red-400 hover:bg-red-500/10 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100"
                         >
                           {deletingId === getPacId(pac)
                             ? <Loader2 className="w-3.5 h-3.5 animate-spin" />

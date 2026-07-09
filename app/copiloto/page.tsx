@@ -926,7 +926,7 @@ function CopilotoContent() {
                       <button
                         onClick={() => deleteHistorico(entry.id)}
                         disabled={deletingId === entry.id}
-                        className="w-6 h-6 rounded flex items-center justify-center text-text-muted hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0 mt-0.5"
+                        className="w-6 h-6 rounded flex items-center justify-center text-text-muted hover:text-red-400 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all flex-shrink-0 mt-0.5"
                         aria-label="Excluir"
                       >
                         {deletingId === entry.id
@@ -969,7 +969,7 @@ function CopilotoContent() {
                   <button
                     onClick={() => deleteHistorico(entry.id)}
                     disabled={deletingId === entry.id}
-                    className="w-6 h-6 rounded flex items-center justify-center text-text-muted hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0 mt-0.5"
+                    className="w-6 h-6 rounded flex items-center justify-center text-text-muted hover:text-red-400 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all flex-shrink-0 mt-0.5"
                     aria-label="Excluir"
                   >
                     {deletingId === entry.id

@@ -847,7 +847,7 @@ export default function PacienteDashboard() {
                     <span className="text-[12px] text-text-secondary">{med}</span>
                     <button
                       onClick={() => removeMedicamento(i)}
-                      className="w-5 h-5 rounded flex items-center justify-center text-text-muted hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
+                      className="w-5 h-5 rounded flex items-center justify-center text-text-muted hover:text-red-400 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all"
                     >
                       <X className="w-3 h-3" />
                     </button>
@@ -931,7 +931,7 @@ export default function PacienteDashboard() {
                           </span>
                           <button
                             onClick={() => deleteExame(ex.id)}
-                            className="w-7 h-7 rounded flex items-center justify-center text-text-muted hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
+                            className="w-7 h-7 rounded flex items-center justify-center text-text-muted hover:text-red-400 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>

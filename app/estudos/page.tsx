@@ -512,19 +512,39 @@ export default function EstudosPage() {
 
         {/* Search */}
         <div className="space-y-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--text-muted)" }} />
-            <input
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && !hasMatch && search.trim() && buscarComIA(search.trim())}
-              placeholder="Buscar estudo, medicamento ou tema… (Enter para buscar com IA)"
-              className="w-full pl-9 pr-4 py-2.5 rounded-xl text-[13px] outline-none"
-              style={{ background: "var(--card)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
-              onFocus={e => (e.currentTarget.style.borderColor = "var(--accent)")}
-              onBlur={e => (e.currentTarget.style.borderColor = "var(--border)")}
-            />
-          </div>
+          <form
+            onSubmit={e => {
+              e.preventDefault()
+              if (search.trim()) buscarComIA(search.trim())
+            }}
+          >
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--text-muted)" }} />
+              <input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Buscar estudo, medicamento ou tema…"
+                className="w-full pl-9 py-2.5 rounded-xl text-[13px] outline-none"
+                style={{
+                  paddingRight: search.trim() ? "2.75rem" : "1rem",
+                  background: "var(--card)",
+                  border: "1px solid var(--border)",
+                  color: "var(--text-primary)",
+                }}
+                onFocus={e => (e.currentTarget.style.borderColor = "var(--accent)")}
+                onBlur={e => (e.currentTarget.style.borderColor = "var(--border)")}
+              />
+              {search.trim() && (
+                <button
+                  type="submit"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center rounded-lg transition-all"
+                  style={{ background: "var(--accent-dim)", border: "1px solid var(--accent-border)" }}
+                >
+                  <Zap className="w-3.5 h-3.5" style={{ color: "var(--accent)" }} />
+                </button>
+              )}
+            </div>
+          </form>
 
           {/* Quick pills */}
           <div className="flex flex-wrap gap-2">

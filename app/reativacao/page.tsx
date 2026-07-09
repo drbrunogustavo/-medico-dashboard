@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import {
   MessageCircle, Plus, Loader2, Copy, Check, Users, X,
   Sparkles, Download, AlertCircle, FileSpreadsheet, Upload,
@@ -404,6 +404,7 @@ export default function ReativacaoPage() {
   const [importResult,         setImportResult]         = useState<{ importados: number; sem_telefone: number } | null>(null)
   const [importErro,           setImportErro]           = useState<string | null>(null)
   const [perfil,               setPerfil]               = useState<Perfil | null>(null)
+  const [filtroInatividade,    setFiltroInatividade]    = useState<"todos" | "30-60" | "60-90" | "90+">("todos")
 
   useEffect(() => {
     Promise.all([
@@ -465,6 +466,17 @@ export default function ReativacaoPage() {
       setGerandoMsg(null)
     }
   }
+
+  const pacientesFiltrados = useMemo(() => {
+    if (filtroInatividade === "todos") return pacientes
+    return pacientes.filter(p => {
+      const d = diasInativos(p.ultimo_contato)
+      if (filtroInatividade === "30-60") return d >= 30 && d < 60
+      if (filtroInatividade === "60-90") return d >= 60 && d < 90
+      if (filtroInatividade === "90+")   return d >= 90
+      return true
+    })
+  }, [pacientes, filtroInatividade])
 
   const pacSelecionados = pacientes.filter(p => selecionados.includes(p.id))
 
@@ -588,27 +600,48 @@ export default function ReativacaoPage() {
           </div>
         )}
 
-        {pacientes.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {[
-              { label: "+90 dias",   count: pacientes.filter(p => diasInativos(p.ultimo_contato) >= 90).length,                                              color: "text-neutral-400" },
-              { label: "60-90 dias", count: pacientes.filter(p => { const d = diasInativos(p.ultimo_contato); return d >= 60 && d < 90 }).length,             color: "text-red-400"     },
-              { label: "30-60 dias", count: pacientes.filter(p => { const d = diasInativos(p.ultimo_contato); return d >= 30 && d < 60 }).length,             color: "text-amber-400"   },
-            ].map(s => (
-              <div key={s.label} className="rounded-xl border border-[--border] bg-[--surface] p-4 text-center">
-                <p className={cn("text-xl font-bold", s.color)}>{s.count}</p>
-                <p className="text-[10px] text-text-muted font-mono mt-0.5">{s.label}</p>
-              </div>
-            ))}
-          </div>
-        )}
+        {pacientes.length > 0 && (() => {
+          const PILLS: { key: "todos" | "30-60" | "60-90" | "90+"; label: string; color: string; activeCls: string; count: number }[] = [
+            { key: "todos",  label: "Todos",     color: "text-accent",        activeCls: "bg-accent-dim border-accent-border text-accent",              count: pacientes.length },
+            { key: "30-60",  label: "30–60 dias", color: "text-amber-400",     activeCls: "bg-amber-500/10 border-amber-500/30 text-amber-400",           count: pacientes.filter(p => { const d = diasInativos(p.ultimo_contato); return d >= 30 && d < 60 }).length },
+            { key: "60-90",  label: "60–90 dias", color: "text-red-400",       activeCls: "bg-red-500/10 border-red-500/30 text-red-400",                 count: pacientes.filter(p => { const d = diasInativos(p.ultimo_contato); return d >= 60 && d < 90 }).length },
+            { key: "90+",    label: "+90 dias",   color: "text-neutral-400",   activeCls: "bg-neutral-500/10 border-neutral-500/30 text-neutral-300",      count: pacientes.filter(p => diasInativos(p.ultimo_contato) >= 90).length },
+          ]
+          return (
+            <div className="flex flex-wrap gap-2">
+              {PILLS.map(pill => {
+                const ativo = filtroInatividade === pill.key
+                return (
+                  <button
+                    key={pill.key}
+                    onClick={() => { setFiltroInatividade(pill.key); setSelecionados([]) }}
+                    className={cn(
+                      "flex items-center gap-2 px-3 py-2 rounded-xl border text-[11px] font-mono font-semibold transition-all",
+                      ativo
+                        ? pill.activeCls
+                        : "border-[--border] text-text-muted hover:text-text-secondary hover:border-[--border-hover]"
+                    )}
+                  >
+                    <span>{pill.label}</span>
+                    <span className={cn(
+                      "text-[10px] px-1.5 py-0.5 rounded-full border font-bold tabular-nums",
+                      ativo ? pill.activeCls : "border-[--border] text-text-muted"
+                    )}>
+                      {pill.count}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          )
+        })()}
 
-        {pacientes.length > 0 && (
+        {pacientesFiltrados.length > 0 && (
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
-              checked={selecionados.length === pacientes.length}
-              onChange={e => setSelecionados(e.target.checked ? pacientes.map(p => p.id) : [])}
+              checked={selecionados.length > 0 && pacientesFiltrados.every(p => selecionados.includes(p.id))}
+              onChange={e => setSelecionados(e.target.checked ? pacientesFiltrados.map(p => p.id) : [])}
               className="accent-accent"
             />
             <span className="text-xs text-text-muted">
@@ -617,7 +650,16 @@ export default function ReativacaoPage() {
           </div>
         )}
 
-        {pacientes.map(p => {
+        {pacientesFiltrados.length === 0 && pacientes.length > 0 && (
+          <div className="flex flex-col items-center justify-center py-10 gap-2">
+            <p className="text-sm text-text-muted">Nenhum paciente nesta faixa de inatividade.</p>
+            <button onClick={() => setFiltroInatividade("todos")} className="text-xs text-accent hover:underline">
+              Ver todos
+            </button>
+          </div>
+        )}
+
+        {pacientesFiltrados.map(p => {
           const dias        = diasInativos(p.ultimo_contato)
           const badge       = urgenciaBadge(dias)
           const selecionado = selecionados.includes(p.id)

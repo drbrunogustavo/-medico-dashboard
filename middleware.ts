@@ -60,6 +60,13 @@ export async function middleware(request: NextRequest) {
   }
 
   if (!session) {
+    // RISK NOTE (COMMIT 66): a transient network failure during Supabase token
+    // refresh can cause getSession() to return null even when the user's refresh
+    // token is still valid, triggering a spurious redirect to /login. A single
+    // retry (e.g. re-call getSession after ~300ms) would reduce false logouts,
+    // but adds latency on every unauthenticated request and needs careful testing
+    // with the SSR cookie-refresh flow. Revisit if logout reports persist after
+    // the <Link> navigation fix applied to client components.
     return NextResponse.redirect(new URL("/login", request.url))
   }
 

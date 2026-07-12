@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useState, useEffect, useCallback, useRef } from "react"
 import { TopBar } from "@/components/TopBar"
 import { Toast } from "@/components/Toast"
@@ -629,20 +630,20 @@ function LeadDetailModal({
                 WhatsApp
               </a>
             )}
-            <a
+            <Link
               href="/agenda"
               className="flex items-center justify-center gap-1.5 py-2 rounded-lg bg-blue-500/10 border border-blue-500/25 text-blue-400 text-[12px] font-medium hover:bg-blue-500/15 transition-colors"
             >
               <CalendarDays className="w-3.5 h-3.5" />
               Agendar
-            </a>
-            <a
+            </Link>
+            <Link
               href={`/nutricao-leads?lead_id=${lead.id}`}
               className="flex items-center justify-center gap-1.5 py-2 rounded-lg bg-purple-500/10 border border-purple-500/25 text-purple-400 text-[12px] font-medium hover:bg-purple-500/15 transition-colors"
             >
               <Sparkles className="w-3.5 h-3.5" />
               Nutrição
-            </a>
+            </Link>
             <button
               onClick={onNurturing}
               className={cn(

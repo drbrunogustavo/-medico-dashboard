@@ -60,7 +60,8 @@ Retorne APENAS o JSON abaixo, sem markdown:
   let caso: Partial<CasoClinico> = {}
   try {
     const cleaned = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim()
-    caso = JSON.parse(cleaned) as Partial<CasoClinico>
+    const s = cleaned.indexOf("{"); const e = cleaned.lastIndexOf("}")
+    caso = JSON.parse(s !== -1 && e > s ? cleaned.slice(s, e + 1) : cleaned) as Partial<CasoClinico>
   } catch { /* retorna parcial */ }
 
   return NextResponse.json({ caso })

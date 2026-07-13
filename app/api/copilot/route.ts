@@ -73,7 +73,9 @@ Retorne APENAS o JSON, sem markdown.`,
   let result: CopilotResult = { action: "suggest", message: "Não entendi. Tente: 'abrir agenda', 'ver pacientes', 'ir para finanças'." }
 
   try {
-    const parsed = JSON.parse(raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim()) as CopilotResult
+    const stripped = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim()
+    const s = stripped.indexOf("{"); const e = stripped.lastIndexOf("}")
+    const parsed = JSON.parse(s !== -1 && e > s ? stripped.slice(s, e + 1) : stripped) as CopilotResult
     if (parsed.action === "navigate" && parsed.route) {
       const base = parsed.route.split("?")[0]
       if (!ROTAS[base]) {

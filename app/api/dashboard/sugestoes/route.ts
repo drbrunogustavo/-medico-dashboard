@@ -57,7 +57,9 @@ Regras: titulo ≤ 8 palavras, descricao ≤ 18 palavras, href deve ser uma das 
   const raw = msg.content.find(b => b.type === "text")?.text ?? "[]"
   let sugestoes: SugestaoIA[] = []
   try {
-    const parsed = JSON.parse(raw)
+    const stripped = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim()
+    const s = stripped.indexOf("["); const e = stripped.lastIndexOf("]")
+    const parsed = JSON.parse(s !== -1 && e > s ? stripped.slice(s, e + 1) : stripped)
     sugestoes = (Array.isArray(parsed) ? parsed : []).slice(0, 2).filter(
       (s: unknown): s is SugestaoIA =>
         typeof s === "object" && s !== null &&

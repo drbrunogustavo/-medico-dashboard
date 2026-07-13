@@ -55,7 +55,8 @@ Regras:
   let exames: ExameExtraido[] = []
   try {
     const cleaned = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim()
-    exames = JSON.parse(cleaned)
+    const s = cleaned.indexOf("["); const e = cleaned.lastIndexOf("]")
+    exames = JSON.parse(s !== -1 && e > s ? cleaned.slice(s, e + 1) : cleaned)
   } catch { /* retorna vazio */ }
 
   return NextResponse.json({

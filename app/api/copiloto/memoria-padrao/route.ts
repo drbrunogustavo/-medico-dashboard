@@ -92,7 +92,8 @@ Regras:
   let chips: Chip[] = []
   try {
     const cleaned = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim()
-    const parsed  = JSON.parse(cleaned) as { chips?: Chip[] }
+    const s = cleaned.indexOf("{"); const e = cleaned.lastIndexOf("}")
+    const parsed  = JSON.parse(s !== -1 && e > s ? cleaned.slice(s, e + 1) : cleaned) as { chips?: Chip[] }
     chips = (parsed.chips ?? []).filter(
       (c): c is Chip =>
         ["exame","medicamento","diagnostico"].includes(c.tipo) &&

@@ -34,7 +34,11 @@ function parseSignedRequest(signedRequest: string, appSecret: string): Record<st
   const expected = crypto.createHmac("sha256", appSecret).update(encodedPayload).digest()
   if (!crypto.timingSafeEqual(sig, expected)) return null
 
-  return JSON.parse(payload) as Record<string, unknown>
+  try {
+    return JSON.parse(payload) as Record<string, unknown>
+  } catch {
+    return null
+  }
 }
 
 export async function POST(req: NextRequest) {

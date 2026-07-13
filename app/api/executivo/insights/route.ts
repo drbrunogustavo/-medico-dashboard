@@ -61,7 +61,8 @@ Retorne APENAS JSON:
   let insights: Insight[] = []
   try {
     const cleaned = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim()
-    const parsed  = JSON.parse(cleaned)
+    const s = cleaned.indexOf("["); const e = cleaned.lastIndexOf("]")
+    const parsed  = JSON.parse(s !== -1 && e > s ? cleaned.slice(s, e + 1) : cleaned)
     insights = (Array.isArray(parsed) ? parsed : []).slice(0, 4).filter(
       (s: unknown): s is Insight =>
         typeof s === "object" && s !== null &&

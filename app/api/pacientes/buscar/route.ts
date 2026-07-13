@@ -62,7 +62,9 @@ Retorne JSON:
   const rawText = planMsg.content.find(b => b.type === "text")?.text ?? "{}"
   let plan: SearchPlan
   try {
-    plan = JSON.parse(rawText) as SearchPlan
+    const stripped = rawText.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim()
+    const s = stripped.indexOf("{"); const e = stripped.lastIndexOf("}")
+    plan = JSON.parse(s !== -1 && e > s ? stripped.slice(s, e + 1) : stripped) as SearchPlan
   } catch {
     return NextResponse.json({ patients: [], explanation: "Não foi possível interpretar a busca." })
   }

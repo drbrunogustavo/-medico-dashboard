@@ -93,6 +93,7 @@ Retorne JSON:
         .select("id, nome")
         .eq("user_id", auth.userId)
         .in("nome", nomes)
+        .limit(100)
       pacs?.forEach(p => {
         patientIds.add(p.id)
         matchContext[p.id] = matchContext[p.id] ?? `Mencionado em consulta: "${term}"`

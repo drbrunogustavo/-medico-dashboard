@@ -22,6 +22,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 })
   }
 
+  if (!process.env.DOCTOR_USER_ID) {
+    console.error("[leads/webhook] DOCTOR_USER_ID não configurado")
+    return NextResponse.json({ ok: false, error: "configuração ausente" })
+  }
+
   const rawText = await req.text()
   let fields: Fields
   try {

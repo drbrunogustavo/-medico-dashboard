@@ -413,10 +413,12 @@ export default function LandingPage() {
   const [depoimentos,      setDepoimentos]      = useState<{id:string;nome:string;especialidade:string;cidade?:string;estado?:string;depoimento:string;resultado_destaque?:string}[]>([])
 
   useEffect(() => {
-    fetch("/api/depoimentos/publicos")
+    const ctrl = new AbortController()
+    fetch("/api/depoimentos/publicos", { signal: ctrl.signal })
       .then(r => r.json())
       .then((d: unknown) => { if (Array.isArray(d)) setDepoimentos(d) })
-      .catch(e => { console.error("[landing] erro ao carregar depoimentos:", e); return null })
+      .catch(e => { if (e instanceof Error && e.name !== "AbortError") console.error("[landing] erro ao carregar depoimentos:", e) })
+    return () => ctrl.abort()
   }, [])
 
   return (

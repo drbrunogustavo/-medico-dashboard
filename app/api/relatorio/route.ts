@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
   const totalDespesas  = despesas.reduce((s, f) => s + (f.valor || 0), 0)
   const lucroLiquido   = totalReceitas - totalDespesas
 
-  const npsNotas    = nps.map(n => n.nota).filter(Boolean) as number[]
+  const npsNotas    = nps.map(n => n.nota).filter(n => n != null) as number[]
   const npsMedia    = npsNotas.length > 0 ? (npsNotas.reduce((a, b) => a + b, 0) / npsNotas.length).toFixed(1) : "N/A"
   const npsPromotores   = npsNotas.filter(n => n >= 9).length
   const npsDetratores   = npsNotas.filter(n => n <= 6).length

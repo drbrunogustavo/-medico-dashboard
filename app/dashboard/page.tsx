@@ -12,7 +12,7 @@ import {
   BookOpen, Trophy, Loader2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { usePerfil } from "@/hooks/usePerfil"
+import { useAppContext } from "@/components/AppProvider"
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -327,7 +327,9 @@ export default function DashboardPage() {
   const [semRetornoCount,  setSemRetornoCount]  = useState<number | null>(null)
   const [greet]                             = useState(greeting)
   const [dateStr]                           = useState(fmtDate)
-  const { perfil, loading: perfilLoading } = usePerfil()
+  const ctx           = useAppContext()
+  const perfil        = ctx?.perfil  ?? null
+  const perfilLoading = ctx?.loading ?? true
   const router       = useRouter()
   const searchParams = useSearchParams()
   const pagamentoSucesso = searchParams.get("pagamento") === "sucesso"

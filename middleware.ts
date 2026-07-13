@@ -52,27 +52,20 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  const { data: { session } } = await supabase.auth.getSession()
+  const { data: { user } } = await supabase.auth.getUser()
 
   if (pathname === "/login" || pathname === "/cadastro") {
-    if (session) return NextResponse.redirect(new URL("/dashboard", request.url))
+    if (user) return NextResponse.redirect(new URL("/dashboard", request.url))
     return supabaseResponse
   }
 
-  if (!session) {
-    // RISK NOTE (COMMIT 66): a transient network failure during Supabase token
-    // refresh can cause getSession() to return null even when the user's refresh
-    // token is still valid, triggering a spurious redirect to /login. A single
-    // retry (e.g. re-call getSession after ~300ms) would reduce false logouts,
-    // but adds latency on every unauthenticated request and needs careful testing
-    // with the SSR cookie-refresh flow. Revisit if logout reports persist after
-    // the <Link> navigation fix applied to client components.
+  if (!user) {
     return NextResponse.redirect(new URL("/login", request.url))
   }
 
   // Admin guard — /admin/* só acessível pelo DOCTOR_USER_ID
   if (pathname.startsWith("/admin")) {
-    if (session.user.id !== process.env.DOCTOR_USER_ID) {
+    if (user.id !== process.env.DOCTOR_USER_ID) {
       return NextResponse.redirect(new URL("/dashboard", request.url))
     }
     return supabaseResponse // admin bypassa onboarding e payment guards
@@ -83,7 +76,7 @@ export async function middleware(request: NextRequest) {
     const { data: perfil, error: perfilError } = await supabase
       .from("perfis")
       .select("onboarding_completo")
-      .eq("user_id", session.user.id)
+      .eq("user_id", user.id)
       .maybeSingle()
 
     if (!perfilError && !perfil?.onboarding_completo) {
@@ -95,7 +88,7 @@ export async function middleware(request: NextRequest) {
       const { data: planoData } = await supabase
         .from("user_planos")
         .select("status")
-        .eq("user_id", session.user.id)
+        .eq("user_id", user.id)
         .maybeSingle()
 
       const hasActivePlan = planoData?.status === "ativo"
@@ -110,7 +103,7 @@ export async function middleware(request: NextRequest) {
     const { data: planoData } = await supabase
       .from("user_planos")
       .select("plano, status")
-      .eq("user_id", session.user.id)
+      .eq("user_id", user.id)
       .maybeSingle()
 
     const plano  = planoData?.plano  ?? "trial"

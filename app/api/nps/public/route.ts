@@ -3,7 +3,31 @@ import { createSupabaseServiceClient } from "@/lib/supabase-service"
 
 function errMsg(e: unknown) { return e instanceof Error ? e.message : String(e) }
 
+// ── Rate limiting (in-memory, per serverless instance) ────────────────────────
+const RL_WINDOW_MS = 60_000
+const ipStoreGet   = new Map<string, { count: number; windowStart: number }>()
+const ipStorePost  = new Map<string, { count: number; windowStart: number }>()
+
+function isRateLimited(
+  store: Map<string, { count: number; windowStart: number }>,
+  ip: string,
+  max: number
+): boolean {
+  const now   = Date.now()
+  const entry = store.get(ip)
+  if (!entry || now - entry.windowStart > RL_WINDOW_MS) {
+    store.set(ip, { count: 1, windowStart: now })
+    return false
+  }
+  if (entry.count >= max) return true
+  entry.count++
+  return false
+}
+
 export async function GET(req: NextRequest) {
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown"
+  if (isRateLimited(ipStoreGet, ip, 20))
+    return NextResponse.json({ error: "Muitas requisições. Tente novamente em breve." }, { status: 429 })
   const token = req.nextUrl.searchParams.get("token")
   if (!token) return NextResponse.json({ error: "token obrigatório" }, { status: 400 })
 
@@ -23,6 +47,10 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown"
+  if (isRateLimited(ipStorePost, ip, 5))
+    return NextResponse.json({ error: "Muitas requisições. Tente novamente em breve." }, { status: 429 })
+
   const { token, nota, comentario } = await req.json() as {
     token: string; nota: number; comentario?: string
   }

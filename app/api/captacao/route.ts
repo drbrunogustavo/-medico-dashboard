@@ -3,7 +3,38 @@ import { createSupabaseServiceClient } from "@/lib/supabase-service"
 
 function errMsg(e: unknown) { return e instanceof Error ? e.message : String(e) }
 
+// ── Rate limiting (in-memory, per serverless instance) ────────────────────────
+const RL_WINDOW_MS  = 60_000
+const RL_MAX        = 10
+const ipStore       = new Map<string, { count: number; windowStart: number }>()
+
+function isRateLimited(ip: string): boolean {
+  const now   = Date.now()
+  const entry = ipStore.get(ip)
+  if (!entry || now - entry.windowStart > RL_WINDOW_MS) {
+    ipStore.set(ip, { count: 1, windowStart: now })
+    return false
+  }
+  if (entry.count >= RL_MAX) return true
+  entry.count++
+  return false
+}
+
+// Prevent unbounded growth — evict expired entries every 500 calls
+let _rlCalls = 0
+function pruneRlStore() {
+  if (++_rlCalls % 500 !== 0) return
+  const now = Date.now()
+  ipStore.forEach((v, k) => {
+    if (now - v.windowStart > RL_WINDOW_MS) ipStore.delete(k)
+  })
+}
+
 export async function POST(req: NextRequest) {
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown"
+  pruneRlStore()
+  if (isRateLimited(ip))
+    return NextResponse.json({ error: "Muitas requisições. Tente novamente em breve." }, { status: 429 })
   const body = await req.json() as {
     nome: string; whatsapp: string; email?: string
     interesse?: string; como_encontrou?: string; mensagem?: string

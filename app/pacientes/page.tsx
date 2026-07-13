@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useCallback, useRef } from "react"
+import { useEffect, useState, useCallback, useRef, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { TopBar } from "@/components/TopBar"
 import { StatCard } from "@/components/StatCard"
@@ -238,7 +238,7 @@ export default function PacientesPage() {
     ? semanticResults
     : (query.trim() ? resultados : lista)
 
-  const exibidos = base.filter(pac => {
+  const exibidos = useMemo(() => base.filter(pac => {
     if (filtroIdade) {
       const anos = calcIdadeAnos(getPacNasc(pac))
       if (anos === null) return false
@@ -252,7 +252,7 @@ export default function PacientesPage() {
       if (bucketConsulta(historicoMap[key] ?? null) !== filtroConsulta) return false
     }
     return true
-  })
+  }), [base, filtroIdade, filtroConsulta, historicoMap])
 
   // ── Open drawer ──────────────────────────────────────────────────────────────
 

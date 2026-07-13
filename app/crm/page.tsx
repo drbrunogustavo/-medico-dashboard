@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useCallback, useRef, useMemo } from "react"
 import { TopBar } from "@/components/TopBar"
 import { Toast } from "@/components/Toast"
 import { cn } from "@/lib/utils"
@@ -1159,15 +1159,25 @@ export default function CRMPage() {
 
   // ── Metrics ─────────────────────────────────────────────────────────────────
 
-  const total        = leads.length
-  const ativos       = leads.filter(l => l.estagio === "ativo").length
-  const conversion   = total > 0 ? Math.round((ativos / total) * 100) : 0
-  const valorTotal   = leads.filter(l => l.estagio !== "perdido").reduce((s, l) => s + (l.valor_potencial ?? 0), 0)
+  const { total, ativos, conversion, valorTotal, novosSemanais } = useMemo(() => {
+    const total        = leads.length
+    const ativos       = leads.filter(l => l.estagio === "ativo").length
+    const conversion   = total > 0 ? Math.round((ativos / total) * 100) : 0
+    const valorTotal   = leads.filter(l => l.estagio !== "perdido").reduce((s, l) => s + (l.valor_potencial ?? 0), 0)
+    const oneWeekAgo   = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+    const novosSemanais = leads.filter(l => l.created_at >= oneWeekAgo).length
+    return { total, ativos, conversion, valorTotal, novosSemanais }
+  }, [leads])
 
-  const oneWeekAgo   = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
-  const novosSemanais = leads.filter(l => l.created_at >= oneWeekAgo).length
+  const leadsByEstagio = useMemo(() =>
+    leads.reduce<Record<string, typeof leads>>((acc, l) => {
+      if (!acc[l.estagio]) acc[l.estagio] = []
+      acc[l.estagio].push(l)
+      return acc
+    }, {}),
+  [leads])
 
-  const activeLead = leads.find(l => l.id === activeId) ?? null
+  const activeLead = useMemo(() => leads.find(l => l.id === activeId) ?? null, [leads, activeId])
 
   return (
     <div className="animate-fade-in flex flex-col min-h-screen">
@@ -1230,7 +1240,7 @@ export default function CRMPage() {
                   <KanbanColumn
                     key={col.id}
                     col={col}
-                    leads={leads.filter(l => l.estagio === col.id)}
+                    leads={leadsByEstagio[col.id] ?? []}
                     onExpand={setExpanded}
                     onAddLead={stage => { setNewEstagio(stage); setShowNew(true) }}
                     nurturingMap={nurturingMap}

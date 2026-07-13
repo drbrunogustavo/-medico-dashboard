@@ -209,14 +209,20 @@ function SidebarContent() {
   }, [])
 
   useEffect(() => {
-    const check = () =>
+    const check = () => {
+      if (document.hidden) return
       fetch("/api/crm/nao-lidos")
         .then(r => r.ok ? r.json() as Promise<{ count: number }> : { count: 0 })
         .then(d => setLeadsNaoLidos(d.count ?? 0))
         .catch(() => {})
+    }
     check()
     const id = setInterval(check, 30_000)
-    return () => clearInterval(id)
+    document.addEventListener("visibilitychange", check)
+    return () => {
+      clearInterval(id)
+      document.removeEventListener("visibilitychange", check)
+    }
   }, [])
 
   const switchAla = (next: AlaId) => {

@@ -47,6 +47,7 @@ function BellMenu() {
   const ref = useRef<HTMLDivElement>(null)
 
   const fetchNotifs = useCallback(async () => {
+    if (document.hidden) return
     try {
       const res = await fetch("/api/notificacoes?limit=5")
       if (!res.ok) return
@@ -61,7 +62,11 @@ function BellMenu() {
   useEffect(() => {
     fetchNotifs()
     const interval = setInterval(fetchNotifs, 60_000)
-    return () => clearInterval(interval)
+    document.addEventListener("visibilitychange", fetchNotifs)
+    return () => {
+      clearInterval(interval)
+      document.removeEventListener("visibilitychange", fetchNotifs)
+    }
   }, [fetchNotifs])
 
   // Close on outside click

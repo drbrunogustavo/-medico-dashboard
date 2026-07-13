@@ -21,6 +21,8 @@ export async function POST(req: NextRequest) {
   const file = form.get("file") as File | null
   if (!file || file.type !== "application/pdf")
     return NextResponse.json({ error: "PDF obrigatório" }, { status: 400 })
+  if (file.size > 10 * 1024 * 1024)
+    return NextResponse.json({ error: "PDF muito grande. Máximo 10 MB." }, { status: 400 })
 
   const arrayBuffer = await file.arrayBuffer()
   const parser = new PDFParse({ data: new Uint8Array(arrayBuffer) })

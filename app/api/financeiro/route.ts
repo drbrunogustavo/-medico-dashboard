@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
+import { originGuard } from "@/lib/check-origin"
 
 function errMsg(e: unknown): string {
   if (e instanceof Error) return e.message
@@ -38,6 +39,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const originErr = originGuard(req)
+  if (originErr) return originErr
+
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
 
@@ -58,6 +62,9 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const originErr = originGuard(req)
+  if (originErr) return originErr
+
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
 

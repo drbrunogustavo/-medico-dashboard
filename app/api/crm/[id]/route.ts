@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
+import { originGuard } from "@/lib/check-origin"
 
 function errMsg(e: unknown): string {
   if (e instanceof Error) return e.message
@@ -42,6 +43,9 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const originErr = originGuard(req)
+  if (originErr) return originErr
+
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
 
@@ -71,9 +75,12 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const originErr = originGuard(req)
+  if (originErr) return originErr
+
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
 

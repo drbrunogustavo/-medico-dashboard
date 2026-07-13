@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServiceClient } from "@/lib/supabase-service"
+import { originGuard } from "@/lib/check-origin"
 
 export async function GET(
   _req: NextRequest,
@@ -61,6 +62,9 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const originErr = originGuard(req)
+  if (originErr) return originErr
+
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
 

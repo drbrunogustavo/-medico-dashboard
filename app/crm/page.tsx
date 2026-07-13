@@ -6,7 +6,7 @@ import { TopBar } from "@/components/TopBar"
 import { Toast } from "@/components/Toast"
 import { cn } from "@/lib/utils"
 import {
-  DndContext, DragOverlay, PointerSensor,
+  DndContext, DragOverlay, PointerSensor, closestCenter,
   useSensor, useSensors,
   type DragStartEvent, type DragEndEvent,
 } from "@dnd-kit/core"
@@ -335,12 +335,15 @@ function KanbanColumn({
   const { setNodeRef, isOver } = useDroppable({ id: col.id })
 
   return (
-    <div className={cn(
-      "flex flex-col rounded-xl border transition-all flex-shrink-0",
-      "w-[260px] md:w-auto md:flex-1 min-h-[300px] md:min-h-[480px] max-h-[calc(100vh-220px)]",
-      col.bg, col.border,
-      isOver && "ring-2 ring-accent/40 border-accent/40"
-    )}>
+    <div
+      ref={setNodeRef}
+      className={cn(
+        "flex flex-col rounded-xl border transition-all flex-shrink-0",
+        "w-[260px] md:w-auto md:flex-1 min-h-[300px] md:min-h-[480px] max-h-[calc(100vh-220px)]",
+        col.bg, col.border,
+        isOver && "ring-2 ring-accent/40 border-accent/40"
+      )}
+    >
       {/* Column header */}
       <div className={cn(
         "flex items-center justify-between px-3 py-2.5 rounded-t-xl border-b",
@@ -364,7 +367,6 @@ function KanbanColumn({
 
       {/* Cards */}
       <div
-        ref={setNodeRef}
         className="flex-1 p-2 space-y-2 overflow-y-auto scrollbar-none"
       >
         {leads.length === 0 && (
@@ -1221,7 +1223,7 @@ export default function CRMPage() {
             ))}
           </div>
         ) : (
-          <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
             <div className="relative">
               <div className="flex gap-3 overflow-x-auto pb-4 -mx-1 px-1">
                 {COLUMNS.map(col => (

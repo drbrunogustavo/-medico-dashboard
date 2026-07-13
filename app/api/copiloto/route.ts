@@ -66,6 +66,7 @@ export async function GET(_req: NextRequest) {
     const { data, error } = await supabase
       .from("copiloto_historico")
       .select("id, paciente_nome, tipo_consulta, relato, resultado, created_at")
+      .eq("user_id", auth.userId)
       .order("created_at", { ascending: false })
       .limit(10)
 

@@ -1090,15 +1090,12 @@ export default function CRMPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       })
-      if (!res.ok) {
-        const errBody = await res.text().catch(() => "(sem corpo)")
-        throw new Error(`HTTP ${res.status}: ${errBody}`)
-      }
+      if (!res.ok) throw new Error()
       const updated = await res.json() as Lead
       setLeads(prev => prev.map(l => l.id === id ? updated : l))
       showToast("Estágio atualizado")
     } catch (e) {
-      console.error("[crm] erro ao mover lead de estágio:", e instanceof Error ? e.message : e)
+      console.error("[crm] erro ao mover lead de estágio:", e)
       showToast("Erro ao mover lead", "error")
       await fetchLeads()
     } finally {

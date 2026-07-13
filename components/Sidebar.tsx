@@ -20,9 +20,8 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useMenu } from "@/components/MobileMenuProvider"
-import { useAuth } from "@/hooks/useAuth"
-import { usePlano } from "@/hooks/usePlano"
-import { usePerfil } from "@/hooks/usePerfil"
+import { useAppContext } from "@/components/AppProvider"
+import type { Plano } from "@/lib/app-types"
 import { PraxisLogo } from "@/components/PraxisLogo"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -192,9 +191,11 @@ const PLAN_UI = {
 function SidebarContent() {
   const pathname      = usePathname()
   const { closeMenu } = useMenu()
-  const { user, signOut } = useAuth()
-  const { plano }     = usePlano()
-  const { perfil }    = usePerfil()
+  const ctx     = useAppContext()
+  const user    = ctx?.user    ?? null
+  const perfil  = ctx?.perfil  ?? null
+  const plano   = (ctx?.plano  ?? "trial") as Plano
+  const signOut = ctx?.signOut ?? (async () => {})
 
   const doctorId    = process.env.NEXT_PUBLIC_DOCTOR_USER_ID
   const isAdminUser = !!user?.id && !!doctorId && user.id === doctorId

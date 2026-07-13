@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server"
+import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServiceClient } from "@/lib/supabase-service"
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"]
 const MAX_BYTES     = 2 * 1024 * 1024 // 2 MB
 
 export async function POST(req: NextRequest) {
+  const auth = await checkAuth()
+  if (!auth.authenticated) return auth.response
+
   let formData: FormData
   try {
     formData = await req.formData()

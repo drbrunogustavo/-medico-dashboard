@@ -3,6 +3,7 @@ import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
 import { AI_MODEL } from "@/lib/ai-config"
 import { getAnthropicClient } from "@/lib/anthropic"
+import { logAiUsage } from "@/lib/log-ai-usage"
 
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -107,6 +108,8 @@ Gere um pacote completo de conteúdo para Instagram. Retorne JSON:
 }`,
       }],
     })
+
+    logAiUsage({ userId: auth.userId, rota: "copiloto-conteudo", inputTokens: resp.usage.input_tokens, outputTokens: resp.usage.output_tokens })
 
     const raw = (resp.content.find(b => b.type === "text") as { text: string } | undefined)?.text ?? "{}"
     const clean = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim()

@@ -3,6 +3,7 @@ import { checkAuth } from "@/lib/auth-check"
 import { getAnthropicClient } from "@/lib/anthropic"
 import { createSupabaseServiceClient } from "@/lib/supabase-service"
 import { AI_MODEL } from "@/lib/ai-config"
+import { logAiUsage } from "@/lib/log-ai-usage"
 
 export const maxDuration = 60
 
@@ -19,7 +20,7 @@ function fmtDate(d: Date): string {
 }
 
 // Sub-call rápida: traduz o tema do usuário para termo PubMed em inglês/MeSH
-async function traduzirParaIngles(tema: string): Promise<string> {
+async function traduzirParaIngles(tema: string, userId: string): Promise<string> {
   const anthropic = getAnthropicClient()
   const msg = await anthropic.messages.create({
     model: AI_MODEL,
@@ -29,6 +30,7 @@ async function traduzirParaIngles(tema: string): Promise<string> {
       content: `Translate this medical topic to the best PubMed search term in English, using MeSH terms when applicable. Reply with ONLY the search term, no explanation, no quotes: ${tema}`,
     }],
   })
+  logAiUsage({ userId, rota: "estudos/traducao", inputTokens: msg.usage.input_tokens, outputTokens: msg.usage.output_tokens })
   return msg.content.find(b => b.type === "text")?.text?.trim() ?? tema
 }
 
@@ -101,7 +103,7 @@ function parseClaudeJSON(text: string): ResultadoEstudos {
   throw new Error(`Claude retornou resposta não parseável como JSON: ${text.slice(0, 120)}…`)
 }
 
-async function classificarComClaude(tema: string, abstracts: string): Promise<ResultadoEstudos> {
+async function classificarComClaude(tema: string, abstracts: string, userId: string): Promise<ResultadoEstudos> {
   const anthropic = getAnthropicClient()
   const msg = await anthropic.messages.create({
     model: AI_MODEL,
@@ -154,6 +156,7 @@ Extraia SOMENTE os estudos presentes nos abstracts acima. Não acrescente nenhum
     }],
   })
 
+  logAiUsage({ userId, rota: "estudos", inputTokens: msg.usage.input_tokens, outputTokens: msg.usage.output_tokens })
   const text   = msg.content.find(b => b.type === "text")?.text ?? "{}"
   const parsed = parseClaudeJSON(text)
   parsed.estudos = normalizarEstudos(parsed.estudos)
@@ -193,7 +196,7 @@ export async function POST(request: NextRequest) {
   // ── 2. Traduzir para inglês/MeSH antes da busca ───────────────────────────
   let termEN = tema
   try {
-    termEN = await traduzirParaIngles(tema)
+    termEN = await traduzirParaIngles(tema, auth.userId)
   } catch (e) {
     console.warn("[estudos] tradução falhou, usando termo original:", e)
   }
@@ -236,7 +239,7 @@ export async function POST(request: NextRequest) {
     let resultado: ResultadoEstudos
 
     if (pubmedOk && abstracts.trim()) {
-      resultado = await classificarComClaude(tema, abstracts)
+      resultado = await classificarComClaude(tema, abstracts, auth.userId)
       resultado.fonte = "pubmed"
     } else {
       // Fallback: Claude com conhecimento próprio (PubMed indisponível)
@@ -248,6 +251,7 @@ export async function POST(request: NextRequest) {
 {"tema":"string","estudos":[{"id":"string","nome":"string","tipo":"ECR"|"Metanálise"|"Coorte"|"Revisão Sistemática"|"Estudo Observacional","n":number,"duracao":"string","desfechoPrincipal":"string","resultado":"string","nivelEvidencia":"A"|"B"|"C","aplicacaoClinica":"string","ano":number,"journal":"string"}],"resumo":"string"}`,
         messages: [{ role: "user", content: `Liste 4-6 estudos clínicos principais sobre: ${tema}` }],
       })
+      logAiUsage({ userId: auth.userId, rota: "estudos/fallback", inputTokens: msg.usage.input_tokens, outputTokens: msg.usage.output_tokens })
       const text = msg.content.find(b => b.type === "text")?.text ?? "{}"
       resultado  = parseClaudeJSON(text)
       resultado.fonte   = "fallback-ia"

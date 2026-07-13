@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import { Lightbulb, Send, Trash2, Loader2, ChevronRight, User, Bot } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
+import { useAppContext } from "@/components/AppProvider"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -111,6 +112,7 @@ function ContextPanel({ ctx }: { ctx: ClinicaCtx }) {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function ConsultorPage() {
+  const appCtx      = useAppContext()
   const [messages,  setMessages]  = useState<Msg[]>([])
   const [input,     setInput]     = useState("")
   const [loading,   setLoading]   = useState(false)
@@ -119,22 +121,20 @@ export default function ConsultorPage() {
   const bottomRef                 = useRef<HTMLDivElement>(null)
   const inputRef                  = useRef<HTMLTextAreaElement>(null)
 
-  // Load context and history
+  // Load exec data and history (once on mount)
   useEffect(() => {
     Promise.all([
       fetch("/api/executivo").then(r => r.json()).catch(e => { console.error("[consultor] ctx executivo falhou:", e); return null }),
       fetch("/api/consultor/historico").then(r => r.json()).catch(e => { console.error("[consultor] histórico falhou:", e); return [] }),
-      fetch("/api/perfil").then(r => r.json()).catch(e => { console.error("[consultor] perfil falhou:", e); return null }),
-    ]).then(([exec, hist, perfil]) => {
-      setCtx({
-        especialidade:   perfil?.especialidade,
-        cidade:          perfil?.cidade,
+    ]).then(([exec, hist]) => {
+      setCtx(prev => ({
+        ...prev,
         ticket_medio:    exec?.consultas_mes && exec?.faturamento_mes
           ? Math.round(exec.faturamento_mes / exec.consultas_mes) : undefined,
         leads_total:     exec?.leads_total,
         nps_score:       exec?.nps_score,
         faturamento_mes: exec?.faturamento_mes,
-      })
+      }))
       if (Array.isArray(hist) && hist.length > 0) {
         setMessages(hist.map((h: { role: string; content: string }) => ({
           role:    h.role as "user" | "assistant",
@@ -143,6 +143,15 @@ export default function ConsultorPage() {
       }
     })
   }, [])
+
+  // Sync perfil fields from context
+  useEffect(() => {
+    setCtx(prev => ({
+      ...prev,
+      especialidade: appCtx?.perfil?.especialidade ?? undefined,
+      cidade:        appCtx?.perfil?.cidade ?? undefined,
+    }))
+  }, [appCtx?.perfil])
 
   // Scroll to bottom on new messages
   useEffect(() => {

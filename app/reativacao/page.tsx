@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
+import { useAppContext } from "@/components/AppProvider"
 import {
   MessageCircle, Plus, Loader2, Copy, Check, Users, X,
   Sparkles, Download, AlertCircle, FileSpreadsheet, Upload,
@@ -433,6 +434,8 @@ function CampanhaModal({
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function ReativacaoPage() {
+  const appCtx = useAppContext()
+
   const [pacientes,            setPacientes]            = useState<Paciente[]>([])
   const [loading,              setLoading]              = useState(true)
   const [showAdd,              setShowAdd]              = useState(false)
@@ -449,14 +452,19 @@ export default function ReativacaoPage() {
   const [filtroFaixaEtaria,    setFiltroFaixaEtaria]    = useState<"todos" | "0-18" | "19-40" | "41-60" | "60+">("todos")
 
   useEffect(() => {
-    Promise.all([
-      fetch("/api/reativacao").then(r => r.json()),
-      fetch("/api/perfil").then(r => r.json()).catch(() => null),
-    ]).then(([pac, prf]) => {
-      setPacientes(Array.isArray(pac) ? pac : [])
-      setPerfil(prf)
-    }).finally(() => setLoading(false))
+    fetch("/api/reativacao")
+      .then(r => r.json())
+      .then(pac => { setPacientes(Array.isArray(pac) ? pac : []) })
+      .finally(() => setLoading(false))
   }, [])
+
+  // Sync perfil from context
+  useEffect(() => {
+    setPerfil(appCtx?.perfil
+      ? { nome: appCtx.perfil.nome ?? undefined, especialidade: appCtx.perfil.especialidade ?? undefined }
+      : null
+    )
+  }, [appCtx?.perfil])
 
   async function refreshLista() {
     const lista = await fetch("/api/reativacao").then(r => r.json())

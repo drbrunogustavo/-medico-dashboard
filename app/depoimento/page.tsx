@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { useAppContext } from "@/components/AppProvider"
 import Link from "next/link"
 import { ArrowLeft, Check, Loader2, Star } from "lucide-react"
 import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
@@ -32,6 +33,8 @@ interface Perfil {
 
 export default function DepoimentoPage() {
   const router = useRouter()
+  const appCtx = useAppContext()
+
   const [saving,    setSaving]    = useState(false)
   const [enviado,   setEnviado]   = useState(false)
   const [erro,      setErro]      = useState("")
@@ -49,22 +52,22 @@ export default function DepoimentoPage() {
     exibir_landing:     false,
   })
 
+  // Pre-fill form from context when perfil loads
   useEffect(() => {
-    fetch("/api/perfil")
-      .then(r => r.json())
-      .then((p: Perfil) => {
-        setForm(f => ({
-          ...f,
-          nome:          p.nome          ?? f.nome,
-          especialidade: p.especialidade ?? f.especialidade,
-          cidade:        p.cidade        ?? f.cidade,
-          estado:        p.estado        ?? f.estado,
-          instagram:     p.instagram     ?? f.instagram,
-          crm:           p.crm           ?? f.crm,
-        }))
-      })
-      .catch(e => { console.error("[depoimento] erro ao carregar perfil:", e); return null })
+    const p = appCtx?.perfil
+    if (!p) return
+    setForm(f => ({
+      ...f,
+      nome:          p.nome          ?? f.nome,
+      especialidade: p.especialidade ?? f.especialidade,
+      cidade:        p.cidade        ?? f.cidade,
+      estado:        p.estado        ?? f.estado,
+      instagram:     p.instagram     ?? f.instagram,
+      crm:           p.crm           ?? f.crm,
+    }))
+  }, [appCtx?.perfil])
 
+  useEffect(() => {
     fetch("/api/depoimentos-praxis")
       .then(r => r.json())
       .then((list: unknown[]) => { if (list.length > 0) setJaEnviou(true) })

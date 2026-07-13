@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo } from "react"
+import { useAppContext } from "@/components/AppProvider"
 import { TopBar } from "@/components/TopBar"
 import { cn } from "@/lib/utils"
 import {
@@ -431,22 +432,18 @@ function EstudoCard({ estudo, copied, onCopy }: {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function EstudosPage() {
-  const [search,         setSearch]    = useState("")
-  const [anos,           setAnos]      = useState<number | null>(5)
-  const [loading,        setLoading]   = useState(false)
-  const [aiResult,       setAiResult]  = useState<TemaEstudo | null>(null)
-  const [error,          setError]     = useState<string | null>(null)
-  const [copied,         setCopied]    = useState<string | null>(null)
-  const [especialidade,  setEspecialidade] = useState<string | null>(null)
+  const ctx          = useAppContext()
+  const especialidade = ctx?.perfil?.especialidade ?? null
+
+  const [search,    setSearch]    = useState("")
+  const [anos,      setAnos]      = useState<number | null>(5)
+  const [loading,   setLoading]   = useState(false)
+  const [aiResult,  setAiResult]  = useState<TemaEstudo | null>(null)
+  const [error,     setError]     = useState<string | null>(null)
+  const [copied,    setCopied]    = useState<string | null>(null)
   const [openTemas, setOpenTemas] = useState<Record<string, boolean>>(
     Object.fromEntries(DATABASE.map(t => [t.id, false]))
   )
-
-  useEffect(() => {
-    fetch("/api/perfil").then(r => r.ok ? r.json() : null)
-      .then(p => { if (p?.especialidade) setEspecialidade(p.especialidade as string) })
-      .catch(() => {})
-  }, [])
 
   const SUGESTOES = useMemo(() => sugestoesPorEsp(especialidade), [especialidade])
 

@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server"
 const ALLOWED_ORIGINS = new Set(
   [
     process.env.NEXT_PUBLIC_APP_URL ?? "",
+    "https://www.praxisplataforma.com.br",
     "https://praxisplataforma.com.br",
     "http://localhost:3000",
     "http://localhost:3001",

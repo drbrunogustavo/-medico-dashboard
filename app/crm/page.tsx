@@ -240,9 +240,9 @@ function LeadCardContent({
           )}
           </button>
 
-          {/* Mobile stage mover — inline pills, avoids overflow clipping */}
+          {/* Stage mover — inline pills, avoids overflow clipping */}
           {onMoveStage && !isDragOverlay && (
-            <div className="md:hidden">
+            <div>
               {!showMoveMenu ? (
                 <button
                   onClick={e => { e.stopPropagation(); setShowMoveMenu(true) }}
@@ -371,7 +371,7 @@ function KanbanColumn({
       >
         {leads.length === 0 && (
           <div className="flex flex-col items-center justify-center h-20 text-[11px] text-text-muted gap-1">
-            <span>Arraste um lead aqui</span>
+            <span>Nenhum lead nesta etapa</span>
           </div>
         )}
         {leads.map(lead => (

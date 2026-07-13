@@ -14,8 +14,18 @@ export async function POST(
   const file     = form.get("file") as File | null
   if (!file) return NextResponse.json({ error: "file obrigatório" }, { status: 400 })
 
+  const ALLOWED_MIME: Record<string, string> = {
+    "image/jpeg": "jpg",
+    "image/png":  "png",
+    "image/webp": "webp",
+  }
+  if (!ALLOWED_MIME[file.type])
+    return NextResponse.json({ error: "Tipo inválido. Use JPEG, PNG ou WebP." }, { status: 400 })
+  if (file.size > 5 * 1024 * 1024)
+    return NextResponse.json({ error: "Imagem muito grande. Máximo 5 MB." }, { status: 400 })
+
   const supabase = createSupabaseServiceClient()
-  const ext      = file.name.split(".").pop()?.toLowerCase() ?? "jpg"
+  const ext      = ALLOWED_MIME[file.type]
   const path     = `${auth.userId}/${id}.${ext}`
 
   try {

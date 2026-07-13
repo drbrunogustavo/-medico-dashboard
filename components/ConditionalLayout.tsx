@@ -5,6 +5,7 @@ import { Sidebar }            from "@/components/Sidebar"
 import { MobileMenuProvider } from "@/components/MobileMenuProvider"
 import { PraxisCopilot }      from "@/components/PraxisCopilot"
 import { CommandBar }          from "@/components/CommandBar"
+import { AppProvider }         from "@/components/AppProvider"
 
 // Routes that must NOT render the Sidebar or trigger any auth hooks.
 const PUBLIC_PATHS = new Set(["/", "/login", "/cadastro", "/demo", "/planos", "/landing", "/onboarding", "/captacao", "/privacidade", "/deletar-dados", "/termos", "/anunciar-curso"])
@@ -19,15 +20,17 @@ export function ConditionalLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <MobileMenuProvider>
-      <div className="flex min-h-screen">
-        <Sidebar />
-        <main className="flex-1 min-w-0 min-h-screen bg-background flex flex-col md:ml-60">
-          <div className="flex-1">{children}</div>
-        </main>
-      </div>
-      <PraxisCopilot />
-      <CommandBar />
-    </MobileMenuProvider>
+    <AppProvider>
+      <MobileMenuProvider>
+        <div className="flex min-h-screen">
+          <Sidebar />
+          <main className="flex-1 min-w-0 min-h-screen bg-background flex flex-col md:ml-60">
+            <div className="flex-1">{children}</div>
+          </main>
+        </div>
+        <PraxisCopilot />
+        <CommandBar />
+      </MobileMenuProvider>
+    </AppProvider>
   )
 }

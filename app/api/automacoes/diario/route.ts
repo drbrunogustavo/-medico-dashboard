@@ -430,18 +430,31 @@ export async function GET(req: NextRequest) {
     const { data: perfis } = await supabase
       .from("perfis").select("user_id, nome, trial_termina_em")
       .eq("plano", "trial").gte("trial_termina_em", daqui2d).lte("trial_termina_em", daqui3d)
-    let enviados = 0
-    for (const perfil of perfis ?? []) {
-      const { data: authUser } = await supabase.auth.admin.getUserById(perfil.user_id)
+    const lista = perfis ?? []
+    // Fetch all emails in parallel instead of sequentially
+    const emailMap = new Map<string, string>()
+    await Promise.all(lista.map(async p => {
+      const { data: authUser } = await supabase.auth.admin.getUserById(p.user_id)
       const email = authUser?.user?.email
-      if (!email) continue
-      const dias = Math.ceil((new Date(perfil.trial_termina_em).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-      const { error } = await resend.emails.send({
-        from: FROM_EMAIL, to: [email], replyTo: REPLY_TO,
-        subject: `🔔 Seu trial PRAXIS expira em ${dias} dia${dias !== 1 ? "s" : ""}`,
-        html: buildTrialEmail(perfil.nome ?? email.split("@")[0], dias),
-      })
-      if (!error) enviados++
+      if (email) emailMap.set(p.user_id, email)
+    }))
+
+    // Send in batches of 5 to avoid overwhelming Resend
+    let enviados = 0
+    const elegíveis = lista.filter(p => emailMap.has(p.user_id))
+    for (let i = 0; i < elegíveis.length; i += 5) {
+      const lote = elegíveis.slice(i, i + 5)
+      const resultados = await Promise.all(lote.map(async perfil => {
+        const email = emailMap.get(perfil.user_id)!
+        const dias = Math.ceil((new Date(perfil.trial_termina_em).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+        const { error } = await resend.emails.send({
+          from: FROM_EMAIL, to: [email], replyTo: REPLY_TO,
+          subject: `🔔 Seu trial PRAXIS expira em ${dias} dia${dias !== 1 ? "s" : ""}`,
+          html: buildTrialEmail(perfil.nome ?? email.split("@")[0], dias),
+        })
+        return error ? 0 : 1
+      }))
+      enviados += resultados.reduce((a: number, b) => a + b, 0)
     }
     return enviados
   }
@@ -458,18 +471,33 @@ export async function GET(req: NextRequest) {
       if (!byUser[lead.user_id]) byUser[lead.user_id] = []
       byUser[lead.user_id].push({ nome: lead.nome, horas: (Date.now() - new Date(lead.updated_at).getTime()) / 3600000 })
     }
+    const uids = Object.keys(byUser)
+    // Fetch all emails and perfis in parallel (2 queries total instead of 2×N)
+    const [emailMap, perfilMap] = await Promise.all([
+      Promise.all(uids.map(async uid => {
+        const { data: authUser } = await supabase.auth.admin.getUserById(uid)
+        return [uid, authUser?.user?.email ?? null] as const
+      })).then(entries => new Map(entries.filter((e): e is [string, string] => e[1] !== null))),
+      supabase.from("perfis").select("user_id, nome").in("user_id", uids)
+        .then(({ data }) => new Map((data ?? []).map(p => [p.user_id, p.nome as string | null]))),
+    ])
+
+    // Send in batches of 5
     let enviados = 0
-    for (const [uid, userLeads] of Object.entries(byUser)) {
-      const { data: authUser } = await supabase.auth.admin.getUserById(uid)
-      const email = authUser?.user?.email
-      if (!email) continue
-      const { data: perfil } = await supabase.from("perfis").select("nome").eq("user_id", uid).maybeSingle()
-      const { error } = await resend.emails.send({
-        from: FROM_EMAIL, to: [email], replyTo: REPLY_TO,
-        subject: `⏰ ${userLeads.length} lead${userLeads.length !== 1 ? "s" : ""} sem resposta há mais de 48h`,
-        html: buildLeadEmail(perfil?.nome ?? email.split("@")[0], userLeads),
-      })
-      if (!error) enviados++
+    const elegíveis = Object.entries(byUser).filter(([uid]) => emailMap.has(uid))
+    for (let i = 0; i < elegíveis.length; i += 5) {
+      const lote = elegíveis.slice(i, i + 5)
+      const resultados = await Promise.all(lote.map(async ([uid, userLeads]) => {
+        const email = emailMap.get(uid)!
+        const nome  = perfilMap.get(uid) ?? email.split("@")[0]
+        const { error } = await resend.emails.send({
+          from: FROM_EMAIL, to: [email], replyTo: REPLY_TO,
+          subject: `⏰ ${userLeads.length} lead${userLeads.length !== 1 ? "s" : ""} sem resposta há mais de 48h`,
+          html: buildLeadEmail(nome, userLeads),
+        })
+        return error ? 0 : 1
+      }))
+      enviados += resultados.reduce((a: number, b) => a + b, 0)
     }
     return enviados
   }

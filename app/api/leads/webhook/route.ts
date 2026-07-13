@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import crypto from "crypto"
 import { createSupabaseServiceClient } from "@/lib/supabase-service"
 import { gerarNurturingInline } from "@/lib/nurturing"
 
@@ -17,8 +18,16 @@ function parseBody(text: string, contentType: string): Fields {
 }
 
 export async function POST(req: NextRequest) {
-  const secret = req.nextUrl.searchParams.get("secret")
-  if (!secret || secret !== process.env.LEADS_WEBHOOK_SECRET) {
+  const received = req.headers.get("x-webhook-secret") ?? ""
+  const expected = process.env.LEADS_WEBHOOK_SECRET ?? ""
+  const receivedBuf = Buffer.from(received)
+  const expectedBuf = Buffer.from(expected)
+  const validSecret =
+    receivedBuf.length > 0 &&
+    receivedBuf.length === expectedBuf.length &&
+    crypto.timingSafeEqual(receivedBuf, expectedBuf)
+  if (!validSecret) {
+    console.warn("[leads/webhook] secret inválido ou ausente — header x-webhook-secret não confere")
     return NextResponse.json({ error: "unauthorized" }, { status: 401 })
   }
 

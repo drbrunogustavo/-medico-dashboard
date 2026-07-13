@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
+import { useAppContext } from "@/components/AppProvider"
 import { TopBar } from "@/components/TopBar"
 import { Toast } from "@/components/Toast"
 import { cn } from "@/lib/utils"
@@ -290,6 +291,7 @@ function RightPanelEmpty() {
 // ── Main content ──────────────────────────────────────────────────────────────
 
 function CopilotoContent() {
+  const appCtx          = useAppContext()
   const searchParams    = useSearchParams()
   const router          = useRouter()
   const pacienteIdParam = searchParams.get("pacienteId") ?? ""
@@ -424,13 +426,11 @@ function CopilotoContent() {
     setHasMediaRecorder(
       typeof MediaRecorder !== "undefined" && !!navigator?.mediaDevices?.getUserMedia
     )
-    fetch("/api/perfil")
-      .then(r => r.ok ? r.json() : null)
-      .then((p: { voz_gravacao_autorizada?: boolean } | null) => {
-        setVoiceConsent(p?.voz_gravacao_autorizada ?? false)
-      })
-      .catch(() => setVoiceConsent(false))
   }, [])
+
+  useEffect(() => {
+    setVoiceConsent(appCtx?.perfil?.voz_gravacao_autorizada ?? false)
+  }, [appCtx?.perfil])
 
   // ── Focus mode: body class + consultation timer ────────────────────────────
   useEffect(() => {
@@ -454,6 +454,7 @@ function CopilotoContent() {
       headers: { "Content-Type": "application/json" },
       body:    JSON.stringify({ voz_gravacao_autorizada: true }),
     }).catch(() => {})
+    appCtx?.refetchPerfil()
     setVoiceConsent(true)
     setShowConsentModal(false)
     iniciarGravacao()

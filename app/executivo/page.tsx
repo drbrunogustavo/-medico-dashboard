@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState, useCallback, useMemo, useRef } from "react"
+import { useAppContext } from "@/components/AppProvider"
 import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip,
@@ -771,6 +772,7 @@ const ABAS: { id: AbaId; label: string; icon: React.ElementType }[] = [
 ]
 
 export default function ExecutivoPage() {
+  const appCtx    = useAppContext()
   const [aba,     setAba]     = useState<AbaId>("marketing")
   const [exec,    setExec]    = useState<Partial<ExecData>>({})
   const [loading, setLoading] = useState(true)
@@ -806,13 +808,11 @@ export default function ExecutivoPage() {
     setHasMediaRecorder(
       typeof MediaRecorder !== "undefined" && !!navigator?.mediaDevices?.getUserMedia
     )
-    fetch("/api/perfil")
-      .then(r => r.ok ? r.json() : null)
-      .then((p: { voz_gravacao_autorizada?: boolean } | null) => {
-        setVoiceConsent(p?.voz_gravacao_autorizada ?? false)
-      })
-      .catch(() => setVoiceConsent(false))
   }, [])
+
+  useEffect(() => {
+    setVoiceConsent(appCtx?.perfil?.voz_gravacao_autorizada ?? false)
+  }, [appCtx?.perfil])
 
   // ─── Sinais do mês — calculados no client, sem IA, sem especulação ──────────
   const sinais = useMemo(() => {
@@ -887,6 +887,7 @@ export default function ExecutivoPage() {
       headers: { "Content-Type": "application/json" },
       body:    JSON.stringify({ voz_gravacao_autorizada: true }),
     }).catch(() => {})
+    appCtx?.refetchPerfil()
     setVoiceConsent(true)
     setShowConsentModal(false)
     iniciarGravacao()

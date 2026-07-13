@@ -237,6 +237,7 @@ export async function POST(req: NextRequest) {
           // saldoAtual is negative (credit) — create a positive transaction to zero it out
           const valorAbsoluto = Math.abs(saldoAtual) // cents
 
+          console.log(`[stripe/webhook] Zerando saldo — afiliado ${afiliado.id}, R$${(valorAbsoluto / 100).toFixed(2)}`)
           const balanceTx = await stripe.customers.createBalanceTransaction(customerId, {
             amount:      valorAbsoluto, // positive = debit, zeroes the negative balance
             currency:    "brl",
@@ -245,7 +246,7 @@ export async function POST(req: NextRequest) {
 
           await supabase.from("afiliados_saldo_perdido").insert({
             afiliado_id:       afiliado.id,
-            valor_perdido:     valorAbsoluto / 100, // store as reais
+            valor_perdido:     parseFloat((valorAbsoluto / 100).toFixed(2)), // store as reais
             stripe_customer_id: customerId,
             motivo:            "cancelamento_assinatura",
           })
@@ -310,8 +311,9 @@ export async function POST(req: NextRequest) {
           // Calculate and credit commission
           const percentual     = (afiliado.comissao_percentual as number) ?? 20
           const comissaoCents  = Math.round(amountPaid * (percentual / 100))
-          const comissaoReais  = comissaoCents / 100
+          const comissaoReais  = parseFloat((comissaoCents / 100).toFixed(2))
 
+          console.log(`[stripe/webhook] Creditando comissão — afiliado ${afiliado.id}, indicação ${indicacao.id}, R$${comissaoReais.toFixed(2)} (${percentual}% de R$${(amountPaid / 100).toFixed(2)})`)
           const balanceTx = await stripe.customers.createBalanceTransaction(
             afiliado.stripe_customer_id as string,
             {
@@ -337,7 +339,7 @@ export async function POST(req: NextRequest) {
             .from("afiliados")
             .update({
               total_indicados:          ((afiliado.total_indicados  as number) ?? 0) + 1,
-              total_comissao_acumulada: ((afiliado.total_comissao_acumulada as number) ?? 0) + comissaoReais,
+              total_comissao_acumulada: parseFloat((((afiliado.total_comissao_acumulada as number) ?? 0) + comissaoReais).toFixed(2)),
             })
             .eq("id", afiliado.id)
 

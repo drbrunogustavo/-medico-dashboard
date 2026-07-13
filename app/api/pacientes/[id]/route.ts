@@ -19,7 +19,10 @@ export async function GET(
       .eq("id", id)
       .eq("user_id", auth.userId)
       .single()
-    if (error) return NextResponse.json({ error: error.message }, { status: 404 })
+    if (error) {
+      console.error("[api/pacientes/[id] GET]", error.message)
+      return NextResponse.json({ error: "Paciente não encontrado" }, { status: 404 })
+    }
 
     const [{ data: exames }, { data: historico }] = await Promise.all([
       supabase
@@ -45,7 +48,7 @@ export async function GET(
     })
   } catch (e) {
     console.error("[api/pacientes/[id] GET]", e)
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    return NextResponse.json({ error: "Erro ao processar solicitação" }, { status: 500 })
   }
 }
 
@@ -85,6 +88,6 @@ export async function PATCH(
     return NextResponse.json(data)
   } catch (e) {
     console.error("[api/pacientes/[id] PATCH]", e)
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    return NextResponse.json({ error: "Erro ao processar solicitação" }, { status: 500 })
   }
 }

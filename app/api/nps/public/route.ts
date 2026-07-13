@@ -17,7 +17,8 @@ export async function GET(req: NextRequest) {
     if (error || !data) return NextResponse.json({ error: "Pesquisa não encontrada" }, { status: 404 })
     return NextResponse.json(data)
   } catch (e) {
-    return NextResponse.json({ error: errMsg(e) }, { status: 500 })
+    console.error("[nps/public GET]", errMsg(e))
+    return NextResponse.json({ error: "Erro ao processar solicitação" }, { status: 500 })
   }
 }
 
@@ -77,6 +78,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true, nota })
   } catch (e) {
-    return NextResponse.json({ error: errMsg(e) }, { status: 500 })
+    console.error("[nps/public POST]", errMsg(e))
+    return NextResponse.json({ error: "Erro ao processar solicitação" }, { status: 500 })
   }
 }

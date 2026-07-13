@@ -55,6 +55,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true })
   } catch (e) {
     console.error("[captacao/post]", e)
-    return NextResponse.json({ error: errMsg(e) }, { status: 500 })
+    return NextResponse.json({ error: "Erro ao processar solicitação" }, { status: 500 })
   }
 }

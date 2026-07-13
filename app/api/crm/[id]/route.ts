@@ -27,10 +27,14 @@ export async function GET(
       .eq("user_id", auth.userId)
       .single()
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 404 })
+    if (error) {
+      console.error("[crm/[id] GET]", error.message)
+      return NextResponse.json({ error: "Lead não encontrado" }, { status: 404 })
+    }
     return NextResponse.json(data)
   } catch (e) {
-    return NextResponse.json({ error: errMsg(e) }, { status: 500 })
+    console.error("[crm/[id] GET]", errMsg(e))
+    return NextResponse.json({ error: "Erro ao processar solicitação" }, { status: 500 })
   }
 }
 
@@ -55,10 +59,14 @@ export async function PATCH(
       .select()
       .single()
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) {
+      console.error("[crm/[id] PATCH]", error.message)
+      return NextResponse.json({ error: "Erro ao processar solicitação" }, { status: 500 })
+    }
     return NextResponse.json(data)
   } catch (e) {
-    return NextResponse.json({ error: errMsg(e) }, { status: 500 })
+    console.error("[crm/[id] PATCH]", errMsg(e))
+    return NextResponse.json({ error: "Erro ao processar solicitação" }, { status: 500 })
   }
 }
 
@@ -80,9 +88,13 @@ export async function DELETE(
       .eq("id", id)
       .eq("user_id", auth.userId)
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) {
+      console.error("[crm/[id] DELETE]", error.message)
+      return NextResponse.json({ error: "Erro ao processar solicitação" }, { status: 500 })
+    }
     return NextResponse.json({ ok: true })
   } catch (e) {
-    return NextResponse.json({ error: errMsg(e) }, { status: 500 })
+    console.error("[crm/[id] DELETE]", errMsg(e))
+    return NextResponse.json({ error: "Erro ao processar solicitação" }, { status: 500 })
   }
 }

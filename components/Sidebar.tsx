@@ -157,6 +157,13 @@ const BADGE_STYLE: Record<string, string> = {
 }
 
 const PLAN_UI = {
+  trial: {
+    label:   "TRIAL",
+    textCls: "text-amber-400",
+    bg:      "bg-amber-500/10",
+    border:  "border-amber-500/25 hover:border-amber-500/40",
+    iconCls: "text-amber-400",
+  },
   starter: {
     label:  "STARTER",
     textCls: "text-text-muted",

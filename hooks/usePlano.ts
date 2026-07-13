@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import type { Session } from "@supabase/supabase-js"
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser"
 
-export type Plano = "starter" | "pro" | "elite"
+export type Plano = "trial" | "starter" | "pro" | "elite"
 
 interface UsePlanoResult {
   plano:   Plano
@@ -32,7 +32,7 @@ export function usePlano(): UsePlanoResult {
         .single()
         .then(({ data: row }: { data: { plano: string } | null }) => {
           const p = row?.plano as Plano | null
-          if (p === "starter" || p === "pro" || p === "elite") {
+          if (p === "trial" || p === "starter" || p === "pro" || p === "elite") {
             setPlano(p)
           }
           setLoading(false)

@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react"
 import type { Session } from "@supabase/supabase-js"
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser"
+import type { Plano } from "@/lib/app-types"
 
-export type Plano = "trial" | "starter" | "pro" | "elite"
+// Re-export so existing consumers keep working without changes
+export type { Plano }
 
 interface UsePlanoResult {
   plano:   Plano

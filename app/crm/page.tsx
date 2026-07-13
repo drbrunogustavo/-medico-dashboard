@@ -139,48 +139,50 @@ function fmtPhone(v: string) {
   return `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`
 }
 
-// ── Lead Card (draggable) ─────────────────────────────────────────────────────
+// ── Lead Card Content (pure visual — no hooks, safe for DragOverlay) ──────────
 
-function LeadCard({
+function LeadCardContent({
   lead,
   onExpand,
   onMoveStage,
   isDragOverlay = false,
+  isDragging    = false,
   hasNurturing  = false,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  dragListeners,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  dragAttributes,
 }: {
   lead: Lead
   onExpand: (l: Lead) => void
   onMoveStage?: (leadId: string, newEstagio: string) => void
   isDragOverlay?: boolean
+  isDragging?: boolean
   hasNurturing?: boolean
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  dragListeners?: Record<string, any>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  dragAttributes?: Record<string, any>
 }) {
   const [showMoveMenu, setShowMoveMenu] = useState(false)
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: lead.id })
   const otherCols = COLUMNS.filter(c => c.id !== lead.estagio)
-
-  const style = isDragOverlay
-    ? { transform: CSS.Translate.toString(transform) }
-    : { transform: CSS.Translate.toString(transform), opacity: isDragging ? 0.35 : 1 }
+  const isActive  = isDragging || isDragOverlay
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={cn(
-        "bg-background border rounded-lg p-3 cursor-default select-none transition-all",
-        isDragging || isDragOverlay
-          ? "border-accent/50 shadow-lg shadow-accent/10 rotate-[1deg]"
-          : "border-border hover:border-accent/30"
-      )}
-    >
+    <div className={cn(
+      "bg-background border rounded-lg p-3 cursor-default select-none transition-all",
+      isActive
+        ? "border-accent/50 shadow-lg shadow-accent/10 rotate-[1deg]"
+        : "border-border hover:border-accent/30"
+    )}>
       <div className="flex items-start gap-2">
         <button
-          {...listeners}
-          {...attributes}
-          className="mt-0.5 text-text-muted hover:text-text-secondary cursor-grab active:cursor-grabbing flex-shrink-0 touch-none"
+          {...(dragListeners ?? {})}
+          {...(dragAttributes ?? {})}
+          className="p-1 -ml-1 text-text-muted hover:text-text-secondary cursor-grab active:cursor-grabbing flex-shrink-0 touch-none rounded"
           aria-label="Arrastar"
         >
-          <GripVertical className="w-3.5 h-3.5" />
+          <GripVertical className="w-5 h-5" />
         </button>
 
         <div className="flex-1 min-w-0">
@@ -278,6 +280,37 @@ function LeadCard({
           )}
         </div>
       </div>
+    </div>
+  )
+}
+
+// ── Lead Card (draggable wrapper) ──────────────────────────────────────────────
+
+function LeadCard({
+  lead,
+  onExpand,
+  onMoveStage,
+  hasNurturing = false,
+}: {
+  lead: Lead
+  onExpand: (l: Lead) => void
+  onMoveStage?: (leadId: string, newEstagio: string) => void
+  hasNurturing?: boolean
+}) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: lead.id })
+  const style = { transform: CSS.Translate.toString(transform), opacity: isDragging ? 0.35 : 1 }
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <LeadCardContent
+        lead={lead}
+        onExpand={onExpand}
+        onMoveStage={onMoveStage}
+        isDragging={isDragging}
+        hasNurturing={hasNurturing}
+        dragListeners={listeners}
+        dragAttributes={attributes}
+      />
     </div>
   )
 }
@@ -1209,7 +1242,7 @@ export default function CRMPage() {
             <DragOverlay>
               {activeLead ? (
                 <div className="w-[260px]">
-                  <LeadCard lead={activeLead} onExpand={() => {}} isDragOverlay />
+                  <LeadCardContent lead={activeLead} onExpand={() => {}} isDragOverlay />
                 </div>
               ) : null}
             </DragOverlay>

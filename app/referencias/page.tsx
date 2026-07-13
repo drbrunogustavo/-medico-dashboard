@@ -587,7 +587,7 @@ export default function ReferenciasPage() {
                       {r.relevancia}
                     </span>
                     <button onClick={()=>removeRef(r.id)}
-                      className="opacity-0 group-hover:opacity-100 w-6 h-6 rounded border border-border flex items-center justify-center text-text-muted hover:text-red-400 hover:border-red-500/40 transition-all">
+                      className="opacity-100 md:opacity-0 md:group-hover:opacity-100 w-6 h-6 rounded border border-border flex items-center justify-center text-text-muted hover:text-red-400 hover:border-red-500/40 transition-all">
                       <Trash2 className="w-3 h-3" />
                     </button>
                   </div>

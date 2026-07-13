@@ -143,7 +143,7 @@ function PostCard({ post, onTransform }: { post: Post; onTransform: (p: Post) =>
         </div>
         {/* Permalink */}
         <a href={post.permalink} target="_blank" rel="noopener noreferrer"
-          className="absolute top-2 right-2 w-6 h-6 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+          className="absolute top-2 right-2 w-6 h-6 rounded-lg flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
           style={{ background: "rgba(0,0,0,0.6)" }}>
           <ExternalLink style={{ width: 11, height: 11, color: "#fff" }} />
         </a>

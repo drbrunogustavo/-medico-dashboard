@@ -1521,7 +1521,7 @@ function CalcGestacional({ copied, onCopy }: { copied: string | null; onCopy: (i
   const [imcPre,   setImcPre]   = useState("")
   const [trim,     setTrim]     = useState("1")
   const [multipla, setMultipla] = useState("Não")
-  const imc = parseFloat(imcPre); const tr = parseInt(trim)
+  const imc = parseFloat(imcPre); const tr = parseInt(trim, 10)
   type Faixa = { min: number; max: number; label: string }
   function faixaIOM(v: number): Faixa {
     if (v < 18.5) return { min: 12.5, max: 18, label: "Baixo peso" }
@@ -1613,7 +1613,7 @@ function CalcPreeclampsia({ copied, onCopy }: { copied: string | null; onCopy: (
 function CalcJanelaFertil({ copied, onCopy }: { copied: string | null; onCopy: (id: string, t: string) => void }) {
   const [ciclo,  setCiclo]  = useState("28")
   const [inicio, setInicio] = useState("")
-  const c = parseInt(ciclo); const d = inicio ? new Date(inicio + "T12:00:00") : null
+  const c = parseInt(ciclo, 10); const d = inicio ? new Date(inicio + "T12:00:00") : null
   let ovulacao: Date | null = null; let janelaInicio: Date | null = null; let janelaFim: Date | null = null
   if (d && c > 0) {
     ovulacao = new Date(d); ovulacao.setDate(d.getDate() + (c - 14))

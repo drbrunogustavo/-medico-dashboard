@@ -1036,7 +1036,7 @@ export default function EditorPage() {
                         <input
                           type="range" min={0} max={100} step={5}
                           value={selectedSeg.opacidade ?? 85}
-                          onChange={e => updateSegment(selectedSeg.id, { opacidade: parseInt(e.target.value) })}
+                          onChange={e => updateSegment(selectedSeg.id, { opacidade: parseInt(e.target.value, 10) })}
                           className="w-full accent-[#00c07f]"
                         />
                       </div>

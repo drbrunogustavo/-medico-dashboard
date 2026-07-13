@@ -411,7 +411,7 @@ export default function ReferenciasPage() {
     } catch { showToast("Erro ao atualizar.") }
   }
 
-  const totalSeg = refs.map(r=>parseInt(r.seguidores.replace(/[^0-9]/g,""))||0).reduce((a,b)=>a+b,0)
+  const totalSeg = refs.map(r=>parseInt(r.seguidores.replace(/[^0-9]/g,""), 10)||0).reduce((a,b)=>a+b,0)
   const fmtSeg = totalSeg>0?(totalSeg>=1000000?(totalSeg/1000000).toFixed(1)+"M+":(totalSeg/1000).toFixed(0)+"k+"):"-"
 
   return (

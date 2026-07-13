@@ -504,7 +504,7 @@ export default function PlanosPage() {
       <footer className="relative px-6 py-6" style={{ borderTop: "1px solid rgba(13,27,42,0.08)" }}>
         <div className="max-w-6xl mx-auto flex items-center justify-between flex-wrap gap-4">
           <p style={{ fontSize: 11, fontFamily: "monospace", color: "#8a7a6a", letterSpacing: "1px" }}>
-            © PRAXIS 2026 — Marketing Médico de Alto Padrão
+            © PRAXIS {new Date().getFullYear()} — Marketing Médico de Alto Padrão
           </p>
           <Link href={user ? "/dashboard" : "/"} style={{ fontSize: 12, color: "#6a5a4a" }}
             onMouseEnter={e => (e.currentTarget.style.color = "#b8976a")}

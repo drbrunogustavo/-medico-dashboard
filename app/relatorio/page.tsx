@@ -188,7 +188,7 @@ export default function RelatorioPage() {
             <label className="block text-[11px] font-medium mb-1" style={{ color: "var(--text-secondary)" }}>Mês</label>
             <select
               value={mes}
-              onChange={e => setMes(parseInt(e.target.value))}
+              onChange={e => setMes(parseInt(e.target.value, 10))}
               className="px-3 py-2 rounded-xl text-[13px] outline-none appearance-none"
               style={{
                 background: "var(--card)", border: "1px solid var(--border)",
@@ -203,7 +203,7 @@ export default function RelatorioPage() {
             <label className="block text-[11px] font-medium mb-1" style={{ color: "var(--text-secondary)" }}>Ano</label>
             <select
               value={ano}
-              onChange={e => setAno(parseInt(e.target.value))}
+              onChange={e => setAno(parseInt(e.target.value, 10))}
               className="px-3 py-2 rounded-xl text-[13px] outline-none appearance-none"
               style={{
                 background: "var(--card)", border: "1px solid var(--border)",

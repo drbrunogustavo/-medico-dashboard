@@ -330,7 +330,7 @@ export default function SobrePage() {
               <Link key={l} href={h} style={{ fontSize: 12, color: MUTED }}>{l}</Link>
             ))}
           </div>
-          <p style={{ fontSize: 11, fontFamily: "monospace", color: MUTED }}>© 2026 PRAXIS</p>
+          <p style={{ fontSize: 11, fontFamily: "monospace", color: MUTED }}>© {new Date().getFullYear()} PRAXIS</p>
         </div>
       </footer>
 

@@ -17,7 +17,7 @@ const PAYMENT_EXEMPT_ROUTES = new Set([
 ])
 
 // Routes that require Pro or Elite plan
-const PRO_ROUTES = new Set(["/expansao", "/predicao", "/benchmark"])
+const PRO_ROUTES = new Set<string>()
 
 // Routes that require Elite plan
 const ELITE_ROUTES = new Set<string>()

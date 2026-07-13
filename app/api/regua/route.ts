@@ -105,7 +105,7 @@ Retorne APENAS JSON com exatamente estas chaves:
     // Birthday: next occurrence
     if (body.data_nascimento) {
       const [, mm, dd] = body.data_nascimento.split("-")
-      const birthday = new Date(now.getFullYear(), parseInt(mm) - 1, parseInt(dd))
+      const birthday = new Date(now.getFullYear(), parseInt(mm, 10) - 1, parseInt(dd, 10))
       if (birthday <= now) birthday.setFullYear(birthday.getFullYear() + 1)
       rows.push({ ...base, tipo: "aniversario", mensagem: msgs.aniversario ?? "", agendado_para: birthday.toISOString() })
     }

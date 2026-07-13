@@ -197,7 +197,7 @@ export default function TermosPage() {
         <div style={{ height: 1, background: "rgba(13,27,42,0.10)", margin: "48px 0 32px" }} />
 
         <p style={{ fontSize: 11, fontFamily: "monospace", color: "#8a7a6a", letterSpacing: "1px" }}>
-          © PRAXIS 2026 · Marketing Médico de Alto Padrão ·{" "}
+          © PRAXIS {new Date().getFullYear()} · Marketing Médico de Alto Padrão ·{" "}
           <Link href="/privacidade" style={{ color: "#8a7a6a" }}>Política de Privacidade</Link>
           {" · "}
           <Link href="/deletar-dados" style={{ color: "#8a7a6a" }}>Exclusão de Dados</Link>

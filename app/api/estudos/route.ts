@@ -5,7 +5,7 @@ import { createSupabaseServiceClient } from "@/lib/supabase-service"
 import { AI_MODEL } from "@/lib/ai-config"
 import { logAiUsage } from "@/lib/log-ai-usage"
 
-export const maxDuration = 60
+export const maxDuration = 120
 
 const NCBI_BASE = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
 const CACHE_DAYS = 7
@@ -39,7 +39,11 @@ async function pubmedSearch(termEN: string, anos: number | null): Promise<string
   if (anos !== null) {
     const today = new Date()
     const from  = new Date(today)
-    from.setFullYear(today.getFullYear() - anos)
+    if (anos < 1) {
+      from.setMonth(today.getMonth() - Math.round(anos * 12))
+    } else {
+      from.setFullYear(today.getFullYear() - anos)
+    }
     dateFilter = `&datetype=pdat&mindate=${fmtDate(from)}&maxdate=${fmtDate(today)}`
   }
   // Sem [Title/Abstract]: permite MeSH expansion automática do PubMed
@@ -107,7 +111,7 @@ async function classificarComClaude(tema: string, abstracts: string, userId: str
   const anthropic = getAnthropicClient()
   const msg = await anthropic.messages.create({
     model: AI_MODEL,
-    max_tokens: 4000,
+    max_tokens: 2500,
     system: `Você é um especialista em medicina baseada em evidências. Analise os abstracts de artigos do PubMed fornecidos e extraia informações estruturadas.
 
 CRÍTICO — REGRA ABSOLUTA: Baseie-se EXCLUSIVAMENTE nos abstracts fornecidos abaixo. Não adicione, não invente e não complemente com estudos do seu conhecimento próprio. Se o PubMed retornou poucos abstracts, retorne apenas esses estudos — a lista pode ter 1, 2 ou 3 itens, e está correto assim. Dados não presentes nos abstracts devem ser: n=0, duracao="não informado".
@@ -214,7 +218,11 @@ export async function POST(request: NextRequest) {
   }
 
   if (pubmedOk && ids.length === 0) {
-    const anosLabel = anos ? `nos últimos ${anos} anos` : "em todos os anos"
+    const anosLabel = anos === null
+      ? "em todos os anos"
+      : anos < 1
+        ? `nos últimos ${Math.round(anos * 12)} meses`
+        : `nos últimos ${anos} ano${anos !== 1 ? "s" : ""}`
     const empty: ResultadoEstudos = {
       tema,
       estudos: [],

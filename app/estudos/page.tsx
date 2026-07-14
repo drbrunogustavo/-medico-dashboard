@@ -487,7 +487,7 @@ export default function EstudosPage() {
         return
       }
       if (res.status === 504 || res.status === 408) {
-        setError("A busca demorou mais que o esperado. Tente novamente em alguns segundos.")
+        setError("A busca demorou mais que o esperado. Tente com um período menor ou repita em alguns segundos.")
         return
       }
       let data: Record<string, unknown>
@@ -593,6 +593,7 @@ export default function EstudosPage() {
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-[10px] font-mono" style={{ color: "var(--text-muted)" }}>PERÍODO:</span>
             {([
+              { label: "6 meses", value: 0.5  },
               { label: "2 anos",  value: 2    },
               { label: "5 anos",  value: 5    },
               { label: "10 anos", value: 10   },

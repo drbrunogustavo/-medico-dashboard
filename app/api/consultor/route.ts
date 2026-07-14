@@ -8,6 +8,12 @@ export const maxDuration = 60
 
 function errMsg(e: unknown) { return e instanceof Error ? e.message : String(e) }
 
+function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([p, new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error(`timeout ${ms}ms`)), ms)
+  )])
+}
+
 const SYSTEM = `Você é o Consultor Estratégico do PRAXIS, especializado em gestão, marketing e escalabilidade de clínicas médicas no Brasil. Você conhece profundamente o mercado médico brasileiro, estratégias de precificação, marketing digital para médicos, gestão financeira de clínicas e estratégias de crescimento. Analise os dados da clínica fornecidos e dê direcionamentos específicos, práticos e acionáveis. Nunca dê respostas genéricas. Sempre baseie suas análises nos dados reais da clínica. Responda em português brasileiro.`
 
 export async function POST(req: NextRequest) {
@@ -44,10 +50,13 @@ export async function POST(req: NextRequest) {
     let memoriaExtra = ""
     try {
       const supabase = createSupabaseServerClient()
-      const [{ data: protocolos }, { data: historico }] = await Promise.all([
-        supabase.from("memoria_clinica").select("titulo,conteudo").eq("user_id", auth.userId).eq("tipo", "protocolo").eq("favorito", true).limit(3),
-        supabase.from("copiloto_historico").select("tipo_consulta,created_at").eq("user_id", auth.userId).order("created_at", { ascending: false }).limit(5),
-      ])
+      const [{ data: protocolos }, { data: historico }] = await withTimeout(
+        Promise.all([
+          supabase.from("memoria_clinica").select("titulo,conteudo").eq("user_id", auth.userId).eq("tipo", "protocolo").eq("favorito", true).limit(3),
+          supabase.from("copiloto_historico").select("tipo_consulta,created_at").eq("user_id", auth.userId).order("created_at", { ascending: false }).limit(5),
+        ]),
+        8_000
+      )
       if (protocolos?.length) memoriaExtra += "\n\nPROTOCOLOS FAVORITOS:\n" + protocolos.map(d => `• ${d.titulo}: ${d.conteudo.slice(0, 200)}`).join("\n")
       if (historico?.length) memoriaExtra += "\n\nÚLTIMAS CONSULTAS:\n" + historico.map(h => `• ${h.tipo_consulta ?? "Consulta"} (${new Date(h.created_at).toLocaleDateString("pt-BR")})`).join("\n")
     } catch (e) { console.error("[consultor] erro ao carregar contexto de memória:", e) }
@@ -66,15 +75,22 @@ export async function POST(req: NextRequest) {
     const encoder = new TextEncoder()
     const readable = new ReadableStream({
       async start(controller) {
+        let done = false
+        const timer = setTimeout(() => {
+          if (!done) { done = true; controller.error(new Error("Stream timeout")) }
+        }, 55_000)
         try {
           for await (const chunk of stream) {
+            if (done) break
             if (chunk.type === "content_block_delta" && chunk.delta.type === "text_delta") {
               controller.enqueue(encoder.encode(chunk.delta.text))
             }
           }
-        } finally {
-          controller.close()
+        } catch (e) {
+          if (!done) { done = true; clearTimeout(timer); controller.error(e); return }
         }
+        clearTimeout(timer)
+        if (!done) { done = true; controller.close() }
       },
     })
 

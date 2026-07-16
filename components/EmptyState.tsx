@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { type LucideIcon } from "lucide-react"
 
@@ -5,9 +6,14 @@ interface EmptyStateProps {
   icon?:      LucideIcon
   title:      string
   subtitle?:  string
-  action?:    { label: string; onClick: () => void }
+  action?:    { label: string } & (
+    | { href: string; onClick?: never }
+    | { onClick: () => void; href?: never }
+  )
   className?: string
 }
+
+const CTA_CLS = "flex items-center gap-2 px-4 py-2 rounded-lg border border-accent-border text-accent text-[12px] font-semibold hover:bg-accent-dim transition-all min-h-[44px]"
 
 export function EmptyState({ icon: Icon, title, subtitle, action, className }: EmptyStateProps) {
   return (
@@ -24,12 +30,9 @@ export function EmptyState({ icon: Icon, title, subtitle, action, className }: E
         )}
       </div>
       {action && (
-        <button
-          onClick={action.onClick}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg border border-accent-border text-accent text-[12px] font-semibold hover:bg-accent-dim transition-all min-h-[44px]"
-        >
-          {action.label}
-        </button>
+        action.href
+          ? <Link href={action.href} className={CTA_CLS}>{action.label}</Link>
+          : <button onClick={action.onClick} className={CTA_CLS}>{action.label}</button>
       )}
     </div>
   )

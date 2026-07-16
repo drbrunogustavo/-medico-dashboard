@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { AI_MODEL } from "@/lib/ai-config"
-import { getAnthropicClient } from "@/lib/anthropic"
+import { getAnthropicClient, captureAnthropicError } from "@/lib/anthropic"
 
 export const maxDuration = 60
 
@@ -50,6 +50,7 @@ Retorne APENAS o texto do script, sem títulos, sem explicações.`,
     const texto = (resp.content.find(b => b.type === "text") as { text: string } | undefined)?.text ?? ""
     return NextResponse.json({ texto })
   } catch (e) {
+    captureAnthropicError(e, "/api/scripts/gerar")
     console.error("[api/scripts/gerar]", e)
     return NextResponse.json({ error: errMsg(e) }, { status: 500 })
   }

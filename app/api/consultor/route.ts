@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
 import { AI_MODEL } from "@/lib/ai-config"
-import { getAnthropicClient } from "@/lib/anthropic"
+import { getAnthropicClient, captureAnthropicError } from "@/lib/anthropic"
 
 export const maxDuration = 60
 
@@ -87,6 +87,7 @@ export async function POST(req: NextRequest) {
             }
           }
         } catch (e) {
+          captureAnthropicError(e, "/api/consultor")
           if (!done) { done = true; clearTimeout(timer); controller.error(e); return }
         }
         clearTimeout(timer)
@@ -113,6 +114,7 @@ export async function POST(req: NextRequest) {
       headers: { "Content-Type": "text/plain; charset=utf-8" },
     })
   } catch (e) {
+    captureAnthropicError(e, "/api/consultor")
     console.error("[api/consultor]", e)
     return NextResponse.json({ error: errMsg(e) }, { status: 500 })
   }

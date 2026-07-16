@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { checkAuth } from '@/lib/auth-check'
 import { AI_MODEL } from "@/lib/ai-config"
-import { getAnthropicClient } from "@/lib/anthropic"
+import { getAnthropicClient, captureAnthropicError } from "@/lib/anthropic"
 
 export const maxDuration = 60
 
@@ -72,6 +72,7 @@ Identifique os 3 fatores com maior score (maior bloqueio), explique o mecanismo 
     const text = data.content?.[0]?.type === 'text' ? data.content[0].text : '{}'
     return NextResponse.json(parseAIJson(text))
   } catch (e) {
+    captureAnthropicError(e, "/api/emagrecimento")
     return NextResponse.json({ error: String(e) }, { status: 500 })
   }
 }

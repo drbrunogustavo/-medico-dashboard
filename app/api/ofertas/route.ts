@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { AI_MODEL } from "@/lib/ai-config"
-import { getAnthropicClient } from "@/lib/anthropic"
+import { getAnthropicClient, captureAnthropicError } from "@/lib/anthropic"
 
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -136,6 +136,7 @@ Retorne apenas JSON válido, sem markdown:
     const data = parseAIJson(extractJSON(text))
     return NextResponse.json(data)
   } catch (err) {
+    captureAnthropicError(err, "/api/ofertas")
     console.error(err)
     return NextResponse.json({ error: "Erro ao gerar campanha" }, { status: 500 })
   }

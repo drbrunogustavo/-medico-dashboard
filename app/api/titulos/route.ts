@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { AI_MODEL } from "@/lib/ai-config"
+import { captureAnthropicError } from "@/lib/anthropic"
 
 export async function POST(request: Request) {
   const auth = await checkAuth()
@@ -20,6 +21,7 @@ export async function POST(request: Request) {
     const data = await res.json()
     return NextResponse.json(data)
   } catch (e) {
+    captureAnthropicError(e, "/api/titulos")
     console.error(e)
     return NextResponse.json({ error: "Erro ao gerar títulos" }, { status: 500 })
   }

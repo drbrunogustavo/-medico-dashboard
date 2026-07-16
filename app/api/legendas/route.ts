@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
 import { AI_MODEL } from "@/lib/ai-config"
+import { captureAnthropicError } from "@/lib/anthropic"
 
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -75,6 +76,7 @@ export async function POST(request: NextRequest) {
     const parsed = parseAIJson(idx >= 0 ? clean.slice(idx) : clean)
     return NextResponse.json(parsed)
   } catch (e) {
+    captureAnthropicError(e, "/api/legendas")
     console.error(e)
     return NextResponse.json({ error: String(e) }, { status: 500 })
   }

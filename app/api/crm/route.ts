@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
+import * as Sentry from "@sentry/nextjs"
 
 function errMsg(e: unknown): string {
   if (e instanceof Error) return e.message
@@ -28,6 +29,7 @@ export async function GET(req: NextRequest) {
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     return NextResponse.json(data ?? [])
   } catch (e) {
+    Sentry.captureException(e, { tags: { route: "/api/crm" } })
     return NextResponse.json({ error: errMsg(e) }, { status: 500 })
   }
 }
@@ -63,6 +65,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(data)
   } catch (e) {
+    Sentry.captureException(e, { tags: { route: "/api/crm" } })
     return NextResponse.json({ error: errMsg(e) }, { status: 500 })
   }
 }

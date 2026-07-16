@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { checkAuth } from '@/lib/auth-check'
 import { AI_MODEL } from "@/lib/ai-config"
+import { captureAnthropicError } from "@/lib/anthropic"
 
 export async function POST(request: NextRequest) {
   const auth = await checkAuth()
@@ -47,6 +48,7 @@ Gere um protocolo personalizado para este paciente específico, adaptando o prot
     const texto = data.content?.[0]?.text ?? ''
     return NextResponse.json({ texto })
   } catch (e) {
+    captureAnthropicError(e, "/api/protocolos")
     return NextResponse.json({ error: String(e) }, { status: 500 })
   }
 }

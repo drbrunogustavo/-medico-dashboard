@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
-import { getAnthropicClient } from "@/lib/anthropic"
+import { getAnthropicClient, captureAnthropicError } from "@/lib/anthropic"
 import { createSupabaseServiceClient } from "@/lib/supabase-service"
 import { AI_MODEL } from "@/lib/ai-config"
 import { logAiUsage } from "@/lib/log-ai-usage"
@@ -202,6 +202,7 @@ export async function POST(request: NextRequest) {
   try {
     termEN = await traduzirParaIngles(tema, auth.userId)
   } catch (e) {
+    captureAnthropicError(e, "/api/estudos")
     console.warn("[estudos] tradução falhou, usando termo original:", e)
   }
 
@@ -213,6 +214,7 @@ export async function POST(request: NextRequest) {
   try {
     ids = await pubmedSearch(termEN, anos)
   } catch (e) {
+    captureAnthropicError(e, "/api/estudos")
     console.error("[estudos] PubMed esearch falhou:", e)
     pubmedOk = false
   }
@@ -237,6 +239,7 @@ export async function POST(request: NextRequest) {
     try {
       abstracts = await pubmedFetch(ids)
     } catch (e) {
+      captureAnthropicError(e, "/api/estudos")
       console.error("[estudos] PubMed efetch falhou:", e)
       pubmedOk = false
     }
@@ -271,6 +274,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(resultado)
   } catch (e) {
+    captureAnthropicError(e, "/api/estudos")
     console.error("[estudos] erro ao processar:", e)
     return NextResponse.json({ error: String(e) }, { status: 500 })
   }

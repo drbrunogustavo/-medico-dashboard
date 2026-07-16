@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { checkAuth } from '@/lib/auth-check'
 import { AI_MODEL } from "@/lib/ai-config"
+import { captureAnthropicError } from "@/lib/anthropic"
 
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -70,6 +71,7 @@ Retorne apenas o JSON array com os 50 objetos.`,
 
     return NextResponse.json({ objecoes: parseAIJson(json) })
   } catch (e) {
+    captureAnthropicError(e, "/api/objecoes/mapear")
     console.error('[objecoes/mapear]', e)
     return NextResponse.json({ error: String(e) }, { status: 500 })
   }

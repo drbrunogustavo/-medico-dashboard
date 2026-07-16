@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { captureAnthropicError } from "@/lib/anthropic"
 
 export async function POST(request: Request) {
   const body = await request.json()
@@ -17,6 +18,7 @@ export async function POST(request: Request) {
     const data = await res.json()
     return NextResponse.json(data)
   } catch (e) {
+    captureAnthropicError(e, "/api/imagens")
     console.error(e)
     return NextResponse.json({ error: 'Erro ao gerar conteúdo' }, { status: 500 })
   }

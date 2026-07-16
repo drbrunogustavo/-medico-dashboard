@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServiceClient } from "@/lib/supabase-service"
-import { getAnthropicClient } from "@/lib/anthropic"
+import { getAnthropicClient, captureAnthropicError } from "@/lib/anthropic"
 
 const ALLOWED_METRIC_FIELDS = ["peso", "altura", "circunferencia_ab"] as const
 type MetricField = (typeof ALLOWED_METRIC_FIELDS)[number]

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
 import { AI_MODEL } from "@/lib/ai-config"
-import { getAnthropicClient } from "@/lib/anthropic"
+import { getAnthropicClient, captureAnthropicError } from "@/lib/anthropic"
 
 export const maxDuration = 60
 
@@ -122,6 +122,7 @@ Retorne APENAS o HTML começando com <!DOCTYPE html> e terminando com </html>.`
 
     return NextResponse.json({ html })
   } catch (err) {
+    captureAnthropicError(err, "/api/ofertas/landing")
     console.error(err)
     return NextResponse.json({ error: "Erro ao gerar landing page" }, { status: 500 })
   }

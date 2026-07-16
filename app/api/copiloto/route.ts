@@ -3,7 +3,7 @@ import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
 import { inserirProntuario } from "@/lib/medx"
 import { AI_MODEL } from "@/lib/ai-config"
-import { getAnthropicClient } from "@/lib/anthropic"
+import { getAnthropicClient, captureAnthropicError } from "@/lib/anthropic"
 import { logAiUsage } from "@/lib/log-ai-usage"
 
 
@@ -73,6 +73,7 @@ export async function GET(_req: NextRequest) {
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     return NextResponse.json(data ?? [])
   } catch (e) {
+    captureAnthropicError(e, "/api/copiloto")
     return NextResponse.json({ error: errMsg(e) }, { status: 500 })
   }
 }
@@ -97,6 +98,7 @@ export async function DELETE(req: NextRequest) {
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     return NextResponse.json({ ok: true })
   } catch (e) {
+    captureAnthropicError(e, "/api/copiloto")
     return NextResponse.json({ error: errMsg(e) }, { status: 500 })
   }
 }
@@ -194,6 +196,7 @@ Retorne um JSON com exatamente estas 7 chaves:
         resultado:       parsed,
       })
     } catch (saveErr) {
+      captureAnthropicError(saveErr, "/api/copiloto")
       console.error("[api/copiloto] Falha ao salvar histórico:", saveErr)
     }
 
@@ -221,6 +224,7 @@ Retorne um JSON com exatamente estas 7 chaves:
             agendado_para: at,
           })
         } catch (e) {
+          captureAnthropicError(e, "/api/copiloto")
           console.error("[copiloto] primeira-consulta automations:", e)
         }
       })()
@@ -228,6 +232,7 @@ Retorne um JSON com exatamente estas 7 chaves:
 
     return NextResponse.json(parsed)
   } catch (e) {
+    captureAnthropicError(e, "/api/copiloto")
     console.error("[api/copiloto]", e)
     return NextResponse.json({ error: errMsg(e) }, { status: 500 })
   }

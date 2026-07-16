@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
 import { AI_MODEL } from "@/lib/ai-config"
-import { getAnthropicClient } from "@/lib/anthropic"
+import { getAnthropicClient, captureAnthropicError } from "@/lib/anthropic"
 
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -116,6 +116,7 @@ Retorne JSON neste formato:
 
     return NextResponse.json(dados)
   } catch (e) {
+    captureAnthropicError(e, "/api/mercado")
     console.error("[api/mercado]", e)
     return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 500 })
   }

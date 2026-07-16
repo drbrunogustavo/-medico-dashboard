@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { AI_MODEL } from "@/lib/ai-config"
-import { getAnthropicClient } from "@/lib/anthropic"
+import { getAnthropicClient, captureAnthropicError } from "@/lib/anthropic"
 
 export const maxDuration = 30
 
@@ -82,6 +82,7 @@ Retorne APENAS o texto do atestado, sem marcações JSON.`,
     const texto = (resp.content.find(b => b.type === "text") as { text: string } | undefined)?.text ?? ""
     return NextResponse.json({ texto: texto.trim() })
   } catch (e) {
+    captureAnthropicError(e, "/api/copiloto/documento")
     console.error("[copiloto/documento]", errMsg(e))
     return NextResponse.json({ error: errMsg(e) }, { status: 500 })
   }

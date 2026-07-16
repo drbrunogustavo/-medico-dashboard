@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
 import { AI_MODEL } from "@/lib/ai-config"
-import { getAnthropicClient } from "@/lib/anthropic"
+import { getAnthropicClient, captureAnthropicError } from "@/lib/anthropic"
 
 export const maxDuration = 60
 
@@ -23,6 +23,7 @@ export async function GET() {
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     return NextResponse.json(data ?? [])
   } catch (e) {
+    captureAnthropicError(e, "/api/reativacao")
     return NextResponse.json({ error: errMsg(e) }, { status: 500 })
   }
 }
@@ -76,6 +77,7 @@ Não use emojis excessivos. Retorne apenas o texto da mensagem.`,
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     return NextResponse.json(data)
   } catch (e) {
+    captureAnthropicError(e, "/api/reativacao")
     return NextResponse.json({ error: errMsg(e) }, { status: 500 })
   }
 }

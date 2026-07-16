@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { AI_MODEL } from "@/lib/ai-config"
-import { getAnthropicClient } from "@/lib/anthropic"
+import { getAnthropicClient, captureAnthropicError } from "@/lib/anthropic"
 
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -87,6 +87,7 @@ Retorne JSON neste formato exato:
     const idx = clean.indexOf("{")
     return NextResponse.json(parseAIJson(idx >= 0 ? clean.slice(idx) : clean))
   } catch (e) {
+    captureAnthropicError(e, "/api/calendario")
     console.error("[api/calendario]", e)
     return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 500 })
   }

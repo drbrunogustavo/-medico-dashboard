@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
 import { AI_MODEL } from "@/lib/ai-config"
-import { getAnthropicClient } from "@/lib/anthropic"
+import { getAnthropicClient, captureAnthropicError } from "@/lib/anthropic"
 import { logAiUsage } from "@/lib/log-ai-usage"
 
 
@@ -85,6 +85,7 @@ Retorne JSON:
     const idx = clean.indexOf("{")
     return NextResponse.json(parseAIJson(idx >= 0 ? clean.slice(idx) : clean))
   } catch (e) {
+    captureAnthropicError(e, "/api/carrossel")
     console.error("[api/carrossel]", e)
     return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 500 })
   }

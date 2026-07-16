@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServiceClient } from "@/lib/supabase-service"
 import { AI_MODEL } from "@/lib/ai-config"
-import { getAnthropicClient } from "@/lib/anthropic"
+import { getAnthropicClient, captureAnthropicError } from "@/lib/anthropic"
 
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -126,6 +126,7 @@ Regras:
     const parsed = parseAIJson(clean.slice(s, e + 1)) as { alertas?: Alerta[] }
     return NextResponse.json({ alertas: parsed.alertas ?? [] })
   } catch (e) {
+    captureAnthropicError(e, "/api/pacientes/[id]/alertas-ia")
     console.error("[alertas-ia]", errMsg(e))
     return NextResponse.json({ alertas: [] })
   }

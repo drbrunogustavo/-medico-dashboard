@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
+import * as Sentry from "@sentry/nextjs"
 import { createClient } from "@supabase/supabase-js"
 import { Resend } from "resend"
 import { buildBoasVindasHtml, FROM_EMAIL, REPLY_TO } from "@/lib/email-boas-vindas"
@@ -355,6 +356,7 @@ export async function POST(req: NextRequest) {
         break
     }
   } catch (e) {
+    Sentry.captureException(e, { tags: { route: "stripe-webhook" }, level: "fatal" })
     console.error("[stripe/webhook] Erro interno:", e)
     return NextResponse.json({ error: "Erro interno." }, { status: 500 })
   }

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { AI_MODEL } from "@/lib/ai-config"
-import { getAnthropicClient } from "@/lib/anthropic"
+import { getAnthropicClient, captureAnthropicError } from "@/lib/anthropic"
 
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -107,6 +107,7 @@ Todos os valores numéricos devem ser números inteiros (sem "R$", sem "," como 
 
     return NextResponse.json(data)
   } catch (e) {
+    captureAnthropicError(e, "/api/precificacao")
     console.error("[api/precificacao]", e)
     return NextResponse.json({ error: errMsg(e) }, { status: 500 })
   }

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
 import { AI_MODEL } from "@/lib/ai-config"
-import { getAnthropicClient } from "@/lib/anthropic"
+import { getAnthropicClient, captureAnthropicError } from "@/lib/anthropic"
 import { logAiUsage } from "@/lib/log-ai-usage"
 
 
@@ -116,6 +116,7 @@ Gere um pacote completo de conteúdo para Instagram. Retorne JSON:
     const idx = clean.indexOf("{")
     return NextResponse.json(parseAIJson(idx >= 0 ? clean.slice(idx) : clean))
   } catch (e) {
+    captureAnthropicError(e, "/api/copiloto-conteudo")
     console.error("[api/copiloto-conteudo]", e)
     return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 500 })
   }

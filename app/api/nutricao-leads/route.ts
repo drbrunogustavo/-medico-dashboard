@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
 import { AI_MODEL } from "@/lib/ai-config"
-import { getAnthropicClient } from "@/lib/anthropic"
+import { getAnthropicClient, captureAnthropicError } from "@/lib/anthropic"
 
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -142,6 +142,7 @@ Retorne APENAS o JSON array, sem markdown.`,
     const dias2= parseAIJson(idx >= 0 ? clean.slice(idx) : clean)
     return NextResponse.json({ trilha: dias2 })
   } catch (e) {
+    captureAnthropicError(e, "/api/nutricao-leads")
     console.error("[api/nutricao-leads]", e)
     return NextResponse.json({ error: String(e) }, { status: 500 })
   }
@@ -161,6 +162,7 @@ export async function GET(req: NextRequest) {
     if (error) throw error
     return NextResponse.json(data ?? [])
   } catch (e) {
+    captureAnthropicError(e, "/api/nutricao-leads")
     return NextResponse.json({ error: String(e) }, { status: 500 })
   }
 }

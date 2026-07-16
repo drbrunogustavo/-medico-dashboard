@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { checkAuth } from '@/lib/auth-check'
 import { AI_MODEL } from "@/lib/ai-config"
+import { captureAnthropicError } from "@/lib/anthropic"
 
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -65,6 +66,7 @@ Retorne apenas o JSON puro.`,
 
     return NextResponse.json(parseAIJson(json))
   } catch (e) {
+    captureAnthropicError(e, "/api/objecoes/transformar")
     console.error('[objecoes/transformar]', e)
     return NextResponse.json({ error: String(e) }, { status: 500 })
   }

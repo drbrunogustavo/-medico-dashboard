@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { AI_MODEL } from "@/lib/ai-config"
-import { getAnthropicClient } from "@/lib/anthropic"
+import { getAnthropicClient, captureAnthropicError } from "@/lib/anthropic"
 
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -73,6 +73,7 @@ Regras:
     const parsed = parseAIJson(clean.slice(s, e + 1)) as { cids?: CidSugerido[] }
     return NextResponse.json({ cids: (parsed.cids ?? []).slice(0, 3) })
   } catch (e) {
+    captureAnthropicError(e, "/api/copiloto/sugerir-cid")
     console.error("[sugerir-cid]", errMsg(e))
     return NextResponse.json({ cids: [] })
   }

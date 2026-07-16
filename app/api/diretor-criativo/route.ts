@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { AI_MODEL } from "@/lib/ai-config"
+import { captureAnthropicError } from "@/lib/anthropic"
 
 export async function POST(request: Request) {
   const auth = await checkAuth()
@@ -19,6 +20,7 @@ export async function POST(request: Request) {
     })
     return NextResponse.json(await res.json())
   } catch (e) {
+    captureAnthropicError(e, "/api/diretor-criativo")
     console.error(e)
     return NextResponse.json({ error: "Erro ao processar direção criativa" }, { status: 500 })
   }

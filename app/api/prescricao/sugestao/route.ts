@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServiceClient } from "@/lib/supabase-service"
-import { getAnthropicClient } from "@/lib/anthropic"
+import { getAnthropicClient, captureAnthropicError } from "@/lib/anthropic"
 
 export const maxDuration = 60
 
@@ -137,6 +137,7 @@ Responda APENAS com um JSON válido, sem markdown, no seguinte formato:
 
     return NextResponse.json({ ...resultado, sugestaoId: saved?.id ?? null })
   } catch (e) {
+    captureAnthropicError(e, "/api/prescricao/sugestao")
     console.error("[prescricao/sugestao POST]", e)
     return NextResponse.json({ error: String(e) }, { status: 500 })
   }

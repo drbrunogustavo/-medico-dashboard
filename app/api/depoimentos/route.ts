@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { sendZapi } from "@/lib/zapi"
 import { AI_MODEL } from "@/lib/ai-config"
-import { getAnthropicClient } from "@/lib/anthropic"
+import { getAnthropicClient, captureAnthropicError } from "@/lib/anthropic"
 
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -84,6 +84,7 @@ Retorne APENAS JSON:
 
     return NextResponse.json(result)
   } catch (e) {
+    captureAnthropicError(e, "/api/depoimentos")
     return NextResponse.json({ error: errMsg(e) }, { status: 500 })
   }
 }

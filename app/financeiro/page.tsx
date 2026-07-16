@@ -3,6 +3,9 @@
 import { useState, useEffect, useCallback } from "react"
 import { TopBar } from "@/components/TopBar"
 import { StatCard } from "@/components/StatCard"
+import { SkeletonList } from "@/components/LoadingPulse"
+import { ErrorState } from "@/components/ErrorState"
+import { EmptyState } from "@/components/EmptyState"
 import { cn } from "@/lib/utils"
 import {
   TrendingUp, TrendingDown, DollarSign, Hash, PlusCircle,
@@ -277,9 +280,7 @@ export default function FinanceiroPage() {
         </div>
 
         {error && (
-          <div className="bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl px-4 py-3 text-[12px]">
-            {error}
-          </div>
+          <ErrorState compact message={error} onRetry={fetchData} />
         )}
 
         {/* Bar chart por unidade */}
@@ -354,32 +355,23 @@ export default function FinanceiroPage() {
           </div>
 
           {loading && rawData.length === 0 ? (
-            <div className="divide-y divide-border">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="px-5 py-4 animate-pulse">
-                  <div className="hidden md:flex items-center gap-4">
-                    <div className="h-3 w-20 rounded bg-surface" />
-                    <div className="h-3 w-24 rounded bg-surface" />
-                    <div className="h-5 w-16 rounded-full bg-surface" />
-                    <div className="h-3 flex-1 rounded bg-surface" />
-                    <div className="h-3 w-28 rounded bg-surface" />
-                    <div className="h-4 w-20 rounded bg-surface" />
-                  </div>
-                  <div className="flex items-center gap-3 md:hidden">
-                    <div className="h-5 w-16 rounded-full bg-surface" />
-                    <div className="h-3 flex-1 rounded bg-surface" />
-                    <div className="h-4 w-16 rounded bg-surface" />
-                  </div>
-                </div>
-              ))}
-            </div>
+            <SkeletonList rows={5} />
           ) : data.length === 0 && !loading ? (
-            <div className="py-12 text-center text-[13px] text-text-muted">
-              {viewAll
-                ? "Nenhum lançamento encontrado."
-                : <>Nenhum lançamento em {MESES[currentMonth]}. <button onClick={() => setViewAll(true)} className="text-accent hover:underline">Ver todos os períodos</button></>
-              }
-            </div>
+            viewAll ? (
+              <EmptyState
+                icon={DollarSign}
+                title="Nenhum lançamento registrado"
+                subtitle="Registre sua primeira receita ou despesa para começar a acompanhar o financeiro da clínica."
+                action={{ label: "Registrar lançamento", onClick: () => setModalOpen(true) }}
+              />
+            ) : (
+              <div className="py-12 text-center text-[13px] text-text-muted">
+                Nenhum lançamento em {MESES[currentMonth]}.{" "}
+                <button onClick={() => setViewAll(true)} className="text-accent hover:underline">
+                  Ver todos os períodos
+                </button>
+              </div>
+            )
           ) : (
             <div className="divide-y divide-border">
               {data.map(l => (

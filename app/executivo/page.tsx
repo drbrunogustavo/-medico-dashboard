@@ -17,6 +17,8 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
+import { SkeletonCard } from "@/components/LoadingPulse"
+import { ErrorState }   from "@/components/ErrorState"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -776,6 +778,7 @@ export default function ExecutivoPage() {
   const [aba,     setAba]     = useState<AbaId>("marketing")
   const [exec,    setExec]    = useState<Partial<ExecData>>({})
   const [loading, setLoading] = useState(true)
+  const [erro,    setErro]    = useState<string | null>(null)
   const [mktg,    setMktg]    = useState<MarketingManual>(MKTG_DEFAULT)
   const [ops,     setOps]     = useState<OperacaoManual>(OPS_DEFAULT)
   const [aut,     setAut]     = useState<AutoridadeManual>(AUT_DEFAULT)
@@ -792,17 +795,25 @@ export default function ExecutivoPage() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef   = useRef<Blob[]>([])
 
+  const carregarDados = useCallback(() => {
+    setLoading(true)
+    setErro(null)
+    fetch("/api/executivo")
+      .then(r => {
+        if (!r.ok) throw new Error(`Erro ${r.status}`)
+        return r.json() as Promise<ExecData>
+      })
+      .then(d => setExec(d))
+      .catch(() => setErro("Falha ao carregar dados executivos. Tente novamente."))
+      .finally(() => setLoading(false))
+  }, [])
+
   useEffect(() => {
     setMktg(getLocalStorage("exec_mktg", MKTG_DEFAULT))
     setOps(getLocalStorage("exec_ops", OPS_DEFAULT))
     setAut(getLocalStorage("exec_aut", AUT_DEFAULT))
-
-    fetch("/api/executivo")
-      .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d) setExec(d) })
-      .catch(e => console.error("[executivo] erro ao carregar dados executivos:", e))
-      .finally(() => setLoading(false))
-  }, [])
+    carregarDados()
+  }, [carregarDados])
 
   useEffect(() => {
     setHasMediaRecorder(
@@ -961,8 +972,31 @@ export default function ExecutivoPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[70vh]">
-        <Loader2 className="w-6 h-6 text-accent animate-spin" />
+      <div className="animate-fade-in">
+        <MobileOnlyHeader title="Painel Executivo" />
+        <div className="px-4 md:px-8 pt-4 md:pt-8 pb-5">
+          <div className="h-8 w-48 bg-white/[0.06] rounded-lg animate-pulse mb-1" />
+          <div className="h-3 w-32 bg-white/[0.04] rounded animate-pulse" />
+        </div>
+        <div className="px-4 md:px-8 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
+        <div className="px-4 md:px-8 grid grid-cols-1 xl:grid-cols-2 gap-4">
+          <SkeletonCard className="min-h-[200px]" />
+          <SkeletonCard className="min-h-[200px]" />
+        </div>
+      </div>
+    )
+  }
+
+  if (erro) {
+    return (
+      <div className="animate-fade-in">
+        <MobileOnlyHeader title="Painel Executivo" />
+        <ErrorState message={erro} onRetry={carregarDados} className="min-h-[70vh]" />
       </div>
     )
   }

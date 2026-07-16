@@ -1,3 +1,6 @@
+// @ts-check
+const { withSentryConfig } = require("@sentry/nextjs")
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Supabase Storage + common avatar hosts
@@ -34,4 +37,18 @@ const nextConfig = {
   },
 }
 
-module.exports = nextConfig
+module.exports = withSentryConfig(nextConfig, {
+  // Suprime logs do Sentry durante o build
+  silent: !process.env.CI,
+
+  // Source maps enviados ao Sentry para stack traces legíveis; não incluídos no bundle
+  widenClientFileUpload: true,
+  hideSourceMaps: true,
+
+  // Remove logs de debug do Sentry do bundle de produção
+  disableLogger: true,
+
+  // Org e project configurados via env vars no Vercel
+  org:     process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+})

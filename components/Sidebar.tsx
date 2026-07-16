@@ -333,23 +333,6 @@ function SidebarContent() {
 
       {/* ── Footer ── */}
       <div className="border-t border-border">
-        {/* Admin link — only rendered for DOCTOR_USER_ID, not present in HTML for others */}
-        {isAdminUser && (
-          <Link
-            href="/admin/depoimentos"
-            onClick={closeMenu}
-            className={cn(
-              "flex items-center gap-2 mx-3 mt-2 px-3 py-1.5 rounded-lg text-[11px] transition-colors",
-              pathname.startsWith("/admin")
-                ? "bg-red-500/10 text-red-400 border border-red-500/20"
-                : "text-text-muted hover:text-text-secondary hover:bg-surface-2"
-            )}
-          >
-            <ShieldCheck className="w-3.5 h-3.5 flex-shrink-0" />
-            <span>Painel Admin</span>
-          </Link>
-        )}
-
         {/* Dashboard quick link */}
         <Link
           href="/dashboard"
@@ -468,6 +451,22 @@ function SidebarContent() {
           >
             <Users2 className="w-3.5 h-3.5" />
           </Link>
+          {isAdminUser && (
+            <Link
+              href="/admin/depoimentos"
+              onClick={closeMenu}
+              className={cn(
+                "w-7 h-7 rounded-lg flex items-center justify-center transition-colors flex-shrink-0",
+                pathname.startsWith("/admin")
+                  ? "bg-red-500/10 text-red-400 border border-red-500/20"
+                  : "text-text-muted hover:text-text-secondary hover:bg-surface-2"
+              )}
+              title="Painel Admin"
+              aria-label="Painel Admin"
+            >
+              <ShieldCheck className="w-3.5 h-3.5" />
+            </Link>
+          )}
           <div className="flex-1" />
           <button
             onClick={signOut}

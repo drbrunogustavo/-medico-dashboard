@@ -3,9 +3,13 @@
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { TopBar } from "@/components/TopBar"
+import { SkeletonCard } from "@/components/LoadingPulse"
+import { EmptyState }   from "@/components/EmptyState"
+import { ErrorState }   from "@/components/ErrorState"
 import {
-  Loader2, Clock, FlaskConical, TrendingUp, TrendingDown,
+  Clock, FlaskConical, TrendingUp, TrendingDown,
   Minus, Calendar, ChevronRight, RefreshCw,
+  Users, CircleDollarSign, Plug,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -37,7 +41,7 @@ interface RadarData {
     critico: PacItem[]
     atencao: PacItem[]
   }
-  exames_pendentes: ExamItem[]
+  exames_pendentes:  ExamItem[]
   financeiro: {
     receita_mes: number
     receita_ant: number
@@ -45,7 +49,9 @@ interface RadarData {
     dias_tot:    number
     estimativa:  number | null
   }
-  agenda: { total: number; appts: AgendaAppt[] } | null
+  agenda:            { total: number; appts: AgendaAppt[] } | null
+  total_pacientes:   number
+  total_lancamentos: number
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -162,18 +168,23 @@ export default function RadarClinicaPage() {
 
       <div className="p-6 md:p-8 space-y-6">
 
-        {/* Loading */}
+        {/* Loading — 4 skeleton cards no layout real */}
         {loading && (
-          <div className="flex items-center justify-center py-24">
-            <Loader2 className="w-5 h-5 animate-spin text-text-muted" />
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <SkeletonCard />
+              <SkeletonCard />
+            </div>
+            <div className="space-y-4">
+              <SkeletonCard />
+              <SkeletonCard />
+            </div>
           </div>
         )}
 
         {/* Erro */}
         {erro && !loading && (
-          <div className="bg-red-500/10 border border-red-500/25 rounded-xl p-6 text-center text-red-400 text-[13px]">
-            {erro}
-          </div>
+          <ErrorState message={erro} onRetry={carregar} />
         )}
 
         {data && !loading && (
@@ -232,7 +243,17 @@ export default function RadarClinicaPage() {
                   />
                   <div className="divide-y divide-border/40">
                     {semRetornoTotal === 0 ? (
-                      <EmptyRow text="Todos os pacientes com retorno nos últimos 90 dias" />
+                      data.total_pacientes === 0 ? (
+                        <EmptyState
+                          icon={Users}
+                          title="Nenhum paciente cadastrado"
+                          subtitle="Cadastre seus pacientes para monitorar retornos e exames pendentes."
+                          action={{ label: "Ir para Pacientes", href: "/pacientes" }}
+                          className="py-10"
+                        />
+                      ) : (
+                        <EmptyRow text="Todos os pacientes com retorno nos últimos 90 dias" />
+                      )
                     ) : (
                       <>
                         {/* Crítico: > 180 dias */}
@@ -344,82 +365,102 @@ export default function RadarClinicaPage() {
                 <SectionLabel text="FINANCEIRO" />
 
                 <div className="bg-card border border-border rounded-xl p-5 space-y-5">
+                  {data.total_lancamentos === 0 ? (
+                    <EmptyState
+                      icon={CircleDollarSign}
+                      title="Nenhum lançamento registrado"
+                      subtitle="Registre receitas e despesas para acompanhar o financeiro da clínica."
+                      action={{ label: "Registrar lançamento", href: "/financeiro" }}
+                      className="py-6"
+                    />
+                  ) : (
+                    <>
+                      {/* Receita principal */}
+                      <div>
+                        <div className="text-[10px] font-mono text-text-muted uppercase tracking-wider">
+                          Receita do mês
+                        </div>
+                        <div className="text-[32px] font-bold text-text-primary mt-0.5 leading-tight">
+                          {fmtBRL(fin?.receita_mes ?? 0)}
+                        </div>
+                        {varPct !== null && (
+                          <div className={cn(
+                            "flex items-center gap-1 mt-1 text-[11px] font-medium",
+                            varPct > 0 ? "text-accent" : varPct < 0 ? "text-red-400" : "text-text-muted"
+                          )}>
+                            {varPct > 0
+                              ? <TrendingUp  className="w-3 h-3" />
+                              : varPct < 0
+                                ? <TrendingDown className="w-3 h-3" />
+                                : <Minus className="w-3 h-3" />}
+                            {varPct > 0 ? "+" : ""}{varPct}% vs mês anterior
+                            <span className="text-text-muted font-normal">
+                              ({fmtBRL(fin?.receita_ant ?? 0)})
+                            </span>
+                          </div>
+                        )}
+                        {varPct === null && fin && fin.receita_ant === 0 && (
+                          <div className="text-[11px] text-text-muted mt-1">Sem dados do mês anterior</div>
+                        )}
+                      </div>
 
-                  {/* Receita principal */}
-                  <div>
-                    <div className="text-[10px] font-mono text-text-muted uppercase tracking-wider">
-                      Receita do mês
-                    </div>
-                    <div className="text-[32px] font-bold text-text-primary mt-0.5 leading-tight">
-                      {fmtBRL(fin?.receita_mes ?? 0)}
-                    </div>
-                    {varPct !== null && (
-                      <div className={cn(
-                        "flex items-center gap-1 mt-1 text-[11px] font-medium",
-                        varPct > 0 ? "text-accent" : varPct < 0 ? "text-red-400" : "text-text-muted"
-                      )}>
-                        {varPct > 0
-                          ? <TrendingUp  className="w-3 h-3" />
-                          : varPct < 0
-                            ? <TrendingDown className="w-3 h-3" />
-                            : <Minus className="w-3 h-3" />}
-                        {varPct > 0 ? "+" : ""}{varPct}% vs mês anterior
-                        <span className="text-text-muted font-normal">
-                          ({fmtBRL(fin?.receita_ant ?? 0)})
-                        </span>
-                      </div>
-                    )}
-                    {varPct === null && fin && fin.receita_ant === 0 && (
-                      <div className="text-[11px] text-text-muted mt-1">Sem dados do mês anterior</div>
-                    )}
-                  </div>
+                      {/* Barra de progresso do mês */}
+                      {fin && (
+                        <div>
+                          <div className="flex justify-between text-[10px] text-text-muted mb-1.5">
+                            <span>Dia {fin.dias_dec} de {fin.dias_tot}</span>
+                            <span>{Math.round((fin.dias_dec / fin.dias_tot) * 100)}% do mês decorrido</span>
+                          </div>
+                          <div className="h-1.5 bg-surface rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-accent rounded-full"
+                              style={{ width: `${Math.min(100, (fin.dias_dec / fin.dias_tot) * 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
 
-                  {/* Barra de progresso do mês */}
-                  {fin && (
-                    <div>
-                      <div className="flex justify-between text-[10px] text-text-muted mb-1.5">
-                        <span>Dia {fin.dias_dec} de {fin.dias_tot}</span>
-                        <span>{Math.round((fin.dias_dec / fin.dias_tot) * 100)}% do mês decorrido</span>
-                      </div>
-                      <div className="h-1.5 bg-surface rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-accent rounded-full"
-                          style={{ width: `${Math.min(100, (fin.dias_dec / fin.dias_tot) * 100)}%` }}
-                        />
-                      </div>
-                    </div>
+                      {/* Estimativa */}
+                      {fin?.estimativa !== null && fin?.estimativa !== undefined ? (
+                        <div className="bg-accent-dim border border-accent-border rounded-lg px-4 py-3">
+                          <div className="text-[10px] font-mono text-text-muted uppercase tracking-wider">
+                            Estimativa ao fim do mês
+                          </div>
+                          <div className="text-[22px] font-bold text-accent mt-0.5">
+                            {fmtBRL(fin.estimativa)}
+                          </div>
+                          <div className="text-[10px] text-text-muted mt-0.5">
+                            Projeção linear — baseada nos {fin.dias_dec} dias decorridos
+                          </div>
+                        </div>
+                      ) : fin && fin.dias_dec < 3 ? (
+                        <div className="flex items-center gap-2 border border-border rounded-lg px-3 py-2.5 text-[11px] text-text-muted">
+                          <Clock className="w-3.5 h-3.5 flex-shrink-0" />
+                          Estimativa disponível a partir do dia 3 do mês
+                        </div>
+                      ) : fin && fin.receita_mes === 0 ? (
+                        <div className="text-[11px] text-text-muted">
+                          Sem receita registrada ainda este mês
+                        </div>
+                      ) : null}
+                    </>
                   )}
-
-                  {/* Estimativa */}
-                  {fin?.estimativa !== null && fin?.estimativa !== undefined ? (
-                    <div className="bg-accent-dim border border-accent-border rounded-lg px-4 py-3">
-                      <div className="text-[10px] font-mono text-text-muted uppercase tracking-wider">
-                        Estimativa ao fim do mês
-                      </div>
-                      <div className="text-[22px] font-bold text-accent mt-0.5">
-                        {fmtBRL(fin.estimativa)}
-                      </div>
-                      <div className="text-[10px] text-text-muted mt-0.5">
-                        Projeção linear — baseada nos {fin.dias_dec} dias decorridos
-                      </div>
-                    </div>
-                  ) : fin && fin.dias_dec < 3 ? (
-                    <div className="flex items-center gap-2 border border-border rounded-lg px-3 py-2.5 text-[11px] text-text-muted">
-                      <Clock className="w-3.5 h-3.5 flex-shrink-0" />
-                      Estimativa disponível a partir do dia 3 do mês
-                    </div>
-                  ) : fin && fin.receita_mes === 0 ? (
-                    <div className="text-[11px] text-text-muted">
-                      Sem receita registrada ainda este mês
-                    </div>
-                  ) : null}
                 </div>
 
                 {/* ── Agenda ── */}
-                {data.agenda !== null && (
-                  <>
-                    <SectionLabel text="AGENDA HOJE" />
-                    <div className="bg-card border border-border rounded-xl overflow-hidden">
+                <SectionLabel text="AGENDA HOJE" />
+                <div className="bg-card border border-border rounded-xl overflow-hidden">
+                  {data.agenda === null ? (
+                    // MedX não configurado — explica e oferece CTA
+                    <EmptyState
+                      icon={Plug}
+                      title="Agenda não configurada"
+                      subtitle="Conecte o MedX para visualizar seus agendamentos do dia diretamente aqui."
+                      action={{ label: "Configurar integração", href: "/integracoes" }}
+                      className="py-10"
+                    />
+                  ) : (
+                    <>
                       <CardHeader
                         icon={<Calendar className="w-3.5 h-3.5 text-purple-400" />}
                         label={
@@ -455,9 +496,9 @@ export default function RadarClinicaPage() {
                           )}
                         </div>
                       )}
-                    </div>
-                  </>
-                )}
+                    </>
+                  )}
+                </div>
               </div>
 
             </div>

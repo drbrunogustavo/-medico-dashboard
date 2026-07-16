@@ -32,6 +32,7 @@ export async function GET() {
     { data: historico },
     { data: lancMes },
     { data: lancAnt },
+    { count: totalLancamentos },
   ] = await Promise.all([
     supabase.from("pacientes_local").select("id, nome").eq("user_id", auth.userId),
     supabase
@@ -53,6 +54,10 @@ export async function GET() {
       .eq("tipo", "receita")
       .gte("data", prevStart)
       .lte("data", prevEnd),
+    supabase
+      .from("financeiro_lancamentos")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", auth.userId),
   ])
 
   // ── Sem retorno ────────────────────────────────────────────────────────────
@@ -144,9 +149,11 @@ export async function GET() {
   }
 
   return NextResponse.json({
-    sem_retorno:      { critico: semRetornoCritico, atencao: semRetornoAtencao },
-    exames_pendentes: examesPendentes,
-    financeiro:       { receita_mes, receita_ant, dias_dec, dias_tot, estimativa },
+    sem_retorno:       { critico: semRetornoCritico, atencao: semRetornoAtencao },
+    exames_pendentes:  examesPendentes,
+    financeiro:        { receita_mes, receita_ant, dias_dec, dias_tot, estimativa },
     agenda,
+    total_pacientes:   pacientes?.length ?? 0,
+    total_lancamentos: totalLancamentos  ?? 0,
   })
 }

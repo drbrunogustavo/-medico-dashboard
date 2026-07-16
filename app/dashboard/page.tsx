@@ -1,8 +1,9 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
+import { ErrorState } from "@/components/ErrorState"
 import { TopBar } from "@/components/TopBar"
 import {
   ArrowRight, Activity, BarChart,
@@ -322,6 +323,7 @@ export default function DashboardPage() {
   const [lastAccess,     setLastAccess]     = useState<string | null>(null)
   const [execMetrics,    setExecMetrics]    = useState<ExecMetrics | null>(null)
   const [execLoading,    setExecLoading]    = useState(true)
+  const [execError,      setExecError]      = useState(false)
   const [sugestoesIA,      setSugestoesIA]      = useState<SugestaoIA[]>([])
   const [sugestoesLoad,    setSugestoesLoad]    = useState(true)
   const [semRetornoCount,  setSemRetornoCount]  = useState<number | null>(null)
@@ -342,6 +344,25 @@ export default function DashboardPage() {
 
   const dica = ACOES_DIA[new Date().getDay()]
 
+  const fetchExecMetrics = useCallback(() => {
+    setExecLoading(true)
+    setExecError(false)
+    fetch("/api/executivo")
+      .then(r => { if (!r.ok) throw new Error(); return r.json() as Promise<Record<string, unknown>> })
+      .then(data => {
+        setExecMetrics({
+          leads_total:     (data.leads_total     as number)              ?? 0,
+          leads_semana:    (data.leads_semana    as number)              ?? 0,
+          nps_score:       (data.nps_score       as number | null)       ?? null,
+          consultas_mes:   (data.consultas_mes   as number)              ?? 0,
+          faturamento_mes: (data.faturamento_mes as number)              ?? 0,
+          leads_origem:    (data.leads_origem    as { origem: string; count: number }[]) ?? [],
+        })
+      })
+      .catch(() => setExecError(true))
+      .finally(() => setExecLoading(false))
+  }, [])
+
   useEffect(() => {
     const prev = localStorage.getItem("praxis_last_access")
     if (prev) setLastAccess(prev)
@@ -360,23 +381,7 @@ export default function DashboardPage() {
       })
       .catch(e => console.error("[dashboard] erro ao carregar pautas recentes:", e))
 
-    // Fetch executive metrics
-    fetch("/api/executivo")
-      .then(r => r.ok ? r.json() : null)
-      .then((data) => {
-        if (data) {
-          setExecMetrics({
-            leads_total:     data.leads_total     ?? 0,
-            leads_semana:    data.leads_semana    ?? 0,
-            nps_score:       data.nps_score       ?? null,
-            consultas_mes:   data.consultas_mes   ?? 0,
-            faturamento_mes: data.faturamento_mes ?? 0,
-            leads_origem:    data.leads_origem    ?? [],
-          })
-        }
-      })
-      .catch(e => console.error("[dashboard] erro ao carregar métricas executivas:", e))
-      .finally(() => setExecLoading(false))
+    fetchExecMetrics()
 
     // Sem retorno — fire-and-forget, secondary info
     fetch("/api/pacientes/sem-retorno-count")
@@ -386,7 +391,7 @@ export default function DashboardPage() {
           setSemRetornoCount((d as { count: number }).count)
       })
       .catch(() => {})
-  }, [])
+  }, [fetchExecMetrics])
 
   useEffect(() => {
     if (execLoading || perfilLoading) return
@@ -495,28 +500,36 @@ export default function DashboardPage() {
         </div>
 
         {/* ── KPIs em destaque ─────────────────────────────────────────────── */}
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
-          <MetricCard
-            label="Leads no CRM"     value={execMetrics?.leads_total ?? 0}
-            sub="total captados"     topColor="#00c07f" loading={execLoading}
+        {execError ? (
+          <ErrorState
+            compact
+            message="Falha ao carregar métricas. Verifique sua conexão e tente novamente."
+            onRetry={fetchExecMetrics}
           />
-          <MetricCard
-            label="Consultas/mês"    value={execMetrics?.consultas_mes ?? 0}
-            sub="mês atual"          topColor="#3b7fff" loading={execLoading}
-          />
-          <MetricCard
-            label="NPS Score"        value={npsDisplay}
-            sub="satisfação"         topColor="#c084fc" loading={execLoading}
-          />
-          <MetricCard
-            label="Banco de Pautas"  value={pautasCount}
-            sub="ideias salvas"      topColor="#f59e0b"
-          />
-          <MetricCard
-            label="Posts publicados" value={postsCount}
-            sub="conteúdos no ar"    topColor="#f472b6"
-          />
-        </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
+            <MetricCard
+              label="Leads no CRM"     value={execMetrics?.leads_total ?? 0}
+              sub="total captados"     topColor="#00c07f" loading={execLoading}
+            />
+            <MetricCard
+              label="Consultas/mês"    value={execMetrics?.consultas_mes ?? 0}
+              sub="mês atual"          topColor="#3b7fff" loading={execLoading}
+            />
+            <MetricCard
+              label="NPS Score"        value={npsDisplay}
+              sub="satisfação"         topColor="#c084fc" loading={execLoading}
+            />
+            <MetricCard
+              label="Banco de Pautas"  value={pautasCount}
+              sub="ideias salvas"      topColor="#f59e0b"
+            />
+            <MetricCard
+              label="Posts publicados" value={postsCount}
+              sub="conteúdos no ar"    topColor="#f472b6"
+            />
+          </div>
+        )}
 
         {/* ── Sugestões PRAXIS IA ─────────────────────────────────────────── */}
         <SugestoesIA sugestoes={sugestoesIA} loading={sugestoesLoad} />

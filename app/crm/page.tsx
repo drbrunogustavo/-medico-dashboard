@@ -18,6 +18,8 @@ import {
   Edit2, Trash2, GripVertical, ChevronDown, Check,
   Link2, ExternalLink, Zap, CheckCircle, Clock, Edit3,
 } from "lucide-react"
+import { ErrorState } from "@/components/ErrorState"
+import { EmptyState } from "@/components/EmptyState"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -974,6 +976,7 @@ function NurturingModal({
 export default function CRMPage() {
   const [leads, setLeads]         = useState<Lead[]>([])
   const [loading, setLoading]     = useState(true)
+  const [erro,    setErro]        = useState<string | null>(null)
   const [toast, setToast]         = useState<string | null>(null)
   const [toastType, setToastType] = useState<"success" | "error">("success")
 
@@ -1006,13 +1009,13 @@ export default function CRMPage() {
 
   const fetchLeads = useCallback(async () => {
     setLoading(true)
+    setErro(null)
     try {
       const res = await fetch("/api/crm")
       if (!res.ok) throw new Error("Erro ao buscar leads")
       setLeads(await res.json())
-    } catch (e) {
-      console.error("[crm] erro ao carregar leads:", e)
-      showToast("Erro ao carregar leads", "error")
+    } catch {
+      setErro("Falha ao carregar leads. Tente novamente.")
     } finally {
       setLoading(false)
     }
@@ -1232,6 +1235,15 @@ export default function CRMPage() {
               <div key={col.id} className={cn("rounded-xl border flex-shrink-0 w-[280px] md:flex-1 h-[320px] animate-pulse", col.bg, col.border)} />
             ))}
           </div>
+        ) : erro ? (
+          <ErrorState message={erro} onRetry={fetchLeads} className="py-12" />
+        ) : leads.length === 0 ? (
+          <EmptyState
+            icon={Users2}
+            title="Nenhum lead ainda"
+            subtitle="Adicione seu primeiro lead para começar a acompanhar seu funil de pacientes."
+            action={{ label: "Adicionar lead", onClick: () => { setNewEstagio("novo"); setShowNew(true) } }}
+          />
         ) : (
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
             <div className="relative">

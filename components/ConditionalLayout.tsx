@@ -6,6 +6,7 @@ import { MobileMenuProvider } from "@/components/MobileMenuProvider"
 import { PraxisCopilot }      from "@/components/PraxisCopilot"
 import { CommandBar }          from "@/components/CommandBar"
 import { AppProvider }         from "@/components/AppProvider"
+import { ScrollToTop }         from "@/components/ScrollToTop"
 
 // Routes that must NOT render the Sidebar or trigger any auth hooks.
 const PUBLIC_PATHS = new Set(["/", "/login", "/cadastro", "/demo", "/planos", "/landing", "/onboarding", "/captacao", "/privacidade", "/deletar-dados", "/termos", "/anunciar-curso"])
@@ -22,6 +23,7 @@ export function ConditionalLayout({ children }: { children: React.ReactNode }) {
   return (
     <AppProvider>
       <MobileMenuProvider>
+        <ScrollToTop />
         <div className="flex min-h-screen">
           <Sidebar />
           <main className="flex-1 min-w-0 min-h-screen bg-background flex flex-col md:ml-60">

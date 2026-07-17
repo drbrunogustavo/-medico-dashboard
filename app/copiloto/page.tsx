@@ -1844,19 +1844,9 @@ function CopilotoContent() {
                 <Button variant="primary" size="sm" onClick={() => { navigator.clipboard.writeText(docModal.texto); showToast("Documento copiado!") }} leftIcon={Copy} className="py-2 px-4">
                   Copiar documento
                 </Button>
-                <button
-                  onClick={() => {
-                    const w = window.open("", "_blank")
-                    if (!w) return
-                    w.document.write(`<html><head><title>${docModal.tipo === "carta" ? "Carta de Encaminhamento" : "Atestado"}</title><style>body{font-family:Arial,sans-serif;font-size:13px;line-height:1.7;margin:60px 80px;white-space:pre-wrap}</style></head><body>${docModal.texto}</body></html>`)
-                    w.document.close()
-                    w.print()
-                  }}
-                  className="flex items-center gap-1.5 text-[12px] font-semibold px-4 py-2 rounded-lg border border-border text-text-secondary hover:text-text-primary hover:border-border-hover transition-all"
-                >
-                  <ArrowRight className="w-3.5 h-3.5" />
+                <Button variant="secondary-medium" size="sm" onClick={() => { const w = window.open("", "_blank"); if (!w) return; w.document.write(`<html><head><title>${docModal.tipo === "carta" ? "Carta de Encaminhamento" : "Atestado"}</title><style>body{font-family:Arial,sans-serif;font-size:13px;line-height:1.7;margin:60px 80px;white-space:pre-wrap}</style></head><body>${docModal.texto}</body></html>`); w.document.close(); w.print() }} leftIcon={ArrowRight} className="px-4 py-2">
                   Imprimir
-                </button>
+                </Button>
               </div>
             )}
           </div>

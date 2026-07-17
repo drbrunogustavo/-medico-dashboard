@@ -6,7 +6,7 @@ import { Loader2 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-type Variant = "primary" | "secondary" | "secondary-soft" | "ghost" | "destructive" | "accent-ghost"
+type Variant = "primary" | "secondary" | "secondary-soft" | "secondary-medium" | "ghost" | "destructive" | "accent-ghost"
 type Size = "sm" | "md" | "lg"
 
 export interface ButtonProps {
@@ -28,8 +28,9 @@ export interface ButtonProps {
 const variantClasses: Record<Variant, string> = {
   primary:          "bg-accent text-background hover:bg-accent/90",
   secondary:        "border border-border text-text-muted hover:text-text-primary",
-  "secondary-soft": "border border-border text-text-muted hover:text-text-secondary hover:border-border-hover",
-  ghost:            "border border-transparent text-text-muted hover:text-accent hover:border-accent-border",
+  "secondary-soft":   "border border-border text-text-muted hover:text-text-secondary hover:border-border-hover",
+  "secondary-medium": "border border-border text-text-secondary hover:text-text-primary hover:border-border-hover",
+  ghost:              "border border-transparent text-text-muted hover:text-accent hover:border-accent-border",
   destructive:      "border border-red-500/30 text-red-400 hover:bg-red-500/10",
   "accent-ghost":   "border border-accent-border bg-accent-dim text-accent hover:bg-accent/20",
 }

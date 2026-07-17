@@ -582,28 +582,15 @@ export default function ReativacaoPage() {
               Campanha ({selecionados.length})
             </button>
           )}
-          <button
-            onClick={handleImportarMedx}
-            disabled={importando}
-            className="flex items-center gap-1.5 text-xs font-semibold border border-[--border] text-text-muted px-3 py-2 rounded-lg hover:text-text-secondary hover:border-[--border-hover] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {importando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+          <Button variant="secondary-soft" size="sm" onClick={handleImportarMedx} loading={importando} leftIcon={Download} className="py-2">
             {importando ? "Importando…" : "Importar do MedX"}
-          </button>
-          <button
-            onClick={() => setShowImportarPlanilha(true)}
-            className="flex items-center gap-1.5 text-xs font-semibold border border-[--border] text-text-muted px-3 py-2 rounded-lg hover:text-text-secondary hover:border-[--border-hover] transition-colors"
-          >
-            <FileSpreadsheet className="w-3.5 h-3.5" />
+          </Button>
+          <Button variant="secondary-soft" size="sm" onClick={() => setShowImportarPlanilha(true)} leftIcon={FileSpreadsheet} className="py-2">
             Importar planilha
-          </button>
-          <button
-            onClick={() => setShowAdd(true)}
-            className="flex items-center gap-1.5 text-xs font-semibold border border-[--border] text-text-muted px-3 py-2 rounded-lg hover:text-text-secondary hover:border-[--border-hover] transition-colors"
-          >
-            <Plus className="w-3.5 h-3.5" />
+          </Button>
+          <Button variant="secondary-soft" size="sm" onClick={() => setShowAdd(true)} leftIcon={Plus} className="py-2">
             Adicionar
-          </button>
+          </Button>
         </div>
       </div>
 

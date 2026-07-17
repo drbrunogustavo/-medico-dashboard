@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react"
 import { Check, Trash2, Globe, EyeOff, Loader2, RefreshCw, Instagram } from "lucide-react"
 import { TopBar } from "@/components/TopBar"
 import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/Button"
 
 interface Dep {
   id: string
@@ -82,13 +83,9 @@ export default function AdminDepoimentosPage() {
         subtitle="ADMIN · PRAXIS INTERNAL"
         tagline="Modere depoimentos enviados por assinantes antes de publicá-los na landing page."
         actions={
-          <button
-            onClick={() => fetchDeps(filtro)}
-            className="flex items-center gap-1.5 px-3 py-1.5 border border-border rounded-lg text-[12px] text-text-muted hover:text-text-primary hover:border-border-hover transition-all"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
+          <Button variant="secondary" size="sm" onClick={() => fetchDeps(filtro)} leftIcon={RefreshCw}>
             Atualizar
-          </button>
+          </Button>
         }
       />
 
@@ -182,35 +179,18 @@ export default function AdminDepoimentosPage() {
                 {/* Ações */}
                 <div className="flex items-center gap-2 pt-1 flex-wrap">
                   {!dep.aprovado && (
-                    <button
-                      onClick={() => aprovar(dep.id)}
-                      disabled={!!acting[dep.id]}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold bg-accent text-background hover:bg-accent/90 disabled:opacity-50 transition-all"
-                    >
-                      {acting[dep.id] === "aprovando"
-                        ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        : <Check className="w-3.5 h-3.5" />}
+                    <Button variant="primary" size="sm" onClick={() => aprovar(dep.id)} loading={acting[dep.id] === "aprovando"} disabled={!!acting[dep.id]} leftIcon={Check}>
                       Aprovar
-                    </button>
+                    </Button>
                   )}
                   {dep.aprovado && (
-                    <button
-                      onClick={() => revogar(dep.id)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] border border-border text-text-muted hover:text-text-primary hover:border-border-hover transition-all"
-                    >
+                    <Button variant="secondary" size="sm" onClick={() => revogar(dep.id)}>
                       Revogar aprovação
-                    </button>
+                    </Button>
                   )}
-                  <button
-                    onClick={() => excluir(dep.id)}
-                    disabled={!!acting[dep.id]}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] border border-red-500/30 text-red-400 hover:bg-red-500/10 disabled:opacity-50 transition-all"
-                  >
-                    {acting[dep.id] === "excluindo"
-                      ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      : <Trash2 className="w-3.5 h-3.5" />}
+                  <Button variant="destructive" size="sm" onClick={() => excluir(dep.id)} loading={acting[dep.id] === "excluindo"} disabled={!!acting[dep.id]} leftIcon={Trash2}>
                     Excluir
-                  </button>
+                  </Button>
                 </div>
               </div>
             ))}

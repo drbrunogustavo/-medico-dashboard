@@ -7,6 +7,7 @@ import {
   Sparkles, Download, AlertCircle, FileSpreadsheet, Upload,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/Button"
 import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -224,12 +225,7 @@ function ImportarPlanilhaModal({
                   ))}
                 </div>
               )}
-              <button
-                onClick={onClose}
-                className="w-full py-2.5 rounded-xl bg-accent text-[--background] text-sm font-semibold hover:bg-accent/90 transition-colors"
-              >
-                Fechar
-              </button>
+              <Button variant="primary" size="lg" fullWidth onClick={onClose}>Fechar</Button>
             </div>
           )}
         </div>
@@ -321,14 +317,7 @@ function AddModal({
             </div>
           </div>
         </div>
-        <button
-          onClick={salvar}
-          disabled={saving || !nome.trim() || !telefone.trim()}
-          className="w-full mt-5 py-2.5 rounded-xl bg-accent text-[--background] text-sm font-semibold hover:bg-accent/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-          Adicionar
-        </button>
+        <Button variant="primary" size="lg" fullWidth onClick={salvar} loading={saving} disabled={!nome.trim() || !telefone.trim()} leftIcon={Plus} className="mt-5">Adicionar</Button>
       </div>
     </div>
   )

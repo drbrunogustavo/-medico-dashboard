@@ -7,6 +7,7 @@ import { StatCard } from "@/components/StatCard"
 import { Plus, FileText, Search, Filter, Tag, Clock, Star, ChevronDown, Pencil, Trash2,
   Sparkles, Loader2, Clapperboard, LayoutGrid, AlignLeft, X } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/Button"
 
 const CATEGORIAS = ["Todas","Nutrologia","Endocrinologia","Longevidade","Metabolismo","Microbioma","Hormônios","Anti-aging","Genômica"]
 const PRIORIDADES = ["Todas","Alta","Média","Baixa"]
@@ -201,10 +202,7 @@ export default function PautasPage() {
                 : <Sparkles className="w-3.5 h-3.5 text-accent" />}
               Ideias do consultório
             </button>
-            <button onClick={() => setShowForm(v => !v)}
-              className="flex items-center gap-2 px-5 py-3 rounded-lg bg-accent-dim border border-accent-border text-accent text-[14px] font-semibold hover:bg-accent/20 transition-colors min-h-[44px]">
-              <Plus className="w-4 h-4" /> Nova Pauta
-            </button>
+            <Button variant="accent-ghost" size="lg" onClick={() => setShowForm(v => !v)} leftIcon={Plus} className="py-3 min-h-[44px]">Nova Pauta</Button>
           </div>
         }
       />

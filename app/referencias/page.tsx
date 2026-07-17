@@ -5,6 +5,7 @@ import { TopBar } from "@/components/TopBar"
 import { StatCard } from "@/components/StatCard"
 import { Plus, Users, TrendingUp, Eye, Star, ExternalLink, Search, Instagram, Globe, Trash2, Sparkles, X, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/Button"
 import { AI_MODEL } from "@/lib/ai-config"
 
 const NICHOS    = ["Todos","Nutrologia","Endocrinologia","Longevidade","Metabolismo","Geral"]
@@ -478,10 +479,7 @@ export default function ReferenciasPage() {
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border text-text-muted text-[12px] hover:border-accent-border hover:text-accent transition-colors">
               <Sparkles className="w-3.5 h-3.5" /> Buscar influencers
             </button>
-            <button onClick={() => setShowForm(v => !v)}
-              className="flex items-center gap-2 px-5 py-3 rounded-lg bg-accent-dim border border-accent-border text-accent text-[14px] font-semibold hover:bg-accent/20 transition-colors min-h-[44px]">
-              <Plus className="w-4 h-4" /> Adicionar
-            </button>
+            <Button variant="accent-ghost" size="lg" onClick={() => setShowForm(v => !v)} leftIcon={Plus} className="py-3 min-h-[44px]">Adicionar</Button>
           </div>
         }
       />

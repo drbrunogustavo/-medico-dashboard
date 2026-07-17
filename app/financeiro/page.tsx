@@ -7,6 +7,7 @@ import { SkeletonList } from "@/components/LoadingPulse"
 import { ErrorState } from "@/components/ErrorState"
 import { EmptyState } from "@/components/EmptyState"
 import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/Button"
 import {
   TrendingUp, TrendingDown, DollarSign, Hash, PlusCircle,
   Trash2, Filter, X, Loader2, ChevronLeft, ChevronRight,
@@ -210,13 +211,9 @@ export default function FinanceiroPage() {
             >
               Ver tudo
             </button>
-            <button
-              onClick={() => setModalOpen(true)}
-              className="flex items-center gap-1.5 text-[11px] bg-accent text-background font-semibold rounded-lg px-3 py-1.5 hover:opacity-90 transition-opacity"
-            >
-              <PlusCircle className="w-3.5 h-3.5" />
+            <Button variant="primary" size="sm" onClick={() => setModalOpen(true)} leftIcon={PlusCircle}>
               Lançamento
-            </button>
+            </Button>
           </div>
         }
       />
@@ -484,12 +481,9 @@ export default function FinanceiroPage() {
               >
                 Novo Lançamento
               </span>
-              <button
-                onClick={() => setModalOpen(false)}
-                className="w-7 h-7 rounded-lg flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-surface-2 transition-all"
-              >
+              <Button variant="secondary" size="sm" onClick={() => setModalOpen(false)} className="w-7 h-7 p-0 border-0 hover:bg-surface-2" aria-label="Fechar">
                 <X className="w-4 h-4" />
-              </button>
+              </Button>
             </div>
 
             {/* Body */}

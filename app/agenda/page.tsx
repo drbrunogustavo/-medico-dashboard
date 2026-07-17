@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { TopBar } from "@/components/TopBar"
 import { StatCard } from "@/components/StatCard"
+import { Button } from "@/components/ui/Button"
 import { cn } from "@/lib/utils"
 import {
   ArrowLeft, ChevronLeft, ChevronRight, Calendar, List,
@@ -1006,12 +1007,9 @@ export default function AgendaPage() {
                 )}>
                   {getApptStatus(selected) || "—"}
                 </span>
-                <button
-                  onClick={() => setSelected(null)}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-surface-2 transition-all"
-                >
+                <Button variant="secondary" size="sm" onClick={() => setSelected(null)} className="w-7 h-7 p-0 border-0 hover:bg-surface-2" aria-label="Fechar">
                   <X className="w-4 h-4" />
-                </button>
+                </Button>
               </div>
             </div>
 
@@ -1114,12 +1112,9 @@ export default function AgendaPage() {
               >
                 Novo Agendamento
               </div>
-              <button
-                onClick={() => setNovoOpen(false)}
-                className="w-7 h-7 flex items-center justify-center rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-2 transition-all"
-              >
+              <Button variant="secondary" size="sm" onClick={() => setNovoOpen(false)} className="w-7 h-7 p-0 border-0 hover:bg-surface-2" aria-label="Fechar">
                 <X className="w-4 h-4" />
-              </button>
+              </Button>
             </div>
 
             <div className="px-6 py-5 space-y-4">

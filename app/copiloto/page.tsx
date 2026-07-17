@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation"
 import { useAppContext } from "@/components/AppProvider"
 import { TopBar } from "@/components/TopBar"
 import { Toast } from "@/components/Toast"
+import { Button } from "@/components/ui/Button"
 import { cn } from "@/lib/utils"
 import {
   Search, Loader2, X, User, Phone,
@@ -1667,12 +1668,9 @@ function CopilotoContent() {
             <div className="px-5 py-4 border-b border-border">
               <div className="flex items-center justify-between mb-1">
                 <h3 className="text-[15px] font-semibold text-text-primary">Consulta finalizada</h3>
-                <button
-                  onClick={() => setShowPostModal(false)}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors"
-                >
+                <Button variant="secondary" size="sm" onClick={() => setShowPostModal(false)} className="w-7 h-7 p-0 border-0 hover:bg-surface-2" aria-label="Fechar">
                   <X className="w-4 h-4" />
-                </button>
+                </Button>
               </div>
               <p className="text-[11px] text-text-muted font-mono">
                 {patient ? getPacNome(patient) : "Paciente"} · {fmtTimer(consultDuration)}
@@ -1818,9 +1816,9 @@ function CopilotoContent() {
                   {docModal.tipo === "carta" ? "Carta de Encaminhamento" : "Atestado Médico"}
                 </span>
               </div>
-              <button onClick={() => setDocModal(null)} className="w-7 h-7 rounded-lg flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors">
+              <Button variant="secondary" size="sm" onClick={() => setDocModal(null)} className="w-7 h-7 p-0 border-0 hover:bg-surface-2" aria-label="Fechar">
                 <X className="w-4 h-4" />
-              </button>
+              </Button>
             </div>
 
             <div className="flex-1 overflow-y-auto p-5">
@@ -1843,16 +1841,9 @@ function CopilotoContent() {
 
             {!docModal.loading && docModal.texto && (
               <div className="flex items-center gap-2 px-5 py-4 border-t border-border flex-shrink-0">
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(docModal.texto)
-                    showToast("Documento copiado!")
-                  }}
-                  className="flex items-center gap-1.5 text-[12px] font-semibold px-4 py-2 rounded-lg bg-accent text-background hover:bg-accent/90 transition-all"
-                >
-                  <Copy className="w-3.5 h-3.5" />
+                <Button variant="primary" size="sm" onClick={() => { navigator.clipboard.writeText(docModal.texto); showToast("Documento copiado!") }} leftIcon={Copy} className="py-2 px-4">
                   Copiar documento
-                </button>
+                </Button>
                 <button
                   onClick={() => {
                     const w = window.open("", "_blank")

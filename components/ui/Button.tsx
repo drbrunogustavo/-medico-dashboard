@@ -28,7 +28,7 @@ export interface ButtonProps {
 const variantClasses: Record<Variant, string> = {
   primary:        "bg-accent text-background hover:bg-accent/90",
   secondary:      "border border-border text-text-muted hover:text-text-primary",
-  destructive:    "bg-danger text-white hover:bg-danger/90",
+  destructive:    "border border-red-500/30 text-red-400 hover:bg-red-500/10",
   "accent-ghost": "border border-accent-border bg-accent-dim text-accent hover:bg-accent/20",
 }
 

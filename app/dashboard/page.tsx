@@ -424,6 +424,11 @@ export default function DashboardPage() {
     .filter(o => o.count > 0)
     .sort((a, b) => b.count - a.count)[0] ?? null
 
+  const isNewUser = !execLoading && execMetrics !== null
+    && execMetrics.leads_total     === 0
+    && execMetrics.consultas_mes   === 0
+    && execMetrics.faturamento_mes === 0
+
   const activityFeed = [
     ...(recentPautas.map(p => ({
       icon: FileText, color: "text-accent",
@@ -506,6 +511,47 @@ export default function DashboardPage() {
             message="Falha ao carregar métricas. Verifique sua conexão e tente novamente."
             onRetry={fetchExecMetrics}
           />
+        ) : isNewUser ? (
+          <div className="rounded-xl border border-border bg-surface p-6 space-y-5">
+            <div className="text-center">
+              <h3 className="text-[16px] font-semibold text-text-primary">Comece a usar o PRAXIS</h3>
+              <p className="text-[13px] text-text-muted mt-1.5">
+                Seus dados aparecerão aqui assim que você registrar pacientes, leads ou consultas.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <Link href="/pacientes"
+                className="flex flex-col items-center gap-3 p-4 rounded-xl border border-border hover:border-border-hover bg-card transition-all hover:-translate-y-0.5">
+                <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/25 flex items-center justify-center">
+                  <Users className="w-5 h-5 text-blue-400" />
+                </div>
+                <div className="text-center">
+                  <p className="text-[13px] font-semibold text-text-primary">Cadastrar primeiro paciente</p>
+                  <p className="text-[11px] text-text-muted mt-0.5">Comece pelo prontuário</p>
+                </div>
+              </Link>
+              <Link href="/crm"
+                className="flex flex-col items-center gap-3 p-4 rounded-xl border border-border hover:border-border-hover bg-card transition-all hover:-translate-y-0.5">
+                <div className="w-10 h-10 rounded-xl bg-accent-dim border border-accent-border flex items-center justify-center">
+                  <TrendingUp className="w-5 h-5 text-accent" />
+                </div>
+                <div className="text-center">
+                  <p className="text-[13px] font-semibold text-text-primary">Adicionar lead no CRM</p>
+                  <p className="text-[11px] text-text-muted mt-0.5">Capture e converta pacientes</p>
+                </div>
+              </Link>
+              <Link href="/copiloto"
+                className="flex flex-col items-center gap-3 p-4 rounded-xl border border-border hover:border-border-hover bg-card transition-all hover:-translate-y-0.5">
+                <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/25 flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-purple-400" />
+                </div>
+                <div className="text-center">
+                  <p className="text-[13px] font-semibold text-text-primary">Experimentar o Copiloto</p>
+                  <p className="text-[11px] text-text-muted mt-0.5">Prontuário SOAP em 30s com IA</p>
+                </div>
+              </Link>
+            </div>
+          </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
             <MetricCard

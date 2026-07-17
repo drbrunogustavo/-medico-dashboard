@@ -20,6 +20,7 @@ import {
 } from "lucide-react"
 import { ErrorState } from "@/components/ErrorState"
 import { EmptyState } from "@/components/EmptyState"
+import { Button }     from "@/components/ui/Button"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -433,9 +434,9 @@ function LeadModal({
           <h2 className="text-[15px] font-semibold text-text-primary">
             {initial ? "Editar Lead" : "Novo Lead"}
           </h2>
-          <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors">
+          <Button variant="secondary" size="sm" onClick={onClose} className="w-7 h-7 p-0 border-0 hover:bg-surface-2" aria-label="Fechar">
             <X className="w-4 h-4" />
-          </button>
+          </Button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-5 space-y-3.5 overflow-y-auto">
@@ -583,9 +584,9 @@ function LeadDetailModal({
               </span>
             )}
           </div>
-          <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors ml-2 flex-shrink-0">
+          <Button variant="secondary" size="sm" onClick={onClose} className="w-7 h-7 p-0 border-0 hover:bg-surface-2 ml-2 flex-shrink-0" aria-label="Fechar">
             <X className="w-4 h-4" />
-          </button>
+          </Button>
         </div>
 
         {/* Body */}
@@ -893,9 +894,9 @@ function NurturingModal({
             </h2>
             <p className="text-[11px] text-text-muted mt-0.5">Sequência automática de 4 mensagens</p>
           </div>
-          <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors">
+          <Button variant="secondary" size="sm" onClick={onClose} className="w-7 h-7 p-0 border-0 hover:bg-surface-2" aria-label="Fechar">
             <X className="w-4 h-4" />
-          </button>
+          </Button>
         </div>
 
         <div className="p-5 space-y-3 flex-1 overflow-y-auto">
@@ -908,14 +909,9 @@ function NurturingModal({
               {genError && (
                 <p className="text-[11px] text-red-400 bg-red-950/30 border border-red-900/40 rounded-lg px-3 py-2">{genError}</p>
               )}
-              <button
-                onClick={gerarSequencia}
-                disabled={generating}
-                className="inline-flex items-center gap-2 text-[12px] font-medium px-4 py-2 rounded-lg border border-accent-border bg-accent-dim text-accent hover:bg-accent/20 transition-colors disabled:opacity-50"
-              >
-                {generating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5" />}
+              <Button variant="accent-ghost" size="sm" onClick={gerarSequencia} loading={generating} leftIcon={Zap}>
                 {generating ? "Gerando sequência…" : "Gerar Sequência Agora"}
-              </button>
+              </Button>
             </div>
           ) : (
             seqs.map(s => (
@@ -953,10 +949,8 @@ function NurturingModal({
                       className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-[12px] text-text-primary resize-none focus:outline-none focus:border-accent/50"
                     />
                     <div className="flex gap-2">
-                      <button onClick={() => setEditId(null)} className="flex-1 py-1.5 rounded-lg border border-border text-[11px] text-text-muted">Cancelar</button>
-                      <button onClick={() => saveEdit(s.id)} disabled={saving} className="flex-1 py-1.5 rounded-lg bg-accent text-[11px] font-semibold text-background disabled:opacity-60 flex items-center justify-center gap-1">
-                        {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />} Salvar
-                      </button>
+                      <Button variant="secondary" size="sm" onClick={() => setEditId(null)} className="flex-1">Cancelar</Button>
+                      <Button variant="primary" size="sm" onClick={() => saveEdit(s.id)} loading={saving} leftIcon={Check} className="flex-1">Salvar</Button>
                     </div>
                   </div>
                 ) : (

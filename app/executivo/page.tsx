@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils"
 import Link from "next/link"
 import { SkeletonCard } from "@/components/LoadingPulse"
 import { ErrorState }   from "@/components/ErrorState"
+import { Button }       from "@/components/ui/Button"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -204,16 +205,11 @@ function AbaMarketing({ mktg, onSave }: {
         <h2 className="text-base font-semibold text-text-primary">Marketing Digital</h2>
         {editing ? (
           <div className="flex gap-2">
-            <button onClick={() => setEditing(false)} className="text-[12px] px-3 py-1.5 rounded-lg border border-border text-text-muted hover:text-text-primary transition-colors">Cancelar</button>
-            <button onClick={save} className="text-[12px] px-3 py-1.5 rounded-lg bg-accent/90 text-white font-semibold hover:bg-accent transition-colors flex items-center gap-1.5">
-              <Check className="w-3.5 h-3.5" /> Salvar
-            </button>
+            <Button variant="secondary" size="sm" onClick={() => setEditing(false)}>Cancelar</Button>
+            <Button variant="primary" size="sm" onClick={save} leftIcon={Check}>Salvar</Button>
           </div>
         ) : (
-          <button onClick={() => { setDraft({ ...mktg }); setEditing(true) }}
-            className="text-[12px] px-3 py-1.5 rounded-lg border border-border text-text-muted hover:text-text-primary transition-colors flex items-center gap-1.5">
-            <Edit3 className="w-3.5 h-3.5" /> Editar dados
-          </button>
+          <Button variant="secondary" size="sm" onClick={() => { setDraft({ ...mktg }); setEditing(true) }} leftIcon={Edit3}>Editar dados</Button>
         )}
       </div>
 
@@ -520,16 +516,11 @@ function AbaOperacao({ ops, onSave, exec }: {
         <h2 className="text-base font-semibold text-text-primary">Operação da Clínica</h2>
         {editing ? (
           <div className="flex gap-2">
-            <button onClick={() => setEditing(false)} className="text-[12px] px-3 py-1.5 rounded-lg border border-border text-text-muted hover:text-text-primary transition-colors">Cancelar</button>
-            <button onClick={save} className="text-[12px] px-3 py-1.5 rounded-lg bg-accent/90 text-white font-semibold hover:bg-accent transition-colors flex items-center gap-1.5">
-              <Check className="w-3.5 h-3.5" /> Salvar
-            </button>
+            <Button variant="secondary" size="sm" onClick={() => setEditing(false)}>Cancelar</Button>
+            <Button variant="primary" size="sm" onClick={save} leftIcon={Check}>Salvar</Button>
           </div>
         ) : (
-          <button onClick={() => { setDraft(ops); setEditing(true) }}
-            className="text-[12px] px-3 py-1.5 rounded-lg border border-border text-text-muted hover:text-text-primary transition-colors flex items-center gap-1.5">
-            <Edit3 className="w-3.5 h-3.5" /> Editar dados
-          </button>
+          <Button variant="secondary" size="sm" onClick={() => { setDraft(ops); setEditing(true) }} leftIcon={Edit3}>Editar dados</Button>
         )}
       </div>
 
@@ -636,16 +627,11 @@ function AbaAutoridade({ exec, aut, onSave }: {
         <h2 className="text-base font-semibold text-text-primary">Autoridade e Reputação</h2>
         {editing ? (
           <div className="flex gap-2">
-            <button onClick={() => setEditing(false)} className="text-[12px] px-3 py-1.5 rounded-lg border border-border text-text-muted hover:text-text-primary transition-colors">Cancelar</button>
-            <button onClick={save} className="text-[12px] px-3 py-1.5 rounded-lg bg-accent/90 text-white font-semibold hover:bg-accent transition-colors flex items-center gap-1.5">
-              <Check className="w-3.5 h-3.5" /> Salvar
-            </button>
+            <Button variant="secondary" size="sm" onClick={() => setEditing(false)}>Cancelar</Button>
+            <Button variant="primary" size="sm" onClick={save} leftIcon={Check}>Salvar</Button>
           </div>
         ) : (
-          <button onClick={() => { setDraft(aut); setLinkDraft(aut.google_link); setEditing(true) }}
-            className="text-[12px] px-3 py-1.5 rounded-lg border border-border text-text-muted hover:text-text-primary transition-colors flex items-center gap-1.5">
-            <Edit3 className="w-3.5 h-3.5" /> Editar dados
-          </button>
+          <Button variant="secondary" size="sm" onClick={() => { setDraft(aut); setLinkDraft(aut.google_link); setEditing(true) }} leftIcon={Edit3}>Editar dados</Button>
         )}
       </div>
 
@@ -748,15 +734,9 @@ function AbaAutoridade({ exec, aut, onSave }: {
 
           {/* Botões de ação */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <Link href="/nps" className="rounded-xl border border-accent-border bg-accent-dim text-accent px-4 py-3 text-[12px] font-semibold flex items-center gap-2 hover:opacity-80 transition-opacity">
-              <Star className="w-3.5 h-3.5" /> Enviar pesquisa NPS
-            </Link>
-            <Link href="/nps" className="rounded-xl border border-border bg-surface text-text-secondary px-4 py-3 text-[12px] font-semibold flex items-center gap-2 hover:text-text-primary transition-colors">
-              <ThumbsUp className="w-3.5 h-3.5" /> Gerar depoimento com IA
-            </Link>
-            <Link href="/indicacoes" className="rounded-xl border border-border bg-surface text-text-secondary px-4 py-3 text-[12px] font-semibold flex items-center gap-2 hover:text-text-primary transition-colors">
-              <UserPlus className="w-3.5 h-3.5" /> Ver indicações
-            </Link>
+            <Button variant="accent-ghost" size="md" href="/nps" leftIcon={Star} className="py-3 justify-start">Enviar pesquisa NPS</Button>
+            <Button variant="secondary" size="md" href="/nps" leftIcon={ThumbsUp} className="py-3 justify-start bg-surface text-text-secondary">Gerar depoimento com IA</Button>
+            <Button variant="secondary" size="md" href="/indicacoes" leftIcon={UserPlus} className="py-3 justify-start bg-surface text-text-secondary">Ver indicações</Button>
           </div>
         </>
       )}

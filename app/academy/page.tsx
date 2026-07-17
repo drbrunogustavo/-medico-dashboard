@@ -9,6 +9,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
+import { EmptyState } from "@/components/EmptyState"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -668,10 +669,16 @@ function AbaAulas({ progresso, onMarcarConcluida }: { progresso: ProgressoMap; o
 
       <div className="space-y-2">
         {lista.length === 0 && (
-          <div className="text-center py-12 rounded-xl" style={{ border: "1px solid var(--border)" }}>
-            <Search className="w-8 h-8 mx-auto mb-3" style={{ color: "var(--text-muted)" }} />
-            <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>Nenhuma aula encontrada</p>
-          </div>
+          <EmptyState
+            icon={Search}
+            title="Nenhuma aula encontrada"
+            subtitle="Tente outros termos ou limpe os filtros para ver todas as aulas."
+            action={{
+              label: "Limpar filtros",
+              onClick: () => { setBusca(""); setFiltroT("todas"); setFiltroN("todos") },
+            }}
+            className="rounded-xl border border-border"
+          />
         )}
         {lista.map(({ aula, trilha }) => {
           const Icon = trilha.icon

@@ -55,6 +55,19 @@ module.exports = {
         danger:  { DEFAULT: "#ef4444", dim: "rgba(239,68,68,0.10)",   border: "rgba(239,68,68,0.25)"   },
         warning: { DEFAULT: "#f59e0b", dim: "rgba(245,158,11,0.10)",  border: "rgba(245,158,11,0.25)"  },
         success: { DEFAULT: "#00c07f", dim: "rgba(0,192,127,0.10)",   border: "rgba(0,192,127,0.25)"   },
+
+        /* ── Bege — paleta quente usada em páginas público/demo/loading ─ */
+        bege: {
+          DEFAULT: "#b8976a",
+          mid:     "#9a8a7a",
+          dark:    "#6a5a4a",
+          dim:     "rgba(184,151,106,0.10)",
+          border:  "rgba(184,151,106,0.25)",
+        },
+
+        /* ── Dark / Cream — fundo escuro e claro das páginas públicas ── */
+        dark:  { DEFAULT: "#0D1B2A" },
+        cream: { DEFAULT: "#F5F0E8", border: "#e8ddd0" },
       },
       fontFamily: {
         sans:  ["var(--font-inter)", "system-ui", "sans-serif"],

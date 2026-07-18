@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useRef } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import {
   Check, ChevronDown, ChevronUp, ArrowRight,
@@ -103,17 +104,6 @@ function SectionHeader({ label, title, sub }: { label: string; title: string; su
   )
 }
 
-// ─── Toast ────────────────────────────────────────────────────────────────────
-
-function Toast({ msg, onClose }: { msg: string; onClose: () => void }) {
-  return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-3 rounded-xl border border-border bg-surface shadow-2xl animate-fade-in" style={{ minWidth: 340 }}>
-      <span className="text-[13px] text-text-primary">{msg}</span>
-      <button onClick={onClose} className="ml-auto text-text-muted hover:text-text-primary"><X className="w-4 h-4" /></button>
-    </div>
-  )
-}
-
 // ─── FAQ Accordion ────────────────────────────────────────────────────────────
 
 function FAQItem({ q, a }: { q: string; a: string }) {
@@ -141,14 +131,9 @@ function FAQItem({ q, a }: { q: string; a: string }) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function LandingPage() {
-  const [toast,          setToast]          = useState<string | null>(null)
+  const router                              = useRouter()
   const [particleCount]                     = useState(20)
   const heroRef                             = useRef<HTMLElement>(null)
-
-  const showToast = () => {
-    setToast("Em breve — entre em contato pelo WhatsApp.")
-    setTimeout(() => setToast(null), 4000)
-  }
 
   return (
     <div className="fixed inset-0 z-[200] bg-background text-text-primary overflow-y-auto" style={{ fontFamily: "var(--font-inter), system-ui, sans-serif" }}>
@@ -208,7 +193,7 @@ export default function LandingPage() {
 
             <div className="flex flex-col sm:flex-row gap-4">
               <button
-                onClick={showToast}
+                onClick={() => router.push('/planos')}
                 className="flex items-center justify-center gap-2 px-8 py-4 rounded-lg bg-accent text-background text-[15px] font-bold hover:opacity-90 transition-all active:scale-[0.98]"
               >
                 Começar agora <ArrowRight className="w-4 h-4" />
@@ -399,7 +384,7 @@ export default function LandingPage() {
                     ))}
                   </div>
                   <button
-                    onClick={showToast}
+                    onClick={() => router.push('/planos')}
                     className={cn("w-full py-3 rounded-lg text-[13px] transition-all active:scale-[0.98] min-h-[48px]", plan.ctaBg, plan.ctaText)}
                   >
                     Assinar {plan.name}
@@ -434,7 +419,7 @@ export default function LandingPage() {
             Junte-se aos profissionais de saúde que já usam PRAXIS para construir uma presença digital de alto padrão.
           </p>
           <button
-            onClick={showToast}
+            onClick={() => router.push('/planos')}
             className="inline-flex items-center gap-2 px-10 py-4 rounded-lg bg-accent text-background text-[15px] font-bold hover:opacity-90 transition-all active:scale-[0.98]"
           >
             Começar agora <ArrowRight className="w-4 h-4" />
@@ -460,7 +445,6 @@ export default function LandingPage() {
         </div>
       </footer>
 
-      {toast && <Toast msg={toast} onClose={() => setToast(null)} />}
     </div>
   )
 }

@@ -14,6 +14,10 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAppContext } from "@/components/AppProvider"
+import {
+  BarChart as ReBarChart, Bar, LineChart, Line,
+  XAxis, YAxis, Tooltip as ReTooltip, ResponsiveContainer,
+} from "recharts"
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -124,12 +128,15 @@ const ACOES_DIA = [
 ]
 
 interface ExecMetrics {
-  leads_total:     number
-  leads_semana:    number
-  nps_score:       number | null
-  consultas_mes:   number
-  faturamento_mes: number
-  leads_origem:    { origem: string; count: number }[]
+  leads_total:       number
+  leads_semana:      number
+  nps_score:         number | null
+  consultas_mes:     number
+  faturamento_mes:   number
+  leads_origem:      { origem: string; count: number }[]
+  faturamento_6m:    { mes: string; valor: number }[]
+  nps_6m:            { mes: string; nps: number | null }[]
+  leads_por_estagio: { estagio: string; count: number }[]
 }
 
 interface AcademyProgresso { aula_id: string; status: string }
@@ -355,12 +362,15 @@ export default function DashboardPage() {
       .then(r => { if (!r.ok) throw new Error(); return r.json() as Promise<Record<string, unknown>> })
       .then(data => {
         setExecMetrics({
-          leads_total:     (data.leads_total     as number)              ?? 0,
-          leads_semana:    (data.leads_semana    as number)              ?? 0,
-          nps_score:       (data.nps_score       as number | null)       ?? null,
-          consultas_mes:   (data.consultas_mes   as number)              ?? 0,
-          faturamento_mes: (data.faturamento_mes as number)              ?? 0,
-          leads_origem:    (data.leads_origem    as { origem: string; count: number }[]) ?? [],
+          leads_total:       (data.leads_total       as number)                               ?? 0,
+          leads_semana:      (data.leads_semana      as number)                               ?? 0,
+          nps_score:         (data.nps_score         as number | null)                        ?? null,
+          consultas_mes:     (data.consultas_mes     as number)                               ?? 0,
+          faturamento_mes:   (data.faturamento_mes   as number)                               ?? 0,
+          leads_origem:      (data.leads_origem      as { origem: string; count: number }[])  ?? [],
+          faturamento_6m:    (data.faturamento_6m    as { mes: string; valor: number }[])     ?? [],
+          nps_6m:            (data.nps_6m            as { mes: string; nps: number | null }[]) ?? [],
+          leads_por_estagio: (data.leads_por_estagio as { estagio: string; count: number }[]) ?? [],
         })
       })
       .catch(() => setExecError(true))
@@ -453,6 +463,11 @@ export default function DashboardPage() {
     && execMetrics.leads_total     === 0
     && execMetrics.consultas_mes   === 0
     && execMetrics.faturamento_mes === 0
+
+  const fat6m  = execMetrics?.faturamento_6m ?? []
+  const varPct = fat6m.length >= 2 && fat6m[fat6m.length - 2].valor > 0
+    ? (fat6m[fat6m.length - 1].valor - fat6m[fat6m.length - 2].valor) / fat6m[fat6m.length - 2].valor * 100
+    : null
 
   const activityFeed = [
     ...(recentPautas.map(p => ({
@@ -670,6 +685,143 @@ export default function DashboardPage() {
               label="Posts publicados" value={postsCount}
               sub="conteúdos no ar"    topColor="#f472b6"
             />
+          </div>
+        )}
+
+        {/* ── Indicadores ─────────────────────────────────────────────────── */}
+        {!isNewUser && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <span className="text-[11px] font-mono text-text-muted tracking-wider uppercase">Indicadores</span>
+              <div className="h-px flex-1 bg-border" />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+              {/* Receita 6 meses */}
+              <div className="bg-surface border border-border rounded-xl p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-[10px] font-mono text-text-muted uppercase tracking-widest">
+                    Receita 6 meses
+                  </span>
+                  {varPct !== null && (
+                    <span className={cn("text-[11px] font-semibold", varPct >= 0 ? "text-success" : "text-danger")}>
+                      {varPct >= 0 ? "↑" : "↓"} {Math.abs(varPct).toFixed(1)}% vs mês anterior
+                    </span>
+                  )}
+                </div>
+                {execLoading ? (
+                  <div className="h-[180px] bg-border/30 rounded-xl animate-pulse" />
+                ) : (
+                  <ResponsiveContainer width="100%" height={180}>
+                    <ReBarChart data={fat6m} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
+                      <XAxis
+                        dataKey="mes"
+                        tick={{ fontSize: 10, fill: "var(--text-muted)" }}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <YAxis hide />
+                      <ReTooltip
+                        contentStyle={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }}
+                        formatter={(v: unknown) => [fmtBRL(Number(v)), "Receita"]}
+                        labelStyle={{ color: "var(--text-secondary)" }}
+                      />
+                      <Bar dataKey="valor" fill="var(--accent)" radius={[4, 4, 0, 0]} />
+                    </ReBarChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+
+              {/* NPS ao longo do tempo */}
+              <div className="bg-surface border border-border rounded-xl p-5">
+                <div className="mb-4">
+                  <span className="text-[10px] font-mono text-text-muted uppercase tracking-widest">
+                    NPS ao longo do tempo
+                  </span>
+                </div>
+                {execLoading ? (
+                  <div className="h-[140px] bg-border/30 rounded-xl animate-pulse" />
+                ) : (
+                  <ResponsiveContainer width="100%" height={140}>
+                    <LineChart
+                      data={execMetrics?.nps_6m ?? []}
+                      margin={{ top: 4, right: 8, left: 0, bottom: 0 }}
+                    >
+                      <XAxis
+                        dataKey="mes"
+                        tick={{ fontSize: 10, fill: "var(--text-muted)" }}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <YAxis
+                        domain={[0, 10]}
+                        ticks={[0, 5, 10]}
+                        tick={{ fontSize: 10, fill: "var(--text-muted)" }}
+                        axisLine={false}
+                        tickLine={false}
+                        width={24}
+                      />
+                      <ReTooltip
+                        contentStyle={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }}
+                        formatter={(v: unknown) => [String(v), "NPS"]}
+                        labelStyle={{ color: "var(--text-secondary)" }}
+                      />
+                      <Line
+                        dataKey="nps"
+                        stroke="var(--accent)"
+                        strokeWidth={2}
+                        dot={false}
+                        connectNulls
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+
+            </div>
+
+            {/* Funil CRM */}
+            <div className="bg-surface border border-border rounded-xl p-5">
+              <div className="mb-4">
+                <span className="text-[10px] font-mono text-text-muted uppercase tracking-widest">
+                  Funil CRM — estágios
+                </span>
+              </div>
+              {execLoading ? (
+                <div className="h-[120px] bg-border/30 rounded-xl animate-pulse" />
+              ) : (
+                <ResponsiveContainer width="100%" height={120}>
+                  <ReBarChart
+                    layout="vertical"
+                    data={execMetrics?.leads_por_estagio ?? []}
+                    margin={{ top: 0, right: 16, left: 0, bottom: 0 }}
+                  >
+                    <XAxis
+                      type="number"
+                      tick={{ fontSize: 10, fill: "var(--text-muted)" }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <YAxis
+                      type="category"
+                      dataKey="estagio"
+                      tick={{ fontSize: 10, fill: "var(--text-muted)" }}
+                      axisLine={false}
+                      tickLine={false}
+                      width={120}
+                    />
+                    <ReTooltip
+                      contentStyle={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }}
+                      formatter={(v: unknown) => [String(v), "Leads"]}
+                      labelStyle={{ color: "var(--text-secondary)" }}
+                    />
+                    <Bar dataKey="count" fill="var(--accent)" radius={[0, 4, 4, 0]} />
+                  </ReBarChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+
           </div>
         )}
 

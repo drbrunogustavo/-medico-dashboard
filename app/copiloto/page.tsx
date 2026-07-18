@@ -658,14 +658,14 @@ function CopilotoContent() {
     debounceRef.current = setTimeout(() => searchPatients(v), 400)
   }
 
-  const fetchMemoriaPadrao = useCallback(async (paciente_nome: string) => {
+  const fetchMemoriaPadrao = useCallback(async (paciente_nome: string, paciente_id?: string) => {
     setMemoriaChips([])
     setLoadingMemoria(true)
     try {
       const res  = await fetch("/api/copiloto/memoria-padrao", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ paciente_nome }),
+        body: JSON.stringify({ paciente_nome, paciente_id: paciente_id || undefined }),
       })
       const data = await res.json() as { chips?: { tipo: string; texto: string }[] }
       setMemoriaChips(data.chips ?? [])
@@ -675,7 +675,7 @@ function CopilotoContent() {
 
   const selectPatient = (p: Paciente) => {
     setPatient(p); setQuery(getPacNome(p)); setShowDrop(false); setResults([])
-    fetchMemoriaPadrao(getPacNome(p))
+    fetchMemoriaPadrao(getPacNome(p), getPacId(p) || undefined)
   }
   const clearPatient = () => {
     setPatient(null); setQuery(""); setResults([]); setShowDrop(false)
@@ -699,6 +699,7 @@ function CopilotoContent() {
           dados:        dados || undefined,
           tipoConsulta,
           nomePaciente: patient ? getPacNome(patient) : undefined,
+          pacienteId:   patient ? getPacId(patient)  : undefined,
           protocoloId:  protocoloId ?? undefined,
         }),
       })

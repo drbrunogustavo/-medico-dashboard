@@ -131,6 +131,7 @@ export async function POST(req: NextRequest) {
       dados?:         string
       tipoConsulta?:  string
       nomePaciente?:  string
+      pacienteId?:    string
       protocoloId?:   string
     }
 
@@ -189,6 +190,7 @@ Retorne um JSON com exatamente estas 7 chaves:
       const supabase = createSupabaseServerClient()
       await supabase.from("copiloto_historico").insert({
         user_id:         auth.userId,
+        paciente_id:     body.pacienteId   ?? null,
         paciente_nome:   body.nomePaciente ?? null,
         tipo_consulta:   body.tipoConsulta ?? null,
         relato:          body.relato,

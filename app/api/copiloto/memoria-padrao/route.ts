@@ -20,15 +20,20 @@ export async function POST(req: NextRequest) {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
 
-  const { paciente_nome } = await req.json() as { paciente_nome?: string }
-  if (!paciente_nome?.trim()) return NextResponse.json({ chips: [] })
+  const { paciente_nome, paciente_id } = await req.json() as { paciente_nome?: string; paciente_id?: string }
+  if (!paciente_nome?.trim() && !paciente_id?.trim()) return NextResponse.json({ chips: [] })
 
   const supabase = createSupabaseServerClient()
-  const { data: historico } = await supabase
+  let query = supabase
     .from("copiloto_historico")
     .select("resultado, created_at")
     .eq("user_id", auth.userId)
-    .ilike("paciente_nome", paciente_nome.trim())
+
+  query = paciente_id?.trim()
+    ? query.eq("paciente_id", paciente_id.trim())
+    : query.ilike("paciente_nome", `%${(paciente_nome ?? "").trim()}%`)
+
+  const { data: historico } = await query
     .order("created_at", { ascending: false })
     .limit(5)
 

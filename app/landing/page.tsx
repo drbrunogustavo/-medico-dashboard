@@ -8,7 +8,7 @@ import {
   Radio, Bot, Video, Layers, Zap, FileText,
   ScanFace, ShieldQuestion, Megaphone, Sparkles,
   Flame, CircleDollarSign, BarChart, Users, MessageSquare,
-  Star, Crown, X,
+  Star, Crown, X, Stethoscope, LineChart, Camera,
 } from "lucide-react"
 import { PraxisLogo } from "@/components/PraxisLogo"
 import { cn } from "@/lib/utils"
@@ -177,18 +177,18 @@ export default function LandingPage() {
           <div className="max-w-3xl">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent-dim border border-accent-border mb-8">
               <span className="w-1.5 h-1.5 rounded-full bg-accent animate-blink" />
-              <span className="text-[10px] font-mono text-accent tracking-widest">PLATAFORMA DE MARKETING MÉDICO</span>
+              <span className="text-[10px] font-mono text-accent tracking-widest">PLATAFORMA CLÍNICA COM IA</span>
             </div>
 
             <h1
               className="text-[38px] md:text-[56px] font-semibold text-text-primary leading-[1.1] mb-6"
               style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}
             >
-              Sua presença digital no nível dos melhores.
+              Do consultório ao conteúdo — tudo em uma plataforma.
             </h1>
 
             <p className="text-[17px] md:text-[19px] text-text-secondary mb-10 leading-relaxed max-w-2xl">
-              PRAXIS é a plataforma de marketing médico que transforma sua expertise em conteúdo de alto impacto — com inteligência artificial de última geração.
+              PRAXIS integra Copiloto de consulta com IA, CRM de pacientes, gestão financeira e marketing médico em uma única plataforma para médicos brasileiros.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4">
@@ -324,6 +324,59 @@ export default function LandingPage() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── PARA QUEM É ─────────────────────────────────────────────────────── */}
+      <section className="py-24 px-6 md:px-12">
+        <div className="max-w-5xl mx-auto">
+          <SectionHeader
+            label="Para quem é o PRAXIS"
+            title="Uma plataforma para cada momento da sua rotina."
+          />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[
+              {
+                icon: Stethoscope,
+                color: "#00c07f",
+                bg: "rgba(0,192,127,0.08)",
+                border: "rgba(0,192,127,0.2)",
+                title: "Na consulta",
+                desc: "Copiloto com IA documenta o prontuário, sugere condutas e gera seguimento pós-consulta em tempo real.",
+              },
+              {
+                icon: LineChart,
+                color: "#3b7fff",
+                bg: "rgba(59,127,255,0.08)",
+                border: "rgba(59,127,255,0.2)",
+                title: "Na gestão",
+                desc: "CRM de leads, financeiro com DRE, NPS de pacientes e indicadores integrados — sem planilha.",
+              },
+              {
+                icon: Camera,
+                color: "#a855f7",
+                bg: "rgba(168,85,247,0.08)",
+                border: "rgba(168,85,247,0.2)",
+                title: "No marketing",
+                desc: "Roteiros, carrosséis, legendas e calendário editorial gerados por IA com a sua especialidade.",
+              },
+            ].map((item, i) => {
+              const Icon = item.icon
+              return (
+                <div key={i} className="flex flex-col gap-4 p-6 rounded-xl border hover:border-border-hover transition-all"
+                  style={{ background: item.bg, borderColor: item.border }}>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+                    style={{ background: "rgba(0,0,0,0.2)", border: `1px solid ${item.border}` }}>
+                    <Icon className="w-5 h-5" style={{ color: item.color }} />
+                  </div>
+                  <div>
+                    <h3 className="text-[16px] font-semibold text-text-primary mb-1">{item.title}</h3>
+                    <p className="text-[13px] text-text-muted leading-relaxed">{item.desc}</p>
+                  </div>
+                </div>
+              )
+            })}
           </div>
         </div>
       </section>

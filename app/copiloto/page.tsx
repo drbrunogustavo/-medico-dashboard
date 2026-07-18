@@ -13,7 +13,7 @@ import {
   Copy, Check, Bot, RefreshCw, Plus, Tag,
   AlertCircle, ChevronDown, ChevronUp, Send,
   Clock, Trash2, FlaskConical, Mic, MicOff, ShieldCheck, Brain,
-  Pill, CalendarDays, Mail, ArrowRight,
+  Pill, CalendarDays, Mail, ArrowRight, Salad, Star, UserPlus,
 } from "lucide-react"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -448,6 +448,14 @@ function CopilotoContent() {
       if (timerRef.current) clearInterval(timerRef.current)
     }
   }, [focusMode])
+
+  // Abre modal automaticamente ao gerar relatório
+  useEffect(() => {
+    if (phase === "done" && result !== null && !showPostModal) {
+      const t = setTimeout(() => setShowPostModal(true), 800)
+      return () => clearTimeout(t)
+    }
+  }, [phase, result, showPostModal])
 
   async function aceitarConsentimento() {
     await fetch("/api/perfil", {
@@ -1769,7 +1777,47 @@ function CopilotoContent() {
                 </div>
               </button>
 
-              {/* ⑥ Copiar lista de exames */}
+              {/* ⑥a Encaminhar para nutrição */}
+              <button
+                onClick={() => {
+                  const id = patient ? getPacId(patient) : ""
+                  router.push(id ? `/nutricao-pacientes?pacienteId=${id}` : "/nutricao-pacientes")
+                  setShowPostModal(false)
+                }}
+                className="w-full flex items-center gap-3 text-left px-4 py-3 rounded-xl border border-border hover:border-border-hover text-text-secondary hover:text-text-primary transition-all"
+              >
+                <Salad className="w-4 h-4 flex-shrink-0 text-green-400" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-semibold">Encaminhar para nutrição</p>
+                  <p className="text-[10px] text-text-muted">Abrir acompanhamento nutricional</p>
+                </div>
+              </button>
+
+              {/* ⑥b Solicitar NPS */}
+              <button
+                onClick={() => { router.push("/nps"); setShowPostModal(false) }}
+                className="w-full flex items-center gap-3 text-left px-4 py-3 rounded-xl border border-border hover:border-border-hover text-text-secondary hover:text-text-primary transition-all"
+              >
+                <Star className="w-4 h-4 flex-shrink-0 text-amber-400" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-semibold">Solicitar avaliação</p>
+                  <p className="text-[10px] text-text-muted">Enviar pesquisa de satisfação NPS</p>
+                </div>
+              </button>
+
+              {/* ⑥c Programa de indicações */}
+              <button
+                onClick={() => { router.push("/indicacoes"); setShowPostModal(false) }}
+                className="w-full flex items-center gap-3 text-left px-4 py-3 rounded-xl border border-border hover:border-border-hover text-text-secondary hover:text-text-primary transition-all"
+              >
+                <UserPlus className="w-4 h-4 flex-shrink-0 text-accent" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-semibold">Programa de indicações</p>
+                  <p className="text-[10px] text-text-muted">Convidar paciente a indicar amigos</p>
+                </div>
+              </button>
+
+              {/* ⑦ Copiar lista de exames */}
               {result?.exames_solicitados && result.exames_solicitados.length > 0 && (
                 <button
                   onClick={() => {

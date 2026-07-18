@@ -103,7 +103,7 @@ function ItemCard({
           {item.tags?.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-1.5">
               {item.tags.map(t => (
-                <span key={t} className="text-[9px] font-mono px-1.5 py-0.5 rounded-full bg-accent-dim border border-accent-border text-accent">{t}</span>
+                <span key={t} className="text-badge font-mono px-1.5 py-0.5 rounded-full bg-accent-dim border border-accent-border text-accent">{t}</span>
               ))}
             </div>
           )}

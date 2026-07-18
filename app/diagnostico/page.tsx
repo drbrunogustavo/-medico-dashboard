@@ -324,7 +324,7 @@ export default function DiagnosticoPage() {
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-semibold text-text-primary">{p.titulo}</p>
                     <span className={cn(
-                      "text-[9px] font-mono px-1.5 py-0.5 rounded-full border",
+                      "text-badge font-mono px-1.5 py-0.5 rounded-full border",
                       p.impacto === "Alto"
                         ? "bg-red-500/10 border-red-500/30 text-red-400"
                         : "bg-amber-500/10 border-amber-500/30 text-amber-400"

@@ -353,7 +353,7 @@ export default function ObecoesPage() {
               {CATEGORIAS.map(cat => {
                 const c = CAT_CONFIG[cat]
                 return (
-                  <div key={cat} className={cn("rounded-lg px-3 py-1.5 border text-[9px] font-mono font-bold uppercase tracking-wider", c.bg, c.border, c.color)}>
+                  <div key={cat} className={cn("rounded-lg px-3 py-1.5 border text-badge font-mono font-bold uppercase tracking-wider", c.bg, c.border, c.color)}>
                     {c.label}
                   </div>
                 )
@@ -628,7 +628,7 @@ export default function ObecoesPage() {
                       <button key={pauta.id} onClick={() => { setTema(pauta.titulo); setModalOpen(false) }}
                         className="w-full text-left px-4 py-3 rounded-lg border border-transparent hover:border-accent-border hover:bg-accent-dim/30 transition-all group">
                         <p className="text-[12px] font-medium text-text-primary group-hover:text-accent transition-colors">{pauta.titulo}</p>
-                        <span className="text-[9px] font-medium px-2 py-0.5 rounded bg-white/[0.04] border border-border text-text-muted mt-1 inline-block">{pauta.categoria}</span>
+                        <span className="text-badge font-medium px-2 py-0.5 rounded bg-white/[0.04] border border-border text-text-muted mt-1 inline-block">{pauta.categoria}</span>
                       </button>
                     ))}
                 </div>

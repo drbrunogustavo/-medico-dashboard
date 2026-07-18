@@ -130,20 +130,20 @@ export default function AdminDepoimentosPage() {
                         <span className="text-[10px] font-mono text-text-muted">{dep.crm}</span>
                       )}
                       {dep.aprovado ? (
-                        <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded-full border bg-accent-dim border-accent-border text-accent">
+                        <span className="text-badge font-mono font-bold px-2 py-0.5 rounded-full border bg-accent-dim border-accent-border text-accent">
                           APROVADO
                         </span>
                       ) : (
-                        <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded-full border bg-amber-500/10 border-amber-500/30 text-amber-400">
+                        <span className="text-badge font-mono font-bold px-2 py-0.5 rounded-full border bg-amber-500/10 border-amber-500/30 text-amber-400">
                           PENDENTE
                         </span>
                       )}
                       {dep.exibir_landing ? (
-                        <span className="flex items-center gap-1 text-[9px] font-mono px-2 py-0.5 rounded-full border bg-blue-500/10 border-blue-500/25 text-blue-400">
+                        <span className="flex items-center gap-1 text-badge font-mono px-2 py-0.5 rounded-full border bg-blue-500/10 border-blue-500/25 text-blue-400">
                           <Globe className="w-2.5 h-2.5" /> Landing
                         </span>
                       ) : (
-                        <span className="flex items-center gap-1 text-[9px] font-mono px-2 py-0.5 rounded-full border border-border text-text-muted">
+                        <span className="flex items-center gap-1 text-badge font-mono px-2 py-0.5 rounded-full border border-border text-text-muted">
                           <EyeOff className="w-2.5 h-2.5" /> Privado
                         </span>
                       )}

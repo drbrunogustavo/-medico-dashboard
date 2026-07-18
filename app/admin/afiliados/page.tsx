@@ -164,7 +164,7 @@ export default function AfiliadosAdminPage() {
                       {/* Status */}
                       <div>
                         <span className={cn(
-                          "text-[9px] font-mono font-bold px-2 py-0.5 rounded-full border whitespace-nowrap",
+                          "text-badge font-mono font-bold px-2 py-0.5 rounded-full border whitespace-nowrap",
                           a.status === "ativo"
                             ? "bg-accent-dim border-accent-border text-accent"
                             : "bg-amber-500/10 border-amber-500/30 text-amber-400"
@@ -222,7 +222,7 @@ export default function AfiliadosAdminPage() {
                         {a.indicacoes.map((ind, j) => (
                           <div key={j} className="flex items-center gap-4 text-[11px]">
                             <span className={cn(
-                              "text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border flex-shrink-0",
+                              "text-badge font-mono font-bold px-1.5 py-0.5 rounded border flex-shrink-0",
                               ind.status === "aplicada"
                                 ? "bg-accent-dim border-accent-border text-accent"
                                 : "bg-amber-500/10 border-amber-500/30 text-amber-400"
@@ -233,7 +233,7 @@ export default function AfiliadosAdminPage() {
                               {ind.indicado_email ?? "—"}
                             </span>
                             <span className={cn(
-                              "text-[9px] px-1.5 py-0.5 rounded border flex-shrink-0",
+                              "text-badge px-1.5 py-0.5 rounded border flex-shrink-0",
                               ind.origem === "manual"
                                 ? "border-blue-500/25 text-blue-400 bg-blue-500/10"
                                 : "border-border text-text-muted"

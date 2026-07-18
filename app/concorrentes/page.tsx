@@ -147,7 +147,7 @@ function CopyBtn({ text, className }: { text: string; className?: string }) {
 
 function PrioBadge({ p }: { p: Prioridade }) {
   return (
-    <span className={cn("text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full border flex-shrink-0", PRIO_STYLE[p])}>
+    <span className={cn("text-badge font-mono font-semibold px-2 py-0.5 rounded-full border flex-shrink-0", PRIO_STYLE[p])}>
       {p}
     </span>
   )
@@ -450,7 +450,7 @@ function BenchmarkResults({ resultado }: { resultado: BenchmarkResult }) {
                   </div>
                 </div>
               </div>
-              <span className={cn("text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full border flex-shrink-0 mt-0.5", AVAL_STYLE[c.avaliacao])}>
+              <span className={cn("text-badge font-mono font-semibold px-2 py-0.5 rounded-full border flex-shrink-0 mt-0.5", AVAL_STYLE[c.avaliacao])}>
                 {c.avaliacao}
               </span>
             </div>
@@ -551,7 +551,7 @@ function CrescimentoResults({ resultado, onCopyBio }: { resultado: CrescimentoRe
           {resultado.acoes_90_dias.map((a, i) => (
             <div key={i} className="bg-background border border-border rounded-lg p-4">
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-accent-dim border border-accent-border text-accent">{a.semana}</span>
+                <span className="text-badge font-mono px-2 py-0.5 rounded-full bg-accent-dim border border-accent-border text-accent">{a.semana}</span>
                 <span className="text-[12px] font-semibold text-text-primary">{a.acao}</span>
               </div>
               <p className="text-[11px] text-text-muted mb-1.5">{a.motivo}</p>

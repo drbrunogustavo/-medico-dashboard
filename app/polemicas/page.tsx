@@ -323,7 +323,7 @@ export default function PolemicasPage() {
                         {c.label}
                       </span>
                       <div className="flex items-center gap-1.5">
-                        <span className={cn("text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded-full border", RISCO_STYLE[ab.risco])}>
+                        <span className={cn("text-badge font-mono font-semibold px-1.5 py-0.5 rounded-full border", RISCO_STYLE[ab.risco])}>
                           {ab.risco}
                         </span>
                         <span className={cn("text-[11px] font-bold font-mono tabular-nums", c.color)}>
@@ -468,7 +468,7 @@ export default function PolemicasPage() {
                           {pauta.titulo}
                         </p>
                         <div className="flex items-center gap-2 mt-1">
-                          <span className="text-[9px] font-medium px-2 py-0.5 rounded bg-white/[0.04] border border-border text-text-muted">
+                          <span className="text-badge font-medium px-2 py-0.5 rounded bg-white/[0.04] border border-border text-text-muted">
                             {pauta.categoria}
                           </span>
                         </div>

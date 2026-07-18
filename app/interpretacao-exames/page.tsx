@@ -1922,7 +1922,7 @@ const EXAMS: ExamData[] = [
 function ClassBadge({ level }: { level: ClassLevel }) {
   const c = LEVEL_CONFIG[level]
   return (
-    <span className={cn("text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full border", c.color, c.bg, c.border)}>
+    <span className={cn("text-badge font-mono font-semibold px-2 py-0.5 rounded-full border", c.color, c.bg, c.border)}>
       {c.label}
     </span>
   )

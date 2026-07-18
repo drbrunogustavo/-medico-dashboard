@@ -119,7 +119,7 @@ const MESES = [
 
 function Badge({ label, className }: { label: string; className: string }) {
   return (
-    <span className={cn("text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded border", className)}>
+    <span className={cn("text-badge font-mono font-semibold px-1.5 py-0.5 rounded border", className)}>
       {label}
     </span>
   )

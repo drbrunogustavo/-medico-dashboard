@@ -354,7 +354,7 @@ export default function NPSPage() {
                       </span>
                     )}
                     <span className={cn(
-                      "text-[9px] font-mono px-1.5 py-0.5 rounded border",
+                      "text-badge font-mono px-1.5 py-0.5 rounded border",
                       nps.status === "respondido" ? "bg-emerald-500/10 border-emerald-500/25 text-emerald-400"
                         : nps.status === "enviado" ? "bg-blue-500/10 border-blue-500/25 text-blue-400"
                         : "bg-surface-2 border-border text-text-muted"

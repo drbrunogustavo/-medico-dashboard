@@ -198,7 +198,7 @@ function LeadCardContent({
               {lead.nome}
             </span>
             <span className={cn(
-              "text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded border whitespace-nowrap flex-shrink-0",
+              "text-badge font-mono font-semibold px-1.5 py-0.5 rounded border whitespace-nowrap flex-shrink-0",
               ORIGEM_BADGE[lead.origem] ?? ORIGEM_BADGE["Outro"]
             )}>
               {lead.origem}

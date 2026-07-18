@@ -180,7 +180,7 @@ export function CommandBar() {
             />
             {loading
               ? <Loader2 className="w-3.5 h-3.5 text-text-muted animate-spin flex-shrink-0" />
-              : <kbd className="text-[9px] font-mono bg-surface border border-border px-1.5 py-0.5 rounded text-text-muted flex-shrink-0">ESC</kbd>
+              : <kbd className="text-badge font-mono bg-surface border border-border px-1.5 py-0.5 rounded text-text-muted flex-shrink-0">ESC</kbd>
             }
           </div>
 

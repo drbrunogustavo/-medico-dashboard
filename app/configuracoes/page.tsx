@@ -633,7 +633,7 @@ function TabMembros() {
               <p className="text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>{m.nome}</p>
               <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{m.email}</p>
             </div>
-            <span className="text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full border"
+            <span className="text-badge font-mono font-semibold px-2 py-0.5 rounded-full border"
               style={{
                 background: m.role === "Admin" ? "var(--accent-dim)" : "var(--surface)",
                 borderColor: m.role === "Admin" ? "var(--accent-border)" : "var(--border)",

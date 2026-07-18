@@ -358,10 +358,10 @@ function EstudoCard({ estudo, copied, onCopy }: {
       >
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-1">
-            <span className={cn("text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full border", TIPO_CONFIG[estudo.tipo])}>
+            <span className={cn("text-badge font-mono font-semibold px-2 py-0.5 rounded-full border", TIPO_CONFIG[estudo.tipo])}>
               {estudo.tipo}
             </span>
-            <span className={cn("text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full border", ev.color, ev.bg, ev.border)}>
+            <span className={cn("text-badge font-mono font-semibold px-2 py-0.5 rounded-full border", ev.color, ev.bg, ev.border)}>
               {ev.label}
             </span>
             <span className="text-[10px] font-mono" style={{ color: "var(--text-muted)" }}>
@@ -652,7 +652,7 @@ export default function EstudosPage() {
                 <span className="text-[13px] font-bold" style={{ color: "var(--text-primary)" }}>
                   {aiResult.tema}
                 </span>
-                <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-purple-500/20 border border-purple-500/30 text-purple-300">
+                <span className="text-badge font-mono px-2 py-0.5 rounded-full bg-purple-500/20 border border-purple-500/30 text-purple-300">
                   GERADO POR IA
                 </span>
               </div>

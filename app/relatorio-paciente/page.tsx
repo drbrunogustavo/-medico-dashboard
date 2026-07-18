@@ -234,7 +234,7 @@ export default function RelatorioPacientePage() {
                     {nome}
                   </div>
                 </div>
-                <span className="text-[9px] font-mono px-2 py-0.5 rounded-full border"
+                <span className="text-badge font-mono px-2 py-0.5 rounded-full border"
                   style={{ background: "var(--accent-dim)", borderColor: "var(--accent-border)", color: "var(--accent)" }}>
                   {tom}
                 </span>

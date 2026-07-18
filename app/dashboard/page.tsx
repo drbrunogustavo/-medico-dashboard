@@ -895,7 +895,7 @@ export default function DashboardPage() {
                     {ala.links.map(link => (
                       <Link key={link.href} href={link.href}
                         className={cn(
-                          "text-[9px] font-mono px-2 py-0.5 rounded-full border transition-colors hover:opacity-80",
+                          "text-badge font-mono px-2 py-0.5 rounded-full border transition-colors hover:opacity-80",
                           ala.bg, ala.border, ala.color,
                         )}>
                         {link.label}

@@ -137,7 +137,7 @@ export function PautasPickerModal({ onSelect, onClose }: PautasPickerModalProps)
                 <p className="text-[13px] font-medium text-text-primary truncate leading-snug">{p.titulo}</p>
                 <div className="flex items-center gap-2 mt-1">
                   {p.categoria && (
-                    <span className={cn("text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded border", getCategoriaStyle(p.categoria))}>
+                    <span className={cn("text-badge font-mono font-semibold px-1.5 py-0.5 rounded border", getCategoriaStyle(p.categoria))}>
                       {p.categoria}
                     </span>
                   )}

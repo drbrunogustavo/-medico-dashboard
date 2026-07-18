@@ -470,7 +470,7 @@ function Step3({ result, onReset, form }: { result: PosicionamentoResult; onRese
             <div key={i} className="bg-background border border-border rounded-lg p-3.5">
               <div className="flex items-start justify-between gap-2 mb-1.5">
                 <span className="text-[12px] font-semibold text-text-primary">{d.dor}</span>
-                <span className={cn("text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full border flex-shrink-0", INTENSIDADE_STYLE[d.intensidade])}>
+                <span className={cn("text-badge font-mono font-semibold px-2 py-0.5 rounded-full border flex-shrink-0", INTENSIDADE_STYLE[d.intensidade])}>
                   {d.intensidade}
                 </span>
               </div>
@@ -491,7 +491,7 @@ function Step3({ result, onReset, form }: { result: PosicionamentoResult; onRese
             <span className="text-[11px] text-text-muted">Frequência: <span className="text-text-primary font-medium">{result.linha_editorial.frequencia_recomendada}</span></span>
             <div className="flex gap-1.5">
               {result.linha_editorial.formatos_prioritarios.map(f => (
-                <span key={f} className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-accent-dim border border-accent-border text-accent">{f}</span>
+                <span key={f} className="text-badge font-mono px-2 py-0.5 rounded-full bg-accent-dim border border-accent-border text-accent">{f}</span>
               ))}
             </div>
           </div>
@@ -558,7 +558,7 @@ function Step3({ result, onReset, form }: { result: PosicionamentoResult; onRese
                   <span className="text-[11px] font-bold text-accent font-mono w-5">{i + 1}.</span>
                   <span className="text-[13px] font-semibold text-text-primary">{t.tema}</span>
                 </div>
-                <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-accent-dim border border-accent-border text-accent flex-shrink-0">{t.formato}</span>
+                <span className="text-badge font-mono px-2 py-0.5 rounded-full bg-accent-dim border border-accent-border text-accent flex-shrink-0">{t.formato}</span>
               </div>
               <div className="ml-7">
                 <p className="text-[11px] text-text-secondary mb-1">{t.justificativa}</p>

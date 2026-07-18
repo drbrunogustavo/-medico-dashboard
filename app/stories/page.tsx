@@ -244,7 +244,7 @@ export default function StoriesPage() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1.5">
                             <span className={cn(
-                              "text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full border",
+                              "text-badge font-mono font-semibold px-2 py-0.5 rounded-full border",
                               TIPO_STYLE[story.tipo] ?? "bg-border text-text-muted border-border",
                             )}>{story.tipo}</span>
                           </div>

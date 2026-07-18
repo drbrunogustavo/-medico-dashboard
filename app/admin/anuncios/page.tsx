@@ -217,7 +217,7 @@ export default function AdminAnunciosPage() {
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-[14px] font-semibold text-text-primary">{an.anunciante_nome}</span>
                       <span className={cn(
-                        "text-[9px] font-mono font-bold px-2 py-0.5 rounded-full border",
+                        "text-badge font-mono font-bold px-2 py-0.5 rounded-full border",
                         an.status === "pendente"              && "bg-amber-500/10  border-amber-500/30  text-amber-400",
                         an.status === "aguardando_pagamento" && "bg-blue-500/10   border-blue-500/30   text-blue-400",
                         an.status === "aprovado"             && "bg-accent-dim    border-accent-border  text-accent",
@@ -227,7 +227,7 @@ export default function AdminAnunciosPage() {
                         {an.status.toUpperCase()}
                       </span>
                       {an.tipo_produto && an.tipo_produto !== "curso" && (
-                        <span className="text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full border bg-violet-500/10 border-violet-500/30 text-violet-400">
+                        <span className="text-badge font-mono font-semibold px-2 py-0.5 rounded-full border bg-violet-500/10 border-violet-500/30 text-violet-400">
                           {TIPOS_PRODUTO.find(t => t.value === an.tipo_produto)?.label ?? an.tipo_produto}
                         </span>
                       )}

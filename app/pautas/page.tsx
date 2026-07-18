@@ -220,7 +220,7 @@ export default function PautasPage() {
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-accent" />
                 <span className="text-[11px] font-mono text-accent tracking-widest uppercase">Ideias do consultório</span>
-                <span className="text-[9px] font-mono text-text-muted px-1.5 py-0.5 rounded bg-white/[0.04] border border-border">{ideias.length} sugestões</span>
+                <span className="text-badge font-mono text-text-muted px-1.5 py-0.5 rounded bg-white/[0.04] border border-border">{ideias.length} sugestões</span>
               </div>
               <button onClick={() => setShowIdeias(false)} className="text-text-muted hover:text-text-secondary transition-colors">
                 <X className="w-4 h-4" />
@@ -233,10 +233,10 @@ export default function PautasPage() {
                 return (
                   <div key={i} className="bg-background border border-border rounded-lg p-4 space-y-2.5">
                     <div className="flex items-center gap-1.5">
-                      <span className="flex items-center gap-1 text-[9px] font-mono px-2 py-0.5 rounded-full border border-accent-border bg-accent-dim text-accent">
+                      <span className="flex items-center gap-1 text-badge font-mono px-2 py-0.5 rounded-full border border-accent-border bg-accent-dim text-accent">
                         {fmtIcon} {ideia.formato}
                       </span>
-                      <span className="text-[9px] font-medium px-2 py-0.5 rounded bg-white/[0.04] border border-border text-text-muted">{ideia.categoria}</span>
+                      <span className="text-badge font-medium px-2 py-0.5 rounded bg-white/[0.04] border border-border text-text-muted">{ideia.categoria}</span>
                     </div>
                     <p className="text-[13px] font-medium text-text-primary leading-snug">{ideia.titulo}</p>
                     <p className="text-[11px] text-text-muted leading-relaxed">{ideia.justificativa}</p>
@@ -378,13 +378,13 @@ export default function PautasPage() {
                 <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-2 flex-wrap">
-                      <span className={cn("text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full border", PRIORIDADE_STYLES[p.prioridade] || PRIORIDADE_STYLES["Baixa"])}>
+                      <span className={cn("text-badge font-mono font-semibold px-2 py-0.5 rounded-full border", PRIORIDADE_STYLES[p.prioridade] || PRIORIDADE_STYLES["Baixa"])}>
                         {p.prioridade}
                       </span>
-                      <span className={cn("text-[9px] font-mono px-2 py-0.5 rounded-full border", ESTAGIO_STYLES[p.estagio] || ESTAGIO_STYLES["Ideia"])}>
+                      <span className={cn("text-badge font-mono px-2 py-0.5 rounded-full border", ESTAGIO_STYLES[p.estagio] || ESTAGIO_STYLES["Ideia"])}>
                         {p.estagio}
                       </span>
-                      <span className="text-[9px] font-medium px-2 py-0.5 rounded bg-white/[0.04] border border-border text-text-muted">
+                      <span className="text-badge font-medium px-2 py-0.5 rounded bg-white/[0.04] border border-border text-text-muted">
                         {p.categoria}
                       </span>
                       {p.fonte && <span className="text-[9px] font-mono text-text-muted">via {p.fonte}</span>}
@@ -395,7 +395,7 @@ export default function PautasPage() {
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <Tag className="w-3 h-3 text-text-muted" />
                         {p.tags.map(t => (
-                          <span key={t} className="text-[9px] px-2 py-0.5 rounded bg-white/[0.04] border border-border text-text-muted">{t}</span>
+                          <span key={t} className="text-badge px-2 py-0.5 rounded bg-white/[0.04] border border-border text-text-muted">{t}</span>
                         ))}
                       </div>
                     )}

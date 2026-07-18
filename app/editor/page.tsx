@@ -1214,7 +1214,7 @@ export default function EditorPage() {
                           {pauta.titulo}
                         </p>
                         <div className="flex items-center gap-2 mt-1">
-                          <span className="text-[9px] font-medium px-2 py-0.5 rounded bg-white/[0.04] border border-border text-text-muted">
+                          <span className="text-badge font-medium px-2 py-0.5 rounded bg-white/[0.04] border border-border text-text-muted">
                             {pauta.categoria}
                           </span>
                           {pauta.nota && (

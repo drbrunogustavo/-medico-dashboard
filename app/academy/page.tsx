@@ -310,10 +310,10 @@ function AbaCasos() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap mb-1">
-                  <span className="text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full border bg-accent-dim border-accent-border text-accent">
+                  <span className="text-badge font-mono font-semibold px-2 py-0.5 rounded-full border bg-accent-dim border-accent-border text-accent">
                     {caso.especialidade}
                   </span>
-                  <span className={cn("text-[9px] font-mono px-2 py-0.5 rounded-full border", DIFICULDADE_STYLE[caso.dificuldade])}>
+                  <span className={cn("text-badge font-mono px-2 py-0.5 rounded-full border", DIFICULDADE_STYLE[caso.dificuldade])}>
                     {caso.dificuldade}
                   </span>
                 </div>
@@ -526,7 +526,7 @@ function AbaTrilhas({ progresso, onMarcarConcluida }: { progresso: ProgressoMap;
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="text-[15px] font-bold" style={{ color: "var(--text-primary)" }}>{trilha.titulo}</h3>
-                    <span className="text-[9px] font-mono px-2 py-0.5 rounded-full border"
+                    <span className="text-badge font-mono px-2 py-0.5 rounded-full border"
                       style={{ background: trilha.bg, borderColor: trilha.border, color: trilha.color }}>{trilha.nivel}</span>
                   </div>
                   <p className="text-[12px] mt-0.5 truncate" style={{ color: "var(--text-muted)" }}>{trilha.descricao}</p>
@@ -578,7 +578,7 @@ function AbaTrilhas({ progresso, onMarcarConcluida }: { progresso: ProgressoMap;
                                       <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{aula.duracao}</span>
                                     </div>
                                   </div>
-                                  <span className={cn("text-[9px] font-mono font-bold px-2 py-0.5 rounded-full border flex-shrink-0 hidden sm:block", NIVEL_STYLE[aula.nivel])}>
+                                  <span className={cn("text-badge font-mono font-bold px-2 py-0.5 rounded-full border flex-shrink-0 hidden sm:block", NIVEL_STYLE[aula.nivel])}>
                                     {aula.nivel.slice(0, 3).toUpperCase()}
                                   </span>
                                 </div>
@@ -705,7 +705,7 @@ function AbaAulas({ progresso, onMarcarConcluida }: { progresso: ProgressoMap; o
                 </p>
                 <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>{trilha.titulo} · {aula.duracao}</p>
               </div>
-              <span className={cn("text-[9px] font-mono font-bold px-2 py-0.5 rounded-full border flex-shrink-0 hidden sm:block", NIVEL_STYLE[aula.nivel])}>
+              <span className={cn("text-badge font-mono font-bold px-2 py-0.5 rounded-full border flex-shrink-0 hidden sm:block", NIVEL_STYLE[aula.nivel])}>
                 {aula.nivel}
               </span>
               <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" style={{ color: "var(--text-muted)" }} />
@@ -922,7 +922,7 @@ function AbaProgresso({ progresso, xpGanho, xpMax, aulasNaSemana }: {
               <p className="text-[14px] font-semibold truncate" style={{ color: "var(--text-primary)" }}>{proxima.aula.titulo}</p>
               <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{proxima.trilha.titulo} · {proxima.aula.duracao}</p>
             </div>
-            <span className={cn("text-[9px] font-mono font-bold px-2 py-0.5 rounded-full border flex-shrink-0", NIVEL_STYLE[proxima.aula.nivel])}>
+            <span className={cn("text-badge font-mono font-bold px-2 py-0.5 rounded-full border flex-shrink-0", NIVEL_STYLE[proxima.aula.nivel])}>
               {proxima.aula.nivel}
             </span>
           </div>

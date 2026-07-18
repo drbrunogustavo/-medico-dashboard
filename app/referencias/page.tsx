@@ -581,7 +581,7 @@ export default function ReferenciasPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <span className={cn("text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full border", RELEVANCIA_STYLES[r.relevancia]||RELEVANCIA_STYLES["Media"])}>
+                    <span className={cn("text-badge font-mono font-semibold px-2 py-0.5 rounded-full border", RELEVANCIA_STYLES[r.relevancia]||RELEVANCIA_STYLES["Media"])}>
                       {r.relevancia}
                     </span>
                     <button onClick={()=>removeRef(r.id)}
@@ -607,7 +607,7 @@ export default function ReferenciasPage() {
                 {r.temas && r.temas.length>0 && (
                   <div className="flex flex-wrap gap-1.5 mb-3">
                     {r.temas.map((t:string)=>(
-                      <span key={t} className="text-[9px] px-2 py-0.5 rounded-full bg-accent-dim border border-accent-border text-accent-text font-mono">{t}</span>
+                      <span key={t} className="text-badge px-2 py-0.5 rounded-full bg-accent-dim border border-accent-border text-accent-text font-mono">{t}</span>
                     ))}
                   </div>
                 )}

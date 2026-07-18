@@ -244,7 +244,7 @@ export default function ReelsPage() {
                           {ideia.titulo}
                         </h3>
                         <div className="flex items-center gap-2 flex-shrink-0">
-                          <span className={cn("text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full border", VIRAL_STYLE[ideia.potencial_viral])}>
+                          <span className={cn("text-badge font-mono font-semibold px-2 py-0.5 rounded-full border", VIRAL_STYLE[ideia.potencial_viral])}>
                             {ideia.potencial_viral}
                           </span>
                           <CopyBtn text={ideiaToText(ideia)} />

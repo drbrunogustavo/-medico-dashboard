@@ -193,7 +193,7 @@ function StoriesCard({ data }: { data: StoriesData }) {
               <span className="text-[10px] font-mono font-bold text-amber-600 mt-0.5 w-4 flex-shrink-0">{s.numero}</span>
               <div className="flex-1 space-y-1">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded border border-amber-200 bg-amber-50 text-amber-700">
+                  <span className="text-badge font-mono px-1.5 py-0.5 rounded border border-amber-200 bg-amber-50 text-amber-700">
                     {s.tipo}
                   </span>
                 </div>

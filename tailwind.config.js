@@ -69,6 +69,9 @@ module.exports = {
         dark:  { DEFAULT: "#0D1B2A" },
         cream: { DEFAULT: "#F5F0E8", border: "#e8ddd0" },
       },
+      fontSize: {
+        badge: ['0.5625rem', { lineHeight: '1rem' }],
+      },
       fontFamily: {
         sans:  ["var(--font-inter)", "system-ui", "sans-serif"],
         serif: ["var(--font-playfair)", "Georgia", "serif"],

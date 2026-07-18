@@ -248,7 +248,7 @@ export default function MetasPage() {
                         <span className="text-[10px] font-mono text-accent border border-accent/30 px-1.5 py-0.5 rounded h-fit flex-shrink-0">{e.area}</span>
                         <p className="text-xs text-text-secondary">{e.estrategia}</p>
                         <span className={cn(
-                          "text-[9px] font-mono px-1.5 rounded-full border h-fit flex-shrink-0 ml-auto",
+                          "text-badge font-mono px-1.5 rounded-full border h-fit flex-shrink-0 ml-auto",
                           e.impacto === "Alto" ? "border-red-500/30 text-red-400" : "border-amber-500/30 text-amber-400"
                         )}>{e.impacto}</span>
                       </div>

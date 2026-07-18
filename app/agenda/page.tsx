@@ -640,7 +640,7 @@ export default function AgendaPage() {
                         <span className="text-[10px] font-normal">{fmtDateLong(dia)}</span>
                       </div>
                       {isHoje && (
-                        <span className="text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full bg-blue-500/12 border border-blue-500/30 text-blue-400">
+                        <span className="text-badge font-mono font-semibold px-2 py-0.5 rounded-full bg-blue-500/12 border border-blue-500/30 text-blue-400">
                           HOJE
                         </span>
                       )}
@@ -700,7 +700,7 @@ export default function AgendaPage() {
                             )}
                             {/* Status badge */}
                             <span className={cn(
-                              "text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full border flex-shrink-0",
+                              "text-badge font-mono font-semibold px-2 py-0.5 rounded-full border flex-shrink-0",
                               statusStyle(getApptStatus(apt))
                             )}>
                               {getApptStatus(apt) || "—"}
@@ -788,7 +788,7 @@ export default function AgendaPage() {
                           )}
                         </div>
                         <span className={cn(
-                          "text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full border flex-shrink-0",
+                          "text-badge font-mono font-semibold px-2 py-0.5 rounded-full border flex-shrink-0",
                           statusStyle(getApptStatus(apt))
                         )}>
                           {getApptStatus(apt) || "—"}
@@ -1002,7 +1002,7 @@ export default function AgendaPage() {
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
                 <span className={cn(
-                  "text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full border",
+                  "text-badge font-mono font-semibold px-2 py-0.5 rounded-full border",
                   statusStyle(getApptStatus(selected))
                 )}>
                   {getApptStatus(selected) || "—"}

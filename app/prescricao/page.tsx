@@ -1688,7 +1688,7 @@ const VIA_LABELS: Record<Via, string> = {
 function LinhaBadge({ linha }: { linha: Linha }) {
   const c = LINHA_CONFIG[linha]
   return (
-    <span className={cn("text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full border flex items-center gap-1", c.color, c.bg, c.border)}>
+    <span className={cn("text-badge font-mono font-semibold px-2 py-0.5 rounded-full border flex items-center gap-1", c.color, c.bg, c.border)}>
       {linha === "primeira" && <Star className="w-2.5 h-2.5" />}
       {c.label}
     </span>
@@ -2049,7 +2049,7 @@ function PrescricaoContent() {
               {calcIMC(paciente.peso, paciente.altura) && <span>IMC {calcIMC(paciente.peso, paciente.altura)} kg/m²</span>}
             </div>
           </div>
-          <span className="text-[9px] font-mono px-2 py-0.5 rounded-full text-blue-400 bg-blue-500/10 border border-blue-500/20 flex-shrink-0">
+          <span className="text-badge font-mono px-2 py-0.5 rounded-full text-blue-400 bg-blue-500/10 border border-blue-500/20 flex-shrink-0">
             PERSONALIZADO
           </span>
         </div>
@@ -2115,7 +2115,7 @@ function PrescricaoContent() {
               </div>
               <div className="flex items-center gap-2">
                 {diag.medicamentos.filter(m => m.linha === "primeira").length > 0 && (
-                  <span className="text-[9px] font-mono px-2 py-0.5 rounded-full text-green-700 bg-green-50 border border-green-200">
+                  <span className="text-badge font-mono px-2 py-0.5 rounded-full text-green-700 bg-green-50 border border-green-200">
                     <Star className="w-2.5 h-2.5 inline mr-0.5" />
                     {diag.medicamentos.filter(m => m.linha === "primeira").length} 1ª linha
                   </span>

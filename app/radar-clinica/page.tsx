@@ -483,7 +483,7 @@ export default function RadarClinicaPage() {
                                 <div className="text-[10px] text-text-muted truncate">{a.proc}</div>
                               </div>
                               {a.status && (
-                                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded border border-border text-text-muted flex-shrink-0">
+                                <span className="text-badge font-mono px-1.5 py-0.5 rounded border border-border text-text-muted flex-shrink-0">
                                   {a.status}
                                 </span>
                               )}

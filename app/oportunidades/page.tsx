@@ -426,7 +426,7 @@ export default function OportunidadesPage() {
                     <p className="text-[11px] text-text-secondary leading-relaxed flex-1">{al.campanha}</p>
                     <div className="flex flex-wrap gap-1">
                       {(al.formatos ?? []).map((f, fi) => (
-                        <span key={fi} className="text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full border bg-accent-dim border-accent-border text-accent">
+                        <span key={fi} className="text-badge font-mono font-semibold px-2 py-0.5 rounded-full border bg-accent-dim border-accent-border text-accent">
                           {f}
                         </span>
                       ))}

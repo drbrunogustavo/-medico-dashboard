@@ -557,7 +557,7 @@ export default function PacientesPage() {
               >
                 <X className="w-3 h-3" />
                 Limpar
-                <span className="ml-1 text-[9px] font-mono bg-accent-dim border border-accent-border text-accent px-1 rounded-full leading-tight">
+                <span className="ml-1 text-badge font-mono bg-accent-dim border border-accent-border text-accent px-1 rounded-full leading-tight">
                   {[filtroIdade, filtroConsulta].filter(Boolean).length}
                 </span>
               </button>

@@ -133,7 +133,7 @@ function PostCard({ post, onLike }: { post: Post; onLike: (id: string) => void }
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-[12px] font-semibold text-text-primary">{post.autor_nome}</span>
             {post.fixado && <Pin className="w-3 h-3 text-accent" />}
-            <span className={cn("text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded-full border", CAT_STYLE[post.categoria] ?? CAT_STYLE.geral)}>
+            <span className={cn("text-badge font-mono font-semibold px-1.5 py-0.5 rounded-full border", CAT_STYLE[post.categoria] ?? CAT_STYLE.geral)}>
               {CAT_LABELS[post.categoria] ?? post.categoria}
             </span>
             <span className="text-[10px] text-text-muted ml-auto">{timeAgo(post.created_at)}</span>

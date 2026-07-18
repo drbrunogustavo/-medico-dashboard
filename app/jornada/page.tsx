@@ -225,7 +225,7 @@ export default function JornadaPage() {
                     <span className="text-[10px] font-mono text-accent border border-accent/30 px-1.5 py-0.5 rounded h-fit flex-shrink-0">{s.etapa}</span>
                     <p className="text-sm text-text-secondary flex-1">{s.sugestao}</p>
                     <span className={cn(
-                      "text-[9px] font-mono px-1.5 rounded-full border h-fit flex-shrink-0",
+                      "text-badge font-mono px-1.5 rounded-full border h-fit flex-shrink-0",
                       s.impacto === "Alto" ? "border-red-500/30 text-red-400" : "border-amber-500/30 text-amber-400"
                     )}>{s.impacto}</span>
                   </div>

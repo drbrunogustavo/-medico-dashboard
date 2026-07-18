@@ -555,7 +555,7 @@ export default function NutricaoPacientesPage() {
                               onChange={e => atualizarStatus(trilha, e.target.value)}
                               onClick={e => e.stopPropagation()}
                               className={cn(
-                                "appearance-none text-[9px] font-mono font-semibold px-2.5 py-1 rounded-full border outline-none cursor-pointer",
+                                "appearance-none text-badge font-mono font-semibold px-2.5 py-1 rounded-full border outline-none cursor-pointer",
                                 (STATUS_META[trilha.status] ?? STATUS_META.ativa).badge
                               )}
                               style={{ background: "transparent" }}

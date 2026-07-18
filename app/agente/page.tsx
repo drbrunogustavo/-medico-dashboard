@@ -550,7 +550,7 @@ p{line-height:1.7;color:#374151;margin:4px 0}ul{padding-left:20px;margin:6px 0}l
                       <div key={item.dia} className="flex items-center gap-4 px-5 py-2.5 hover:bg-white/[0.02] transition-colors">
                         <span className="text-[11px] font-mono font-bold text-accent w-10 flex-shrink-0">Dia {item.dia}</span>
                         <p className="flex-1 text-[12px] text-text-secondary leading-snug">{item.tema}</p>
-                        <span className={cn("text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full border flex-shrink-0", FORMATO_BADGE[item.formato] ?? "bg-white/[0.06] border-border text-text-muted")}>
+                        <span className={cn("text-badge font-mono font-semibold px-2 py-0.5 rounded-full border flex-shrink-0", FORMATO_BADGE[item.formato] ?? "bg-white/[0.06] border-border text-text-muted")}>
                           {item.formato}
                         </span>
                       </div>
@@ -702,7 +702,7 @@ p{line-height:1.7;color:#374151;margin:4px 0}ul{padding-left:20px;margin:6px 0}l
                           <p className="text-[10px] text-text-muted mt-0.5 truncate">{d.reel.titulo}</p>
                         </div>
                         {calItem && (
-                          <span className={cn("text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full border flex-shrink-0", FORMATO_BADGE[calItem.formato] ?? "bg-white/[0.06] border-border text-text-muted")}>
+                          <span className={cn("text-badge font-mono font-semibold px-2 py-0.5 rounded-full border flex-shrink-0", FORMATO_BADGE[calItem.formato] ?? "bg-white/[0.06] border-border text-text-muted")}>
                             {calItem.formato}
                           </span>
                         )}
@@ -949,7 +949,7 @@ p{line-height:1.7;color:#374151;margin:4px 0}ul{padding-left:20px;margin:6px 0}l
                   {(() => {
                     const cal = plano?.calendario.find(c => c.dia === calendarDay.dia)
                     return cal?.formato ? (
-                      <span className={cn("text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full border", FORMATO_BADGE[cal.formato] ?? "border-border text-text-muted")}>
+                      <span className={cn("text-badge font-mono font-semibold px-2 py-0.5 rounded-full border", FORMATO_BADGE[cal.formato] ?? "border-border text-text-muted")}>
                         {cal.formato}
                       </span>
                     ) : null

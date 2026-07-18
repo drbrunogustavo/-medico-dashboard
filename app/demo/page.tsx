@@ -285,7 +285,7 @@ export default function DemoPage() {
                   </div>
                   <div className="text-[11px] font-semibold" style={{ color: "var(--text-primary)" }}>{m.label}</div>
                   <div className="text-[10px]" style={{ color: "var(--text-muted)" }}>{m.sub}</div>
-                  <div className="text-[9px] font-mono mt-1.5 px-1.5 py-0.5 rounded inline-block" style={{ background: "rgba(245,158,11,0.1)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.2)" }}>dado ilustrativo</div>
+                  <div className="text-badge font-mono mt-1.5 px-1.5 py-0.5 rounded inline-block" style={{ background: "rgba(245,158,11,0.1)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.2)" }}>dado ilustrativo</div>
                 </div>
               )
             })}

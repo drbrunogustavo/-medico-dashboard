@@ -132,7 +132,7 @@ function EnviarBtn({
 
 function DayBadge({ dia }: { dia: number }) {
   return (
-    <span className="text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/25 text-blue-400">
+    <span className="text-badge font-mono font-semibold px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/25 text-blue-400">
       D{dia}
     </span>
   )
@@ -141,7 +141,7 @@ function DayBadge({ dia }: { dia: number }) {
 function StatusBadge({ status }: { status: string }) {
   const m = STATUS_META[status] ?? STATUS_META.ativa
   return (
-    <span className={cn("flex items-center gap-1 text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full border", m.badge)}>
+    <span className={cn("flex items-center gap-1 text-badge font-mono font-semibold px-2 py-0.5 rounded-full border", m.badge)}>
       <span className={cn("w-1.5 h-1.5 rounded-full flex-shrink-0", m.dot)} />
       {m.label}
     </span>
@@ -560,7 +560,7 @@ export default function NutricaoLeadsPage() {
                           <div className="flex items-center gap-2 flex-wrap min-w-0">
                             <DayBadge dia={item.dia} />
                             <span className={cn(
-                              "flex items-center gap-1 text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full border",
+                              "flex items-center gap-1 text-badge font-mono font-semibold px-2 py-0.5 rounded-full border",
                               meta.badge
                             )}>
                               <Icon className="w-2.5 h-2.5" />
@@ -568,7 +568,7 @@ export default function NutricaoLeadsPage() {
                             </span>
                             {/* Canal badge */}
                             <span className={cn(
-                              "flex items-center gap-1 text-[9px] font-mono px-2 py-0.5 rounded-full border",
+                              "flex items-center gap-1 text-badge font-mono px-2 py-0.5 rounded-full border",
                               canal === "WhatsApp"
                                 ? "bg-emerald-500/10 border-emerald-500/25 text-emerald-400"
                                 : "bg-surface-2 border-border text-text-muted"
@@ -692,7 +692,7 @@ export default function NutricaoLeadsPage() {
                               onChange={e => atualizarStatus(lead, e.target.value)}
                               onClick={e => e.stopPropagation()}
                               className={cn(
-                                "appearance-none text-[9px] font-mono font-semibold px-2.5 py-1 rounded-full border outline-none cursor-pointer",
+                                "appearance-none text-badge font-mono font-semibold px-2.5 py-1 rounded-full border outline-none cursor-pointer",
                                 (STATUS_META[lead.status] ?? STATUS_META.ativa).badge
                               )}
                               style={{ background: "transparent" }}

@@ -105,7 +105,7 @@ function IndicacaoCard({
             <span className="text-[13px] font-semibold text-text-primary">{ind.indicador_nome}</span>
             <span className="text-[11px] text-text-muted">→</span>
             <span className="text-[13px] text-blue-400">{ind.indicado_nome}</span>
-            <span className={cn("text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded border", st.cls)}>{st.label}</span>
+            <span className={cn("text-badge font-mono font-semibold px-1.5 py-0.5 rounded border", st.cls)}>{st.label}</span>
           </div>
           <div className="text-[10px] text-text-muted mt-0.5">{fmtDate(ind.created_at)}</div>
         </div>

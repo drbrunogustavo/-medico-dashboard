@@ -429,7 +429,7 @@ export default function LandingPage() {
                   {plan.badge && (
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                       <span className={cn(
-                        "text-[9px] font-mono font-bold px-3 py-1 rounded-full border tracking-widest",
+                        "text-badge font-mono font-bold px-3 py-1 rounded-full border tracking-widest",
                         plan.id === "pro"
                           ? "bg-accent text-background border-accent"
                           : "bg-[#d4af37] text-[#080808] border-[#d4af37]"

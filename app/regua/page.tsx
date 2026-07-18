@@ -144,7 +144,7 @@ function PatientGroup({
         </div>
         <div className="flex items-center gap-2 flex-shrink-0 ml-2">
           {isPaused && (
-            <span className="text-[9px] font-mono bg-amber-500/10 border border-amber-500/25 text-amber-400 px-1.5 py-0.5 rounded">PAUSADO</span>
+            <span className="text-badge font-mono bg-amber-500/10 border border-amber-500/25 text-amber-400 px-1.5 py-0.5 rounded">PAUSADO</span>
           )}
           <span className="text-[10px] font-mono text-text-muted">{sent}/{msgs.length}</span>
           {open ? <ChevronUp className="w-4 h-4 text-text-muted" /> : <ChevronDown className="w-4 h-4 text-text-muted" />}

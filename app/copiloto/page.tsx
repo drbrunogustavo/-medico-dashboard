@@ -837,7 +837,7 @@ function CopilotoContent() {
             <span className="text-[14px] font-semibold text-text-primary truncate">
               {patient ? getPacNome(patient) : "Modo Consulta"}
             </span>
-            <span className="hidden sm:block text-[9px] font-mono border border-accent-border text-accent px-2 py-0.5 rounded-full bg-accent-dim">
+            <span className="hidden sm:block text-badge font-mono border border-accent-border text-accent px-2 py-0.5 rounded-full bg-accent-dim">
               EM ATENDIMENTO
             </span>
           </div>
@@ -936,7 +936,7 @@ function CopilotoContent() {
                             {fmtDateLong(entry.created_at)}
                           </span>
                           {entry.tipo_consulta && (
-                            <span className="text-[9px] font-mono bg-blue-500/10 border border-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded-full">
+                            <span className="text-badge font-mono bg-blue-500/10 border border-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded-full">
                               {entry.tipo_consulta}
                             </span>
                           )}
@@ -976,7 +976,7 @@ function CopilotoContent() {
                         </span>
                       )}
                       {entry.tipo_consulta && (
-                        <span className="text-[9px] font-mono text-text-muted bg-surface-2 border border-border px-1.5 py-0.5 rounded">
+                        <span className="text-badge font-mono text-text-muted bg-surface-2 border border-border px-1.5 py-0.5 rounded">
                           {entry.tipo_consulta}
                         </span>
                       )}

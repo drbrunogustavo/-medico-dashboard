@@ -732,7 +732,7 @@ export default function PacienteDashboard() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
                               <span className="text-[12px] font-semibold text-text-primary">{a.titulo}</span>
-                              <span className={cn("text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded-full border", uCls.badge)}>
+                              <span className={cn("text-badge font-mono font-semibold px-1.5 py-0.5 rounded-full border", uCls.badge)}>
                                 {a.urgencia === "alta" ? "URGENTE" : a.urgencia === "media" ? "ATENÇÃO" : "INFO"}
                               </span>
                             </div>
@@ -1091,7 +1091,7 @@ export default function PacienteDashboard() {
                                             {fmtDateLong(entry.created_at)}
                                           </span>
                                           {entry.tipo_consulta && (
-                                            <span className="text-[9px] font-mono bg-blue-500/10 border border-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded-full">
+                                            <span className="text-badge font-mono bg-blue-500/10 border border-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded-full">
                                               {entry.tipo_consulta}
                                             </span>
                                           )}

@@ -45,7 +45,7 @@ function LogRow({ log }: { log: AutomacaoLog }) {
         <span className="flex-1 text-[12px] font-semibold text-text-primary">
           {TIPO_LABELS[log.tipo] ?? log.tipo}
         </span>
-        <span className={cn("text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full border", cfg.bg, cfg.cls)}>
+        <span className={cn("text-badge font-mono font-semibold px-2 py-0.5 rounded-full border", cfg.bg, cfg.cls)}>
           {cfg.label}
         </span>
         <span className="text-[10px] font-mono text-text-muted">{fmtDate(log.created_at)}</span>

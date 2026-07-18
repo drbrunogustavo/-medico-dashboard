@@ -961,7 +961,7 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
                     <div className="p-3 space-y-2">
                       <div className="flex items-center gap-1.5">
                         <span className={cn(
-                          "text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full border",
+                          "text-badge font-mono font-semibold px-2 py-0.5 rounded-full border",
                           i === 0 ? "bg-accent-dim border-accent-border text-accent"
                             : i === 1 ? "bg-blue-50 border-blue-200 text-blue-700"
                               : "bg-purple-50 border-purple-200 text-purple-700"
@@ -1020,7 +1020,7 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-[13px] font-semibold text-text-primary">Imagem Gerada</span>
                     {selectedHist && (
-                      <span className="text-[9px] font-mono text-text-muted px-2 py-0.5 rounded bg-white/[0.04] border border-border">
+                      <span className="text-badge font-mono text-text-muted px-2 py-0.5 rounded bg-white/[0.04] border border-border">
                         Histórico · {selectedHist.timestamp}
                       </span>
                     )}
@@ -1199,7 +1199,7 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
               </div>
               <div className="flex gap-2 flex-wrap justify-center">
                 {Object.keys(GATILHO_COLORS).map(g => (
-                  <span key={g} className={cn("text-[9px] font-mono font-semibold px-2.5 py-1 rounded-full border", GATILHO_COLORS[g])}>
+                  <span key={g} className={cn("text-badge font-mono font-semibold px-2.5 py-1 rounded-full border", GATILHO_COLORS[g])}>
                     {g}
                   </span>
                 ))}
@@ -1223,7 +1223,7 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
                     <div key={idx} className="px-5 py-3 flex items-center gap-4 hover:bg-white/[0.02] group transition-colors">
                       <span className="text-[11px] font-mono text-text-muted w-7 flex-shrink-0 tabular-nums">{idx + 1}</span>
                       <span className={cn(
-                        "text-[9px] font-mono font-semibold px-2.5 py-1 rounded-full border w-24 text-center flex-shrink-0",
+                        "text-badge font-mono font-semibold px-2.5 py-1 rounded-full border w-24 text-center flex-shrink-0",
                         GATILHO_COLORS[h.gatilho] || "bg-slate-100 border-slate-300 text-slate-500"
                       )}>
                         {h.gatilho}
@@ -1310,7 +1310,7 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
                             <span className={cn("flex-shrink-0 text-[8px] font-mono font-semibold px-2 py-0.5 rounded-full border", prioStyle)}>{pauta.prioridade}</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="text-[9px] font-medium px-2 py-0.5 rounded bg-white/[0.04] border border-border text-text-muted">{pauta.categoria}</span>
+                            <span className="text-badge font-medium px-2 py-0.5 rounded bg-white/[0.04] border border-border text-text-muted">{pauta.categoria}</span>
                             <span className="text-[9px] text-text-muted/60">→</span>
                             <span className="text-[9px] text-accent/70">{ESTILOS[estiloSugerido].label}</span>
                           </div>

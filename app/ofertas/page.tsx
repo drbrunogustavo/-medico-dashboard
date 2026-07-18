@@ -288,7 +288,7 @@ export default function OfertasPage() {
       <button
         onClick={() => copiarTexto(text, k)}
         className={cn(
-          "flex items-center gap-1 text-[9px] font-mono px-2 py-1 rounded border transition-all",
+          "flex items-center gap-1 text-badge font-mono px-2 py-1 rounded border transition-all",
           done
             ? "text-accent border-accent-border bg-accent-dim"
             : "text-text-muted border-border hover:text-text-secondary hover:border-border-hover"
@@ -658,7 +658,7 @@ export default function OfertasPage() {
               {fmt.items.map((a, i) => (
                 <div key={i} className="bg-card border border-border rounded-xl p-4 flex flex-col gap-3">
                   <div className="flex items-center justify-between">
-                    <span className={cn("text-[9px] font-mono font-bold px-2 py-0.5 rounded border tracking-wider", VARIACAO_STYLE[a.variacao] ?? VARIACAO_STYLE["Equilibrado"])}>
+                    <span className={cn("text-badge font-mono font-bold px-2 py-0.5 rounded border tracking-wider", VARIACAO_STYLE[a.variacao] ?? VARIACAO_STYLE["Equilibrado"])}>
                       {a.variacao}
                     </span>
                     <CopyBtn text={`Headline: ${a.headline}\nTexto: ${a.texto}\nCTA: ${a.cta}`} k={`ad-${fmt.key}-${i}`} />
@@ -700,7 +700,7 @@ export default function OfertasPage() {
                 <p className="text-[10px] text-text-secondary mt-0.5">{s.sugestaoVisual}</p>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="text-[9px] font-mono text-amber-400 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                <span className="text-badge font-mono text-amber-400 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
                   {s.sticker}
                 </span>
               </div>

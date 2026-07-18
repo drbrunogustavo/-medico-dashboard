@@ -209,7 +209,7 @@ export default function AssinantesPage() {
                     {/* Plano */}
                     <td className="px-4 py-3 whitespace-nowrap">
                       <span className={cn(
-                        "text-[9px] font-mono font-bold px-2 py-0.5 rounded-full border",
+                        "text-badge font-mono font-bold px-2 py-0.5 rounded-full border",
                         PLANO_STYLE[a.plano] ?? "border-border text-text-muted"
                       )}>
                         {PLANO_LABEL[a.plano] ?? a.plano}
@@ -219,7 +219,7 @@ export default function AssinantesPage() {
                     {/* Status */}
                     <td className="px-4 py-3 whitespace-nowrap">
                       <span className={cn(
-                        "inline-flex items-center gap-1 text-[9px] font-mono font-bold px-2 py-0.5 rounded-full border",
+                        "inline-flex items-center gap-1 text-badge font-mono font-bold px-2 py-0.5 rounded-full border",
                         STATUS_STYLE[a.status] ?? "border-border text-text-muted"
                       )}>
                         {isProblematic(a.status) && <AlertTriangle className="w-2.5 h-2.5" />}

@@ -305,12 +305,12 @@ function SopGeradoView({ sop, onNovo }: { sop: SopResult; onNovo: () => void }) 
                     <p className="text-sm font-semibold text-text-primary">{p.titulo}</p>
                     <div className="flex gap-2 flex-shrink-0">
                       {p.responsavel && (
-                        <span className="text-[9px] font-mono px-2 py-0.5 rounded-full border border-[--border] text-text-muted">
+                        <span className="text-badge font-mono px-2 py-0.5 rounded-full border border-[--border] text-text-muted">
                           {p.responsavel}
                         </span>
                       )}
                       {p.tempo && (
-                        <span className="text-[9px] font-mono px-2 py-0.5 rounded-full border border-[--border] text-text-muted">
+                        <span className="text-badge font-mono px-2 py-0.5 rounded-full border border-[--border] text-text-muted">
                           {p.tempo}
                         </span>
                       )}

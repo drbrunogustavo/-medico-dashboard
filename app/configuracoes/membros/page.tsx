@@ -343,7 +343,7 @@ export default function MembrosPage() {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
           {PERFIS.map(p => (
             <div key={p.value} className="bg-surface border border-border rounded-xl p-3 space-y-1">
-              <span className={cn("text-[9px] font-mono font-bold px-2 py-0.5 rounded-full border", PERFIL_COLOR[p.value] ?? "bg-gray-100 text-gray-600 border-gray-200")}>
+              <span className={cn("text-badge font-mono font-bold px-2 py-0.5 rounded-full border", PERFIL_COLOR[p.value] ?? "bg-gray-100 text-gray-600 border-gray-200")}>
                 {p.label}
               </span>
               <p className="text-[10px] text-text-muted leading-snug pt-1">{p.desc}</p>
@@ -471,7 +471,7 @@ function MemberRow({
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-[13px] font-semibold text-text-primary truncate">{membro.nome}</span>
-          <span className={cn("text-[9px] font-mono font-bold px-2 py-0.5 rounded-full border flex-shrink-0", PERFIL_COLOR[membro.perfil] ?? "bg-gray-100 text-gray-600 border-gray-200")}>
+          <span className={cn("text-badge font-mono font-bold px-2 py-0.5 rounded-full border flex-shrink-0", PERFIL_COLOR[membro.perfil] ?? "bg-gray-100 text-gray-600 border-gray-200")}>
             {PERFIL_LABEL[membro.perfil] ?? membro.perfil}
           </span>
         </div>

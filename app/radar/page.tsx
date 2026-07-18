@@ -206,7 +206,7 @@ type Tab = "radar" | "reels" | "velocity" | "opportunities"
 function SourceBadge({ source }: { source: string }) {
   const s = SOURCE_STYLES[source] || {bg:"bg-slate-100",border:"border-slate-300",text:"text-slate-500",dot:"bg-slate-400"}
   return (
-    <span className={cn("inline-flex items-center gap-1.5 text-[9px] font-mono font-medium px-2 py-0.5 rounded-full border",s.bg,s.border,s.text)}>
+    <span className={cn("inline-flex items-center gap-1.5 text-badge font-mono font-medium px-2 py-0.5 rounded-full border",s.bg,s.border,s.text)}>
       <span className={cn("w-1 h-1 rounded-full flex-shrink-0",s.dot)} />{source}
     </span>
   )
@@ -215,7 +215,7 @@ function SourceBadge({ source }: { source: string }) {
 function RelevanceBadge({ level }: { level: string }) {
   const s = RELEVANCE_STYLES[level] || RELEVANCE_STYLES["Baixo"]
   return (
-    <span className={cn("inline-flex items-center gap-1.5 text-[9px] font-mono font-semibold px-2.5 py-1 rounded-full border tracking-wider",s.bg,s.border,s.text)}>
+    <span className={cn("inline-flex items-center gap-1.5 text-badge font-mono font-semibold px-2.5 py-1 rounded-full border tracking-wider",s.bg,s.border,s.text)}>
       <span className={cn("w-1.5 h-1.5 rounded-full flex-shrink-0",s.text.replace("text-","bg-"),s.pulse&&"animate-ping")} />{level}
     </span>
   )
@@ -230,7 +230,7 @@ function PlatformBadge({ platform }: { platform: string }) {
     "X (Twitter)":"bg-slate-100 border-slate-300 text-slate-600",
   }
   return (
-    <span className={cn("text-[9px] font-mono font-medium px-2 py-0.5 rounded-full border",map[platform]||"bg-slate-100 border-slate-300 text-slate-500")}>
+    <span className={cn("text-badge font-mono font-medium px-2 py-0.5 rounded-full border",map[platform]||"bg-slate-100 border-slate-300 text-slate-500")}>
       {platform}
     </span>
   )
@@ -667,7 +667,7 @@ Retorne um objeto JSON com:
                     <div className="flex items-start justify-between gap-3 mb-3">
                       <div className="flex items-center gap-2 flex-wrap">
                         <SourceBadge source={item.source} />
-                        <span className="text-[9px] font-medium px-2 py-0.5 rounded bg-white/[0.04] border border-border text-text-muted">{item.category}</span>
+                        <span className="text-badge font-medium px-2 py-0.5 rounded bg-white/[0.04] border border-border text-text-muted">{item.category}</span>
                       </div>
                       <RelevanceBadge level={item.relevance} />
                     </div>
@@ -736,7 +736,7 @@ Retorne um objeto JSON com:
                       <p className="text-[12px] font-medium text-text-primary truncate">{reel.title}</p>
                       <div className="flex flex-wrap items-center gap-2 mt-1">
                         <PlatformBadge platform={reel.platform}/>
-                        <span className="text-[9px] font-medium px-2 py-0.5 rounded bg-white/[0.04] border border-border text-text-muted">{reel.category}</span>
+                        <span className="text-badge font-medium px-2 py-0.5 rounded bg-white/[0.04] border border-border text-text-muted">{reel.category}</span>
                         <span className="text-[10px] font-mono font-bold text-text-primary tabular-nums">{reel.views} <span className="text-[10px] font-normal text-text-muted">views</span></span>
                         <span className={cn("text-[10px] font-mono font-bold tabular-nums", parseFloat(reel.engagement)>15?"text-accent":"text-text-primary")}>{reel.engagement} <span className="text-[10px] font-normal text-text-muted">engaj.</span></span>
                       </div>
@@ -793,7 +793,7 @@ Retorne um objeto JSON com:
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2">
                           <span className="text-[13px] font-semibold text-text-primary">{item.topic}</span>
-                          <span className="text-[9px] font-medium px-2 py-0.5 rounded bg-white/[0.04] border border-border text-text-muted">{item.category}</span>
+                          <span className="text-badge font-medium px-2 py-0.5 rounded bg-white/[0.04] border border-border text-text-muted">{item.category}</span>
                         </div>
                         <div className="relative h-1.5 bg-background rounded-full overflow-hidden">
                           <div
@@ -897,7 +897,7 @@ Retorne um objeto JSON com:
                     <div className="flex items-center gap-2 flex-wrap mb-3">
                       {opp.platforms.map(p => <PlatformBadge key={p} platform={p}/>)}
                       {opp.keywords.slice(0,3).map(k => (
-                        <span key={k} className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-white/[0.04] border border-border text-text-muted">#{k}</span>
+                        <span key={k} className="text-badge font-mono px-1.5 py-0.5 rounded bg-white/[0.04] border border-border text-text-muted">#{k}</span>
                       ))}
                     </div>
 
@@ -947,7 +947,7 @@ Retorne um objeto JSON com:
                 <Microscope className="w-4 h-4 text-accent flex-shrink-0" />
                 <span className="text-[13px] font-semibold text-text-primary">Engenharia Reversa</span>
                 <PlatformBadge platform={reverseReel.platform} />
-                <span className="text-[9px] font-medium px-2 py-0.5 rounded bg-white/[0.04] border border-border text-text-muted">
+                <span className="text-badge font-medium px-2 py-0.5 rounded bg-white/[0.04] border border-border text-text-muted">
                   {reverseReel.category}
                 </span>
               </div>
@@ -1022,7 +1022,7 @@ Retorne um objeto JSON com:
                         <div className="text-[9px] font-mono text-text-muted mb-2">GATILHOS EMOCIONAIS</div>
                         <div className="flex flex-wrap gap-1.5">
                           {(reverseResult.gatilhos ?? []).map((g, i) => (
-                            <span key={i} className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-accent-dim border border-accent-border text-accent">
+                            <span key={i} className="text-badge font-mono px-2 py-0.5 rounded-full bg-accent-dim border border-accent-border text-accent">
                               {g}
                             </span>
                           ))}

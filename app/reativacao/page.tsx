@@ -799,7 +799,7 @@ export default function ReativacaoPage() {
                   <div className="flex items-center justify-between gap-2 flex-wrap">
                     <div className="flex items-center gap-2 min-w-0">
                       <p className="text-sm font-semibold text-text-primary">{p.nome}</p>
-                      <span className={cn("text-[9px] font-mono px-2 py-0.5 rounded-full border", badge.cls)}>
+                      <span className={cn("text-badge font-mono px-2 py-0.5 rounded-full border", badge.cls)}>
                         {badge.label}
                       </span>
                     </div>

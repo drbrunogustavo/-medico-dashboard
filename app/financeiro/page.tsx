@@ -466,7 +466,7 @@ export default function FinanceiroPage() {
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-1.5 min-w-0">
                         <span className={cn(
-                          "text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full border uppercase tracking-wider flex-shrink-0",
+                          "text-badge font-mono font-semibold px-2 py-0.5 rounded-full border uppercase tracking-wider flex-shrink-0",
                           l.tipo === "receita"
                             ? "bg-accent-dim border-accent-border text-accent"
                             : "bg-red-500/10 border-red-500/30 text-red-400"
@@ -511,7 +511,7 @@ export default function FinanceiroPage() {
                       <span className="text-[11px] text-text-secondary truncate">{l.unidade}</span>
                     </div>
                     <span className={cn(
-                      "text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full border uppercase tracking-wider inline-block",
+                      "text-badge font-mono font-semibold px-2 py-0.5 rounded-full border uppercase tracking-wider inline-block",
                       l.tipo === "receita"
                         ? "bg-accent-dim border-accent-border text-accent"
                         : "bg-red-500/10 border-red-500/30 text-red-400"

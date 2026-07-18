@@ -258,7 +258,7 @@ export default function CtaPage() {
                       </div>
                       <div className="flex items-center gap-2 mt-2.5">
                         <span className={cn(
-                          "text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full border",
+                          "text-badge font-mono font-semibold px-2 py-0.5 rounded-full border",
                           TIPO_STYLE[cta.tipo] ?? "bg-border text-text-muted border-border",
                         )}>{cta.tipo}</span>
                         <span className="text-[9px] font-mono text-text-muted">{cta.canal}</span>

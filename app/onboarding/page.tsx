@@ -141,15 +141,8 @@ export default function OnboardingPage() {
     try {
       await save({ onboarding_completo: true })
       await fetch("/api/perfil/onboarding", { method: "POST" }).catch(() => null)
-      const perfil = await fetch("/api/perfil").then(r => r.json()).catch(() => null) as { email?: string; nome?: string } | null
-      if (perfil?.email && perfil?.nome) {
-        fetch("/api/email/boas-vindas", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ nome: perfil.nome, email: perfil.email }),
-        }).catch(() => null)
-      }
-      router.push("/planos")
+      const meData = await fetch("/api/me").then(r => r.json()).catch(() => null) as { plano?: string } | null
+      router.push(meData?.plano && meData.plano !== "trial" ? "/dashboard" : "/planos")
     } catch {
       setErroMsg("Erro de conexão. Tente novamente.")
     } finally {

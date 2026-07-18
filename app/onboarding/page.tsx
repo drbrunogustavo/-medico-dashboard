@@ -107,13 +107,14 @@ function ProgressBar({ step }: { step: number }) {
 export default function OnboardingPage() {
   const router = useRouter()
 
-  const [step,     setStep]     = useState(1)
-  const [saving,   setSaving]   = useState(false)
-  const [erroMsg,  setErroMsg]  = useState("")
-  const [nome,     setNome]     = useState("")
-  const [espec,    setEspec]    = useState("")
-  const [cidade,   setCidade]   = useState("")
-  const [problema, setProblema] = useState("")
+  const [step,          setStep]          = useState(1)
+  const [saving,        setSaving]        = useState(false)
+  const [erroMsg,       setErroMsg]       = useState("")
+  const [nome,          setNome]          = useState("")
+  const [espec,         setEspec]         = useState("")
+  const [cidade,        setCidade]        = useState("")
+  const [problema,      setProblema]      = useState("")
+  const [vozConsent,    setVozConsent]    = useState(false)
 
   const inputStyle: React.CSSProperties = {
     background: CARD_BG, border: `1px solid ${BORDER}`, color: DARK,
@@ -139,7 +140,7 @@ export default function OnboardingPage() {
     setSaving(true)
     setErroMsg("")
     try {
-      await save({ onboarding_completo: true })
+      await save({ onboarding_completo: true, voz_gravacao_autorizada: vozConsent })
       await fetch("/api/perfil/onboarding", { method: "POST" }).catch(() => null)
       const meData = await fetch("/api/me").then(r => r.json()).catch(() => null) as { plano?: string } | null
       router.push(meData?.plano && meData.plano !== "trial" ? "/dashboard" : "/planos")
@@ -368,6 +369,24 @@ export default function OnboardingPage() {
                 Escolha seu plano e comece com <strong style={{ color: DARK }}>7 dias grátis</strong> — cancele quando quiser.
               </p>
             </div>
+
+            <button
+              type="button"
+              onClick={() => setVozConsent(v => !v)}
+              className="w-full flex items-start gap-3 rounded-xl px-4 py-3 text-left transition-all"
+              style={{ background: vozConsent ? `${GOLD}10` : CARD_BG, border: `1.5px solid ${vozConsent ? GOLD : BORDER}` }}>
+              <div
+                className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0 mt-0.5 transition-all"
+                style={{ background: vozConsent ? GOLD : "transparent", border: `2px solid ${vozConsent ? GOLD : BORDER}` }}>
+                {vozConsent && <Check className="w-3 h-3" style={{ color: "#fff" }} />}
+              </div>
+              <div>
+                <p className="text-[13px] font-medium" style={{ color: DARK }}>Autorizar gravação de voz (LGPD)</p>
+                <p className="text-[11px] mt-0.5" style={{ color: MUTED }}>
+                  Permite transcrição de áudio no Copiloto. Você pode revogar a qualquer momento nas configurações.
+                </p>
+              </div>
+            </button>
 
             {erroMsg && (
               <div className="flex items-center gap-3 rounded-xl px-4 py-3 text-left" style={{ background: "#fef2f2", border: "1px solid #fecaca" }}>

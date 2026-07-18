@@ -10,7 +10,7 @@ import {
   Lightbulb, Users, TrendingUp,
   Megaphone, BarChart3, Sparkles, GraduationCap,
   FileText, Stethoscope, Check, Star, AlertTriangle,
-  BookOpen, Trophy, Loader2,
+  BookOpen, Trophy, Loader2, CalendarDays, Clock, MessageCircle,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAppContext } from "@/components/AppProvider"
@@ -327,6 +327,10 @@ export default function DashboardPage() {
   const [sugestoesIA,      setSugestoesIA]      = useState<SugestaoIA[]>([])
   const [sugestoesLoad,    setSugestoesLoad]    = useState(true)
   const [semRetornoCount,  setSemRetornoCount]  = useState<number | null>(null)
+  const [consultasHoje,    setConsultasHoje]    = useState<number | null>(null)
+  const [leadsNaoLidos,    setLeadsNaoLidos]    = useState<number | null>(null)
+  const [receitaHoje,      setReceitaHoje]      = useState<number | null>(null)
+  const [rotinaLoading,    setRotinaLoading]    = useState(true)
   const [greet]                             = useState(greeting)
   const [dateStr]                           = useState(fmtDate)
   const ctx           = useAppContext()
@@ -391,6 +395,27 @@ export default function DashboardPage() {
           setSemRetornoCount((d as { count: number }).count)
       })
       .catch(() => {})
+
+    // Rotina de hoje — 3 chamadas paralelas
+    const hoje = new Date().toISOString().split("T")[0]
+    setRotinaLoading(true)
+    Promise.all([
+      fetch(`/api/agenda?action=agenda&inicio=${hoje}&fim=${hoje}`).then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch("/api/crm/nao-lidos").then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch(`/api/financeiro?inicio=${hoje}&fim=${hoje}`).then(r => r.ok ? r.json() : null).catch(() => null),
+    ]).then(([agendaData, naoLidosData, financeiroData]) => {
+      setConsultasHoje(Array.isArray(agendaData) ? agendaData.length : 0)
+      setLeadsNaoLidos((naoLidosData as { count?: number } | null)?.count ?? 0)
+      const lancamentos = Array.isArray(financeiroData) ? financeiroData as { tipo: string; valor: number | string }[] : []
+      const receita = lancamentos
+        .filter(l => l.tipo === "receita")
+        .reduce((acc, l) => acc + Number(l.valor), 0)
+      setReceitaHoje(receita)
+    }).catch(() => {
+      setConsultasHoje(null)
+      setLeadsNaoLidos(null)
+      setReceitaHoje(null)
+    }).finally(() => setRotinaLoading(false))
   }, [fetchExecMetrics])
 
   useEffect(() => {
@@ -501,6 +526,77 @@ export default function DashboardPage() {
                 )}
               </div>
             </>
+          )}
+        </div>
+
+        {/* ── Minha rotina de hoje ─────────────────────────────────────────── */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <span className="text-[11px] font-mono text-text-muted tracking-wider uppercase">Minha rotina de hoje</span>
+            <div className="h-px flex-1 bg-border" />
+            {rotinaLoading && <Loader2 className="w-3 h-3 text-text-muted animate-spin" />}
+          </div>
+          {rotinaLoading ? (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {[0, 1, 2, 3].map(i => (
+                <div key={i} className="h-[76px] rounded-xl border border-border bg-surface animate-pulse" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <button
+                onClick={() => router.push("/agenda")}
+                className="flex items-center gap-3 px-4 py-3 rounded-xl border border-border hover:border-border-hover bg-surface transition-all hover:-translate-y-0.5 text-left w-full"
+              >
+                <CalendarDays className="w-5 h-5 text-blue-400 flex-shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-[22px] font-bold leading-none text-text-primary tabular-nums">
+                    {consultasHoje ?? "—"}
+                  </p>
+                  <p className="text-[10px] text-text-muted mt-0.5">
+                    {consultasHoje === 1 ? "consulta hoje" : "consultas hoje"}
+                  </p>
+                </div>
+              </button>
+              <button
+                onClick={() => router.push("/pacientes")}
+                className="flex items-center gap-3 px-4 py-3 rounded-xl border border-border hover:border-border-hover bg-surface transition-all hover:-translate-y-0.5 text-left w-full"
+              >
+                <Clock className="w-5 h-5 text-amber-400 flex-shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-[22px] font-bold leading-none text-text-primary tabular-nums">
+                    {semRetornoCount ?? "—"}
+                  </p>
+                  <p className="text-[10px] text-text-muted mt-0.5">sem retorno</p>
+                </div>
+              </button>
+              <button
+                onClick={() => router.push("/crm")}
+                className="flex items-center gap-3 px-4 py-3 rounded-xl border border-border hover:border-border-hover bg-surface transition-all hover:-translate-y-0.5 text-left w-full"
+              >
+                <MessageCircle className="w-5 h-5 text-accent flex-shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-[22px] font-bold leading-none text-text-primary tabular-nums">
+                    {leadsNaoLidos ?? "—"}
+                  </p>
+                  <p className="text-[10px] text-text-muted mt-0.5">
+                    {leadsNaoLidos === 1 ? "lead não lido" : "leads não lidos"}
+                  </p>
+                </div>
+              </button>
+              <button
+                onClick={() => router.push("/financeiro")}
+                className="flex items-center gap-3 px-4 py-3 rounded-xl border border-border hover:border-border-hover bg-surface transition-all hover:-translate-y-0.5 text-left w-full"
+              >
+                <TrendingUp className="w-5 h-5 text-success flex-shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-[16px] font-bold leading-none text-text-primary tabular-nums">
+                    {receitaHoje !== null ? fmtBRL(receitaHoje) : "—"}
+                  </p>
+                  <p className="text-[10px] text-text-muted mt-0.5">receita hoje</p>
+                </div>
+              </button>
+            </div>
           )}
         </div>
 

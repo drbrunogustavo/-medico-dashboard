@@ -505,28 +505,30 @@ function LeadModal({
             </div>
           </div>
 
-          {/* Valor potencial */}
-          <div>
-            <label className="block text-[11px] font-mono text-text-muted mb-1.5 tracking-wider uppercase">Valor Potencial (R$)</label>
-            <input
-              value={form.valor_potencial}
-              onChange={e => set("valor_potencial", e.target.value.replace(/[^0-9.,]/g, ""))}
-              placeholder="0,00"
-              className="w-full bg-background border border-border rounded-lg px-3 py-2 text-[13px] text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/50 transition-colors"
-            />
-          </div>
+          {initial && (
+            <div>
+              <label className="block text-[11px] font-mono text-text-muted mb-1.5 tracking-wider uppercase">Valor Potencial (R$)</label>
+              <input
+                value={form.valor_potencial}
+                onChange={e => set("valor_potencial", e.target.value.replace(/[^0-9.,]/g, ""))}
+                placeholder="0,00"
+                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-[13px] text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/50 transition-colors"
+              />
+            </div>
+          )}
 
-          {/* Observações */}
-          <div>
-            <label className="block text-[11px] font-mono text-text-muted mb-1.5 tracking-wider uppercase">Observações</label>
-            <textarea
-              value={form.observacoes}
-              onChange={e => set("observacoes", e.target.value)}
-              placeholder="Notas sobre o lead..."
-              rows={3}
-              className="w-full bg-background border border-border rounded-lg px-3 py-2 text-[13px] text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/50 transition-colors resize-none"
-            />
-          </div>
+          {initial && (
+            <div>
+              <label className="block text-[11px] font-mono text-text-muted mb-1.5 tracking-wider uppercase">Observações</label>
+              <textarea
+                value={form.observacoes}
+                onChange={e => set("observacoes", e.target.value)}
+                placeholder="Notas sobre o lead..."
+                rows={3}
+                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-[13px] text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/50 transition-colors resize-none"
+              />
+            </div>
+          )}
 
           <div className="flex gap-2 pt-1">
             <button

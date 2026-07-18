@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import {
-  Loader2, CalendarDays, Sparkles, ChevronRight,
+  Loader2, CalendarDays, Sparkles, ChevronRight, ChevronLeft,
   Copy, Check, X, Film, LayoutGrid, BookOpen, Hash,
   Download, Printer, ArrowRight,
 } from "lucide-react"
@@ -13,6 +13,7 @@ import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface Post {
+  id?:              string
   dia:              number
   dia_semana:       string
   formato:          string
@@ -24,6 +25,7 @@ interface Post {
   roteiro:          string
   stories_sequencia: string[]
   hashtags:         string[]
+  publicado?:       boolean
 }
 
 interface CalendarioResult {
@@ -160,7 +162,11 @@ function CopyBtn({ text }: { text: string }) {
 
 // ─── Day Modal ────────────────────────────────────────────────────────────────
 
-function DayModal({ post, onClose }: { post: Post; onClose: () => void }) {
+function DayModal({ post, onClose, onTogglePublicado }: {
+  post: Post
+  onClose: () => void
+  onTogglePublicado?: (id: string, publicado: boolean) => void
+}) {
   const [tab, setTab] = useState<"legenda" | "roteiro" | "stories" | "hashtags">("legenda")
 
   const tabs = [
@@ -234,6 +240,7 @@ function DayModal({ post, onClose }: { post: Post; onClose: () => void }) {
         {/* Tab content */}
         <div className="overflow-y-auto flex-1 p-5 pt-3">
           {tab === "legenda" && (
+
             <div className="space-y-3">
               <div className="rounded-lg border border-border bg-background p-4">
                 <p className="text-[12px] text-text-primary leading-relaxed whitespace-pre-wrap">{post.legenda}</p>
@@ -280,6 +287,24 @@ function DayModal({ post, onClose }: { post: Post; onClose: () => void }) {
             </div>
           )}
         </div>
+
+        {post.id && (
+          <div className="px-5 pb-4 pt-3 border-t border-border">
+            <button
+              onClick={() => onTogglePublicado?.(post.id!, !post.publicado)}
+              className={cn(
+                "w-full flex items-center justify-center gap-2 py-2.5 rounded-xl",
+                "border transition-all text-[12px] font-semibold",
+                post.publicado
+                  ? "border-accent/30 bg-accent/10 text-accent"
+                  : "border-border text-text-muted hover:border-border-hover hover:text-text-primary"
+              )}
+            >
+              <Check className="w-3.5 h-3.5" />
+              {post.publicado ? "Publicado ✓" : "Marcar como publicado"}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -341,6 +366,7 @@ function CalendarGrid({
                         <div className="flex items-center gap-1">
                           <div className={cn("w-1.5 h-1.5 rounded-full flex-shrink-0", FORMATO_DOT[post.formato] ?? "bg-gray-300")} />
                           <span className="text-[9px] font-mono text-text-muted truncate">{post.formato}</span>
+                          {post.publicado && <Check className="w-2.5 h-2.5 text-accent ml-auto flex-shrink-0" />}
                         </div>
                         <p className="text-[9px] text-text-secondary leading-tight line-clamp-2">{post.tema}</p>
                       </div>
@@ -368,19 +394,34 @@ export default function CalendarioPage() {
   const [temasSel,      setTemasSel]      = useState<string[]>([])
   const [mixPct,        setMixPct]        = useState<MixPct>({ reel: 40, carrossel: 30, stories: 20, foto: 10 })
   const [resultado,     setResultado]     = useState<CalendarioResult | null>(null)
+  const [posts,         setPosts]         = useState<Post[]>([])
   const [loading,       setLoading]       = useState(false)
+  const [savedLoading,  setSavedLoading]  = useState(false)
   const [error,         setError]         = useState("")
   const [selectedPost,  setSelectedPost]  = useState<Post | null>(null)
-  const [view,          setView]          = useState<"grid" | "lista">("grid")
+  const [view,          setView]          = useState<"grid" | "lista" | "semana">("grid")
+  const [currentWeek,   setCurrentWeek]   = useState(1)
 
   function toggleTema(t: string) {
     setTemasSel(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t])
   }
 
+  useEffect(() => {
+    setSavedLoading(true)
+    fetch(`/api/calendario-posts?mes=${mes}&ano=${ano}`)
+      .then(r => r.ok ? r.json() : [])
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) setPosts(data)
+      })
+      .catch(() => {})
+      .finally(() => setSavedLoading(false))
+  }, [mes, ano])
+
   async function gerar() {
     setLoading(true)
     setError("")
     setResultado(null)
+    setPosts([])
     try {
       const resp = await fetch("/api/calendario", {
         method: "POST",
@@ -396,11 +437,40 @@ export default function CalendarioPage() {
       if (!resp.ok) throw new Error(await resp.text())
       const data = await resp.json() as CalendarioResult
       setResultado(data)
+      setPosts(data.posts)
+      fetch("/api/calendario-posts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mes, ano, posts: data.posts }),
+      })
+        .then(r => r.ok ? r.json() : null)
+        .then(saved => {
+          if (saved?.count) {
+            fetch(`/api/calendario-posts?mes=${mes}&ano=${ano}`)
+              .then(r => r.ok ? r.json() : null)
+              .then(withIds => { if (Array.isArray(withIds)) setPosts(withIds) })
+              .catch(() => {})
+          }
+        })
+        .catch(() => {})
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleTogglePublicado = async (id: string, publicado: boolean) => {
+    setPosts(prev => prev.map(p => p.id === id ? { ...p, publicado } : p))
+    setSelectedPost(prev => prev !== null && prev.id === id ? { ...prev, publicado } : prev)
+    await fetch("/api/calendario-posts", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, publicado }),
+    }).catch(() => {
+      setPosts(prev => prev.map(p => p.id === id ? { ...p, publicado: !publicado } : p))
+      setSelectedPost(prev => prev !== null && prev.id === id ? { ...prev, publicado: !publicado } : prev)
+    })
   }
 
   function exportCSV() {
@@ -567,51 +637,120 @@ export default function CalendarioPage() {
           </div>
         )}
 
-        {resultado && (
+        {savedLoading && (
+          <div className="flex items-center gap-2 text-[12px] text-text-muted">
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            Carregando calendário salvo...
+          </div>
+        )}
+
+        {(resultado !== null || posts.length > 0) && (
           <div className="space-y-5">
             {/* Summary */}
             <div className="rounded-xl border border-border bg-surface p-4">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-3">
                   <CalendarDays className="w-4 h-4 text-accent" />
-                  <span className="text-[13px] font-semibold text-text-primary">{resultado.mes}</span>
-                  <span className="text-[11px] text-text-muted font-mono">{resultado.total_posts} posts</span>
+                  <span className="text-[13px] font-semibold text-text-primary">
+                    {resultado?.mes ?? `${MESES[mes - 1]}/${ano}`}
+                  </span>
+                  <span className="text-[11px] text-text-muted font-mono">
+                    {resultado?.total_posts ?? posts.length} posts
+                  </span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  {(["grid", "lista"] as const).map(v => (
+                  {(["grid", "semana", "lista"] as const).map(v => (
                     <button key={v} onClick={() => setView(v)}
                       className={cn(
-                        "text-[11px] px-2.5 py-1 rounded-lg border transition-all capitalize",
+                        "text-[11px] px-2.5 py-1 rounded-lg border transition-all",
                         view === v ? "border-accent-border bg-accent-dim text-accent" : "border-border text-text-muted"
                       )}>
-                      {v === "grid" ? "Grade" : "Lista"}
+                      {v === "grid" ? "Grade" : v === "semana" ? "Semana" : "Lista"}
                     </button>
                   ))}
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 flex-wrap">
-                {Object.entries(resultado.distribuicao_pilares).map(([pilar, pct]) => (
-                  <div key={pilar} className="flex items-center gap-1.5">
-                    <div className={cn("w-2 h-2 rounded-full", PILAR_DOT[pilar] ?? "bg-gray-300")} />
-                    <span className="text-[11px] text-text-secondary">{pilar}</span>
-                    <span className="text-[11px] font-mono text-text-muted">{pct}%</span>
+              {resultado && (
+                <>
+                  <div className="flex items-center gap-3 flex-wrap">
+                    {Object.entries(resultado.distribuicao_pilares).map(([pilar, pct]) => (
+                      <div key={pilar} className="flex items-center gap-1.5">
+                        <div className={cn("w-2 h-2 rounded-full", PILAR_DOT[pilar] ?? "bg-gray-300")} />
+                        <span className="text-[11px] text-text-secondary">{pilar}</span>
+                        <span className="text-[11px] font-mono text-text-muted">{pct}%</span>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-
-              {resultado.dica_estrategica && (
-                <div className="mt-3 pt-3 border-t border-border rounded-lg bg-accent-dim border border-accent-border px-3 py-2 mt-3">
-                  <p className="text-[11px] text-accent font-medium">💡 {resultado.dica_estrategica}</p>
-                </div>
+                  {resultado.dica_estrategica && (
+                    <div className="mt-3 pt-3 border-t border-border rounded-lg bg-accent-dim border border-accent-border px-3 py-2 mt-3">
+                      <p className="text-[11px] text-accent font-medium">💡 {resultado.dica_estrategica}</p>
+                    </div>
+                  )}
+                </>
               )}
             </div>
 
             {view === "grid" ? (
-              <CalendarGrid posts={resultado.posts} mes={mes} ano={ano} onSelectPost={setSelectedPost} />
+              <CalendarGrid posts={posts} mes={mes} ano={ano} onSelectPost={setSelectedPost} />
+            ) : view === "semana" ? (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <button
+                    onClick={() => setCurrentWeek(w => Math.max(1, w - 1))}
+                    disabled={currentWeek === 1}
+                    className="p-1.5 rounded-lg border border-border text-text-muted hover:text-text-primary disabled:opacity-30 transition-all"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <span className="text-[12px] font-semibold text-text-primary">
+                    Semana {currentWeek}
+                  </span>
+                  <button
+                    onClick={() => setCurrentWeek(w => Math.min(5, w + 1))}
+                    disabled={currentWeek === 5}
+                    className="p-1.5 rounded-lg border border-border text-text-muted hover:text-text-primary disabled:opacity-30 transition-all"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="grid grid-cols-7 gap-2">
+                  {["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"].map(d => (
+                    <div key={d} className="text-[10px] font-mono text-text-muted uppercase text-center pb-1 border-b border-border">
+                      {d}
+                    </div>
+                  ))}
+                  {Array.from({ length: 7 }, (_, i) => {
+                    const dia = (currentWeek - 1) * 7 + 1 + i
+                    const daysInMonth = new Date(ano, mes, 0).getDate()
+                    const valid = dia <= daysInMonth
+                    const dayPost = valid ? posts.find(p => p.dia === dia) : undefined
+                    return (
+                      <div key={i} className="min-h-[80px]">
+                        {valid && (
+                          <div className="space-y-1">
+                            <div className="text-[10px] text-text-muted text-center">{dia}</div>
+                            {dayPost && (
+                              <button
+                                onClick={() => setSelectedPost(dayPost)}
+                                className="w-full text-left p-1.5 rounded-lg bg-surface border border-border hover:border-border-hover transition-all"
+                              >
+                                <div className="flex items-center gap-1">
+                                  {dayPost.publicado && <Check className="w-2.5 h-2.5 text-accent flex-shrink-0" />}
+                                  <span className="text-[10px] text-text-primary truncate">{dayPost.tema}</span>
+                                </div>
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
             ) : (
               <div className="space-y-2">
-                {resultado.posts.map((p, i) => (
+                {posts.map((p, i) => (
                   <button key={i} onClick={() => setSelectedPost(p)}
                     className="w-full text-left rounded-xl border border-border bg-surface p-4 hover:border-accent-border hover:bg-accent-dim/30 transition-all">
                     <div className="flex items-start gap-4">
@@ -623,6 +762,7 @@ export default function CalendarioPage() {
                         <div className="flex items-center gap-2 flex-wrap">
                           <Badge label={p.formato} className={FORMATO_STYLE[p.formato] ?? "bg-gray-50 border-gray-200 text-gray-700"} />
                           <Badge label={p.pilar}   className={PILAR_STYLE[p.pilar]   ?? "bg-gray-50 border-gray-200 text-gray-700"} />
+                          {p.publicado && <Check className="w-3 h-3 text-accent ml-auto flex-shrink-0" />}
                         </div>
                         <p className="text-[13px] font-medium text-text-primary truncate">{p.tema}</p>
                         <p className="text-[11px] text-text-muted truncate">{p.gancho}</p>
@@ -637,7 +777,13 @@ export default function CalendarioPage() {
         )}
       </div>
 
-      {selectedPost && <DayModal post={selectedPost} onClose={() => setSelectedPost(null)} />}
+      {selectedPost && (
+        <DayModal
+          post={selectedPost}
+          onClose={() => setSelectedPost(null)}
+          onTogglePublicado={handleTogglePublicado}
+        />
+      )}
     </div>
   )
 }

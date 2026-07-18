@@ -32,25 +32,23 @@ export async function GET() {
   const six      = monthsAgo(6)
 
   try {
-    // Faturamento do mês
-    const { data: lancMes } = await supabase
-      .from("financeiro_lancamentos")
-      .select("valor, tipo")
-      .eq("user_id", auth.userId)
-      .gte("data", som)
-      .lte("data", now)
+    const [
+      { data: lancMes },
+      { data: lancSeis },
+      { data: leads },
+      { data: npsData },
+      { data: consultas },
+    ] = await Promise.all([
+      supabase.from("financeiro_lancamentos").select("valor, tipo").eq("user_id", auth.userId).gte("data", som).lte("data", now),
+      supabase.from("financeiro_lancamentos").select("valor, tipo, data").eq("user_id", auth.userId).eq("tipo", "receita").gte("data", six),
+      supabase.from("crm_leads").select("estagio, created_at").eq("user_id", auth.userId),
+      supabase.from("nps_respostas").select("nota, created_at").eq("user_id", auth.userId).order("created_at", { ascending: false }).limit(100),
+      supabase.from("consultas").select("id, origem").eq("user_id", auth.userId).gte("data", som).lte("data", now),
+    ])
 
     const faturamento_mes = (lancMes ?? [])
       .filter(l => l.tipo === "receita")
       .reduce((s: number, l: { valor: number }) => s + (l.valor ?? 0), 0)
-
-    // Faturamento últimos 6 meses
-    const { data: lancSeis } = await supabase
-      .from("financeiro_lancamentos")
-      .select("valor, tipo, data")
-      .eq("user_id", auth.userId)
-      .eq("tipo", "receita")
-      .gte("data", six)
 
     const faturamento_6m: { mes: string; valor: number }[] = []
     for (let i = 5; i >= 0; i--) {
@@ -64,22 +62,12 @@ export async function GET() {
       faturamento_6m.push({ mes: mesLabel, valor })
     }
 
-    // Leads CRM
-    const { data: leads }     = await supabase.from("crm_leads").select("estagio, created_at").eq("user_id", auth.userId)
     const leads_total          = (leads ?? []).length
     const leads_semana         = (leads ?? []).filter(l => l.created_at >= sow).length
     const leads_por_estagio   = ["Novo Lead","Contato Feito","Qualificado","Consulta Agendada","Paciente"].map(e => ({
       estagio: e,
       count:   (leads ?? []).filter(l => l.estagio === e).length,
     }))
-
-    // NPS
-    const { data: npsData } = await supabase
-      .from("nps_respostas")
-      .select("nota, created_at")
-      .eq("user_id", auth.userId)
-      .order("created_at", { ascending: false })
-      .limit(100)
 
     const calcNps = (resps: { nota: number }[]) => {
       if (!resps.length) return null
@@ -98,14 +86,6 @@ export async function GET() {
       const mesResps = (npsData ?? []).filter(r => r.created_at?.startsWith(mesStr))
       nps_6m.push({ mes: mesLabel, nps: calcNps(mesResps) })
     }
-
-    // Consultas do mês (agenda)
-    const { data: consultas } = await supabase
-      .from("consultas")
-      .select("id, origem")
-      .eq("user_id", auth.userId)
-      .gte("data", som)
-      .lte("data", now)
 
     const consultas_mes = (consultas ?? []).length
 

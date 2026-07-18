@@ -7,7 +7,7 @@ import { getAgenda } from "@/lib/medx"
 
 const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms))
 
-const resend     = new Resend(process.env.RESEND_API_KEY)
+const getResend  = () => new Resend(process.env.RESEND_API_KEY)
 const APP_URL    = process.env.NEXT_PUBLIC_APP_URL ?? "https://praxisplataforma.com.br"
 const FROM_EMAIL = process.env.EMAIL_FROM          ?? "PRAXIS <onboarding@resend.dev>"
 const REPLY_TO   = process.env.EMAIL_REPLY_TO      ?? "contato@praxisplataforma.com.br"
@@ -447,7 +447,7 @@ export async function GET(req: NextRequest) {
       const resultados = await Promise.all(lote.map(async perfil => {
         const email = emailMap.get(perfil.user_id)!
         const dias = Math.ceil((new Date(perfil.trial_termina_em).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-        const { error } = await resend.emails.send({
+        const { error } = await getResend().emails.send({
           from: FROM_EMAIL, to: [email], replyTo: REPLY_TO,
           subject: `🔔 Seu trial PRAXIS expira em ${dias} dia${dias !== 1 ? "s" : ""}`,
           html: buildTrialEmail(perfil.nome ?? email.split("@")[0], dias),
@@ -490,7 +490,7 @@ export async function GET(req: NextRequest) {
       const resultados = await Promise.all(lote.map(async ([uid, userLeads]) => {
         const email = emailMap.get(uid)!
         const nome  = perfilMap.get(uid) ?? email.split("@")[0]
-        const { error } = await resend.emails.send({
+        const { error } = await getResend().emails.send({
           from: FROM_EMAIL, to: [email], replyTo: REPLY_TO,
           subject: `⏰ ${userLeads.length} lead${userLeads.length !== 1 ? "s" : ""} sem resposta há mais de 48h`,
           html: buildLeadEmail(nome, userLeads),
@@ -665,7 +665,7 @@ export async function GET(req: NextRequest) {
           agenda_semana,
         }
 
-        const { error } = await resend.emails.send({
+        const { error } = await getResend().emails.send({
           from: FROM_EMAIL, to: [email], replyTo: REPLY_TO,
           subject: `📊 Seu diagnóstico executivo semanal, Dr. ${primeiroNome}`,
           html: buildRelatorioEmail(metrics),
@@ -688,7 +688,7 @@ export async function GET(req: NextRequest) {
       const email = authUser?.user?.email
       if (!email) continue
       const nome = (perfil.nome as string) ?? "Médico"
-      const { error } = await resend.emails.send({
+      const { error } = await getResend().emails.send({
         from: FROM_EMAIL, to: [email], replyTo: REPLY_TO,
         subject: `⚠️ ${semRetorno.length} paciente${semRetorno.length !== 1 ? "s" : ""} sem retorno há +180 dias`,
         html: buildAlertaSemRetornoEmail(nome, semRetorno),
@@ -783,7 +783,7 @@ export async function GET(req: NextRequest) {
 
       if (!semPost && !(pautasParadas?.length)) continue
 
-      const { error } = await resend.emails.send({
+      const { error } = await getResend().emails.send({
         from: FROM_EMAIL, to: [email], replyTo: REPLY_TO,
         subject: semPost
           ? `📱 Você ficou ${diasSemPost ?? "vários"} dias sem publicar`

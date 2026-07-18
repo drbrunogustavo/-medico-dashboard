@@ -12,10 +12,12 @@ import {
   TrendingUp, TrendingDown, DollarSign, Hash, PlusCircle,
   Trash2, Filter, X, Loader2, ChevronLeft, ChevronRight,
 } from "lucide-react"
-import {
-  BarChart as ReBarChart, Bar,
-  XAxis, YAxis, Tooltip as ReTooltip, ResponsiveContainer,
-} from "recharts"
+import dynamic from "next/dynamic"
+
+const FinanceiroWeeklyChart = dynamic(() => import("@/components/charts/FinanceiroWeeklyChart"), {
+  ssr: false,
+  loading: () => <div className="h-[120px] bg-border/30 rounded-xl animate-pulse" />,
+})
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -307,32 +309,7 @@ export default function FinanceiroPage() {
             <div className="text-[10px] font-mono text-text-muted uppercase tracking-widest mb-3">
               Receita por Semana — {MESES[currentMonth]} {currentYear}
             </div>
-            <ResponsiveContainer width="100%" height={120}>
-              <ReBarChart data={receitaSemanal} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-                <XAxis
-                  dataKey="semana"
-                  tick={{ fontSize: 10, fill: "var(--text-muted)" }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis
-                  tick={{ fontSize: 10, fill: "var(--text-muted)" }}
-                  axisLine={false}
-                  tickLine={false}
-                  width={64}
-                  tickFormatter={(v: unknown) => {
-                    const n = Number(v)
-                    return n >= 1000 ? `${(n / 1000).toFixed(0)}k` : String(n)
-                  }}
-                />
-                <ReTooltip
-                  contentStyle={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }}
-                  formatter={(v: unknown) => [fmt(Number(v)), "Receita"]}
-                  labelStyle={{ color: "var(--text-secondary)" }}
-                />
-                <Bar dataKey="total" fill="var(--accent)" radius={[4, 4, 0, 0]} />
-              </ReBarChart>
-            </ResponsiveContainer>
+            <FinanceiroWeeklyChart data={receitaSemanal} />
           </div>
         )}
 

@@ -14,10 +14,20 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAppContext } from "@/components/AppProvider"
-import {
-  BarChart as ReBarChart, Bar, LineChart, Line,
-  XAxis, YAxis, Tooltip as ReTooltip, ResponsiveContainer,
-} from "recharts"
+import dynamic from "next/dynamic"
+
+const RevenueChart = dynamic(() => import("@/components/charts/DashboardCharts").then(m => m.RevenueChart), {
+  ssr: false,
+  loading: () => <div className="h-[180px] bg-border/30 rounded-xl animate-pulse" />,
+})
+const NpsChart = dynamic(() => import("@/components/charts/DashboardCharts").then(m => m.NpsChart), {
+  ssr: false,
+  loading: () => <div className="h-[140px] bg-border/30 rounded-xl animate-pulse" />,
+})
+const FunnelChart = dynamic(() => import("@/components/charts/DashboardCharts").then(m => m.FunnelChart), {
+  ssr: false,
+  loading: () => <div className="h-[120px] bg-border/30 rounded-xl animate-pulse" />,
+})
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -713,23 +723,7 @@ export default function DashboardPage() {
                 {execLoading ? (
                   <div className="h-[180px] bg-border/30 rounded-xl animate-pulse" />
                 ) : (
-                  <ResponsiveContainer width="100%" height={180}>
-                    <ReBarChart data={fat6m} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
-                      <XAxis
-                        dataKey="mes"
-                        tick={{ fontSize: 10, fill: "var(--text-muted)" }}
-                        axisLine={false}
-                        tickLine={false}
-                      />
-                      <YAxis hide />
-                      <ReTooltip
-                        contentStyle={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }}
-                        formatter={(v: unknown) => [fmtBRL(Number(v)), "Receita"]}
-                        labelStyle={{ color: "var(--text-secondary)" }}
-                      />
-                      <Bar dataKey="valor" fill="var(--accent)" radius={[4, 4, 0, 0]} />
-                    </ReBarChart>
-                  </ResponsiveContainer>
+                  <RevenueChart data={fat6m} />
                 )}
               </div>
 
@@ -743,39 +737,7 @@ export default function DashboardPage() {
                 {execLoading ? (
                   <div className="h-[140px] bg-border/30 rounded-xl animate-pulse" />
                 ) : (
-                  <ResponsiveContainer width="100%" height={140}>
-                    <LineChart
-                      data={execMetrics?.nps_6m ?? []}
-                      margin={{ top: 4, right: 8, left: 0, bottom: 0 }}
-                    >
-                      <XAxis
-                        dataKey="mes"
-                        tick={{ fontSize: 10, fill: "var(--text-muted)" }}
-                        axisLine={false}
-                        tickLine={false}
-                      />
-                      <YAxis
-                        domain={[0, 10]}
-                        ticks={[0, 5, 10]}
-                        tick={{ fontSize: 10, fill: "var(--text-muted)" }}
-                        axisLine={false}
-                        tickLine={false}
-                        width={24}
-                      />
-                      <ReTooltip
-                        contentStyle={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }}
-                        formatter={(v: unknown) => [String(v), "NPS"]}
-                        labelStyle={{ color: "var(--text-secondary)" }}
-                      />
-                      <Line
-                        dataKey="nps"
-                        stroke="var(--accent)"
-                        strokeWidth={2}
-                        dot={false}
-                        connectNulls
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
+                  <NpsChart data={execMetrics?.nps_6m ?? []} />
                 )}
               </div>
 
@@ -791,34 +753,7 @@ export default function DashboardPage() {
               {execLoading ? (
                 <div className="h-[120px] bg-border/30 rounded-xl animate-pulse" />
               ) : (
-                <ResponsiveContainer width="100%" height={120}>
-                  <ReBarChart
-                    layout="vertical"
-                    data={execMetrics?.leads_por_estagio ?? []}
-                    margin={{ top: 0, right: 16, left: 0, bottom: 0 }}
-                  >
-                    <XAxis
-                      type="number"
-                      tick={{ fontSize: 10, fill: "var(--text-muted)" }}
-                      axisLine={false}
-                      tickLine={false}
-                    />
-                    <YAxis
-                      type="category"
-                      dataKey="estagio"
-                      tick={{ fontSize: 10, fill: "var(--text-muted)" }}
-                      axisLine={false}
-                      tickLine={false}
-                      width={120}
-                    />
-                    <ReTooltip
-                      contentStyle={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }}
-                      formatter={(v: unknown) => [String(v), "Leads"]}
-                      labelStyle={{ color: "var(--text-secondary)" }}
-                    />
-                    <Bar dataKey="count" fill="var(--accent)" radius={[0, 4, 4, 0]} />
-                  </ReBarChart>
-                </ResponsiveContainer>
+                <FunnelChart data={execMetrics?.leads_por_estagio ?? []} />
               )}
             </div>
 

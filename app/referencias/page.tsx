@@ -560,9 +560,9 @@ export default function ReferenciasPage() {
         </div>
 
         {loading ? (
-          <div className="text-center py-16 text-text-muted text-[13px]">Carregando referencias...</div>
+          <div className="text-center py-16 text-text-muted text-[13px]">Carregando referências...</div>
         ) : filtered.length===0 ? (
-          <div className="text-center py-16 text-text-muted text-[13px]">Nenhuma referencia encontrada.</div>
+          <div className="text-center py-16 text-text-muted text-[13px]">Nenhuma referência encontrada.</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {filtered.map(r=>(

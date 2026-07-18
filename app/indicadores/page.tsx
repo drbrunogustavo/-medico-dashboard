@@ -1,13 +1,28 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts"
 import { Activity, TrendingUp, Users, Stethoscope, Sparkles, Loader2 } from "lucide-react"
 import dynamic from "next/dynamic"
 
 const NpsChart = dynamic(
   () => import("@/components/charts/DashboardCharts").then(m => m.NpsChart),
   { ssr: false, loading: () => <div className="h-[140px] bg-border/30 rounded-xl animate-pulse" /> }
+)
+const FunnelChart = dynamic(
+  () => import("@/components/charts/DashboardCharts").then(m => m.FunnelChart),
+  { ssr: false, loading: () => <div className="h-[160px] bg-border/30 rounded-xl animate-pulse" /> }
+)
+const RevenueProjectionChart = dynamic(
+  () => import("@/components/charts/IndicadoresCharts").then(m => m.RevenueProjectionChart),
+  { ssr: false, loading: () => <div className="h-full bg-border/30 rounded-xl animate-pulse" /> }
+)
+const OrigemPieChart = dynamic(
+  () => import("@/components/charts/IndicadoresCharts").then(m => m.OrigemPieChart),
+  { ssr: false, loading: () => <div className="w-full sm:w-[180px] h-[180px] bg-border/30 rounded-xl animate-pulse" /> }
+)
+const LeadsFunnelChart = dynamic(
+  () => import("@/components/charts/IndicadoresCharts").then(m => m.LeadsFunnelChart),
+  { ssr: false, loading: () => <div className="h-[160px] bg-border/30 rounded-xl animate-pulse" /> }
 )
 import { cn } from "@/lib/utils"
 import Link from "next/link"
@@ -225,19 +240,7 @@ export default function IndicadoresPage() {
             <div className="rounded-xl border border-[--border] bg-[--surface] p-5">
               <h3 className="text-xs font-mono text-text-muted uppercase tracking-widest mb-4">Faturamento + Projeção 3 meses</h3>
               <div className="h-[160px] md:h-[200px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} barSize={24}>
-                  <XAxis dataKey="mes" tick={{ fill: "#7c85a0", fontSize: 11, fontFamily: "monospace" }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fill: "#7c85a0", fontSize: 10, fontFamily: "monospace" }} axisLine={false} tickLine={false} tickFormatter={v => `${(v/1000).toFixed(0)}k`} />
-                  <Tooltip
-                    contentStyle={{ background: "#13141d", border: "1px solid #1c1d2a", borderRadius: 8, fontSize: 12 }}
-                    formatter={(v) => [fmt(Number(v ?? 0)), ""]}
-                    cursor={{ fill: "rgba(255,255,255,0.03)" }}
-                  />
-                  <Bar dataKey="valor"    fill="#a855f7" radius={[4,4,0,0]} />
-                  <Bar dataKey="projecao" fill="#a855f740" radius={[4,4,0,0]} />
-                </BarChart>
-              </ResponsiveContainer>
+                <RevenueProjectionChart data={chartData} />
               </div>
               <p className="text-[10px] text-text-muted font-mono mt-2">Barras claras = projeção baseada na tendência</p>
             </div>
@@ -256,7 +259,7 @@ export default function IndicadoresPage() {
         {/* ── MARKETING ── */}
         {tab === "marketing" && (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {[
                 { label: "Leads no Mês",            value: String(exec.leads_total ?? 0) },
                 { label: "Leads esta Semana",        value: String(exec.leads_semana ?? 0) },
@@ -274,19 +277,7 @@ export default function IndicadoresPage() {
               <h3 className="text-xs font-mono text-text-muted uppercase tracking-widest mb-4">Leads por Origem</h3>
               <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
                 <div className="w-full sm:w-[180px] h-[180px] flex-shrink-0">
-                <ResponsiveContainer width="100%" height={180}>
-                  <PieChart>
-                    <Pie data={exec.leads_origem ?? []} dataKey="count" nameKey="origem" cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={3}>
-                      {(exec.leads_origem ?? []).map((_, i) => (
-                        <Cell key={i} fill={ORIGEM_COLORS[i % ORIGEM_COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      contentStyle={{ background: "#13141d", border: "1px solid #1c1d2a", borderRadius: 8, fontSize: 12 }}
-                      formatter={(v) => [Number(v ?? 0), "leads"]}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
+                  <OrigemPieChart data={exec.leads_origem ?? []} />
                 </div>
                 <div className="space-y-2 flex-1 w-full sm:w-auto">
                   {(exec.leads_origem ?? []).map((o, i) => (
@@ -335,18 +326,7 @@ export default function IndicadoresPage() {
 
             <div className="rounded-xl border border-[--border] bg-[--surface] p-5">
               <h3 className="text-xs font-mono text-text-muted uppercase tracking-widest mb-4">Leads por Estágio do Funil</h3>
-              <ResponsiveContainer width="100%" height={160}>
-                <BarChart data={exec.leads_por_estagio ?? []} layout="vertical" barSize={14}>
-                  <XAxis type="number" tick={{ fill: "#7c85a0", fontSize: 10 }} axisLine={false} tickLine={false} />
-                  <YAxis type="category" dataKey="estagio" tick={{ fill: "#7c85a0", fontSize: 10, fontFamily: "monospace" }} axisLine={false} tickLine={false} width={100} />
-                  <Tooltip
-                    contentStyle={{ background: "#13141d", border: "1px solid #1c1d2a", borderRadius: 8, fontSize: 12 }}
-                    formatter={(v) => [Number(v ?? 0), "leads"]}
-                    cursor={{ fill: "rgba(255,255,255,0.03)" }}
-                  />
-                  <Bar dataKey="count" fill="#3b7fff" radius={[0,4,4,0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              <LeadsFunnelChart data={exec.leads_por_estagio ?? []} />
             </div>
 
             <Link href="/consultor" className="flex items-center gap-2 text-xs font-semibold text-purple-400 hover:text-purple-300 transition-colors">

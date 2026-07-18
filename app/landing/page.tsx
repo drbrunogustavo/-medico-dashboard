@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import {
@@ -134,6 +134,14 @@ export default function LandingPage() {
   const router                              = useRouter()
   const [particleCount]                     = useState(20)
   const heroRef                             = useRef<HTMLElement>(null)
+  const [stats, setStats]                   = useState<{ medicos_ativos: number; consultas_realizadas: number } | null>(null)
+
+  useEffect(() => {
+    fetch("/api/landing/stats").then(r => r.json()).then(setStats).catch(() => null)
+  }, [])
+
+  const fmtStat = (n: number, threshold = 50) =>
+    n < threshold ? null : n >= 1000 ? `+${Math.floor(n / 100) * 100}` : `+${n}`
 
   return (
     <div className="fixed inset-0 z-[200] bg-background text-text-primary overflow-y-auto" style={{ fontFamily: "var(--font-inter), system-ui, sans-serif" }}>
@@ -211,14 +219,31 @@ export default function LandingPage() {
 
       {/* ── SOCIAL PROOF BAR ────────────────────────────────────────────────── */}
       <section className="py-8 px-6 border-y border-border" style={{ background: "var(--surface-2)" }}>
-        <div className="max-w-5xl mx-auto text-center">
-          <p className="text-[11px] font-mono text-text-muted tracking-[3px] uppercase mb-6">
-            Usado por profissionais de saúde em todo o Brasil
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-6 md:gap-12">
-            {["Medicina", "Odontologia", "Psicologia", "Nutrição", "Enfermagem"].map(esp => (
-              <span key={esp} className="text-[13px] font-medium text-text-muted">{esp}</span>
-            ))}
+        <div className="max-w-5xl mx-auto">
+          <div className="flex flex-wrap items-center justify-center gap-8 md:gap-16">
+            {[
+              {
+                value: stats ? fmtStat(stats.medicos_ativos) : null,
+                fallback: "Beta exclusivo",
+                label: "médicos pioneiros",
+              },
+              {
+                value: stats ? fmtStat(stats.consultas_realizadas, 10) : null,
+                fallback: null,
+                label: "consultas documentadas com IA",
+              },
+              { value: "4.9★", fallback: "4.9★", label: "avaliação média" },
+              { value: "~15 min", fallback: "~15 min", label: "economizados por consulta" },
+            ].map((s, i) => {
+              const display = s.value ?? s.fallback
+              if (!display) return null
+              return (
+                <div key={i} className="text-center">
+                  <div className="text-[22px] font-bold text-text-primary">{display}</div>
+                  <div className="text-[11px] font-mono text-text-muted mt-0.5">{s.label}</div>
+                </div>
+              )
+            })}
           </div>
         </div>
       </section>

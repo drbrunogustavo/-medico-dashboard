@@ -392,6 +392,7 @@ function KanbanColumn({
         {leads.length === 0 && (
           <div className="flex flex-col items-center justify-center h-20 text-[11px] text-text-muted gap-1">
             <span>Nenhum lead nesta etapa</span>
+            <span className="text-[10px] text-text-muted opacity-60">Use o campo acima para adicionar rapidamente</span>
           </div>
         )}
         {leads.map(lead => (

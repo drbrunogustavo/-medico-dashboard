@@ -1144,6 +1144,13 @@ function CopilotoContent() {
               </button>
             )}
 
+            {!hasMediaRecorder && (
+              <div className="w-full flex items-center gap-3 rounded-xl border border-border bg-surface px-4 py-3">
+                <MicOff className="w-5 h-5 text-text-muted flex-shrink-0" />
+                <p className="text-[12px] text-text-muted">Gravação não disponível neste navegador. Use Chrome ou Edge.</p>
+              </div>
+            )}
+
             {/* Relato */}
             <div className="space-y-1.5">
               <label className="text-[10px] font-mono text-text-muted uppercase tracking-widest">
@@ -1275,6 +1282,7 @@ function CopilotoContent() {
               <button
                 onClick={gerar}
                 disabled={phase === "loading" || !relato.trim()}
+                title={!relato.trim() ? "Preencha o relato antes de gerar" : undefined}
                 className={cn(
                   "w-full flex items-center justify-center gap-2 text-[13px] font-semibold rounded-xl py-3 transition-all",
                   phase === "loading"
@@ -1622,6 +1630,7 @@ function CopilotoContent() {
         <button
           onClick={gerar}
           disabled={phase === "loading" || !relato.trim()}
+          title={!relato.trim() ? "Preencha o relato antes de gerar" : undefined}
           className={cn(
             "w-full flex items-center justify-center gap-2 text-[13px] font-semibold rounded-xl py-3 transition-all",
             phase === "loading"

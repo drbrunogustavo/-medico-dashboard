@@ -14,7 +14,7 @@ import { useDraggable, useDroppable } from "@dnd-kit/core"
 import { CSS } from "@dnd-kit/utilities"
 import {
   Plus, X, Loader2, Users2, TrendingUp, DollarSign,
-  Sparkles, Phone, Instagram, CalendarDays, MessageSquare,
+  Sparkles, Phone, Instagram, CalendarDays, MessageSquare, MessageCircle,
   Edit2, Trash2, GripVertical, ChevronDown, Check,
   Link2, ExternalLink, Zap, CheckCircle, Clock, Edit3,
 } from "lucide-react"
@@ -242,6 +242,20 @@ function LeadCardContent({
             </div>
           )}
           </button>
+
+          {lead.telefone && (
+            <a
+              href={`https://wa.me/55${lead.telefone.replace(/\D/g, "")}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={e => e.stopPropagation()}
+              className="mt-1.5 flex items-center gap-1 text-[10px] text-emerald-400 hover:text-emerald-300 transition-colors w-fit"
+              aria-label="Abrir WhatsApp"
+            >
+              <MessageCircle className="w-3 h-3" />
+              WhatsApp
+            </a>
+          )}
 
           {/* Stage mover — inline pills, avoids overflow clipping */}
           {onMoveStage && !isDragOverlay && (

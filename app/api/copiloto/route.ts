@@ -20,8 +20,9 @@ function parseAIJson(text: string): any {
 }
 export const maxDuration = 60
 
-const SYSTEM_BASE = `Você é o Copiloto de Consulta do PRAXIS — assistente clínico especialista em Endocrinologia, Nutrologia e Longevidade.
-Retorne APENAS JSON válido, sem markdown, sem texto antes ou depois do JSON.`
+function buildSystemPrompt(especialidade: string): string {
+  return `Você é o Copiloto de Consulta do PRAXIS — assistente clínico especialista em ${especialidade}.\nRetorne APENAS JSON válido, sem markdown, sem texto antes ou depois do JSON.`
+}
 
 async function getMemoriaContext(userId: string, protocoloId?: string): Promise<string> {
   try {
@@ -137,8 +138,13 @@ export async function POST(req: NextRequest) {
 
     const nome = body.nomePaciente ?? "paciente"
     const tipo = body.tipoConsulta ?? "Consulta"
-    const memoriaCtx = await getMemoriaContext(auth.userId, body.protocoloId)
-    const SYSTEM = SYSTEM_BASE + memoriaCtx
+    const supabase = createSupabaseServerClient()
+    const [memoriaCtx, { data: perfilEspec }] = await Promise.all([
+      getMemoriaContext(auth.userId, body.protocoloId),
+      supabase.from("perfis").select("especialidade").eq("user_id", auth.userId).maybeSingle(),
+    ])
+    const especialidade = (perfilEspec?.especialidade as string | null) || "Clínica Geral"
+    const SYSTEM = buildSystemPrompt(especialidade) + memoriaCtx
 
     const resp = await client.messages.create({
       model:      AI_MODEL,

@@ -616,19 +616,19 @@ export default function PacienteDashboard() {
                   <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5">
                     {pac.peso && (
                       <span className="flex items-center gap-1.5">
-                        <span className="text-[9px] font-mono text-text-muted uppercase tracking-widest">Peso</span>
+                        <span className="text-[10px] font-mono text-text-muted uppercase tracking-widest">Peso</span>
                         <span className="text-[13px] font-semibold text-text-primary">{pac.peso} kg</span>
                       </span>
                     )}
                     {calcIMC(pac.peso, pac.altura) !== "—" && (
                       <span className="flex items-center gap-1.5">
-                        <span className="text-[9px] font-mono text-text-muted uppercase tracking-widest">IMC</span>
+                        <span className="text-[10px] font-mono text-text-muted uppercase tracking-widest">IMC</span>
                         <span className="text-[13px] font-semibold text-text-primary">{calcIMC(pac.peso, pac.altura)}</span>
                       </span>
                     )}
                     {pac.protocolo_ativo && (
                       <span className="flex items-center gap-1.5 min-w-0">
-                        <span className="text-[9px] font-mono text-text-muted uppercase tracking-widest flex-shrink-0">Protocolo</span>
+                        <span className="text-[10px] font-mono text-text-muted uppercase tracking-widest flex-shrink-0">Protocolo</span>
                         <span className="text-[12px] text-text-secondary truncate max-w-[220px]">{pac.protocolo_ativo}</span>
                       </span>
                     )}
@@ -766,7 +766,7 @@ export default function PacienteDashboard() {
                       isEditing ? "border-blue-500/40" : "border-border"
                     )}
                   >
-                    <div className="text-[9px] font-mono text-text-muted uppercase tracking-widest mb-2">
+                    <div className="text-[10px] font-mono text-text-muted uppercase tracking-widest mb-2">
                       {m.label}
                     </div>
                     {isEditing ? (
@@ -809,7 +809,7 @@ export default function PacienteDashboard() {
 
             {/* Sexo — pill selector */}
             <div className="bg-card border border-border rounded-xl px-4 py-3 flex items-center justify-between gap-4">
-              <span className="text-[9px] font-mono text-text-muted uppercase tracking-widest">Sexo Biológico</span>
+              <span className="text-[10px] font-mono text-text-muted uppercase tracking-widest">Sexo Biológico</span>
               <div className="flex items-center gap-1.5">
                 {(["M","F","outro"] as const).map(opt => (
                   <button
@@ -899,7 +899,7 @@ export default function PacienteDashboard() {
                   <div className="border border-border rounded-xl overflow-hidden mb-3">
                     <div className="hidden md:grid grid-cols-[2fr_1fr_1fr_1fr_90px_32px] gap-3 px-4 py-2 border-b border-border">
                       {["Exame","Valor","Referência","Tendência","Data",""].map(h => (
-                        <span key={h} className="text-[9px] font-mono text-text-muted uppercase tracking-widest">{h}</span>
+                        <span key={h} className="text-[10px] font-mono text-text-muted uppercase tracking-widest">{h}</span>
                       ))}
                     </div>
                     <div className="divide-y divide-border">
@@ -953,7 +953,7 @@ export default function PacienteDashboard() {
                         { key: "data_coleta", label: "Data coleta", placeholder: "",             type: "date" },
                       ].map(f => (
                         <div key={f.key}>
-                          <label className="block text-[9px] font-mono text-text-muted uppercase tracking-widest mb-1">{f.label}</label>
+                          <label className="block text-[10px] font-mono text-text-muted uppercase tracking-widest mb-1">{f.label}</label>
                           <input
                             type={f.type}
                             value={exameForm[f.key as keyof typeof exameForm]}
@@ -964,7 +964,7 @@ export default function PacienteDashboard() {
                         </div>
                       ))}
                       <div>
-                        <label className="block text-[9px] font-mono text-text-muted uppercase tracking-widest mb-1">Tendência</label>
+                        <label className="block text-[10px] font-mono text-text-muted uppercase tracking-widest mb-1">Tendência</label>
                         <select
                           value={exameForm.tendencia}
                           onChange={e => setExameForm(prev => ({ ...prev, tendencia: e.target.value }))}
@@ -1057,7 +1057,7 @@ export default function PacienteDashboard() {
                         {/* Month separator */}
                         <div className={cn("flex items-center gap-3 -ml-6 mb-3", mIdx > 0 ? "mt-5" : "mt-0")}>
                           <div className="h-px flex-1 bg-border" />
-                          <span className="text-[9px] font-mono text-text-muted uppercase tracking-widest whitespace-nowrap px-1">
+                          <span className="text-[10px] font-mono text-text-muted uppercase tracking-widest whitespace-nowrap px-1">
                             {monthLabel}
                           </span>
                           <div className="h-px flex-1 bg-border" />
@@ -1110,13 +1110,13 @@ export default function PacienteDashboard() {
                                       <div className="border-t border-border px-4 py-3 space-y-2.5 bg-surface/50">
                                         {temPlano && (
                                           <div>
-                                            <p className="text-[9px] font-mono text-text-muted uppercase tracking-widest mb-1">Conduta</p>
+                                            <p className="text-[10px] font-mono text-text-muted uppercase tracking-widest mb-1">Conduta</p>
                                             <p className="text-[11px] text-text-secondary leading-relaxed">{entry.resultado!.plano}</p>
                                           </div>
                                         )}
                                         {temExames && (
                                           <div>
-                                            <p className="text-[9px] font-mono text-text-muted uppercase tracking-widest mb-1.5">Exames solicitados</p>
+                                            <p className="text-[10px] font-mono text-text-muted uppercase tracking-widest mb-1.5">Exames solicitados</p>
                                             <div className="flex flex-wrap gap-1.5">
                                               {(entry.resultado?.exames_solicitados ?? []).map((ex, i) => (
                                                 <span key={i} className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400">

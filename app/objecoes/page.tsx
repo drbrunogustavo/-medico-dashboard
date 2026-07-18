@@ -449,7 +449,7 @@ export default function ObecoesPage() {
                 {/* Panel header */}
                 <div className="flex items-start justify-between px-4 py-3 border-b border-border flex-shrink-0">
                   <div className="flex-1 min-w-0 pr-3">
-                    <div className="text-[9px] font-mono text-text-muted uppercase tracking-wider mb-1">Transformando objeção</div>
+                    <div className="text-[10px] font-mono text-text-muted uppercase tracking-wider mb-1">Transformando objeção</div>
                     <p className="text-[12px] font-semibold text-text-primary leading-snug">{activeObjecao.texto}</p>
                   </div>
                   <button onClick={() => setActiveObjecao(null)} className="w-6 h-6 flex-shrink-0 flex items-center justify-center rounded-md border border-border text-text-muted hover:text-text-primary transition-all">
@@ -489,15 +489,15 @@ export default function ObecoesPage() {
                       {activeTab === "reel" && (
                         <>
                           <div>
-                            <div className="text-[9px] font-mono text-text-muted uppercase tracking-wider mb-1">Título</div>
+                            <div className="text-[10px] font-mono text-text-muted uppercase tracking-wider mb-1">Título</div>
                             <p className="text-[12px] font-semibold text-text-primary">{transformResult.reel.titulo}</p>
                           </div>
                           <div>
-                            <div className="text-[9px] font-mono text-text-muted uppercase tracking-wider mb-1">Gancho de abertura</div>
+                            <div className="text-[10px] font-mono text-text-muted uppercase tracking-wider mb-1">Gancho de abertura</div>
                             <p className="text-[11px] text-text-secondary italic leading-relaxed">{transformResult.reel.gancho}</p>
                           </div>
                           <div>
-                            <div className="text-[9px] font-mono text-text-muted uppercase tracking-wider mb-1.5">Estrutura (60s)</div>
+                            <div className="text-[10px] font-mono text-text-muted uppercase tracking-wider mb-1.5">Estrutura (60s)</div>
                             <div className="space-y-1">
                               {(transformResult.reel.estrutura ?? []).map((p, i) => (
                                 <div key={i} className="flex items-start gap-2">
@@ -512,7 +512,7 @@ export default function ObecoesPage() {
                       {activeTab === "story" && (
                         <>
                           <div>
-                            <div className="text-[9px] font-mono text-text-muted uppercase tracking-wider mb-1">Título</div>
+                            <div className="text-[10px] font-mono text-text-muted uppercase tracking-wider mb-1">Título</div>
                             <p className="text-[12px] font-semibold text-text-primary">{transformResult.story.titulo}</p>
                           </div>
                           <div className="space-y-2">
@@ -528,7 +528,7 @@ export default function ObecoesPage() {
                       {activeTab === "carrossel" && (
                         <>
                           <div>
-                            <div className="text-[9px] font-mono text-text-muted uppercase tracking-wider mb-1">Título</div>
+                            <div className="text-[10px] font-mono text-text-muted uppercase tracking-wider mb-1">Título</div>
                             <p className="text-[12px] font-semibold text-text-primary">{transformResult.carrossel.titulo}</p>
                           </div>
                           <div className="space-y-2">
@@ -549,11 +549,11 @@ export default function ObecoesPage() {
                       {activeTab === "faq" && (
                         <>
                           <div>
-                            <div className="text-[9px] font-mono text-text-muted uppercase tracking-wider mb-1">Título / Pergunta</div>
+                            <div className="text-[10px] font-mono text-text-muted uppercase tracking-wider mb-1">Título / Pergunta</div>
                             <p className="text-[12px] font-semibold text-text-primary">{transformResult.faq.titulo}</p>
                           </div>
                           <div>
-                            <div className="text-[9px] font-mono text-text-muted uppercase tracking-wider mb-1.5">Resposta completa</div>
+                            <div className="text-[10px] font-mono text-text-muted uppercase tracking-wider mb-1.5">Resposta completa</div>
                             <p className="text-[11px] text-text-secondary leading-relaxed whitespace-pre-wrap">{transformResult.faq.resposta}</p>
                           </div>
                         </>

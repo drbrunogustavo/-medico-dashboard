@@ -359,11 +359,11 @@ function Step3({ result, onReset, form }: { result: PosicionamentoResult; onRese
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="bg-background border border-border rounded-lg p-3">
-              <div className="text-[9px] font-mono text-text-muted uppercase tracking-wide mb-1">Justificativa</div>
+              <div className="text-[10px] font-mono text-text-muted uppercase tracking-wide mb-1">Justificativa</div>
               <p className="text-[12px] text-text-secondary">{result.nicho_ideal.justificativa}</p>
             </div>
             <div className="bg-background border border-border rounded-lg p-3">
-              <div className="text-[9px] font-mono text-text-muted uppercase tracking-wide mb-1">Tamanho do Mercado</div>
+              <div className="text-[10px] font-mono text-text-muted uppercase tracking-wide mb-1">Tamanho do Mercado</div>
               <p className="text-[12px] text-text-secondary">{result.nicho_ideal.tamanho_mercado}</p>
             </div>
           </div>
@@ -390,12 +390,12 @@ function Step3({ result, onReset, form }: { result: PosicionamentoResult; onRese
               { label: "Como decide",        value: result.publico_alvo.como_decide },
             ].map(({ label, value }) => (
               <div key={label} className="bg-background border border-border rounded-lg p-3">
-                <div className="text-[9px] font-mono text-text-muted uppercase tracking-wide mb-1">{label}</div>
+                <div className="text-[10px] font-mono text-text-muted uppercase tracking-wide mb-1">{label}</div>
                 <p className="text-[12px] text-text-secondary">{value}</p>
               </div>
             ))}
             <div className="bg-background border border-border rounded-lg p-3">
-              <div className="text-[9px] font-mono text-text-muted uppercase tracking-wide mb-2">Dores Principais</div>
+              <div className="text-[10px] font-mono text-text-muted uppercase tracking-wide mb-2">Dores Principais</div>
               <div className="space-y-1">
                 {result.publico_alvo.dores_principais.map((d, i) => (
                   <div key={i} className="flex items-start gap-1.5 text-[12px] text-text-secondary">
@@ -421,7 +421,7 @@ function Step3({ result, onReset, form }: { result: PosicionamentoResult; onRese
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="bg-background border border-border rounded-lg p-3">
-              <div className="text-[9px] font-mono text-text-muted uppercase tracking-wide mb-2">Diferenciais Atuais</div>
+              <div className="text-[10px] font-mono text-text-muted uppercase tracking-wide mb-2">Diferenciais Atuais</div>
               <div className="space-y-1">
                 {result.diferenciais_competitivos.diferenciais_atuais.map((d, i) => (
                   <div key={i} className="flex items-start gap-1.5 text-[12px] text-text-secondary">
@@ -431,7 +431,7 @@ function Step3({ result, onReset, form }: { result: PosicionamentoResult; onRese
               </div>
             </div>
             <div className="bg-background border border-border rounded-lg p-3">
-              <div className="text-[9px] font-mono text-text-muted uppercase tracking-wide mb-2">A Desenvolver</div>
+              <div className="text-[10px] font-mono text-text-muted uppercase tracking-wide mb-2">A Desenvolver</div>
               <div className="space-y-1">
                 {result.diferenciais_competitivos.diferenciais_a_desenvolver.map((d, i) => (
                   <div key={i} className="flex items-start gap-1.5 text-[12px] text-text-secondary">
@@ -524,7 +524,7 @@ function Step3({ result, onReset, form }: { result: PosicionamentoResult; onRese
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="bg-background border border-border rounded-lg p-3">
-              <div className="text-[9px] font-mono text-text-muted uppercase tracking-wide mb-2">Palavras-Chave</div>
+              <div className="text-[10px] font-mono text-text-muted uppercase tracking-wide mb-2">Palavras-Chave</div>
               <div className="flex flex-wrap gap-1.5">
                 {result.estrategia_comunicacao.palavras_chave.map(p => (
                   <span key={p} className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-accent-dim border border-accent-border text-accent">{p}</span>
@@ -532,7 +532,7 @@ function Step3({ result, onReset, form }: { result: PosicionamentoResult; onRese
               </div>
             </div>
             <div className="bg-background border border-border rounded-lg p-3">
-              <div className="text-[9px] font-mono text-text-muted uppercase tracking-wide mb-2">Frases a Evitar</div>
+              <div className="text-[10px] font-mono text-text-muted uppercase tracking-wide mb-2">Frases a Evitar</div>
               <div className="space-y-1">
                 {result.estrategia_comunicacao.frases_a_evitar.map((f, i) => (
                   <div key={i} className="text-[11px] text-red-400 line-through">{f}</div>
@@ -541,7 +541,7 @@ function Step3({ result, onReset, form }: { result: PosicionamentoResult; onRese
             </div>
           </div>
           <div className="bg-background border border-border rounded-lg p-3">
-            <div className="text-[9px] font-mono text-text-muted uppercase tracking-wide mb-1">Storytelling</div>
+            <div className="text-[10px] font-mono text-text-muted uppercase tracking-wide mb-1">Storytelling</div>
             <p className="text-[12px] text-text-secondary">{result.estrategia_comunicacao.storytelling}</p>
           </div>
         </div>

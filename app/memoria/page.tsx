@@ -149,12 +149,12 @@ function HistoricoCard({ item }: { item: HistoricoItem }) {
       {expanded && res.resumo && (
         <div className="px-4 pb-4 space-y-2.5">
           <div className="bg-background border border-border rounded-lg p-3">
-            <div className="text-[9px] font-mono text-text-muted uppercase tracking-widest mb-1">Resumo</div>
+            <div className="text-[10px] font-mono text-text-muted uppercase tracking-widest mb-1">Resumo</div>
             <p className="text-[12px] text-text-secondary leading-relaxed">{res.resumo}</p>
           </div>
           {res.plano && (
             <div className="bg-background border border-border rounded-lg p-3">
-              <div className="text-[9px] font-mono text-text-muted uppercase tracking-widest mb-1">Plano</div>
+              <div className="text-[10px] font-mono text-text-muted uppercase tracking-widest mb-1">Plano</div>
               <p className="text-[12px] text-text-secondary leading-relaxed whitespace-pre-line">{res.plano}</p>
             </div>
           )}

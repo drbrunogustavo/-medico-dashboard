@@ -190,7 +190,7 @@ export function CommandBar() {
             {/* ─ Pacientes section ─────────────────────────────────────────── */}
             {hasPacQuery && (loading || pacientes.length > 0) && (
               <div className="pt-2">
-                <p className="px-4 pb-1 text-[9px] font-mono text-text-muted uppercase tracking-widest">
+                <p className="px-4 pb-1 text-[10px] font-mono text-text-muted uppercase tracking-widest">
                   Pacientes
                 </p>
                 {loading && pacientes.length === 0 ? (
@@ -235,7 +235,7 @@ export function CommandBar() {
                   ? "mt-2 border-t border-border pt-2"
                   : "pt-2"
               )}>
-                <p className="px-4 pb-1 text-[9px] font-mono text-text-muted uppercase tracking-widest">
+                <p className="px-4 pb-1 text-[10px] font-mono text-text-muted uppercase tracking-widest">
                   {hasQuery ? "Navegar para" : "Acesso rápido"}
                 </p>
                 {filteredNav.map((item, i) => {

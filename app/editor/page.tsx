@@ -946,14 +946,14 @@ export default function EditorPage() {
                   <div className="grid sm:grid-cols-2 gap-3">
 
                     <div className="sm:col-span-2">
-                      <label className="text-[9px] font-mono text-text-muted uppercase tracking-wider block mb-1">Instrução de direção</label>
+                      <label className="text-[10px] font-mono text-text-muted uppercase tracking-wider block mb-1">Instrução de direção</label>
                       <p className="text-[12px] text-text-secondary italic">"{selectedSeg.instrucao}"</p>
                     </div>
 
                     {/* Asset selector */}
                     {selectedSeg.tipo === "asset" && (
                       <div className="sm:col-span-2">
-                        <label className="text-[9px] font-mono text-text-muted uppercase tracking-wider block mb-1.5">Asset Associado</label>
+                        <label className="text-[10px] font-mono text-text-muted uppercase tracking-wider block mb-1.5">Asset Associado</label>
                         <div className="flex flex-wrap gap-1.5">
                           <button
                             onClick={() => updateSegment(selectedSeg.id, { assetId: undefined })}
@@ -994,7 +994,7 @@ export default function EditorPage() {
                     {/* Text editor */}
                     {selectedSeg.tipo === "texto" && (
                       <div className="sm:col-span-2">
-                        <label className="text-[9px] font-mono text-text-muted uppercase tracking-wider block mb-1.5">Texto em Tela</label>
+                        <label className="text-[10px] font-mono text-text-muted uppercase tracking-wider block mb-1.5">Texto em Tela</label>
                         <textarea
                           value={selectedSeg.texto ?? selectedSeg.texto_sugerido ?? ""}
                           onChange={e => updateSegment(selectedSeg.id, { texto: e.target.value })}
@@ -1007,7 +1007,7 @@ export default function EditorPage() {
                     {/* Position */}
                     {(selectedSeg.tipo === "asset" || selectedSeg.tipo === "texto") && (
                       <div>
-                        <label className="text-[9px] font-mono text-text-muted uppercase tracking-wider block mb-1.5">Posição</label>
+                        <label className="text-[10px] font-mono text-text-muted uppercase tracking-wider block mb-1.5">Posição</label>
                         <div className="flex gap-1.5">
                           {(["topo", "centro", "rodape"] as const).map(pos => (
                             <button
@@ -1030,7 +1030,7 @@ export default function EditorPage() {
                     {/* Opacity */}
                     {selectedSeg.tipo === "asset" && (
                       <div>
-                        <label className="text-[9px] font-mono text-text-muted uppercase tracking-wider block mb-1.5">
+                        <label className="text-[10px] font-mono text-text-muted uppercase tracking-wider block mb-1.5">
                           Opacidade — {selectedSeg.opacidade ?? 85}%
                         </label>
                         <input

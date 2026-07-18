@@ -1073,7 +1073,7 @@ export default function ExecutivoPage() {
         {/* Sinais do mês */}
         {sinais.length > 0 && (
           <div className="rounded-xl border border-border bg-surface p-4">
-            <p className="text-[9px] font-mono text-text-muted uppercase tracking-widest mb-3">Sinais do mês</p>
+            <p className="text-[10px] font-mono text-text-muted uppercase tracking-widest mb-3">Sinais do mês</p>
             <div className="space-y-2">
               {sinais.map((s, i) => (
                 <InsightBullet key={i} text={s.texto} type={s.tipo} />
@@ -1086,7 +1086,7 @@ export default function ExecutivoPage() {
         {(exec.faturamento_6m ?? []).some(m => m.valor > 0) && (
           <div className="rounded-xl border border-border bg-surface p-4">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-[9px] font-mono text-text-muted uppercase tracking-widest">Receita — últimos 6 meses</p>
+              <p className="text-[10px] font-mono text-text-muted uppercase tracking-widest">Receita — últimos 6 meses</p>
               <p className="text-[11px] font-mono font-semibold text-text-primary">
                 {fmt(exec.faturamento_mes ?? 0)}
                 <span className="text-text-muted font-normal"> este mês</span>

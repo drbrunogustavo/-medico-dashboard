@@ -801,7 +801,7 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
                     <div className="flex items-center justify-between mb-1.5">
                       <div className="flex items-center gap-2">
                         <span>{PART_ICON[key]}</span>
-                        <span className="text-[9px] font-mono text-text-muted uppercase tracking-wider">{PART_LABEL[key]}</span>
+                        <span className="text-[10px] font-mono text-text-muted uppercase tracking-wider">{PART_LABEL[key]}</span>
                       </div>
                       {expanded.includes(key)
                         ? <ChevronUp   className="w-3 h-3 text-text-muted flex-shrink-0" />
@@ -1153,7 +1153,7 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
 
           {headlines.length > 0 && (
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[9px] font-mono text-text-muted uppercase tracking-wider">Gatilho:</span>
+              <span className="text-[10px] font-mono text-text-muted uppercase tracking-wider">Gatilho:</span>
               {["Todos", "Medo", "Curiosidade", "Autoridade", "Escassez", "Dor", "Benefício"].map(g => (
                 <button key={g} onClick={() => setHeadlineFilter(g)}
                   className={cn(
@@ -1210,10 +1210,10 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
           {!loadingHeadlines && headlines.length > 0 && (
             <div className="bg-card border border-border rounded-lg overflow-hidden">
               <div className="px-5 py-2 border-b border-border flex items-center gap-4">
-                <span className="text-[9px] font-mono text-text-muted uppercase tracking-wider w-7">#</span>
-                <span className="text-[9px] font-mono text-text-muted uppercase tracking-wider w-24 flex-shrink-0">Gatilho</span>
-                <span className="text-[9px] font-mono text-text-muted uppercase tracking-wider flex-1">Headline</span>
-                <span className="text-[9px] font-mono text-text-muted uppercase tracking-wider w-12 text-right">Score</span>
+                <span className="text-[10px] font-mono text-text-muted uppercase tracking-wider w-7">#</span>
+                <span className="text-[10px] font-mono text-text-muted uppercase tracking-wider w-24 flex-shrink-0">Gatilho</span>
+                <span className="text-[10px] font-mono text-text-muted uppercase tracking-wider flex-1">Headline</span>
+                <span className="text-[10px] font-mono text-text-muted uppercase tracking-wider w-12 text-right">Score</span>
                 <span className="w-28" />
               </div>
               <div className="divide-y divide-border">

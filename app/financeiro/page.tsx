@@ -432,7 +432,7 @@ export default function FinanceiroPage() {
           {/* Column headers — hidden on small screens */}
           <div className="hidden md:grid grid-cols-[100px_160px_80px_1fr_140px_120px_40px] gap-4 px-5 py-2 border-b border-border">
             {["Data", "Unidade", "Tipo", "Descrição", "Forma de Pagamento", "Valor", ""].map(h => (
-              <span key={h} className="text-[9px] font-mono text-text-muted uppercase tracking-widest">{h}</span>
+              <span key={h} className="text-[10px] font-mono text-text-muted uppercase tracking-widest">{h}</span>
             ))}
           </div>
 

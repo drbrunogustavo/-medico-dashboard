@@ -582,7 +582,7 @@ export default function NutricaoPacientesPage() {
                       {/* Expanded messages */}
                       {isExpanded && msgs.length > 0 && (
                         <div className="border-t border-border px-4 pb-4 pt-3 space-y-2 bg-surface-2">
-                          <div className="text-[9px] font-mono text-text-muted uppercase tracking-widest mb-2">
+                          <div className="text-[10px] font-mono text-text-muted uppercase tracking-widest mb-2">
                             Mensagens · {msgs.length}
                           </div>
                           {msgs.map((m, i) => (

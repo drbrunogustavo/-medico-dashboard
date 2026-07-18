@@ -116,12 +116,12 @@ function IndicacaoCard({
         <div className="border-t border-border p-4 space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="bg-background border border-border rounded-lg p-3">
-              <div className="text-[9px] font-mono text-text-muted uppercase tracking-widest mb-1">Indicador</div>
+              <div className="text-[10px] font-mono text-text-muted uppercase tracking-widest mb-1">Indicador</div>
               <div className="text-[13px] font-semibold text-text-primary">{ind.indicador_nome}</div>
               <div className="text-[11px] text-text-muted flex items-center gap-1 mt-0.5"><Phone className="w-3 h-3" />{ind.indicador_telefone}</div>
             </div>
             <div className="bg-background border border-border rounded-lg p-3">
-              <div className="text-[9px] font-mono text-text-muted uppercase tracking-widest mb-1">Indicado</div>
+              <div className="text-[10px] font-mono text-text-muted uppercase tracking-widest mb-1">Indicado</div>
               <div className="text-[13px] font-semibold text-blue-400">{ind.indicado_nome}</div>
               <div className="text-[11px] text-text-muted flex items-center gap-1 mt-0.5"><Phone className="w-3 h-3" />{ind.indicado_telefone}</div>
             </div>
@@ -253,7 +253,7 @@ export default function IndicacoesPage() {
             { label: "Cortesias Ativas",     value: cortesiasAtivas, color: "text-amber-400" },
           ].map(s => (
             <div key={s.label} className="bg-card border border-border rounded-xl p-4">
-              <div className="text-[9px] font-mono text-text-muted uppercase tracking-widest mb-2">{s.label}</div>
+              <div className="text-[10px] font-mono text-text-muted uppercase tracking-widest mb-2">{s.label}</div>
               <div className={cn("text-2xl font-bold", s.color)}>{s.value}</div>
             </div>
           ))}

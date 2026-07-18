@@ -1241,7 +1241,7 @@ function CopilotoContent() {
                 <div className="space-y-2 animate-fade-in mt-2">
                   <div className="flex items-center gap-1.5">
                     <Brain className="w-3 h-3 text-accent" />
-                    <span className="text-[9px] font-mono text-text-muted uppercase tracking-widest">
+                    <span className="text-[10px] font-mono text-text-muted uppercase tracking-widest">
                       {loadingMemoria ? "Buscando padrões..." : "Padrões dos atendimentos anteriores"}
                     </span>
                     {loadingMemoria && <Loader2 className="w-3 h-3 text-accent animate-spin" />}

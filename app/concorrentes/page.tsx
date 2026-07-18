@@ -234,7 +234,7 @@ function ConcorrenteResults({ resultado, nome, onSavePauta, savingId, router }: 
             { label: "Frequência", value: resultado.visao_geral.frequencia_posting   },
           ].map(({ label, value }) => (
             <div key={label} className="bg-background rounded-lg p-3 border border-border">
-              <div className="text-[9px] font-mono text-text-muted uppercase tracking-wide mb-1">{label}</div>
+              <div className="text-[10px] font-mono text-text-muted uppercase tracking-wide mb-1">{label}</div>
               <div className="text-[12px] font-semibold text-text-primary">{value}</div>
             </div>
           ))}

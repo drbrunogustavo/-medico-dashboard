@@ -316,11 +316,11 @@ export default function OportunidadesPage() {
                       </div>
                       <div className="space-y-1.5">
                         <div>
-                          <div className="text-[9px] font-mono text-text-muted uppercase tracking-wider mb-0.5">Conteúdo</div>
+                          <div className="text-[10px] font-mono text-text-muted uppercase tracking-wider mb-0.5">Conteúdo</div>
                           <p className="text-[11px] text-text-secondary leading-snug">{ev.oportunidade_conteudo}</p>
                         </div>
                         <div>
-                          <div className="text-[9px] font-mono text-text-muted uppercase tracking-wider mb-0.5">Campanha</div>
+                          <div className="text-[10px] font-mono text-text-muted uppercase tracking-wider mb-0.5">Campanha</div>
                           <p className="text-[11px] text-text-secondary leading-snug">{ev.oportunidade_campanha}</p>
                         </div>
                       </div>
@@ -376,7 +376,7 @@ export default function OportunidadesPage() {
 
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1.5">
-                          <span className="text-[9px] font-mono text-text-muted uppercase tracking-wider">Concorrência:</span>
+                          <span className="text-[10px] font-mono text-text-muted uppercase tracking-wider">Concorrência:</span>
                           <span className={cn("text-[10px] font-bold", CONCORRENCIA_STYLE[t.concorrencia] ?? "text-text-secondary")}>{t.concorrencia}</span>
                         </div>
                         <div className="flex-1 mx-3 h-1 bg-background rounded-full overflow-hidden">

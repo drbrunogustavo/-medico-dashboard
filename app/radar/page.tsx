@@ -995,7 +995,7 @@ Retorne um objeto JSON com:
                 <>
                   {/* Technical analysis */}
                   <div>
-                    <div className="text-[9px] font-mono text-text-muted uppercase tracking-wider mb-3">Análise Técnica</div>
+                    <div className="text-[10px] font-mono text-text-muted uppercase tracking-wider mb-3">Análise Técnica</div>
                     <div className="grid grid-cols-2 gap-3">
 
                       <div className="bg-background rounded-lg p-3 col-span-2">

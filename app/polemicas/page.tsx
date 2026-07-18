@@ -339,19 +339,19 @@ export default function PolemicasPage() {
 
                     {/* Título */}
                     <div>
-                      <div className="text-[9px] font-mono text-text-muted uppercase tracking-wider mb-1">Título sugerido</div>
+                      <div className="text-[10px] font-mono text-text-muted uppercase tracking-wider mb-1">Título sugerido</div>
                       <p className="text-[12px] font-semibold text-text-primary leading-snug">{ab.titulo}</p>
                     </div>
 
                     {/* Gancho */}
                     <div>
-                      <div className="text-[9px] font-mono text-text-muted uppercase tracking-wider mb-1">Gancho de abertura</div>
+                      <div className="text-[10px] font-mono text-text-muted uppercase tracking-wider mb-1">Gancho de abertura</div>
                       <p className="text-[11px] text-text-secondary leading-relaxed italic whitespace-pre-line">{ab.gancho}</p>
                     </div>
 
                     {/* Estrutura */}
                     <div>
-                      <div className="text-[9px] font-mono text-text-muted uppercase tracking-wider mb-1.5">Estrutura do roteiro</div>
+                      <div className="text-[10px] font-mono text-text-muted uppercase tracking-wider mb-1.5">Estrutura do roteiro</div>
                       <div className="space-y-1">
                         {(ab.estrutura ?? []).map((ponto, pi) => (
                           <div key={pi} className="flex items-start gap-2">
@@ -367,7 +367,7 @@ export default function PolemicasPage() {
                     {/* Score bar */}
                     <div>
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-[9px] font-mono text-text-muted uppercase tracking-wider">Viralização estimada</span>
+                        <span className="text-[10px] font-mono text-text-muted uppercase tracking-wider">Viralização estimada</span>
                         <span className={cn("text-[11px] font-bold font-mono", c.color)}>{ab.score}/100</span>
                       </div>
                       <div className="h-1 bg-background rounded-full overflow-hidden">

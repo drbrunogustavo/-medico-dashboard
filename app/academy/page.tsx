@@ -330,7 +330,7 @@ function AbaCasos() {
                   { label: "Resultado",   text: caso.resultado  },
                 ].map(({ label, text }) => (
                   <div key={label}>
-                    <p className="text-[9px] font-mono text-text-muted uppercase tracking-widest mb-1">{label}</p>
+                    <p className="text-[10px] font-mono text-text-muted uppercase tracking-widest mb-1">{label}</p>
                     <p className="text-[12px] text-text-secondary leading-relaxed">{text}</p>
                   </div>
                 ))}

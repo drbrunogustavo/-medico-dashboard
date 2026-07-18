@@ -821,7 +821,7 @@ export default function DashboardPage() {
             <div className="flex items-center gap-2 px-5 py-3.5 border-b border-border">
               <Lightbulb className="w-3.5 h-3.5 text-[#d4af37]" />
               <span className="text-[12px] font-semibold text-text-primary">Ação Recomendada Hoje</span>
-              <span className="ml-auto text-[9px] font-mono text-text-muted uppercase tracking-wider">
+              <span className="ml-auto text-[10px] font-mono text-text-muted uppercase tracking-wider">
                 {["DOM","SEG","TER","QUA","QUI","SEX","SÁB"][new Date().getDay()]}
               </span>
             </div>

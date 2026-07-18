@@ -322,7 +322,7 @@ export default function ReguaPage() {
             { label: "Mensagens Enviadas",  value: sent,    color: "text-emerald-400"},
           ].map(s => (
             <div key={s.label} className="bg-card border border-border rounded-xl p-4">
-              <div className="text-[9px] font-mono text-text-muted uppercase tracking-widest mb-2">{s.label}</div>
+              <div className="text-[10px] font-mono text-text-muted uppercase tracking-widest mb-2">{s.label}</div>
               <div className={cn("text-3xl font-bold", s.color)}>{s.value}</div>
             </div>
           ))}

@@ -507,7 +507,7 @@ export default function PacientesPage() {
         {!semanticMode && (
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-[9px] font-mono text-text-muted uppercase tracking-widest whitespace-nowrap">Idade</span>
+              <span className="text-[10px] font-mono text-text-muted uppercase tracking-widest whitespace-nowrap">Idade</span>
               {(["0-18", "19-40", "41-60", "60+"] as const).map(v => (
                 <button
                   key={v}
@@ -525,7 +525,7 @@ export default function PacientesPage() {
             </div>
             <div className="w-px h-4 bg-border hidden sm:block" />
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-[9px] font-mono text-text-muted uppercase tracking-widest whitespace-nowrap">Última consulta</span>
+              <span className="text-[10px] font-mono text-text-muted uppercase tracking-widest whitespace-nowrap">Última consulta</span>
               {([
                 { v: "0-30",   label: "≤ 30 dias" },
                 { v: "31-90",  label: "31–90 dias" },
@@ -601,7 +601,7 @@ export default function PacientesPage() {
             {/* Header row */}
             <div className="hidden md:grid grid-cols-[1fr_160px_200px_140px_40px] gap-4 px-5 py-2.5 border-b border-border">
               {["Paciente", "Telefone", "E-mail", "Última Consulta", ""].map(h => (
-                <span key={h} className="text-[9px] font-mono text-text-muted uppercase tracking-widest">{h}</span>
+                <span key={h} className="text-[10px] font-mono text-text-muted uppercase tracking-widest">{h}</span>
               ))}
             </div>
 

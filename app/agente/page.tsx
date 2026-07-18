@@ -508,7 +508,7 @@ p{line-height:1.7;color:#374151;margin:4px 0}ul{padding-left:20px;margin:6px 0}l
                   <h3 className="text-[18px] font-bold text-text-primary mb-4">{plano.tema}</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <div className="text-[9px] font-mono text-text-muted uppercase tracking-wider mb-2">Pilares editoriais</div>
+                      <div className="text-[10px] font-mono text-text-muted uppercase tracking-wider mb-2">Pilares editoriais</div>
                       <div className="space-y-1.5">
                         {(plano.pilares ?? []).map((p, i) => (
                           <div key={i} className="flex items-center gap-2">
@@ -519,7 +519,7 @@ p{line-height:1.7;color:#374151;margin:4px 0}ul{padding-left:20px;margin:6px 0}l
                       </div>
                     </div>
                     <div>
-                      <div className="text-[9px] font-mono text-text-muted uppercase tracking-wider mb-2">Distribuição de formatos</div>
+                      <div className="text-[10px] font-mono text-text-muted uppercase tracking-wider mb-2">Distribuição de formatos</div>
                       <div className="space-y-1.5">
                         {[
                           { label: "Reels",      value: plano.distribuicao?.reels      ?? 0, color: "text-blue-400",   bg: "bg-blue-500"   },
@@ -727,15 +727,15 @@ p{line-height:1.7;color:#374151;margin:4px 0}ul{padding-left:20px;margin:6px 0}l
                             {curSection === "reel" && (
                               <div className="space-y-4">
                                 <div>
-                                  <div className="text-[9px] font-mono text-text-muted uppercase tracking-wider mb-1">Título do Reel</div>
+                                  <div className="text-[10px] font-mono text-text-muted uppercase tracking-wider mb-1">Título do Reel</div>
                                   <p className="text-[13px] font-bold text-text-primary">{d.reel.titulo}</p>
                                 </div>
                                 <div>
-                                  <div className="text-[9px] font-mono text-text-muted uppercase tracking-wider mb-1.5">Gancho de abertura</div>
+                                  <div className="text-[10px] font-mono text-text-muted uppercase tracking-wider mb-1.5">Gancho de abertura</div>
                                   <p className="text-[12px] text-text-secondary italic leading-relaxed whitespace-pre-line bg-background border border-border rounded-lg px-4 py-3">{d.reel.gancho}</p>
                                 </div>
                                 <div>
-                                  <div className="text-[9px] font-mono text-text-muted uppercase tracking-wider mb-1.5">Roteiro (60s)</div>
+                                  <div className="text-[10px] font-mono text-text-muted uppercase tracking-wider mb-1.5">Roteiro (60s)</div>
                                   <div className="space-y-1.5">
                                     {(d.reel.roteiro ?? []).map((ponto, pi) => (
                                       <div key={pi} className="flex items-start gap-2.5">
@@ -757,12 +757,12 @@ p{line-height:1.7;color:#374151;margin:4px 0}ul{padding-left:20px;margin:6px 0}l
                             {curSection === "imagem" && (
                               <div className="space-y-4">
                                 <div>
-                                  <div className="text-[9px] font-mono text-text-muted uppercase tracking-wider mb-1">Headline da Arte</div>
+                                  <div className="text-[10px] font-mono text-text-muted uppercase tracking-wider mb-1">Headline da Arte</div>
                                   <p className="text-[18px] font-black text-text-primary leading-tight">{d.imagem.headline}</p>
                                 </div>
                                 <div className="bg-background border border-border rounded-lg p-4 space-y-3">
                                   <div>
-                                    <div className="text-[9px] font-mono text-text-muted uppercase tracking-wider mb-1.5">Prompt para IA</div>
+                                    <div className="text-[10px] font-mono text-text-muted uppercase tracking-wider mb-1.5">Prompt para IA</div>
                                     <p className="text-[12px] text-text-secondary leading-relaxed">{d.imagem.prompt}</p>
                                     <button onClick={() => navigator.clipboard.writeText(d.imagem.prompt).then(() => showToast("Prompt copiado!"))}
                                       className="mt-2 flex items-center gap-1.5 text-[10px] text-text-muted hover:text-accent transition-colors">
@@ -770,7 +770,7 @@ p{line-height:1.7;color:#374151;margin:4px 0}ul{padding-left:20px;margin:6px 0}l
                                     </button>
                                   </div>
                                   <div>
-                                    <div className="text-[9px] font-mono text-text-muted uppercase tracking-wider mb-1">Estilo recomendado</div>
+                                    <div className="text-[10px] font-mono text-text-muted uppercase tracking-wider mb-1">Estilo recomendado</div>
                                     <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full border border-border text-text-secondary bg-white/[0.04]">{d.imagem.estilo}</span>
                                   </div>
                                 </div>
@@ -779,7 +779,7 @@ p{line-height:1.7;color:#374151;margin:4px 0}ul{padding-left:20px;margin:6px 0}l
                             {curSection === "legenda" && (
                               <div className="space-y-4">
                                 <div>
-                                  <div className="text-[9px] font-mono text-text-muted uppercase tracking-wider mb-1.5">Legenda completa</div>
+                                  <div className="text-[10px] font-mono text-text-muted uppercase tracking-wider mb-1.5">Legenda completa</div>
                                   <div className="bg-background border border-border rounded-lg px-4 py-3">
                                     <p className="text-[12px] text-text-secondary leading-relaxed whitespace-pre-line">{d.legenda.texto}</p>
                                     <button onClick={() => navigator.clipboard.writeText(`${d.legenda.texto}\n\n${d.legenda.hashtags.join(" ")}`).then(() => showToast("Legenda copiada!"))}
@@ -789,7 +789,7 @@ p{line-height:1.7;color:#374151;margin:4px 0}ul{padding-left:20px;margin:6px 0}l
                                   </div>
                                 </div>
                                 <div>
-                                  <div className="text-[9px] font-mono text-text-muted uppercase tracking-wider mb-2">Hashtags</div>
+                                  <div className="text-[10px] font-mono text-text-muted uppercase tracking-wider mb-2">Hashtags</div>
                                   <div className="flex flex-wrap gap-1.5">
                                     {(d.legenda.hashtags ?? []).map((h, hi) => (
                                       <span key={hi} className="text-[10px] font-mono px-2.5 py-1 rounded-full border border-blue-200 bg-blue-50 text-blue-700">{h}</span>
@@ -800,7 +800,7 @@ p{line-height:1.7;color:#374151;margin:4px 0}ul{padding-left:20px;margin:6px 0}l
                             )}
                             {curSection === "story" && (
                               <div className="space-y-3">
-                                <div className="text-[9px] font-mono text-text-muted uppercase tracking-wider">Sequência de 3 slides</div>
+                                <div className="text-[10px] font-mono text-text-muted uppercase tracking-wider">Sequência de 3 slides</div>
                                 {(d.story.slides ?? []).map((slide, si) => (
                                   <div key={si} className="bg-background border border-border rounded-lg p-4">
                                     <div className="text-[8px] font-mono text-text-muted uppercase mb-2 flex items-center gap-1.5">
@@ -891,7 +891,7 @@ p{line-height:1.7;color:#374151;margin:4px 0}ul{padding-left:20px;margin:6px 0}l
 
                     {/* Legend */}
                     <div className="flex items-center gap-4 mt-4 pt-3 border-t border-border flex-wrap">
-                      <span className="text-[9px] font-mono text-text-muted uppercase tracking-wider">Legenda:</span>
+                      <span className="text-[10px] font-mono text-text-muted uppercase tracking-wider">Legenda:</span>
                       {[
                         { label: "Reel",      dot: "bg-accent" },
                         { label: "Story",     dot: "bg-purple-400" },
@@ -985,15 +985,15 @@ p{line-height:1.7;color:#374151;margin:4px 0}ul{padding-left:20px;margin:6px 0}l
               {calModalSec === "reel" && (
                 <div className="space-y-4">
                   <div>
-                    <div className="text-[9px] font-mono text-text-muted uppercase tracking-wider mb-1">Título do Reel</div>
+                    <div className="text-[10px] font-mono text-text-muted uppercase tracking-wider mb-1">Título do Reel</div>
                     <p className="text-[13px] font-bold text-text-primary">{calendarDay.reel.titulo}</p>
                   </div>
                   <div>
-                    <div className="text-[9px] font-mono text-text-muted uppercase tracking-wider mb-1.5">Gancho de abertura</div>
+                    <div className="text-[10px] font-mono text-text-muted uppercase tracking-wider mb-1.5">Gancho de abertura</div>
                     <p className="text-[12px] text-text-secondary italic leading-relaxed whitespace-pre-line bg-background border border-border rounded-lg px-4 py-3">{calendarDay.reel.gancho}</p>
                   </div>
                   <div>
-                    <div className="text-[9px] font-mono text-text-muted uppercase tracking-wider mb-1.5">Roteiro (60s)</div>
+                    <div className="text-[10px] font-mono text-text-muted uppercase tracking-wider mb-1.5">Roteiro (60s)</div>
                     <div className="space-y-1.5">
                       {(calendarDay.reel.roteiro ?? []).map((ponto, pi) => (
                         <div key={pi} className="flex items-start gap-2.5">
@@ -1015,12 +1015,12 @@ p{line-height:1.7;color:#374151;margin:4px 0}ul{padding-left:20px;margin:6px 0}l
               {calModalSec === "imagem" && (
                 <div className="space-y-4">
                   <div>
-                    <div className="text-[9px] font-mono text-text-muted uppercase tracking-wider mb-1">Headline da Arte</div>
+                    <div className="text-[10px] font-mono text-text-muted uppercase tracking-wider mb-1">Headline da Arte</div>
                     <p className="text-[18px] font-black text-text-primary leading-tight">{calendarDay.imagem.headline}</p>
                   </div>
                   <div className="bg-background border border-border rounded-lg p-4 space-y-3">
                     <div>
-                      <div className="text-[9px] font-mono text-text-muted uppercase tracking-wider mb-1.5">Prompt para IA</div>
+                      <div className="text-[10px] font-mono text-text-muted uppercase tracking-wider mb-1.5">Prompt para IA</div>
                       <p className="text-[12px] text-text-secondary leading-relaxed">{calendarDay.imagem.prompt}</p>
                       <button onClick={() => navigator.clipboard.writeText(calendarDay.imagem.prompt).then(() => showToast("Prompt copiado!"))}
                         className="mt-2 flex items-center gap-1.5 text-[10px] text-text-muted hover:text-accent transition-colors">
@@ -1028,7 +1028,7 @@ p{line-height:1.7;color:#374151;margin:4px 0}ul{padding-left:20px;margin:6px 0}l
                       </button>
                     </div>
                     <div>
-                      <div className="text-[9px] font-mono text-text-muted uppercase tracking-wider mb-1">Estilo recomendado</div>
+                      <div className="text-[10px] font-mono text-text-muted uppercase tracking-wider mb-1">Estilo recomendado</div>
                       <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full border border-border text-text-secondary bg-white/[0.04]">{calendarDay.imagem.estilo}</span>
                     </div>
                   </div>
@@ -1037,7 +1037,7 @@ p{line-height:1.7;color:#374151;margin:4px 0}ul{padding-left:20px;margin:6px 0}l
               {calModalSec === "legenda" && (
                 <div className="space-y-4">
                   <div>
-                    <div className="text-[9px] font-mono text-text-muted uppercase tracking-wider mb-1.5">Legenda completa</div>
+                    <div className="text-[10px] font-mono text-text-muted uppercase tracking-wider mb-1.5">Legenda completa</div>
                     <div className="bg-background border border-border rounded-lg px-4 py-3">
                       <p className="text-[12px] text-text-secondary leading-relaxed whitespace-pre-line">{calendarDay.legenda.texto}</p>
                       <button onClick={() => navigator.clipboard.writeText(`${calendarDay.legenda.texto}\n\n${calendarDay.legenda.hashtags.join(" ")}`).then(() => showToast("Legenda copiada!"))}
@@ -1047,7 +1047,7 @@ p{line-height:1.7;color:#374151;margin:4px 0}ul{padding-left:20px;margin:6px 0}l
                     </div>
                   </div>
                   <div>
-                    <div className="text-[9px] font-mono text-text-muted uppercase tracking-wider mb-2">Hashtags</div>
+                    <div className="text-[10px] font-mono text-text-muted uppercase tracking-wider mb-2">Hashtags</div>
                     <div className="flex flex-wrap gap-1.5">
                       {(calendarDay.legenda.hashtags ?? []).map((h, hi) => (
                         <span key={hi} className="text-[10px] font-mono px-2.5 py-1 rounded-full border border-blue-200 bg-blue-50 text-blue-700">{h}</span>
@@ -1058,7 +1058,7 @@ p{line-height:1.7;color:#374151;margin:4px 0}ul{padding-left:20px;margin:6px 0}l
               )}
               {calModalSec === "story" && (
                 <div className="space-y-3">
-                  <div className="text-[9px] font-mono text-text-muted uppercase tracking-wider">Sequência de slides</div>
+                  <div className="text-[10px] font-mono text-text-muted uppercase tracking-wider">Sequência de slides</div>
                   {(calendarDay.story.slides ?? []).map((slide, si) => (
                     <div key={si} className="bg-background border border-border rounded-lg p-4">
                       <div className="text-[8px] font-mono text-text-muted uppercase mb-2 flex items-center gap-1.5">

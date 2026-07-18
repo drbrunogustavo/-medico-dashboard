@@ -12,6 +12,10 @@ import {
   TrendingUp, TrendingDown, DollarSign, Hash, PlusCircle,
   Trash2, Filter, X, Loader2, ChevronLeft, ChevronRight,
 } from "lucide-react"
+import {
+  BarChart as ReBarChart, Bar,
+  XAxis, YAxis, Tooltip as ReTooltip, ResponsiveContainer,
+} from "recharts"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -81,6 +85,8 @@ export default function FinanceiroPage() {
   const [error,       setError]       = useState("")
   const [modalOpen,   setModalOpen]   = useState(false)
   const [saving,      setSaving]      = useState(false)
+  const [receitaAnt,  setReceitaAnt]  = useState<number | null>(null)
+  const [loadingAnt,  setLoadingAnt]  = useState(false)
 
   const [form, setForm] = useState({
     unidade:         "",
@@ -103,19 +109,37 @@ export default function FinanceiroPage() {
 
   const fetchData = useCallback(async () => {
     setLoading(true)
+    setLoadingAnt(true)
     setError("")
     try {
       const params = new URLSearchParams(viewAll ? {} : { inicio, fim })
-      const res    = await fetch(`/api/financeiro?${params}`)
-      const json   = await res.json()
+      const prevM  = currentMonth === 0 ? 11 : currentMonth - 1
+      const prevY  = currentMonth === 0 ? currentYear - 1 : currentYear
+      const { inicio: pInicio, fim: pFim } = monthRange(prevY, prevM)
+      const [res, resAnt] = await Promise.all([
+        fetch(`/api/financeiro?${params}`),
+        viewAll ? Promise.resolve(null) : fetch(`/api/financeiro?inicio=${pInicio}&fim=${pFim}`),
+      ])
+      const json = await res.json()
       if (json.error) throw new Error(json.error)
       setRawData(Array.isArray(json) ? json : [])
+      if (resAnt) {
+        const jsonAnt = await resAnt.json()
+        if (Array.isArray(jsonAnt)) {
+          setReceitaAnt(
+            jsonAnt.filter((l: Lancamento) => l.tipo === "receita").reduce((s: number, l: Lancamento) => s + l.valor, 0)
+          )
+        }
+      } else {
+        setReceitaAnt(null)
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
     } finally {
       setLoading(false)
+      setLoadingAnt(false)
     }
-  }, [inicio, fim, viewAll])
+  }, [inicio, fim, viewAll, currentMonth, currentYear])
 
   useEffect(() => { fetchData() }, [fetchData])
 
@@ -169,6 +193,30 @@ export default function FinanceiroPage() {
   const saldo      = receitas - despesas
   const totalCount = data.length
 
+  // Temporal analysis
+  const isCurrentMonth  = !viewAll && currentYear === now.getFullYear() && currentMonth === now.getMonth()
+  const hoje            = now.getDate()
+  const diasNoMes       = new Date(currentYear, currentMonth + 1, 0).getDate()
+  const projecao        = isCurrentMonth && hoje > 0 ? (receitas / hoje) * diasNoMes : null
+  const varPct          = !viewAll && receitaAnt !== null && receitaAnt > 0
+    ? ((receitas - receitaAnt) / receitaAnt) * 100
+    : null
+
+  const receitaSemanal = [0, 1, 2, 3, 4].flatMap(idx => {
+    const weekStart = idx * 7 + 1
+    const weekEnd   = Math.min((idx + 1) * 7, diasNoMes)
+    if (weekStart > diasNoMes) return []
+    const total = rawData
+      .filter(l => {
+        const d = new Date(l.data + "T12:00:00")
+        return l.tipo === "receita"
+          && d.getDate() >= weekStart && d.getDate() <= weekEnd
+          && d.getMonth() === currentMonth && d.getFullYear() === currentYear
+      })
+      .reduce((s, l) => s + l.valor, 0)
+    return [{ semana: `S${idx + 1}`, total }]
+  })
+
   // Per-unit bar chart (unfiltered by tipo so bars show full picture)
   const porUnidade = unidades.map(u => {
     const rec  = rawData.filter(l => l.unidade === u && l.tipo === "receita").reduce((s, l) => s + l.valor, 0)
@@ -220,13 +268,73 @@ export default function FinanceiroPage() {
 
       <div className="p-4 md:p-8 space-y-6">
 
-        {/* 4 KPI Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        {/* KPI Cards */}
+        <div className={cn(
+          "grid grid-cols-1 sm:grid-cols-2 gap-3",
+          projecao !== null ? "lg:grid-cols-5" : "lg:grid-cols-4"
+        )}>
           <StatCard label="Receitas"         value={fmt(receitas)} sub="no período"  icon={TrendingUp}   accent="green" />
           <StatCard label="Despesas"         value={fmt(despesas)} sub="no período"  icon={TrendingDown} accent="red"   />
           <StatCard label="Saldo do Período" value={fmt(saldo)}    sub="líquido"     icon={DollarSign}   accent={saldo >= 0 ? "green" : "red"} />
           <StatCard label="Lançamentos"      value={totalCount}    sub="no período"  icon={Hash}         accent="blue"  />
+          {projecao !== null && (
+            <StatCard
+              label="Projeção do Mês"
+              value={fmt(projecao)}
+              sub={loadingAnt ? "calculando…" : "baseado no ritmo atual"}
+              icon={TrendingUp}
+              accent="blue"
+            />
+          )}
         </div>
+        {varPct !== null && (
+          <div className="flex items-center gap-2 text-[11px] font-mono">
+            <span className="text-text-muted">vs. mês anterior:</span>
+            <span className={cn(
+              "px-2 py-0.5 rounded-full border font-semibold",
+              varPct >= 0
+                ? "bg-accent-dim border-accent-border text-accent"
+                : "bg-red-500/10 border-red-500/30 text-red-400"
+            )}>
+              {varPct >= 0 ? "+" : ""}{varPct.toFixed(1)}%
+            </span>
+          </div>
+        )}
+
+        {/* Receita semanal */}
+        {!viewAll && receitaSemanal.some(s => s.total > 0) && (
+          <div className="bg-surface border border-border rounded-xl p-5">
+            <div className="text-[10px] font-mono text-text-muted uppercase tracking-widest mb-3">
+              Receita por Semana — {MESES[currentMonth]} {currentYear}
+            </div>
+            <ResponsiveContainer width="100%" height={120}>
+              <ReBarChart data={receitaSemanal} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                <XAxis
+                  dataKey="semana"
+                  tick={{ fontSize: 10, fill: "var(--text-muted)" }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  tick={{ fontSize: 10, fill: "var(--text-muted)" }}
+                  axisLine={false}
+                  tickLine={false}
+                  width={64}
+                  tickFormatter={(v: unknown) => {
+                    const n = Number(v)
+                    return n >= 1000 ? `${(n / 1000).toFixed(0)}k` : String(n)
+                  }}
+                />
+                <ReTooltip
+                  contentStyle={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }}
+                  formatter={(v: unknown) => [fmt(Number(v)), "Receita"]}
+                  labelStyle={{ color: "var(--text-secondary)" }}
+                />
+                <Bar dataKey="total" fill="var(--accent)" radius={[4, 4, 0, 0]} />
+              </ReBarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
 
         {/* Tipo + unit filters */}
         <div className="flex flex-col gap-2">

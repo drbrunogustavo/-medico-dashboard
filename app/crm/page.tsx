@@ -327,6 +327,7 @@ function KanbanColumn({
   onAddLead,
   nurturingMap,
   onMoveStage,
+  quickAddNode,
 }: {
   col: typeof COLUMNS[number]
   leads: Lead[]
@@ -334,6 +335,7 @@ function KanbanColumn({
   onAddLead: (estagio: string) => void
   nurturingMap: Record<string, boolean>
   onMoveStage: (leadId: string, newEstagio: string) => void
+  quickAddNode?: React.ReactNode
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: col.id })
 
@@ -372,6 +374,7 @@ function KanbanColumn({
       <div
         className="flex-1 p-2 space-y-2 overflow-y-auto scrollbar-none"
       >
+        {quickAddNode}
         {leads.length === 0 && (
           <div className="flex flex-col items-center justify-center h-20 text-[11px] text-text-muted gap-1">
             <span>Nenhum lead nesta etapa</span>
@@ -994,6 +997,12 @@ export default function CRMPage() {
 
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  // Quick-add
+  const [quickNome,   setQuickNome]   = useState("")
+  const [quickTel,    setQuickTel]    = useState("")
+  const [quickSaving, setQuickSaving] = useState(false)
+  const quickNomeRef = useRef<HTMLInputElement>(null)
+
   function showToast(msg: string, type: "success" | "error" = "success") {
     if (toastTimer.current) clearTimeout(toastTimer.current)
     setToast(msg)
@@ -1051,6 +1060,21 @@ export default function CRMPage() {
     } finally {
       setSaving(false)
     }
+  }
+
+  const handleQuickAdd = async () => {
+    if (!quickNome.trim() || quickSaving) return
+    setQuickSaving(true)
+    await createLead({
+      nome:     quickNome.trim(),
+      telefone: quickTel || null,
+      origem:   "Instagram",
+      estagio:  "novo",
+    })
+    setQuickNome("")
+    setQuickTel("")
+    setQuickSaving(false)
+    quickNomeRef.current?.focus()
   }
 
   async function updateLead(id: string, data: Partial<Lead>) {
@@ -1251,6 +1275,27 @@ export default function CRMPage() {
                     onAddLead={stage => { setNewEstagio(stage); setShowNew(true) }}
                     nurturingMap={nurturingMap}
                     onMoveStage={handleMoveStage}
+                    quickAddNode={col.id === "novo" ? (
+                      <div className="flex gap-1.5 mb-2">
+                        <input
+                          ref={quickNomeRef}
+                          placeholder="Nome..."
+                          value={quickNome}
+                          onChange={e => setQuickNome(e.target.value)}
+                          onKeyDown={e => e.key === "Enter" && handleQuickAdd()}
+                          disabled={quickSaving}
+                          className="flex-1 min-w-0 bg-surface-2 border border-border rounded-lg text-[12px] px-3 py-1.5 text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent transition-colors disabled:opacity-50"
+                        />
+                        <input
+                          placeholder="Tel"
+                          value={quickTel}
+                          onChange={e => setQuickTel(fmtPhone(e.target.value))}
+                          onKeyDown={e => e.key === "Enter" && handleQuickAdd()}
+                          disabled={quickSaving}
+                          className="w-[90px] bg-surface-2 border border-border rounded-lg text-[12px] px-3 py-1.5 text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent transition-colors disabled:opacity-50"
+                        />
+                      </div>
+                    ) : undefined}
                   />
                 ))}
               </div>

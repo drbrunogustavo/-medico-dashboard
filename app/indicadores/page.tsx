@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import { Activity, TrendingUp, Users, Stethoscope, Sparkles, Loader2 } from "lucide-react"
+import { Activity, TrendingUp, Users, Stethoscope, Sparkles, Loader2, BarChart2 } from "lucide-react"
 import dynamic from "next/dynamic"
 
 const NpsChart = dynamic(
@@ -27,6 +27,7 @@ const LeadsFunnelChart = dynamic(
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
+import { EmptyState } from "@/components/EmptyState"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -177,6 +178,24 @@ export default function IndicadoresPage() {
     return (
       <div className="flex items-center justify-center min-h-[70vh]">
         <Loader2 className="w-6 h-6 text-purple-400 animate-spin" />
+      </div>
+    )
+  }
+
+  const semDados =
+    (exec.faturamento_mes ?? 0) === 0 &&
+    (exec.consultas_mes   ?? 0) === 0 &&
+    (exec.leads_total     ?? 0) === 0
+
+  if (semDados) {
+    return (
+      <div className="flex items-center justify-center min-h-[70vh]">
+        <EmptyState
+          icon={BarChart2}
+          title="Seus indicadores aparecem aqui"
+          subtitle="Use o Copiloto para documentar consultas, adicione leads no CRM e registre lançamentos financeiros — os dados são calculados automaticamente."
+          action={{ label: "Iniciar primeira consulta", href: "/copiloto" }}
+        />
       </div>
     )
   }

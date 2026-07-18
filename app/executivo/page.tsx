@@ -202,7 +202,7 @@ function AbaMarketing({ mktg, onSave }: {
     <div className="space-y-6">
       {/* Header + edit button */}
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-semibold text-text-primary">Marketing Digital</h2>
+        <h2 className="text-[11px] font-mono font-semibold text-text-muted uppercase tracking-wider">Marketing Digital</h2>
         {editing ? (
           <div className="flex gap-2">
             <Button variant="secondary" size="sm" onClick={() => setEditing(false)}>Cancelar</Button>
@@ -401,7 +401,7 @@ function AbaComercial({ exec }: { exec: Partial<ExecData> }) {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-base font-semibold text-text-primary">Funil Comercial</h2>
+      <h2 className="text-[11px] font-mono font-semibold text-text-muted uppercase tracking-wider">Funil Comercial</h2>
 
       {/* Funil visual */}
       <div className="rounded-xl border border-border bg-surface p-6">
@@ -513,7 +513,7 @@ function AbaOperacao({ ops, onSave, exec }: {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-semibold text-text-primary">Operação da Clínica</h2>
+        <h2 className="text-[11px] font-mono font-semibold text-text-muted uppercase tracking-wider">Operação da Clínica</h2>
         {editing ? (
           <div className="flex gap-2">
             <Button variant="secondary" size="sm" onClick={() => setEditing(false)}>Cancelar</Button>
@@ -624,7 +624,7 @@ function AbaAutoridade({ exec, aut, onSave }: {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-semibold text-text-primary">Autoridade e Reputação</h2>
+        <h2 className="text-[11px] font-mono font-semibold text-text-muted uppercase tracking-wider">Autoridade e Reputação</h2>
         {editing ? (
           <div className="flex gap-2">
             <Button variant="secondary" size="sm" onClick={() => setEditing(false)}>Cancelar</Button>

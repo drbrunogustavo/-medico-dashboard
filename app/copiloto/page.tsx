@@ -921,7 +921,7 @@ function CopilotoContent() {
           ) : patient ? (
             /* Timeline view for selected patient */
             <div className="px-5 pt-3 pb-4 max-h-72 overflow-y-auto">
-              <div className="text-[9px] font-mono text-text-muted tracking-widest uppercase mb-3">
+              <div className="text-[11px] font-mono text-text-muted tracking-widest uppercase mb-3">
                 Histórico · {getPacNome(patient)}
               </div>
               <div className="relative pl-6 space-y-4">
@@ -1503,7 +1503,7 @@ function CopilotoContent() {
 
               {/* ── Ações rápidas pós-prontuário ──────────────────────── */}
               <div className="border border-border rounded-xl p-4 bg-surface/40 space-y-2">
-                <p className="text-[9px] font-mono text-text-muted uppercase tracking-widest">Próximos passos</p>
+                <p className="text-[11px] font-mono text-text-muted uppercase tracking-widest">Próximos passos</p>
                 <div className="flex flex-wrap gap-2">
                   {[
                     {
@@ -1712,7 +1712,7 @@ function CopilotoContent() {
 
             {/* Actions */}
             <div className="p-4 space-y-2">
-              <p className="text-[9px] font-mono text-text-muted uppercase tracking-widest mb-3">O que fazer agora?</p>
+              <p className="text-[11px] font-mono text-text-muted uppercase tracking-widest mb-3">O que fazer agora?</p>
 
               {/* ① WhatsApp D+1 */}
               {(() => {

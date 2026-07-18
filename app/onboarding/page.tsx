@@ -111,7 +111,7 @@ export default function OnboardingPage() {
   const [saving,        setSaving]        = useState(false)
   const [erroMsg,       setErroMsg]       = useState("")
   const [nome,          setNome]          = useState("")
-  const [espec,         setEspec]         = useState("")
+  const [espec,         setEspec]         = useState("Clínica Geral")
   const [cidade,        setCidade]        = useState("")
   const [problema,      setProblema]      = useState("")
   const [vozConsent,    setVozConsent]    = useState(false)
@@ -236,7 +236,6 @@ export default function OnboardingPage() {
               <div className="space-y-1.5">
                 <label className="block text-[11px] font-mono tracking-widest uppercase" style={{ color: TEXT2 }}>Especialidade principal</label>
                 <select value={espec} onChange={e => setEspec(e.target.value)} style={inputStyle}>
-                  <option value="">Selecione a especialidade</option>
                   {ESPECIALIDADES.map(e => <option key={e} value={e}>{e}</option>)}
                 </select>
               </div>
@@ -251,10 +250,7 @@ export default function OnboardingPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between">
-              <button onClick={() => next()} className="text-[12px] underline underline-offset-4" style={{ color: TEXT2 }}>
-                Pular por agora
-              </button>
+            <div className="flex justify-end">
               <button
                 onClick={() => next()}
                 disabled={saving}

@@ -436,7 +436,9 @@ function CopilotoContent() {
 
   useEffect(() => {
     if (!isRecording) { setRecDuration(0); return }
-    const t = setInterval(() => setRecDuration(s => s + 1), 1000)
+    const t = setInterval(() => {
+      if (document.visibilityState === "visible") setRecDuration(s => s + 1)
+    }, 1000)
     return () => clearInterval(t)
   }, [isRecording])
 
@@ -445,7 +447,9 @@ function CopilotoContent() {
     if (focusMode) {
       document.body.classList.add("consulta-focus")
       setTimerSecs(0)
-      timerRef.current = setInterval(() => setTimerSecs(s => s + 1), 1000)
+      timerRef.current = setInterval(() => {
+        if (document.visibilityState === "visible") setTimerSecs(s => s + 1)
+      }, 1000)
     } else {
       document.body.classList.remove("consulta-focus")
       if (timerRef.current) clearInterval(timerRef.current)

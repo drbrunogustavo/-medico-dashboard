@@ -1078,7 +1078,7 @@ export default function CRMPage() {
     }
   }
 
-  const handleQuickAdd = async () => {
+  const handleQuickAdd = useCallback(async () => {
     if (!quickNome.trim() || quickSaving) return
     setQuickSaving(true)
     await createLead({
@@ -1091,7 +1091,7 @@ export default function CRMPage() {
     setQuickTel("")
     setQuickSaving(false)
     quickNomeRef.current?.focus()
-  }
+  }, [quickNome, quickTel, quickSaving, createLead])
 
   async function updateLead(id: string, data: Partial<Lead>) {
     setSaving(true)

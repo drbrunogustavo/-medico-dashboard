@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { Resend } from "resend"
 import { buildBoasVindasHtml, FROM_EMAIL, REPLY_TO } from "@/lib/email-boas-vindas"
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+const getResend = () => new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(req: NextRequest) {
   if (!process.env.RESEND_API_KEY) {
@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
   const nome = body.nome.replace(/^Dr\.?\s*/i, "")
   const primeiroNome = nome.split(" ")[0] ?? nome
 
-  const { data, error } = await resend.emails.send({
+  const { data, error } = await getResend().emails.send({
     from:     FROM_EMAIL,
     to:       [body.email],
     replyTo:  REPLY_TO,

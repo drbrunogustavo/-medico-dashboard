@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { Resend } from "resend"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
 
-const resend    = new Resend(process.env.RESEND_API_KEY)
+const getResend = () => new Resend(process.env.RESEND_API_KEY)
 const APP_URL   = process.env.NEXT_PUBLIC_APP_URL ?? "https://praxisplataforma.com.br"
 const FROM_EMAIL = process.env.EMAIL_FROM         ?? "PRAXIS <onboarding@resend.dev>"
 const REPLY_TO  = process.env.EMAIL_REPLY_TO      ?? "contato@praxisplataforma.com.br"
@@ -215,7 +215,7 @@ export async function POST(req: NextRequest) {
         const nome  = (perfil.nome as string) ?? "Médico"
         const primeiroNome = nome.replace(/^Dr\.?\s*/i, "").split(" ")[0] ?? nome
 
-        const { error } = await resend.emails.send({
+        const { error } = await getResend().emails.send({
           from:    FROM_EMAIL,
           to:      [email],
           replyTo: REPLY_TO,

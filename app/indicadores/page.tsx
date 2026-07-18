@@ -1,8 +1,14 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts"
+import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts"
 import { Activity, TrendingUp, Users, Stethoscope, Sparkles, Loader2 } from "lucide-react"
+import dynamic from "next/dynamic"
+
+const NpsChart = dynamic(
+  () => import("@/components/charts/DashboardCharts").then(m => m.NpsChart),
+  { ssr: false, loading: () => <div className="h-[140px] bg-border/30 rounded-xl animate-pulse" /> }
+)
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
@@ -13,10 +19,12 @@ interface ExecData {
   faturamento_mes:   number
   faturamento_6m:    { mes: string; valor: number }[]
   leads_total:       number
+  leads_semana:      number
   leads_por_estagio: { estagio: string; count: number }[]
   consultas_mes:     number
   leads_origem:      { origem: string; count: number }[]
   nps_score:         number | null
+  nps_6m:            { mes: string; nps: number | null }[]
 }
 
 interface IndManuais {
@@ -251,6 +259,7 @@ export default function IndicadoresPage() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {[
                 { label: "Leads no Mês",            value: String(exec.leads_total ?? 0) },
+                { label: "Leads esta Semana",        value: String(exec.leads_semana ?? 0) },
                 { label: "Taxa Conversão Lead",      value: `${conv_lead}%` },
                 { label: "Custo por Consulta (est.)",value: fmt(ticket_medio > 0 && custo_lead > 0 ? custo_lead : 0) },
               ].map(k => (
@@ -381,6 +390,13 @@ export default function IndicadoresPage() {
                 </p>
               </div>
             </div>
+
+            {(exec.nps_6m ?? []).some(p => p.nps !== null) && (
+              <div className="rounded-xl border border-[--border] bg-[--surface] p-5">
+                <h3 className="text-xs font-mono text-text-muted uppercase tracking-widest mb-4">NPS ao longo do tempo</h3>
+                <NpsChart data={exec.nps_6m ?? []} />
+              </div>
+            )}
 
             <Link href="/consultor" className="flex items-center gap-2 text-xs font-semibold text-purple-400 hover:text-purple-300 transition-colors">
               <Sparkles className="w-3.5 h-3.5" />

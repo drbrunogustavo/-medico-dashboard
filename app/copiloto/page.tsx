@@ -363,6 +363,7 @@ function CopilotoContent() {
   const audioChunksRef   = useRef<Blob[]>([])
   const [isRecordingDados,    setIsRecordingDados]    = useState(false)
   const [isTranscribingDados, setIsTranscribingDados] = useState(false)
+  const [recDuration,         setRecDuration]         = useState(0)
   const mediaRecorderDadosRef = useRef<MediaRecorder | null>(null)
   const audioChunksDadosRef   = useRef<Blob[]>([])
 
@@ -432,6 +433,12 @@ function CopilotoContent() {
   useEffect(() => {
     setVoiceConsent(appCtx?.perfil?.voz_gravacao_autorizada ?? false)
   }, [appCtx?.perfil])
+
+  useEffect(() => {
+    if (!isRecording) { setRecDuration(0); return }
+    const t = setInterval(() => setRecDuration(s => s + 1), 1000)
+    return () => clearInterval(t)
+  }, [isRecording])
 
   // ── Focus mode: body class + consultation timer ────────────────────────────
   useEffect(() => {
@@ -1094,45 +1101,49 @@ function CopilotoContent() {
               </div>
             </div>
 
+            {/* Botão de gravação proeminente */}
+            {hasMediaRecorder && (
+              <button
+                type="button"
+                onClick={handleMicClick}
+                disabled={isTranscribing || isRecordingDados}
+                className={cn(
+                  "w-full min-h-[64px] rounded-xl border-2 transition-all flex flex-col items-center justify-center gap-2 py-5 disabled:cursor-not-allowed",
+                  isTranscribing
+                    ? "bg-surface border-border opacity-70"
+                    : isRecording
+                    ? "bg-red-500/10 border-red-500/40"
+                    : "bg-surface border-border hover:border-accent hover:bg-accent/5"
+                )}
+              >
+                {isTranscribing ? (
+                  <>
+                    <Loader2 className="w-6 h-6 text-accent animate-spin" />
+                    <span className="text-[15px] font-semibold text-text-muted">Transcrevendo...</span>
+                  </>
+                ) : isRecording ? (
+                  <>
+                    <MicOff className="w-6 h-6 text-red-400 animate-pulse" />
+                    <span className="text-[15px] font-semibold text-red-400">Gravando...</span>
+                    <span className="text-[11px] text-text-muted">
+                      {`${String(Math.floor(recDuration / 60)).padStart(2, "0")}:${String(recDuration % 60).padStart(2, "0")}`}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Mic className="w-6 h-6 text-accent" />
+                    <span className="text-[15px] font-semibold text-text-primary">Gravar consulta</span>
+                    <span className="text-[11px] text-text-muted">Toque para iniciar a gravação de voz</span>
+                  </>
+                )}
+              </button>
+            )}
+
             {/* Relato */}
             <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="text-[10px] font-mono text-text-muted uppercase tracking-widest">
-                  Relato da Consulta *
-                </label>
-                <div className="flex items-center gap-2">
-                  {isTranscribing && (
-                    <span className="text-[10px] text-blue-400 flex items-center gap-1">
-                      <Loader2 className="w-3 h-3 animate-spin" /> transcrevendo...
-                    </span>
-                  )}
-                  {hasMediaRecorder ? (
-                    <button
-                      type="button"
-                      onClick={handleMicClick}
-                      disabled={isTranscribing || isRecordingDados}
-                      title={isRecording ? "Parar gravação" : "Gravar relato por voz"}
-                      className={cn(
-                        "flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-lg border transition-all",
-                        isRecording
-                          ? "bg-red-500/15 border-red-500/40 text-red-400 animate-pulse"
-                          : "border-border text-text-muted hover:border-blue-500/30 hover:text-blue-400 disabled:opacity-40"
-                      )}
-                    >
-                      {isRecording
-                        ? <><MicOff className="w-3 h-3" /> Parar</>
-                        : <><Mic className="w-3 h-3" /> Gravar</>}
-                    </button>
-                  ) : voiceConsent !== null && (
-                    <span
-                      title="Gravação de voz não disponível neste navegador"
-                      className="text-text-muted"
-                    >
-                      <MicOff className="w-3.5 h-3.5" />
-                    </span>
-                  )}
-                </div>
-              </div>
+              <label className="text-[10px] font-mono text-text-muted uppercase tracking-widest">
+                Relato da Consulta *
+              </label>
               <textarea
                 value={relato}
                 onChange={e => setRelato(e.target.value)}

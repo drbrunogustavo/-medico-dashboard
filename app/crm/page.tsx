@@ -1267,7 +1267,25 @@ export default function CRMPage() {
         {loading ? (
           <div className="flex gap-3 overflow-x-auto pb-2">
             {COLUMNS.map(col => (
-              <div key={col.id} className={cn("rounded-xl border flex-shrink-0 w-[280px] md:flex-1 h-[320px] animate-pulse", col.bg, col.border)} />
+              <div key={col.id} className={cn("rounded-xl border flex-shrink-0 w-[280px] md:flex-1 overflow-hidden", col.bg, col.border)}>
+                <div className={cn("flex items-center gap-2 px-4 py-3 border-b", col.border, col.header)}>
+                  <div className="w-20 h-3 rounded bg-white/10 animate-pulse" />
+                </div>
+                <div className="p-3 space-y-2">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="rounded-lg border border-white/5 bg-white/5 p-3 animate-pulse space-y-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-full bg-white/10 flex-shrink-0" />
+                        <div className="flex-1 space-y-1">
+                          <div className="h-2.5 rounded bg-white/10 w-3/4" />
+                          <div className="h-2 rounded bg-white/[0.06] w-1/2" />
+                        </div>
+                      </div>
+                      <div className="h-2 rounded bg-white/[0.06] w-full" />
+                    </div>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         ) : erro ? (

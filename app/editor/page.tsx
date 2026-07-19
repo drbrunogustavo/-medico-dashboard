@@ -8,6 +8,7 @@ import {
   BookOpen, X, Search, Loader2,
   AlertCircle, ChevronRight, Layers, Type,
   Video, ImageIcon, Sliders, RefreshCw, Sparkles,
+  Check,
 } from "lucide-react"
 import { AI_MODEL } from "@/lib/ai-config"
 
@@ -79,7 +80,7 @@ function StepDot({ n, active, done }: { n: number; active: boolean; done: boolea
       active ? "bg-accent-dim border-accent text-accent" :
                "bg-transparent border-border text-text-muted"
     )}>
-      {done ? "✓" : n}
+      {done ? <Check className="w-3.5 h-3.5" /> : n}
     </div>
   )
 }
@@ -545,7 +546,7 @@ export default function EditorPage() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <div className="text-[10px] font-mono text-text-muted tracking-widest uppercase mb-0.5">IA · Roteiro</div>
-                <h3 className="text-[15px] font-semibold text-text-primary">✨ Gerar Roteiro</h3>
+                <h3 className="text-[15px] font-semibold text-text-primary flex items-center gap-1.5"><Sparkles className="w-4 h-4" /> Gerar Roteiro</h3>
               </div>
               <button onClick={() => setShowGerarModal(false)} className="text-text-muted hover:text-text-primary transition-colors">
                 <X className="w-4 h-4" />

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import Link from "next/link"
+import { Check } from "lucide-react"
 
 const PERIODOS = [
   { dias: 7,  label: "7 dias",  preco: "R$ 150" },
@@ -99,7 +100,7 @@ export default function AnunciarCursoPage() {
     return (
       <div style={S.page}>
         <div style={{ maxWidth: 480, textAlign: "center", padding: "40px 24px" }}>
-          <div style={{ width: 56, height: 56, borderRadius: 28, background: "rgba(0,192,127,0.12)", border: "1px solid rgba(0,192,127,0.3)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px", fontSize: 24, color: "#00c07f" }}>✓</div>
+          <div style={{ width: 56, height: 56, borderRadius: 28, background: "rgba(0,192,127,0.12)", border: "1px solid rgba(0,192,127,0.3)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px", color: "#00c07f" }}><Check style={{ width: 24, height: 24 }} /></div>
           <h1 style={{ color: "#e8eaf2", fontSize: 20, fontWeight: 700, marginBottom: 10 }}>Pagamento confirmado!</h1>
           <p style={{ color: "#7c85a0", fontSize: 14, lineHeight: 1.7 }}>
             Pagamento recebido com sucesso. Seu anúncio está em análise e será ativado em até 24h. Você receberá confirmação por e-mail.

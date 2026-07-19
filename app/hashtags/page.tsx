@@ -1,7 +1,7 @@
 // Salvar em: app/hashtags/page.tsx
 'use client'
 import { useState, useEffect } from 'react'
-import { Copy, Check } from "lucide-react"
+import { Copy, Check, Sparkles, ClipboardList, Pin, Save, Loader2, Hash, RotateCcw } from "lucide-react"
 import { PautasModal } from '@/components/PautasModal'
 import { Toast } from '@/components/Toast'
 import { AI_MODEL } from "@/lib/ai-config"
@@ -100,8 +100,8 @@ export default function HashtagsPage() {
           <p style={{ fontSize:11, color:D.text2, margin:'4px 0 0', fontFamily:D.font }}>Descubra hashtags relevantes para aumentar o alcance do seu conteúdo.</p>
         </div>
         <button onClick={gerar} disabled={loading||!tema.trim()}
-          style={{ background:tema.trim()?D.accent:D.border, color:tema.trim()?D.bg:D.muted, padding:'12px 28px', borderRadius:10, border:'none', fontWeight:900, fontSize:13, cursor:tema.trim()?'pointer':'not-allowed', fontFamily:"'Inter'" }}>
-          {loading ? '⟳ Analisando...' : '✦ Gerar Hashtags'}
+          style={{ display:'inline-flex', alignItems:'center', justifyContent:'center', gap:8, background:tema.trim()?D.accent:D.border, color:tema.trim()?D.bg:D.muted, padding:'12px 28px', borderRadius:10, border:'none', fontWeight:900, fontSize:13, cursor:tema.trim()?'pointer':'not-allowed', fontFamily:"'Inter'" }}>
+          {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Analisando...</> : <><Sparkles className="w-4 h-4" /> Gerar Hashtags</>}
         </button>
       </div>
 
@@ -111,8 +111,8 @@ export default function HashtagsPage() {
           <div>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
               <label style={{ fontSize:11, fontWeight:700, color:D.muted, letterSpacing:3, textTransform:'uppercase' as const }}>Tema do Post</label>
-              <button onClick={()=>setShowPautas(true)} style={{ fontSize:10, fontWeight:700, color:D.accent, background:'rgba(200,168,76,0.08)', border:'1px solid rgba(200,168,76,0.25)', borderRadius:6, padding:'4px 10px', cursor:'pointer', fontFamily:"'Inter'" }}>
-                📋 Banco de Pautas
+              <button onClick={()=>setShowPautas(true)} style={{ display:'inline-flex', alignItems:'center', gap:5, fontSize:10, fontWeight:700, color:D.accent, background:'rgba(200,168,76,0.08)', border:'1px solid rgba(200,168,76,0.25)', borderRadius:6, padding:'4px 10px', cursor:'pointer', fontFamily:"'Inter'" }}>
+                <ClipboardList className="w-3 h-3" /> Banco de Pautas
               </button>
             </div>
             <textarea value={tema} onChange={e=>setTema(e.target.value)} rows={3} placeholder="Ex: Tieoide e ganho de peso" style={{ ...inputSty, resize:'none', display:'block' }} />
@@ -163,7 +163,7 @@ export default function HashtagsPage() {
         <div className="bg-background" style={{ flex:1, overflowY:'auto', padding:isMob?16:32 }}>
           {/* Aviso Instagram */}
           <div style={{ marginBottom:20, padding:'12px 16px', borderRadius:8, background:'rgba(200,168,76,0.06)', border:'1px solid rgba(200,168,76,0.2)', display:'flex', gap:12, alignItems:'center' }}>
-            <span style={{ fontSize:18 }}>📌</span>
+            <Pin style={{ width:18, height:18, color:D.accent, flexShrink:0 }} />
             <div style={{ fontSize:12, color:D.text2, lineHeight:1.5 }}>
               <strong style={{ color:D.accent }}>Instagram 2025:</strong> O algoritmo prioriza posts com <strong style={{ color:D.text }}>até 5 hashtags</strong> relevantes. Menos é mais.
             </div>
@@ -171,8 +171,8 @@ export default function HashtagsPage() {
 
           {!resultado.length && !loading && (
             <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'50vh', gap:12, opacity:.5 }}>
-              <div style={{ fontSize:48 }}>#️⃣</div>
-              <div style={{ color:D.muted, fontSize:13, fontWeight:700, letterSpacing:2, textTransform:'uppercase' as const, textAlign:'center' }}>Defina o tema e<br />clique em ✦ Gerar Hashtags</div>
+              <Hash style={{ width:48, height:48, color:D.muted }} />
+              <div style={{ color:D.muted, fontSize:13, fontWeight:700, letterSpacing:2, textTransform:'uppercase' as const, textAlign:'center' }}>Defina o tema e<br />clique em Gerar Hashtags</div>
             </div>
           )}
           {loading && (
@@ -189,12 +189,12 @@ export default function HashtagsPage() {
                   {resultado.length} hashtags · {nicho}
                 </div>
                 <div style={{ display:'flex', gap:8 }}>
-                  <button onClick={salvarSet} style={{ padding:'7px 14px', borderRadius:8, border:`1px solid rgba(200,168,76,0.3)`, background:'none', color:D.atext, fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:"'Inter'" }}>
-                    💾 Salvar set
+                  <button onClick={salvarSet} style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'7px 14px', borderRadius:8, border:`1px solid rgba(200,168,76,0.3)`, background:'none', color:D.atext, fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:"'Inter'" }}>
+                    <Save className="w-3.5 h-3.5" /> Salvar set
                   </button>
                   <CopyBtn text={resultado.map(h=>'#'+h.hashtag).join(' ')} label="Copiar todos" />
-                  <button onClick={gerar} style={{ padding:'7px 14px', borderRadius:8, border:`1px solid ${D.border}`, background:'none', color:D.muted, fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:"'Inter'" }}>
-                    ↺ Regerar
+                  <button onClick={gerar} style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'7px 14px', borderRadius:8, border:`1px solid ${D.border}`, background:'none', color:D.muted, fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:"'Inter'" }}>
+                    <RotateCcw className="w-3.5 h-3.5" /> Regerar
                   </button>
                 </div>
               </div>

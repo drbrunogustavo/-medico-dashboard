@@ -10,6 +10,7 @@ export default function CadastroPage() {
   const [senha,           setSenha]           = useState("")
   const [confirmarSenha,  setConfirmarSenha]  = useState("")
   const [codigoIndicacao, setCodigoIndicacao] = useState("")
+  const [aceitouTermos,   setAceitouTermos]   = useState(false)
   const [loading,         setLoading]         = useState(false)
   const [erro,            setErro]            = useState("")
   const router       = useRouter()
@@ -38,6 +39,10 @@ export default function CadastroPage() {
     }
     if (senha !== confirmarSenha) {
       setErro("As senhas não coincidem.")
+      return
+    }
+    if (!aceitouTermos) {
+      setErro("Você precisa aceitar os Termos de Uso e a Política de Privacidade.")
       return
     }
 
@@ -217,10 +222,27 @@ export default function CadastroPage() {
           </p>
         )}
 
+        {/* Aceite de termos */}
+        <div style={{ display: "flex", alignItems: "flex-start", gap: "10px", marginBottom: "20px" }}>
+          <input
+            type="checkbox"
+            id="aceite-termos"
+            checked={aceitouTermos}
+            onChange={e => setAceitouTermos(e.target.checked)}
+            style={{ marginTop: "2px", width: "16px", height: "16px", accentColor: "#00c07f", cursor: "pointer", flexShrink: 0 }}
+          />
+          <label htmlFor="aceite-termos" style={{ color: "#888", fontSize: "12px", lineHeight: 1.5, cursor: "pointer" }}>
+            Li e aceito os{" "}
+            <a href="/termos" target="_blank" style={{ color: "#00c07f", textDecoration: "none" }}>Termos de Uso</a>
+            {" "}e a{" "}
+            <a href="/privacidade" target="_blank" style={{ color: "#00c07f", textDecoration: "none" }}>Política de Privacidade</a>.
+          </label>
+        </div>
+
         {/* Botão */}
         <button
           onClick={handleCadastro}
-          disabled={loading}
+          disabled={loading || !aceitouTermos}
           style={{
             width: "100%",
             padding: "14px",
@@ -230,8 +252,8 @@ export default function CadastroPage() {
             fontSize: "15px",
             fontWeight: "700",
             border: "none",
-            cursor: loading ? "wait" : "pointer",
-            opacity: loading ? 0.7 : 1,
+            cursor: loading ? "wait" : !aceitouTermos ? "not-allowed" : "pointer",
+            opacity: loading || !aceitouTermos ? 0.7 : 1,
           }}
         >
           {loading ? "Criando conta..." : "Criar minha conta"}

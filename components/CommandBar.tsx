@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback, useMemo } from "react"
 import { useRouter } from "next/navigation"
-import { Search, User, Loader2, CornerDownLeft } from "lucide-react"
+import { Search, User, Loader2, CornerDownLeft, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 // ── Navigable items (curated from all alas) ───────────────────────────────────
@@ -284,7 +284,7 @@ export function CommandBar() {
           {/* One-time migration hint */}
           {isFirstOpen && (
             <div className="border-t border-border px-4 py-2.5 text-[11px] text-text-muted bg-surface/50">
-              Para o Copiloto IA, use o botão ✨ no canto inferior direito.
+              Para o Copiloto IA, use o botão <Sparkles className="inline-block align-[-0.15em] w-3 h-3" /> no canto inferior direito.
             </div>
           )}
 

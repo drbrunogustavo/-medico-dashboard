@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, ArrowRight, Check, X, Zap, Star, Crown, Loader2, CalendarDays } from "lucide-react"
+import { ArrowLeft, ArrowRight, Check, X, Zap, Star, Crown, Loader2, CalendarDays, AlertTriangle } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -380,7 +380,7 @@ export default function PlanosPage() {
         {!isSuccess && stripeError && (
           <div className="rounded-xl p-4 flex items-start gap-3"
             style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)" }}>
-            <span style={{ width: 16, height: 16, color: "#f87171", flexShrink: 0, marginTop: 1 }}>⚠</span>
+            <AlertTriangle style={{ width: 16, height: 16, color: "#f87171", flexShrink: 0, marginTop: 1 }} />
             <div>
               <p style={{ fontSize: 13, color: "#f87171", fontWeight: 600 }}>Não foi possível abrir o checkout</p>
               <p style={{ fontSize: 12, color: "#f87171", opacity: 0.8, marginTop: 2 }}>{stripeError}</p>

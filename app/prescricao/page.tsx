@@ -2149,7 +2149,7 @@ function PrescricaoContent() {
                         {loadingSugestao[diag.id]
                           ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
                           : <Sparkles className="w-3.5 h-3.5" />}
-                        {loadingSugestao[diag.id] ? "Gerando sugestão…" : "Sugestão Personalizada ✨"}
+                        {loadingSugestao[diag.id] ? "Gerando sugestão…" : "Sugestão Personalizada"}
                       </button>
                     )}
 

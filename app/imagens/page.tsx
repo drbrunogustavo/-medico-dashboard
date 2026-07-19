@@ -7,6 +7,7 @@ import {
   ChevronDown, ChevronUp, Sparkles, Edit3,
   Image as ImageIcon, History, AlertCircle,
   BookOpen, X, Search, Loader2, TrendingUp, Layers2,
+  AlertTriangle,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { AI_MODEL } from "@/lib/ai-config"
@@ -635,7 +636,7 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
                 ? "border-accent text-accent"
                 : "border-transparent text-text-muted hover:text-text-secondary"
             )}>
-            {sec === "imagens" ? "Diretor Criativo" : "✦ Headlines"}
+            {sec === "imagens" ? "Diretor Criativo" : <><Sparkles className="inline-block align-[-0.15em] w-3 h-3 mr-1" />Headlines</>}
           </button>
         ))}
       </div>
@@ -714,7 +715,7 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
                       <div className="text-[9px] font-mono text-text-muted">{m.sub}</div>
                       {m.available
                         ? <div className="text-[9px] text-text-muted mt-0.5">{m.note}</div>
-                        : <div className="text-[9px] text-amber-500 font-mono mt-0.5">⚠ Indisponível no momento</div>}
+                        : <div className="text-[9px] text-amber-500 font-mono mt-0.5 flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> Indisponível no momento</div>}
                     </div>
                   </button>
                 ))}
@@ -982,7 +983,7 @@ Gere exatamente 100 headlines variadas, distribuídas entre os 6 gatilhos, orden
                               : "border-border text-text-muted hover:border-accent-border hover:text-accent"
                           )}
                         >
-                          {variacaoSel === i ? "✓ Selecionada" : "Escolher Esta"}
+                          {variacaoSel === i ? <><Check className="inline-block align-[-0.15em] w-3.5 h-3.5 mr-1" />Selecionada</> : "Escolher Esta"}
                         </button>
                         <button
                           type="button"

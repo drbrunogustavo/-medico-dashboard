@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from "react"
 import {
   Loader2, CalendarDays, Sparkles, ChevronRight, ChevronLeft,
   Copy, Check, X, Film, LayoutGrid, BookOpen, Hash,
-  Download, Printer, ArrowRight,
+  Download, Printer, ArrowRight, Lightbulb,
 } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
@@ -301,7 +301,7 @@ function DayModal({ post, onClose, onTogglePublicado }: {
               )}
             >
               <Check className="w-3.5 h-3.5" />
-              {post.publicado ? "Publicado ✓" : "Marcar como publicado"}
+              {post.publicado ? "Publicado" : "Marcar como publicado"}
             </button>
           </div>
         )}
@@ -684,7 +684,7 @@ export default function CalendarioPage() {
                   </div>
                   {resultado.dica_estrategica && (
                     <div className="mt-3 pt-3 border-t border-border rounded-lg bg-accent-dim border border-accent-border px-3 py-2 mt-3">
-                      <p className="text-[11px] text-accent font-medium">💡 {resultado.dica_estrategica}</p>
+                      <p className="text-[11px] text-accent font-medium"><Lightbulb className="inline-block align-[-0.15em] w-3 h-3 mr-1" /> {resultado.dica_estrategica}</p>
                     </div>
                   )}
                 </>

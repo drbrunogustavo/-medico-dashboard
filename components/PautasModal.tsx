@@ -2,6 +2,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { ClipboardList, X } from "lucide-react"
 
 interface Pauta {
   id:        string
@@ -65,10 +66,10 @@ export function PautasModal({ onSelect, onClose }: Props) {
         {/* Header */}
         <div style={{ padding: '20px 24px 16px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
           <div>
-            <div style={{ color: C.d2, fontSize: 14, fontWeight: 900, letterSpacing: 1 }}>📋 Banco de Pautas</div>
+            <div style={{ color: C.d2, fontSize: 14, fontWeight: 900, letterSpacing: 1, display: 'flex', alignItems: 'center', gap: 6 }}><ClipboardList style={{ width: 16, height: 16 }} /> Banco de Pautas</div>
             <div style={{ color: C.label, fontSize: 11, marginTop: 2 }}>Selecione uma pauta para usar como tema</div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: C.label, fontSize: 20, cursor: 'pointer', padding: '4px 8px', borderRadius: 6 }}>✕</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: C.label, cursor: 'pointer', padding: '4px 8px', borderRadius: 6, display: 'flex', alignItems: 'center' }}><X style={{ width: 18, height: 18 }} /></button>
         </div>
 
         {/* Search */}

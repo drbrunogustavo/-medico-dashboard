@@ -11,6 +11,7 @@ import {
   Megaphone, BarChart3, Sparkles, GraduationCap,
   FileText, Stethoscope, Check, Star, AlertTriangle,
   BookOpen, Trophy, Loader2, CalendarDays, Clock, MessageCircle,
+  DollarSign, Camera,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAppContext } from "@/components/AppProvider"
@@ -531,18 +532,18 @@ export default function DashboardPage() {
                 </p>
                 {execMetrics && execMetrics.faturamento_mes > 0 && (
                   <p className="text-[14px] text-text-secondary leading-relaxed">
-                    💰 Você faturou <span className="text-text-primary font-medium">{fmtBRL(execMetrics.faturamento_mes)}</span> em consultas este mês.
+                    <DollarSign className="inline-block align-[-0.15em] w-4 h-4 mr-1 text-accent" /> Você faturou <span className="text-text-primary font-medium">{fmtBRL(execMetrics.faturamento_mes)}</span> em consultas este mês.
                   </p>
                 )}
                 {topOrigem && (
                   <p className="text-[14px] text-text-secondary leading-relaxed">
-                    📸 <span className="text-text-primary font-medium">{topOrigem.origem}</span> trouxe{" "}
+                    <Camera className="inline-block align-[-0.15em] w-4 h-4 mr-1 text-accent" /> <span className="text-text-primary font-medium">{topOrigem.origem}</span> trouxe{" "}
                     <span className="text-text-primary font-medium">{topOrigem.count} lead{topOrigem.count !== 1 ? "s" : ""}</span> no total.
                   </p>
                 )}
                 {semRetornoCount !== null && semRetornoCount > 0 && (
                   <p className="text-[14px] text-text-secondary leading-relaxed">
-                    ⚠{" "}
+                    <AlertTriangle className="inline-block align-[-0.15em] w-4 h-4 mr-1 text-amber-400" />{" "}
                     <Link href="/pacientes" className="text-text-primary font-medium hover:text-amber-400 transition-colors">
                       {semRetornoCount} paciente{semRetornoCount !== 1 ? "s" : ""}
                     </Link>{" "}
@@ -767,7 +768,7 @@ export default function DashboardPage() {
         <div className="flex items-start justify-between gap-4 px-5 py-4 rounded-xl border"
           style={{ background: "rgba(184,151,106,0.06)", borderColor: "rgba(184,151,106,0.2)" }}>
           <div className="flex items-start gap-3">
-            <span className="text-lg flex-shrink-0">⭐</span>
+            <Star className="w-5 h-5 flex-shrink-0 text-accent" />
             <div>
               <p className="text-[13px] font-semibold text-text-primary">Gostou do PRAXIS?</p>
               <p className="text-[11px] text-text-muted mt-0.5">

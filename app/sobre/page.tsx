@@ -5,6 +5,7 @@ import { useRef, useEffect, useState } from "react"
 import {
   ArrowRight, Bot, Database, Zap, Lock, Check,
   Users, Cpu, BarChart3, Shield, Heart,
+  XCircle,
 } from "lucide-react"
 
 // ─── Tokens ───────────────────────────────────────────────────────────────────
@@ -213,7 +214,7 @@ export default function SobrePage() {
           {ALTERNATIVES.map(({ label, color, issues }, i) => (
             <FadeUp key={label} delay={i * 80}>
               <div className="rounded-2xl p-7 h-full" style={{ background: CARD, border: `1px solid ${color}20` }}>
-                <div style={{ fontSize: 10, fontFamily: "monospace", color, letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: 10 }}>❌ {label}</div>
+                <div style={{ fontSize: 10, fontFamily: "monospace", color, letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: 10, display: "flex", alignItems: "center", gap: 4 }}><XCircle style={{ width: 12, height: 12 }} /> {label}</div>
                 <ul className="space-y-2.5">
                   {issues.map((iss, j) => (
                     <li key={j} className="flex items-start gap-2.5">

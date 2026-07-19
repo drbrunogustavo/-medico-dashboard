@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Search, Star, ExternalLink, Filter, Tag, Zap } from "lucide-react"
+import { Search, Star, ExternalLink, Filter, Tag, Zap, Gift } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
 
@@ -299,7 +299,7 @@ function ParceiroCard({ parceiro: p }: { parceiro: Parceiro }) {
             <h3 className="text-[13px] font-semibold text-text-primary leading-snug">{p.nome}</h3>
             {p.destaque && (
               <span className="text-[8px] font-mono px-1.5 py-0.5 rounded border border-amber-200 bg-amber-50 text-amber-700 flex-shrink-0 whitespace-nowrap">
-                ★ Recomendado PRAXIS
+                <Star className="inline-block align-[-0.15em] w-2.5 h-2.5 mr-0.5 fill-current" /> Recomendado PRAXIS
               </span>
             )}
           </div>
@@ -324,7 +324,7 @@ function ParceiroCard({ parceiro: p }: { parceiro: Parceiro }) {
           <span className="text-[11px] text-text-secondary">{p.preco}</span>
         </div>
         <div className="rounded-lg bg-accent-dim border border-accent-border px-2.5 py-1.5">
-          <p className="text-[10px] text-accent font-medium leading-snug">🎁 {p.beneficio}</p>
+          <p className="text-[10px] text-accent font-medium leading-snug"><Gift className="inline-block align-[-0.15em] w-3 h-3 mr-1" /> {p.beneficio}</p>
         </div>
       </div>
 

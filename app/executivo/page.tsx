@@ -13,7 +13,7 @@ import {
   ArrowDown, ChevronRight, UserPlus, AlertCircle, Zap,
   Edit3, Check, RefreshCw, MessageSquare, ThumbsUp,
   DollarSign, Clock, Repeat, Activity, Eye, Camera,
-  Sparkles, X, Mic, MicOff, ShieldCheck,
+  Sparkles, X, Mic, MicOff, ShieldCheck, Heart,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
@@ -265,7 +265,7 @@ function AbaMarketing({ mktg, onSave }: {
                       {["Reel","Carrossel","Stories","Foto"].map(f => <option key={f}>{f}</option>)}
                     </select>
                     <div className="flex gap-1">
-                      <input type="number" placeholder="❤️"
+                      <input type="number" placeholder="Curtidas"
                         value={draft.top3?.[i]?.curtidas ?? ""}
                         onChange={e => updateTop3(i, "curtidas", Number(e.target.value))}
                         className="w-full bg-surface border border-border rounded-lg px-2 py-1.5 text-[12px] text-text-primary focus:outline-none"
@@ -342,7 +342,7 @@ function AbaMarketing({ mktg, onSave }: {
                       <p className="text-[10px] text-text-muted font-mono">{p.formato}</p>
                     </div>
                     {p.curtidas > 0 && (
-                      <span className="text-[11px] font-mono text-text-secondary flex-shrink-0">❤️ {p.curtidas.toLocaleString("pt-BR")}</span>
+                      <span className="text-[11px] font-mono text-text-secondary flex-shrink-0"><Heart className="inline-block align-[-0.15em] w-3 h-3 mr-1 fill-rose-500 text-rose-500" /> {p.curtidas.toLocaleString("pt-BR")}</span>
                     )}
                   </div>
                 ))}
@@ -673,7 +673,7 @@ function AbaAutoridade({ exec, aut, onSave }: {
                 {aut.google_rating > 0 && (
                   <div>
                     <p className="text-[10px] font-mono text-text-muted uppercase">Google</p>
-                    <p className="text-xl font-bold text-amber-600">⭐ {aut.google_rating}/5</p>
+                    <p className="text-xl font-bold text-amber-600"><Star className="inline-block align-[-0.15em] w-5 h-5 mr-1 fill-current" /> {aut.google_rating}/5</p>
                     {aut.google_link && (
                       <a href={aut.google_link} target="_blank" rel="noopener noreferrer"
                         className="text-[10px] text-accent hover:underline">Ver perfil →</a>

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Calculator, TrendingUp, Target, Loader2, ChevronDown, ChevronUp, DollarSign, BarChart3, Lightbulb, AlertCircle } from "lucide-react"
+import { Calculator, TrendingUp, Target, Loader2, ChevronDown, ChevronUp, DollarSign, BarChart3, Lightbulb, AlertCircle, Timer, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
 
@@ -409,7 +409,7 @@ export default function PrecificacaoPage() {
                     <p className="text-sm text-text-primary">{a.acao}</p>
                     <div className="flex gap-3 mt-1">
                       <span className="text-[10px] font-mono text-emerald-400">{a.impacto_estimado}</span>
-                      <span className="text-[10px] font-mono text-text-muted">⏱ {a.prazo}</span>
+                      <span className="text-[10px] font-mono text-text-muted"><Timer className="inline-block align-[-0.15em] w-3 h-3 mr-1" /> {a.prazo}</span>
                     </div>
                   </div>
                 </div>
@@ -422,7 +422,7 @@ export default function PrecificacaoPage() {
             <ul className="space-y-2">
               {result.erros_comuns_precificacao.map((e, i) => (
                 <li key={i} className="flex gap-2 text-sm text-text-secondary">
-                  <span className="text-red-400 mt-0.5 flex-shrink-0">✕</span>
+                  <X className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
                   {e}
                 </li>
               ))}

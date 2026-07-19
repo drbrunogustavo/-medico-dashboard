@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useParams } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { Loader2, CheckCircle, Heart, UserPlus } from "lucide-react"
+import { Loader2, CheckCircle, Heart, UserPlus, Gift } from "lucide-react"
 import { PraxisLogo } from "@/components/PraxisLogo"
 
 const inputCls = "w-full bg-surface border border-border rounded-xl px-4 py-3 text-[14px] text-text-primary placeholder-text-muted focus:outline-none focus:border-accent/50 transition-colors"
@@ -63,7 +63,7 @@ export default function IndicarPage() {
             {/* Benefit callout */}
             <div className="px-6 py-4 bg-amber-500/5 border-b border-amber-500/15">
               <p className="text-[12px] text-amber-300 leading-relaxed">
-                🎁 Quem indicou você receberá a próxima consulta como cortesia após você realizar a sua!
+                <Gift className="inline-block align-[-0.15em] w-3.5 h-3.5 mr-1" /> Quem indicou você receberá a próxima consulta como cortesia após você realizar a sua!
               </p>
             </div>
 

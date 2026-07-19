@@ -6,7 +6,7 @@ import Link from "next/link"
 import {
   ArrowRight, Check, Loader2, AlertCircle,
   Users, DollarSign, Sparkles, BarChart3, Bot,
-  GraduationCap, Target, Zap,
+  GraduationCap, Target, Zap, PartyPopper,
 } from "lucide-react"
 
 // ─── Tokens ───────────────────────────────────────────────────────────────────
@@ -313,7 +313,7 @@ export default function OnboardingPage() {
         {step === 4 && (
           <div className="animate-fade-in space-y-6">
             <div className="text-center mb-8">
-              <div className="text-[36px] mb-3">🎯</div>
+              <div className="mb-3 flex justify-center"><Target style={{ width: 36, height: 36, color: GOLD }} /></div>
               <h2 className="text-[26px] font-semibold" style={{ color: DARK, fontFamily: "var(--font-playfair), Georgia, serif" }}>
                 Comece por aqui
               </h2>
@@ -360,9 +360,9 @@ export default function OnboardingPage() {
         {step === 5 && (
           <div className="text-center animate-fade-in space-y-8">
             <div className="space-y-4">
-              <div className="w-20 h-20 mx-auto rounded-full flex items-center justify-center text-[36px]"
+              <div className="w-20 h-20 mx-auto rounded-full flex items-center justify-center"
                 style={{ background: `${GOLD}18`, border: `2px solid ${GOLD}40` }}>
-                🎉
+                <PartyPopper style={{ width: 36, height: 36, color: GOLD }} />
               </div>
               <h2 className="text-[30px] font-semibold" style={{ color: DARK, fontFamily: "var(--font-playfair), Georgia, serif" }}>
                 Sua plataforma está configurada!

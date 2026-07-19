@@ -1,6 +1,7 @@
 // Salvar em: app/whatsapp/page.tsx
 'use client'
 import { useState, useEffect } from 'react'
+import { Smartphone, Settings, CheckSquare, Square, Check, Save, X, Zap, Hospital } from "lucide-react"
 import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
 
 const D = {
@@ -114,7 +115,7 @@ export default function WhatsAppPage() {
       {/* Header */}
       <div className="border-b border-border bg-surface" style={{ padding:'16px 24px', display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:12 }}>
         <div style={{ display:'flex', alignItems:'center', gap:14 }}>
-          <div style={{ width:40, height:40, borderRadius:10, background:D.adim, border:`1px solid ${D.aborder}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20 }}>📱</div>
+          <div style={{ width:40, height:40, borderRadius:10, background:D.adim, border:`1px solid ${D.aborder}`, display:'flex', alignItems:'center', justifyContent:'center' }}><Smartphone style={{ width:20, height:20, color:D.accent }} /></div>
           <div>
             <h1 style={{ fontSize:17, fontWeight:700, color:D.text, margin:0 }}>Agente WhatsApp</h1>
             <p style={{ fontSize:10, color:D.muted, margin:'2px 0 0', fontFamily:D.mono, letterSpacing:1 }}>ASSISTENTE VIRTUAL · DR. BRUNO GUSTAVO</p>
@@ -152,7 +153,7 @@ export default function WhatsAppPage() {
             {/* Alerta de configuração */}
             {status === 'configurando' && (
               <div style={{ padding:'14px 18px', borderRadius:10, background:D.bdim, border:`1px solid ${D.bborder}`, display:'flex', gap:12, alignItems:'flex-start' }}>
-                <span style={{ fontSize:20 }}>⚙️</span>
+                <Settings style={{ width:20, height:20, color:D.blue }} />
                 <div>
                   <div style={{ color:D.blue, fontWeight:700, fontSize:13, marginBottom:4 }}>Configure antes de ativar</div>
                   <div style={{ color:D.text2, fontSize:12, lineHeight:1.6 }}>
@@ -208,7 +209,7 @@ export default function WhatsAppPage() {
                     { label:'Mensagem de saudação definida', done: !!config.saudacao },
                   ].map((item, i) => (
                     <div key={i} style={{ display:'flex', alignItems:'center', gap:10 }}>
-                      <span style={{ fontSize:16, flexShrink:0 }}>{item.done?'✅':'⬜'}</span>
+                      <span style={{ display:'flex', flexShrink:0 }}>{item.done ? <CheckSquare style={{ width:16, height:16, color:D.accent }} /> : <Square style={{ width:16, height:16, color:D.muted }} />}</span>
                       <span style={{ fontSize:13, color:item.done?D.text:D.text2 }}>{item.label}</span>
                     </div>
                   ))}
@@ -301,7 +302,7 @@ export default function WhatsAppPage() {
               </Card>
               <button onClick={salvarConfig}
                 style={{ padding:'12px', borderRadius:9, background:saved?D.adim:D.accent, border:`1px solid ${saved?D.aborder:D.accent}`, color:saved?D.atext:'var(--background)', fontWeight:700, fontSize:14, cursor:'pointer', fontFamily:D.font, transition:'all 0.2s' }}>
-                {saved ? '✓ Configuração salva!' : '💾 Salvar Configuração'}
+                {saved ? <><Check style={{ width:15, height:15, verticalAlign:'-0.15em', marginRight:5 }} />Configuração salva!</> : <><Save style={{ width:15, height:15, verticalAlign:'-0.15em', marginRight:5 }} />Salvar Configuração</>}
               </button>
             </div>
           </div>
@@ -333,7 +334,7 @@ export default function WhatsAppPage() {
             </div>
             <button onClick={salvarConfig}
               style={{ padding:'12px', borderRadius:9, background:saved?D.adim:D.accent, border:`1px solid ${saved?D.aborder:D.accent}`, color:saved?D.atext:'var(--background)', fontWeight:700, fontSize:14, cursor:'pointer', fontFamily:D.font }}>
-              {saved ? '✓ Salvo!' : '💾 Salvar Fluxos'}
+              {saved ? <><Check style={{ width:15, height:15, verticalAlign:'-0.15em', marginRight:5 }} />Salvo!</> : <><Save style={{ width:15, height:15, verticalAlign:'-0.15em', marginRight:5 }} />Salvar Fluxos</>}
             </button>
           </div>
         )}
@@ -399,7 +400,7 @@ export default function WhatsAppPage() {
                     <Toggle value={r.ativo} onChange={v => setRespostas(prev => prev.map(x => x.id===r.id?{...x,ativo:v}:x))} />
                     <button onClick={() => setRespostas(prev => prev.filter(x => x.id!==r.id))}
                       style={{ width:28, height:28, borderRadius:6, background:'none', border:`1px solid ${D.border}`, color:D.muted, cursor:'pointer', fontSize:14, display:'flex', alignItems:'center', justifyContent:'center' }}>
-                      ✕
+                      <X style={{ width:14, height:14 }} />
                     </button>
                   </div>
                 </div>
@@ -415,7 +416,7 @@ export default function WhatsAppPage() {
             {/* n8n */}
             <Card style={{ border:`1px solid ${config.n8n_webhook?D.aborder:D.border}` }}>
               <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:16 }}>
-                <span style={{ fontSize:24 }}>⚡</span>
+                <Zap style={{ width:24, height:24, color:D.warn }} />
                 <div>
                   <div style={{ fontWeight:700, fontSize:14, color:D.text }}>n8n</div>
                   <div style={{ fontSize:10, color:config.n8n_webhook?D.atext:D.muted, fontFamily:D.mono }}>
@@ -445,7 +446,7 @@ export default function WhatsAppPage() {
             {/* MedX */}
             <Card style={{ border:`1px solid ${config.medx_token?D.aborder:D.border}` }}>
               <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:16 }}>
-                <span style={{ fontSize:24 }}>🏥</span>
+                <Hospital style={{ width:24, height:24, color:D.accent }} />
                 <div>
                   <div style={{ fontWeight:700, fontSize:14, color:D.text }}>MedX</div>
                   <div style={{ fontSize:10, color:config.medx_token?D.atext:D.muted, fontFamily:D.mono }}>
@@ -502,7 +503,7 @@ export default function WhatsAppPage() {
             </div>
 
             <button onClick={salvarConfig} style={{ gridColumn:isMob?'1':'1 / -1', padding:'12px', borderRadius:9, background:saved?D.adim:D.accent, border:`1px solid ${saved?D.aborder:D.accent}`, color:saved?D.atext:'var(--background)', fontWeight:700, fontSize:14, cursor:'pointer', fontFamily:D.font }}>
-              {saved ? '✓ Configuração salva!' : '💾 Salvar Integrações'}
+              {saved ? <><Check style={{ width:15, height:15, verticalAlign:'-0.15em', marginRight:5 }} />Configuração salva!</> : <><Save style={{ width:15, height:15, verticalAlign:'-0.15em', marginRight:5 }} />Salvar Integrações</>}
             </button>
           </div>
         )}

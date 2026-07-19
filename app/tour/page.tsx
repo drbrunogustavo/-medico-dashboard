@@ -3,7 +3,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { useEffect, useRef, useState } from "react"
-import { ArrowRight, Check, Clock } from "lucide-react"
+import { ArrowRight, Check, Clock, Frown } from "lucide-react"
 import { FluxoIntegrado } from "@/components/FluxoIntegrado"
 
 const BG     = "#F5F0E8"
@@ -364,14 +364,14 @@ export default function TourPage() {
             <FadeUp key={i} delay={i * 60}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="rounded-xl p-4 flex items-center gap-3" style={{ background: CARD, border: `1px solid rgba(220,38,38,0.2)` }}>
-                  <span style={{ fontSize: 20, flexShrink: 0 }}>😣</span>
+                  <Frown style={{ width: 20, height: 20, color: "#dc2626", flexShrink: 0 }} />
                   <div>
                     <div style={{ fontSize: 9, fontFamily: "monospace", color: "#dc2626", letterSpacing: "1px", marginBottom: 3, textTransform: "uppercase" }}>ANTES</div>
                     <div style={{ fontSize: 13, color: TEXT2, lineHeight: 1.4 }}>{antes}</div>
                   </div>
                 </div>
                 <div className="rounded-xl p-4 flex items-center gap-3" style={{ background: `${cor}08`, border: `1px solid ${cor}30` }}>
-                  <span style={{ fontSize: 20, flexShrink: 0 }}>✅</span>
+                  <Check style={{ width: 20, height: 20, color: cor, flexShrink: 0 }} />
                   <div>
                     <div style={{ fontSize: 9, fontFamily: "monospace", color: cor, letterSpacing: "1px", marginBottom: 3, textTransform: "uppercase", fontWeight: 700 }}>DEPOIS</div>
                     <div style={{ fontSize: 13, fontWeight: 600, color: DARK, lineHeight: 1.4 }}>{depois}</div>

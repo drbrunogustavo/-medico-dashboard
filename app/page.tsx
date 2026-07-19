@@ -8,6 +8,7 @@ import {
   Zap, Star, Crown, Megaphone, Stethoscope, TrendingUp,
   Bot, BarChart3, Users, Target, Settings, Lock,
   Database, CheckCircle2, X, Minus, ChevronRight, BookOpen,
+  Sparkles, XCircle,
 } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
 import { track } from "@vercel/analytics"
@@ -469,8 +470,8 @@ export default function LandingPage() {
       {/* ── SEÇÃO 1 — HERO ───────────────────────────────────────────────────── */}
       <section className="max-w-5xl mx-auto px-6 pt-20 pb-16 text-center">
         <FadeUp>
-          <span style={{ display: "inline-block", fontSize: 11, fontFamily: "monospace", color: GOLD, letterSpacing: "2px", border: `1px solid ${GOLD}40`, padding: "4px 16px", borderRadius: 999, marginBottom: 28 }}>
-            ✓ Desenvolvido e usado por médicos
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11, fontFamily: "monospace", color: GOLD, letterSpacing: "2px", border: `1px solid ${GOLD}40`, padding: "4px 16px", borderRadius: 999, marginBottom: 28 }}>
+            <Check style={{ width: 12, height: 12 }} /> Desenvolvido e usado por médicos
           </span>
           <h1 style={{
             fontFamily: "var(--font-playfair), Georgia, serif",
@@ -508,7 +509,7 @@ export default function LandingPage() {
             <FadeUp>
               <div>
                 <div style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11, fontFamily: "monospace", color: GOLD, letterSpacing: "2px", border: `1px solid ${GOLD}40`, padding: "4px 14px", borderRadius: 999, marginBottom: 20 }}>
-                  ⭐ O módulo mais valioso
+                  <Star style={{ width: 12, height: 12 }} /> O módulo mais valioso
                 </div>
                 <h2 style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: "clamp(26px, 4vw, 48px)", fontWeight: 700, color: "#F5F0E8", lineHeight: 1.15, marginBottom: 16 }}>
                   Documentação clínica em<br />
@@ -663,11 +664,11 @@ export default function LandingPage() {
             <FadeUp key={i} delay={i * 50}>
               <div className="rounded-2xl p-5 grid grid-cols-2 gap-3 items-center" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
                 <div className="flex items-start gap-2.5">
-                  <span style={{ color: "#dc2626", flexShrink: 0, fontSize: 15, marginTop: 1 }}>❌</span>
+                  <span style={{ color: "#dc2626", flexShrink: 0, marginTop: 1, display: "flex" }}><XCircle style={{ width: 15, height: 15 }} /></span>
                   <span style={{ fontSize: 13, color: TEXT2, lineHeight: 1.5 }}>{problema}</span>
                 </div>
                 <div className="flex items-center gap-2 rounded-xl px-3 py-2" style={{ background: `${cor}10`, border: `1px solid ${cor}25` }}>
-                  <span style={{ fontSize: 14, flexShrink: 0 }}>✅</span>
+                  <span style={{ flexShrink: 0, display: "flex", color: "#16a34a" }}><CheckCircle2 style={{ width: 14, height: 14 }} /></span>
                   <span style={{ fontSize: 12, fontWeight: 700, color: cor, lineHeight: 1.4 }}>{solucao}</span>
                 </div>
               </div>
@@ -1206,7 +1207,7 @@ export default function LandingPage() {
         ) : (
           <FadeUp>
             <div className="text-center rounded-2xl p-12 md:p-16" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
-              <div style={{ fontSize: 48, marginBottom: 16 }}>🩺</div>
+              <div style={{ marginBottom: 16 }}><Stethoscope style={{ width: 48, height: 48, color: GOLD }} /></div>
               <p style={{ fontSize: 16, fontWeight: 600, color: DARK, marginBottom: 8 }}>
                 Seja um dos primeiros médicos a usar o PRAXIS e deixar sua marca nesta seção.
               </p>
@@ -1231,7 +1232,7 @@ export default function LandingPage() {
             <div className="px-8 md:px-16 py-14 md:py-20">
               <FadeUp className="text-center mb-16">
                 <span style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 11, fontFamily: "monospace", color: GOLD, letterSpacing: "2px", border: `1px solid ${GOLD}40`, padding: "4px 16px", borderRadius: 999, marginBottom: 24 }}>
-                  ✦ EXCLUSIVO PRAXIS
+                  <Sparkles style={{ width: 12, height: 12 }} /> EXCLUSIVO PRAXIS
                 </span>
                 <h2 style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: "clamp(24px, 4vw, 44px)", fontWeight: 700, color: "#F5F0E8", lineHeight: 1.2, marginBottom: 12 }}>
                   O módulo que diferencia o PRAXIS<br />de qualquer concorrente

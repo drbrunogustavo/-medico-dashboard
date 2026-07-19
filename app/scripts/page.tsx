@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { FileText, Sparkles, Copy, Check, ChevronDown, ChevronUp, Loader2, MessageSquare, Phone, Clipboard, Smartphone, Users, ShieldQuestion, Heart } from "lucide-react"
+import { FileText, Sparkles, Copy, Check, ChevronDown, ChevronUp, Loader2, MessageSquare, Phone, Clipboard, Smartphone, Users, ShieldQuestion, Heart, BookOpen } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
 
@@ -378,13 +378,13 @@ export default function ScriptsPage() {
               key={t}
               onClick={() => setTab(t)}
               className={cn(
-                "px-4 py-2 rounded-lg text-xs font-mono uppercase tracking-wide transition-all",
+                "px-4 py-2 rounded-lg text-xs font-mono uppercase tracking-wide transition-all inline-flex items-center gap-2",
                 tab === t
                   ? "bg-blue-500/10 border border-blue-500/20 text-blue-400 font-semibold"
                   : "text-text-muted hover:text-text-secondary"
               )}
             >
-              {t === "biblioteca" ? "📚 Biblioteca" : "✨ Gerar Script"}
+              {t === "biblioteca" ? <><BookOpen className="w-3.5 h-3.5" /> Biblioteca</> : <><Sparkles className="w-3.5 h-3.5" /> Gerar Script</>}
             </button>
           ))}
         </div>

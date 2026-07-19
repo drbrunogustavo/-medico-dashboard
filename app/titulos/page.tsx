@@ -1,7 +1,7 @@
 // Salvar em: app/titulos/page.tsx
 'use client'
 import { useState, useEffect } from 'react'
-import { Copy, Check } from "lucide-react"
+import { Copy, Check, Loader2, Sparkles, ClipboardList, PenLine } from "lucide-react"
 import { PautasModal } from '@/components/PautasModal'
 import { Toast } from '@/components/Toast'
 import { AI_MODEL } from "@/lib/ai-config"
@@ -83,7 +83,7 @@ export default function TitulosPage() {
         </div>
         <button onClick={gerar} disabled={loading||!tema.trim()}
           style={{ background:tema.trim()?D.accent:D.border, color:tema.trim()?D.bg:D.muted, padding:'12px 28px', borderRadius:10, border:'none', fontWeight:900, fontSize:13, cursor:tema.trim()?'pointer':'not-allowed', fontFamily:"'Inter'", width:isMob?'100%':undefined }}>
-          {loading ? '⟳ Gerando...' : '✦ Gerar Títulos'}
+          {loading ? <><Loader2 className="animate-spin" style={{ width:14, height:14, verticalAlign:'-0.15em', marginRight:5 }} />Gerando...</> : <><Sparkles style={{ width:14, height:14, verticalAlign:'-0.15em', marginRight:5 }} />Gerar Títulos</>}
         </button>
       </div>
 
@@ -94,7 +94,7 @@ export default function TitulosPage() {
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
               <label style={{ fontSize:11, fontWeight:700, color:D.muted, letterSpacing:3, textTransform:'uppercase' as const }}>Tema</label>
               <button onClick={()=>setShowPautas(true)} style={{ fontSize:10, fontWeight:700, color:D.accent, background:'rgba(200,168,76,0.08)', border:'1px solid rgba(200,168,76,0.25)', borderRadius:6, padding:'4px 10px', cursor:'pointer', fontFamily:"'Inter'" }}>
-                📋 Banco de Pautas
+                <ClipboardList style={{ width:12, height:12, verticalAlign:'-0.15em', marginRight:4 }} />Banco de Pautas
               </button>
             </div>
             <textarea value={tema} onChange={e=>setTema(e.target.value)} rows={3} placeholder="Ex: Resistência à insulina em pessoas magras" style={{ ...inputSty, resize:'none', display:'block' }} />
@@ -127,8 +127,8 @@ export default function TitulosPage() {
         <div className="bg-background" style={{ flex:1, overflowY:'auto', padding:isMob?16:32 }}>
           {!titulos.length && !loading && (
             <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'60vh', gap:12, opacity:.5 }}>
-              <div style={{ fontSize:48 }}>✍️</div>
-              <div style={{ color:D.muted, fontSize:13, fontWeight:700, letterSpacing:2, textTransform:'uppercase' as const, textAlign:'center' }}>Defina o tema e clique em<br />✦ Gerar Títulos</div>
+              <PenLine style={{ width:48, height:48 }} />
+              <div style={{ color:D.muted, fontSize:13, fontWeight:700, letterSpacing:2, textTransform:'uppercase' as const, textAlign:'center' }}>Defina o tema e clique em<br />Gerar Títulos</div>
             </div>
           )}
           {loading && (

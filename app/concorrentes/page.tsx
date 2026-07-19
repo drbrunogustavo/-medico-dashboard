@@ -11,6 +11,7 @@ import {
   BarChart2, TrendingUp, Target, Shield, Lightbulb, Eye,
   Copy, Check, Loader2, BookmarkPlus, Users, AlertTriangle,
   RefreshCw, ChevronRight, Video, Zap, Instagram, BarChart,
+  XCircle,
 } from "lucide-react"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -153,7 +154,7 @@ function PrioBadge({ p }: { p: Prioridade }) {
   )
 }
 
-function SectionHeader({ icon: Icon, emoji, title, copyText }: { icon: React.ElementType; emoji: string; title: string; copyText: string }) {
+function SectionHeader({ icon: Icon, title, copyText }: { icon: React.ElementType; title: string; copyText: string }) {
   return (
     <div className="flex items-center justify-between mb-4">
       <div className="flex items-center gap-2.5">
@@ -161,7 +162,7 @@ function SectionHeader({ icon: Icon, emoji, title, copyText }: { icon: React.Ele
           <Icon className="w-3.5 h-3.5 text-accent" />
         </div>
         <h3 className="text-[15px] font-semibold text-text-primary" style={{ fontFamily: "var(--font-playfair)" }}>
-          {emoji} {title}
+          {title}
         </h3>
       </div>
       <CopyBtn text={copyText} />
@@ -226,7 +227,7 @@ function ConcorrenteResults({ resultado, nome, onSavePauta, savingId, router }: 
     <div className="space-y-4">
       {/* Visão Geral */}
       <div className="bg-card border border-border rounded-xl p-5">
-        <SectionHeader icon={Eye} emoji="📊" title="Visão Geral" copyText={toTextVisaoGeral(resultado.visao_geral)} />
+        <SectionHeader icon={Eye} title="Visão Geral" copyText={toTextVisaoGeral(resultado.visao_geral)} />
         <p className="text-[13px] text-text-secondary leading-relaxed mb-4">{resultado.visao_geral.resumo}</p>
         <div className="grid grid-cols-2 gap-2 mb-4">
           {[
@@ -252,7 +253,7 @@ function ConcorrenteResults({ resultado, nome, onSavePauta, savingId, router }: 
 
       {/* Estratégia */}
       <div className="bg-card border border-border rounded-xl p-5">
-        <SectionHeader icon={TrendingUp} emoji="📱" title="Estratégia de Conteúdo" copyText={toTextEstrategia(resultado.estrategia_conteudo)} />
+        <SectionHeader icon={TrendingUp} title="Estratégia de Conteúdo" copyText={toTextEstrategia(resultado.estrategia_conteudo)} />
         <div className="space-y-4">
           <div>
             <div className="text-[10px] font-mono text-text-muted uppercase tracking-wide mb-2">Frequência</div>
@@ -299,7 +300,7 @@ function ConcorrenteResults({ resultado, nome, onSavePauta, savingId, router }: 
 
       {/* Posicionamento */}
       <div className="bg-card border border-border rounded-xl p-5">
-        <SectionHeader icon={Target} emoji="🎯" title="Posicionamento" copyText={toTextPosicionamento(resultado.posicionamento)} />
+        <SectionHeader icon={Target} title="Posicionamento" copyText={toTextPosicionamento(resultado.posicionamento)} />
         <div className="space-y-3">
           {[
             { label: "Proposta de valor",  value: resultado.posicionamento.proposta_valor  },
@@ -331,7 +332,7 @@ function ConcorrenteResults({ resultado, nome, onSavePauta, savingId, router }: 
 
       {/* Pontos Fracos */}
       <div className="bg-card border border-border rounded-xl p-5">
-        <SectionHeader icon={Shield} emoji="⚠️" title="Pontos Fracos / Oportunidades" copyText={toTextPontosFragcos(resultado.pontos_fracos)} />
+        <SectionHeader icon={Shield} title="Pontos Fracos / Oportunidades" copyText={toTextPontosFragcos(resultado.pontos_fracos)} />
         <div className="space-y-3">
           {resultado.pontos_fracos.map((pf, i) => (
             <div key={i} className="bg-background border border-border rounded-lg p-3.5">
@@ -356,7 +357,7 @@ function ConcorrenteResults({ resultado, nome, onSavePauta, savingId, router }: 
 
       {/* Recomendações */}
       <div className="bg-card border border-border rounded-xl p-5">
-        <SectionHeader icon={Lightbulb} emoji="💡" title="Recomendações para você" copyText={toTextRecomendacoes(resultado.recomendacoes)} />
+        <SectionHeader icon={Lightbulb} title="Recomendações para você" copyText={toTextRecomendacoes(resultado.recomendacoes)} />
         <div className="space-y-3">
           {resultado.recomendacoes.map((rec, i) => (
             <div key={i} className="bg-background border border-border rounded-lg p-3.5">
@@ -411,7 +412,7 @@ function BenchmarkResults({ resultado }: { resultado: BenchmarkResult }) {
       {/* Score card */}
       <div className="bg-card border border-border rounded-xl p-5">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-[15px] font-semibold text-text-primary" style={{ fontFamily: "var(--font-playfair)" }}>📊 Sua pontuação</h3>
+          <h3 className="text-[15px] font-semibold text-text-primary flex items-center gap-1.5" style={{ fontFamily: "var(--font-playfair)" }}><BarChart2 className="w-4 h-4" /> Sua pontuação</h3>
           <CopyBtn text={toTextBenchmark(resultado)} />
         </div>
         <div className="flex items-end gap-3 mb-4">
@@ -461,7 +462,7 @@ function BenchmarkResults({ resultado }: { resultado: BenchmarkResult }) {
       {/* Pontos fortes / Lacunas */}
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-card border border-border rounded-xl p-4">
-          <div className="text-[10px] font-mono text-green-600 uppercase tracking-widest mb-3">✅ Pontos fortes</div>
+          <div className="text-[10px] font-mono text-green-600 uppercase tracking-widest mb-3 flex items-center gap-1"><Check className="w-3 h-3" /> Pontos fortes</div>
           <div className="space-y-2">
             {resultado.pontos_fortes.map((p, i) => (
               <div key={i} className="flex items-start gap-2 text-[11px] text-text-secondary">
@@ -471,7 +472,7 @@ function BenchmarkResults({ resultado }: { resultado: BenchmarkResult }) {
           </div>
         </div>
         <div className="bg-card border border-border rounded-xl p-4">
-          <div className="text-[10px] font-mono text-red-600 uppercase tracking-widest mb-3">⚠️ Lacunas críticas</div>
+          <div className="text-[10px] font-mono text-red-600 uppercase tracking-widest mb-3 flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> Lacunas críticas</div>
           <div className="space-y-2">
             {resultado.lacunas_criticas.map((l, i) => (
               <div key={i} className="flex items-start gap-2 text-[11px] text-text-secondary">
@@ -507,7 +508,7 @@ function CrescimentoResults({ resultado, onCopyBio }: { resultado: CrescimentoRe
       {/* Score + bio */}
       <div className="bg-card border border-border rounded-xl p-5">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-[15px] font-semibold text-text-primary" style={{ fontFamily: "var(--font-playfair)" }}>🚀 Sua pontuação de crescimento</h3>
+          <h3 className="text-[15px] font-semibold text-text-primary flex items-center gap-1.5" style={{ fontFamily: "var(--font-playfair)" }}><TrendingUp className="w-4 h-4" /> Sua pontuação de crescimento</h3>
           <CopyBtn text={toTextCrescimento(resultado)} />
         </div>
         <div className="flex items-end gap-3 mb-3">
@@ -584,7 +585,7 @@ function CrescimentoResults({ resultado, onCopyBio }: { resultado: CrescimentoRe
             ))}
           </div>
           <div className="pt-3 border-t border-border">
-            <div className="text-[10px] font-mono text-red-500 uppercase tracking-widest mb-2">❌ Erros a evitar</div>
+            <div className="text-[10px] font-mono text-red-500 uppercase tracking-widest mb-2 flex items-center gap-1"><XCircle className="w-3 h-3" /> Erros a evitar</div>
             <div className="space-y-1.5">
               {resultado.erros_evitar.map((e, i) => (
                 <div key={i} className="flex items-start gap-2 text-[11px] text-text-secondary">

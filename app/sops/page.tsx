@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { ClipboardList, Sparkles, Copy, Check, X, Clock, Users, Wrench, AlertTriangle, BarChart2, Loader2 } from "lucide-react"
+import { ClipboardList, Sparkles, Copy, Check, X, Clock, Users, Wrench, AlertTriangle, BarChart2, Loader2, FolderOpen } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
 
@@ -368,7 +368,7 @@ function SopGeradoView({ sop, onNovo }: { sop: SopResult; onNovo: () => void }) 
           <ul className="space-y-1">
             {sop.indicadores.map((ind, i) => (
               <li key={i} className="text-sm text-text-secondary flex gap-2">
-                <span className="text-emerald-400 flex-shrink-0">✓</span>
+                <Check className="w-4 h-4 flex-shrink-0 text-emerald-400" />
                 {ind}
               </li>
             ))}
@@ -449,13 +449,13 @@ export default function SopsPage() {
               key={t}
               onClick={() => setTab(t)}
               className={cn(
-                "px-4 py-2 rounded-lg text-xs font-mono uppercase tracking-wide transition-all",
+                "px-4 py-2 rounded-lg text-xs font-mono uppercase tracking-wide transition-all inline-flex items-center gap-2",
                 tab === t
                   ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-semibold"
                   : "text-text-muted hover:text-text-secondary"
               )}
             >
-              {t === "biblioteca" ? "📂 Biblioteca" : "✨ Gerar SOP"}
+              {t === "biblioteca" ? <><FolderOpen className="w-3.5 h-3.5" /> Biblioteca</> : <><Sparkles className="w-3.5 h-3.5" /> Gerar SOP</>}
             </button>
           ))}
         </div>

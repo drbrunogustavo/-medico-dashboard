@@ -136,12 +136,17 @@ export default function OnboardingPage() {
     setStep(s => s + 1)
   }
 
+  // Persiste onboarding_completo sem redirecionar — reutilizado pelos atalhos de módulo da Etapa 4
+  const persistOnboarding = async () => {
+    await save({ onboarding_completo: true, voz_gravacao_autorizada: vozConsent })
+    await fetch("/api/perfil/onboarding", { method: "POST" }).catch(() => null)
+  }
+
   const finish = async () => {
     setSaving(true)
     setErroMsg("")
     try {
-      await save({ onboarding_completo: true, voz_gravacao_autorizada: vozConsent })
-      await fetch("/api/perfil/onboarding", { method: "POST" }).catch(() => null)
+      await persistOnboarding()
       const meData = await fetch("/api/me").then(r => r.json()).catch(() => null) as { plano?: string } | null
       router.push(meData?.plano && meData.plano !== "trial" ? "/dashboard" : "/planos")
     } catch {
@@ -320,6 +325,7 @@ export default function OnboardingPage() {
             <div className="space-y-3">
               {modules.map(({ icon: Icon, color, title, desc, href }, i) => (
                 <a key={i} href={href}
+                  onClick={async (e) => { e.preventDefault(); await persistOnboarding(); router.push(href) }}
                   className="flex items-center gap-4 rounded-2xl p-5 transition-all hover:-translate-y-0.5"
                   style={{ background: CARD_BG, border: `1.5px solid ${color}35`, textDecoration: "none", display: "flex" }}>
                   <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: `${color}12`, border: `1px solid ${color}30` }}>

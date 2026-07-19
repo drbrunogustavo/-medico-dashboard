@@ -1,7 +1,7 @@
 // Salvar em: app/ganchos/page.tsx
 'use client'
 import { useState, useEffect } from 'react'
-import { Copy, Check } from "lucide-react"
+import { Copy, Check, Loader2, Sparkles, ClipboardList, Zap, Star } from "lucide-react"
 import { TopBar } from '@/components/TopBar'
 import { PautasModal } from '@/components/PautasModal'
 import { Toast } from '@/components/Toast'
@@ -121,7 +121,7 @@ export default function GanchosPage() {
             className="flex items-center gap-1.5 text-[12px] font-bold rounded-lg px-4 py-1.5 transition-all disabled:opacity-50"
             style={{ background: tema.trim()&&tipos.length ? D.accent : D.border, color: tema.trim()&&tipos.length ? D.bg : D.muted }}
           >
-            {loading ? '⟳ Gerando...' : '✦ Gerar Ganchos'}
+            {loading ? <><Loader2 className="animate-spin" style={{ width:14, height:14, verticalAlign:'-0.15em', marginRight:5 }} />Gerando...</> : <><Sparkles style={{ width:14, height:14, verticalAlign:'-0.15em', marginRight:5 }} />Gerar Ganchos</>}
           </button>
         }
       />
@@ -133,7 +133,7 @@ export default function GanchosPage() {
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
               <label style={{ fontSize:11, fontWeight:700, color:D.muted, letterSpacing:3, textTransform:'uppercase' as const }}>Tema</label>
               <button onClick={()=>setShowPautas(true)} style={{ fontSize:10, fontWeight:700, color:D.accent, background:'rgba(200,168,76,0.08)', border:'1px solid rgba(200,168,76,0.25)', borderRadius:6, padding:'4px 10px', cursor:'pointer' }}>
-                📋 Banco de Pautas
+                <ClipboardList style={{ width:12, height:12, verticalAlign:'-0.15em', marginRight:4 }} />Banco de Pautas
               </button>
             </div>
             <textarea value={tema} onChange={e=>setTema(e.target.value)} rows={3} placeholder="Ex: Resistência à insulina" style={{ ...inputSty, resize:'none', display:'block' }} />
@@ -166,7 +166,7 @@ export default function GanchosPage() {
                       <div style={{ fontWeight:700, fontSize:12, color:ativo?t.cor:D.muted }}>{t.l}</div>
                       <div style={{ fontSize:10, color:D.muted, marginTop:2, fontStyle:'italic' }}>{t.ex}</div>
                     </div>
-                    {ativo && <span style={{ color:t.cor, fontSize:14 }}>✓</span>}
+                    {ativo && <span style={{ color:t.cor, display:'flex' }}><Check style={{ width:14, height:14 }} /></span>}
                   </button>
                 )
               })}
@@ -181,7 +181,7 @@ export default function GanchosPage() {
             {(['gerar','favoritos'] as const).map(tab => (
               <button key={tab} onClick={()=>setAba(tab)}
                 style={{ padding:'8px 20px', border:'none', borderBottom:aba===tab?`2px solid ${D.accent}`:'2px solid transparent', background:'none', color:aba===tab?D.accent:D.muted, fontWeight:700, fontSize:12, cursor:'pointer', textTransform:'uppercase' as const, letterSpacing:2, marginBottom:-1 }}>
-                {tab==='gerar' ? '⚡ Ganchos' : `★ Favoritos (${favoritos.length})`}
+                {tab==='gerar' ? <><Zap style={{ width:13, height:13, verticalAlign:'-0.15em', marginRight:4 }} />Ganchos</> : <><Star style={{ width:13, height:13, verticalAlign:'-0.15em', marginRight:4 }} />Favoritos ({favoritos.length})</>}
               </button>
             ))}
           </div>
@@ -216,7 +216,7 @@ export default function GanchosPage() {
                           <CopyBtn text={g.texto} />
                           <button onClick={()=>toggleFav(g)}
                             style={{ padding:'6px 12px', borderRadius:6, border:`1px solid ${isFav(g)?'rgba(200,168,76,0.5)':D.border}`, background:isFav(g)?'rgba(200,168,76,0.12)':'none', color:isFav(g)?D.accent:D.muted, fontSize:11, fontWeight:700, cursor:'pointer' }}>
-                            {isFav(g)?'★':'☆'}
+                            {isFav(g) ? <Star style={{ width:14, height:14, fill:'currentColor' }} /> : <Star style={{ width:14, height:14 }} />}
                           </button>
                         </div>
                       </div>
@@ -232,8 +232,8 @@ export default function GanchosPage() {
             <>
               {favoritos.length === 0 ? (
                 <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'50vh', gap:12, opacity:.5 }}>
-                  <div style={{ fontSize:48 }}>★</div>
-                  <div style={{ color:D.muted, fontSize:13, fontWeight:700, letterSpacing:2, textTransform:'uppercase' as const, textAlign:'center' }}>Nenhum favorito ainda<br />Clique em ☆ para salvar</div>
+                  <Star style={{ width:48, height:48 }} />
+                  <div style={{ color:D.muted, fontSize:13, fontWeight:700, letterSpacing:2, textTransform:'uppercase' as const, textAlign:'center' }}>Nenhum favorito ainda<br />Clique na estrela para salvar</div>
                 </div>
               ) : (
                 <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
@@ -255,7 +255,7 @@ export default function GanchosPage() {
                           <CopyBtn text={g.texto} />
                           <button onClick={()=>toggleFav(g)}
                             style={{ padding:'6px 12px', borderRadius:6, border:`1px solid rgba(200,168,76,0.5)`, background:'rgba(200,168,76,0.12)', color:D.accent, fontSize:11, fontWeight:700, cursor:'pointer' }}>
-                            ★
+                            <Star style={{ width:14, height:14, fill:'currentColor' }} />
                           </button>
                         </div>
                       </div>

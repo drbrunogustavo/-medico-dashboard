@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { ArrowLeft, CheckCircle2, Loader2, Trash2 } from "lucide-react"
+import { ArrowLeft, CheckCircle2, Loader2, Trash2, Timer } from "lucide-react"
 
 export default function DeletarDadosPage() {
   const [nome,    setNome]    = useState("")
@@ -173,7 +173,7 @@ export default function DeletarDadosPage() {
               background: "var(--card)", border: "1px solid var(--border)",
             }}>
               <p style={{ margin: 0, fontSize: 12, lineHeight: 1.6, color: "var(--text-muted)" }}>
-                ⏱ Após a solicitação, seus dados serão excluídos em até <strong style={{ color: "var(--text-secondary)" }}>30 dias úteis</strong>. Você receberá uma confirmação no e-mail informado acima quando o processo for concluído.
+                <Timer style={{ width: 14, height: 14, verticalAlign: "-0.15em", marginRight: 5 }} /> Após a solicitação, seus dados serão excluídos em até <strong style={{ color: "var(--text-secondary)" }}>30 dias úteis</strong>. Você receberá uma confirmação no e-mail informado acima quando o processo for concluído.
               </p>
             </div>
 

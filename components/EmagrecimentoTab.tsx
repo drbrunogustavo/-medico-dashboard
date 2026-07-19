@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import {
   Loader2, AlertCircle, ChevronRight, ChevronLeft,
   Copy, Check, RotateCcw, Zap,
+  X,
 } from "lucide-react"
 import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
@@ -531,10 +532,10 @@ export function EmagrecimentoTab() {
               {sexo && (
                 <button
                   onClick={() => setSexo(null)}
-                  className="px-2.5 py-1.5 rounded-full text-[10px] border transition-all"
+                  className="px-2.5 py-1.5 rounded-full text-[10px] border transition-all flex items-center justify-center"
                   style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}
                 >
-                  ✕
+                  <X className="w-3 h-3" />
                 </button>
               )}
             </div>

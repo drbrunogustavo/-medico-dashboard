@@ -275,7 +275,7 @@ export default function NutricaoLeadsPage() {
       })
       const data = await res.json() as { success?: boolean; error?: string }
       if (data.error) throw new Error(data.error)
-      showToast("✓ Mensagem enviada pelo WhatsApp!")
+      showToast("Mensagem enviada pelo WhatsApp!")
     } catch (e) {
       showToast(e instanceof Error ? e.message : "Erro ao enviar", "error")
     } finally {

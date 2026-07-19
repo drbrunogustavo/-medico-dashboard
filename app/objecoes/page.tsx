@@ -424,7 +424,7 @@ export default function ObecoesPage() {
                             </button>
                             <p className="flex-1 text-[12px] text-text-secondary leading-relaxed">{ob.texto}</p>
                             {isSaved ? (
-                              <span className="text-[9px] font-mono text-accent flex-shrink-0">Salvo ✓</span>
+                              <span className="text-[9px] font-mono text-accent flex-shrink-0">Salvo <Check className="inline-block align-[-0.15em] w-2.5 h-2.5 ml-0.5" /></span>
                             ) : (
                               <button
                                 onClick={() => transformarObjecao(ob)}

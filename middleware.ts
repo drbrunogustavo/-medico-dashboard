@@ -87,11 +87,17 @@ export async function middleware(request: NextRequest) {
     if (!PAYMENT_EXEMPT_ROUTES.has(pathname)) {
       const { data: planoData } = await supabase
         .from("user_planos")
-        .select("status")
+        .select("status, assinatura_termina_em")
         .eq("user_id", user.id)
         .maybeSingle()
 
-      const hasActivePlan = planoData?.status === "ativo"
+      // Assinantes que cancelaram mantêm acesso até o fim do período já pago
+      const dentroDoPeriodoPago =
+        planoData?.status === "cancelado_fim_periodo" &&
+        !!planoData.assinatura_termina_em &&
+        new Date(planoData.assinatura_termina_em as string) > new Date()
+
+      const hasActivePlan = planoData?.status === "ativo" || dentroDoPeriodoPago
       if (!hasActivePlan) {
         return NextResponse.redirect(new URL("/planos", request.url))
       }

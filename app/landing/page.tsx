@@ -512,6 +512,8 @@ export default function LandingPage() {
           <div className="flex items-center gap-6">
             <a href="#planos" className="text-[12px] text-text-muted hover:text-text-primary transition-colors">Planos</a>
             <Link href="/login" className="text-[12px] text-text-muted hover:text-text-primary transition-colors">Entrar</Link>
+            <Link href="/termos" className="text-[12px] text-text-muted hover:text-text-primary transition-colors">Termos</Link>
+            <Link href="/privacidade" className="text-[12px] text-text-muted hover:text-text-primary transition-colors">Privacidade</Link>
             <a href="https://wa.me/5535999999999" target="_blank" rel="noopener noreferrer"
               className="text-[12px] text-text-muted hover:text-accent transition-colors">WhatsApp</a>
           </div>

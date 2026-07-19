@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { TopBar } from "@/components/TopBar"
 import { StatCard } from "@/components/StatCard"
-import { Plus, Users, TrendingUp, Eye, Star, ExternalLink, Search, Instagram, Globe, Trash2, Sparkles, X, Loader2 } from "lucide-react"
+import { Plus, Users, TrendingUp, Eye, Star, ExternalLink, Search, Instagram, Globe, Trash2, Sparkles, X, Loader2, Check, Copy, CheckCircle2, AlertTriangle, Target, Zap } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/Button"
 import { AI_MODEL } from "@/lib/ai-config"
@@ -61,7 +61,7 @@ function ATag({ text, color='var(--accent)' }: { text:string; color?:string }) {
   )
 }
 
-function ASection({ title, children }: { title:string; children:React.ReactNode }) {
+function ASection({ title, children }: { title:React.ReactNode; children:React.ReactNode }) {
   return (
     <div style={{ background:'var(--surface-2)', border:'1px solid var(--border)', borderRadius:10, padding:'16px 20px', marginBottom:12 }}>
       <div style={{ fontSize:9, fontWeight:700, color:'var(--text-muted)', letterSpacing:3, textTransform:'uppercase' as const, marginBottom:12 }}>{title}</div>
@@ -182,10 +182,10 @@ function AnaliseModal({ referencia, onClose }: { referencia: Referencia; onClose
           <div style={{ display:'flex', gap:8, alignItems:'center' }}>
             {resultado && (
               <button onClick={copy} style={{ padding:'7px 14px', borderRadius:8, border:'1px solid rgba(200,168,76,0.3)', background:copied?'rgba(200,168,76,0.12)':'none', color:copied?'var(--accent)':'var(--text-muted)', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:"'Inter',sans-serif" }}>
-                {copied?'✓ Copiado':'⎘ Exportar'}
+                {copied ? <><Check style={{ width:13, height:13, verticalAlign:'-0.15em', marginRight:5 }} />Copiado</> : <><Copy style={{ width:13, height:13, verticalAlign:'-0.15em', marginRight:5 }} />Exportar</>}
               </button>
             )}
-            <button onClick={onClose} style={{ background:'none', border:'none', color:'var(--text-muted)', fontSize:22, cursor:'pointer', padding:'4px 8px', lineHeight:1 }}>✕</button>
+            <button onClick={onClose} style={{ background:'none', border:'none', color:'var(--text-muted)', fontSize:22, cursor:'pointer', padding:'4px 8px', lineHeight:1, display:'flex' }}><X style={{ width:20, height:20 }} /></button>
           </div>
         </div>
 
@@ -248,7 +248,7 @@ function AnaliseModal({ referencia, onClose }: { referencia: Referencia; onClose
 
               {/* Fortes / Fracos */}
               <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(200px, 1fr))', gap:12, marginBottom:12 }}>
-                <ASection title="✅ Pontos Fortes">
+                <ASection title={<><CheckCircle2 style={{ width:11, height:11, verticalAlign:'-0.15em', marginRight:4 }} />Pontos Fortes</>}>
                   {resultado.pontos_fortes.map((p,i)=>(
                     <div key={i} style={{ display:'flex', gap:8, marginBottom:6 }}>
                       <span style={{ color:'#16a34a', flexShrink:0 }}>+</span>
@@ -256,7 +256,7 @@ function AnaliseModal({ referencia, onClose }: { referencia: Referencia; onClose
                     </div>
                   ))}
                 </ASection>
-                <ASection title="⚠️ Pontos Fracos">
+                <ASection title={<><AlertTriangle style={{ width:11, height:11, verticalAlign:'-0.15em', marginRight:4 }} />Pontos Fracos</>}>
                   {resultado.pontos_fracos.map((p,i)=>(
                     <div key={i} style={{ display:'flex', gap:8, marginBottom:6 }}>
                       <span style={{ color:'#dc2626', flexShrink:0 }}>−</span>
@@ -267,7 +267,7 @@ function AnaliseModal({ referencia, onClose }: { referencia: Referencia; onClose
               </div>
 
               {/* Oportunidades */}
-              <ASection title="🎯 Oportunidades para você">
+              <ASection title={<><Target style={{ width:11, height:11, verticalAlign:'-0.15em', marginRight:4 }} />Oportunidades para você</>}>
                 {resultado.oportunidades.map((o,i)=>(
                   <div key={i} style={{ display:'flex', gap:10, padding:'10px 14px', background:'rgba(200,168,76,0.05)', border:'1px solid rgba(200,168,76,0.15)', borderRadius:7, marginBottom:8 }}>
                     <span style={{ color:'var(--accent)', fontWeight:900, flexShrink:0 }}>→</span>
@@ -277,7 +277,7 @@ function AnaliseModal({ referencia, onClose }: { referencia: Referencia; onClose
               </ASection>
 
               {/* Estratégia */}
-              <ASection title="⚡ Estratégia Recomendada">
+              <ASection title={<><Zap style={{ width:11, height:11, verticalAlign:'-0.15em', marginRight:4 }} />Estratégia Recomendada</>}>
                 <div style={{ padding:'12px 16px', background:'rgba(200,168,76,0.08)', border:'1px solid rgba(200,168,76,0.25)', borderRadius:8, marginBottom:12, color:'var(--text-primary)', fontSize:13, lineHeight:1.6, fontStyle:'italic', fontFamily:"Georgia,serif" }}>
                   "{resultado.estrategia.diferencial}"
                 </div>
@@ -426,7 +426,7 @@ export default function ReferenciasPage() {
             <div className="flex items-center justify-between p-5 border-b border-border flex-shrink-0">
               <div>
                 <div className="text-[9px] font-mono text-text-muted tracking-widest uppercase mb-0.5">IA · Descoberta</div>
-                <h3 className="text-[15px] font-semibold text-text-primary">✨ Buscar Influencers</h3>
+                <h3 className="text-[15px] font-semibold text-text-primary flex items-center gap-1.5"><Sparkles className="w-4 h-4" /> Buscar Influencers</h3>
               </div>
               <button onClick={() => setShowInflModal(false)} className="text-text-muted hover:text-text-primary transition-colors">
                 <X className="w-4 h-4" />
@@ -629,7 +629,7 @@ export default function ReferenciasPage() {
                     <button
                       onClick={() => setAnaliseRef(r)}
                       className="opacity-100 md:opacity-0 md:group-hover:opacity-100 flex items-center gap-1 px-2.5 py-1 rounded-md border border-border text-text-muted hover:text-accent hover:border-accent-border text-[10px] font-mono transition-all whitespace-nowrap">
-                      🔍 Análise
+                      <Search className="w-3 h-3" /> Análise
                     </button>
                     <ExternalLink className="w-3 h-3 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
@@ -646,7 +646,7 @@ export default function ReferenciasPage() {
           <div className="bg-card border border-border rounded-xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e=>e.stopPropagation()}>
             <div className="flex items-center justify-between px-5 py-4 border-b border-border">
               <div className="text-[13px] font-semibold text-text-primary">Editar Referência</div>
-              <button onClick={()=>setEditRef(null)} className="text-text-muted hover:text-text-primary text-lg">✕</button>
+              <button onClick={()=>setEditRef(null)} className="text-text-muted hover:text-text-primary flex items-center"><X className="w-4 h-4" /></button>
             </div>
             <div className="p-5 space-y-3">
               <div className="grid grid-cols-2 gap-3">

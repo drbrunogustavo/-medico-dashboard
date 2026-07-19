@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
-import { Check, Trash2, Globe, EyeOff, Loader2, RefreshCw, Instagram } from "lucide-react"
+import { Check, Trash2, Globe, EyeOff, Loader2, RefreshCw, Instagram, Star } from "lucide-react"
 import { TopBar } from "@/components/TopBar"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/Button"
@@ -171,8 +171,8 @@ export default function AdminDepoimentosPage() {
                 </p>
 
                 {dep.resultado_destaque && (
-                  <div className="text-[11px] font-mono text-accent bg-accent-dim border border-accent-border rounded-lg px-3 py-1.5">
-                    ★ {dep.resultado_destaque}
+                  <div className="text-[11px] font-mono text-accent bg-accent-dim border border-accent-border rounded-lg px-3 py-1.5 flex items-center gap-1.5">
+                    <Star className="w-3 h-3 fill-current flex-shrink-0" /> {dep.resultado_destaque}
                   </div>
                 )}
 

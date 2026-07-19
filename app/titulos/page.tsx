@@ -1,6 +1,7 @@
 // Salvar em: app/titulos/page.tsx
 'use client'
 import { useState, useEffect } from 'react'
+import { Copy, Check } from "lucide-react"
 import { PautasModal } from '@/components/PautasModal'
 import { Toast } from '@/components/Toast'
 import { AI_MODEL } from "@/lib/ai-config"
@@ -29,8 +30,8 @@ function CopyBtn({ text }: { text: string }) {
   const [ok, setOk] = useState(false)
   return (
     <button onClick={() => { navigator.clipboard.writeText(text); setOk(true); setTimeout(()=>setOk(false),1600) }}
-      style={{ padding:'5px 12px', borderRadius:6, border:`1px solid rgba(200,168,76,0.3)`, background: ok?'rgba(200,168,76,0.12)':'none', color: ok?D.accent:D.muted, fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:"'Inter'" }}>
-      {ok ? '✓ Copiado' : '⎘ Copiar'}
+      style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'5px 12px', borderRadius:6, border:`1px solid rgba(200,168,76,0.3)`, background: ok?'rgba(200,168,76,0.12)':'none', color: ok?D.accent:D.muted, fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:"'Inter'" }}>
+      {ok ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />} {ok ? 'Copiado' : 'Copiar'}
     </button>
   )
 }

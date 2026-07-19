@@ -1,6 +1,7 @@
 // Salvar em: app/ganchos/page.tsx
 'use client'
 import { useState, useEffect } from 'react'
+import { Copy, Check } from "lucide-react"
 import { TopBar } from '@/components/TopBar'
 import { PautasModal } from '@/components/PautasModal'
 import { Toast } from '@/components/Toast'
@@ -37,8 +38,8 @@ function CopyBtn({ text }: { text:string }) {
   const [ok, setOk] = useState(false)
   return (
     <button onClick={()=>{ navigator.clipboard.writeText(text); setOk(true); setTimeout(()=>setOk(false),1600) }}
-      style={{ padding:'6px 12px', borderRadius:6, border:`1px solid rgba(200,168,76,0.3)`, background:ok?'rgba(200,168,76,0.12)':'none', color:ok?D.accent:D.muted, fontSize:11, fontWeight:700, cursor:'pointer', flexShrink:0 }}>
-      {ok?'✓':'⎘'}
+      style={{ display:'inline-flex', alignItems:'center', padding:'6px 12px', borderRadius:6, border:`1px solid rgba(200,168,76,0.3)`, background:ok?'rgba(200,168,76,0.12)':'none', color:ok?D.accent:D.muted, fontSize:11, fontWeight:700, cursor:'pointer', flexShrink:0 }}>
+      {ok ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
     </button>
   )
 }

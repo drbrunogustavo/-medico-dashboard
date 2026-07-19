@@ -1,6 +1,7 @@
 // Salvar em: app/hashtags/page.tsx
 'use client'
 import { useState, useEffect } from 'react'
+import { Copy, Check } from "lucide-react"
 import { PautasModal } from '@/components/PautasModal'
 import { Toast } from '@/components/Toast'
 import { AI_MODEL } from "@/lib/ai-config"
@@ -28,12 +29,12 @@ interface HashtagResult {
   tipo:     string
 }
 
-function CopyBtn({ text, label='⎘ Copiar' }: { text:string; label?:string }) {
+function CopyBtn({ text, label='Copiar' }: { text:string; label?:string }) {
   const [ok, setOk] = useState(false)
   return (
     <button onClick={() => { navigator.clipboard.writeText(text); setOk(true); setTimeout(()=>setOk(false),1600) }}
-      style={{ padding:'8px 16px', borderRadius:8, border:`1px solid rgba(200,168,76,0.3)`, background:ok?'rgba(200,168,76,0.12)':'none', color:ok?D.accent:D.muted, fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:"'Inter'" }}>
-      {ok ? '✓ Copiado!' : label}
+      style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'8px 16px', borderRadius:8, border:`1px solid rgba(200,168,76,0.3)`, background:ok?'rgba(200,168,76,0.12)':'none', color:ok?D.accent:D.muted, fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:"'Inter'" }}>
+      {ok ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />} {ok ? 'Copiado!' : label}
     </button>
   )
 }
@@ -149,7 +150,7 @@ export default function HashtagsPage() {
                   <div key={i} style={{ background:D.card, border:`1px solid ${D.border}`, borderRadius:8, padding:'10px 12px' }}>
                     <div style={{ color:D.muted, fontSize:11, lineHeight:1.7 }}>{set.join(' ')}</div>
                     <div style={{ marginTop:6 }}>
-                      <CopyBtn text={set.join(' ')} label="⎘ Copiar set" />
+                      <CopyBtn text={set.join(' ')} label="Copiar set" />
                     </div>
                   </div>
                 ))}
@@ -191,7 +192,7 @@ export default function HashtagsPage() {
                   <button onClick={salvarSet} style={{ padding:'7px 14px', borderRadius:8, border:`1px solid rgba(200,168,76,0.3)`, background:'none', color:D.atext, fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:"'Inter'" }}>
                     💾 Salvar set
                   </button>
-                  <CopyBtn text={resultado.map(h=>'#'+h.hashtag).join(' ')} label="⎘ Copiar todos" />
+                  <CopyBtn text={resultado.map(h=>'#'+h.hashtag).join(' ')} label="Copiar todos" />
                   <button onClick={gerar} style={{ padding:'7px 14px', borderRadius:8, border:`1px solid ${D.border}`, background:'none', color:D.muted, fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:"'Inter'" }}>
                     ↺ Regerar
                   </button>

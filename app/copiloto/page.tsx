@@ -278,10 +278,17 @@ function RightPanelEmpty() {
         </p>
       </div>
       <div className="flex flex-col gap-2 w-full max-w-xs">
-        {["📋 Resumo Clínico", "🗺 Plano Terapêutico", "🧪 Exames Solicitados", "📝 Orientações ao Paciente",
-          "💬 Follow-up D+1 / D+7 / D+30", "📱 Sugestão de Conteúdo", "📄 Prontuário"].map(s => (
-          <div key={s} className="text-[11px] text-text-muted bg-surface border border-border rounded-lg px-3 py-2 text-left">
-            {s}
+        {[
+          { icon: ClipboardList, label: "Resumo Clínico" },
+          { icon: Pill,          label: "Plano Terapêutico" },
+          { icon: FlaskConical,  label: "Exames Solicitados" },
+          { icon: FileText,      label: "Orientações ao Paciente" },
+          { icon: MessageCircle, label: "Follow-up D+1 / D+7 / D+30" },
+          { icon: Sparkles,      label: "Sugestão de Conteúdo" },
+          { icon: BookOpen,      label: "Prontuário" },
+        ].map(({ icon: Icon, label }) => (
+          <div key={label} className="text-[11px] text-text-muted bg-surface border border-border rounded-lg px-3 py-2 text-left flex items-center gap-2">
+            <Icon className="w-3.5 h-3.5 flex-shrink-0" /> {label}
           </div>
         ))}
       </div>

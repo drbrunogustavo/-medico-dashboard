@@ -4,6 +4,7 @@ import * as Sentry from "@sentry/nextjs"
 import { createClient } from "@supabase/supabase-js"
 import { Resend } from "resend"
 import { buildBoasVindasHtml, FROM_EMAIL, REPLY_TO } from "@/lib/email-boas-vindas"
+import { buildTrialAcabandoHtml } from "@/lib/email-trial"
 
 function getSupabaseAdmin() {
   const url    = process.env.NEXT_PUBLIC_SUPABASE_URL!
@@ -35,6 +36,31 @@ async function dispararEmailBoasVindas(
     html:    buildBoasVindasHtml(nome),
   })
   console.log(`[stripe/webhook] E-mail de boas-vindas enviado — user ${userId} → ${email}`)
+}
+
+async function dispararEmailTrialAcabando(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+  userId: string,
+  dias: number,
+) {
+  const { data: authUser } = await supabase.auth.admin.getUserById(userId)
+  const email = authUser.user?.email
+  if (!email) return
+  const { data: perfilRow } = await supabase
+    .from("perfis")
+    .select("nome")
+    .eq("user_id", userId)
+    .maybeSingle()
+  const nome = (perfilRow?.nome as string | null) ?? email
+  const resend = new Resend(process.env.RESEND_API_KEY)
+  await resend.emails.send({
+    from:    FROM_EMAIL,
+    to:      [email],
+    replyTo: REPLY_TO,
+    subject: `🔔 Seu trial PRAXIS expira em ${dias} dia${dias !== 1 ? "s" : ""}`,
+    html:    buildTrialAcabandoHtml(nome, dias),
+  })
+  console.log(`[stripe/webhook] E-mail de trial-acabando enviado — user ${userId} → ${email}`)
 }
 
 export async function POST(req: NextRequest) {
@@ -97,6 +123,7 @@ export async function POST(req: NextRequest) {
         const subId = session.subscription as string | null
         let priceId: string | null = null
         let periodEnd: string | null = null
+        let trialEnd: string | null = null
 
         if (subId) {
           const sub = await stripe.subscriptions.retrieve(subId)
@@ -104,6 +131,9 @@ export async function POST(req: NextRequest) {
           priceId   = item?.price.id ?? null
           periodEnd = item?.current_period_end
             ? new Date(item.current_period_end * 1000).toISOString()
+            : null
+          trialEnd  = sub.trial_end
+            ? new Date(sub.trial_end * 1000).toISOString()
             : null
         }
 
@@ -116,6 +146,7 @@ export async function POST(req: NextRequest) {
             stripe_subscription_id: subId,
             stripe_price_id:        priceId,
             assinatura_termina_em:  periodEnd,
+            trial_termina_em:       trialEnd,
             atualizado_em:          new Date().toISOString(),
           },
           { onConflict: "user_id" },
@@ -256,6 +287,27 @@ export async function POST(req: NextRequest) {
         } catch (afiliadoErr) {
           console.error("[stripe/webhook] Erro ao zerar saldo do afiliado:", afiliadoErr)
           // intentionally swallowed — webhook must always return 200
+        }
+        break
+      }
+
+      case "customer.subscription.trial_will_end": {
+        const sub    = event.data.object as Stripe.Subscription
+        const userId = sub.metadata?.user_id
+
+        if (!userId) {
+          console.warn("[stripe/webhook] trial_will_end sem metadata user_id", sub.id)
+          break
+        }
+
+        const dias = sub.trial_end
+          ? Math.max(1, Math.ceil((sub.trial_end * 1000 - Date.now()) / 86_400_000))
+          : 3
+
+        // Fire-and-forget: falha no e-mail nunca trava nem reverte o webhook
+        if (process.env.RESEND_API_KEY) {
+          dispararEmailTrialAcabando(supabase, userId, dias)
+            .catch((err) => console.error("[stripe/webhook] Falha ao enviar e-mail de trial:", err))
         }
         break
       }

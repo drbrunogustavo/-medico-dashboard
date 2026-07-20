@@ -209,7 +209,11 @@ Retorne um JSON com exatamente estas 7 chaves:
     }
 
     // Fire-and-forget: Primeira Consulta → schedule NPS + indicação D+1
-    if (body.tipoConsulta?.toLowerCase() === "primeira consulta" && body.nomePaciente) {
+    if (
+      (body.tipoConsulta?.toLowerCase() === "primeira consulta" ||
+       body.tipoConsulta?.toLowerCase() === "nova consulta") &&
+      body.nomePaciente
+    ) {
       ;(async () => {
         try {
           const sbFF = createSupabaseServerClient()

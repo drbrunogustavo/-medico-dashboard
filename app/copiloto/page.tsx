@@ -155,7 +155,7 @@ function parseProntuario(text: string): ProntuarioBloco[] | null {
   })
 }
 
-const TIPOS = ["Primeira consulta", "Retorno", "Urgência", "Teleconsulta"]
+const TIPOS = ["Nova consulta", "Retorno", "Primeira consulta", "Urgência", "Teleconsulta"]
 
 const FOLLOWUP_META = {
   d1:  { label: "D+1",  badge: "bg-blue-500/12 border-blue-500/30 text-blue-400",    bg: "bg-blue-500/5  border-blue-500/15"    },

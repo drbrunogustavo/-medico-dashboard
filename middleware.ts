@@ -17,10 +17,10 @@ const PAYMENT_EXEMPT_ROUTES = new Set([
 ])
 
 // Routes that require Pro or Elite plan
-const PRO_ROUTES = new Set<string>()
+const PRO_ROUTES = new Set<string>(["/radar", "/copiloto", "/nps", "/precificacao", "/indicadores"])
 
 // Routes that require Elite plan
-const ELITE_ROUTES = new Set<string>()
+const ELITE_ROUTES = new Set<string>(["/executivo", "/consultor", "/diagnostico", "/calculadoras"])
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -119,14 +119,14 @@ export async function middleware(request: NextRequest) {
     if (PRO_ROUTES.has(pathname)) {
       const hasAccess = isActive && (plano === "pro" || plano === "elite")
       if (!hasAccess) {
-        return NextResponse.redirect(new URL("/planos", request.url))
+        return NextResponse.redirect(new URL("/planos?upgrade=pro", request.url))
       }
     }
 
     if (ELITE_ROUTES.has(pathname)) {
       const hasAccess = isActive && plano === "elite"
       if (!hasAccess) {
-        return NextResponse.redirect(new URL("/planos", request.url))
+        return NextResponse.redirect(new URL("/planos?upgrade=elite", request.url))
       }
     }
   }

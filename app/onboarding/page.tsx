@@ -22,12 +22,12 @@ const MUTED   = "#8a7a6a"
 // ─── Constantes ───────────────────────────────────────────────────────────────
 
 const ESPECIALIDADES = [
-  "Clínica Geral", "Endocrinologia", "Nutrologia", "Cardiologia",
-  "Dermatologia", "Ginecologia e Obstetrícia", "Ortopedia", "Neurologia",
-  "Psiquiatria", "Pediatria", "Oftalmologia", "Urologia",
-  "Oncologia", "Reumatologia", "Nefrologia", "Pneumologia",
-  "Gastroenterologia", "Hematologia", "Infectologia", "Medicina do Esporte",
-  "Medicina Estética", "Cirurgia Plástica", "Cirurgia Geral", "Outra",
+  "Cardiologia", "Cirurgia Geral", "Cirurgia Plástica", "Clínica Geral",
+  "Dermatologia", "Endocrinologia", "Gastroenterologia", "Ginecologia e Obstetrícia",
+  "Hematologia", "Infectologia", "Medicina do Esporte", "Medicina Estética",
+  "Nefrologia", "Neurologia", "Nutrologia", "Oftalmologia",
+  "Oncologia", "Ortopedia", "Pediatria", "Pneumologia",
+  "Psiquiatria", "Reumatologia", "Urologia", "Outra",
 ]
 
 const PROBLEMAS = [

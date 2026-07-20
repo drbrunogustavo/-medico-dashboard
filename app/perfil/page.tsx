@@ -13,12 +13,12 @@ import { cn } from "@/lib/utils"
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser"
 
 const ESPECIALIDADES = [
-  "Cardiologia", "Dermatologia", "Endocrinologia", "Gastroenterologia",
-  "Geriatria", "Ginecologia e Obstetrícia", "Infectologia", "Medicina do Trabalho",
-  "Medicina Estética", "Medicina de Família", "Neurologia", "Nutrologia",
-  "Oftalmologia", "Oncologia", "Ortopedia", "Otorrinolaringologia",
-  "Pediatria", "Pneumologia", "Psiquiatria", "Reumatologia",
-  "Urologia", "Cirurgia Plástica", "Outra",
+  "Cardiologia", "Cirurgia Plástica", "Dermatologia", "Endocrinologia",
+  "Gastroenterologia", "Geriatria", "Ginecologia e Obstetrícia", "Infectologia",
+  "Medicina de Família", "Medicina do Trabalho", "Medicina Estética", "Neurologia",
+  "Nutrologia", "Oftalmologia", "Oncologia", "Ortopedia",
+  "Otorrinolaringologia", "Pediatria", "Pneumologia", "Psiquiatria",
+  "Reumatologia", "Urologia", "Outra",
 ]
 
 const TIPOGRAFIAS = ["Montserrat", "Playfair Display", "Inter", "Poppins", "Lato"]

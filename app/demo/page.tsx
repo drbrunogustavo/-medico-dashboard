@@ -19,7 +19,7 @@ function DemoBanner() {
     <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between gap-3 px-4 py-2.5"
       style={{ background: "#0D1B2A", borderBottom: "1px solid rgba(184,151,106,0.25)" }}>
       <div className="flex items-center gap-2">
-        <span className="text-[14px]">📊</span>
+        <BarChart3 className="w-4 h-4 inline-block align-[-0.15em]" />
         <span className="text-[12px] font-medium" style={{ color: "#e8ddd0" }}>
           <strong style={{ color: "#b8976a" }}>Dados demonstrativos</strong> para fins ilustrativos — não representam dados reais de nenhum usuário.
         </span>

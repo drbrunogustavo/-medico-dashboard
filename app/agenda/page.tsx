@@ -228,6 +228,7 @@ export default function AgendaPage() {
   const [updatingStatus, setUpdatingStatus] = useState(false)
   const [newStatusId,    setNewStatusId]    = useState("")
   const [statusUpdateOk, setStatusUpdateOk] = useState(false)
+  const [statusUpdateErro, setStatusUpdateErro] = useState("")
 
   // New appointment modal
   const [novoOpen,    setNovoOpen]    = useState(false)
@@ -410,6 +411,7 @@ export default function AgendaPage() {
   const atualizarStatus = async () => {
     if (!selected || !newStatusId) return
     setUpdatingStatus(true)
+    setStatusUpdateErro("")
     try {
       const body = {
         IdAgendamento: getApptId(selected),
@@ -420,14 +422,20 @@ export default function AgendaPage() {
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify(body),
       })
-      if (!res.ok) throw new Error(`Erro ${res.status}`)
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error((err as { error?: string }).error ?? `Erro ${res.status}`)
+      }
       setStatusUpdateOk(true)
       setTimeout(() => {
         setSelected(null)
         setStatusUpdateOk(false)
         fetchAgenda()
-      }, 1200)
-    } catch (e) { console.error("[agenda] erro ao atualizar status do agendamento:", e) }
+      }, 1600)
+    } catch (e) {
+      console.error("[agenda] erro ao atualizar status do agendamento:", e)
+      setStatusUpdateErro(e instanceof Error ? e.message : "Não foi possível atualizar o status.")
+    }
     finally { setUpdatingStatus(false) }
   }
 
@@ -669,7 +677,7 @@ export default function AgendaPage() {
                         {items.map((apt, i) => (
                           <button
                             key={i}
-                            onClick={() => { setSelected(apt); setNewStatusId("") }}
+                            onClick={() => { setSelected(apt); setNewStatusId(""); setStatusUpdateErro("") }}
                             className="w-full text-left bg-surface border border-border rounded-xl px-4 py-3 hover:border-blue-500/30 hover:bg-blue-500/[0.03] transition-all group flex items-center gap-4"
                           >
                             {/* Status bar */}
@@ -775,7 +783,7 @@ export default function AgendaPage() {
                     {mobileItems.map((apt, j) => (
                       <button
                         key={j}
-                        onClick={() => { setSelected(apt); setNewStatusId("") }}
+                        onClick={() => { setSelected(apt); setNewStatusId(""); setStatusUpdateErro("") }}
                         className="w-full text-left flex items-center gap-3 px-4 py-3 hover:bg-surface-2 transition-colors"
                       >
                         <div className="w-1 self-stretch rounded-full flex-shrink-0" style={{ background: statusBarColor(getApptStatus(apt)) }} />
@@ -920,7 +928,7 @@ export default function AgendaPage() {
                           return (
                             <button
                               key={j}
-                              onClick={e => { e.stopPropagation(); setSelected(apt); setNewStatusId("") }}
+                              onClick={e => { e.stopPropagation(); setSelected(apt); setNewStatusId(""); setStatusUpdateErro("") }}
                               className="absolute left-1 right-1 z-10 rounded-lg border text-left overflow-hidden hover:z-20 hover:scale-[1.02] transition-transform"
                               style={{
                                 top:              top + 2,
@@ -1070,6 +1078,17 @@ export default function AgendaPage() {
                     {statusUpdateOk ? "Salvo!" : "Salvar"}
                   </button>
                 </div>
+
+                {statusUpdateErro && (
+                  <div className="bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg px-3 py-2 text-[11px]">
+                    {statusUpdateErro}
+                  </div>
+                )}
+                {statusUpdateOk && !statusUpdateErro && (
+                  <div className="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-lg px-3 py-2 text-[11px]">
+                    <Check className="w-3 h-3" /> Status atualizado com sucesso!
+                  </div>
+                )}
               </div>
             )}
 

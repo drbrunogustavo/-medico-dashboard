@@ -73,7 +73,10 @@ export default function CadastroPage() {
     await fetch("/api/perfil", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ nome: nome.trim() }),
+      body: JSON.stringify({
+        nome: nome.trim(),
+        termos_aceitos_em: aceitouTermos ? new Date().toISOString() : null,
+      }),
     }).catch(e => { console.error("[cadastro] erro ao salvar nome:", e); return null })
 
     // Fire-and-forget — never blocks signup regardless of outcome

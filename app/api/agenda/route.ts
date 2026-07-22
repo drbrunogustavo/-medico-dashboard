@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import {
   getAgenda, getAgendaByUsuario, getDisponibilidade,
-  getUsuariosAgenda, getStatusAgenda, inserirAgendamento, atualizarAgendamento,
+  getUsuariosAgenda, inserirAgendamento, atualizarAgendamento,
 } from "@/lib/medx"
 
 // ── MedX → camelCase normalization ────────────────────────────────────────────
@@ -82,7 +82,12 @@ export async function GET(req: NextRequest) {
       case "usuarios":
         return NextResponse.json(await getUsuariosAgenda())
       case "status":
-        return NextResponse.json(await getStatusAgenda())
+        // Fonte única de verdade: mesmo STATUS_MAP usado em normalizeMedXAppointment.
+        // Garante labels não-vazios e consistência com os cards (o endpoint MedX
+        // GetStatusNomeAgenda devolve nomes de campo imprevisíveis → dropdown em branco).
+        return NextResponse.json(
+          Object.entries(STATUS_MAP).map(([id, nome]) => ({ Id: Number(id), Nome: nome })),
+        )
       default:
         return NextResponse.json({ error: "Action inválida" }, { status: 400 })
     }

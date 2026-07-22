@@ -106,6 +106,11 @@ export async function middleware(request: NextRequest) {
 
   // Plan guard — tier enforcement for premium routes
   if (PRO_ROUTES.has(pathname) || ELITE_ROUTES.has(pathname)) {
+    // Admin bypassa tier enforcement (mesmo padrão do payment gate)
+    if (user.id === process.env.DOCTOR_USER_ID) {
+      return supabaseResponse
+    }
+
     const { data: planoData } = await supabase
       .from("user_planos")
       .select("plano, status")

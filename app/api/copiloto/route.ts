@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
-import { inserirProntuario } from "@/lib/medx"
+import { inserirProntuario, getPacienteById } from "@/lib/medx"
 import { AI_MODEL } from "@/lib/ai-config"
 import { getAnthropicClient, captureAnthropicError } from "@/lib/anthropic"
 import { logAiUsage } from "@/lib/log-ai-usage"
@@ -220,20 +220,34 @@ Retorne um JSON com exatamente estas 7 chaves:
           const d1   = new Date()
           d1.setDate(d1.getDate() + 1)
           const at = d1.toISOString()
+
+          // Telefone do paciente via MedX — necessário para envio via WhatsApp
+          let pacienteTelefone: string | null = null
+          if (body.pacienteId) {
+            try {
+              const contato = await getPacienteById(String(body.pacienteId))
+              pacienteTelefone =
+                contato?.Telefone ?? contato?.telefone ??
+                contato?.Celular  ?? contato?.celular  ??
+                contato?.Telefone_Celular ?? contato?.Fone ?? null
+            } catch { /* best-effort — telefone não bloqueia o agendamento */ }
+          }
+
           await sbFF.from("nps_pesquisas").insert({
             user_id:           auth.userId,
             paciente_nome:     body.nomePaciente,
-            paciente_telefone: null,
+            paciente_telefone: pacienteTelefone,
             agendado_para:     at,
           })
           const indicacao = `Olá, ${body.nomePaciente}! Foi um prazer ter você em consulta. Se você conhece alguém que também pode se beneficiar do nosso cuidado, agradeço muito a sua indicação. Qualquer dúvida, estou à disposição!`
           await sbFF.from("nurturing_sequencias").insert({
-            user_id:       auth.userId,
-            lead_id:       null,
-            dia:           1,
-            mensagem:      indicacao,
-            status:        "pendente",
-            agendado_para: at,
+            user_id:           auth.userId,
+            lead_id:           null,
+            paciente_telefone: pacienteTelefone,
+            dia:               1,
+            mensagem:          indicacao,
+            status:            "pendente",
+            agendado_para:     at,
           })
         } catch (e) {
           captureAnthropicError(e, "/api/copiloto")

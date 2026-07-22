@@ -34,18 +34,20 @@ export async function GET(req: NextRequest) {
     {
       let q = supabase
         .from("nurturing_sequencias")
-        .select("id, lead_id, mensagem, user_id")
+        .select("id, lead_id, mensagem, user_id, paciente_telefone")
         .lte("agendado_para", now)
         .eq("status", "pendente")
       if (userId) q = q.eq("user_id", userId)
 
       const { data: seqs } = await q
       for (const seq of seqs ?? []) {
-        const { data: lead } = await supabase
-          .from("crm_leads").select("telefone").eq("id", seq.lead_id).single()
-        if (!lead?.telefone) continue
+        // Lead de CRM → telefone via crm_leads; paciente pós-consulta → paciente_telefone
+        const telefone = seq.lead_id
+          ? (await supabase.from("crm_leads").select("telefone").eq("id", seq.lead_id).single()).data?.telefone
+          : (seq.paciente_telefone as string | null)
+        if (!telefone) continue
 
-        const { ok } = await sendZapiForUser(seq.user_id as string, lead.telefone, seq.mensagem)
+        const { ok } = await sendZapiForUser(seq.user_id as string, telefone, seq.mensagem)
         if (ok) {
           await supabase
             .from("nurturing_sequencias")

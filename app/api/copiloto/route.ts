@@ -239,16 +239,16 @@ Retorne um JSON com exatamente estas 7 chaves:
             paciente_telefone: pacienteTelefone,
             agendado_para:     at,
           })
-          const indicacao = `Olá, ${body.nomePaciente}! Foi um prazer ter você em consulta. Se você conhece alguém que também pode se beneficiar do nosso cuidado, agradeço muito a sua indicação. Qualquer dúvida, estou à disposição!`
-          await sbFF.from("nurturing_sequencias").insert({
-            user_id:           auth.userId,
-            lead_id:           null,
-            paciente_telefone: pacienteTelefone,
-            dia:               1,
-            mensagem:          indicacao,
-            status:            "pendente",
-            agendado_para:     at,
-          })
+          const d7  = new Date(); d7.setDate(d7.getDate() + 7)
+          const d30 = new Date(); d30.setDate(d30.getDate() + 30)
+          const indicacao   = `Olá, ${body.nomePaciente}! Foi um prazer ter você em consulta. Se você conhece alguém que também pode se beneficiar do nosso cuidado, agradeço muito a sua indicação. Qualquer dúvida, estou à disposição!`
+          const mensagemD7  = `Olá, ${body.nomePaciente}! Já se passaram 7 dias desde nossa consulta. Como está se sentindo? Está conseguindo seguir as orientações? Qualquer dúvida, estou à disposição.`
+          const mensagemD30 = `Olá, ${body.nomePaciente}! Já faz um mês desde nossa consulta. Que tal marcarmos um retorno para avaliarmos sua evolução? Será um prazer acompanhar seu progresso.`
+          await sbFF.from("nurturing_sequencias").insert([
+            { user_id: auth.userId, lead_id: null, paciente_telefone: pacienteTelefone, dia: 1,  mensagem: indicacao,   status: "pendente", agendado_para: at },
+            { user_id: auth.userId, lead_id: null, paciente_telefone: pacienteTelefone, dia: 7,  mensagem: mensagemD7,  status: "pendente", agendado_para: d7.toISOString() },
+            { user_id: auth.userId, lead_id: null, paciente_telefone: pacienteTelefone, dia: 30, mensagem: mensagemD30, status: "pendente", agendado_para: d30.toISOString() },
+          ])
         } catch (e) {
           captureAnthropicError(e, "/api/copiloto")
           console.error("[copiloto] primeira-consulta automations:", e)

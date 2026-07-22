@@ -236,6 +236,18 @@ export default function DiretorCriativoPage() {
   // Variações state
   const [variacoes,        setVariacoes]        = useState<Variacao[]>([])
   const [loadingVariacoes, setLoadingVariacoes] = useState(false)
+  const [perfil, setPerfil] = useState<{
+    marca_cor_primaria?:   string
+    marca_cor_secundaria?: string
+    marca_cor_fundo?:      string
+    marca_tipografia?:     string
+    avatar_url?:           string
+    nome?:                 string
+  } | null>(null)
+
+  useEffect(() => {
+    fetch("/api/perfil").then(r => r.json()).then(setPerfil).catch(() => {})
+  }, [])
   const [variacaoSel,      setVariacaoSel]      = useState<number | null>(null)
   const [variacaoAudit,    setVariacaoAudit]    = useState<string | null>(null)
 
@@ -298,6 +310,20 @@ export default function DiretorCriativoPage() {
 
   // ── Step 1: Generate creative direction via Claude ──────────────────────────
 
+  const getVisualIdentity = () => {
+    if (!perfil) return VISUAL_IDENTITY // fallback: identidade fixa do produto
+    const cor1  = perfil.marca_cor_primaria   ?? "#b8976a"
+    const cor2  = perfil.marca_cor_secundaria ?? "#0D1B2A"
+    const fundo = perfil.marca_cor_fundo      ?? "#1a1a2e"
+    const fonte = perfil.marca_tipografia     ?? "Montserrat"
+    return `IDENTIDADE VISUAL DO MÉDICO (referência obrigatória):
+- Cor primária (deve dominar o design): ${cor1}
+- Cor secundária: ${cor2}
+- Cor de fundo: ${fundo}
+- Tipografia: ${fonte}${perfil.nome ? `\n- Nome do médico: ${perfil.nome}` : ""}
+- Estética: editorial premium, iluminação cinematográfica, alto contraste, acabamento sofisticado. Sem visual de template/Canva, sem estética clínica/hospitalar.`
+  }
+
   const gerarPrompt = async () => {
     if (!ideia.trim()) { setError("Digite o tema da sua arte antes de continuar."); return }
     setError(null); setLoadingPrompt(true); setPromptParts(null)
@@ -311,7 +337,7 @@ export default function DiretorCriativoPage() {
 
       const systemPrompt = `You are a world-class creative director specializing in ultra-premium luxury medical content for social media. Transform simple ideas into cinematic, editorial-grade visual prompts.
 
-${VISUAL_IDENTITY}
+${getVisualIdentity()}
 
 Return ONLY valid JSON. No markdown. No code blocks. No explanation.`
 

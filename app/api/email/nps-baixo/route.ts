@@ -6,6 +6,12 @@ const APP_URL    = process.env.NEXT_PUBLIC_APP_URL    ?? "https://praxisplatafor
 const FROM_EMAIL = process.env.EMAIL_FROM             ?? "PRAXIS <onboarding@resend.dev>"
 const REPLY_TO   = process.env.EMAIL_REPLY_TO         ?? "contato@praxisplataforma.com.br"
 
+function isCronAuthorized(req: NextRequest): boolean {
+  const secret = process.env.CRON_SECRET
+  if (!secret) return false
+  return req.headers.get("authorization") === `Bearer ${secret}`
+}
+
 function buildHtml(nome: string, pacienteNome: string, nota: number, comentario: string | null): string {
   const primeiroNome = nome.replace(/^Dr\.?\s*/i, "").split(" ")[0] ?? nome
   const notaColor    = nota <= 3 ? "#ef4444" : "#f59e0b"
@@ -86,6 +92,9 @@ function buildHtml(nome: string, pacienteNome: string, nota: number, comentario:
 }
 
 export async function POST(req: NextRequest) {
+  if (!isCronAuthorized(req)) {
+    return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
+  }
   if (!process.env.RESEND_API_KEY) {
     return NextResponse.json({ error: "RESEND_API_KEY não configurado" }, { status: 503 })
   }

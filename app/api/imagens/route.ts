@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server'
 import { captureAnthropicError } from "@/lib/anthropic"
+import { checkAuth } from "@/lib/auth-check"
 
 export async function POST(request: Request) {
+  const auth = await checkAuth()
+  if (!auth.authenticated) return auth.response
   const body = await request.json()
 
   try {

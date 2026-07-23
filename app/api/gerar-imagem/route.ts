@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { checkAuth } from "@/lib/auth-check"
 
 const OPENAI_SIZE: Record<string, string> = {
   "9:16": "1024x1536",
@@ -19,6 +20,8 @@ const FLUX_DIMS: Record<string, { width: number; height: number }> = {
 }
 
 export async function POST(request: Request) {
+  const auth = await checkAuth()
+  if (!auth.authenticated) return auth.response
   const { prompt, formato, modelo } = await request.json() as {
     prompt: string
     formato: string

@@ -91,7 +91,10 @@ export async function POST(req: NextRequest) {
           const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://praxisplataforma.com.br"
           await fetch(`${appUrl}/api/email/nps-baixo`, {
             method:  "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${process.env.CRON_SECRET ?? ""}`,
+            },
             body:    JSON.stringify({
               email,
               nome:         perfil?.nome ?? email.split("@")[0],

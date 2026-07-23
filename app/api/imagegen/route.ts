@@ -1,9 +1,12 @@
 // Salvar em: app/api/imagegen/route.ts
 import { NextResponse } from 'next/server'
+import { checkAuth } from "@/lib/auth-check"
 
 export const maxDuration = 60
 
 export async function POST(request: Request) {
+  const auth = await checkAuth()
+  if (!auth.authenticated) return auth.response
   const { tema, formato } = await request.json()
 
   const dims: Record<string, { w: number; h: number }> = {

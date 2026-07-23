@@ -146,11 +146,17 @@ export default function OnboardingPage() {
     setSaving(true)
     setErroMsg("")
     try {
-      await persistOnboarding()
+      const r1 = await fetch("/api/perfil", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nome, especialidade: espec, cidade, onboarding_completo: true, voz_gravacao_autorizada: vozConsent }),
+      })
+      const r2 = await fetch("/api/perfil/onboarding", { method: "POST" })
+      if (!r1.ok || !r2.ok) throw new Error("Falha ao salvar")
       const meData = await fetch("/api/me").then(r => r.json()).catch(() => null) as { plano?: string } | null
       router.push(meData?.plano && meData.plano !== "trial" ? "/dashboard" : "/planos")
     } catch {
-      setErroMsg("Erro de conexão. Tente novamente.")
+      setErroMsg("Erro ao salvar configurações. Tente novamente.")
     } finally {
       setSaving(false)
     }

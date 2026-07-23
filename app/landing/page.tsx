@@ -10,6 +10,7 @@ import {
   Flame, CircleDollarSign, BarChart, Users, MessageSquare,
   Star, Crown, X, Stethoscope, Monitor, Smartphone,
   Shield, Lock, Mic,
+  Clock, Bell, BarChart3, TrendingUp, Brain,
 } from "lucide-react"
 import { PraxisLogo } from "@/components/PraxisLogo"
 import { cn } from "@/lib/utils"
@@ -23,36 +24,6 @@ const GOLD      = "#B8976A"
 const GOLD_DARK = "#96784F"
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
-
-const MODULES = [
-  { icon: Radio,            label: "Radar de Tendências",       desc: "Monitore temas em alta em tempo real com IA"         },
-  { icon: Bot,              label: "Agente Executivo",          desc: "Calendário editorial completo em minutos"            },
-  { icon: Video,            label: "Gerador de Roteiros",       desc: "Roteiros para Reels prontos para gravar"             },
-  { icon: Layers,           label: "Diretor Criativo",          desc: "Artes e imagens premium com IA generativa"           },
-  { icon: Zap,              label: "Biblioteca de Ganchos",     desc: "Aberturas que param o scroll instantaneamente"       },
-  { icon: FileText,         label: "Banco de Pautas",           desc: "Repositório organizado de todas as suas ideias"      },
-  { icon: ScanFace,         label: "Raio-X de Pacientes",       desc: "Psicologia e gatilhos do seu público ideal"          },
-  { icon: ShieldQuestion,   label: "Mapa de Objeções",          desc: "Transforme dúvidas em conteúdo de conversão"         },
-  { icon: Megaphone,        label: "Gerador de Ofertas",        desc: "Campanhas completas com roteiro e landing page"      },
-  { icon: Sparkles,         label: "Gerador de Legendas",       desc: "Legendas otimizadas para engajamento máximo"         },
-  { icon: Flame,            label: "Gerador de Polêmicas",      desc: "Conteúdo controverso ético que gera debate"          },
-  { icon: CircleDollarSign, label: "Detector de Oportunidades", desc: "Identifique janelas de faturamento no seu nicho"     },
-  { icon: BarChart,         label: "Análise de Concorrentes",   desc: "Monitore os melhores do seu nicho"                   },
-  { icon: Users,            label: "Monitor de Referências",    desc: "Acompanhe médicos influentes para inspiração"        },
-  { icon: MessageSquare,    label: "Agente WhatsApp",           desc: "Automação de mensagens para pacientes"               },
-]
-
-const PAINS = [
-  { title: "Falta de tempo", desc: "Você tem consultório cheio, mas as redes ficam para depois. Sempre." },
-  { title: "Conteúdo genérico", desc: "O que você posta não reflete sua real expertise e sofisticação." },
-  { title: "Inconsistência", desc: "Semanas sem postar. Seguidores esfriam. Algoritmo pune. Ciclo vicioso." },
-]
-
-const STEPS = [
-  { num: "01", title: "Escolha o módulo", desc: "Selecione a ferramenta ideal para o conteúdo que precisa criar hoje." },
-  { num: "02", title: "Configure com IA", desc: "A PRAXIS elabora a estratégia, o roteiro, o prompt, a arte — tudo com Claude IA." },
-  { num: "03", title: "Publique com autoridade", desc: "Conteúdo premium pronto para publicar. Sua expertise, amplificada." },
-]
 
 const FAQS = [
   { q: "Preciso ter experiência com redes sociais?", a: "Não. A PRAXIS foi projetada para médicos que são especialistas em sua área, não em marketing. A plataforma guia você em cada etapa." },
@@ -292,48 +263,69 @@ export default function LandingPage() {
       {/* ── PROBLEMA ────────────────────────────────────────────────────────── */}
       <section className="py-24 px-6 md:px-12">
         <div className="max-w-5xl mx-auto">
-          <SectionHeader
-            label="O problema"
-            title="Você é um especialista. Mas nas redes, parece mais um."
-            sub="Médicos altamente qualificados produzem conteúdo inconsistente porque falta tempo, estratégia e as ferramentas certas."
-          />
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <p className="text-[10px] font-mono tracking-[3px] uppercase mb-3" style={{ color: GOLD_DARK }}>O problema real</p>
+            <h2 className="text-[28px] md:text-[36px] font-semibold mb-4 leading-tight" style={{ fontFamily: "var(--font-playfair), Georgia, serif", color: NAVY }}>
+              Sua clínica roda em <em style={{ color: GOLD_DARK, fontStyle: "italic" }}>oito ferramentas</em> que não se falam.
+            </h2>
+            <p className="text-[15px] leading-relaxed" style={{ color: NAVY2 }}>
+              Prontuário num sistema. Agenda em outro. Financeiro na planilha. Leads no WhatsApp. Conteúdo no bloco de notas. E você no meio, perdendo tempo que deveria ser do paciente.
+            </p>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {PAINS.map((p, i) => (
-              <div key={i} className="bg-surface border border-border rounded-xl p-6 hover:border-border-hover transition-all">
-                <div className="w-8 h-8 rounded-lg bg-red-50 border border-red-200 flex items-center justify-center mb-4">
-                  <X className="w-4 h-4 text-red-400" />
+            {[
+              { icon: Clock,     title: "40 minutos por dia digitando",      desc: "Prontuário, receita, orientações, relatório. Trabalho manual que a IA já faz em segundos." },
+              { icon: Bell,      title: "Pacientes que somem sem retorno",   desc: "Sem seguimento estruturado, o paciente esquece. Sem NPS, você não sabe por quê." },
+              { icon: BarChart3, title: "Decisões no escuro",                desc: "Quanto faturou? Qual origem traz mais paciente? Sem dado consolidado, é tudo intuição." },
+            ].map((p, i) => {
+              const Icon = p.icon
+              return (
+                <div key={i} className="rounded-xl p-6" style={{ background: "#fff", border: "1px solid rgba(13,27,42,0.08)" }}>
+                  <div className="w-9 h-9 rounded-lg flex items-center justify-center mb-4" style={{ background: "rgba(192,57,43,0.08)", border: "1px solid rgba(192,57,43,0.2)" }}>
+                    <Icon className="w-4 h-4" style={{ color: "#c0392b" }} />
+                  </div>
+                  <h3 className="text-[15px] font-semibold mb-2" style={{ color: NAVY }}>{p.title}</h3>
+                  <p className="text-[13px] leading-relaxed" style={{ color: NAVY2 }}>{p.desc}</p>
                 </div>
-                <h3 className="text-[15px] font-semibold text-text-primary mb-2">{p.title}</h3>
-                <p className="text-[13px] text-text-muted leading-relaxed">{p.desc}</p>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       </section>
 
-      {/* ── MÓDULOS ─────────────────────────────────────────────────────────── */}
-      <section className="py-24 px-6 md:px-12" style={{ background: "var(--surface-2)" }}>
+      {/* ── 4 AMBIENTES ─────────────────────────────────────────────────────── */}
+      <section className="py-24 px-6 md:px-12" style={{ background: CREAM2 }}>
         <div className="max-w-5xl mx-auto">
-          <SectionHeader
-            label="A solução"
-            title="15 módulos de inteligência e criação."
-            sub="Cada ferramenta foi desenvolvida especificamente para profissionais de saúde que querem uma presença digital de alto padrão."
-          />
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-            {MODULES.map((m, i) => {
-              const Icon = m.icon
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <h2 className="text-[28px] md:text-[38px] font-semibold leading-tight" style={{ fontFamily: "var(--font-playfair), Georgia, serif", color: NAVY }}>
+              Quatro ambientes.<br /><em style={{ color: GOLD_DARK, fontStyle: "italic" }}>Uma única plataforma.</em>
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[
+              { num: "01", icon: Stethoscope, title: "Consultório", desc: "O Copiloto ouve a consulta, documenta o prontuário, sugere condutas e organiza o seguimento — enquanto você olha para o paciente, não para a tela.", features: ["Copiloto de voz", "Prontuário SOAP", "Prescrição digital", "Memória clínica", "Agenda inteligente", "Cartas e atestados"] },
+              { num: "02", icon: TrendingUp, title: "Gestão", desc: "CRM de pacientes, controle financeiro com projeção, NPS automático e indicadores da clínica.", features: ["CRM Kanban", "Financeiro + DRE", "Pesquisa NPS", "Indicações", "Reativação", "Multi-clínica"] },
+              { num: "03", icon: Smartphone, title: "Marketing", desc: "Calendário editorial completo, roteiros de reels, carrosséis e legendas gerados por IA — com a sua especialidade.", features: ["Calendário editorial", "Roteiros de reels", "Diretor criativo", "Banco de pautas", "Legendas e ganchos", "Analytics Instagram"] },
+              { num: "04", icon: Brain, title: "Inteligência", desc: "Consultor estratégico com IA, diagnóstico completo da clínica, radar de tendências científicas e Academy.", features: ["Consultor IA", "Diagnóstico 360°", "Painel executivo", "Radar científico", "Banco de estudos", "Academy"] },
+            ].map((a, i) => {
+              const Icon = a.icon
               return (
-                <div
-                  key={i}
-                  className="flex items-start gap-3 p-4 bg-surface border border-border rounded-xl hover:border-border-hover hover:-translate-y-0.5 transition-all duration-200 animate-fade-in"
-                  style={{ animationDelay: `${i * 40}ms` }}
-                >
-                  <div className="w-8 h-8 rounded-lg bg-accent-dim border border-accent-border flex items-center justify-center flex-shrink-0">
-                    <Icon className="w-4 h-4 text-accent" />
+                <div key={i} className="rounded-2xl p-6" style={{ background: "#fff", border: "1px solid rgba(13,27,42,0.08)" }}>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: "rgba(184,151,106,0.10)", border: "1px solid rgba(184,151,106,0.30)" }}>
+                      <Icon className="w-5 h-5" style={{ color: GOLD_DARK }} />
+                    </div>
+                    <span className="text-[32px] font-bold leading-none" style={{ fontFamily: "var(--font-playfair), Georgia, serif", color: "rgba(184,151,106,0.30)" }}>{a.num}</span>
                   </div>
-                  <div>
-                    <div className="text-[13px] font-semibold text-text-primary">{m.label}</div>
-                    <div className="text-[11px] text-text-muted mt-0.5 leading-snug">{m.desc}</div>
+                  <h3 className="text-[19px] font-semibold mb-2" style={{ fontFamily: "var(--font-playfair), Georgia, serif", color: NAVY }}>{a.title}</h3>
+                  <p className="text-[13px] leading-relaxed mb-4" style={{ color: NAVY2 }}>{a.desc}</p>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                    {a.features.map((f, j) => (
+                      <div key={j} className="flex items-center gap-1.5">
+                        <Check className="w-3.5 h-3.5 flex-shrink-0" style={{ color: GOLD }} />
+                        <span className="text-[12px]" style={{ color: NAVY2 }}>{f}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )
@@ -342,55 +334,74 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── COMO FUNCIONA ───────────────────────────────────────────────────── */}
-      <section className="py-24 px-6 md:px-12">
-        <div className="max-w-4xl mx-auto">
-          <SectionHeader
-            label="Como funciona"
-            title="3 passos para conteúdo de alto impacto."
-          />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {STEPS.map((s, i) => (
-              <div key={i} className="text-center">
-                <div
-                  className="text-[48px] font-bold leading-none mb-4"
-                  style={{ fontFamily: "var(--font-playfair), Georgia, serif", color: "rgba(0,192,127,0.2)" }}
-                >
-                  {s.num}
-                </div>
-                <h3 className="text-[16px] font-semibold text-text-primary mb-2">{s.title}</h3>
-                <p className="text-[13px] text-text-muted leading-relaxed">{s.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── 3 AMBIENTES ─────────────────────────────────────────────────────── */}
-      <section className="py-24 px-6 md:px-12">
+      {/* ── MÓDULOS POR CATEGORIA ───────────────────────────────────────────── */}
+      <section id="modulos" className="py-24 px-6 md:px-12">
         <div className="max-w-5xl mx-auto">
-          <SectionHeader label="Três ambientes, uma plataforma" title="Do atendimento à captação de pacientes." />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="text-center max-w-2xl mx-auto mb-14">
+            <h2 className="text-[28px] md:text-[38px] font-semibold leading-tight mb-4" style={{ fontFamily: "var(--font-playfair), Georgia, serif", color: NAVY }}>
+              Tudo o que sua clínica precisa,<br /><em style={{ color: GOLD_DARK, fontStyle: "italic" }}>organizado por área.</em>
+            </h2>
+            <p className="text-[15px] leading-relaxed" style={{ color: NAVY2 }}>Não é um gerador de posts. É a operação completa da sua clínica.</p>
+          </div>
+          <div className="space-y-12">
             {[
-              { num: "01", icon: Stethoscope, title: "Consultório", desc: "Copiloto de voz documenta o prontuário, sugere condutas e agenda o seguimento pós-consulta em tempo real." },
-              { num: "02", icon: Monitor,     title: "Gestão",      desc: "CRM de leads, financeiro com DRE, NPS de pacientes e indicadores da clínica integrados — sem planilha." },
-              { num: "03", icon: Smartphone,  title: "Marketing",   desc: "Roteiros, carrosséis, legendas e calendário editorial gerados por IA com a sua especialidade." },
-            ].map((item, i) => {
-              const Icon = item.icon
+              { icon: Stethoscope, name: "Consultório", desc: "O que acontece durante e depois da consulta", mods: [
+                { n: "Copiloto de Consulta", badge: "PRINCIPAL", d: "Documentação por voz em tempo real" },
+                { n: "Agenda Inteligente", d: "Encaixes, lembretes e confirmações" },
+                { n: "Prescrição Digital", d: "Receitas e atestados assinados" },
+                { n: "Memória Clínica", d: "Protocolos e condutas do médico" },
+                { n: "Raio-X de Pacientes", d: "Perfil e histórico consolidado" },
+                { n: "Reativação", d: "Traz de volta quem sumiu" },
+              ] },
+              { icon: TrendingUp, name: "Gestão", desc: "A saúde financeira e comercial da clínica", mods: [
+                { n: "CRM de Pacientes", d: "Funil Kanban de leads" },
+                { n: "Financeiro", d: "Fluxo de caixa e DRE" },
+                { n: "Pesquisa NPS", d: "Satisfação automática pós-consulta" },
+                { n: "Programa de Indicações", d: "Member get member com cortesia" },
+                { n: "Painel Executivo", d: "Indicadores da clínica" },
+                { n: "Precificação", d: "Precifique procedimentos com margem" },
+              ] },
+              { icon: Smartphone, name: "Marketing", desc: "Autoridade digital sem tirar tempo do consultório", mods: [
+                { n: "Calendário Editorial", d: "Planejamento mensal com IA" },
+                { n: "Gerador de Roteiros", d: "Reels prontos para gravar" },
+                { n: "Diretor Criativo", d: "Artes e imagens premium" },
+                { n: "Banco de Pautas", d: "Repositório de ideias" },
+                { n: "Ganchos e Legendas", d: "Aberturas que prendem" },
+                { n: "Analytics Instagram", d: "O que performou e por quê" },
+              ] },
+              { icon: Brain, name: "Inteligência", desc: "Decisões estratégicas com base em dados", mods: [
+                { n: "Consultor Estratégico", d: "Recomendações com IA" },
+                { n: "Diagnóstico 360°", d: "Análise completa da clínica" },
+                { n: "Radar Científico", d: "Tendências e evidências recentes" },
+                { n: "Banco de Estudos", d: "Referências organizadas" },
+                { n: "Mapa de Objeções", d: "Dúvidas viram conteúdo" },
+                { n: "Academy", d: "Trilhas de crescimento" },
+              ] },
+            ].map((cat, i) => {
+              const Icon = cat.icon
               return (
-                <div key={i} className="relative flex flex-col gap-4 p-6 rounded-xl"
-                  style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(201,168,108,0.18)" }}>
-                  <div className="flex items-center justify-between">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-                      style={{ background: "rgba(201,168,108,0.10)", border: "1px solid rgba(201,168,108,0.25)" }}>
-                      <Icon className="w-5 h-5" style={{ color: GOLD }} />
-                    </div>
-                    <span className="text-[28px] font-bold leading-none"
-                      style={{ fontFamily: "var(--font-playfair), Georgia, serif", color: "rgba(201,168,108,0.25)" }}>{item.num}</span>
+                <div key={i}>
+                  <div className="flex items-center gap-3 mb-1">
+                    <Icon className="w-5 h-5" style={{ color: GOLD_DARK }} />
+                    <h3 className="text-[20px] font-semibold" style={{ fontFamily: "var(--font-playfair), Georgia, serif", color: NAVY }}>{cat.name}</h3>
                   </div>
-                  <div>
-                    <h3 className="text-[16px] font-semibold text-text-primary mb-1">{item.title}</h3>
-                    <p className="text-[13px] text-text-muted leading-relaxed">{item.desc}</p>
+                  <p className="text-[13px] mb-4" style={{ color: NAVY2 }}>{cat.desc}</p>
+                  <div className="h-px mb-5" style={{ background: "rgba(13,27,42,0.10)" }} />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                    {cat.mods.map((m, j) => {
+                      const badge = (m as { badge?: string }).badge
+                      return (
+                        <div key={j} className="rounded-xl p-4" style={{ background: "#fff", border: "1px solid rgba(13,27,42,0.08)" }}>
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-[14px] font-bold" style={{ color: NAVY }}>{m.n}</span>
+                            {badge && (
+                              <span className="text-[8px] font-mono font-bold px-1.5 py-0.5 rounded" style={{ background: NAVY, color: CREAM, letterSpacing: "0.1em" }}>{badge}</span>
+                            )}
+                          </div>
+                          <p className="text-[12.5px] leading-snug" style={{ color: NAVY2 }}>{m.d}</p>
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
               )

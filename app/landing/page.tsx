@@ -451,6 +451,7 @@ export default function LandingPage() {
               Isto é o que o Copiloto entrega<br /><em style={{ color: GOLD_DARK, fontStyle: "italic" }}>ao final de uma consulta.</em>
             </h2>
             <p className="text-[15px] leading-relaxed" style={{ color: NAVY2 }}>Gravação de 12 minutos. Documentação completa em 40 segundos.</p>
+            <span className="inline-block mt-4 text-[9px] text-text-muted border border-border rounded px-2 py-[3px]">Exemplo ilustrativo · dados fictícios</span>
           </div>
           <div className="grid md:grid-cols-[0.85fr_1.15fr] gap-8 items-start">
             {/* Esquerda sticky */}
@@ -560,6 +561,9 @@ export default function LandingPage() {
             <h2 className="text-[28px] md:text-[36px] font-semibold leading-tight text-white" style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}>
               A saúde financeira da sua clínica,<br /><em style={{ color: GOLD, fontStyle: "italic" }}>atualizada em tempo real.</em>
             </h2>
+          </div>
+          <div className="flex justify-end mb-3">
+            <span className="inline-block text-[9px] rounded px-2 py-[3px]" style={{ color: "rgba(245,240,232,0.60)", border: "1px solid rgba(245,240,232,0.25)" }}>Exemplo ilustrativo · dados fictícios</span>
           </div>
           {/* KPIs */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">

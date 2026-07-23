@@ -9,13 +9,18 @@ import {
   ScanFace, ShieldQuestion, Megaphone, Sparkles,
   Flame, CircleDollarSign, BarChart, Users, MessageSquare,
   Star, Crown, X, Stethoscope, Monitor, Smartphone,
+  Shield, Lock, Mic,
 } from "lucide-react"
 import { PraxisLogo } from "@/components/PraxisLogo"
 import { cn } from "@/lib/utils"
 
-// ─── Palette (landing redesign — navy + gold) ───────────────────────────────────
-const NAVY = "#0A1628"
-const GOLD = "#C9A86C"
+// ─── Palette (landing v2 — cream + navy + gold) ─────────────────────────────────
+const CREAM     = "#F5F0E8"
+const CREAM2    = "#EDE6DA"
+const NAVY      = "#0D1B2A"
+const NAVY2     = "#152B42"
+const GOLD      = "#B8976A"
+const GOLD_DARK = "#96784F"
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -141,117 +146,146 @@ export default function LandingPage() {
     n < threshold ? null : n >= 1000 ? `+${Math.floor(n / 100) * 100}` : `+${n}`
 
   return (
-    <div className="fixed inset-0 z-[200] bg-background text-text-primary overflow-y-auto" style={{ fontFamily: "var(--font-inter), system-ui, sans-serif" }}>
+    <div className="fixed inset-0 z-[200] overflow-y-auto" style={{ fontFamily: "var(--font-inter), system-ui, sans-serif", background: CREAM, color: NAVY }}>
 
       {/* ── Navbar ──────────────────────────────────────────────────────────── */}
       <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-12"
-        style={{ height: 64, background: "rgba(8,8,8,0.85)", backdropFilter: "blur(20px)", borderBottom: "1px solid #1f1f1f" }}>
-        <PraxisLogo />
-        <div className="flex items-center gap-4">
-          <a href="#planos" className="hidden md:block text-[13px] text-text-muted hover:text-text-primary transition-colors">Planos</a>
-          <Link href="/login"
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-semibold text-background bg-accent hover:opacity-90 transition-all active:scale-[0.97]">
-            Acessar plataforma
+        style={{ height: 68, background: "rgba(245,240,232,0.92)", backdropFilter: "blur(20px)", borderBottom: "1px solid rgba(13,27,42,0.10)" }}>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center justify-center rounded-full flex-shrink-0" style={{ width: 38, height: 38, border: `1.5px solid ${GOLD}` }}>
+            <span style={{ fontFamily: "var(--font-playfair), Georgia, serif", color: GOLD, fontSize: 18, fontWeight: 700 }}>P</span>
+          </div>
+          <div className="leading-none">
+            <div style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: 19, fontWeight: 700, letterSpacing: "0.18em", color: NAVY }}>PRAXIS</div>
+            <div className="mt-0.5" style={{ fontSize: 8.5, letterSpacing: "0.24em", color: GOLD_DARK, textTransform: "uppercase" }}>Sistema Operacional de Clínicas</div>
+          </div>
+        </div>
+        <div className="flex items-center gap-6">
+          <a href="#plataforma" className="hidden md:block text-[13px] hover:opacity-70 transition-opacity" style={{ color: NAVY2 }}>Plataforma</a>
+          <a href="#copiloto"   className="hidden md:block text-[13px] hover:opacity-70 transition-opacity" style={{ color: NAVY2 }}>Copiloto</a>
+          <a href="#modulos"    className="hidden md:block text-[13px] hover:opacity-70 transition-opacity" style={{ color: NAVY2 }}>Módulos</a>
+          <a href="#planos"     className="hidden md:block text-[13px] hover:opacity-70 transition-opacity" style={{ color: NAVY2 }}>Planos</a>
+          <Link href="/planos"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-semibold transition-all active:scale-[0.97]"
+            style={{ background: NAVY, color: CREAM }}>
+            Testar 7 dias grátis
           </Link>
         </div>
       </nav>
 
       {/* ── HERO ────────────────────────────────────────────────────────────── */}
-      <section ref={heroRef} className="relative pt-32 pb-20 px-6 md:px-12 overflow-hidden min-h-screen flex items-center"
-        style={{ background: `radial-gradient(circle at 72% 28%, rgba(201,168,108,0.07), transparent 60%), ${NAVY}` }}>
-        <div className="relative max-w-6xl mx-auto w-full grid md:grid-cols-2 gap-12 items-center">
+      <section id="plataforma" ref={heroRef} className="relative pt-32 pb-20 px-6 md:px-12 overflow-hidden min-h-screen flex items-center"
+        style={{ background: `radial-gradient(circle at 82% 12%, rgba(184,151,106,0.20), transparent 55%), ${CREAM}` }}>
+        <div className="relative max-w-6xl mx-auto w-full grid md:grid-cols-[1.05fr_0.95fr] gap-12 items-center">
           {/* Esquerda */}
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-8"
-              style={{ background: "rgba(201,168,108,0.10)", border: "1px solid rgba(201,168,108,0.30)" }}>
-              <span className="w-1.5 h-1.5 rounded-full animate-blink" style={{ background: GOLD }} />
-              <span className="text-[10px] font-mono tracking-widest" style={{ color: GOLD }}>PLATAFORMA CLÍNICA COM IA</span>
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-7"
+              style={{ background: "rgba(184,151,106,0.12)", border: "1px solid rgba(184,151,106,0.35)" }}>
+              <span className="text-[10px] font-mono tracking-widest" style={{ color: GOLD_DARK }}>Consultório · Gestão · Marketing · Inteligência</span>
             </div>
 
-            <h1 className="text-[38px] md:text-[54px] font-semibold leading-[1.1] mb-6 text-white"
-              style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}>
-              Do consultório ao conteúdo — tudo em uma plataforma.
+            <h1 className="text-[40px] md:text-[56px] font-semibold leading-[1.08] mb-6"
+              style={{ fontFamily: "var(--font-playfair), Georgia, serif", color: NAVY }}>
+              Sua clínica inteira em <em style={{ color: GOLD_DARK, fontStyle: "italic" }}>um só sistema.</em>
             </h1>
 
-            <p className="text-[17px] md:text-[18px] mb-8 leading-relaxed max-w-xl" style={{ color: "rgba(255,255,255,0.70)" }}>
-              PRAXIS integra Copiloto de consulta com IA, CRM de pacientes, gestão financeira e marketing médico numa única plataforma para médicos brasileiros.
+            <p className="text-[17px] md:text-[18px] mb-8 leading-relaxed max-w-xl" style={{ color: NAVY2 }}>
+              O PRAXIS documenta sua consulta por voz, organiza seus pacientes, controla seu financeiro e cria seu conteúdo médico. <strong style={{ color: NAVY }}>Tudo com IA. Tudo integrado. Tudo em um lugar.</strong>
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 mb-10">
+            <div className="flex flex-col sm:flex-row gap-4 mb-6">
               <button onClick={() => router.push('/planos')}
                 className="flex items-center justify-center gap-2 px-8 py-4 rounded-lg text-[15px] font-bold transition-all active:scale-[0.98]"
-                style={{ background: GOLD, color: NAVY }}>
-                Começar agora <ArrowRight className="w-4 h-4" />
+                style={{ background: NAVY, color: CREAM }}>
+                Testar 7 dias grátis <ArrowRight className="w-4 h-4" />
               </button>
-              <Link href="/login"
+              <a href="#copiloto"
                 className="flex items-center justify-center gap-2 px-8 py-4 rounded-lg text-[15px] font-medium transition-all"
-                style={{ border: "1px solid rgba(255,255,255,0.20)", color: "rgba(255,255,255,0.80)" }}>
-                Já tenho conta →
-              </Link>
+                style={{ border: `1px solid ${NAVY}`, color: NAVY }}>
+                Ver o Copiloto em ação
+              </a>
             </div>
 
-            <div className="flex gap-8">
-              {[{ v: "7 dias", l: "grátis para testar" }, { v: "15", l: "módulos de IA" }, { v: "Claude", l: "IA de ponta" }].map((s, i) => (
-                <div key={i}>
-                  <div className="text-[22px] font-bold" style={{ color: GOLD }}>{s.v}</div>
-                  <div className="text-[11px] font-mono mt-0.5" style={{ color: "rgba(255,255,255,0.50)" }}>{s.l}</div>
+            <div className="flex flex-wrap gap-x-6 gap-y-2">
+              {["Sem cartão de crédito", "Configuração em 5 minutos", "Cancele quando quiser"].map((t, i) => (
+                <div key={i} className="flex items-center gap-1.5">
+                  <Check className="w-4 h-4 flex-shrink-0" style={{ color: "#2E9E6B" }} />
+                  <span className="text-[12px]" style={{ color: NAVY2 }}>{t}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Direita — mockup Copiloto */}
-          <div className="relative hidden md:block">
-            <div className="rounded-2xl p-5 shadow-2xl" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(201,168,108,0.20)" }}>
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "rgba(201,168,108,0.12)", border: "1px solid rgba(201,168,108,0.25)" }}>
-                  <Bot className="w-4 h-4" style={{ color: GOLD }} />
-                </div>
-                <div>
-                  <div className="text-[12px] font-semibold text-white">Copiloto de Consulta</div>
-                  <div className="text-[10px] font-mono" style={{ color: "rgba(255,255,255,0.40)" }}>Transcrição em tempo real</div>
-                </div>
+          {/* Direita — mockup Copiloto (janela dark) */}
+          <div className="relative">
+            <div className="rounded-2xl overflow-hidden shadow-2xl" style={{ background: NAVY, border: `1px solid ${NAVY2}` }}>
+              <div className="flex items-center gap-2 px-4 py-3" style={{ background: NAVY2, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#ff5f57" }} />
+                <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#febc2e" }} />
+                <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#28c840" }} />
+                <span className="ml-2 text-[10px] font-mono" style={{ color: "rgba(255,255,255,0.5)" }}>Copiloto de Consulta</span>
               </div>
-              <div className="space-y-2">
-                {[{ icon: FileText, t: "Prontuário gerado", s: "SOAP estruturado automaticamente" },
-                  { icon: Stethoscope, t: "Condutas sugeridas", s: "Baseadas na sua especialidade" },
-                  { icon: MessageSquare, t: "Seguimento D+1 / D+7 / D+30", s: "WhatsApp automático pós-consulta" }].map((r, i) => {
-                  const Icon = r.icon
-                  return (
-                    <div key={i} className="flex items-start gap-3 p-3 rounded-lg" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                      <Icon className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: GOLD }} />
-                      <div>
-                        <div className="text-[12px] font-medium text-white">{r.t}</div>
-                        <div className="text-[10px]" style={{ color: "rgba(255,255,255,0.45)" }}>{r.s}</div>
+              <div className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <div className="text-[13px] font-semibold text-white">Ana Carolina M., 34 anos</div>
+                    <div className="text-[10px]" style={{ color: "rgba(255,255,255,0.45)" }}>Retorno · Endocrinologia</div>
+                  </div>
+                  <div className="flex items-center gap-1.5 px-2 py-1 rounded-full" style={{ background: "rgba(46,158,107,0.15)", border: "1px solid rgba(46,158,107,0.4)" }}>
+                    <span className="w-1.5 h-1.5 rounded-full animate-blink" style={{ background: "#2E9E6B" }} />
+                    <span className="text-[9px] font-mono tracking-wider" style={{ color: "#7fe0b0" }}>AO VIVO</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-3 rounded-lg mb-3" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(184,151,106,0.15)", border: `1px solid ${GOLD}` }}>
+                    <Mic className="w-4 h-4" style={{ color: GOLD }} />
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-[11px] text-white">Gravando consulta…</div>
+                    <div className="text-[10px] font-mono" style={{ color: "rgba(255,255,255,0.4)" }}>08:42</div>
+                  </div>
+                </div>
+                <div className="space-y-1.5 mb-4">
+                  {["“…a fadiga melhorou bastante depois que ajustamos a dose.”", "“Continuo com dificuldade para perder peso, principalmente à tarde.”"].map((l, i) => (
+                    <div key={i} className="text-[10.5px] leading-snug px-3 py-2 rounded-lg" style={{ background: "rgba(255,255,255,0.02)", color: "rgba(255,255,255,0.6)" }}>{l}</div>
+                  ))}
+                </div>
+                <div className="text-[9px] font-mono uppercase tracking-widest mb-2" style={{ color: GOLD }}>Gerado automaticamente</div>
+                <div className="space-y-2">
+                  {[{ icon: FileText, t: "Prontuário SOAP completo" }, { icon: Stethoscope, t: "Prescrição + exames" }, { icon: MessageSquare, t: "Seguimento D+1 · D+7 · D+30" }].map((r, i) => {
+                    const Icon = r.icon
+                    return (
+                      <div key={i} className="flex items-center gap-3 p-2.5 rounded-lg" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                        <Icon className="w-4 h-4 flex-shrink-0" style={{ color: GOLD }} />
+                        <span className="text-[11.5px] text-white">{r.t}</span>
+                        <Check className="w-3.5 h-3.5 ml-auto" style={{ color: "#2E9E6B" }} />
                       </div>
-                    </div>
-                  )
-                })}
+                    )
+                  })}
+                </div>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── SOCIAL PROOF BAR ────────────────────────────────────────────────── */}
-      <section className="py-8 px-6 border-y" style={{ background: "rgba(255,255,255,0.02)", borderColor: "rgba(201,168,108,0.15)" }}>
-        <div className="max-w-5xl mx-auto">
-          <div className="flex flex-wrap items-center justify-center gap-8 md:gap-16">
-            {[
-              { value: stats ? fmtStat(stats.medicos_ativos) : null, fallback: "Beta exclusivo", label: "médicos na plataforma" },
-              { value: stats ? fmtStat(stats.consultas_realizadas, 10) : null, fallback: null, label: "consultas documentadas com IA" },
-              { value: "Plano Pro", fallback: "Plano Pro", label: "recomendado para começar" },
-            ].map((s, i) => {
-              const display = s.value ?? s.fallback
-              if (!display) return null
-              return (
-                <div key={i} className="text-center">
-                  <div className="text-[22px] font-bold" style={{ color: GOLD }}>{display}</div>
-                  <div className="text-[11px] font-mono text-text-muted mt-0.5">{s.label}</div>
-                </div>
-              )
-            })}
-          </div>
+      {/* ── TRUST BAR ───────────────────────────────────────────────────────── */}
+      <section className="py-6 px-6 md:px-12" style={{ background: NAVY }}>
+        <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6">
+          {[
+            { icon: Shield, t: "Dados em conformidade com a LGPD" },
+            { icon: Users,  t: "Criado por médico, para médicos" },
+            { icon: Lock,   t: "Prontuários criptografados" },
+            { icon: Zap,    t: "Integração nativa com MedX" },
+          ].map((item, i) => {
+            const Icon = item.icon
+            return (
+              <div key={i} className="flex items-center gap-2.5 justify-center md:justify-start">
+                <Icon className="w-4 h-4 flex-shrink-0" style={{ color: GOLD }} />
+                <span className="text-[12px]" style={{ color: "rgba(245,240,232,0.85)" }}>{item.t}</span>
+              </div>
+            )
+          })}
         </div>
       </section>
 

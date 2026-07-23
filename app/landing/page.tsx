@@ -8,10 +8,14 @@ import {
   Radio, Bot, Video, Layers, Zap, FileText,
   ScanFace, ShieldQuestion, Megaphone, Sparkles,
   Flame, CircleDollarSign, BarChart, Users, MessageSquare,
-  Star, Crown, X, Stethoscope, LineChart, Camera,
+  Star, Crown, X, Stethoscope, Monitor, Smartphone,
 } from "lucide-react"
 import { PraxisLogo } from "@/components/PraxisLogo"
 import { cn } from "@/lib/utils"
+
+// ─── Palette (landing redesign — navy + gold) ───────────────────────────────────
+const NAVY = "#0A1628"
+const GOLD = "#C9A86C"
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -43,12 +47,6 @@ const STEPS = [
   { num: "01", title: "Escolha o módulo", desc: "Selecione a ferramenta ideal para o conteúdo que precisa criar hoje." },
   { num: "02", title: "Configure com IA", desc: "A PRAXIS elabora a estratégia, o roteiro, o prompt, a arte — tudo com Claude IA." },
   { num: "03", title: "Publique com autoridade", desc: "Conteúdo premium pronto para publicar. Sua expertise, amplificada." },
-]
-
-const TESTIMONIALS = [
-  { name: "Dra. Fernanda Lopes", role: "Endocrinologista · SP", result: "3x mais engajamento em 60 dias", quote: "Finalmente consegui manter uma frequência de posts sem abrir mão do consultório. A PRAXIS pensa por mim quando não tenho tempo de pensar." },
-  { name: "Dr. Ricardo Mendes", role: "Nutrólogo · MG", result: "+2.400 seguidores em 90 dias", quote: "O Agente Executivo me deu um calendário editorial para o mês inteiro em menos de 10 minutos. Mudou completamente minha relação com o conteúdo." },
-  { name: "Dra. Camila Rocha", role: "Ginecologista · RJ", result: "Primeiro Reel viral com 180k views", quote: "Usei o Radar de Tendências para pegar uma pauta em alta e o roteiro ficou tão bom que viralizou. Nunca tinha tido resultado assim." },
 ]
 
 const FAQS = [
@@ -132,7 +130,6 @@ function FAQItem({ q, a }: { q: string; a: string }) {
 
 export default function LandingPage() {
   const router                              = useRouter()
-  const [particleCount]                     = useState(20)
   const heroRef                             = useRef<HTMLElement>(null)
   const [stats, setStats]                   = useState<{ medicos_ativos: number; consultas_realizadas: number } | null>(null)
 
@@ -160,86 +157,96 @@ export default function LandingPage() {
       </nav>
 
       {/* ── HERO ────────────────────────────────────────────────────────────── */}
-      <section ref={heroRef} className="relative pt-32 pb-24 px-6 md:px-12 overflow-hidden min-h-screen flex items-center">
-        {/* Particles */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {[...Array(particleCount)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute rounded-full"
-              style={{
-                width: i % 4 === 0 ? 3 : 2,
-                height: i % 4 === 0 ? 3 : 2,
-                background: `rgba(0,192,127,${0.10 + (i % 5) * 0.06})`,
-                left: `${(i * 5.1) % 98}%`,
-                top:  `${(i * 7.3 + 10) % 95}%`,
-                animation: `particle ${18 + (i % 8) * 2}s ${i * 0.6}s linear infinite`,
-              }}
-            />
-          ))}
-        </div>
-        {/* Accent glow */}
-        <div className="absolute top-1/3 right-1/4 w-[500px] h-[500px] bg-accent/[0.03] rounded-full blur-[120px] pointer-events-none" />
-
-        <div className="relative max-w-5xl mx-auto w-full">
-          <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent-dim border border-accent-border mb-8">
-              <span className="w-1.5 h-1.5 rounded-full bg-accent animate-blink" />
-              <span className="text-[10px] font-mono text-accent tracking-widest">PLATAFORMA CLÍNICA COM IA</span>
+      <section ref={heroRef} className="relative pt-32 pb-20 px-6 md:px-12 overflow-hidden min-h-screen flex items-center"
+        style={{ background: `radial-gradient(circle at 72% 28%, rgba(201,168,108,0.07), transparent 60%), ${NAVY}` }}>
+        <div className="relative max-w-6xl mx-auto w-full grid md:grid-cols-2 gap-12 items-center">
+          {/* Esquerda */}
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-8"
+              style={{ background: "rgba(201,168,108,0.10)", border: "1px solid rgba(201,168,108,0.30)" }}>
+              <span className="w-1.5 h-1.5 rounded-full animate-blink" style={{ background: GOLD }} />
+              <span className="text-[10px] font-mono tracking-widest" style={{ color: GOLD }}>PLATAFORMA CLÍNICA COM IA</span>
             </div>
 
-            <h1
-              className="text-[38px] md:text-[56px] font-semibold text-text-primary leading-[1.1] mb-6"
-              style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}
-            >
+            <h1 className="text-[38px] md:text-[54px] font-semibold leading-[1.1] mb-6 text-white"
+              style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}>
               Do consultório ao conteúdo — tudo em uma plataforma.
             </h1>
 
-            <p className="text-[17px] md:text-[19px] text-text-secondary mb-10 leading-relaxed max-w-2xl">
-              PRAXIS integra Copiloto de consulta com IA, CRM de pacientes, gestão financeira e marketing médico em uma única plataforma para médicos brasileiros.
+            <p className="text-[17px] md:text-[18px] mb-8 leading-relaxed max-w-xl" style={{ color: "rgba(255,255,255,0.70)" }}>
+              PRAXIS integra Copiloto de consulta com IA, CRM de pacientes, gestão financeira e marketing médico numa única plataforma para médicos brasileiros.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4">
-              <button
-                onClick={() => router.push('/planos')}
-                className="flex items-center justify-center gap-2 px-8 py-4 rounded-lg bg-accent text-background text-[15px] font-bold hover:opacity-90 transition-all active:scale-[0.98]"
-              >
+            <div className="flex flex-col sm:flex-row gap-4 mb-10">
+              <button onClick={() => router.push('/planos')}
+                className="flex items-center justify-center gap-2 px-8 py-4 rounded-lg text-[15px] font-bold transition-all active:scale-[0.98]"
+                style={{ background: GOLD, color: NAVY }}>
                 Começar agora <ArrowRight className="w-4 h-4" />
               </button>
-              <Link
-                href="/login"
-                className="flex items-center justify-center gap-2 px-8 py-4 rounded-lg border border-border text-text-secondary text-[15px] font-medium hover:border-border-hover hover:text-text-primary transition-all"
-              >
+              <Link href="/login"
+                className="flex items-center justify-center gap-2 px-8 py-4 rounded-lg text-[15px] font-medium transition-all"
+                style={{ border: "1px solid rgba(255,255,255,0.20)", color: "rgba(255,255,255,0.80)" }}>
                 Já tenho conta →
               </Link>
+            </div>
+
+            <div className="flex gap-8">
+              {[{ v: "7 dias", l: "grátis para testar" }, { v: "15", l: "módulos de IA" }, { v: "Claude", l: "IA de ponta" }].map((s, i) => (
+                <div key={i}>
+                  <div className="text-[22px] font-bold" style={{ color: GOLD }}>{s.v}</div>
+                  <div className="text-[11px] font-mono mt-0.5" style={{ color: "rgba(255,255,255,0.50)" }}>{s.l}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Direita — mockup Copiloto */}
+          <div className="relative hidden md:block">
+            <div className="rounded-2xl p-5 shadow-2xl" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(201,168,108,0.20)" }}>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "rgba(201,168,108,0.12)", border: "1px solid rgba(201,168,108,0.25)" }}>
+                  <Bot className="w-4 h-4" style={{ color: GOLD }} />
+                </div>
+                <div>
+                  <div className="text-[12px] font-semibold text-white">Copiloto de Consulta</div>
+                  <div className="text-[10px] font-mono" style={{ color: "rgba(255,255,255,0.40)" }}>Transcrição em tempo real</div>
+                </div>
+              </div>
+              <div className="space-y-2">
+                {[{ icon: FileText, t: "Prontuário gerado", s: "SOAP estruturado automaticamente" },
+                  { icon: Stethoscope, t: "Condutas sugeridas", s: "Baseadas na sua especialidade" },
+                  { icon: MessageSquare, t: "Seguimento D+1 / D+7 / D+30", s: "WhatsApp automático pós-consulta" }].map((r, i) => {
+                  const Icon = r.icon
+                  return (
+                    <div key={i} className="flex items-start gap-3 p-3 rounded-lg" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                      <Icon className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: GOLD }} />
+                      <div>
+                        <div className="text-[12px] font-medium text-white">{r.t}</div>
+                        <div className="text-[10px]" style={{ color: "rgba(255,255,255,0.45)" }}>{r.s}</div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
             </div>
           </div>
         </div>
       </section>
 
       {/* ── SOCIAL PROOF BAR ────────────────────────────────────────────────── */}
-      <section className="py-8 px-6 border-y border-border" style={{ background: "var(--surface-2)" }}>
+      <section className="py-8 px-6 border-y" style={{ background: "rgba(255,255,255,0.02)", borderColor: "rgba(201,168,108,0.15)" }}>
         <div className="max-w-5xl mx-auto">
           <div className="flex flex-wrap items-center justify-center gap-8 md:gap-16">
             {[
-              {
-                value: stats ? fmtStat(stats.medicos_ativos) : null,
-                fallback: "Beta exclusivo",
-                label: "médicos pioneiros",
-              },
-              {
-                value: stats ? fmtStat(stats.consultas_realizadas, 10) : null,
-                fallback: null,
-                label: "consultas documentadas com IA",
-              },
-              { value: "4.9★", fallback: "4.9★", label: "avaliação média" },
-              { value: "~15 min", fallback: "~15 min", label: "economizados por consulta" },
+              { value: stats ? fmtStat(stats.medicos_ativos) : null, fallback: "Beta exclusivo", label: "médicos na plataforma" },
+              { value: stats ? fmtStat(stats.consultas_realizadas, 10) : null, fallback: null, label: "consultas documentadas com IA" },
+              { value: "Plano Pro", fallback: "Plano Pro", label: "recomendado para começar" },
             ].map((s, i) => {
               const display = s.value ?? s.fallback
               if (!display) return null
               return (
                 <div key={i} className="text-center">
-                  <div className="text-[22px] font-bold text-text-primary">{display}</div>
+                  <div className="text-[22px] font-bold" style={{ color: GOLD }}>{display}</div>
                   <div className="text-[11px] font-mono text-text-muted mt-0.5">{s.label}</div>
                 </div>
               )
@@ -325,75 +332,27 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── DEPOIMENTOS ─────────────────────────────────────────────────────── */}
-      <section className="py-24 px-6 md:px-12" style={{ background: "var(--surface-2)" }}>
-        <div className="max-w-5xl mx-auto">
-          <SectionHeader label="Resultados reais" title="Médicos que transformaram sua presença digital." />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {TESTIMONIALS.map((t, i) => (
-              <div key={i} className="bg-surface border border-border rounded-xl p-6 hover:border-border-hover transition-all">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-                    style={{ background: "linear-gradient(135deg, rgba(0,192,127,0.25), rgba(0,192,127,0.08))", border: "1px solid rgba(0,192,127,0.2)" }}>
-                    <span className="text-[12px] font-bold text-accent">{t.name.split(" ").slice(1, 3).map(w => w[0]).join("")}</span>
-                  </div>
-                  <div>
-                    <div className="text-[13px] font-semibold text-text-primary">{t.name}</div>
-                    <div className="text-[10px] text-text-muted">{t.role}</div>
-                  </div>
-                </div>
-                <p className="text-[13px] text-text-secondary leading-relaxed mb-4 italic">&ldquo;{t.quote}&rdquo;</p>
-                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-accent-dim border border-accent-border">
-                  <span className="w-1 h-1 rounded-full bg-accent" />
-                  <span className="text-[11px] text-accent font-medium">{t.result}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── PARA QUEM É ─────────────────────────────────────────────────────── */}
+      {/* ── 3 AMBIENTES ─────────────────────────────────────────────────────── */}
       <section className="py-24 px-6 md:px-12">
         <div className="max-w-5xl mx-auto">
-          <SectionHeader
-            label="Para quem é o PRAXIS"
-            title="Uma plataforma para cada momento da sua rotina."
-          />
+          <SectionHeader label="Três ambientes, uma plataforma" title="Do atendimento à captação de pacientes." />
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[
-              {
-                icon: Stethoscope,
-                color: "#00c07f",
-                bg: "rgba(0,192,127,0.08)",
-                border: "rgba(0,192,127,0.2)",
-                title: "Na consulta",
-                desc: "Copiloto com IA documenta o prontuário, sugere condutas e gera seguimento pós-consulta em tempo real.",
-              },
-              {
-                icon: LineChart,
-                color: "#3b7fff",
-                bg: "rgba(59,127,255,0.08)",
-                border: "rgba(59,127,255,0.2)",
-                title: "Na gestão",
-                desc: "CRM de leads, financeiro com DRE, NPS de pacientes e indicadores integrados — sem planilha.",
-              },
-              {
-                icon: Camera,
-                color: "#a855f7",
-                bg: "rgba(168,85,247,0.08)",
-                border: "rgba(168,85,247,0.2)",
-                title: "No marketing",
-                desc: "Roteiros, carrosséis, legendas e calendário editorial gerados por IA com a sua especialidade.",
-              },
+              { num: "01", icon: Stethoscope, title: "Consultório", desc: "Copiloto de voz documenta o prontuário, sugere condutas e agenda o seguimento pós-consulta em tempo real." },
+              { num: "02", icon: Monitor,     title: "Gestão",      desc: "CRM de leads, financeiro com DRE, NPS de pacientes e indicadores da clínica integrados — sem planilha." },
+              { num: "03", icon: Smartphone,  title: "Marketing",   desc: "Roteiros, carrosséis, legendas e calendário editorial gerados por IA com a sua especialidade." },
             ].map((item, i) => {
               const Icon = item.icon
               return (
-                <div key={i} className="flex flex-col gap-4 p-6 rounded-xl border hover:border-border-hover transition-all"
-                  style={{ background: item.bg, borderColor: item.border }}>
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-                    style={{ background: "rgba(0,0,0,0.2)", border: `1px solid ${item.border}` }}>
-                    <Icon className="w-5 h-5" style={{ color: item.color }} />
+                <div key={i} className="relative flex flex-col gap-4 p-6 rounded-xl"
+                  style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(201,168,108,0.18)" }}>
+                  <div className="flex items-center justify-between">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+                      style={{ background: "rgba(201,168,108,0.10)", border: "1px solid rgba(201,168,108,0.25)" }}>
+                      <Icon className="w-5 h-5" style={{ color: GOLD }} />
+                    </div>
+                    <span className="text-[28px] font-bold leading-none"
+                      style={{ fontFamily: "var(--font-playfair), Georgia, serif", color: "rgba(201,168,108,0.25)" }}>{item.num}</span>
                   </div>
                   <div>
                     <h3 className="text-[16px] font-semibold text-text-primary mb-1">{item.title}</h3>
@@ -402,6 +361,47 @@ export default function LandingPage() {
                 </div>
               )
             })}
+          </div>
+        </div>
+      </section>
+
+      {/* ── FEATURE COPILOTO ────────────────────────────────────────────────── */}
+      <section className="py-24 px-6 md:px-12" style={{ background: NAVY }}>
+        <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-12 items-center">
+          <div>
+            <p className="text-[10px] font-mono tracking-[3px] uppercase mb-3" style={{ color: GOLD }}>O coração da plataforma</p>
+            <h2 className="text-[28px] md:text-[36px] font-semibold mb-4 leading-tight text-white"
+              style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}>
+              O Copiloto que trabalha depois que o paciente sai.
+            </h2>
+            <p className="text-[15px] mb-6 leading-relaxed" style={{ color: "rgba(255,255,255,0.70)" }}>
+              Enquanto você atende, o Copiloto ouve, documenta e organiza. Ao final, o prontuário já sai pronto e o seguimento certo é disparado na hora certa — indicação, NPS e retorno, tudo automático.
+            </p>
+            <div className="space-y-3">
+              {["Prontuário SOAP gerado automaticamente", "Sugestão de CID e condutas por especialidade", "Indicação e NPS agendados via WhatsApp (D+1, D+7, D+30)"].map((t, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <Check className="w-4 h-4 flex-shrink-0" style={{ color: GOLD }} />
+                  <span className="text-[13px]" style={{ color: "rgba(255,255,255,0.85)" }}>{t}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="rounded-2xl p-5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(201,168,108,0.20)" }}>
+            <div className="text-[10px] font-mono uppercase tracking-widest mb-3" style={{ color: "rgba(255,255,255,0.40)" }}>Ações pós-consulta</div>
+            <div className="space-y-2">
+              {[{ t: "Prontuário salvo", s: "há 2 segundos" }, { t: "Indicação D+1 agendada", s: "amanhã, 09:00" },
+                { t: "NPS D+1 agendado", s: "amanhã, 09:00" }, { t: "Retorno D+30 agendado", s: "em 30 dias" }].map((r, i) => (
+                <div key={i} className="flex items-center justify-between p-3 rounded-lg" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: "rgba(201,168,108,0.15)", border: "1px solid rgba(201,168,108,0.30)" }}>
+                      <Check className="w-3 h-3" style={{ color: GOLD }} />
+                    </div>
+                    <span className="text-[12px] text-white">{r.t}</span>
+                  </div>
+                  <span className="text-[10px] font-mono" style={{ color: "rgba(255,255,255,0.40)" }}>{r.s}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -514,7 +514,7 @@ export default function LandingPage() {
             <Link href="/login" className="text-[12px] text-text-muted hover:text-text-primary transition-colors">Entrar</Link>
             <Link href="/termos" className="text-[12px] text-text-muted hover:text-text-primary transition-colors">Termos</Link>
             <Link href="/privacidade" className="text-[12px] text-text-muted hover:text-text-primary transition-colors">Privacidade</Link>
-            <a href="https://wa.me/5535999999999" target="_blank" rel="noopener noreferrer"
+            <a href="https://wa.me/5535997688008" target="_blank" rel="noopener noreferrer"
               className="text-[12px] text-text-muted hover:text-accent transition-colors">WhatsApp</a>
           </div>
           <p className="text-[11px] text-text-muted text-center md:text-right">

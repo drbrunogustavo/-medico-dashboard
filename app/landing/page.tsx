@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import {
@@ -26,75 +26,70 @@ const GOLD_DARK = "#96784F"
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
 const FAQS = [
-  { q: "Preciso ter experiência com redes sociais?", a: "Não. A PRAXIS foi projetada para médicos que são especialistas em sua área, não em marketing. A plataforma guia você em cada etapa." },
-  { q: "O conteúdo gerado é ético e dentro das normas do CFM?", a: "Sim. Todos os módulos foram desenvolvidos com as diretrizes éticas do CFM em mente. A IA é treinada para evitar linguagem promocional indevida e sensacionalismo." },
-  { q: "Posso cancelar a qualquer momento?", a: "Sim, sem fidelidade, sem multa, sem burocracia. Você cancela quando quiser diretamente pelo painel." },
-  { q: "A plataforma funciona para todas as especialidades?", a: "Sim. Endocrinologistas, nutrólogos, ginecologistas, cardiologistas, psiquiatras, dermatologistas — a PRAXIS se adapta ao seu nicho." },
-  { q: "Quantas gerações posso fazer por mês?", a: "Depende do plano. Starter: 30/mês. Pro: 200/mês. Elite: ilimitado." },
-  { q: "Os dados dos meus pacientes ficam seguros?", a: "A PRAXIS não armazena dados de pacientes. Você trabalha com conteúdo estratégico e de autoridade, nunca com casos clínicos identificáveis." },
-  { q: "Posso usar no celular?", a: "Sim. A plataforma é responsiva e funciona bem em smartphones e tablets, além do desktop." },
-  { q: "Como funciona o onboarding do plano Elite?", a: "No plano Elite, um especialista PRAXIS entra em contato em até 24h para uma sessão de 1 hora para configurar tudo para o seu perfil e nicho." },
+  { q: "O uso de IA em consulta é permitido pelo CFM?", a: "Sim. O Copiloto é uma ferramenta de apoio à documentação — o médico revisa e valida tudo antes de assinar. A responsabilidade clínica e o prontuário seguem sendo do profissional." },
+  { q: "O paciente precisa consentir com a gravação?", a: "Sim. O PRAXIS orienta o registro do consentimento do paciente antes de iniciar a captação de áudio, em conformidade com a LGPD e as boas práticas do CFM." },
+  { q: "Meus dados e prontuários estão seguros?", a: "Sim. Os prontuários são criptografados, o acesso é isolado por médico e a plataforma segue a LGPD. Você mantém o controle e a portabilidade dos seus dados." },
+  { q: "Funciona com o sistema que já uso na clínica?", a: "O PRAXIS tem integração nativa com o MedX (agenda, pacientes e status). Os demais módulos operam de forma independente, sem exigir a troca do seu sistema atual." },
+  { q: "Preciso saber usar IA ou tecnologia?", a: "Não. A plataforma foi feita para o dia a dia do médico: você fala, ela documenta. A configuração inicial leva cerca de 5 minutos." },
+  { q: "Posso cancelar quando quiser?", a: "Sim, sem fidelidade e sem multa. O cancelamento é feito pelo próprio painel e o acesso permanece até o fim do período já pago." },
+  { q: "O conteúdo gerado é genérico?", a: "Não. O conteúdo e as condutas usam a sua especialidade, a sua memória clínica e a sua identidade visual — o resultado sai com a sua cara, não um template." },
+  { q: "Serve para quem tem mais de uma clínica?", a: "Sim. O plano Pro atende até 3 clínicas e o Elite é multi-clínica ilimitado, com indicadores consolidados por unidade." },
 ]
 
 const PLANS = [
   {
-    id: "starter", name: "Starter", price: 97,
-    badge: null as string | null, color: "text-text-secondary",
-    border: "border-border", ctaBg: "bg-white/[0.06] hover:bg-white/[0.10]", ctaText: "text-text-secondary",
-    features: ["Roteiros, Legendas, Ganchos", "Banco de Pautas", "30 gerações/mês", "Suporte por email"],
-    excluded: ["Agente Executivo", "Radar de Tendências", "Diretor Criativo"],
-    icon: Zap,
+    id: "starter", name: "Starter", price: 97, icon: Zap,
+    badge: null as string | null, highlight: false,
+    blocks: [
+      { label: "Consultório", items: ["Agenda inteligente"] },
+      { label: "Gestão",      items: ["CRM de pacientes", "Financeiro + DRE"] },
+      { label: "Marketing",   items: ["Roteiros, legendas e pautas", "Calendário editorial", "30 gerações/mês"] },
+      { label: "Suporte",     items: ["Suporte por e-mail"] },
+    ],
+    excluded: ["Copiloto de Consulta", "Diretor Criativo", "Radar Científico"],
   },
   {
-    id: "pro", name: "Pro", price: 197,
-    badge: "RECOMENDADO", color: "text-accent",
-    border: "border-accent-border", ctaBg: "bg-accent hover:opacity-90", ctaText: "text-background font-bold",
-    features: ["Todos os módulos exceto Agente Executivo", "200 gerações/mês", "Suporte por WhatsApp", "Atualizações prioritárias"],
-    excluded: ["Agente Executivo"],
-    icon: Star,
+    id: "pro", name: "Pro", price: 197, icon: Star,
+    badge: "Escolha da maioria" as string | null, highlight: true,
+    blocks: [
+      { label: "Consultório", items: ["Copiloto de Consulta por voz", "Prontuário SOAP", "Memória clínica", "Seguimento D+1 / D+7 / D+30"] },
+      { label: "Gestão",      items: ["CRM, Financeiro e NPS", "Indicações e reativação", "Até 3 clínicas"] },
+      { label: "Marketing",   items: ["Tudo do Starter", "200 gerações/mês"] },
+      { label: "Suporte",     items: ["Suporte por WhatsApp"] },
+    ],
+    excluded: [] as string[],
   },
   {
-    id: "elite", name: "Elite", price: 397,
-    badge: "ELITE", color: "text-[#d4af37]",
-    border: "border-[rgba(212,175,55,0.25)]", ctaBg: "bg-[#d4af37] hover:bg-[#e0bc40]", ctaText: "text-[#080808] font-bold",
-    features: ["TODOS os 15 módulos", "Gerações ilimitadas", "WhatsApp prioritário", "Onboarding 1:1 com especialista"],
-    excluded: [],
-    icon: Crown,
+    id: "elite", name: "Elite", price: 397, icon: Crown,
+    badge: "Elite" as string | null, highlight: false,
+    blocks: [
+      { label: "Consultório",  items: ["Tudo do plano Pro"] },
+      { label: "Gestão",       items: ["Clínicas ilimitadas", "Diagnóstico 360°"] },
+      { label: "Marketing",    items: ["Diretor Criativo (imagens IA)", "Agente Executivo", "Gerações ilimitadas"] },
+      { label: "Inteligência", items: ["Consultor Estratégico IA", "Academy"] },
+      { label: "Suporte",      items: ["WhatsApp prioritário + onboarding 1:1"] },
+    ],
+    excluded: [] as string[],
   },
 ]
-
-// ─── Section header ───────────────────────────────────────────────────────────
-
-function SectionHeader({ label, title, sub }: { label: string; title: string; sub?: string }) {
-  return (
-    <div className="text-center max-w-2xl mx-auto mb-12">
-      <p className="text-[10px] font-mono text-accent tracking-[3px] uppercase mb-3">{label}</p>
-      <h2 className="text-[28px] md:text-[36px] font-semibold text-text-primary mb-4 leading-tight"
-        style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}>
-        {title}
-      </h2>
-      {sub && <p className="text-[15px] text-text-secondary leading-relaxed">{sub}</p>}
-    </div>
-  )
-}
 
 // ─── FAQ Accordion ────────────────────────────────────────────────────────────
 
 function FAQItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false)
   return (
-    <div className="border-b border-border">
+    <div style={{ borderBottom: "1px solid rgba(13,27,42,0.10)" }}>
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between py-5 text-left gap-4 group"
+        className="w-full flex items-center justify-between py-5 text-left gap-4"
       >
-        <span className="text-[14px] font-medium text-text-primary group-hover:text-accent transition-colors">{q}</span>
+        <span className="text-[14px] font-medium" style={{ color: NAVY }}>{q}</span>
         {open
-          ? <ChevronUp   className="w-4 h-4 text-accent flex-shrink-0" />
-          : <ChevronDown className="w-4 h-4 text-text-muted flex-shrink-0 group-hover:text-text-secondary transition-colors" />}
+          ? <ChevronUp   className="w-4 h-4 flex-shrink-0" style={{ color: GOLD_DARK }} />
+          : <ChevronDown className="w-4 h-4 flex-shrink-0" style={{ color: GOLD_DARK }} />}
       </button>
       {open && (
-        <p className="pb-5 text-[13px] text-text-secondary leading-relaxed">
+        <p className="pb-5 text-[13px] leading-relaxed" style={{ color: NAVY2 }}>
           {a}
         </p>
       )}
@@ -107,14 +102,6 @@ function FAQItem({ q, a }: { q: string; a: string }) {
 export default function LandingPage() {
   const router                              = useRouter()
   const heroRef                             = useRef<HTMLElement>(null)
-  const [stats, setStats]                   = useState<{ medicos_ativos: number; consultas_realizadas: number } | null>(null)
-
-  useEffect(() => {
-    fetch("/api/landing/stats").then(r => r.json()).then(setStats).catch(() => null)
-  }, [])
-
-  const fmtStat = (n: number, threshold = 50) =>
-    n < threshold ? null : n >= 1000 ? `+${Math.floor(n / 100) * 100}` : `+${n}`
 
   return (
     <div className="fixed inset-0 z-[200] overflow-y-auto" style={{ fontFamily: "var(--font-inter), system-ui, sans-serif", background: CREAM, color: NAVY }}>
@@ -410,35 +397,39 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── FEATURE COPILOTO ────────────────────────────────────────────────── */}
-      <section className="py-24 px-6 md:px-12" style={{ background: NAVY }}>
-        <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-12 items-center">
-          <div>
+      {/* ── COPILOTO (deep) ─────────────────────────────────────────────────── */}
+      <section id="copiloto" className="py-24 px-6 md:px-12" style={{ background: NAVY }}>
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center max-w-2xl mx-auto mb-14">
             <p className="text-[10px] font-mono tracking-[3px] uppercase mb-3" style={{ color: GOLD }}>O coração da plataforma</p>
-            <h2 className="text-[28px] md:text-[36px] font-semibold mb-4 leading-tight text-white"
-              style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}>
-              O Copiloto que trabalha depois que o paciente sai.
+            <h2 className="text-[28px] md:text-[38px] font-semibold leading-tight text-white" style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}>
+              O Copiloto continua trabalhando <em style={{ color: GOLD, fontStyle: "italic" }}>depois que o paciente sai.</em>
             </h2>
-            <p className="text-[15px] mb-6 leading-relaxed" style={{ color: "rgba(255,255,255,0.70)" }}>
-              Enquanto você atende, o Copiloto ouve, documenta e organiza. Ao final, o prontuário já sai pronto e o seguimento certo é disparado na hora certa — indicação, NPS e retorno, tudo automático.
-            </p>
-            <div className="space-y-3">
-              {["Prontuário SOAP gerado automaticamente", "Sugestão de CID e condutas por especialidade", "Indicação e NPS agendados via WhatsApp (D+1, D+7, D+30)"].map((t, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <Check className="w-4 h-4 flex-shrink-0" style={{ color: GOLD }} />
-                  <span className="text-[13px]" style={{ color: "rgba(255,255,255,0.85)" }}>{t}</span>
-                </div>
-              ))}
-            </div>
           </div>
-          <div className="rounded-2xl p-5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(201,168,108,0.20)" }}>
-            <div className="text-[10px] font-mono uppercase tracking-widest mb-3" style={{ color: "rgba(255,255,255,0.40)" }}>Ações pós-consulta</div>
-            <div className="space-y-2">
+          <div className="grid md:grid-cols-3 gap-4 mb-12">
+            {[
+              { n: "01", t: "Ouve e documenta", d: "Durante a consulta, transcreve a conversa e estrutura o prontuário SOAP em tempo real." },
+              { n: "02", t: "Sugere e prescreve", d: "Propõe condutas, CID e monta prescrição e pedido de exames pela sua memória clínica." },
+              { n: "03", t: "Agenda o seguimento", d: "Dispara indicação, NPS e retorno via WhatsApp em D+1, D+7 e D+30 — automaticamente." },
+            ].map((s, i) => (
+              <div key={i} className="rounded-2xl p-6" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(184,151,106,0.20)" }}>
+                <div className="text-[32px] font-bold leading-none mb-3" style={{ fontFamily: "var(--font-playfair), Georgia, serif", color: "rgba(184,151,106,0.45)" }}>{s.n}</div>
+                <h3 className="text-[16px] font-semibold text-white mb-2">{s.t}</h3>
+                <p className="text-[13px] leading-relaxed" style={{ color: "rgba(255,255,255,0.65)" }}>{s.d}</p>
+              </div>
+            ))}
+          </div>
+          <div className="rounded-2xl p-5 max-w-2xl mx-auto" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(184,151,106,0.20)" }}>
+            <div className="flex items-center gap-2 mb-3">
+              <FileText className="w-4 h-4" style={{ color: GOLD }} />
+              <span className="text-[10px] font-mono uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.40)" }}>Ações pós-consulta</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {[{ t: "Prontuário salvo", s: "há 2 segundos" }, { t: "Indicação D+1 agendada", s: "amanhã, 09:00" },
                 { t: "NPS D+1 agendado", s: "amanhã, 09:00" }, { t: "Retorno D+30 agendado", s: "em 30 dias" }].map((r, i) => (
                 <div key={i} className="flex items-center justify-between p-3 rounded-lg" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
                   <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: "rgba(201,168,108,0.15)", border: "1px solid rgba(201,168,108,0.30)" }}>
+                    <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(184,151,106,0.15)", border: "1px solid rgba(184,151,106,0.30)" }}>
                       <Check className="w-3 h-3" style={{ color: GOLD }} />
                     </div>
                     <span className="text-[12px] text-white">{r.t}</span>
@@ -451,65 +442,265 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── PLANOS ──────────────────────────────────────────────────────────── */}
-      <section id="planos" className="py-24 px-6 md:px-12">
+      {/* ── RELATÓRIO GERADO ────────────────────────────────────────────────── */}
+      <section className="py-24 px-6 md:px-12" style={{ background: CREAM }}>
         <div className="max-w-5xl mx-auto">
-          <SectionHeader
-            label="Planos"
-            title="Investimento que se paga no primeiro mês."
-            sub="Cancele quando quiser. Sem fidelidade, sem burocracia."
-          />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <p className="text-[10px] font-mono tracking-[3px] uppercase mb-3" style={{ color: GOLD_DARK }}>Veja o resultado real</p>
+            <h2 className="text-[28px] md:text-[36px] font-semibold mb-4 leading-tight" style={{ fontFamily: "var(--font-playfair), Georgia, serif", color: NAVY }}>
+              Isto é o que o Copiloto entrega<br /><em style={{ color: GOLD_DARK, fontStyle: "italic" }}>ao final de uma consulta.</em>
+            </h2>
+            <p className="text-[15px] leading-relaxed" style={{ color: NAVY2 }}>Gravação de 12 minutos. Documentação completa em 40 segundos.</p>
+          </div>
+          <div className="grid md:grid-cols-[0.85fr_1.15fr] gap-8 items-start">
+            {/* Esquerda sticky */}
+            <div className="md:sticky md:top-24">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-4" style={{ background: "rgba(46,158,107,0.10)", border: "1px solid rgba(46,158,107,0.35)" }}>
+                <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#2E9E6B" }} />
+                <span className="text-[10px] font-mono" style={{ color: "#2E9E6B" }}>Gerado em 38 segundos</span>
+              </div>
+              <h3 className="text-[22px] font-semibold mb-4 leading-snug" style={{ fontFamily: "var(--font-playfair), Georgia, serif", color: NAVY }}>
+                Da conversa ao prontuário, <em style={{ color: GOLD_DARK, fontStyle: "italic" }}>sem digitar.</em>
+              </h3>
+              <div className="space-y-4">
+                {[
+                  { t: "Estrutura SOAP completa", d: "Subjetivo, objetivo, avaliação e plano organizados automaticamente." },
+                  { t: "CID e exames sugeridos", d: "Codificação e pedido de exames prontos para revisar e assinar." },
+                  { t: "Seguimento já agendado", d: "As três mensagens de acompanhamento saem sem você lembrar." },
+                ].map((it, i) => (
+                  <div key={i} className="flex gap-3">
+                    <Check className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: GOLD }} />
+                    <div>
+                      <div className="text-[13px] font-semibold" style={{ color: NAVY }}>{it.t}</div>
+                      <div className="text-[12px] leading-relaxed" style={{ color: NAVY2 }}>{it.d}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* Direita — documento */}
+            <div className="rounded-2xl overflow-hidden shadow-xl" style={{ background: "#fff", border: "1px solid rgba(13,27,42,0.10)" }}>
+              <div className="flex items-center justify-between px-5 py-3" style={{ background: NAVY }}>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-center rounded-full" style={{ width: 22, height: 22, border: `1px solid ${GOLD}` }}>
+                    <span style={{ fontFamily: "var(--font-playfair), Georgia, serif", color: GOLD, fontSize: 11, fontWeight: 700 }}>P</span>
+                  </div>
+                  <span className="text-[11px] font-mono tracking-widest" style={{ color: CREAM }}>PRONTUÁRIO DE CONSULTA</span>
+                </div>
+                <span className="text-[8px] font-mono font-bold px-1.5 py-0.5 rounded" style={{ background: "rgba(184,151,106,0.20)", color: GOLD, letterSpacing: "0.1em" }}>IA</span>
+              </div>
+              <div className="p-5">
+                <div className="grid grid-cols-4 gap-2 pb-4 mb-4" style={{ borderBottom: "1px solid rgba(13,27,42,0.08)" }}>
+                  {[["Paciente", "Ana Carolina M."], ["Idade", "34 anos"], ["Tipo", "Retorno · 90 dias"], ["Data", "22/07/2026"]].map(([k, v], i) => (
+                    <div key={i}>
+                      <div className="text-[8.5px] font-mono uppercase tracking-wider mb-0.5" style={{ color: GOLD_DARK }}>{k}</div>
+                      <div className="text-[11px] font-medium" style={{ color: NAVY }}>{v}</div>
+                    </div>
+                  ))}
+                </div>
+                {[
+                  { l: "S", t: "Subjetivo", c: "Refere melhora importante da fadiga após ajuste da levotiroxina. Mantém cansaço vespertino leve e dificuldade de perda de peso, sobretudo no período da tarde. Nega palpitações, intolerância ao calor ou alterações de humor." },
+                  { l: "O", t: "Objetivo", c: "Peso 78,4 kg (anterior 81,2) · IMC 28,1 · PA 118/76 · TSH 2,8 (prévio 8,4) · HOMA-IR 4,3 · Vit. D 24 · Ferritina 32." },
+                  { l: "A", t: "Avaliação", c: "Tireoidite de Hashimoto compensada, resistência insulínica e hipovitaminose D." },
+                  { l: "P", t: "Plano", c: "" },
+                  { l: "E", t: "Exames", c: "" },
+                ].map((sec, i) => (
+                  <div key={i} className="mb-4">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span className="w-5 h-5 rounded flex items-center justify-center text-[11px] font-bold flex-shrink-0" style={{ background: NAVY, color: CREAM }}>{sec.l}</span>
+                      <span className="text-[12px] font-semibold" style={{ color: NAVY }}>{sec.t}</span>
+                    </div>
+                    {sec.c && <p className="text-[11.5px] leading-relaxed pl-7" style={{ color: NAVY2 }}>{sec.c}</p>}
+                    {sec.l === "A" && (
+                      <div className="flex gap-1.5 pl-7 mt-2">
+                        {["E06.3", "E88.81", "E55.9"].map(cid => (
+                          <span key={cid} className="text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded" style={{ background: "rgba(184,151,106,0.12)", color: GOLD_DARK, border: "1px solid rgba(184,151,106,0.3)" }}>{cid}</span>
+                        ))}
+                      </div>
+                    )}
+                    {sec.l === "P" && (
+                      <div className="pl-7 space-y-1.5">
+                        {["Manter levotiroxina 75 mcg em jejum", "Iniciar metformina XR 500 mg à noite", "Colecalciferol 50.000 UI/semana por 8 semanas", "Sulfato ferroso 40 mg/dia", "Orientação nutricional e atividade física", "Retorno em 90 dias com exames"].map((p, j) => (
+                          <div key={j} className="flex items-start gap-1.5">
+                            <Check className="w-3 h-3 mt-0.5 flex-shrink-0" style={{ color: "#2E9E6B" }} />
+                            <span className="text-[11px]" style={{ color: NAVY2 }}>{p}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {sec.l === "E" && (
+                      <p className="text-[11px] leading-relaxed pl-7" style={{ color: NAVY2 }}>
+                        TSH, T4 livre, anti-TPO, glicemia de jejum, insulina, HbA1c, perfil lipídico, 25-OH-vitamina D, ferritina, hemograma e TGO/TGP.
+                      </p>
+                    )}
+                  </div>
+                ))}
+                <div className="grid grid-cols-3 gap-2 pt-4 mt-2" style={{ borderTop: "1px solid rgba(13,27,42,0.08)" }}>
+                  {[["D+1", "Indicação"], ["D+7", "Acompanhamento"], ["D+30", "Retorno"]].map(([d, t], i) => (
+                    <div key={i} className="rounded-lg p-2.5 text-center" style={{ background: CREAM }}>
+                      <div className="flex items-center justify-center gap-1 mb-0.5">
+                        <MessageSquare className="w-3 h-3" style={{ color: GOLD_DARK }} />
+                        <span className="text-[10px] font-mono font-bold" style={{ color: NAVY }}>{d}</span>
+                      </div>
+                      <div className="text-[9.5px]" style={{ color: NAVY2 }}>{t}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── PAINEL FINANCEIRO ───────────────────────────────────────────────── */}
+      <section className="py-24 px-6 md:px-12" style={{ background: NAVY }}>
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <p className="text-[10px] font-mono tracking-[3px] uppercase mb-3" style={{ color: GOLD }}>Gestão em números</p>
+            <h2 className="text-[28px] md:text-[36px] font-semibold leading-tight text-white" style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}>
+              A saúde financeira da sua clínica,<br /><em style={{ color: GOLD, fontStyle: "italic" }}>atualizada em tempo real.</em>
+            </h2>
+          </div>
+          {/* KPIs */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+            {[
+              { l: "Receitas", v: "R$ 92.480", d: "↑ 18,4%", up: true },
+              { l: "Despesas", v: "R$ 31.240", d: "↑ 4,1%", up: false },
+              { l: "Saldo", v: "R$ 61.240", d: "↑ 27,2%", up: true },
+              { l: "Projeção", v: "R$ 104,7k", d: "próx. mês", up: true },
+            ].map((k, i) => (
+              <div key={i} className="rounded-xl p-4" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                <div className="text-[10px] font-mono uppercase tracking-widest mb-1.5" style={{ color: "rgba(255,255,255,0.45)" }}>{k.l}</div>
+                <div className="text-[20px] font-bold text-white leading-none">{k.v}</div>
+                <div className="text-[10px] font-mono mt-1.5" style={{ color: k.up ? "#7fe0b0" : "rgba(255,255,255,0.5)" }}>{k.d}</div>
+              </div>
+            ))}
+          </div>
+          <div className="grid md:grid-cols-2 gap-3">
+            {/* Barras receita */}
+            <div className="rounded-xl p-5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
+              <div className="text-[11px] font-semibold text-white mb-4">Receita · últimos 6 meses</div>
+              <svg viewBox="0 0 300 120" className="w-full" style={{ height: 120 }}>
+                {[["Fev", 58], ["Mar", 64], ["Abr", 71], ["Mai", 79], ["Jun", 85], ["Jul", 92]].map((m, i) => {
+                  const h = ((m[1] as number) / 92) * 90
+                  const x = 12 + i * 48
+                  return (
+                    <g key={i}>
+                      <rect x={x} y={100 - h} width={30} height={h} rx={3} fill={GOLD} opacity={0.4 + i * 0.1} />
+                      <text x={x + 15} y={114} textAnchor="middle" fontSize={8} fill="rgba(255,255,255,0.5)" fontFamily="monospace">{m[0]}</text>
+                    </g>
+                  )
+                })}
+              </svg>
+            </div>
+            {/* NPS linha */}
+            <div className="rounded-xl p-5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
+              <div className="flex items-center justify-between mb-4">
+                <div className="text-[11px] font-semibold text-white">NPS · evolução</div>
+                <div className="text-[16px] font-bold" style={{ color: "#7fe0b0" }}>9,2</div>
+              </div>
+              <svg viewBox="0 0 300 120" className="w-full" style={{ height: 120 }}>
+                <polyline fill="none" stroke="#2E9E6B" strokeWidth={2}
+                  points="12,88 66,80 120,68 174,52 228,40 288,26" />
+                {[[12, 88], [66, 80], [120, 68], [174, 52], [228, 40], [288, 26]].map((p, i) => (
+                  <circle key={i} cx={p[0]} cy={p[1]} r={3} fill="#7fe0b0" />
+                ))}
+              </svg>
+            </div>
+            {/* Funil */}
+            <div className="rounded-xl p-5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
+              <div className="text-[11px] font-semibold text-white mb-4">Funil de pacientes</div>
+              <div className="space-y-2">
+                {[["Novo", 68], ["Contato", 50], ["Agendado", 35], ["Consultou", 23], ["Perdido", 13]].map((f, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <span className="text-[10px] w-16 flex-shrink-0" style={{ color: "rgba(255,255,255,0.6)" }}>{f[0]}</span>
+                    <div className="flex-1 h-4 rounded" style={{ background: "rgba(255,255,255,0.05)" }}>
+                      <div className="h-4 rounded" style={{ width: `${((f[1] as number) / 68) * 100}%`, background: i === 4 ? "rgba(192,57,43,0.5)" : GOLD, opacity: i === 4 ? 1 : 0.8 }} />
+                    </div>
+                    <span className="text-[10px] font-mono w-6 text-right" style={{ color: "rgba(255,255,255,0.7)" }}>{f[1]}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* Origem */}
+            <div className="rounded-xl p-5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
+              <div className="text-[11px] font-semibold text-white mb-4">Origem dos pacientes</div>
+              <div className="space-y-2.5">
+                {[["Instagram", 31], ["Indicação", 22], ["Google", 10], ["Outros", 5]].map((o, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <span className="text-[10px] w-20 flex-shrink-0" style={{ color: "rgba(255,255,255,0.6)" }}>{o[0]}</span>
+                    <div className="flex-1 h-2 rounded-full" style={{ background: "rgba(255,255,255,0.05)" }}>
+                      <div className="h-2 rounded-full" style={{ width: `${((o[1] as number) / 31) * 100}%`, background: GOLD }} />
+                    </div>
+                    <span className="text-[10px] font-mono w-6 text-right" style={{ color: "rgba(255,255,255,0.7)" }}>{o[1]}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── PLANOS ──────────────────────────────────────────────────────────── */}
+      <section id="planos" className="py-24 px-6 md:px-12" style={{ background: CREAM2 }}>
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <h2 className="text-[28px] md:text-[38px] font-semibold mb-4 leading-tight" style={{ fontFamily: "var(--font-playfair), Georgia, serif", color: NAVY }}>
+              Um plano para cada <em style={{ color: GOLD_DARK, fontStyle: "italic" }}>momento da clínica.</em>
+            </h2>
+            <p className="text-[15px]" style={{ color: NAVY2 }}>7 dias grátis. Cancele quando quiser, sem fidelidade.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
             {PLANS.map(plan => {
               const Icon = plan.icon
               return (
-                <div
-                  key={plan.id}
-                  className={cn(
-                    "relative flex flex-col bg-surface border rounded-xl p-6 transition-all",
-                    plan.border,
-                    plan.id === "pro" && "shadow-lg shadow-accent/5"
-                  )}
-                >
+                <div key={plan.id} className="relative rounded-2xl p-6 flex flex-col"
+                  style={{ background: "#fff", border: plan.highlight ? `2px solid ${GOLD}` : "1px solid rgba(13,27,42,0.10)", boxShadow: plan.highlight ? "0 12px 40px rgba(184,151,106,0.18)" : "none" }}>
                   {plan.badge && (
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                      <span className={cn(
-                        "text-badge font-mono font-bold px-3 py-1 rounded-full border tracking-widest",
-                        plan.id === "pro"
-                          ? "bg-accent text-background border-accent"
-                          : "bg-[#d4af37] text-[#080808] border-[#d4af37]"
-                      )}>
-                        {plan.badge}
+                      <span className="text-[9px] font-mono font-bold px-3 py-1 rounded-full tracking-widest whitespace-nowrap"
+                        style={{ background: plan.highlight ? GOLD : NAVY, color: plan.highlight ? NAVY : CREAM }}>
+                        {plan.badge.toUpperCase()}
                       </span>
                     </div>
                   )}
-                  <div className="flex items-center gap-3 mb-4">
-                    <Icon className={cn("w-5 h-5", plan.color)} />
-                    <span className={cn("text-[16px] font-semibold", plan.color)}>{plan.name}</span>
+                  <div className="flex items-center gap-2 mb-3 mt-1">
+                    <Icon className="w-5 h-5" style={{ color: GOLD_DARK }} />
+                    <span className="text-[17px] font-semibold" style={{ fontFamily: "var(--font-playfair), Georgia, serif", color: NAVY }}>{plan.name}</span>
                   </div>
                   <div className="flex items-baseline gap-1 mb-5">
-                    <span className="text-[11px] text-text-muted font-mono">R$</span>
-                    <span className={cn("text-[34px] font-bold leading-none", plan.color)}>{plan.price}</span>
-                    <span className="text-[12px] text-text-muted">/mês</span>
+                    <span className="text-[11px] font-mono" style={{ color: NAVY2 }}>R$</span>
+                    <span className="text-[36px] font-bold leading-none" style={{ color: NAVY }}>{plan.price}</span>
+                    <span className="text-[12px]" style={{ color: NAVY2 }}>/mês</span>
                   </div>
-                  <div className="flex-1 space-y-2 mb-6">
-                    {plan.features.map((f, i) => (
-                      <div key={i} className="flex items-center gap-2">
-                        <Check className="w-3.5 h-3.5 text-accent flex-shrink-0" />
-                        <span className="text-[12px] text-text-secondary">{f}</span>
+                  <div className="flex-1 space-y-3 mb-6">
+                    {plan.blocks.map((b, i) => (
+                      <div key={i}>
+                        <div className="text-[9px] font-mono uppercase tracking-widest mb-1.5" style={{ color: GOLD_DARK }}>{b.label}</div>
+                        <div className="space-y-1">
+                          {b.items.map((it, j) => (
+                            <div key={j} className="flex items-start gap-1.5">
+                              <Check className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" style={{ color: GOLD }} />
+                              <span className="text-[12px]" style={{ color: NAVY2 }}>{it}</span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     ))}
-                    {plan.excluded.map((f, i) => (
-                      <div key={i} className="flex items-center gap-2">
-                        <X className="w-3.5 h-3.5 text-text-muted/40 flex-shrink-0" />
-                        <span className="text-[12px] text-text-muted/50">{f}</span>
+                    {plan.excluded.length > 0 && (
+                      <div className="pt-1 space-y-1">
+                        {plan.excluded.map((f, j) => (
+                          <div key={j} className="flex items-start gap-1.5">
+                            <X className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" style={{ color: "rgba(13,27,42,0.25)" }} />
+                            <span className="text-[12px]" style={{ color: "rgba(13,27,42,0.40)" }}>{f}</span>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    )}
                   </div>
-                  <button
-                    onClick={() => router.push('/planos')}
-                    className={cn("w-full py-3 rounded-lg text-[13px] transition-all active:scale-[0.98] min-h-[48px]", plan.ctaBg, plan.ctaText)}
-                  >
+                  <button onClick={() => router.push('/planos')}
+                    className="w-full py-3 rounded-lg text-[13px] font-semibold transition-all active:scale-[0.98] min-h-[48px]"
+                    style={{ background: plan.highlight ? NAVY : "transparent", color: plan.highlight ? CREAM : NAVY, border: plan.highlight ? "none" : `1px solid ${NAVY}` }}>
                     Assinar {plan.name}
                   </button>
                 </div>
@@ -520,9 +711,12 @@ export default function LandingPage() {
       </section>
 
       {/* ── FAQ ─────────────────────────────────────────────────────────────── */}
-      <section className="py-24 px-6 md:px-12" style={{ background: "var(--surface-2)" }}>
+      <section className="py-24 px-6 md:px-12" style={{ background: CREAM }}>
         <div className="max-w-2xl mx-auto">
-          <SectionHeader label="Dúvidas frequentes" title="Tudo que você precisa saber." />
+          <div className="text-center mb-12">
+            <p className="text-[10px] font-mono tracking-[3px] uppercase mb-3" style={{ color: GOLD_DARK }}>Dúvidas frequentes</p>
+            <h2 className="text-[28px] md:text-[36px] font-semibold" style={{ fontFamily: "var(--font-playfair), Georgia, serif", color: NAVY }}>Perguntas de quem é médico.</h2>
+          </div>
           <div>
             {FAQS.map((f, i) => <FAQItem key={i} q={f.q} a={f.a} />)}
           </div>
@@ -530,23 +724,24 @@ export default function LandingPage() {
       </section>
 
       {/* ── CTA FINAL ───────────────────────────────────────────────────────── */}
-      <section className="py-24 px-6 md:px-12">
+      <section className="py-24 px-6 md:px-12" style={{ background: NAVY }}>
         <div className="max-w-2xl mx-auto text-center">
-          <h2
-            className="text-[30px] md:text-[40px] font-semibold text-text-primary mb-4"
-            style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}
-          >
-            Comece hoje. Cancele quando quiser.
+          <h2 className="text-[30px] md:text-[42px] font-semibold mb-8 leading-tight text-white"
+            style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}>
+            Sua próxima consulta pode ser <em style={{ color: GOLD, fontStyle: "italic" }}>documentada sozinha.</em>
           </h2>
-          <p className="text-[15px] text-text-secondary mb-8">
-            Junte-se aos profissionais de saúde que já usam PRAXIS para construir uma presença digital de alto padrão.
-          </p>
-          <button
-            onClick={() => router.push('/planos')}
-            className="inline-flex items-center gap-2 px-10 py-4 rounded-lg bg-accent text-background text-[15px] font-bold hover:opacity-90 transition-all active:scale-[0.98]"
-          >
-            Começar agora <ArrowRight className="w-4 h-4" />
-          </button>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <button onClick={() => router.push('/planos')}
+              className="inline-flex items-center justify-center gap-2 px-10 py-4 rounded-lg text-[15px] font-bold transition-all active:scale-[0.98]"
+              style={{ background: GOLD, color: NAVY }}>
+              Começar agora <ArrowRight className="w-4 h-4" />
+            </button>
+            <a href="https://wa.me/5535997688008" target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 px-10 py-4 rounded-lg text-[15px] font-medium transition-all"
+              style={{ border: "1px solid rgba(245,240,232,0.30)", color: CREAM }}>
+              Falar com um especialista
+            </a>
+          </div>
         </div>
       </section>
 

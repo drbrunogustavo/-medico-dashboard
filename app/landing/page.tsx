@@ -12,7 +12,6 @@ import {
   Shield, Lock, Mic,
   Clock, Bell, BarChart3, TrendingUp, Brain,
 } from "lucide-react"
-import { PraxisLogo } from "@/components/PraxisLogo"
 import { cn } from "@/lib/utils"
 
 // ─── Palette (landing v2 — cream + navy + gold) ─────────────────────────────────
@@ -104,7 +103,7 @@ export default function LandingPage() {
   const heroRef                             = useRef<HTMLElement>(null)
 
   return (
-    <div className="fixed inset-0 z-[200] overflow-y-auto" style={{ fontFamily: "var(--font-inter), system-ui, sans-serif", background: CREAM, color: NAVY }}>
+    <div className="fixed inset-0 z-[200] overflow-y-auto overflow-x-hidden" style={{ fontFamily: "var(--font-inter), system-ui, sans-serif", background: CREAM, color: NAVY }}>
 
       {/* ── Navbar ──────────────────────────────────────────────────────────── */}
       <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-12"
@@ -752,7 +751,15 @@ export default function LandingPage() {
       {/* ── FOOTER ──────────────────────────────────────────────────────────── */}
       <footer className="border-t border-border py-10 px-6 md:px-12" style={{ background: "var(--surface)" }}>
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-          <PraxisLogo />
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center rounded-full flex-shrink-0" style={{ width: 38, height: 38, border: `1.5px solid ${GOLD}` }}>
+              <span style={{ fontFamily: "var(--font-playfair), Georgia, serif", color: GOLD, fontSize: 18, fontWeight: 700 }}>P</span>
+            </div>
+            <div className="leading-none">
+              <div style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: 19, fontWeight: 700, letterSpacing: "0.18em", color: NAVY }}>PRAXIS</div>
+              <div className="mt-0.5" style={{ fontSize: 8.5, letterSpacing: "0.24em", color: GOLD_DARK, textTransform: "uppercase" }}>Sistema Operacional de Clínicas</div>
+            </div>
+          </div>
           <div className="flex items-center gap-6">
             <a href="#planos" className="text-[12px] text-text-muted hover:text-text-primary transition-colors">Planos</a>
             <Link href="/login" className="text-[12px] text-text-muted hover:text-text-primary transition-colors">Entrar</Link>

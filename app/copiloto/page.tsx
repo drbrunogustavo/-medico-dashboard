@@ -476,11 +476,15 @@ function CopilotoContent() {
   }, [phase, result, showPostModal])
 
   async function aceitarConsentimento() {
-    await fetch("/api/perfil", {
+    const res = await fetch("/api/perfil", {
       method:  "PATCH",
       headers: { "Content-Type": "application/json" },
       body:    JSON.stringify({ voz_gravacao_autorizada: true }),
-    }).catch(() => {})
+    }).catch(() => null)
+    if (!res || !res.ok) {
+      showToast("Erro ao registrar consentimento. Tente novamente.")
+      return
+    }
     appCtx?.refetchPerfil()
     setVoiceConsent(true)
     setShowConsentModal(false)

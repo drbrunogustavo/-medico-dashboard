@@ -873,11 +873,16 @@ export default function ExecutivoPage() {
   }
 
   async function aceitarConsentimento() {
-    await fetch("/api/perfil", {
+    const res = await fetch("/api/perfil", {
       method:  "PATCH",
       headers: { "Content-Type": "application/json" },
       body:    JSON.stringify({ voz_gravacao_autorizada: true }),
-    }).catch(() => {})
+    }).catch(() => null)
+    if (!res || !res.ok) {
+      setShowConsentModal(false)
+      setErro("Erro ao registrar consentimento. Tente novamente.")
+      return
+    }
     appCtx?.refetchPerfil()
     setVoiceConsent(true)
     setShowConsentModal(false)

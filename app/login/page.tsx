@@ -226,6 +226,23 @@ export default function LoginPage() {
         </a>
       )}
 
+      {/* CTA anunciantes — sempre visível */}
+      <div style={{
+        width: "100%", maxWidth: "420px",
+        borderTop: "1px solid rgba(255,255,255,0.12)",
+        paddingTop: "16px", marginTop: "20px", textAlign: "center",
+      }}>
+        <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)", marginBottom: "8px" }}>
+          Você é especialista e quer divulgar seu curso aqui?
+        </p>
+        <a href="/anunciar-curso" style={{
+          fontSize: "12px", fontWeight: 700, color: "var(--accent)",
+          textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "5px",
+        }}>
+          Clique aqui para anunciar →
+        </a>
+      </div>
+
     </div>
   )
 }

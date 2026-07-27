@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server'
 import { checkAuth } from "@/lib/auth-check"
+import { createSupabaseServerClient } from "@/lib/supabase-server"
+import { checkAiRateLimit } from "@/lib/rate-limit"
+import { logAiUsage } from "@/lib/log-ai-usage"
 
 const OPENAI_SIZE: Record<string, string> = {
   "9:16": "1024x1536",
@@ -22,6 +25,18 @@ const FLUX_DIMS: Record<string, { width: number; height: number }> = {
 export async function POST(request: Request) {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
+
+  const supabase = createSupabaseServerClient()
+  const { data: planoData } = await supabase.from("user_planos").select("plano").eq("user_id", auth.userId).maybeSingle()
+  const { allowed } = await checkAiRateLimit(auth.userId, planoData?.plano ?? "trial", supabase)
+  if (!allowed) {
+    return NextResponse.json(
+      { error: "Limite mensal de gerações atingido. Faça upgrade do plano." },
+      { status: 429 }
+    )
+  }
+  logAiUsage({ userId: auth.userId, rota: "gerar-imagem" })
+
   const { prompt, formato, modelo } = await request.json() as {
     prompt: string
     formato: string

@@ -1,10 +1,25 @@
 import { NextResponse } from 'next/server'
 import { captureAnthropicError } from "@/lib/anthropic"
 import { checkAuth } from "@/lib/auth-check"
+import { createSupabaseServerClient } from "@/lib/supabase-server"
+import { checkAiRateLimit } from "@/lib/rate-limit"
+import { logAiUsage } from "@/lib/log-ai-usage"
 
 export async function POST(request: Request) {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
+
+  const supabase = createSupabaseServerClient()
+  const { data: planoData } = await supabase.from("user_planos").select("plano").eq("user_id", auth.userId).maybeSingle()
+  const { allowed } = await checkAiRateLimit(auth.userId, planoData?.plano ?? "trial", supabase)
+  if (!allowed) {
+    return NextResponse.json(
+      { error: "Limite mensal de gerações atingido. Faça upgrade do plano." },
+      { status: 429 }
+    )
+  }
+  logAiUsage({ userId: auth.userId, rota: "imagens" })
+
   const body = await request.json()
 
   try {

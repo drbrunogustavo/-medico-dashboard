@@ -5,6 +5,7 @@ import { inserirProntuario, getPacienteById } from "@/lib/medx"
 import { AI_MODEL } from "@/lib/ai-config"
 import { getAnthropicClient, captureAnthropicError } from "@/lib/anthropic"
 import { logAiUsage } from "@/lib/log-ai-usage"
+import { checkAiRateLimit } from "@/lib/rate-limit"
 
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -139,11 +140,19 @@ export async function POST(req: NextRequest) {
     const nome = body.nomePaciente ?? "paciente"
     const tipo = body.tipoConsulta ?? "Consulta"
     const supabase = createSupabaseServerClient()
-    const [memoriaCtx, { data: perfilEspec }] = await Promise.all([
+    const [memoriaCtx, { data: perfilEspec }, { data: planoData }] = await Promise.all([
       getMemoriaContext(auth.userId, body.protocoloId),
       supabase.from("perfis").select("especialidade").eq("user_id", auth.userId).maybeSingle(),
+      supabase.from("user_planos").select("plano").eq("user_id", auth.userId).maybeSingle(),
     ])
     const especialidade = (perfilEspec?.especialidade as string | null) || "Clínica Geral"
+    const { allowed } = await checkAiRateLimit(auth.userId, planoData?.plano ?? "trial", supabase)
+    if (!allowed) {
+      return NextResponse.json(
+        { error: "Limite mensal de gerações atingido. Faça upgrade do plano." },
+        { status: 429 }
+      )
+    }
     const SYSTEM = buildSystemPrompt(especialidade) + memoriaCtx
 
     const resp = await client.messages.create({

@@ -3,6 +3,8 @@ import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
 import { AI_MODEL } from "@/lib/ai-config"
 import { getAnthropicClient, captureAnthropicError } from "@/lib/anthropic"
+import { checkAiRateLimit } from "@/lib/rate-limit"
+import { logAiUsage } from "@/lib/log-ai-usage"
 
 export const maxDuration = 60
 
@@ -22,6 +24,16 @@ export async function POST(req: NextRequest) {
   const ai = getAnthropicClient()
 
   try {
+    const sbRate = createSupabaseServerClient()
+    const { data: planoData } = await sbRate.from("user_planos").select("plano").eq("user_id", auth.userId).maybeSingle()
+    const { allowed } = await checkAiRateLimit(auth.userId, planoData?.plano ?? "trial", sbRate)
+    if (!allowed) {
+      return NextResponse.json(
+        { error: "Limite mensal de gerações atingido. Faça upgrade do plano." },
+        { status: 429 }
+      )
+    }
+
     const body = await req.json() as {
       messages:  { role: "user" | "assistant"; content: string }[]
       contexto?: {
@@ -105,6 +117,7 @@ export async function POST(req: NextRequest) {
           { user_id: auth.userId, role: "user",      content: lastUser.content },
           { user_id: auth.userId, role: "assistant", content: answer },
         ])
+        logAiUsage({ userId: auth.userId, rota: "consultor", inputTokens: final.usage.input_tokens, outputTokens: final.usage.output_tokens })
       } catch {
         // Non-critical
       }

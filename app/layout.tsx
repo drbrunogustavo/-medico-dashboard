@@ -29,11 +29,13 @@ export const metadata: Metadata = {
     siteName: "PRAXIS",
     locale: "pt_BR",
     type: "website",
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "PRAXIS" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "PRAXIS",
     description: "Plataforma completa para médicos: marketing digital, gestão clínica, CRM de leads, IA estratégica e muito mais.",
+    images: ["/og-image.png"],
   },
   robots: {
     index: true,

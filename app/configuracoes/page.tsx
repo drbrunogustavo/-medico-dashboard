@@ -676,14 +676,20 @@ const HISTORICO = [
 
 function TabFaturamento() {
   const [loadingPortal, setLoadingPortal] = useState(false)
+  const [portalErro,    setPortalErro]    = useState("")
 
   const abrirPortal = async () => {
     setLoadingPortal(true)
+    setPortalErro("")
     const res = await fetch("/api/stripe/portal", { method: "POST" }).catch(() => null)
-    if (res?.ok) {
-      const { url } = await res.json()
-      if (url) window.location.href = url
+    if (!res || !res.ok) {
+      setPortalErro("Erro ao abrir o portal. Tente novamente.")
+      setLoadingPortal(false)
+      return
     }
+    const { url } = await res.json()
+    if (url) { window.location.href = url; return }
+    setPortalErro("Erro ao abrir o portal. Tente novamente.")
     setLoadingPortal(false)
   }
 
@@ -722,6 +728,9 @@ function TabFaturamento() {
             Gerenciar no Stripe
           </button>
         </div>
+        {portalErro && (
+          <p className="px-5 pb-4 text-[12px] text-red-400">{portalErro}</p>
+        )}
       </Card>
 
       {/* Upgrade */}

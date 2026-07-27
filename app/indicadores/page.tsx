@@ -132,6 +132,8 @@ export default function IndicadoresPage() {
     }).finally(() => setLoading(false))
   }, [])
 
+  const [saveErro, setSaveErro] = useState(false)
+
   const updateInd = useCallback((key: keyof IndManuais, val: number) => {
     setInd(prev => {
       const next = { ...prev, [key]: val }
@@ -141,7 +143,9 @@ export default function IndicadoresPage() {
           method:  "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(next),
-        }).catch(console.error)
+        })
+          .then(r => { if (!r.ok) throw new Error(); setSaveErro(false) })
+          .catch(() => setSaveErro(true))
       }, 800)
       return next
     })
@@ -202,6 +206,11 @@ export default function IndicadoresPage() {
 
   return (
     <div className="animate-fade-in">
+      {saveErro && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl text-[13px] bg-red-500/10 border border-red-500/30 text-red-400">
+          Erro ao salvar. Verifique sua conexão.
+        </div>
+      )}
       <MobileOnlyHeader title="Indicadores da Clínica" />
       <div className="flex flex-wrap items-center justify-between gap-3 p-4 md:p-8 pb-0">
         <div>

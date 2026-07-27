@@ -86,6 +86,7 @@ export default function MetasPage() {
   const [plano,        setPlano]        = useState<PlanoIA | null>(null)
   const [loadingPlano, setLoadingPlano] = useState(false)
   const [errorPlano,   setErrorPlano]   = useState("")
+  const [saveErro,     setSaveErro]     = useState(false)
 
   // Monthly tracker
   const [metasMes,     setMetasMes]     = useState<Partial<MetasMes>>({})
@@ -142,7 +143,9 @@ export default function MetasPage() {
           method:  "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(next),
-        }).catch(console.error)
+        })
+          .then(r => { if (!r.ok) throw new Error(); setSaveErro(false) })
+          .catch(() => setSaveErro(true))
       }, 800)
       return next
     })
@@ -170,6 +173,11 @@ export default function MetasPage() {
 
   return (
     <div className="animate-fade-in">
+      {saveErro && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl text-[13px] bg-red-500/10 border border-red-500/30 text-red-400">
+          Erro ao salvar. Verifique sua conexão.
+        </div>
+      )}
       <MobileOnlyHeader title="Metas e Planejamento" />
       <div className="flex items-center gap-3 p-8 pb-0">
         <div className="w-9 h-9 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center">

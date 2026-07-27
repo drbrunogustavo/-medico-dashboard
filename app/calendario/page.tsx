@@ -443,7 +443,10 @@ export default function CalendarioPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ mes, ano, posts: data.posts }),
       })
-        .then(r => r.ok ? r.json() : null)
+        .then(r => {
+          if (!r.ok) { setError("Calendário gerado, mas houve erro ao salvar. Gere novamente para persistir."); return null }
+          return r.json()
+        })
         .then(saved => {
           if (saved?.count) {
             fetch(`/api/calendario-posts?mes=${mes}&ano=${ano}`)
@@ -452,7 +455,7 @@ export default function CalendarioPage() {
               .catch(() => {})
           }
         })
-        .catch(() => {})
+        .catch(() => setError("Calendário gerado, mas houve erro ao salvar. Gere novamente para persistir."))
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
     } finally {

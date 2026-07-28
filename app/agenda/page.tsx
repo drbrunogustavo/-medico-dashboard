@@ -207,6 +207,35 @@ function eventHeight(horaInicio: string, horaFim?: string): number {
   return SLOT_H * 0.75 // default 45min
 }
 
+// ── Overlap layout ────────────────────────────────────────────────────────────
+// For each day column, assigns a horizontal sub-column index and total count
+// so overlapping events are displayed side-by-side instead of stacked.
+
+function computeColumns(items: Appointment[]) {
+  if (!items.length) return []
+  const evs = items.map(apt => {
+    const s = horaToMinutes(getApptHora(apt))
+    const e = apt.horaFim ? Math.max(s + 15, horaToMinutes(String(apt.horaFim))) : s + 45
+    return { apt, s, e, col: 0, maxCols: 1 }
+  }).sort((a, b) => a.s - b.s || b.e - a.e)
+  const colEnds: number[] = []
+  for (const ev of evs) {
+    let c = colEnds.findIndex(end => end <= ev.s)
+    if (c === -1) c = colEnds.length
+    colEnds[c] = ev.e
+    ev.col = c
+  }
+  for (let i = 0; i < evs.length; i++) {
+    let maxCol = evs[i].col
+    for (let j = 0; j < evs.length; j++) {
+      if (i !== j && evs[j].s < evs[i].e && evs[j].e > evs[i].s)
+        maxCol = Math.max(maxCol, evs[j].col)
+    }
+    evs[i].maxCols = maxCol + 1
+  }
+  return evs
+}
+
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function AgendaPage() {
@@ -918,23 +947,27 @@ export default function AgendaPage() {
                           </div>
                         )}
                         {/* Events */}
-                        {items.map((apt, j) => {
+                        {computeColumns(items).map(({ apt, col, maxCols }, j) => {
                           const hora   = getApptHora(apt)
                           const mins   = horaToMinutes(hora)
                           if (mins < CAL_START * 60 || mins >= CAL_END * 60) return null
                           const top    = eventTop(hora)
                           const height = eventHeight(hora, apt.horaFim as string | undefined)
                           const sColor = statusBarColor(getApptStatus(apt))
+                          const wPct   = 100 / maxCols
+                          const lPct   = col * wPct
                           return (
                             <button
                               key={j}
                               onClick={e => { e.stopPropagation(); setSelected(apt); setNewStatusId(""); setStatusUpdateErro("") }}
-                              className="absolute left-1 right-1 z-10 rounded-lg border text-left overflow-hidden hover:z-20 hover:scale-[1.02] transition-transform"
+                              className="absolute z-10 rounded-lg border text-left overflow-hidden hover:z-20 hover:scale-[1.02] transition-transform"
                               style={{
-                                top:              top + 2,
-                                height:           Math.max(height - 4, 24),
-                                borderColor:      `${sColor}55`,
-                                backgroundColor:  `${sColor}18`,
+                                top:             top + 2,
+                                height:          Math.max(height - 4, 24),
+                                left:            `calc(${lPct}% + 2px)`,
+                                width:           `calc(${wPct}% - 4px)`,
+                                borderColor:     `${sColor}55`,
+                                backgroundColor: `${sColor}18`,
                               }}
                             >
                               <div

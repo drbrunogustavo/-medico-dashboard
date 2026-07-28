@@ -10,14 +10,19 @@ import {
 // Id_Agendamento, …). O frontend espera camelCase. Traduzimos aqui, num ponto só.
 
 const STATUS_MAP: Record<number, string> = {
-  1: "Agendado",
-  2: "Confirmado",
-  3: "Aguardando",
-  4: "Em atendimento",
-  5: "Atendido",
-  6: "Cancelado",
-  7: "Falta",
-  8: "Remarcado",
+  0:  "Agendado",
+  1:  "Desmarcado",
+  2:  "Faltou",
+  3:  "Primeira Consulta",
+  4:  "Retorno",
+  5:  "Consulta Nova",
+  6:  "Remarcado",
+  7:  "Implante Hormonal",
+  8:  "Reposição EV/IM",
+  9:  "Flebotomia",
+  10: "Iniciado Atendimento",
+  11: "Finalizado Atendimento",
+  12: "Black List",
 }
 
 function normalizeMedXAppointment(a: Record<string, unknown>) {

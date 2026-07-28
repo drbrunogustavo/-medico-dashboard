@@ -490,7 +490,7 @@ export default function LandingPage() {
                 <span className="text-[8px] font-mono font-bold px-1.5 py-0.5 rounded" style={{ background: "rgba(184,151,106,0.20)", color: GOLD, letterSpacing: "0.1em" }}>IA</span>
               </div>
               <div className="p-5">
-                <div className="grid grid-cols-4 gap-2 pb-4 mb-4" style={{ borderBottom: "1px solid rgba(13,27,42,0.08)" }}>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pb-4 mb-4" style={{ borderBottom: "1px solid rgba(13,27,42,0.08)" }}>
                   {[["Paciente", "Ana Carolina M."], ["Idade", "34 anos"], ["Tipo", "Retorno · 90 dias"], ["Data", "22/07/2026"]].map(([k, v], i) => (
                     <div key={i}>
                       <div className="text-[8.5px] font-mono uppercase tracking-wider mb-0.5" style={{ color: GOLD_DARK }}>{k}</div>

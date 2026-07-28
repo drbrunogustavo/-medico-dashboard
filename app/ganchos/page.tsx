@@ -131,7 +131,7 @@ export default function GanchosPage() {
         <div className="bg-card border-r border-border md:border-b-0 border-b" style={{ width:isMob?'100%':280, flexShrink:0, overflowY:'auto', padding:24, display:'flex', flexDirection:'column', gap:20 }}>
           <div>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
-              <label style={{ fontSize:11, fontWeight:700, color:D.muted, letterSpacing:3, textTransform:'uppercase' as const }}>Tema</label>
+              <label style={{ fontSize:11, fontWeight:700, color:D.text2, letterSpacing:3, textTransform:'uppercase' as const }}>Tema</label>
               <button onClick={()=>setShowPautas(true)} style={{ fontSize:10, fontWeight:700, color:D.accent, background:'rgba(200,168,76,0.08)', border:'1px solid rgba(200,168,76,0.25)', borderRadius:6, padding:'4px 10px', cursor:'pointer' }}>
                 <ClipboardList style={{ width:12, height:12, verticalAlign:'-0.15em', marginRight:4 }} />Banco de Pautas
               </button>
@@ -140,11 +140,11 @@ export default function GanchosPage() {
           </div>
 
           <div>
-            <label style={{ fontSize:11, fontWeight:700, color:D.muted, letterSpacing:3, textTransform:'uppercase' as const, display:'block', marginBottom:8 }}>Formato</label>
+            <label style={{ fontSize:11, fontWeight:700, color:D.text2, letterSpacing:3, textTransform:'uppercase' as const, display:'block', marginBottom:8 }}>Formato</label>
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:6 }}>
               {FORMATOS.map(f => (
                 <button key={f} onClick={()=>setFormato(f)}
-                  style={{ padding:'9px', borderRadius:8, border:'none', cursor:'pointer', fontWeight:700, fontSize:12, background:formato===f?D.accent:D.card, color:formato===f?D.bg:D.muted }}>
+                  style={{ padding:'9px', borderRadius:8, border:'none', cursor:'pointer', fontWeight:700, fontSize:12, background:formato===f?D.accent:D.card, color:formato===f?D.bg:D.text2 }}>
                   {f}
                 </button>
               ))}
@@ -152,7 +152,7 @@ export default function GanchosPage() {
           </div>
 
           <div>
-            <label style={{ fontSize:11, fontWeight:700, color:D.muted, letterSpacing:3, textTransform:'uppercase' as const, display:'block', marginBottom:8 }}>
+            <label style={{ fontSize:11, fontWeight:700, color:D.text2, letterSpacing:3, textTransform:'uppercase' as const, display:'block', marginBottom:8 }}>
               Tipos de Gancho <span style={{ color:D.muted, fontWeight:400, textTransform:'none', letterSpacing:0 }}>(selecione 1+)</span>
             </label>
             <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
@@ -163,7 +163,7 @@ export default function GanchosPage() {
                     style={{ padding:'10px 14px', borderRadius:8, border:`1px solid ${ativo?t.cor:'transparent'}`, cursor:'pointer', textAlign:'left', display:'flex', alignItems:'center', gap:10, background:ativo?'rgba(0,0,0,0.3)':D.card }}>
                     <span style={{ fontSize:16 }}>{t.e}</span>
                     <div style={{ flex:1 }}>
-                      <div style={{ fontWeight:700, fontSize:12, color:ativo?t.cor:D.muted }}>{t.l}</div>
+                      <div style={{ fontWeight:700, fontSize:12, color:ativo?t.cor:D.text2 }}>{t.l}</div>
                       <div style={{ fontSize:10, color:D.muted, marginTop:2, fontStyle:'italic' }}>{t.ex}</div>
                     </div>
                     {ativo && <span style={{ color:t.cor, display:'flex' }}><Check style={{ width:14, height:14 }} /></span>}

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { createPortal } from "react-dom"
 import { TopBar } from "@/components/TopBar"
 import { cn } from "@/lib/utils"
 import {
@@ -10,6 +11,16 @@ import {
   X, Check, Plus, Pencil, Trash2,
 } from "lucide-react"
 import Link from "next/link"
+
+// ─── Portal — escapa do containing block criado por transform/animate ─────────
+// animate-fade-in usa translateY, que quebra position:fixed em filhos.
+// createPortal renderiza direto no document.body, contornando o problema.
+function Portal({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+  if (!mounted) return null
+  return createPortal(children, document.body)
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -710,56 +721,60 @@ function InviteTeamModal({ onClose, onSaved }: {
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="rounded-xl w-full max-w-md max-h-[85vh] overflow-y-auto shadow-xl"
-        style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-        <div className="p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Users className="w-4 h-4" style={{ color: "var(--accent)" }} />
-              <h2 className="text-[15px] font-semibold" style={{ color: "var(--text-primary)" }}>Convidar membro</h2>
-            </div>
-            <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors" style={{ color: "var(--text-muted)" }}>
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-          <form onSubmit={submit} className="space-y-4">
-            <div>
-              <label className="block text-[11px] font-mono mb-1.5 tracking-widest uppercase" style={{ color: "var(--text-muted)" }}>Nome completo *</label>
-              <input value={nome} onChange={e => setNome(e.target.value)} placeholder="Ex: Ana Paula" style={inputSty} />
-            </div>
-            <div>
-              <label className="block text-[11px] font-mono mb-1.5 tracking-widest uppercase" style={{ color: "var(--text-muted)" }}>E-mail *</label>
-              <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="email@clinica.com" style={inputSty} />
-            </div>
-            <div className="px-3 py-2.5 rounded-lg text-[11px]"
-              style={{ background: "var(--accent-dim)", border: "1px solid var(--accent-border)", color: "var(--accent)" }}>
-              Um convite será enviado para o e-mail informado. O membro deverá criar conta com esse e-mail.
-            </div>
-            {error && (
-              <div className="flex items-center gap-2 px-3 py-2 rounded-lg"
-                style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.22)" }}>
-                <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#ef4444" }} />
-                <p className="text-[11px]" style={{ color: "#ef4444" }}>{error}</p>
+    <Portal>
+      <div className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+        onClick={onClose}>
+        <div className="rounded-2xl w-full max-w-md max-h-[85vh] overflow-y-auto shadow-2xl"
+          style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
+          onClick={e => e.stopPropagation()}>
+          <div className="p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4" style={{ color: "var(--accent)" }} />
+                <h2 className="text-[15px] font-semibold" style={{ color: "var(--text-primary)" }}>Convidar membro</h2>
               </div>
-            )}
-            <div className="flex gap-3 pt-1">
-              <button type="button" onClick={onClose}
-                className="flex-1 py-2.5 rounded-lg border text-[13px] transition-colors"
-                style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}>
-                Cancelar
-              </button>
-              <button type="submit" disabled={loading}
-                className="flex-1 py-2.5 rounded-lg text-[13px] font-bold disabled:opacity-50 flex items-center justify-center gap-2 transition-all"
-                style={{ background: "var(--accent)", color: "var(--background)" }}>
-                {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-                {loading ? "Enviando..." : "Enviar convite"}
+              <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors" style={{ color: "var(--text-muted)" }}>
+                <X className="w-4 h-4" />
               </button>
             </div>
-          </form>
+            <form onSubmit={submit} className="space-y-4">
+              <div>
+                <label className="block text-[11px] font-mono mb-1.5 tracking-widest uppercase" style={{ color: "var(--text-muted)" }}>Nome completo *</label>
+                <input value={nome} onChange={e => setNome(e.target.value)} placeholder="Ex: Ana Paula" style={inputSty} />
+              </div>
+              <div>
+                <label className="block text-[11px] font-mono mb-1.5 tracking-widest uppercase" style={{ color: "var(--text-muted)" }}>E-mail *</label>
+                <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="email@clinica.com" style={inputSty} />
+              </div>
+              <div className="px-3 py-2.5 rounded-lg text-[11px]"
+                style={{ background: "var(--accent-dim)", border: "1px solid var(--accent-border)", color: "var(--accent)" }}>
+                Um convite será enviado para o e-mail informado. O membro deverá criar conta com esse e-mail.
+              </div>
+              {error && (
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg"
+                  style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.22)" }}>
+                  <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#ef4444" }} />
+                  <p className="text-[11px]" style={{ color: "#ef4444" }}>{error}</p>
+                </div>
+              )}
+              <div className="flex gap-3 pt-1">
+                <button type="button" onClick={onClose}
+                  className="flex-1 py-2.5 rounded-lg border text-[13px] transition-colors"
+                  style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}>
+                  Cancelar
+                </button>
+                <button type="submit" disabled={loading}
+                  className="flex-1 py-2.5 rounded-lg text-[13px] font-bold disabled:opacity-50 flex items-center justify-center gap-2 transition-all"
+                  style={{ background: "var(--accent)", color: "var(--background)" }}>
+                  {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                  {loading ? "Enviando..." : "Enviar convite"}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
-    </div>
+    </Portal>
   )
 }
 
@@ -826,9 +841,12 @@ function PermissionsModal({ member, onClose, onSaved }: {
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="rounded-xl w-full max-w-lg shadow-xl flex flex-col"
-        style={{ background: "var(--surface)", border: "1px solid var(--border)", maxHeight: "85vh" }}>
+    <Portal>
+    <div className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+      onClick={onClose}>
+      <div className="rounded-2xl w-full max-w-lg shadow-2xl flex flex-col"
+        style={{ background: "var(--surface)", border: "1px solid var(--border)", maxHeight: "85vh" }}
+        onClick={e => e.stopPropagation()}>
         {/* Cabeçalho fixo */}
         <div className="flex items-center justify-between p-6 pb-4 border-b flex-shrink-0" style={{ borderColor: "var(--border)" }}>
           <div className="flex items-center gap-2">
@@ -882,6 +900,7 @@ function PermissionsModal({ member, onClose, onSaved }: {
         </div>
       </div>
     </div>
+    </Portal>
   )
 }
 

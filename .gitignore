@@ -41,3 +41,5 @@ next-env.d.ts
 n8n-workflow.json
 meu-dashboard/
 .DS_Store
+.claude/
+.claude-flow/

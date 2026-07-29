@@ -710,52 +710,54 @@ function InviteTeamModal({ onClose, onSaved }: {
   }
 
   return (
-    <div className="fixed inset-0 md:left-60 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="rounded-2xl w-full max-w-md shadow-2xl"
+    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="rounded-xl w-full max-w-md max-h-[85vh] overflow-y-auto shadow-xl"
         style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-        <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: "var(--border)" }}>
-          <div className="flex items-center gap-2">
-            <Users className="w-4 h-4" style={{ color: "var(--accent)" }} />
-            <h2 className="text-[15px] font-semibold" style={{ color: "var(--text-primary)" }}>Convidar membro</h2>
-          </div>
-          <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors" style={{ color: "var(--text-muted)" }}>
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-        <form onSubmit={submit} className="p-6 space-y-4">
-          <div>
-            <label className="block text-[11px] font-mono mb-1.5 tracking-widest uppercase" style={{ color: "var(--text-muted)" }}>Nome completo *</label>
-            <input value={nome} onChange={e => setNome(e.target.value)} placeholder="Ex: Ana Paula" style={inputSty} />
-          </div>
-          <div>
-            <label className="block text-[11px] font-mono mb-1.5 tracking-widest uppercase" style={{ color: "var(--text-muted)" }}>E-mail *</label>
-            <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="email@clinica.com" style={inputSty} />
-          </div>
-          <div className="px-3 py-2.5 rounded-lg text-[11px]"
-            style={{ background: "var(--accent-dim)", border: "1px solid var(--accent-border)", color: "var(--accent)" }}>
-            Um convite será enviado para o e-mail informado. O membro deverá criar conta com esse e-mail.
-          </div>
-          {error && (
-            <div className="flex items-center gap-2 px-3 py-2 rounded-lg"
-              style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.22)" }}>
-              <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#ef4444" }} />
-              <p className="text-[11px]" style={{ color: "#ef4444" }}>{error}</p>
+        <div className="p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Users className="w-4 h-4" style={{ color: "var(--accent)" }} />
+              <h2 className="text-[15px] font-semibold" style={{ color: "var(--text-primary)" }}>Convidar membro</h2>
             </div>
-          )}
-          <div className="flex gap-3 pt-1">
-            <button type="button" onClick={onClose}
-              className="flex-1 py-2.5 rounded-lg border text-[13px] transition-colors"
-              style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}>
-              Cancelar
-            </button>
-            <button type="submit" disabled={loading}
-              className="flex-1 py-2.5 rounded-lg text-[13px] font-bold disabled:opacity-50 flex items-center justify-center gap-2 transition-all"
-              style={{ background: "var(--accent)", color: "var(--background)" }}>
-              {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-              {loading ? "Enviando..." : "Enviar convite"}
+            <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors" style={{ color: "var(--text-muted)" }}>
+              <X className="w-4 h-4" />
             </button>
           </div>
-        </form>
+          <form onSubmit={submit} className="space-y-4">
+            <div>
+              <label className="block text-[11px] font-mono mb-1.5 tracking-widest uppercase" style={{ color: "var(--text-muted)" }}>Nome completo *</label>
+              <input value={nome} onChange={e => setNome(e.target.value)} placeholder="Ex: Ana Paula" style={inputSty} />
+            </div>
+            <div>
+              <label className="block text-[11px] font-mono mb-1.5 tracking-widest uppercase" style={{ color: "var(--text-muted)" }}>E-mail *</label>
+              <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="email@clinica.com" style={inputSty} />
+            </div>
+            <div className="px-3 py-2.5 rounded-lg text-[11px]"
+              style={{ background: "var(--accent-dim)", border: "1px solid var(--accent-border)", color: "var(--accent)" }}>
+              Um convite será enviado para o e-mail informado. O membro deverá criar conta com esse e-mail.
+            </div>
+            {error && (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg"
+                style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.22)" }}>
+                <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#ef4444" }} />
+                <p className="text-[11px]" style={{ color: "#ef4444" }}>{error}</p>
+              </div>
+            )}
+            <div className="flex gap-3 pt-1">
+              <button type="button" onClick={onClose}
+                className="flex-1 py-2.5 rounded-lg border text-[13px] transition-colors"
+                style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}>
+                Cancelar
+              </button>
+              <button type="submit" disabled={loading}
+                className="flex-1 py-2.5 rounded-lg text-[13px] font-bold disabled:opacity-50 flex items-center justify-center gap-2 transition-all"
+                style={{ background: "var(--accent)", color: "var(--background)" }}>
+                {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                {loading ? "Enviando..." : "Enviar convite"}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   )
@@ -824,11 +826,11 @@ function PermissionsModal({ member, onClose, onSaved }: {
   }
 
   return (
-    <div className="fixed inset-0 md:left-60 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="rounded-2xl w-full max-w-lg shadow-2xl flex flex-col"
+    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="rounded-xl w-full max-w-lg shadow-xl flex flex-col"
         style={{ background: "var(--surface)", border: "1px solid var(--border)", maxHeight: "85vh" }}>
-        {/* Cabeçalho */}
-        <div className="flex items-center justify-between px-6 py-4 border-b flex-shrink-0" style={{ borderColor: "var(--border)" }}>
+        {/* Cabeçalho fixo */}
+        <div className="flex items-center justify-between p-6 pb-4 border-b flex-shrink-0" style={{ borderColor: "var(--border)" }}>
           <div className="flex items-center gap-2">
             <Shield className="w-4 h-4" style={{ color: "var(--accent)" }} />
             <h2 className="text-[15px] font-semibold" style={{ color: "var(--text-primary)" }}>
@@ -845,9 +847,11 @@ function PermissionsModal({ member, onClose, onSaved }: {
             <div key={section.label}>
               <p className="text-[10px] font-mono font-semibold tracking-[2px] uppercase mb-3"
                 style={{ color: "var(--text-muted)" }}>{section.label}</p>
-              <div className="rounded-xl border divide-y" style={{ borderColor: "var(--border)" }}>
-                {section.perms.map(p => (
-                  <div key={p.key} className="flex items-center justify-between px-4 py-3">
+              <div className="rounded-xl border" style={{ borderColor: "var(--border)" }}>
+                {section.perms.map((p, i, arr) => (
+                  <div key={p.key}
+                    className={`flex items-center justify-between px-4 py-3${i < arr.length - 1 ? " border-b" : ""}`}
+                    style={{ borderColor: "var(--border)" }}>
                     <span className="text-[13px]" style={{ color: "var(--text-primary)" }}>{p.label}</span>
                     <Toggle
                       checked={perms[p.key] ?? false}
@@ -862,8 +866,8 @@ function PermissionsModal({ member, onClose, onSaved }: {
         {error && (
           <p className="px-6 pb-2 text-[12px]" style={{ color: "#ef4444" }}>{error}</p>
         )}
-        {/* Rodapé */}
-        <div className="flex gap-3 px-6 py-4 border-t flex-shrink-0" style={{ borderColor: "var(--border)" }}>
+        {/* Rodapé fixo */}
+        <div className="flex gap-3 p-6 pt-4 border-t flex-shrink-0" style={{ borderColor: "var(--border)" }}>
           <button type="button" onClick={onClose}
             className="flex-1 py-2.5 rounded-lg border text-[13px] transition-colors"
             style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}>

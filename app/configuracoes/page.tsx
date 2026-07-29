@@ -7,12 +7,47 @@ import {
   Plug, Bell, Palette, Shield, Users, CreditCard,
   CheckCircle2, XCircle, ChevronRight, ExternalLink,
   Eye, EyeOff, Loader2, AlertTriangle, Download, Wifi,
+  X, Check, Plus, Pencil, Trash2,
 } from "lucide-react"
 import Link from "next/link"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type Tab = "integracoes" | "notificacoes" | "aparencia" | "seguranca" | "membros" | "faturamento"
+
+interface TeamPermission {
+  id:                  string
+  member_id:           string
+  owner_id:            string
+  agenda_ver:          boolean
+  agenda_editar:       boolean
+  copiloto:            boolean
+  prontuario_ver:      boolean
+  prontuario_escrever: boolean
+  crm_ver:             boolean
+  crm_editar:          boolean
+  financeiro_ver:      boolean
+  financeiro_editar:   boolean
+  nps_ver:             boolean
+  indicacoes_ver:      boolean
+  marketing_ver:       boolean
+  marketing_usar:      boolean
+  configuracoes:       boolean
+  gerenciar_membros:   boolean
+  updated_at:          string
+}
+
+interface TeamMember {
+  id:               string
+  owner_id:         string
+  user_id:          string | null
+  email:            string
+  nome:             string
+  status:           "pendente" | "ativo"
+  invite_token:     string | null
+  created_at:       string
+  team_permissions: TeamPermission[]
+}
 
 // ─── Tab config ───────────────────────────────────────────────────────────────
 
@@ -609,60 +644,363 @@ function TabSeguranca() {
   )
 }
 
+// ─── Tab: Membros — helpers ───────────────────────────────────────────────────
+
+const PERM_SECTIONS = [
+  {
+    label: "Consultório",
+    perms: [
+      { key: "agenda_ver",          label: "Agenda — ver"               },
+      { key: "agenda_editar",       label: "Agenda — editar"            },
+      { key: "copiloto",            label: "Copiloto de Consulta"       },
+      { key: "prontuario_ver",      label: "Prontuários — ver"          },
+      { key: "prontuario_escrever", label: "Prontuários — escrever"     },
+    ],
+  },
+  {
+    label: "Gestão",
+    perms: [
+      { key: "crm_ver",             label: "CRM de Pacientes — ver"     },
+      { key: "crm_editar",          label: "CRM de Pacientes — editar"  },
+      { key: "financeiro_ver",      label: "Financeiro — ver"           },
+      { key: "financeiro_editar",   label: "Financeiro — editar"        },
+      { key: "nps_ver",             label: "Pesquisa NPS"               },
+      { key: "indicacoes_ver",      label: "Programa de Indicações"     },
+    ],
+  },
+  {
+    label: "Marketing",
+    perms: [
+      { key: "marketing_ver",       label: "Conteúdo — ver"             },
+      { key: "marketing_usar",      label: "Conteúdo — usar IA"         },
+    ],
+  },
+]
+
+function InviteTeamModal({ onClose, onSaved }: {
+  onClose: () => void
+  onSaved: (m: TeamMember) => void
+}) {
+  const [nome,    setNome]    = useState("")
+  const [email,   setEmail]   = useState("")
+  const [loading, setLoading] = useState(false)
+  const [error,   setError]   = useState("")
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!nome.trim() || !email.trim()) { setError("Nome e e-mail são obrigatórios."); return }
+    setLoading(true); setError("")
+    try {
+      const res  = await fetch("/api/team", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nome: nome.trim(), email: email.trim().toLowerCase() }),
+      })
+      const data = await res.json() as TeamMember & { error?: string }
+      if (!res.ok) { setError(data.error ?? "Erro ao convidar."); return }
+      onSaved(data)
+      onClose()
+    } catch { setError("Erro de conexão.") }
+    finally  { setLoading(false) }
+  }
+
+  const inputSty: React.CSSProperties = {
+    width: "100%", padding: "10px 14px", borderRadius: 8, fontSize: 13,
+    background: "transparent", outline: "none",
+    border: "1px solid var(--border)", color: "var(--text-primary)",
+  }
+
+  return (
+    <div className="fixed inset-0 md:left-60 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+      <div className="rounded-2xl w-full max-w-md shadow-2xl"
+        style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+        <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: "var(--border)" }}>
+          <div className="flex items-center gap-2">
+            <Users className="w-4 h-4" style={{ color: "var(--accent)" }} />
+            <h2 className="text-[15px] font-semibold" style={{ color: "var(--text-primary)" }}>Convidar membro</h2>
+          </div>
+          <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors" style={{ color: "var(--text-muted)" }}>
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <form onSubmit={submit} className="p-6 space-y-4">
+          <div>
+            <label className="block text-[11px] font-mono mb-1.5 tracking-widest uppercase" style={{ color: "var(--text-muted)" }}>Nome completo *</label>
+            <input value={nome} onChange={e => setNome(e.target.value)} placeholder="Ex: Ana Paula" style={inputSty} />
+          </div>
+          <div>
+            <label className="block text-[11px] font-mono mb-1.5 tracking-widest uppercase" style={{ color: "var(--text-muted)" }}>E-mail *</label>
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="email@clinica.com" style={inputSty} />
+          </div>
+          <div className="px-3 py-2.5 rounded-lg text-[11px]"
+            style={{ background: "var(--accent-dim)", border: "1px solid var(--accent-border)", color: "var(--accent)" }}>
+            Um convite será enviado para o e-mail informado. O membro deverá criar conta com esse e-mail.
+          </div>
+          {error && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg"
+              style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.22)" }}>
+              <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#ef4444" }} />
+              <p className="text-[11px]" style={{ color: "#ef4444" }}>{error}</p>
+            </div>
+          )}
+          <div className="flex gap-3 pt-1">
+            <button type="button" onClick={onClose}
+              className="flex-1 py-2.5 rounded-lg border text-[13px] transition-colors"
+              style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}>
+              Cancelar
+            </button>
+            <button type="submit" disabled={loading}
+              className="flex-1 py-2.5 rounded-lg text-[13px] font-bold disabled:opacity-50 flex items-center justify-center gap-2 transition-all"
+              style={{ background: "var(--accent)", color: "var(--background)" }}>
+              {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+              {loading ? "Enviando..." : "Enviar convite"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+function PermissionsModal({ member, onClose, onSaved }: {
+  member:   TeamMember
+  onClose:  () => void
+  onSaved:  (m: TeamMember) => void
+}) {
+  const base = member.team_permissions?.[0]
+  const [perms,   setPerms]   = useState<Record<string, boolean>>({
+    agenda_ver:          base?.agenda_ver          ?? true,
+    agenda_editar:       base?.agenda_editar       ?? false,
+    copiloto:            base?.copiloto            ?? false,
+    prontuario_ver:      base?.prontuario_ver      ?? false,
+    prontuario_escrever: base?.prontuario_escrever ?? false,
+    crm_ver:             base?.crm_ver             ?? true,
+    crm_editar:          base?.crm_editar          ?? false,
+    financeiro_ver:      base?.financeiro_ver      ?? false,
+    financeiro_editar:   base?.financeiro_editar   ?? false,
+    nps_ver:             base?.nps_ver             ?? false,
+    indicacoes_ver:      base?.indicacoes_ver      ?? false,
+    marketing_ver:       base?.marketing_ver       ?? true,
+    marketing_usar:      base?.marketing_usar      ?? false,
+    configuracoes:       base?.configuracoes       ?? false,
+    gerenciar_membros:   base?.gerenciar_membros   ?? false,
+  })
+  const [loading, setLoading] = useState(false)
+  const [error,   setError]   = useState("")
+
+  const save = async () => {
+    setLoading(true); setError("")
+    try {
+      const res = await fetch("/api/team", {
+        method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId: member.id, permissions: perms }),
+      })
+      const data = await res.json() as Partial<TeamPermission> & { error?: string }
+      if (!res.ok) { setError(data.error ?? "Erro ao salvar."); return }
+      const updated: TeamPermission = {
+        id:                  base?.id ?? data.id ?? "",
+        member_id:           member.id,
+        owner_id:            member.owner_id,
+        updated_at:          new Date().toISOString(),
+        agenda_ver:          perms["agenda_ver"]          ?? false,
+        agenda_editar:       perms["agenda_editar"]       ?? false,
+        copiloto:            perms["copiloto"]            ?? false,
+        prontuario_ver:      perms["prontuario_ver"]      ?? false,
+        prontuario_escrever: perms["prontuario_escrever"] ?? false,
+        crm_ver:             perms["crm_ver"]             ?? false,
+        crm_editar:          perms["crm_editar"]          ?? false,
+        financeiro_ver:      perms["financeiro_ver"]      ?? false,
+        financeiro_editar:   perms["financeiro_editar"]   ?? false,
+        nps_ver:             perms["nps_ver"]             ?? false,
+        indicacoes_ver:      perms["indicacoes_ver"]      ?? false,
+        marketing_ver:       perms["marketing_ver"]       ?? false,
+        marketing_usar:      perms["marketing_usar"]      ?? false,
+        configuracoes:       perms["configuracoes"]       ?? false,
+        gerenciar_membros:   perms["gerenciar_membros"]   ?? false,
+      }
+      onSaved({ ...member, team_permissions: [updated] })
+      onClose()
+    } catch { setError("Erro de conexão.") }
+    finally  { setLoading(false) }
+  }
+
+  return (
+    <div className="fixed inset-0 md:left-60 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+      <div className="rounded-2xl w-full max-w-lg shadow-2xl flex flex-col"
+        style={{ background: "var(--surface)", border: "1px solid var(--border)", maxHeight: "85vh" }}>
+        {/* Cabeçalho */}
+        <div className="flex items-center justify-between px-6 py-4 border-b flex-shrink-0" style={{ borderColor: "var(--border)" }}>
+          <div className="flex items-center gap-2">
+            <Shield className="w-4 h-4" style={{ color: "var(--accent)" }} />
+            <h2 className="text-[15px] font-semibold" style={{ color: "var(--text-primary)" }}>
+              Permissões — {member.nome}
+            </h2>
+          </div>
+          <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors" style={{ color: "var(--text-muted)" }}>
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        {/* Corpo com scroll */}
+        <div className="overflow-y-auto flex-1 p-6 space-y-5">
+          {PERM_SECTIONS.map(section => (
+            <div key={section.label}>
+              <p className="text-[10px] font-mono font-semibold tracking-[2px] uppercase mb-3"
+                style={{ color: "var(--text-muted)" }}>{section.label}</p>
+              <div className="rounded-xl border divide-y" style={{ borderColor: "var(--border)" }}>
+                {section.perms.map(p => (
+                  <div key={p.key} className="flex items-center justify-between px-4 py-3">
+                    <span className="text-[13px]" style={{ color: "var(--text-primary)" }}>{p.label}</span>
+                    <Toggle
+                      checked={perms[p.key] ?? false}
+                      onChange={() => setPerms(prev => ({ ...prev, [p.key]: !prev[p.key] }))}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+        {error && (
+          <p className="px-6 pb-2 text-[12px]" style={{ color: "#ef4444" }}>{error}</p>
+        )}
+        {/* Rodapé */}
+        <div className="flex gap-3 px-6 py-4 border-t flex-shrink-0" style={{ borderColor: "var(--border)" }}>
+          <button type="button" onClick={onClose}
+            className="flex-1 py-2.5 rounded-lg border text-[13px] transition-colors"
+            style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}>
+            Cancelar
+          </button>
+          <button onClick={save} disabled={loading}
+            className="flex-1 py-2.5 rounded-lg text-[13px] font-bold disabled:opacity-50 flex items-center justify-center gap-2 transition-all"
+            style={{ background: "var(--accent)", color: "var(--background)" }}>
+            {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+            {loading ? "Salvando..." : "Salvar permissões"}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Tab: Membros ─────────────────────────────────────────────────────────────
 
 function TabMembros() {
-  const PREVIEW = [
-    { nome: "Administrador", email: "contato@praxisplataforma.com.br", role: "Admin", avatar: "P" },
-    { nome: "Ana Secretaria",    email: "ana@clinica.com.br",       role: "Secretária",  avatar: "AS" },
-    { nome: "Marcos Assistente", email: "marcos@clinica.com.br",    role: "Assistente",  avatar: "MA" },
-  ]
+  const [members,    setMembers]    = useState<TeamMember[]>([])
+  const [loading,    setLoading]    = useState(true)
+  const [showInvite, setShowInvite] = useState(false)
+  const [editTarget, setEditTarget] = useState<TeamMember | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [fetchError, setFetchError] = useState("")
+
+  useEffect(() => {
+    fetch("/api/team")
+      .then(r => r.json())
+      .then((d: unknown) => setMembers(Array.isArray(d) ? (d as TeamMember[]) : []))
+      .catch(() => setFetchError("Erro ao carregar membros."))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const remove = async (id: string) => {
+    if (!confirm("Remover este membro da equipe?")) return
+    setDeletingId(id)
+    try {
+      await fetch(`/api/team?id=${id}`, { method: "DELETE" })
+      setMembers(prev => prev.filter(m => m.id !== id))
+    } finally { setDeletingId(null) }
+  }
 
   return (
-    <div className="space-y-5">
-      <SectionTitle>Equipe atual</SectionTitle>
-      <Card>
-        {PREVIEW.map((m, i) => (
-          <div key={i} className="flex items-center gap-4 px-5 py-4 border-b last:border-0"
-            style={{ borderColor: "var(--border)" }}>
-            <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-[11px] font-bold"
-              style={{ background: "var(--accent-dim)", color: "var(--accent)", border: "1px solid var(--accent-border)" }}>
-              {m.avatar}
-            </div>
-            <div className="flex-1">
-              <p className="text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>{m.nome}</p>
-              <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{m.email}</p>
-            </div>
-            <span className="text-badge font-mono font-semibold px-2 py-0.5 rounded-full border"
-              style={{
-                background: m.role === "Admin" ? "var(--accent-dim)" : "var(--surface)",
-                borderColor: m.role === "Admin" ? "var(--accent-border)" : "var(--border)",
-                color: m.role === "Admin" ? "var(--accent)" : "var(--text-muted)",
-              }}>
-              {m.role.toUpperCase()}
-            </span>
-          </div>
-        ))}
-      </Card>
-
-      <Link
-        href="/configuracoes/membros"
-        className="flex items-center justify-between px-5 py-4 rounded-xl border transition-all hover:-translate-y-0.5"
-        style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
-        <div className="flex items-center gap-3">
-          <Users className="w-4 h-4" style={{ color: "var(--accent)" }} />
-          <div>
-            <p className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>
-              Gerenciar membros
-            </p>
-            <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
-              Convide, edite permissões e remova membros da equipe
-            </p>
-          </div>
+    <>
+      <div className="space-y-5">
+        <div className="flex items-center justify-between">
+          <SectionTitle>Equipe da clínica</SectionTitle>
+          <button
+            onClick={() => setShowInvite(true)}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[12px] font-semibold transition-all"
+            style={{ background: "var(--accent-dim)", border: "1px solid var(--accent-border)", color: "var(--accent)" }}>
+            <Plus className="w-3.5 h-3.5" /> Convidar membro
+          </button>
         </div>
-        <ChevronRight className="w-4 h-4" style={{ color: "var(--text-muted)" }} />
-      </Link>
-    </div>
+
+        {fetchError && (
+          <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg"
+            style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.22)" }}>
+            <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#ef4444" }} />
+            <p className="text-[12px]" style={{ color: "#ef4444" }}>{fetchError}</p>
+          </div>
+        )}
+
+        {loading ? (
+          <div className="flex items-center gap-2 py-8" style={{ color: "var(--text-muted)" }}>
+            <Loader2 className="w-4 h-4 animate-spin" />
+            <span className="text-[12px]">Carregando membros...</span>
+          </div>
+        ) : members.length === 0 ? (
+          <Card>
+            <div className="flex flex-col items-center py-10 gap-3">
+              <Users className="w-8 h-8" style={{ color: "var(--text-muted)" }} />
+              <p className="text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>Nenhum membro ainda</p>
+              <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
+                Convide sua equipe para colaborar no PRAXIS.
+              </p>
+            </div>
+          </Card>
+        ) : (
+          <Card>
+            {members.map((m, i) => {
+              const initials = m.nome.split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase()
+              return (
+                <div key={m.id}
+                  className={cn("flex items-center gap-3 px-5 py-4", i < members.length - 1 ? "border-b" : "")}
+                  style={{ borderColor: "var(--border)" }}>
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-[11px] font-bold"
+                    style={{ background: "var(--accent-dim)", color: "var(--accent)", border: "1px solid var(--accent-border)" }}>
+                    {initials}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-medium truncate" style={{ color: "var(--text-primary)" }}>{m.nome}</p>
+                    <p className="text-[11px] truncate" style={{ color: "var(--text-muted)" }}>{m.email}</p>
+                  </div>
+                  <span className="text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full flex-shrink-0"
+                    style={m.status === "ativo"
+                      ? { background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.22)", color: "#10b981" }
+                      : { background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.22)", color: "#f59e0b" }}>
+                    {m.status === "ativo" ? "ATIVO" : "PENDENTE"}
+                  </span>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <button onClick={() => setEditTarget(m)} title="Editar permissões"
+                      className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
+                      style={{ color: "var(--text-muted)" }}>
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                    <button onClick={() => remove(m.id)} disabled={deletingId === m.id} title="Remover membro"
+                      className="w-8 h-8 rounded-lg flex items-center justify-center disabled:opacity-40 transition-colors"
+                      style={{ color: "var(--text-muted)" }}>
+                      {deletingId === m.id
+                        ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        : <Trash2 className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+          </Card>
+        )}
+      </div>
+
+      {showInvite && (
+        <InviteTeamModal
+          onClose={() => setShowInvite(false)}
+          onSaved={m => setMembers(prev => [...prev, m])}
+        />
+      )}
+      {editTarget && (
+        <PermissionsModal
+          member={editTarget}
+          onClose={() => setEditTarget(null)}
+          onSaved={updated => setMembers(prev => prev.map(m => m.id === updated.id ? updated : m))}
+        />
+      )}
+    </>
   )
 }
 

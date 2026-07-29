@@ -86,6 +86,18 @@ export default function CadastroPage() {
       body: JSON.stringify({ codigoManual: codigoIndicacao.trim() || null }),
     }).catch(e => { console.error("[cadastro] erro ao registrar indicação:", e); return null })
 
+    // Ativar convite de membro se houver token na URL
+    const inviteToken = searchParams.get("convite")
+    if (inviteToken) {
+      await fetch("/api/team/activate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: inviteToken }),
+      }).catch(e => { console.error("[cadastro] erro ao ativar convite:", e); return null })
+      router.push("/dashboard")
+      return
+    }
+
     router.push("/onboarding")
   }
 

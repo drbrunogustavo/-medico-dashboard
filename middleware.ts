@@ -22,6 +22,23 @@ const PRO_ROUTES = new Set<string>(["/radar", "/copiloto", "/nps", "/precificaca
 // Routes that require Elite plan
 const ELITE_ROUTES = new Set<string>(["/executivo", "/consultor", "/diagnostico", "/calculadoras"])
 
+// Routes completely blocked for team members (owner-only modules)
+const MEMBER_BLOCKED_ROUTES = ["/executivo", "/consultor", "/diagnostico", "/calculadoras", "/indicadores"]
+
+// Map from route prefix → team_permissions column required to be true
+const MEMBER_PERM_MAP: Record<string, string> = {
+  "/agenda":        "agenda_ver",
+  "/copiloto":      "copiloto",
+  "/crm":           "crm_ver",
+  "/financeiro":    "financeiro_ver",
+  "/nps":           "nps_ver",
+  "/indicacoes":    "indicacoes_ver",
+  "/calendario":    "marketing_ver",
+  "/roteiros":      "marketing_ver",
+  "/imagens":       "marketing_usar",
+  "/configuracoes": "configuracoes",
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
@@ -69,6 +86,36 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL("/dashboard", request.url))
     }
     return supabaseResponse // admin bypassa onboarding e payment guards
+  }
+
+  // Team member permission gate — runs before onboarding/payment (members have no plan)
+  const { data: membership } = await supabase
+    .from("team_members")
+    .select("id, team_permissions(*)")
+    .eq("user_id", user.id)
+    .eq("status", "ativo")
+    .maybeSingle()
+
+  if (membership) {
+    const isBlocked = MEMBER_BLOCKED_ROUTES.some(
+      r => pathname === r || pathname.startsWith(r + "/")
+    )
+    if (isBlocked) {
+      return NextResponse.redirect(new URL("/dashboard?sem-acesso=1", request.url))
+    }
+    const routeKey = Object.keys(MEMBER_PERM_MAP).find(
+      key => pathname === key || pathname.startsWith(key + "/")
+    )
+    const requiredPerm = routeKey ? MEMBER_PERM_MAP[routeKey] : undefined
+    if (requiredPerm) {
+      const perms = (
+        membership.team_permissions as unknown as Array<Record<string, boolean>> | null
+      )?.[0]
+      if (!perms?.[requiredPerm]) {
+        return NextResponse.redirect(new URL("/dashboard?sem-acesso=1", request.url))
+      }
+    }
+    return supabaseResponse // member bypasses onboarding and payment gate
   }
 
   // Onboarding guard

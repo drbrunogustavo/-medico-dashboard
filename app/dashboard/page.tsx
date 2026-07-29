@@ -357,6 +357,7 @@ export default function DashboardPage() {
   const router       = useRouter()
   const searchParams = useSearchParams()
   const pagamentoSucesso = searchParams.get("pagamento") === "sucesso"
+  const semAcesso        = searchParams.get("sem-acesso") === "1"
 
   useEffect(() => {
     if (!perfilLoading && perfil !== null && !perfil.onboarding_completo) {
@@ -782,6 +783,17 @@ export default function DashboardPage() {
             Compartilhar →
           </a>
         </div>
+
+        {/* ── Sem acesso banner ───────────────────────────────────────────── */}
+        {semAcesso && (
+          <div className="flex items-center gap-3 px-5 py-4 rounded-xl border"
+            style={{ background: "rgba(239,68,68,0.06)", borderColor: "rgba(239,68,68,0.22)" }}>
+            <AlertTriangle className="w-4 h-4 flex-shrink-0" style={{ color: "#ef4444" }} />
+            <p className="text-[13px] font-medium" style={{ color: "#ef4444" }}>
+              Você não tem permissão para acessar este módulo.
+            </p>
+          </div>
+        )}
 
         {/* ── Pagamento sucesso banner ────────────────────────────────────── */}
         {pagamentoSucesso && (

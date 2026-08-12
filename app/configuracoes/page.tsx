@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { createPortal } from "react-dom"
+import { useTheme } from "next-themes"
 import { TopBar } from "@/components/TopBar"
 import { cn } from "@/lib/utils"
 import {
@@ -422,6 +423,7 @@ function TabNotificacoes() {
 // ─── Tab: Aparência ───────────────────────────────────────────────────────────
 
 function TabAparencia() {
+  const { theme, setTheme } = useTheme()
   const [idioma,      setIdioma]      = useState("pt-BR")
   const [dataFmt,     setDataFmt]     = useState("dd/MM/yyyy")
   const [moeda,       setMoeda]       = useState("BRL")
@@ -458,21 +460,29 @@ function TabAparencia() {
             <p className="text-[12px] font-semibold mb-3" style={{ color: "var(--text-primary)" }}>Tema</p>
             <div className="flex gap-3">
               {[
-                { id: "off-white", label: "Off-White (padrão)", preview: "#F5F0E8" },
-                { id: "dark",      label: "Escuro",             preview: "#08090e"  },
-              ].map(t => (
-                <label key={t.id}
-                  className="flex items-center gap-2.5 cursor-pointer select-none">
-                  <div className="w-8 h-8 rounded-lg border flex-shrink-0"
-                    style={{ background: t.preview, borderColor: "var(--border)" }} />
-                  <div>
-                    <p className="text-[12px]" style={{ color: "var(--text-primary)" }}>{t.label}</p>
-                    {t.id === "off-white" && (
-                      <p className="text-[10px] font-mono" style={{ color: "var(--accent)" }}>Ativo</p>
-                    )}
-                  </div>
-                </label>
-              ))}
+                { id: "light", label: "Off-White (padrão)", preview: "#F5F0E8" },
+                { id: "dark",  label: "Escuro",             preview: "#08090e"  },
+              ].map(t => {
+                const isActive = theme === t.id || (!theme && t.id === "light")
+                return (
+                  <button key={t.id} onClick={() => setTheme(t.id)}
+                    className="flex items-center gap-2.5 cursor-pointer select-none text-left transition-all">
+                    <div className="w-8 h-8 rounded-lg flex-shrink-0 transition-all"
+                      style={{
+                        background: t.preview,
+                        border: isActive
+                          ? "2px solid var(--accent)"
+                          : "1px solid var(--border)",
+                      }} />
+                    <div>
+                      <p className="text-[12px]" style={{ color: "var(--text-primary)" }}>{t.label}</p>
+                      {isActive && (
+                        <p className="text-[10px] font-mono" style={{ color: "var(--accent)" }}>Ativo</p>
+                      )}
+                    </div>
+                  </button>
+                )
+              })}
             </div>
           </div>
         </div>

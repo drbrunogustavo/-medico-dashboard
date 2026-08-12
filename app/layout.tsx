@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { Inter, Playfair_Display } from "next/font/google"
 import "./globals.css"
 import { ConditionalLayout } from "@/components/ConditionalLayout"
+import { ThemeProvider } from "@/components/ThemeProvider"
 import { InstallPWA } from "@/components/InstallPWA"
 import { Analytics } from "@vercel/analytics/react"
 
@@ -64,6 +65,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       </head>
       <body className="bg-background text-text-primary antialiased">
+        <ThemeProvider>
         <ConditionalLayout>{children}</ConditionalLayout>
         <InstallPWA />
         <Analytics />
@@ -74,6 +76,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             });
           }
         `}} />
+        </ThemeProvider>
       </body>
     </html>
   )

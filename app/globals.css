@@ -33,6 +33,35 @@
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
+   DARK THEME — ativado via data-theme="dark" no <html>
+   (next-themes define isso automaticamente via ThemeProvider)
+══════════════════════════════════════════════════════════════════════════════ */
+
+[data-theme="dark"] {
+  --background:     #08090e;
+  --surface:        #0f1018;
+  --surface-2:      #13141d;
+  --card:           #13141d;
+  --border:         #1c1d2a;
+  --border-hover:   #2a2c3e;
+
+  --text-primary:   #e8eaf2;
+  --text-secondary: #7c85a0;
+  --text-muted:     #474f66;
+
+  --accent-rgb:     184 151 106;
+  --accent:         #b8976a;
+  --accent-text:    #b8976a;
+  --accent-dim:     rgba(184, 151, 106, 0.12);
+  --accent-border:  rgba(184, 151, 106, 0.28);
+
+  --gold:           #b8976a;
+  --topbar-bg:      rgba(15, 16, 24, 0.92);
+  --scrollbar:      #2a2c3e;
+  --selection-bg:   rgba(184, 151, 106, 0.15);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
    BASE
 ══════════════════════════════════════════════════════════════════════════════ */
 

@@ -54,6 +54,7 @@ interface TeamMember {
   user_id:          string | null
   email:            string
   nome:             string
+  cargo?:           string
   status:           "pendente" | "ativo"
   invite_token:     string | null
   created_at:       string
@@ -784,6 +785,7 @@ function PermissionsModal({ member, onClose, onSaved }: {
   onSaved:  (m: TeamMember) => void
 }) {
   const base = member.team_permissions?.[0]
+  const [cargo,   setCargo]   = useState(member.cargo ?? "")
   const [perms,   setPerms]   = useState<Record<string, boolean>>({
     agenda_ver:          base?.agenda_ver          ?? true,
     agenda_editar:       base?.agenda_editar       ?? false,
@@ -809,7 +811,7 @@ function PermissionsModal({ member, onClose, onSaved }: {
     try {
       const res = await fetch("/api/team", {
         method: "PATCH", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ memberId: member.id, permissions: perms }),
+        body: JSON.stringify({ memberId: member.id, cargo, permissions: perms }),
       })
       const data = await res.json() as Partial<TeamPermission> & { error?: string }
       if (!res.ok) { setError(data.error ?? "Erro ao salvar."); return }
@@ -834,7 +836,7 @@ function PermissionsModal({ member, onClose, onSaved }: {
         configuracoes:       perms["configuracoes"]       ?? false,
         gerenciar_membros:   perms["gerenciar_membros"]   ?? false,
       }
-      onSaved({ ...member, team_permissions: [updated] })
+      onSaved({ ...member, cargo: cargo.trim() || undefined, team_permissions: [updated] })
       onClose()
     } catch { setError("Erro de conexão.") }
     finally  { setLoading(false) }
@@ -861,6 +863,17 @@ function PermissionsModal({ member, onClose, onSaved }: {
         </div>
         {/* Corpo com scroll */}
         <div className="overflow-y-auto flex-1 p-6 space-y-5">
+          {/* Campo cargo */}
+          <div>
+            <label className="block text-[11px] font-mono mb-1.5 tracking-widest uppercase" style={{ color: "var(--text-muted)" }}>Função / Cargo</label>
+            <input
+              value={cargo}
+              onChange={e => setCargo(e.target.value)}
+              placeholder="Ex: Recepcionista, Enfermeira, Assistente..."
+              className="w-full rounded-lg px-3 py-2 text-[13px] outline-none transition-colors"
+              style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
+            />
+          </div>
           {PERM_SECTIONS.map(section => (
             <div key={section.label}>
               <p className="text-[10px] font-mono font-semibold tracking-[2px] uppercase mb-3"
@@ -982,6 +995,9 @@ function TabMembros() {
                   <div className="flex-1 min-w-0">
                     <p className="text-[13px] font-medium truncate" style={{ color: "var(--text-primary)" }}>{m.nome}</p>
                     <p className="text-[11px] truncate" style={{ color: "var(--text-muted)" }}>{m.email}</p>
+                    {m.cargo && (
+                      <p className="text-[10px] font-mono truncate" style={{ color: "var(--accent)" }}>{m.cargo}</p>
+                    )}
                   </div>
                   <span className="text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full flex-shrink-0"
                     style={m.status === "ativo"

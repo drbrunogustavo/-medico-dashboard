@@ -143,6 +143,7 @@ export async function PATCH(req: NextRequest) {
   const body = await req.json() as {
     memberId:    string
     permissions: Record<string, boolean>
+    cargo?:      string
   }
 
   if (!body.memberId || !body.permissions) {
@@ -150,6 +151,16 @@ export async function PATCH(req: NextRequest) {
   }
 
   const supabase = createSupabaseServerClient()
+
+  // Atualizar cargo em team_members se fornecido
+  if (body.cargo !== undefined) {
+    await supabase
+      .from("team_members")
+      .update({ cargo: body.cargo.trim() || null })
+      .eq("id",       body.memberId)
+      .eq("owner_id", auth.userId)
+  }
+
   const { data, error } = await supabase
     .from("team_permissions")
     .update({ ...body.permissions, updated_at: new Date().toISOString() })

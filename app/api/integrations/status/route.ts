@@ -10,5 +10,6 @@ export async function GET() {
     zapi:      !!(process.env.ZAPI_INSTANCE_ID && process.env.ZAPI_TOKEN),
     instagram: !!(process.env.META_ACCESS_TOKEN && process.env.META_IG_USER_ID),
     stripe:    !!(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_PRICE_STARTER_MONTHLY),
+    resend:    !!process.env.RESEND_API_KEY,
   })
 }

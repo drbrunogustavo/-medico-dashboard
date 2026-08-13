@@ -198,14 +198,19 @@ function TabIntegracoes() {
   const [zapiTestResult, setZapiTestResult] = useState<ZapiTestResult | null>(null)
 
   useEffect(() => {
-    fetch("/api/integracoes")
-      .then(r => r.json())
-      .then((rows: Array<{ tipo: string; config: Record<string, string>; ativo: boolean }>) => {
+    Promise.all([
+      fetch("/api/integracoes").then(r => r.json()),
+      fetch("/api/integrations/status").then(r => r.json()),
+    ])
+      .then(([rows, envStatus]: [
+        Array<{ tipo: string; config: Record<string, string>; ativo: boolean }>,
+        Record<string, boolean>,
+      ]) => {
         const vals: IntegrationState = {}
-        const conn: Record<string, boolean> = {}
-        rows.forEach(row => { vals[row.tipo] = row.config; conn[row.tipo] = row.ativo })
+        rows.forEach(row => { vals[row.tipo] = row.config })
+        // env vars são a fonte de verdade para o status de conexão
         setValues(vals)
-        setConnected(conn)
+        setConnected(envStatus)
       })
       .catch(() => {})
       .finally(() => setLoading(false))

@@ -37,7 +37,7 @@ export async function GET() {
   const supabase = createSupabaseServerClient()
   const { data, error } = await supabase
     .from("team_members")
-    .select("*, team_permissions(*)")
+    .select("id, owner_id, user_id, email, nome, cargo, status, invite_token, created_at, team_permissions(*)")
     .eq("owner_id", auth.userId)
     .order("created_at", { ascending: true })
 

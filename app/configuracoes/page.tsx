@@ -55,7 +55,7 @@ interface TeamMember {
   user_id:          string | null
   email:            string
   nome:             string
-  cargo?:           string
+  cargo?:           string | null
   status:           "pendente" | "ativo"
   invite_token:     string | null
   created_at:       string

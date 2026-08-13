@@ -4,8 +4,8 @@
 
 /* ══════════════════════════════════════════════════════════════════════════════
    THEME TOKENS
-   Applied via data-theme attribute on <html>.
-   Default = dark. Anti-flash script in layout.tsx sets data-theme before paint.
+   Applied via .dark class on <html> (next-themes default).
+   Default = light.
 ══════════════════════════════════════════════════════════════════════════════ */
 
 :root {
@@ -33,11 +33,11 @@
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   DARK THEME — ativado via data-theme="dark" no <html>
-   (next-themes define isso automaticamente via ThemeProvider)
+   DARK THEME — ativado via classe .dark no <html> (next-themes padrão)
 ══════════════════════════════════════════════════════════════════════════════ */
 
-[data-theme="dark"] {
+.dark {
+  color-scheme: dark;
   --background:     #08090e;
   --surface:        #0f1018;
   --surface-2:      #13141d;

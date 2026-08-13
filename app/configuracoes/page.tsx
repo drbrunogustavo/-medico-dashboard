@@ -9,7 +9,7 @@ import {
   Plug, Bell, Palette, Shield, Users, CreditCard,
   CheckCircle2, XCircle, ChevronRight, ExternalLink,
   Eye, EyeOff, Loader2, AlertTriangle, Download, Wifi,
-  X, Check, Plus, Pencil, Trash2,
+  X, Check, Plus, Pencil, Trash2, Mail,
 } from "lucide-react"
 import Link from "next/link"
 
@@ -934,8 +934,10 @@ function TabMembros() {
   const [loading,    setLoading]    = useState(true)
   const [showInvite, setShowInvite] = useState(false)
   const [editTarget, setEditTarget] = useState<TeamMember | null>(null)
-  const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [fetchError, setFetchError] = useState("")
+  const [deletingId,  setDeletingId]  = useState<string | null>(null)
+  const [resendingId, setResendingId] = useState<string | null>(null)
+  const [resentId,    setResentId]    = useState<string | null>(null)
+  const [fetchError,  setFetchError]  = useState("")
 
   useEffect(() => {
     fetch("/api/team")
@@ -944,6 +946,19 @@ function TabMembros() {
       .catch(() => setFetchError("Erro ao carregar membros."))
       .finally(() => setLoading(false))
   }, [])
+
+  const resend = async (id: string) => {
+    setResendingId(id)
+    try {
+      await fetch("/api/team/resend", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ member_id: id }),
+      })
+      setResentId(id)
+      setTimeout(() => setResentId(null), 3000)
+    } finally { setResendingId(null) }
+  }
 
   const remove = async (id: string) => {
     if (!confirm("Remover este membro da equipe?")) return
@@ -1016,6 +1031,19 @@ function TabMembros() {
                     {m.status === "ativo" ? "ATIVO" : "PENDENTE"}
                   </span>
                   <div className="flex items-center gap-1 flex-shrink-0">
+                    {m.status === "pendente" && (
+                      <button
+                        onClick={() => resend(m.id)}
+                        disabled={resendingId === m.id}
+                        title="Reenviar convite"
+                        className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-mono disabled:opacity-40 transition-colors"
+                        style={{ color: resentId === m.id ? "#10b981" : "var(--text-muted)" }}>
+                        {resendingId === m.id
+                          ? <Loader2 className="w-3 h-3 animate-spin" />
+                          : <Mail className="w-3 h-3" />}
+                        {resentId === m.id ? "Reenviado!" : "Reenviar"}
+                      </button>
+                    )}
                     <button onClick={() => setEditTarget(m)} title="Editar permissões"
                       className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
                       style={{ color: "var(--text-muted)" }}>

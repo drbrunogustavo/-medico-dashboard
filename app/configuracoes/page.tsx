@@ -538,14 +538,41 @@ function TabAparencia() {
 
 // ─── Tab: Segurança ───────────────────────────────────────────────────────────
 
+interface ActiveSession {
+  id:     string
+  device: string
+  ip:     string
+  time:   string
+  atual:  boolean
+}
+
 function TabSeguranca() {
-  const [oldPwd,   setOldPwd]   = useState("")
-  const [newPwd,   setNewPwd]   = useState("")
-  const [confPwd,  setConfPwd]  = useState("")
-  const [showPwds, setShowPwds] = useState(false)
-  const [saving,   setSaving]   = useState(false)
-  const [saved,    setSaved]    = useState(false)
-  const [error,    setError]    = useState("")
+  const [oldPwd,      setOldPwd]      = useState("")
+  const [newPwd,      setNewPwd]      = useState("")
+  const [confPwd,     setConfPwd]     = useState("")
+  const [showPwds,    setShowPwds]    = useState(false)
+  const [saving,      setSaving]      = useState(false)
+  const [saved,       setSaved]       = useState(false)
+  const [error,       setError]       = useState("")
+  const [sessions,    setSessions]    = useState<ActiveSession[]>([])
+  const [sessLoading, setSessLoading] = useState(true)
+  const [terminating, setTerminating] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetch("/api/auth/sessions")
+      .then(r => r.json())
+      .then((d: unknown) => setSessions(Array.isArray(d) ? (d as ActiveSession[]) : []))
+      .catch(() => {})
+      .finally(() => setSessLoading(false))
+  }, [])
+
+  const terminateSession = async (id: string) => {
+    setTerminating(id)
+    try {
+      await fetch(`/api/auth/sessions?session_id=${id}`, { method: "DELETE" })
+      setSessions(prev => prev.filter(s => s.id !== id))
+    } finally { setTerminating(null) }
+  }
 
   const changePwd = async () => {
     setError("")
@@ -573,12 +600,6 @@ function TabSeguranca() {
       />
     </div>
   )
-
-  const SESSOES = [
-    { device: "Chrome — macOS",           local: "São Paulo, SP",   atual: true,  time: "Agora"        },
-    { device: "Safari — iPhone 15 Pro",   local: "São Paulo, SP",   atual: false, time: "Há 2 horas"   },
-    { device: "Chrome — Windows",         local: "Curitiba, PR",    atual: false, time: "Ontem, 14h32" },
-  ]
 
   return (
     <div className="space-y-5">
@@ -620,23 +641,38 @@ function TabSeguranca() {
 
       <SectionTitle>Sessões ativas</SectionTitle>
       <Card>
-        {SESSOES.map((s, i) => (
-          <div key={i} className="flex items-center gap-4 px-5 py-4 border-b last:border-0"
+        {sessLoading ? (
+          <div className="flex items-center gap-2 px-5 py-4" style={{ color: "var(--text-muted)" }}>
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            <span className="text-[12px]">Carregando sessões...</span>
+          </div>
+        ) : sessions.length === 0 ? (
+          <div className="px-5 py-4">
+            <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Nenhuma sessão ativa encontrada.</p>
+          </div>
+        ) : sessions.map((s, i) => (
+          <div key={s.id} className="flex items-center gap-4 px-5 py-4 border-b last:border-0"
             style={{ borderColor: "var(--border)" }}>
-            <div className="flex-1">
-              <p className="text-[12px] font-medium" style={{ color: "var(--text-primary)" }}>{s.device}</p>
+            <div className="flex-1 min-w-0">
+              <p className="text-[12px] font-medium truncate" style={{ color: "var(--text-primary)" }}>{s.device}</p>
               <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>
-                {s.local} · {s.time}
+                {s.ip} · {s.time}
               </p>
             </div>
             {s.atual ? (
-              <span className="text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full"
+              <span className="text-[9px] font-mono font-semibold px-2 py-0.5 rounded-full flex-shrink-0"
                 style={{ background: "var(--accent-dim)", border: "1px solid var(--accent-border)", color: "var(--accent)" }}>
                 ATUAL
               </span>
             ) : (
-              <button className="text-[11px] transition-colors" style={{ color: "var(--text-muted)" }}
-                onClick={() => {}}>
+              <button
+                disabled={terminating === s.id}
+                className="text-[11px] flex items-center gap-1 disabled:opacity-40 transition-colors flex-shrink-0"
+                style={{ color: "var(--text-muted)" }}
+                onClick={() => terminateSession(s.id)}>
+                {terminating === s.id
+                  ? <Loader2 className="w-3 h-3 animate-spin" />
+                  : null}
                 Encerrar
               </button>
             )}

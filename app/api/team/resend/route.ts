@@ -40,6 +40,11 @@ export async function POST(req: NextRequest) {
   const ownerNome  = (perfil?.nome as string | null) ?? "seu médico"
   const inviteUrl  = `${APP_URL}/cadastro?convite=${member.invite_token}`
 
+  console.log("[team/resend] RESEND KEY presente:", !!process.env.RESEND_API_KEY)
+  console.log("[team/resend] EMAIL_FROM env:", process.env.EMAIL_FROM ?? "(não definido — usará sandbox)")
+  console.log("[team/resend] to:", member.email)
+  console.log("[team/resend] invite_token:", member.invite_token ? member.invite_token.slice(0, 8) + "…" : "NULL")
+
   if (process.env.RESEND_API_KEY) {
     if (!process.env.EMAIL_FROM) {
       console.warn("[team/resend] EMAIL_FROM não definido — usando sandbox onboarding@resend.dev (só entrega para emails verificados no Resend)")

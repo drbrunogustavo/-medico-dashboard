@@ -106,11 +106,14 @@ export async function POST(req: NextRequest) {
     owner_id:  auth.userId,
   })
 
-  // Enviar email de convite via Resend (fire-and-forget)
+  // Enviar email de convite via Resend
   if (process.env.RESEND_API_KEY) {
+    if (!process.env.EMAIL_FROM) {
+      console.warn("[team/invite] EMAIL_FROM não definido — usando sandbox onboarding@resend.dev (só entrega para emails verificados no Resend)")
+    }
     const resend = new Resend(process.env.RESEND_API_KEY)
     const inviteUrl = `${APP_URL}/cadastro?convite=${inviteToken}`
-    resend.emails.send({
+    const emailResult = await resend.emails.send({
       from:    FROM_EMAIL,
       to:      [email],
       subject: "Você foi convidado para o PRAXIS",
@@ -128,7 +131,10 @@ export async function POST(req: NextRequest) {
           <p style="color:#888;font-size:12px;">Este convite expira em 7 dias.</p>
         </div>
       `,
-    }).catch(console.error)
+    })
+    console.log("[team/invite] email result:", JSON.stringify(emailResult))
+  } else {
+    console.warn("[team/invite] RESEND_API_KEY não definido — email não enviado")
   }
 
   return NextResponse.json({ ...member, team_permissions: [] as PermissionsRow[] }, { status: 201 })

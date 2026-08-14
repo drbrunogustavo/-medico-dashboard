@@ -27,8 +27,12 @@ export async function POST(req: NextRequest) {
   if (member.status !== "pendente") {
     return NextResponse.json({ error: "Membro já aceitou o convite." }, { status: 409 })
   }
+  const token = member.invite_token ?? crypto.randomUUID()
   if (!member.invite_token) {
-    return NextResponse.json({ error: "Token de convite não encontrado." }, { status: 409 })
+    await supabase
+      .from("team_members")
+      .update({ invite_token: token })
+      .eq("id", body.member_id)
   }
 
   const { data: perfil } = await supabase
@@ -38,12 +42,12 @@ export async function POST(req: NextRequest) {
     .maybeSingle()
 
   const ownerNome  = (perfil?.nome as string | null) ?? "seu médico"
-  const inviteUrl  = `${APP_URL}/cadastro?convite=${member.invite_token}`
+  const inviteUrl  = `${APP_URL}/cadastro?convite=${token}`
 
   console.log("[team/resend] RESEND KEY presente:", !!process.env.RESEND_API_KEY)
   console.log("[team/resend] EMAIL_FROM env:", process.env.EMAIL_FROM ?? "(não definido — usará sandbox)")
   console.log("[team/resend] to:", member.email)
-  console.log("[team/resend] invite_token:", member.invite_token ? member.invite_token.slice(0, 8) + "…" : "NULL")
+  console.log("[team/resend] invite_token:", token.slice(0, 8) + "… (gerado novo:", !member.invite_token, ")")
 
   if (process.env.RESEND_API_KEY) {
     if (!process.env.EMAIL_FROM) {

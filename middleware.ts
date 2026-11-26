@@ -130,8 +130,9 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL("/onboarding", request.url))
     }
 
-    // Payment gate — require an active plan after onboarding is complete
-    if (!PAYMENT_EXEMPT_ROUTES.has(pathname)) {
+    // Payment gate — require an active plan after onboarding is complete.
+    // O admin (DOCTOR_USER_ID) não passa pelo gate de pagamento, igual ao tier guard abaixo.
+    if (!PAYMENT_EXEMPT_ROUTES.has(pathname) && user.id !== process.env.DOCTOR_USER_ID) {
       const { data: planoData } = await supabase
         .from("user_planos")
         .select("status, assinatura_termina_em")

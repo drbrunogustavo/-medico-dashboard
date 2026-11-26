@@ -456,7 +456,7 @@ export default function RadarClinicaPage() {
                       icon={Plug}
                       title="Agenda não configurada"
                       subtitle="Conecte o MedX para visualizar seus agendamentos do dia diretamente aqui."
-                      action={{ label: "Configurar integração", href: "/integracoes" }}
+                      action={{ label: "Configurar integração", href: "/configuracoes" }}
                       className="py-10"
                     />
                   ) : (

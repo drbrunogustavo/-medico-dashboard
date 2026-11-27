@@ -1,594 +1,364 @@
 "use client"
 
-import { useState } from "react"
-import { Calculator, TrendingUp, Target, Loader2, ChevronDown, ChevronUp, DollarSign, BarChart3, Lightbulb, AlertCircle, Timer, X } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
+import { useEffect, useId, useRef, useState } from "react"
+import { ChevronDown, ChevronUp } from "lucide-react"
+import { Panel, PxButton, Segmented, Field, PxInput, PageHeader } from "@/components/px"
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+// ─── Tipos ───────────────────────────────────────────────────────────────────
 
-interface Benchmark {
-  perfil:  string
-  faixa:   string
-  media:   number
-}
-
-interface AcaoValor {
-  acao:              string
-  impacto_estimado:  string
-  prazo:             string
-}
+interface Benchmark { perfil: string; faixa: string; media: number }
+interface AcaoValor { acao: string; impacto_estimado: string; prazo: string }
 
 interface PrecificacaoResult {
-  valor_minimo:                       number
-  valor_recomendado:                  number
-  valor_premium:                      number
-  ponto_equilibrio:                   number
-  margem_liquida_pct:                 number
-  faturamento_estimado_recomendado:   number
-  estrategia_reajuste:                string
-  justificativa:                      string
-  benchmarks_regiao:                  Benchmark[]
-  acoes_para_aumentar_valor:          AcaoValor[]
-  erros_comuns_precificacao:          string[]
+  valor_minimo:                     number
+  valor_recomendado:                number
+  valor_premium:                    number
+  ponto_equilibrio:                 number
+  margem_liquida_pct:               number
+  faturamento_estimado_recomendado: number
+  estrategia_reajuste:              string
+  justificativa:                    string
+  benchmarks_regiao:                Benchmark[]
+  acoes_para_aumentar_valor:        AcaoValor[]
+  erros_comuns_precificacao:        string[]
 }
 
-// ─── Constants ───────────────────────────────────────────────────────────────
+// ─── Constantes ──────────────────────────────────────────────────────────────
 
 const TEMPO_CONSULTA_OPTS = ["20 min", "30 min", "45 min", "60 min", "90 min"]
 const POSICIONAMENTO_OPTS = [
-  { id: "acessivel",     label: "Acessível",      desc: "Volume alto, ticket baixo" },
-  { id: "intermediario", label: "Intermediário",  desc: "Equilíbrio volume/valor" },
-  { id: "premium",       label: "Premium",        desc: "Qualidade percebida alta" },
-  { id: "ultra",         label: "Ultra-premium",  desc: "Exclusivo, agenda seletiva" },
+  { id: "acessivel",     label: "Acessível",     desc: "Volume alto, ticket baixo" },
+  { id: "intermediario", label: "Intermediário", desc: "Equilíbrio entre volume e valor" },
+  { id: "premium",       label: "Premium",       desc: "Qualidade percebida alta" },
+  { id: "ultra",         label: "Ultra-premium", desc: "Exclusivo, agenda seletiva" },
 ]
 
 const LOADING_PHRASES = [
-  "Analisando mercado da sua cidade...",
-  "Calculando ponto de equilíbrio...",
-  "Comparando benchmarks regionais...",
-  "Identificando oportunidades de aumento...",
-  "Gerando estratégia de reajuste...",
-  "Finalizando relatório de precificação...",
+  "Analisando o mercado da sua cidade",
+  "Calculando o ponto de equilíbrio",
+  "Comparando benchmarks regionais",
+  "Identificando oportunidades de aumento",
+  "Gerando a estratégia de reajuste",
+  "Finalizando o relatório de precificação",
 ]
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })
 
-function fmt(v: number) {
-  return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })
-}
+const areaTitulo = "text-[15px] font-semibold text-px-ink"
 
-// ─── Sub-components ──────────────────────────────────────────────────────────
+// ─── Componentes ─────────────────────────────────────────────────────────────
 
-function SliderField({
-  label, value, onChange, min, max, step = 1, suffix = "",
-}: {
-  label: string; value: number; onChange: (v: number) => void
-  min: number; max: number; step?: number; suffix?: string
+function SliderField({ label, value, onChange, min, max, step = 1, suffix = "" }: {
+  label: string; value: number; onChange: (v: number) => void; min: number; max: number; step?: number; suffix?: string
 }) {
+  const id = useId()
   return (
     <div className="space-y-1.5">
-      <div className="flex items-center justify-between">
-        <label className="text-[11px] font-mono text-text-muted uppercase tracking-wide">{label}</label>
-        <span className="text-sm font-semibold text-text-primary font-mono">{value}{suffix}</span>
+      <div className="flex items-baseline justify-between">
+        <label htmlFor={id} className="text-[13px] font-medium text-px-ink">{label}</label>
+        <span className="text-[14px] font-semibold text-px-ink">{value}{suffix}</span>
       </div>
-      <input
-        type="range"
-        min={min} max={max} step={step} value={value}
-        onChange={e => onChange(Number(e.target.value))}
-        className="w-full h-1.5 rounded-full appearance-none cursor-pointer accent-accent"
-      />
-      <div className="flex justify-between text-[10px] text-text-muted font-mono">
-        <span>{min}{suffix}</span>
-        <span>{max}{suffix}</span>
-      </div>
+      <input id={id} type="range" min={min} max={max} step={step} value={value} onChange={e => onChange(Number(e.target.value))}
+        className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-px-ink/15 accent-px-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-px-ink/40" />
+      <div className="flex justify-between text-[12px] text-px-muted"><span>{min}{suffix}</span><span>{max}{suffix}</span></div>
     </div>
   )
 }
 
-function CostField({
-  label, value, onChange,
-}: {
-  label: string; value: number; onChange: (v: number) => void
-}) {
+function CostField({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
+  const id = useId()
   return (
-    <div className="space-y-1">
-      <label className="text-[11px] font-mono text-text-muted uppercase tracking-wide">{label}</label>
+    <Field label={label} htmlFor={id}>
       <div className="relative">
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-xs font-mono">R$</span>
-        <input
-          type="number"
-          min={0}
-          value={value || ""}
-          onChange={e => onChange(Number(e.target.value) || 0)}
-          placeholder="0"
-          className="w-full bg-[--surface] border border-[--border] rounded-lg pl-9 pr-3 py-2.5 text-sm text-text-primary font-mono focus:outline-none focus:border-accent/50 transition-colors"
-        />
+        <span aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[13px] text-px-muted">R$</span>
+        <PxInput id={id} type="number" min={0} inputMode="decimal" value={value || ""} placeholder="0" className="pl-9"
+          onChange={e => onChange(Math.max(0, Number(e.target.value) || 0))} />
       </div>
-    </div>
+    </Field>
   )
 }
 
-function ValueCard({
-  label, value, desc, color, big = false,
-}: {
-  label: string; value: number; desc: string; color: string; big?: boolean
-}) {
-  return (
-    <div className={cn(
-      "rounded-xl border p-5 flex flex-col gap-2",
-      big ? "border-accent/30 bg-accent/5" : "border-[--border] bg-[--surface]"
-    )}>
-      <span className={cn("text-[10px] font-mono uppercase tracking-widest", color)}>{label}</span>
-      <span className={cn("font-bold tracking-tight", big ? "text-3xl text-accent" : "text-2xl text-text-primary")}>
-        {fmt(value)}
-      </span>
-      <span className="text-[11px] text-text-muted leading-relaxed">{desc}</span>
-    </div>
-  )
-}
-
-function Section({
-  icon: Icon, title, children, defaultOpen = false,
-}: {
-  icon: React.ElementType; title: string; children: React.ReactNode; defaultOpen?: boolean
-}) {
+function Secao({ title, children, defaultOpen = false }: { title: string; children: React.ReactNode; defaultOpen?: boolean }) {
   const [open, setOpen] = useState(defaultOpen)
+  const id = useId()
   return (
-    <div className="rounded-xl border border-[--border] overflow-hidden">
-      <button
-        onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between p-4 hover:bg-white/[0.02] transition-colors"
-      >
-        <div className="flex items-center gap-2.5">
-          <Icon className="w-4 h-4 text-accent" />
-          <span className="text-sm font-semibold text-text-primary">{title}</span>
-        </div>
-        {open ? <ChevronUp className="w-4 h-4 text-text-muted" /> : <ChevronDown className="w-4 h-4 text-text-muted" />}
-      </button>
-      {open && <div className="px-4 pb-4 border-t border-[--border] pt-4">{children}</div>}
-    </div>
+    <Panel as="section" className="p-0">
+      <h2>
+        <button type="button" aria-expanded={open} aria-controls={id} onClick={() => setOpen(o => !o)}
+          className="flex w-full items-center justify-between gap-3 rounded-px-panel p-4 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-px-ink/40">
+          <span className={areaTitulo}>{title}</span>
+          {open ? <ChevronUp className="h-4 w-4 text-px-muted" aria-hidden="true" /> : <ChevronDown className="h-4 w-4 text-px-muted" aria-hidden="true" />}
+        </button>
+      </h2>
+      {open && <div id={id} className="border-t border-px-ink/10 p-4">{children}</div>}
+    </Panel>
   )
 }
 
-// ─── Simulator ───────────────────────────────────────────────────────────────
-
-function Simulator({
-  result, consultasMes,
-}: {
-  result: PrecificacaoResult; consultasMes: number
-}) {
-  const [preco, setPreco]           = useState(result.valor_recomendado)
-  const [ocupacao, setOcupacao]     = useState(80)
-  const consultasEfetivas           = Math.round(consultasMes * ocupacao / 100)
-  const faturamento                 = consultasEfetivas * preco
+function Simulador({ result, consultasMes }: { result: PrecificacaoResult; consultasMes: number }) {
+  const max = result.valor_premium + 200
+  const [preco,    setPreco]    = useState(Math.min(Math.max(result.valor_recomendado, result.valor_minimo), max))
+  const [ocupacao, setOcupacao] = useState(80)
+  const consultasEfetivas = Math.round(consultasMes * ocupacao / 100)
+  const faturamento       = consultasEfetivas * preco
+  const diff              = faturamento - result.faturamento_estimado_recomendado
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <SliderField
-          label="Preço da consulta"
-          value={preco}
-          onChange={setPreco}
-          min={result.valor_minimo}
-          max={result.valor_premium + 200}
-          step={10}
-          suffix=""
-        />
-        <SliderField
-          label="Taxa de ocupação"
-          value={ocupacao}
-          onChange={setOcupacao}
-          min={20} max={100} suffix="%"
-        />
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+        <SliderField label="Preço da consulta" value={preco} onChange={setPreco} min={result.valor_minimo} max={max} step={10} />
+        <SliderField label="Taxa de ocupação" value={ocupacao} onChange={setOcupacao} min={20} max={100} suffix="%" />
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-2">
-        <div className="rounded-lg bg-[--surface] border border-[--border] p-3 text-center">
-          <p className="text-[10px] font-mono text-text-muted uppercase mb-1">Consultas/mês</p>
-          <p className="text-lg font-bold text-text-primary font-mono">{consultasEfetivas}</p>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="rounded-px-card bg-px-ink/[0.05] p-3 text-center">
+          <p className="text-[12.5px] text-px-muted">Consultas por mês</p>
+          <p className="text-[20px] font-semibold text-px-ink">{consultasEfetivas}</p>
         </div>
-        <div className="rounded-lg bg-[--surface] border border-[--border] p-3 text-center">
-          <p className="text-[10px] font-mono text-text-muted uppercase mb-1">Faturamento</p>
-          <p className="text-lg font-bold text-accent font-mono">{fmt(faturamento)}</p>
+        <div className="rounded-px-card bg-px-ink/[0.05] p-3 text-center">
+          <p className="text-[12.5px] text-px-muted">Faturamento</p>
+          <p className="text-[20px] font-semibold text-px-ink">{fmt(faturamento)}</p>
         </div>
-        <div className="rounded-lg bg-[--surface] border border-[--border] p-3 text-center">
-          <p className="text-[10px] font-mono text-text-muted uppercase mb-1">vs. Recomendado</p>
-          <p className={cn("text-lg font-bold font-mono", faturamento >= result.faturamento_estimado_recomendado ? "text-emerald-400" : "text-red-400")}>
-            {faturamento >= result.faturamento_estimado_recomendado ? "+" : ""}{fmt(faturamento - result.faturamento_estimado_recomendado)}
-          </p>
+        <div className="rounded-px-card bg-px-ink/[0.05] p-3 text-center">
+          <p className="text-[12.5px] text-px-muted">Diferença para o recomendado</p>
+          <p className={`text-[20px] font-semibold ${diff < 0 ? "text-px-danger" : "text-px-ink"}`}>{diff > 0 ? "+" : ""}{fmt(diff)}</p>
         </div>
       </div>
     </div>
   )
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+function ValorCard({ label, value, desc, destaque = false }: { label: string; value: number; desc: string; destaque?: boolean }) {
+  return (
+    <Panel as="div" tone={destaque ? "dark" : "light"} className="flex flex-col gap-1.5">
+      <span className={`text-[13px] font-medium ${destaque ? "text-white/75" : "text-px-muted"}`}>{label}</span>
+      <span className={`font-semibold tracking-[-0.02em] ${destaque ? "text-[32px] text-white" : "text-[26px] text-px-ink"}`}>{fmt(value)}</span>
+      <span className={`text-[12.5px] leading-relaxed ${destaque ? "text-white/75" : "text-px-muted"}`}>{desc}</span>
+    </Panel>
+  )
+}
+
+// ─── Página ──────────────────────────────────────────────────────────────────
 
 export default function PrecificacaoPage() {
-  const [step, setStep] = useState<1 | 2 | 3>(1)
+  const [step, setStep]           = useState<1 | 2 | 3>(1)
   const [phraseIdx, setPhraseIdx] = useState(0)
-  const [result, setResult] = useState<PrecificacaoResult | null>(null)
-  const [error, setError]   = useState("")
+  const [result, setResult]       = useState<PrecificacaoResult | null>(null)
+  const [error, setError]         = useState("")
+  const timer = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  // Form state
-  const [especialidade,      setEspecialidade]      = useState("")
-  const [cidade,             setCidade]             = useState("")
-  const [tempoConsulta,      setTempoConsulta]      = useState("30 min")
-  const [anosExp,            setAnosExp]            = useState(5)
-  const [consultasDia,       setConsultasDia]       = useState(8)
-  const [diasMes,            setDiasMes]            = useState(20)
-  const [custoAluguel,       setCustoAluguel]       = useState(0)
-  const [custoFuncionarios,  setCustoFuncionarios]  = useState(0)
-  const [custoSistemas,      setCustoSistemas]      = useState(0)
-  const [custoMarketing,     setCustoMarketing]     = useState(0)
-  const [custoOutros,        setCustoOutros]        = useState(0)
-  const [posicionamento,     setPosicionamento]     = useState("intermediario")
+  const [especialidade,     setEspecialidade]     = useState("")
+  const [cidade,            setCidade]            = useState("")
+  const [tempoConsulta,     setTempoConsulta]     = useState("30 min")
+  const [anosExp,           setAnosExp]           = useState(5)
+  const [consultasDia,      setConsultasDia]      = useState(8)
+  const [diasMes,           setDiasMes]           = useState(20)
+  const [custoAluguel,      setCustoAluguel]      = useState(0)
+  const [custoFuncionarios, setCustoFuncionarios] = useState(0)
+  const [custoSistemas,     setCustoSistemas]     = useState(0)
+  const [custoMarketing,    setCustoMarketing]    = useState(0)
+  const [custoOutros,       setCustoOutros]       = useState(0)
+  const [posicionamento,    setPosicionamento]    = useState("intermediario")
 
-  const custoTotal    = custoAluguel + custoFuncionarios + custoSistemas + custoMarketing + custoOutros
-  const consultasMes  = consultasDia * diasMes
-  const canSubmit     = especialidade.trim().length > 0 && cidade.trim().length > 0
+  const custoTotal   = custoAluguel + custoFuncionarios + custoSistemas + custoMarketing + custoOutros
+  const consultasMes = consultasDia * diasMes
+  const canSubmit    = especialidade.trim().length > 0 && cidade.trim().length > 0
+
+  const parar = () => { if (timer.current) { clearInterval(timer.current); timer.current = null } }
+  useEffect(() => parar, [])
 
   async function handleSubmit() {
     if (!canSubmit) return
-    setError("")
-    setStep(2)
-    setPhraseIdx(0)
-
-    const interval = setInterval(() =>
-      setPhraseIdx(i => (i + 1) % LOADING_PHRASES.length), 2000)
+    setError(""); setStep(2); setPhraseIdx(0)
+    parar()
+    timer.current = setInterval(() => setPhraseIdx(i => (i + 1) % LOADING_PHRASES.length), 2000)
 
     try {
       const res = await fetch("/api/precificacao", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          especialidade,
-          cidade,
-          tempo_consulta:      tempoConsulta,
-          anos_experiencia:    anosExp,
-          consultas_dia:       consultasDia,
-          dias_mes:            diasMes,
-          custo_aluguel:       custoAluguel,
-          custo_funcionarios:  custoFuncionarios,
-          custo_sistemas:      custoSistemas,
-          custo_marketing:     custoMarketing,
-          custo_outros:        custoOutros,
+          especialidade, cidade,
+          tempo_consulta:     tempoConsulta,
+          anos_experiencia:   anosExp,
+          consultas_dia:      consultasDia,
+          dias_mes:           diasMes,
+          custo_aluguel:      custoAluguel,
+          custo_funcionarios: custoFuncionarios,
+          custo_sistemas:     custoSistemas,
+          custo_marketing:    custoMarketing,
+          custo_outros:       custoOutros,
           posicionamento,
         }),
       })
-      const data = await res.json()
-      clearInterval(interval)
-      if (!res.ok || data.error) {
-        setError(data.error ?? "Erro ao calcular precificação")
-        setStep(1)
-        return
-      }
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || data.error) { setError(data.error ?? "Não foi possível calcular a precificação. Tente novamente."); setStep(1); return }
       setResult(data as PrecificacaoResult)
       setStep(3)
     } catch (e) {
       console.error("[precificacao] erro ao calcular precificação:", e)
-      clearInterval(interval)
       setError("Erro de conexão. Tente novamente.")
       setStep(1)
-    }
+    } finally { parar() }
   }
 
-  // ── Step 2: Loading ──
+  // ── Carregando ──
   if (step === 2) {
     return (
-      <div className="animate-fade-in flex flex-col items-center justify-center min-h-[70vh] gap-8">
-        <div className="w-16 h-16 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center">
-          <Calculator className="w-8 h-8 text-accent animate-pulse" />
-        </div>
-        <div className="text-center space-y-2">
-          <h2 className="text-xl font-semibold text-text-primary">Calculando sua precificação...</h2>
-          <p className="text-sm text-text-muted font-mono">{LOADING_PHRASES[phraseIdx]}</p>
-        </div>
-        <div className="flex gap-2">
-          {LOADING_PHRASES.map((_, i) => (
-            <div
-              key={i}
-              className={cn(
-                "w-2 h-2 rounded-full transition-all duration-500",
-                i === phraseIdx ? "bg-accent scale-125" : "bg-[--border]"
-              )}
-            />
-          ))}
+      <div className="animate-fade-in">
+        <PageHeader title="Precificação" caption="Calculando" />
+        <div className="px-4 py-24 text-center md:px-10">
+          <p role="status" className="text-[16px] font-semibold text-px-ink">Calculando sua precificação</p>
+          <p className="mt-1.5 text-[13.5px] text-px-muted">{LOADING_PHRASES[phraseIdx]}</p>
         </div>
       </div>
     )
   }
 
-  // ── Step 3: Results ──
+  // ── Resultado ──
   if (step === 3 && result) {
+    const posLabel = POSICIONAMENTO_OPTS.find(p => p.id === posicionamento)?.label ?? posicionamento
     return (
       <div className="animate-fade-in">
-        <div className="flex flex-wrap items-center justify-between gap-3 p-4 md:p-8 pb-0">
-          <div>
-            <h1 className="text-2xl font-bold text-text-primary tracking-tight">Precificação Estratégica</h1>
-            <p className="text-sm text-text-muted mt-1 font-mono">
-              {especialidade} · {cidade} · {tempoConsulta} · {posicionamento}
-            </p>
-          </div>
-          <button
-            onClick={() => { setStep(1); setResult(null) }}
-            className="text-xs font-mono border border-[--border] px-3 py-1.5 rounded-lg text-text-muted hover:text-text-secondary hover:border-accent/30 transition-colors"
-          >
-            Recalcular
-          </button>
-        </div>
-
-        <div className="p-4 md:p-8 space-y-6">
-          {/* Value Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <ValueCard
-              label="Valor Mínimo"
-              value={result.valor_minimo}
-              desc="Ponto de equilíbrio + margem mínima. Abaixo disso você trabalha no prejuízo."
-              color="text-red-400"
-            />
-            <ValueCard
-              label="Valor Recomendado"
-              value={result.valor_recomendado}
-              desc="Preço ideal para seu perfil, mercado e posicionamento desejado."
-              color="text-accent"
-              big
-            />
-            <ValueCard
-              label="Valor Premium"
-              value={result.valor_premium}
-              desc="Teto realista para sua especialidade e cidade. Meta de médio prazo."
-              color="text-purple-400"
-            />
+        <PageHeader
+          title="Precificação"
+          caption={`${especialidade}, ${cidade}, consulta de ${tempoConsulta}, perfil ${posLabel.toLowerCase()}`}
+          actions={<PxButton variant="secondary" size="sm" onClick={() => { setStep(1); setResult(null) }}>Recalcular</PxButton>}
+        />
+        <div className="max-w-5xl space-y-4 px-4 pb-10 md:px-10">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <ValorCard label="Valor mínimo" value={result.valor_minimo} desc="Ponto de equilíbrio mais margem mínima. Abaixo disso a consulta dá prejuízo." />
+            <ValorCard label="Valor recomendado" value={result.valor_recomendado} desc="Preço ideal para seu perfil, mercado e posicionamento." destaque />
+            <ValorCard label="Valor premium" value={result.valor_premium} desc="Teto realista para sua especialidade e cidade. Meta de médio prazo." />
           </div>
 
-          {/* KPI Row */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
             {[
-              { label: "Ponto de equilíbrio",     value: fmt(result.ponto_equilibrio),                         note: "por consulta" },
-              { label: "Margem líquida est.",      value: `${result.margem_liquida_pct}%`,                     note: "no recomendado" },
-              { label: "Faturamento est.",         value: fmt(result.faturamento_estimado_recomendado),         note: "/mês" },
-              { label: "Custo total mensal",       value: fmt(custoTotal),                                      note: "seus dados" },
+              { label: "Ponto de equilíbrio",  value: fmt(result.ponto_equilibrio),                 note: "por consulta" },
+              { label: "Margem líquida",       value: `${result.margem_liquida_pct}%`,              note: "estimada no valor recomendado" },
+              { label: "Faturamento",          value: fmt(result.faturamento_estimado_recomendado), note: "estimado por mês" },
+              { label: "Custo total mensal",   value: fmt(custoTotal),                              note: "informado por você" },
             ].map(k => (
-              <div key={k.label} className="rounded-xl border border-[--border] bg-[--surface] p-4">
-                <p className="text-[10px] font-mono text-text-muted uppercase tracking-wide">{k.label}</p>
-                <p className="text-xl font-bold text-text-primary mt-1">{k.value}</p>
-                <p className="text-[10px] text-text-muted mt-0.5 font-mono">{k.note}</p>
-              </div>
+              <Panel as="div" key={k.label} className="p-4">
+                <p className="text-[12.5px] text-px-muted">{k.label}</p>
+                <p className="mt-1 text-[20px] font-semibold leading-none text-px-ink">{k.value}</p>
+                <p className="mt-1.5 text-[12px] text-px-muted">{k.note}</p>
+              </Panel>
             ))}
           </div>
 
-          {/* Simulator */}
-          <Section icon={Calculator} title="Simulador Interativo" defaultOpen>
-            <Simulator result={result} consultasMes={consultasMes} />
-          </Section>
+          <Secao title="Simulador" defaultOpen><Simulador result={result} consultasMes={consultasMes} /></Secao>
 
-          {/* Benchmarks */}
-          <Section icon={BarChart3} title="Benchmark Regional" defaultOpen>
-            <div className="space-y-2">
-              {result.benchmarks_regiao.map((b, i) => (
-                <div key={i} className="flex items-center gap-3 py-2.5 border-b border-[--border] last:border-0">
-                  <div className="flex-1">
-                    <p className="text-sm text-text-primary">{b.perfil}</p>
-                    <p className="text-[11px] text-text-muted font-mono">{b.faixa}</p>
+          <Secao title="Benchmark regional" defaultOpen>
+            <ul className="divide-y divide-px-ink/10">
+              {(result.benchmarks_regiao ?? []).map((b, i) => (
+                <li key={i} className="flex items-center gap-3 py-2.5">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[13.5px] text-px-ink">{b.perfil}</p>
+                    <p className="text-[12.5px] text-px-muted">{b.faixa}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-semibold text-accent font-mono">{fmt(b.media)}</p>
-                    <p className="text-[10px] text-text-muted font-mono">média</p>
+                    <p className="text-[13.5px] font-semibold text-px-ink">{fmt(b.media)}</p>
+                    <p className="text-[12px] text-px-muted">média</p>
                   </div>
-                  <div className="w-24 h-1.5 bg-[--border] rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-accent rounded-full"
-                      style={{ width: `${Math.min((b.media / (result.valor_premium + 200)) * 100, 100)}%` }}
-                    />
+                  <div aria-hidden="true" className="h-1.5 w-24 overflow-hidden rounded-full bg-px-ink/10">
+                    <div className="h-full rounded-full bg-px-ink" style={{ width: `${Math.min((b.media / (result.valor_premium + 200)) * 100, 100)}%` }} />
                   </div>
-                </div>
-              ))}
-            </div>
-          </Section>
-
-          {/* Justificativa */}
-          <Section icon={Target} title="Justificativa da Precificação">
-            <p className="text-sm text-text-secondary leading-relaxed">{result.justificativa}</p>
-          </Section>
-
-          {/* Estratégia de reajuste */}
-          <Section icon={TrendingUp} title="Estratégia de Reajuste">
-            <p className="text-sm text-text-secondary leading-relaxed">{result.estrategia_reajuste}</p>
-          </Section>
-
-          {/* Ações para aumentar valor */}
-          <Section icon={Lightbulb} title="Ações para Aumentar Seu Valor Percebido">
-            <div className="space-y-3">
-              {result.acoes_para_aumentar_valor.map((a, i) => (
-                <div key={i} className="flex gap-3 p-3 rounded-lg bg-[--surface] border border-[--border]">
-                  <div className="w-6 h-6 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-[10px] font-mono font-bold text-accent">{i + 1}</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-text-primary">{a.acao}</p>
-                    <div className="flex gap-3 mt-1">
-                      <span className="text-[10px] font-mono text-emerald-400">{a.impacto_estimado}</span>
-                      <span className="text-[10px] font-mono text-text-muted"><Timer className="inline-block align-[-0.15em] w-3 h-3 mr-1" /> {a.prazo}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Section>
-
-          {/* Erros comuns */}
-          <Section icon={AlertCircle} title="Erros Comuns a Evitar">
-            <ul className="space-y-2">
-              {result.erros_comuns_precificacao.map((e, i) => (
-                <li key={i} className="flex gap-2 text-sm text-text-secondary">
-                  <X className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
-                  {e}
                 </li>
               ))}
             </ul>
-          </Section>
+          </Secao>
+
+          <Secao title="Justificativa"><p className="text-[13.5px] leading-relaxed text-px-ink/80">{result.justificativa}</p></Secao>
+          <Secao title="Estratégia de reajuste"><p className="text-[13.5px] leading-relaxed text-px-ink/80">{result.estrategia_reajuste}</p></Secao>
+
+          <Secao title="Ações para aumentar o valor percebido">
+            <ol className="space-y-2.5">
+              {(result.acoes_para_aumentar_valor ?? []).map((a, i) => (
+                <li key={i} className="flex gap-3 rounded-px-card bg-px-ink/[0.04] p-3">
+                  <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-px-ink text-[12px] font-semibold text-white">{i + 1}</span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[13.5px] text-px-ink">{a.acao}</p>
+                    <p className="mt-1 text-[12.5px] text-px-muted">Impacto: {a.impacto_estimado}. Prazo: {a.prazo}.</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </Secao>
+
+          <Secao title="Erros comuns a evitar">
+            <ul className="list-disc space-y-1.5 pl-5 text-[13.5px] leading-relaxed text-px-ink/80">
+              {(result.erros_comuns_precificacao ?? []).map((e, i) => <li key={i}>{e}</li>)}
+            </ul>
+          </Secao>
         </div>
       </div>
     )
   }
 
-  // ── Step 1: Form ──
+  // ── Formulário ──
   return (
     <div className="animate-fade-in">
-      <MobileOnlyHeader title="Precificação Estratégica" />
-      <div className="p-4 md:p-8 pb-0">
-        <div className="flex items-center gap-3 mb-1">
-          <div className="w-9 h-9 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center">
-            <Calculator className="w-5 h-5 text-accent" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-text-primary tracking-tight">Precificação Inteligente</h1>
-            <p className="text-sm text-text-muted font-mono">EXECUTIVO · CALCULADORA ESTRATÉGICA</p>
-            <p className="text-[12px] text-text-secondary mt-1.5">Calcule o preço ideal dos seus procedimentos com base em custos e benchmark regional.</p>
-          </div>
-        </div>
-      </div>
+      <PageHeader title="Precificação" caption="Preço ideal da consulta, com base nos seus custos e no mercado da sua cidade" />
+      <div className="max-w-3xl space-y-4 px-4 pb-10 md:px-10">
+        {error && <p role="alert" className="rounded-px-card bg-px-danger-soft px-4 py-3 text-[13px] text-px-danger">{error}</p>}
 
-      <div className="p-4 md:p-8 space-y-8 max-w-3xl w-full">
-        {error && (
-          <div className="flex items-start gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
-            <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-            {error}
+        <Panel as="section" className="space-y-4">
+          <h2 className={areaTitulo}>Perfil profissional</h2>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Field label="Especialidade" htmlFor="pr-esp"><PxInput id="pr-esp" value={especialidade} onChange={e => setEspecialidade(e.target.value)} placeholder="Dermatologista, cardiologista" required /></Field>
+            <Field label="Cidade" htmlFor="pr-cid"><PxInput id="pr-cid" value={cidade} onChange={e => setCidade(e.target.value)} placeholder="São Paulo, SP" required /></Field>
           </div>
-        )}
-
-        {/* Perfil */}
-        <div className="space-y-4">
-          <h2 className="text-xs font-mono text-text-muted uppercase tracking-widest flex items-center gap-2">
-            <span className="w-5 h-5 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center text-accent text-[10px]">1</span>
-            Perfil Profissional
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="text-[11px] font-mono text-text-muted uppercase tracking-wide">Especialidade *</label>
-              <input
-                value={especialidade}
-                onChange={e => setEspecialidade(e.target.value)}
-                placeholder="Ex: Dermatologista, Cardiologista..."
-                className="w-full bg-[--surface] border border-[--border] rounded-lg px-3 py-2.5 text-sm text-text-primary focus:outline-none focus:border-accent/50 transition-colors placeholder:text-text-muted"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[11px] font-mono text-text-muted uppercase tracking-wide">Cidade *</label>
-              <input
-                value={cidade}
-                onChange={e => setCidade(e.target.value)}
-                placeholder="Ex: São Paulo - SP"
-                className="w-full bg-[--surface] border border-[--border] rounded-lg px-3 py-2.5 text-sm text-text-primary focus:outline-none focus:border-accent/50 transition-colors placeholder:text-text-muted"
-              />
-            </div>
-          </div>
-
           <div className="space-y-1.5">
-            <label className="text-[11px] font-mono text-text-muted uppercase tracking-wide">Tempo de consulta</label>
-            <div className="flex flex-wrap gap-2">
-              {TEMPO_CONSULTA_OPTS.map(t => (
-                <button
-                  key={t}
-                  onClick={() => setTempoConsulta(t)}
-                  className={cn(
-                    "text-[11px] font-mono px-3 py-1.5 rounded-full border transition-all",
-                    tempoConsulta === t
-                      ? "bg-accent/10 border-accent/40 text-accent font-semibold"
-                      : "border-[--border] text-text-muted hover:text-text-secondary"
-                  )}
-                >
-                  {t}
-                </button>
-              ))}
-            </div>
+            <p className="text-[13px] font-medium text-px-ink">Tempo de consulta</p>
+            <Segmented label="Tempo de consulta" value={tempoConsulta} onChange={setTempoConsulta} options={TEMPO_CONSULTA_OPTS.map(t => ({ value: t, label: t }))} />
           </div>
-
           <SliderField label="Anos de experiência" value={anosExp} onChange={setAnosExp} min={0} max={30} suffix=" anos" />
-        </div>
+        </Panel>
 
-        {/* Agenda */}
-        <div className="space-y-4">
-          <h2 className="text-xs font-mono text-text-muted uppercase tracking-widest flex items-center gap-2">
-            <span className="w-5 h-5 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center text-accent text-[10px]">2</span>
-            Capacidade de Agenda
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <Panel as="section" className="space-y-4">
+          <h2 className={areaTitulo}>Capacidade de agenda</h2>
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
             <SliderField label="Consultas por dia" value={consultasDia} onChange={setConsultasDia} min={1} max={20} />
-            <SliderField label="Dias de trabalho/mês" value={diasMes} onChange={setDiasMes} min={4} max={26} />
+            <SliderField label="Dias de trabalho por mês" value={diasMes} onChange={setDiasMes} min={4} max={26} />
           </div>
-          <div className="text-center py-3 rounded-lg bg-accent/5 border border-accent/15">
-            <span className="text-[11px] font-mono text-text-muted">Capacidade total: </span>
-            <span className="text-sm font-bold text-accent font-mono">{consultasMes} consultas/mês</span>
-          </div>
-        </div>
+          <p className="rounded-px-card bg-px-ink/[0.05] py-3 text-center text-[13.5px] text-px-ink">
+            Capacidade total: <span className="font-semibold">{consultasMes} consultas por mês</span>
+          </p>
+        </Panel>
 
-        {/* Custos */}
-        <div className="space-y-4">
-          <h2 className="text-xs font-mono text-text-muted uppercase tracking-widest flex items-center gap-2">
-            <span className="w-5 h-5 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center text-accent text-[10px]">3</span>
-            Custos Operacionais Mensais
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-            <CostField label="Aluguel / espaço"    value={custoAluguel}      onChange={setCustoAluguel} />
+        <Panel as="section" className="space-y-4">
+          <h2 className={areaTitulo}>Custos operacionais mensais</h2>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
+            <CostField label="Aluguel ou espaço"    value={custoAluguel}      onChange={setCustoAluguel} />
             <CostField label="Funcionários"         value={custoFuncionarios} onChange={setCustoFuncionarios} />
-            <CostField label="Sistemas / software"  value={custoSistemas}     onChange={setCustoSistemas} />
-            <CostField label="Marketing / ads"      value={custoMarketing}    onChange={setCustoMarketing} />
+            <CostField label="Sistemas e software"  value={custoSistemas}     onChange={setCustoSistemas} />
+            <CostField label="Marketing e anúncios" value={custoMarketing}    onChange={setCustoMarketing} />
             <CostField label="Outros"               value={custoOutros}       onChange={setCustoOutros} />
-            <div className="space-y-1">
-              <label className="text-[11px] font-mono text-text-muted uppercase tracking-wide">Total mensal</label>
-              <div className="bg-[--surface] border border-accent/20 rounded-lg px-3 py-2.5 flex items-center">
-                <DollarSign className="w-3.5 h-3.5 text-accent mr-1.5" />
-                <span className="text-sm font-bold text-accent font-mono">
-                  {custoTotal.toLocaleString("pt-BR")}
-                </span>
-              </div>
+            <div>
+              <p className="mb-1.5 text-[13px] font-medium text-px-ink">Total mensal</p>
+              <p data-testid="custo-total" className="flex h-11 items-center rounded-px-ctl bg-px-ink/[0.05] px-3.5 text-[14px] font-semibold text-px-ink">{fmt(custoTotal)}</p>
             </div>
           </div>
-        </div>
+        </Panel>
 
-        {/* Posicionamento */}
-        <div className="space-y-3">
-          <h2 className="text-xs font-mono text-text-muted uppercase tracking-widest flex items-center gap-2">
-            <span className="w-5 h-5 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center text-accent text-[10px]">4</span>
-            Posicionamento Desejado
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {POSICIONAMENTO_OPTS.map(p => (
-              <button
-                key={p.id}
-                onClick={() => setPosicionamento(p.id)}
-                className={cn(
-                  "text-left rounded-xl border p-3 transition-all",
-                  posicionamento === p.id
-                    ? "border-accent/40 bg-accent/5"
-                    : "border-[--border] hover:border-[--border-hover]"
-                )}
-              >
-                <p className={cn("text-sm font-semibold", posicionamento === p.id ? "text-accent" : "text-text-primary")}>
-                  {p.label}
-                </p>
-                <p className="text-[11px] text-text-muted mt-0.5">{p.desc}</p>
-              </button>
-            ))}
+        <Panel as="section" className="space-y-3">
+          <h2 className={areaTitulo}>Posicionamento desejado</h2>
+          <div role="group" aria-label="Posicionamento desejado" className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {POSICIONAMENTO_OPTS.map(p => {
+              const ativo = posicionamento === p.id
+              return (
+                <button key={p.id} type="button" aria-pressed={ativo} onClick={() => setPosicionamento(p.id)}
+                  className={`rounded-px-card border p-3 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-px-ink/40 ${ativo ? "border-px-ink bg-px-ink text-white" : "border-px-ink/15 bg-white text-px-ink hover:border-px-ink/40"}`}>
+                  <span className="block text-[14px] font-semibold">{p.label}</span>
+                  <span className={`mt-0.5 block text-[12.5px] ${ativo ? "text-white/75" : "text-px-muted"}`}>{p.desc}</span>
+                </button>
+              )
+            })}
           </div>
-        </div>
+        </Panel>
 
-        {/* CTA */}
-        <button
-          onClick={handleSubmit}
-          disabled={!canSubmit}
-          className={cn(
-            "w-full py-3.5 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2",
-            canSubmit
-              ? "bg-accent text-[--background] hover:bg-accent/90"
-              : "bg-[--surface] border border-[--border] text-text-muted cursor-not-allowed"
-          )}
-        >
-          <Calculator className="w-4 h-4" />
-          Calcular Precificação Estratégica
-        </button>
+        <PxButton fullWidth onClick={handleSubmit} disabled={!canSubmit}>Calcular precificação</PxButton>
+        {!canSubmit && <p className="text-center text-[12.5px] text-px-muted">Informe especialidade e cidade para calcular.</p>}
       </div>
     </div>
   )

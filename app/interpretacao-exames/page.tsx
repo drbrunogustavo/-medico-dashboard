@@ -1816,17 +1816,6 @@ const EXAMS: ExamData[] = [
     notes: "Dosar na fase lútea (D21 de ciclo 28d). Em ciclos irregulares, coletar 7 dias após pico de LH.",
   },
   {
-    id: "estradiol", name: "Estradiol (E2)", category: "Saúde da Mulher Avançada",
-    range: {
-      lab: "20–400 pg/mL (fase folicular/pico)", unit: "pg/mL",
-      classifyFn: (v) => v < 20 ? "baixo" : v < 50 ? "insuficiente" : v <= 400 ? "normal" : "elevado",
-    },
-    correlations: ["E2 <20 em mulher em idade fértil: hipogonadismo, menopausa precoce (IOP)", "E2 >400 fase folicular: estimulação excessiva (FIV) ou cistos foliculares", "Pós-menopausa sem TRH: E2 <20 é esperado"],
-    conducts: ["E2 baixo + sintomas climatéricos: avaliar TRH", "E2 muito baixo em jovem + FSH >40: IOP, encaminhar reprodução assistida", "Correlacionar com FSH, LH e fase do ciclo"],
-    related: ["FSH", "LH", "Progesterona", "AMH"],
-    notes: "E2 isolado tem pouco valor: interpretar com perfil hormonal completo e fase do ciclo.",
-  },
-  {
     id: "lh_fsh", name: "LH / FSH", category: "Saúde da Mulher Avançada",
     range: {
       lab: "2–15 mUI/mL (fase folicular)", unit: "mUI/mL",

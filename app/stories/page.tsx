@@ -1,301 +1,103 @@
 "use client"
 
 import { useState } from "react"
-import { TopBar } from "@/components/TopBar"
-import { EmptyState } from "@/components/EmptyState"
-import { Toast } from "@/components/Toast"
-import type { ToastType } from "@/components/Toast"
+import { Smartphone, ClipboardList } from "lucide-react"
 import { PautasPickerModal } from "@/components/PautasPickerModal"
-import { cn } from "@/lib/utils"
-import {
-  Instagram, Copy, Check, Loader2, AlertTriangle,
-  RefreshCw, Hash, Smartphone, FileText,
-} from "lucide-react"
+import { Panel, PxButton, Segmented, Field, PxInput, Tag, PageHeader, CopyButton } from "@/components/px"
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+interface Story { numero: number; texto: string; tipo: string; dica_visual: string; sticker?: string }
+interface StoriesResult { sequencia_titulo: string; stories: Story[]; hashtags: string[] }
 
-interface Story {
-  numero:      number
-  texto:       string
-  tipo:        string
-  dica_visual: string
-  sticker?:    string
-}
-
-interface StoriesResult {
-  sequencia_titulo: string
-  stories:          Story[]
-  hashtags:         string[]
-}
-
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-const TONS    = ["Educativo", "Motivacional", "Casual", "Científico", "Polêmico"]
+const TONS = ["Educativo", "Motivacional", "Casual", "Científico", "Polêmico"]
 const N_SLIDES = [3, 5, 7, 10]
 
-const TIPO_STYLE: Record<string, string> = {
-  "Gancho":    "bg-red-50 border-red-200 text-red-700",
-  "Conteúdo":  "bg-blue-50 border-blue-200 text-blue-700",
-  "Revelação": "bg-amber-50 border-amber-200 text-amber-700",
-  "CTA":       "bg-accent-dim border-accent-border text-accent",
-}
-
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
-function CopyBtn({ text, className }: { text: string; className?: string }) {
-  const [done, setDone] = useState(false)
-  return (
-    <button
-      type="button"
-      onClick={() => { navigator.clipboard.writeText(text); setDone(true); setTimeout(() => setDone(false), 1800) }}
-      className={cn(
-        "flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg border transition-all flex-shrink-0",
-        done
-          ? "bg-accent-dim border-accent-border text-accent"
-          : "border-border text-text-muted hover:border-accent-border hover:text-accent",
-        className,
-      )}
-    >
-      {done ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-      {done ? "Copiado" : "Copiar"}
-    </button>
-  )
-}
-
-// ─── Main Page ────────────────────────────────────────────────────────────────
-
 export default function StoriesPage() {
-  const [tema,       setTema]       = useState("")
-  const [slides,     setSlides]     = useState(5)
-  const [tom,        setTom]        = useState("Educativo")
+  const [tema, setTema] = useState("")
+  const [slides, setSlides] = useState(5)
+  const [tom, setTom] = useState("Educativo")
   const [showPautas, setShowPautas] = useState(false)
-  const [loading,  setLoading]  = useState(false)
+  const [loading, setLoading] = useState(false)
   const [resultado, setResultado] = useState<StoriesResult | null>(null)
-  const [error,    setError]    = useState<string | null>(null)
-  const [toast,    setToast]    = useState<{ message: string; type: ToastType } | null>(null)
-
-  const showToast = (message: string, type: ToastType = "success") => {
-    setToast({ message, type }); setTimeout(() => setToast(null), 3000)
-  }
+  const [erro, setErro] = useState<string | null>(null)
 
   const gerar = async () => {
-    if (!tema.trim()) { setError("Informe o tema dos stories."); return }
-    setError(null); setLoading(true); setResultado(null)
+    if (!tema.trim()) { setErro("Informe o tema dos stories."); return }
+    setErro(null); setLoading(true); setResultado(null)
     try {
-      const res = await fetch("/api/stories", {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ tema, slides, tom }),
-      })
-      const data = await res.json() as StoriesResult & { error?: string }
-      if (data.error) throw new Error(data.error)
-      setResultado(data)
-      showToast("Sequência de stories gerada!")
+      const res = await fetch("/api/stories", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tema, slides, tom }) })
+      const data = await res.json().catch(() => ({})) as Partial<StoriesResult> & { error?: string }
+      if (!res.ok || data.error) throw new Error(data.error || "falha")
+      if (!Array.isArray(data.stories)) throw new Error("sem stories")
+      setResultado({ sequencia_titulo: data.sequencia_titulo ?? "Sequência de stories", stories: data.stories, hashtags: data.hashtags ?? [] })
     } catch (e) {
-      setError("Erro ao gerar stories: " + String(e))
-    } finally {
-      setLoading(false)
-    }
+      console.error("[stories] erro ao gerar:", e)
+      setErro("Não foi possível gerar os stories. Tente novamente em instantes.")
+    } finally { setLoading(false) }
   }
 
   return (
     <div className="animate-fade-in">
-      <TopBar
-        title="Gerador de Stories"
-        subtitle="SEQUÊNCIA · GANCHO · STICKERS · CTA"
-        actions={
-          loading ? (
-            <div className="flex items-center gap-2 text-accent text-[11px] font-mono tracking-wider">
-              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-              Gerando stories...
-            </div>
-          ) : undefined
-        }
-      />
-
-      <div className="p-4 md:p-8">
-        <div className="grid grid-cols-1 md:grid-cols-[2fr_3fr] gap-5 items-start">
-
-          {/* ── PAINEL ESQUERDO ─── */}
-          <div className="space-y-4">
-            <div className="bg-card border border-border rounded-xl p-5">
-              <div className="flex items-center gap-2 mb-4">
-                <Instagram className="w-4 h-4 text-text-muted" />
-                <span className="text-[11px] font-mono text-text-muted tracking-widest uppercase">Configuração</span>
-              </div>
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-[10px] font-mono text-text-muted uppercase tracking-wide mb-1.5">Tema *</label>
-                  <div className="flex gap-2">
-                    <input
-                      value={tema}
-                      onChange={e => setTema(e.target.value)}
-                      placeholder="ex: Resistência à insulina — sinais que você ignora"
-                      className="flex-1 bg-background border border-border rounded-lg px-3 py-2.5 text-[13px] text-text-primary placeholder:text-text-muted outline-none focus:border-accent/40 transition-colors min-w-0"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPautas(true)}
-                      title="Usar pauta do banco"
-                      className="flex items-center gap-1.5 px-2.5 py-2 rounded-lg border border-border text-text-muted hover:border-accent-border hover:text-accent transition-colors flex-shrink-0 text-[11px] font-medium"
-                    >
-                      <FileText className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">Pautas</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-card border border-border rounded-xl p-5">
-              <div className="text-[11px] font-mono text-text-muted tracking-widest uppercase mb-3">Nº de Stories</div>
-              <div className="flex gap-2">
-                {N_SLIDES.map(n => (
-                  <button key={n} type="button" onClick={() => setSlides(n)}
-                    className={cn(
-                      "flex-1 py-2 rounded-lg border text-[12px] font-semibold transition-all",
-                      slides === n
-                        ? "bg-accent-dim border-accent-border text-accent"
-                        : "border-border text-text-muted hover:border-border-hover",
-                    )}>{n}</button>
-                ))}
-              </div>
-            </div>
-
-            <div className="bg-card border border-border rounded-xl p-5">
-              <div className="text-[11px] font-mono text-text-muted tracking-widest uppercase mb-3">Tom</div>
-              <div className="flex flex-wrap gap-2">
-                {TONS.map(t => (
-                  <button key={t} type="button" onClick={() => setTom(t)}
-                    className={cn(
-                      "text-[11px] px-3 py-1.5 rounded-full border transition-all",
-                      tom === t
-                        ? "bg-accent-dim border-accent-border text-accent font-medium"
-                        : "border-border text-text-muted hover:text-text-secondary hover:border-border-hover",
-                    )}>{t}</button>
-                ))}
-              </div>
-            </div>
-
-            {error && (
-              <div className="flex items-start gap-2.5 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
-                <AlertTriangle className="w-3.5 h-3.5 text-red-600 flex-shrink-0 mt-0.5" />
-                <p className="text-[12px] text-red-700">{error}</p>
-              </div>
-            )}
-
-            <button
-              type="button" onClick={gerar}
-              disabled={loading || !tema.trim()}
-              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-accent text-background text-[14px] font-bold hover:bg-accent/90 transition-all shadow-lg shadow-accent/20 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading
-                ? <><Loader2 className="w-4 h-4 animate-spin" /> Gerando...</>
-                : <><Smartphone className="w-4 h-4" /> Gerar Stories</>
-              }
-            </button>
-
-            {resultado && (
-              <button type="button" onClick={gerar} disabled={loading}
-                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border text-text-muted text-[12px] hover:border-accent-border hover:text-accent transition-all disabled:opacity-40">
-                <RefreshCw className="w-3.5 h-3.5" /> Gerar Novamente
-              </button>
-            )}
+      <PageHeader title="Gerador de Stories" caption="Sequência com gancho, conteúdo, stickers e chamada final" />
+      <div className="grid grid-cols-1 gap-4 px-4 pb-10 md:px-10 lg:grid-cols-[320px_1fr]">
+        <Panel as="aside" className="space-y-4 self-start">
+          <Field label="Tema" htmlFor="st-tema">
+            <PxInput id="st-tema" value={tema} onChange={e => setTema(e.target.value)} placeholder="Resistência à insulina: sinais que você ignora" />
+          </Field>
+          <PxButton variant="secondary" size="sm" leftIcon={ClipboardList} onClick={() => setShowPautas(true)}>Usar uma pauta do banco</PxButton>
+          <div className="space-y-1.5">
+            <p className="text-[13px] font-medium text-px-ink">Número de stories</p>
+            <Segmented label="Número de stories" value={String(slides)} onChange={v => setSlides(Number(v))} options={N_SLIDES.map(n => ({ value: String(n), label: String(n) }))} />
           </div>
-
-          {/* ── PAINEL DIREITO ─── */}
-          <div>
-            {!loading && !resultado && (
-              <EmptyState icon={Instagram} title="Configure e gere sua sequência" subtitle="Informe o tema, escolha o número de stories e o tom. Claude vai criar uma sequência com gancho irresistível, conteúdo e CTA." />
-            )}
-
-            {loading && (
-              <div className="space-y-3 animate-pulse">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="bg-card border border-border rounded-xl p-4">
-                    <div className="flex gap-3">
-                      <div className="w-7 h-7 rounded-full bg-border flex-shrink-0" />
-                      <div className="flex-1 space-y-2">
-                        <div className="h-3 bg-border rounded w-4/5" />
-                        <div className="h-3 bg-border rounded w-2/5" />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {resultado && !loading && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-[15px] font-semibold text-text-primary" style={{ fontFamily: "var(--font-playfair)" }}>
-                    {resultado.sequencia_titulo}
-                  </h3>
-                  <CopyBtn text={resultado.stories.map(s => `Story ${s.numero}: ${s.texto}`).join("\n\n")} />
-                </div>
-
-                <div className="space-y-2.5">
-                  {resultado.stories.map(story => (
-                    <div key={story.numero} className="bg-card border border-border rounded-xl p-4">
-                      <div className="flex items-start gap-3">
-                        <div className="flex-shrink-0 w-7 h-7 rounded-full bg-accent-dim border border-accent-border flex items-center justify-center">
-                          <span className="text-[11px] font-bold text-accent">{story.numero}</span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1.5">
-                            <span className={cn(
-                              "text-badge font-mono font-semibold px-2 py-0.5 rounded-full border",
-                              TIPO_STYLE[story.tipo] ?? "bg-border text-text-muted border-border",
-                            )}>{story.tipo}</span>
-                          </div>
-                          <p className="text-[13px] text-text-primary leading-relaxed mb-2">{story.texto}</p>
-                          <div className="space-y-1">
-                            <div className="flex items-start gap-1.5">
-                              <span className="text-[9px] font-mono text-text-muted flex-shrink-0">VISUAL:</span>
-                              <span className="text-[10px] text-text-muted italic">{story.dica_visual}</span>
-                            </div>
-                            {story.sticker && (
-                              <div className="flex items-start gap-1.5">
-                                <span className="text-[9px] font-mono text-accent flex-shrink-0">STICKER:</span>
-                                <span className="text-[10px] text-text-secondary">{story.sticker}</span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <CopyBtn text={story.texto} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {resultado.hashtags.length > 0 && (
-                  <div className="bg-card border border-border rounded-xl p-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Hash className="w-4 h-4 text-text-muted" />
-                      <span className="text-[11px] font-mono text-text-muted tracking-widest uppercase">Hashtags</span>
-                    </div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {resultado.hashtags.map(h => (
-                        <span key={h} className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-accent-dim border border-accent-border text-accent">
-                          #{h}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
+          <div className="space-y-1.5">
+            <p className="text-[13px] font-medium text-px-ink">Tom</p>
+            <Segmented label="Tom" value={tom} onChange={setTom} options={TONS.map(t => ({ value: t, label: t }))} />
           </div>
+          {erro && <p role="alert" className="rounded-px-card bg-px-danger-soft px-3 py-2 text-[13px] text-px-danger">{erro}</p>}
+          <PxButton fullWidth leftIcon={Smartphone} onClick={gerar} loading={loading} disabled={!tema.trim()}>{loading ? "Gerando" : resultado ? "Gerar novamente" : "Gerar stories"}</PxButton>
+        </Panel>
+
+        <div className="min-w-0 space-y-4">
+          {loading && <p role="status" className="py-24 text-center text-[14px] font-medium text-px-ink">Criando a sequência</p>}
+          {!loading && !resultado && (
+            <Panel className="py-16 text-center">
+              <p className="text-[15px] font-semibold text-px-ink">Defina o tema e o tamanho da sequência</p>
+              <p className="mt-1 text-[13px] text-px-muted">Cada story vem com texto, dica visual e sticker quando couber.</p>
+            </Panel>
+          )}
+          {!loading && resultado && (
+            <>
+              <div className="flex items-start justify-between gap-3">
+                <h2 className="text-[18px] font-semibold leading-snug text-px-ink">{resultado.sequencia_titulo}</h2>
+                {resultado.stories.length > 0 && <CopyButton text={resultado.stories.map(s => `Story ${s.numero}: ${s.texto}`).join("\n\n")} label="Copiar sequência" />}
+              </div>
+              {resultado.stories.length === 0 && <Panel className="py-10 text-center text-[13px] text-px-muted">A IA não devolveu nenhum story. Tente de novo.</Panel>}
+              <ol className="space-y-3">
+                {resultado.stories.map((s, i) => (
+                  <li key={s.numero ?? i}>
+                    <Panel as="article" className="flex items-start gap-3">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-px-ink text-[13px] font-semibold text-white" aria-label={`Story ${s.numero ?? i + 1}`}>{s.numero ?? i + 1}</span>
+                      <div className="min-w-0 flex-1 space-y-2">
+                        <Tag tone={s.tipo === "Gancho" || s.tipo === "CTA" ? "ink" : "neutral"}>{s.tipo}</Tag>
+                        <p className="text-[14px] leading-relaxed text-px-ink">{s.texto}</p>
+                        <p className="text-[12.5px] leading-relaxed text-px-muted"><span className="font-medium text-px-ink/80">Visual:</span> {s.dica_visual}</p>
+                        {s.sticker && <p className="text-[12.5px] leading-relaxed text-px-muted"><span className="font-medium text-px-accent">Sticker:</span> {s.sticker}</p>}
+                      </div>
+                      <CopyButton text={s.texto} />
+                    </Panel>
+                  </li>
+                ))}
+              </ol>
+              {resultado.hashtags.length > 0 && (
+                <Panel as="section" className="space-y-2">
+                  <h2 className="text-[12.5px] font-medium text-px-muted">Hashtags</h2>
+                  <p className="text-[13px] leading-relaxed text-px-ink/80">{resultado.hashtags.map(h => "#" + h.replace(/^#/, "")).join(" ")}</p>
+                </Panel>
+              )}
+            </>
+          )}
         </div>
       </div>
-
-      <Toast message={toast?.message ?? null} type={toast?.type} />
-      {showPautas && (
-        <PautasPickerModal
-          onSelect={t => setTema(t)}
-          onClose={() => setShowPautas(false)}
-        />
-      )}
+      {showPautas && <PautasPickerModal onSelect={t => setTema(t)} onClose={() => setShowPautas(false)} />}
     </div>
   )
 }

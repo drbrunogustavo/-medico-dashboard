@@ -1,391 +1,150 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { TopBar } from "@/components/TopBar"
-import { EmptyState } from "@/components/EmptyState"
-import { Toast } from "@/components/Toast"
-import type { ToastType } from "@/components/Toast"
+import { LayoutGrid, ClipboardList } from "lucide-react"
 import { PautasPickerModal } from "@/components/PautasPickerModal"
-import { cn } from "@/lib/utils"
-import {
-  LayoutGrid, Copy, Check, Loader2, AlertTriangle,
-  ChevronRight, RefreshCw, Hash, Layers, FileText,
-} from "lucide-react"
+import { Panel, PxButton, Segmented, Field, PxInput, PageHeader, CopyButton } from "@/components/px"
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-interface Slide {
-  numero:      number
-  titulo:      string
-  conteudo:    string
-  dica_visual: string
-}
-
-interface CarrosselResult {
-  titulo:    string
-  subtitulo: string
-  slides:    Slide[]
-  cta:       string
-  hashtags:  string[]
-  legenda:   string
-}
-
-// ─── Constants ────────────────────────────────────────────────────────────────
+interface Slide { numero: number; titulo: string; conteudo: string; dica_visual: string }
+interface CarrosselResult { titulo: string; subtitulo: string; slides: Slide[]; cta: string; hashtags: string[]; legenda: string }
 
 const OBJETIVOS = ["Educativo", "Autoridade", "Vendas", "Engajamento", "Inspirador"]
-const TONS      = ["Profissional", "Próximo", "Científico", "Motivacional", "Didático"]
+const TONS = ["Profissional", "Próximo", "Científico", "Motivacional", "Didático"]
+const tags = (r: CarrosselResult) => r.hashtags.map(h => "#" + h.replace(/^#/, "")).join(" ")
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+const toCanva = (r: CarrosselResult) =>
+  `CARROSSEL: ${r.titulo}\n${r.subtitulo}\n\n` +
+  r.slides.map(s => `SLIDE ${s.numero}. ${s.titulo}\n${s.conteudo}`).join("\n\n") +
+  `\n\n----------\nCTA: ${r.cta}\nHASHTAGS: ${tags(r)}\n\nLEGENDA:\n${r.legenda}`
 
-function CopyBtn({ text, className }: { text: string; className?: string }) {
-  const [done, setDone] = useState(false)
-  return (
-    <button
-      type="button"
-      onClick={() => { navigator.clipboard.writeText(text); setDone(true); setTimeout(() => setDone(false), 1800) }}
-      className={cn(
-        "flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg border transition-all flex-shrink-0",
-        done
-          ? "bg-accent-dim border-accent-border text-accent"
-          : "border-border text-text-muted hover:border-accent-border hover:text-accent",
-        className,
-      )}
-    >
-      {done ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-      {done ? "Copiado" : "Copiar"}
-    </button>
-  )
+const toBriefing = (r: CarrosselResult) => {
+  const n = r.slides.length
+  const blocos = r.slides.map(s => {
+    const linhas = [`=== SLIDE ${s.numero} DE ${n} ===`, `[TÍTULO] ${s.titulo}`, `[CORPO] ${s.conteudo}`]
+    if (s.dica_visual?.trim()) linhas.push(`[VISUAL] ${s.dica_visual}`)
+    return linhas.join("\n")
+  })
+  return blocos.join("\n\n") + `\n\n[CTA] ${r.cta}\n[HASHTAGS] ${tags(r)}\n[LEGENDA] ${r.legenda}`
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
-
 export default function CarrosselPage() {
-  const [tema,        setTema]        = useState("")
-  const [slides,      setSlides]      = useState(7)
+  const [tema, setTema] = useState("")
+  const [slides, setSlides] = useState(7)
+  const [objetivo, setObjetivo] = useState("Educativo")
+  const [tom, setTom] = useState("Profissional")
+  const [showPautas, setShowPautas] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [resultado, setResultado] = useState<CarrosselResult | null>(null)
+  const [erro, setErro] = useState<string | null>(null)
+  const [exportFmt, setExportFmt] = useState<"canva" | "briefing">("canva")
 
-  // Pre-fill tema from ?tema= URL param (set by modal pós-consulta)
   useEffect(() => {
     const t = new URLSearchParams(window.location.search).get("tema")
     if (t) setTema(t)
   }, [])
-  const [objetivo,    setObjetivo]    = useState("Educativo")
-  const [tom,         setTom]         = useState("Profissional")
-  const [showPautas,  setShowPautas]  = useState(false)
-  const [loading,  setLoading]  = useState(false)
-  const [resultado, setResultado] = useState<CarrosselResult | null>(null)
-  const [error,    setError]    = useState<string | null>(null)
-  const [toast,    setToast]    = useState<{ message: string; type: ToastType } | null>(null)
-
-  const showToast = (message: string, type: ToastType = "success") => {
-    setToast({ message, type }); setTimeout(() => setToast(null), 3000)
-  }
 
   const gerar = async () => {
-    if (!tema.trim()) { setError("Informe o tema do carrossel."); return }
-    setError(null); setLoading(true); setResultado(null)
+    if (!tema.trim()) { setErro("Informe o tema do carrossel."); return }
+    setErro(null); setLoading(true); setResultado(null)
     try {
-      const res = await fetch("/api/carrossel", {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ tema, slides, objetivo, tom }),
-      })
-      const data = await res.json() as CarrosselResult & { error?: string }
-      if (data.error) throw new Error(data.error)
-      setResultado(data)
-      showToast("Carrossel gerado com sucesso!")
+      const res = await fetch("/api/carrossel", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tema, slides, objetivo, tom }) })
+      const data = await res.json().catch(() => ({})) as Partial<CarrosselResult> & { error?: string }
+      if (!res.ok || data.error) throw new Error(data.error || "falha")
+      if (!Array.isArray(data.slides)) throw new Error("sem slides")
+      setResultado({ titulo: data.titulo ?? "", subtitulo: data.subtitulo ?? "", slides: data.slides, cta: data.cta ?? "", hashtags: data.hashtags ?? [], legenda: data.legenda ?? "" })
     } catch (e) {
-      setError("Erro ao gerar carrossel: " + String(e))
-    } finally {
-      setLoading(false)
-    }
+      console.error("[carrossel] erro ao gerar:", e)
+      setErro("Não foi possível gerar o carrossel. Tente novamente em instantes.")
+    } finally { setLoading(false) }
   }
-
-  const [exportFmt, setExportFmt] = useState<"canva" | "briefing">("canva")
-
-  const toCanva = (r: CarrosselResult) =>
-    `CARROSSEL — ${r.titulo}\n${r.subtitulo}\n\n` +
-    r.slides.map(s => `SLIDE ${s.numero} • ${s.titulo}\n${s.conteudo}`).join("\n\n") +
-    `\n\n——————————\nCTA: ${r.cta}\nHASHTAGS: ${r.hashtags.map(h => "#" + h.replace(/^#/, "")).join(" ")}\n\nLEGENDA:\n${r.legenda}`
-
-  const toBriefing = (r: CarrosselResult) => {
-    const n = r.slides.length
-    const slideBlocks = r.slides.map(s => {
-      const lines = [`═══ SLIDE ${s.numero} DE ${n} ═══`, `[TÍTULO] ${s.titulo}`, `[CORPO] ${s.conteudo}`]
-      if (s.dica_visual?.trim()) lines.push(`[VISUAL] ${s.dica_visual}`)
-      return lines.join("\n")
-    })
-    return slideBlocks.join("\n\n") +
-      `\n\n[CTA] ${r.cta}\n[HASHTAGS] ${r.hashtags.map(h => "#" + h.replace(/^#/, "")).join(" ")}\n[LEGENDA] ${r.legenda}`
-  }
-
-  const toFullText = (r: CarrosselResult) => exportFmt === "canva" ? toCanva(r) : toBriefing(r)
 
   return (
     <div className="animate-fade-in">
-      <TopBar
-        title="Gerador de Carrossel"
-        subtitle="SLIDES · CAPA · CTA · LEGENDA"
-        actions={
-          loading ? (
-            <div className="flex items-center gap-2 text-accent text-[11px] font-mono tracking-wider">
-              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-              Gerando carrossel...
-            </div>
-          ) : undefined
-        }
-      />
-
-      <div className="p-4 md:p-8">
-        <div className="grid grid-cols-1 md:grid-cols-[2fr_3fr] gap-5 items-start">
-
-          {/* ── PAINEL ESQUERDO ─── */}
-          <div className="space-y-4">
-            <div className="bg-card border border-border rounded-xl p-5">
-              <div className="flex items-center gap-2 mb-4">
-                <LayoutGrid className="w-4 h-4 text-text-muted" />
-                <span className="text-[11px] font-mono text-text-muted tracking-widest uppercase">Configuração</span>
-              </div>
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-[10px] font-mono text-text-muted uppercase tracking-wide mb-1.5">Tema *</label>
-                  <div className="flex gap-2">
-                    <input
-                      value={tema}
-                      onChange={e => setTema(e.target.value)}
-                      placeholder="ex: Como emagrecer sem passar fome"
-                      className="flex-1 bg-background border border-border rounded-lg px-3 py-2.5 text-[13px] text-text-primary placeholder:text-text-muted outline-none focus:border-accent/40 transition-colors min-w-0"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPautas(true)}
-                      title="Usar pauta do banco"
-                      className="flex items-center gap-1.5 px-2.5 py-2 rounded-lg border border-border text-text-muted hover:border-accent-border hover:text-accent transition-colors flex-shrink-0 text-[11px] font-medium"
-                    >
-                      <FileText className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">Pautas</span>
-                    </button>
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-[10px] font-mono text-text-muted uppercase tracking-wide mb-1.5">
-                    Nº de Slides: <span className="text-accent">{slides}</span>
-                  </label>
-                  <input
-                    type="range" min={3} max={12} value={slides}
-                    onChange={e => setSlides(Number(e.target.value))}
-                    className="w-full accent-accent"
-                  />
-                  <div className="flex justify-between text-[9px] font-mono text-text-muted mt-0.5">
-                    <span>3</span><span>12</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-card border border-border rounded-xl p-5">
-              <div className="text-[11px] font-mono text-text-muted tracking-widest uppercase mb-3">Objetivo</div>
-              <div className="flex flex-wrap gap-2">
-                {OBJETIVOS.map(o => (
-                  <button key={o} type="button" onClick={() => setObjetivo(o)}
-                    className={cn(
-                      "text-[11px] px-3 py-1.5 rounded-full border transition-all",
-                      objetivo === o
-                        ? "bg-accent-dim border-accent-border text-accent font-medium"
-                        : "border-border text-text-muted hover:text-text-secondary hover:border-border-hover",
-                    )}>{o}</button>
-                ))}
-              </div>
-            </div>
-
-            <div className="bg-card border border-border rounded-xl p-5">
-              <div className="text-[11px] font-mono text-text-muted tracking-widest uppercase mb-3">Tom de Voz</div>
-              <div className="flex flex-wrap gap-2">
-                {TONS.map(t => (
-                  <button key={t} type="button" onClick={() => setTom(t)}
-                    className={cn(
-                      "text-[11px] px-3 py-1.5 rounded-full border transition-all",
-                      tom === t
-                        ? "bg-accent-dim border-accent-border text-accent font-medium"
-                        : "border-border text-text-muted hover:text-text-secondary hover:border-border-hover",
-                    )}>{t}</button>
-                ))}
-              </div>
-            </div>
-
-            {error && (
-              <div className="flex items-start gap-2.5 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
-                <AlertTriangle className="w-3.5 h-3.5 text-red-600 flex-shrink-0 mt-0.5" />
-                <p className="text-[12px] text-red-700">{error}</p>
-              </div>
-            )}
-
-            <button
-              type="button" onClick={gerar}
-              disabled={loading || !tema.trim()}
-              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-accent text-background text-[14px] font-bold hover:bg-accent/90 transition-all shadow-lg shadow-accent/20 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading
-                ? <><Loader2 className="w-4 h-4 animate-spin" /> Gerando...</>
-                : <><LayoutGrid className="w-4 h-4" /> Gerar Carrossel</>
-              }
-            </button>
-
-            {resultado && (
-              <button type="button" onClick={gerar} disabled={loading}
-                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border text-text-muted text-[12px] hover:border-accent-border hover:text-accent transition-all disabled:opacity-40">
-                <RefreshCw className="w-3.5 h-3.5" /> Gerar Novamente
-              </button>
-            )}
-          </div>
-
-          {/* ── PAINEL DIREITO ─── */}
+      <PageHeader title="Gerador de Carrossel" caption="Capa, slides, chamada final e legenda prontos para diagramar" />
+      <div className="grid grid-cols-1 gap-4 px-4 pb-10 md:px-10 lg:grid-cols-[320px_1fr]">
+        <Panel as="aside" className="space-y-4 self-start">
+          <Field label="Tema" htmlFor="cr-tema">
+            <PxInput id="cr-tema" value={tema} onChange={e => setTema(e.target.value)} placeholder="Como emagrecer sem passar fome" />
+          </Field>
+          <PxButton variant="secondary" size="sm" leftIcon={ClipboardList} onClick={() => setShowPautas(true)}>Usar uma pauta do banco</PxButton>
           <div>
-            {!loading && !resultado && (
-              <EmptyState icon={LayoutGrid} title="Configure e gere seu carrossel" subtitle="Informe o tema, ajuste o número de slides e escolha o objetivo. Claude irá criar todos os slides com textos prontos para usar." />
-            )}
-
-            {loading && (
-              <div className="space-y-3 animate-pulse">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="bg-card border border-border rounded-xl p-5">
-                    <div className="h-4 bg-border rounded w-2/5 mb-3" />
-                    <div className="space-y-2">
-                      <div className="h-3 bg-border rounded w-full" />
-                      <div className="h-3 bg-border rounded w-5/6" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {resultado && !loading && (
-              <div className="space-y-4">
-                {/* Capa */}
-                <div className="bg-card border border-border rounded-xl p-5">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-lg bg-accent-dim border border-accent-border flex items-center justify-center">
-                        <Layers className="w-3.5 h-3.5 text-accent" />
-                      </div>
-                      <h3 className="text-[15px] font-semibold text-text-primary" style={{ fontFamily: "var(--font-playfair)" }}>
-                        Capa do Carrossel
-                      </h3>
-                    </div>
-                    <CopyBtn text={`${resultado.titulo}\n${resultado.subtitulo}`} />
-                  </div>
-                  <div className="bg-background border border-border rounded-lg p-4">
-                    <div className="text-[16px] font-bold text-text-primary mb-1" style={{ fontFamily: "var(--font-playfair)" }}>
-                      {resultado.titulo}
-                    </div>
-                    <div className="text-[12px] text-text-secondary">{resultado.subtitulo}</div>
-                  </div>
-                </div>
-
-                {/* Slides */}
-                <div className="bg-card border border-border rounded-xl p-5">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-lg bg-accent-dim border border-accent-border flex items-center justify-center">
-                        <LayoutGrid className="w-3.5 h-3.5 text-accent" />
-                      </div>
-                      <h3 className="text-[15px] font-semibold text-text-primary" style={{ fontFamily: "var(--font-playfair)" }}>
-                        Slides ({resultado.slides.length})
-                      </h3>
-                    </div>
-                    <CopyBtn text={resultado.slides.map(s => `SLIDE ${s.numero}: ${s.titulo}\n${s.conteudo}`).join("\n\n")} />
-                  </div>
-                  <div className="space-y-3">
-                    {resultado.slides.map(slide => (
-                      <div key={slide.numero} className="bg-background border border-border rounded-lg p-4">
-                        <div className="flex items-start gap-3">
-                          <div className="flex-shrink-0 w-7 h-7 rounded-full bg-accent-dim border border-accent-border flex items-center justify-center">
-                            <span className="text-[11px] font-bold text-accent">{slide.numero}</span>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="text-[13px] font-semibold text-text-primary mb-1">{slide.titulo}</div>
-                            <p className="text-[12px] text-text-secondary leading-relaxed mb-2">{slide.conteudo}</p>
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-[9px] font-mono text-text-muted">VISUAL:</span>
-                              <span className="text-[10px] text-text-muted italic">{slide.dica_visual}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* CTA */}
-                <div className="bg-card border border-border rounded-xl p-5">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <ChevronRight className="w-4 h-4 text-accent" />
-                      <span className="text-[11px] font-mono text-text-muted tracking-widest uppercase">CTA Final</span>
-                    </div>
-                    <CopyBtn text={resultado.cta} />
-                  </div>
-                  <p className="text-[13px] text-text-primary font-medium">{resultado.cta}</p>
-                </div>
-
-                {/* Hashtags */}
-                <div className="bg-card border border-border rounded-xl p-5">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <Hash className="w-4 h-4 text-text-muted" />
-                      <span className="text-[11px] font-mono text-text-muted tracking-widest uppercase">Hashtags</span>
-                    </div>
-                    <CopyBtn text={resultado.hashtags.map(h => "#" + h).join(" ")} />
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {resultado.hashtags.map(h => (
-                      <span key={h} className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-accent-dim border border-accent-border text-accent">
-                        #{h}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Legenda */}
-                <div className="bg-card border border-border rounded-xl p-5">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-[11px] font-mono text-text-muted tracking-widest uppercase">Legenda Completa</span>
-                    <CopyBtn text={resultado.legenda} />
-                  </div>
-                  <p className="text-[12px] text-text-secondary leading-relaxed whitespace-pre-line">{resultado.legenda}</p>
-                </div>
-
-                {/* Copiar tudo */}
-                <div className="flex flex-wrap items-center gap-2">
-                  <div className="flex rounded-lg border border-border overflow-hidden text-[10px] font-mono flex-shrink-0">
-                    <button type="button"
-                      onClick={() => setExportFmt("canva")}
-                      className={cn("px-2.5 py-1.5 transition-all", exportFmt === "canva" ? "bg-accent text-background font-semibold" : "text-text-muted hover:text-text-secondary")}
-                    >CANVA</button>
-                    <button type="button"
-                      onClick={() => setExportFmt("briefing")}
-                      className={cn("px-2.5 py-1.5 transition-all border-l border-border", exportFmt === "briefing" ? "bg-accent text-background font-semibold" : "text-text-muted hover:text-text-secondary")}
-                    >BRIEFING</button>
-                  </div>
-                  <button type="button"
-                    onClick={() => { navigator.clipboard.writeText(toFullText(resultado!)); showToast("Carrossel completo copiado!") }}
-                    className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-accent-border text-accent text-[13px] font-medium hover:bg-accent-dim transition-all"
-                  >
-                    <Copy className="w-4 h-4" /> Copiar Carrossel Completo
-                  </button>
-                </div>
-              </div>
-            )}
+            <label htmlFor="cr-n" className="mb-1.5 block text-[13px] font-medium text-px-ink">Número de slides: {slides}</label>
+            <input id="cr-n" type="range" min={3} max={12} value={slides} onChange={e => setSlides(Number(e.target.value))} className="w-full accent-black" />
           </div>
+          <div className="space-y-1.5">
+            <p className="text-[13px] font-medium text-px-ink">Objetivo</p>
+            <Segmented label="Objetivo" value={objetivo} onChange={setObjetivo} options={OBJETIVOS.map(o => ({ value: o, label: o }))} />
+          </div>
+          <div className="space-y-1.5">
+            <p className="text-[13px] font-medium text-px-ink">Tom de voz</p>
+            <Segmented label="Tom de voz" value={tom} onChange={setTom} options={TONS.map(t => ({ value: t, label: t }))} />
+          </div>
+          {erro && <p role="alert" className="rounded-px-card bg-px-danger-soft px-3 py-2 text-[13px] text-px-danger">{erro}</p>}
+          <PxButton fullWidth leftIcon={LayoutGrid} onClick={gerar} loading={loading} disabled={!tema.trim()}>{loading ? "Gerando" : resultado ? "Gerar novamente" : "Gerar carrossel"}</PxButton>
+        </Panel>
+
+        <div className="min-w-0 space-y-4">
+          {loading && <p role="status" className="py-24 text-center text-[14px] font-medium text-px-ink">Criando o carrossel. Pode levar até um minuto.</p>}
+          {!loading && !resultado && (
+            <Panel className="py-16 text-center">
+              <p className="text-[15px] font-semibold text-px-ink">Defina o tema e o número de slides</p>
+              <p className="mt-1 text-[13px] text-px-muted">Você recebe texto de todos os slides, CTA, hashtags e legenda.</p>
+            </Panel>
+          )}
+          {!loading && resultado && (
+            <>
+              <Panel as="section" tone="strong" className="space-y-2">
+                <div className="flex items-center justify-between gap-3">
+                  <h2 className="text-[12.5px] font-medium text-px-muted">Capa</h2>
+                  <CopyButton text={`${resultado.titulo}\n${resultado.subtitulo}`} />
+                </div>
+                <p className="text-[19px] font-semibold leading-snug text-px-ink">{resultado.titulo}</p>
+                <p className="text-[13.5px] text-px-ink/80">{resultado.subtitulo}</p>
+              </Panel>
+
+              <Panel as="section" className="space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <h2 className="text-[12.5px] font-medium text-px-muted">Slides ({resultado.slides.length})</h2>
+                  {resultado.slides.length > 0 && <CopyButton text={resultado.slides.map(s => `SLIDE ${s.numero}: ${s.titulo}\n${s.conteudo}`).join("\n\n")} label="Copiar slides" />}
+                </div>
+                <ol className="space-y-2.5">
+                  {resultado.slides.map((s, i) => (
+                    <li key={s.numero ?? i} className="flex items-start gap-3 rounded-px-card bg-px-ink/[0.04] p-3">
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-px-ink text-[12px] font-semibold text-white" aria-label={`Slide ${s.numero ?? i + 1}`}>{s.numero ?? i + 1}</span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[14px] font-semibold text-px-ink">{s.titulo}</p>
+                        <p className="mt-0.5 text-[13.5px] leading-relaxed text-px-ink/85">{s.conteudo}</p>
+                        {s.dica_visual && <p className="mt-1.5 text-[12.5px] text-px-muted"><span className="font-medium text-px-ink/80">Visual:</span> {s.dica_visual}</p>}
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </Panel>
+
+              <Panel as="section" className="space-y-1.5">
+                <div className="flex items-center justify-between gap-3"><h2 className="text-[12.5px] font-medium text-px-muted">Chamada final</h2><CopyButton text={resultado.cta} /></div>
+                <p className="text-[14px] font-medium text-px-ink">{resultado.cta}</p>
+              </Panel>
+
+              <Panel as="section" className="space-y-1.5">
+                <div className="flex items-center justify-between gap-3"><h2 className="text-[12.5px] font-medium text-px-muted">Hashtags</h2>{resultado.hashtags.length > 0 && <CopyButton text={tags(resultado)} />}</div>
+                <p className="text-[13px] leading-relaxed text-px-ink/80">{tags(resultado)}</p>
+              </Panel>
+
+              <Panel as="section" className="space-y-1.5">
+                <div className="flex items-center justify-between gap-3"><h2 className="text-[12.5px] font-medium text-px-muted">Legenda completa</h2><CopyButton text={resultado.legenda} /></div>
+                <p className="whitespace-pre-line text-[13.5px] leading-relaxed text-px-ink/85">{resultado.legenda}</p>
+              </Panel>
+
+              <Panel as="section" className="flex flex-wrap items-center gap-3">
+                <Segmented label="Formato da cópia" value={exportFmt} onChange={setExportFmt} options={[{ value: "canva", label: "Canva" }, { value: "briefing", label: "Briefing" }]} />
+                <CopyButton className="ml-auto" text={exportFmt === "canva" ? toCanva(resultado) : toBriefing(resultado)} label="Copiar carrossel completo" />
+              </Panel>
+            </>
+          )}
         </div>
       </div>
-
-      <Toast message={toast?.message ?? null} type={toast?.type} />
-      {showPautas && (
-        <PautasPickerModal
-          onSelect={t => setTema(t)}
-          onClose={() => setShowPautas(false)}
-        />
-      )}
+      {showPautas && <PautasPickerModal onSelect={t => setTema(t)} onClose={() => setShowPautas(false)} />}
     </div>
   )
 }

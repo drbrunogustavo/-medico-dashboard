@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Smartphone, ClipboardList } from "lucide-react"
 import { PautasPickerModal } from "@/components/PautasPickerModal"
 import { Panel, PxButton, Segmented, Field, PxInput, Tag, PageHeader, CopyButton } from "@/components/px"
@@ -19,6 +19,11 @@ export default function StoriesPage() {
   const [loading, setLoading] = useState(false)
   const [resultado, setResultado] = useState<StoriesResult | null>(null)
   const [erro, setErro] = useState<string | null>(null)
+
+  useEffect(() => {
+    const t = new URLSearchParams(window.location.search).get("tema")
+    if (t) setTema(t)
+  }, [])
 
   const gerar = async () => {
     if (!tema.trim()) { setErro("Informe o tema dos stories."); return }

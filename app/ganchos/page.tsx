@@ -1,273 +1,155 @@
-// Salvar em: app/ganchos/page.tsx
 'use client'
-import { useState, useEffect } from 'react'
-import { Copy, Check, Loader2, Sparkles, ClipboardList, Zap, Star } from "lucide-react"
-import { TopBar } from '@/components/TopBar'
-import { PautasModal } from '@/components/PautasModal'
-import { Toast } from '@/components/Toast'
-import { AI_MODEL } from "@/lib/ai-config"
 
-const D = {
-  bg:'var(--background)',surface:'var(--surface)',card:'var(--surface-2)',border:'var(--border)',
-  text:'var(--text-primary)',text2:'var(--text-secondary)',muted:'var(--text-muted)',
-  accent:'var(--accent)',adim:'var(--accent-dim)',aborder:'var(--accent-border)',atext:'var(--accent-text)',
-}
-const inputSty = { background:D.card, border:`1px solid ${D.border}`, color:D.text, borderRadius:8, padding:'10px 14px', fontSize:14, width:'100%', outline:'none' } as React.CSSProperties
+import { useState } from "react"
+import { Star, ClipboardList } from "lucide-react"
+import { PautasModal } from "@/components/PautasModal"
+import { pedirJSON, mensagemErroIA } from "@/lib/ia-json"
+import { Panel, PxButton, Segmented, Field, Tag, PageHeader, CopyButton } from "@/components/px"
 
 const TIPOS = [
-  { v:'dado',      l:'Dado Chocante',    e:'📊', cor:'rgba(96,165,250,0.85)',  ex:'95% das pessoas que fazem dieta...' },
-  { v:'pergunta',  l:'Pergunta',         e:'❓', cor:'rgba(167,139,250,0.85)', ex:'Por que médicos nunca te contam isso?' },
-  { v:'polemico',  l:'Afirmação Polêmica',e:'🔥', cor:'rgba(251,146,60,0.85)', ex:'Dieta não emagrece. Ponto final.' },
-  { v:'segredo',   l:'Segredo Revelado', e:'🤫', cor:'rgba(52,211,153,0.85)',  ex:'O que a indústria não quer que você saiba...' },
-  { v:'contra',    l:'Contra-intuitivo', e:'🔄', cor:'rgba(251,191,36,0.85)',  ex:'Comer mais pode te fazer emagrecer.' },
-  { v:'autoridade',l:'Autoridade',       e:'🏆', cor:'rgba(245,101,101,0.85)', ex:'Depois de ver 10.000 pacientes, aprendi...' },
+  { v: "dado",       l: "Dado Chocante",      ex: "X% das pessoas que fazem dieta..." },
+  { v: "pergunta",   l: "Pergunta",           ex: "Por que médicos nunca te contam isso?" },
+  { v: "polemico",   l: "Afirmação Polêmica", ex: "Dieta não emagrece. Ponto final." },
+  { v: "segredo",    l: "Segredo Revelado",   ex: "O que a indústria não quer que você saiba..." },
+  { v: "contra",     l: "Contra-intuitivo",   ex: "Comer mais pode te fazer emagrecer." },
+  { v: "autoridade", l: "Autoridade",         ex: "Depois de anos atendendo, aprendi..." },
+]
+const FORMATOS = ["Reel", "Carrossel", "Feed", "Stories"]
+const IMPACTO: Record<string, string> = { viral: "Viral", conversao: "Conversão", educativo: "Educativo", vendas: "Vendas" }
+
+interface Gancho { texto: string; tipo: string; impacto?: string }
+
+// Modelos de estrutura exibidos antes da primeira geração. Sem números de estudo: servem só de referência de formato.
+const BIBLIOTECA_FIXA: Gancho[] = [
+  { texto: "A maioria das pessoas que faz dieta recupera o peso perdido. Isso não é falta de vontade.", tipo: "Dado Chocante", impacto: "viral" },
+  { texto: "O que a balança mostra não é o que importa. Te explico por quê.", tipo: "Contra-intuitivo", impacto: "educativo" },
+  { texto: "Médico, te faço uma pergunta: você trata o sintoma ou a causa?", tipo: "Pergunta", impacto: "conversao" },
+  { texto: "Depois de anos atendendo pacientes com obesidade, aprendi uma coisa:", tipo: "Autoridade", impacto: "educativo" },
+  { texto: "Parar de comer não emagrece. E eu posso explicar o porquê.", tipo: "Afirmação Polêmica", impacto: "viral" },
+  { texto: "Tem uma informação sobre tireoide que muita gente nunca ouviu no consultório.", tipo: "Segredo Revelado", impacto: "educativo" },
+  { texto: "O exame voltou normal. O paciente continua com todos os sintomas. Por quê?", tipo: "Pergunta", impacto: "conversao" },
+  { texto: "Insulina alta em jejum com glicose normal: o sinal que quase ninguém procura.", tipo: "Dado Chocante", impacto: "educativo" },
 ]
 
-const FORMATOS = ['Reel','Carrossel','Feed','Stories']
+const areaCls = "w-full resize-none rounded-px-ctl border border-px-line bg-white px-3.5 py-2.5 text-[13.5px] text-px-ink placeholder:text-px-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-px-ink/40"
 
-interface Gancho { texto: string; tipo: string; cor: string; impacto?: string }
-
-const IMPACTO_CONFIG: Record<string, { emoji: string; label: string; bg: string; border: string; color: string }> = {
-  viral:     { emoji:'🔥', label:'Viral',     bg:'rgba(239,68,68,0.15)',  border:'rgba(239,68,68,0.4)',  color:'#f87171' },
-  conversao: { emoji:'⭐', label:'Conversão', bg:'rgba(234,179,8,0.15)', border:'rgba(234,179,8,0.4)',  color:'#facc15' },
-  educativo: { emoji:'🧠', label:'Educativo', bg:'rgba(59,130,246,0.15)',border:'rgba(59,130,246,0.4)', color:'#60a5fa' },
-  vendas:    { emoji:'💰', label:'Vendas',    bg:'rgba(34,197,94,0.15)', border:'rgba(34,197,94,0.4)',  color:'#4ade80' },
-}
-
-function CopyBtn({ text }: { text:string }) {
-  const [ok, setOk] = useState(false)
+function CartaoGancho({ g, fav, onFav }: { g: Gancho; fav: boolean; onFav: () => void }) {
   return (
-    <button onClick={()=>{ navigator.clipboard.writeText(text); setOk(true); setTimeout(()=>setOk(false),1600) }}
-      style={{ display:'inline-flex', alignItems:'center', padding:'6px 12px', borderRadius:6, border:`1px solid rgba(200,168,76,0.3)`, background:ok?'rgba(200,168,76,0.12)':'none', color:ok?D.accent:D.muted, fontSize:11, fontWeight:700, cursor:'pointer', flexShrink:0 }}>
-      {ok ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-    </button>
+    <Panel as="article" className="flex items-start gap-3">
+      <div className="min-w-0 flex-1 space-y-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Tag tone="neutral">{g.tipo}</Tag>
+          {g.impacto && IMPACTO[g.impacto] && <Tag tone="accent">{IMPACTO[g.impacto]}</Tag>}
+        </div>
+        <p className="text-[15px] italic leading-relaxed text-px-ink">&ldquo;{g.texto}&rdquo;</p>
+      </div>
+      <div className="flex shrink-0 flex-col gap-1.5">
+        <CopyButton text={g.texto} iconOnly />
+        <PxButton variant={fav ? "primary" : "secondary"} size="sm" leftIcon={Star} onClick={onFav} aria-label={fav ? "Remover dos favoritos" : "Salvar nos favoritos"} />
+      </div>
+    </Panel>
   )
 }
 
-// Ganchos da biblioteca estática (usados antes da IA)
-const BIBLIOTECA_FIXA: Gancho[] = [
-  { texto:'95% das pessoas que fazem dieta recuperam tudo em 2 anos. Isso não é falta de vontade.', tipo:'Dado Chocante', cor:'rgba(96,165,250,0.85)', impacto:'viral' },
-  { texto:'O que a balança mostra não é o que importa. Te explico por quê.', tipo:'Contra-intuitivo', cor:'rgba(251,191,36,0.85)', impacto:'educativo' },
-  { texto:'Médico, te faço uma pergunta: você trata o sintoma ou a causa?', tipo:'Pergunta', cor:'rgba(167,139,250,0.85)', impacto:'conversao' },
-  { texto:'Depois de 10 anos atendendo pacientes com obesidade, aprendi uma coisa:', tipo:'Autoridade', cor:'rgba(245,101,101,0.85)', impacto:'educativo' },
-  { texto:'Parar de comer não emagrece. E eu posso provar com dados.', tipo:'Afirmação Polêmica', cor:'rgba(251,146,60,0.85)', impacto:'viral' },
-  { texto:'Tem uma informação sobre tireoide que a maioria dos médicos ignora.', tipo:'Segredo Revelado', cor:'rgba(52,211,153,0.85)', impacto:'educativo' },
-  { texto:'O exame voltou normal. O paciente continua com todos os sintomas. Por quê?', tipo:'Pergunta', cor:'rgba(167,139,250,0.85)', impacto:'conversao' },
-  { texto:'Insulina alta em jejum com glicose normal: o sinal que ninguém vê.', tipo:'Dado Chocante', cor:'rgba(96,165,250,0.85)', impacto:'educativo' },
-]
-
 export default function GanchosPage() {
-  const [tema,       setTema]       = useState('')
-  const [tipos,      setTipos]      = useState<string[]>(['dado','pergunta','polemico'])
-  const [formato,    setFormato]    = useState('Reel')
-  const [ganchos,    setGanchos]    = useState<Gancho[]>(BIBLIOTECA_FIXA)
-  const [loading,    setLoading]    = useState(false)
-  const [favoritos,  setFavoritos]  = useState<Gancho[]>([])
+  const [tema, setTema] = useState("")
+  const [tipos, setTipos] = useState<string[]>(["dado", "pergunta", "polemico"])
+  const [formato, setFormato] = useState("Reel")
+  const [ganchos, setGanchos] = useState<Gancho[]>(BIBLIOTECA_FIXA)
+  const [gerado, setGerado] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [favoritos, setFavoritos] = useState<Gancho[]>([])
   const [showPautas, setShowPautas] = useState(false)
-  const [aba,        setAba]        = useState<'gerar'|'favoritos'>('gerar')
-  const [isMob,   setIsMob]   = useState(false)
-  const [errMsg,  setErrMsg]  = useState<string | null>(null)
-  useEffect(() => { setIsMob(window.innerWidth < 768) }, [])
-  const showErr = (msg: string) => { setErrMsg(msg); setTimeout(() => setErrMsg(null), 4000) }
+  const [aba, setAba] = useState<"gerar" | "favoritos">("gerar")
+  const [erro, setErro] = useState<string | null>(null)
 
-  const toggleTipo = (v:string) => setTipos(prev => prev.includes(v) ? prev.filter(t=>t!==v) : [...prev,v])
-  const toggleFav  = (g:Gancho) => setFavoritos(prev => prev.some(f=>f.texto===g.texto) ? prev.filter(f=>f.texto!==g.texto) : [g,...prev])
-  const isFav = (g:Gancho) => favoritos.some(f=>f.texto===g.texto)
+  const toggleTipo = (v: string) => setTipos(prev => prev.includes(v) ? prev.filter(t => t !== v) : [...prev, v])
+  const isFav = (g: Gancho) => favoritos.some(f => f.texto === g.texto)
+  const toggleFav = (g: Gancho) => setFavoritos(prev => isFav(g) ? prev.filter(f => f.texto !== g.texto) : [g, ...prev])
 
   const gerar = async () => {
     if (!tema.trim() || !tipos.length) return
-    setLoading(true)
+    setLoading(true); setErro(null)
     try {
-      const tiposLabel = tipos.map(v => TIPOS.find(t=>t.v===v)?.l).filter(Boolean).join(', ')
+      const tiposLabel = tipos.map(v => TIPOS.find(t => t.v === v)?.l).filter(Boolean).join(", ")
       const prompt =
-        'Crie 8 ganchos de abertura para ' + formato + ' do médico usuário — Clínico-Geral, Endocrinologia e Nutrologia.\n' +
-        'TEMA: ' + tema + '\nTIPOS DE GANCHO: ' + tiposLabel + '\n\n' +
-        'REGRAS:\n' +
-        '- Máx 2 frases por gancho — para o dedo no scroll em 3 segundos\n' +
-        '- Tom: médico que fala como amigo, direto, sem academicismo\n' +
+        "Crie 8 ganchos de abertura para " + formato + " do médico usuário — Clínico-Geral, Endocrinologia e Nutrologia.\n" +
+        "TEMA: " + tema + "\nTIPOS DE GANCHO: " + tiposLabel + "\n\n" +
+        "REGRAS:\n" +
+        "- Máx 2 frases por gancho — para o dedo no scroll em 3 segundos\n" +
+        "- Tom: médico que fala como amigo, direto, sem academicismo\n" +
         '- Proibido: "Você sabia que", "Neste vídeo", "Hoje vou falar"\n' +
-        '- Distribua os tipos solicitados entre os 8 ganchos\n' +
+        "- Não invente números, percentuais nem estudos\n" +
+        "- Distribua os tipos solicitados entre os 8 ganchos\n" +
         '- Para cada gancho, classifique o campo "impacto" com UM dos valores: viral | conversao | educativo | vendas\n' +
-        '  viral=alto potencial de compartilhamento/provocação, conversao=leva ao agendamento/ação, educativo=ensina/conscientiza, vendas=oferta direta\n\n' +
+        "  viral=alto potencial de compartilhamento/provocação, conversao=leva ao agendamento/ação, educativo=ensina/conscientiza, vendas=oferta direta\n\n" +
         'Retorne SOMENTE JSON: {"ganchos":[{"texto":"...","tipo":"nome do tipo","impacto":"viral|conversao|educativo|vendas"}]}'
-      const res  = await fetch('/api/ganchos', { method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ model:AI_MODEL, max_tokens:1200, messages:[{role:'user',content:prompt}] }) })
-      const data = await res.json()
-      const raw  = (data.content?.[0]?.text||'{}').replace(/```json/g,'').replace(/```/g,'').trim()
-      const startIdx = raw.indexOf('{'); const jsonStr = startIdx >= 0 ? raw.slice(startIdx) : raw; const json = JSON.parse(jsonStr)
-      if (!json.ganchos){console.error('API response:',json);throw new Error('Resposta inesperada da IA. Tente novamente.')}
-      const mapped: Gancho[] = json.ganchos.map((g: {texto:string; tipo:string; impacto?:string}) => ({
-        texto:   g.texto,
-        tipo:    g.tipo,
-        cor:     TIPOS.find(t=>t.l===g.tipo)?.cor || D.accent,
-        impacto: g.impacto,
-      }))
-      setGanchos(mapped)
-      setAba('gerar')
-    } catch(e) { const m=String(e); showErr(m.includes('rate_limit') ? 'Limite de requisições atingido. Aguarde 1 minuto e tente novamente.' : 'Erro ao gerar ganchos. Tente novamente.') }
-    setLoading(false)
+      const json = await pedirJSON<{ ganchos?: Gancho[] }>("/api/ganchos", prompt, 1200)
+      if (!Array.isArray(json.ganchos)) throw new Error("sem ganchos")
+      setGanchos(json.ganchos.map(g => ({ texto: g.texto, tipo: g.tipo, impacto: g.impacto })))
+      setGerado(true); setAba("gerar")
+    } catch (e) {
+      console.error("[ganchos] erro ao gerar:", e)
+      setErro(mensagemErroIA(e, "A IA devolveu uma resposta inesperada. Tente novamente."))
+    } finally { setLoading(false) }
   }
 
   return (
-    <div className="min-h-screen" style={{ color:D.text }}>
-      {showPautas && <PautasModal onSelect={(t)=>{setTema(t);setShowPautas(false)}} onClose={()=>setShowPautas(false)} />}
-      <TopBar
-        title="Biblioteca de Ganchos"
-        subtitle="GANCHOS · COPYWRITING · CONVERSÃO"
-        actions={
-          <button
-            onClick={gerar}
-            disabled={loading || !tema.trim() || !tipos.length}
-            className="flex items-center gap-1.5 text-[12px] font-bold rounded-lg px-4 py-1.5 transition-all disabled:opacity-50"
-            style={{ background: tema.trim()&&tipos.length ? D.accent : D.border, color: tema.trim()&&tipos.length ? D.bg : D.muted }}
-          >
-            {loading ? <><Loader2 className="animate-spin" style={{ width:14, height:14, verticalAlign:'-0.15em', marginRight:5 }} />Gerando...</> : <><Sparkles style={{ width:14, height:14, verticalAlign:'-0.15em', marginRight:5 }} />Gerar Ganchos</>}
-          </button>
-        }
-      />
+    <div className="animate-fade-in">
+      <PageHeader title="Biblioteca de Ganchos" caption="Aberturas que seguram o dedo no scroll" />
+      {showPautas && <PautasModal onSelect={t => setTema(t)} onClose={() => setShowPautas(false)} />}
 
-      <div style={{ display:'flex', flexDirection:isMob?'column':'row', height:isMob?'auto':'calc(100vh - 60px)' }}>
-        {/* Left */}
-        <div className="bg-card border-r border-border md:border-b-0 border-b" style={{ width:isMob?'100%':280, flexShrink:0, overflowY:'auto', padding:24, display:'flex', flexDirection:'column', gap:20 }}>
-          <div>
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
-              <label style={{ fontSize:11, fontWeight:700, color:D.text2, letterSpacing:3, textTransform:'uppercase' as const }}>Tema</label>
-              <button onClick={()=>setShowPautas(true)} style={{ fontSize:10, fontWeight:700, color:D.accent, background:'rgba(200,168,76,0.08)', border:'1px solid rgba(200,168,76,0.25)', borderRadius:6, padding:'4px 10px', cursor:'pointer' }}>
-                <ClipboardList style={{ width:12, height:12, verticalAlign:'-0.15em', marginRight:4 }} />Banco de Pautas
-              </button>
-            </div>
-            <textarea value={tema} onChange={e=>setTema(e.target.value)} rows={3} placeholder="Ex: Resistência à insulina" style={{ ...inputSty, resize:'none', display:'block' }} />
+      <div className="grid grid-cols-1 gap-4 px-4 pb-10 md:px-10 lg:grid-cols-[320px_1fr]">
+        <Panel as="aside" className="space-y-4 self-start">
+          <Field label="Tema" htmlFor="gc-tema">
+            <textarea id="gc-tema" value={tema} onChange={e => setTema(e.target.value)} rows={3} placeholder="Resistência à insulina" className={areaCls} />
+          </Field>
+          <PxButton variant="secondary" size="sm" leftIcon={ClipboardList} onClick={() => setShowPautas(true)}>Usar uma pauta do banco</PxButton>
+          <div className="space-y-1.5">
+            <p className="text-[13px] font-medium text-px-ink">Formato</p>
+            <Segmented label="Formato" value={formato} onChange={setFormato} options={FORMATOS.map(f => ({ value: f, label: f }))} />
           </div>
-
           <div>
-            <label style={{ fontSize:11, fontWeight:700, color:D.text2, letterSpacing:3, textTransform:'uppercase' as const, display:'block', marginBottom:8 }}>Formato</label>
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:6 }}>
-              {FORMATOS.map(f => (
-                <button key={f} onClick={()=>setFormato(f)}
-                  style={{ padding:'9px', borderRadius:8, border:'none', cursor:'pointer', fontWeight:700, fontSize:12, background:formato===f?D.accent:D.card, color:formato===f?D.bg:D.text2 }}>
-                  {f}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <label style={{ fontSize:11, fontWeight:700, color:D.text2, letterSpacing:3, textTransform:'uppercase' as const, display:'block', marginBottom:8 }}>
-              Tipos de Gancho <span style={{ color:D.muted, fontWeight:400, textTransform:'none', letterSpacing:0 }}>(selecione 1+)</span>
-            </label>
-            <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+            <p className="mb-1.5 text-[13px] font-medium text-px-ink">Tipos de gancho <span className="font-normal text-px-muted">(escolha ao menos um)</span></p>
+            <div role="group" aria-label="Tipos de gancho" className="flex flex-col gap-1.5">
               {TIPOS.map(t => {
                 const ativo = tipos.includes(t.v)
                 return (
-                  <button key={t.v} onClick={()=>toggleTipo(t.v)}
-                    style={{ padding:'10px 14px', borderRadius:8, border:`1px solid ${ativo?t.cor:'transparent'}`, cursor:'pointer', textAlign:'left', display:'flex', alignItems:'center', gap:10, background:ativo?'rgba(0,0,0,0.3)':D.card }}>
-                    <span style={{ fontSize:16 }}>{t.e}</span>
-                    <div style={{ flex:1 }}>
-                      <div style={{ fontWeight:700, fontSize:12, color:ativo?t.cor:D.text2 }}>{t.l}</div>
-                      <div style={{ fontSize:10, color:D.muted, marginTop:2, fontStyle:'italic' }}>{t.ex}</div>
-                    </div>
-                    {ativo && <span style={{ color:t.cor, display:'flex' }}><Check style={{ width:14, height:14 }} /></span>}
+                  <button key={t.v} type="button" aria-pressed={ativo} onClick={() => toggleTipo(t.v)}
+                    className={`rounded-px-card border p-2.5 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-px-ink/40 ${ativo ? "border-px-ink bg-px-ink text-white" : "border-px-ink/15 bg-white text-px-ink hover:border-px-ink/40"}`}>
+                    <span className="block text-[13.5px] font-semibold">{t.l}</span>
+                    <span className={`block text-[12px] italic ${ativo ? "text-white/75" : "text-px-muted"}`}>{t.ex}</span>
                   </button>
                 )
               })}
             </div>
           </div>
-        </div>
+          <PxButton fullWidth onClick={gerar} loading={loading} disabled={!tema.trim() || !tipos.length}>{loading ? "Gerando" : gerado ? "Gerar novos ganchos" : "Gerar ganchos"}</PxButton>
+        </Panel>
 
-        {/* Center */}
-        <div className="bg-background" style={{ flex:1, overflowY:'auto', padding:isMob?16:32 }}>
-          {/* Tabs */}
-          <div style={{ display:'flex', gap:4, marginBottom:24, borderBottom:`1px solid ${D.border}`, paddingBottom:0 }}>
-            {(['gerar','favoritos'] as const).map(tab => (
-              <button key={tab} onClick={()=>setAba(tab)}
-                style={{ padding:'8px 20px', border:'none', borderBottom:aba===tab?`2px solid ${D.accent}`:'2px solid transparent', background:'none', color:aba===tab?D.accent:D.muted, fontWeight:700, fontSize:12, cursor:'pointer', textTransform:'uppercase' as const, letterSpacing:2, marginBottom:-1 }}>
-                {tab==='gerar' ? <><Zap style={{ width:13, height:13, verticalAlign:'-0.15em', marginRight:4 }} />Ganchos</> : <><Star style={{ width:13, height:13, verticalAlign:'-0.15em', marginRight:4 }} />Favoritos ({favoritos.length})</>}
-              </button>
-            ))}
-          </div>
+        <div className="min-w-0 space-y-4">
+          {erro && <p role="alert" className="rounded-px-card bg-px-danger-soft px-4 py-3 text-[13px] text-px-danger">{erro}</p>}
+          <Segmented label="Lista" value={aba} onChange={setAba}
+            options={[{ value: "gerar", label: gerado ? "Ganchos gerados" : "Modelos" }, { value: "favoritos", label: `Favoritos (${favoritos.length})` }]} />
 
-          {/* Tab Ganchos */}
-          {aba==='gerar' && (
+          {loading && <p role="status" className="py-24 text-center text-[14px] font-medium text-px-ink">Criando os ganchos</p>}
+
+          {!loading && aba === "gerar" && (
             <>
-              {loading && (
-                <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'50vh', gap:16 }}>
-                  <div className="animate-spin" style={{ width:44, height:44, border:'3px solid rgba(200,168,76,0.2)', borderTop:`3px solid ${D.accent}`, borderRadius:'50%' }} />
-                  <div style={{ color:D.accent, fontSize:13, fontWeight:700, letterSpacing:2 }}>CRIANDO GANCHOS...</div>
-                  <div style={{ color:'#7c85a0', fontSize:10, marginTop:6, letterSpacing:0.5 }}>A geração pode levar 30–60 segundos. Não feche a página.</div>
-                </div>
-              )}
-              {!loading && (
-                <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
-                  {ganchos.map((g, i) => (
-                    <div key={i} style={{ background:D.card, border:`1px solid ${D.border}`, borderRadius:10, padding:'18px 20px', borderLeft:`3px solid ${g.cor}` }}>
-                      <div style={{ display:'flex', alignItems:'flex-start', gap:12 }}>
-                        <div style={{ flex:1 }}>
-                          <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:10, flexWrap:'wrap' }}>
-                            <span style={{ fontSize:10, fontWeight:700, padding:'2px 8px', borderRadius:99, color:g.cor, background:'rgba(0,0,0,0.4)', border:`1px solid ${g.cor}` }}>{g.tipo}</span>
-                            {g.impacto && IMPACTO_CONFIG[g.impacto] && (() => { const ic = IMPACTO_CONFIG[g.impacto!]; return (
-                              <span style={{ fontSize:10, fontWeight:700, padding:'2px 8px', borderRadius:99, color:ic.color, background:ic.bg, border:`1px solid ${ic.border}` }}>{ic.emoji} {ic.label}</span>
-                            )})()}
-                          </div>
-                          <div className="font-playfair" style={{ color:D.text, fontSize:15, lineHeight:1.65, fontStyle:'italic' }}>
-                            "{g.texto}"
-                          </div>
-                        </div>
-                        <div style={{ display:'flex', flexDirection:'column', gap:6, flexShrink:0 }}>
-                          <CopyBtn text={g.texto} />
-                          <button onClick={()=>toggleFav(g)}
-                            style={{ padding:'6px 12px', borderRadius:6, border:`1px solid ${isFav(g)?'rgba(200,168,76,0.5)':D.border}`, background:isFav(g)?'rgba(200,168,76,0.12)':'none', color:isFav(g)?D.accent:D.muted, fontSize:11, fontWeight:700, cursor:'pointer' }}>
-                            {isFav(g) ? <Star style={{ width:14, height:14, fill:'currentColor' }} /> : <Star style={{ width:14, height:14 }} />}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+              {!gerado && <p className="text-[13px] text-px-muted">Modelos de estrutura para referência. Informe o tema e gere ganchos sob medida.</p>}
+              <ul className="space-y-3">
+                {ganchos.map(g => <li key={g.texto}><CartaoGancho g={g} fav={isFav(g)} onFav={() => toggleFav(g)} /></li>)}
+              </ul>
             </>
           )}
 
-          {/* Tab Favoritos */}
-          {aba==='favoritos' && (
-            <>
-              {favoritos.length === 0 ? (
-                <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'50vh', gap:12, opacity:.5 }}>
-                  <Star style={{ width:48, height:48 }} />
-                  <div style={{ color:D.muted, fontSize:13, fontWeight:700, letterSpacing:2, textTransform:'uppercase' as const, textAlign:'center' }}>Nenhum favorito ainda<br />Clique na estrela para salvar</div>
-                </div>
-              ) : (
-                <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
-                  {favoritos.map((g, i) => (
-                    <div key={i} style={{ background:D.card, border:`1px solid ${D.border}`, borderRadius:10, padding:'18px 20px', borderLeft:`3px solid ${g.cor}` }}>
-                      <div style={{ display:'flex', alignItems:'flex-start', gap:12 }}>
-                        <div style={{ flex:1 }}>
-                          <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8, flexWrap:'wrap' }}>
-                            <span style={{ fontSize:10, fontWeight:700, padding:'2px 8px', borderRadius:99, color:g.cor, background:'rgba(0,0,0,0.4)', border:`1px solid ${g.cor}` }}>{g.tipo}</span>
-                            {g.impacto && IMPACTO_CONFIG[g.impacto] && (() => { const ic = IMPACTO_CONFIG[g.impacto!]; return (
-                              <span style={{ fontSize:10, fontWeight:700, padding:'2px 8px', borderRadius:99, color:ic.color, background:ic.bg, border:`1px solid ${ic.border}` }}>{ic.emoji} {ic.label}</span>
-                            )})()}
-                          </div>
-                          <div className="font-playfair" style={{ color:D.text, fontSize:15, lineHeight:1.65, fontStyle:'italic' }}>
-                            "{g.texto}"
-                          </div>
-                        </div>
-                        <div style={{ display:'flex', gap:6, flexShrink:0 }}>
-                          <CopyBtn text={g.texto} />
-                          <button onClick={()=>toggleFav(g)}
-                            style={{ padding:'6px 12px', borderRadius:6, border:`1px solid rgba(200,168,76,0.5)`, background:'rgba(200,168,76,0.12)', color:D.accent, fontSize:11, fontWeight:700, cursor:'pointer' }}>
-                            <Star style={{ width:14, height:14, fill:'currentColor' }} />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </>
+          {!loading && aba === "favoritos" && (
+            favoritos.length === 0
+              ? <Panel className="py-14 text-center"><p className="text-[15px] font-semibold text-px-ink">Nenhum favorito ainda</p><p className="mt-1 text-[13px] text-px-muted">Use a estrela em um gancho para guardá-lo aqui. A lista vale só enquanto a página estiver aberta.</p></Panel>
+              : <ul className="space-y-3">{favoritos.map(g => <li key={g.texto}><CartaoGancho g={g} fav onFav={() => toggleFav(g)} /></li>)}</ul>
           )}
         </div>
       </div>
-      <Toast message={errMsg} type="error" />
     </div>
   )
 }

@@ -1,288 +1,155 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { TopBar } from "@/components/TopBar"
-import { StatCard } from "@/components/StatCard"
-import { Sparkles, Copy, Check, RefreshCw, FileText, Instagram, Eye } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { Sparkles } from "lucide-react"
+import { Panel, PxButton, Segmented, Field, PxCheckbox, PageHeader, CopyButton } from "@/components/px"
 
 const FORMATOS = [
-  { id: "carrossel", label: "Carrossel", icon: "📊", desc: "Sequência de slides educativos" },
-  { id: "reels",     label: "Reels",     icon: "🎬", desc: "Vídeo curto e dinâmico" },
-  { id: "feed",      label: "Feed",      icon: "🖼️", desc: "Post único informativo" },
-  { id: "stories",   label: "Stories",   icon: "⚡", desc: "Conteúdo rápido e direto" },
+  { id: "carrossel", label: "Carrossel", desc: "Sequência de slides educativos" },
+  { id: "reels",     label: "Reels",     desc: "Vídeo curto e dinâmico" },
+  { id: "feed",      label: "Feed",      desc: "Post único informativo" },
+  { id: "stories",   label: "Stories",   desc: "Conteúdo rápido e direto" },
 ]
-
 const TONS = ["Educativo", "Inspirador", "Científico", "Casual", "Urgente"]
 
-interface Pauta {
-  id: string
-  titulo: string
-  categoria: string
-  nota: string
-  fonte?: string
-}
+interface Pauta { id: string; titulo: string; categoria: string; nota: string; fonte?: string }
+interface Legenda { gancho: string; desenvolvimento: string; cta: string; hashtags: string; completa: string }
 
-interface Legenda {
-  gancho: string
-  desenvolvimento: string
-  cta: string
-  hashtags: string
-  completa: string
+const areaCls = "w-full resize-none rounded-px-ctl border border-px-line bg-white px-3.5 py-2.5 text-[13.5px] text-px-ink placeholder:text-px-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-px-ink/40"
+
+function Bloco({ titulo, children }: { titulo: string; children: React.ReactNode }) {
+  return (
+    <Panel as="section" className="space-y-1.5">
+      <h2 className="text-[12.5px] font-medium text-px-muted">{titulo}</h2>
+      {children}
+    </Panel>
+  )
 }
 
 export default function LegendaPage() {
-  const [pautas, setPautas]       = useState<Pauta[]>([])
-  const [pautaSel, setPautaSel]   = useState<Pauta | null>(null)
-  const [formato, setFormato]     = useState("carrossel")
-  const [tom, setTom]             = useState("Educativo")
-  const [emojis, setEmojis]       = useState(true)
-  const [loading, setLoading]     = useState(false)
-  const [legenda, setLegenda]     = useState<Legenda | null>(null)
-  const [copiado, setCopiado]     = useState(false)
-  const [topico, setTopico]       = useState("")
+  const [pautas, setPautas] = useState<Pauta[]>([])
+  const [pautasErro, setPautasErro] = useState(false)
+  const [pautaSel, setPautaSel] = useState<Pauta | null>(null)
+  const [formato, setFormato] = useState("carrossel")
+  const [tom, setTom] = useState("Educativo")
+  const [emojis, setEmojis] = useState(true)
+  const [loading, setLoading] = useState(false)
+  const [legenda, setLegenda] = useState<Legenda | null>(null)
+  const [topico, setTopico] = useState("")
   const [usarPauta, setUsarPauta] = useState(false)
-  const [toast, setToast]         = useState<string | null>(null)
-  const [geradas, setGeradas]     = useState(0)
+  const [erro, setErro] = useState<string | null>(null)
 
-  const showToast = (msg: string) => {
-    setToast(msg); setTimeout(() => setToast(null), 2600)
-  }
-
-  // Lê tema da URL (vindo do Banco de Pautas)
   useEffect(() => {
-    if (typeof window === 'undefined') return
-    const t = new URLSearchParams(window.location.search).get('tema')
-    if (t) { setTopico(decodeURIComponent(t)); setUsarPauta(false) }
+    const t = new URLSearchParams(window.location.search).get("tema")
+    if (t) { setTopico(t); setUsarPauta(false) }
   }, [])
 
   useEffect(() => {
-    fetch('/api/pautas')
-      .then(r => r.json())
-      .then(data => setPautas(data || []))
-      .catch(console.error)
+    fetch("/api/pautas")
+      .then(r => { if (!r.ok) throw new Error("falha"); return r.json() })
+      .then(data => setPautas(Array.isArray(data) ? data : []))
+      .catch(() => setPautasErro(true))
   }, [])
+
+  const tema = usarPauta ? pautaSel?.titulo : topico
 
   const gerarLegenda = async () => {
-    const tema = usarPauta ? pautaSel?.titulo : topico
-    if (!tema?.trim()) { showToast("Selecione uma pauta ou digite um tema!"); return }
-    setLoading(true); setLegenda(null)
-
+    if (!tema?.trim()) { setErro("Selecione uma pauta ou digite um tema."); return }
+    setLoading(true); setLegenda(null); setErro(null)
     const contexto = usarPauta && pautaSel
       ? `Título: ${pautaSel.titulo}\nCategoria: ${pautaSel.categoria}\nNotas: ${pautaSel.nota || "Nenhuma"}\nFonte: ${pautaSel.fonte || "Não informada"}`
       : `Tema: ${topico}`
-
     try {
-      const res = await fetch('/api/legendas', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tema, contexto, formato, tom, emojis })
-      })
-      const parsed = await res.json()
-      if (parsed.error) throw new Error(parsed.error)
-      setLegenda(parsed)
-      setGeradas(g => g + 1)
+      const res = await fetch("/api/legendas", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tema, contexto, formato, tom, emojis }) })
+      const data = await res.json().catch(() => ({})) as Partial<Legenda> & { error?: string }
+      if (!res.ok || data.error) throw new Error(data.error || "falha")
+      if (typeof data.completa !== "string") throw new Error("resposta incompleta")
+      setLegenda({ gancho: data.gancho ?? "", desenvolvimento: data.desenvolvimento ?? "", cta: data.cta ?? "", hashtags: data.hashtags ?? "", completa: data.completa })
     } catch (e) {
-      console.error(e)
-      showToast("Erro ao gerar legenda: " + String(e))
-    }
-    setLoading(false)
-  }
-
-  const copiar = () => {
-    if (!legenda) return
-    navigator.clipboard.writeText(legenda.completa)
-    setCopiado(true); showToast("Legenda copiada!")
-    setTimeout(() => setCopiado(false), 2000)
-  }
-
-  const stats = {
-    geradas, pautas: pautas.length, formatos: FORMATOS.length,
+      console.error("[legendas] erro ao gerar:", e)
+      setErro("Não foi possível gerar a legenda. Tente novamente em instantes.")
+    } finally { setLoading(false) }
   }
 
   return (
     <div className="animate-fade-in">
-      <TopBar
-        title="Gerador de Legendas"
-        subtitle="INSTAGRAM · IA ESPECIALIZADA EM CONTEÚDO MÉDICO"
-        actions={
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent-dim border border-accent-border">
-            <Sparkles className="w-3.5 h-3.5 text-accent" />
-            <span className="text-[11px] font-mono text-accent">{geradas} geradas</span>
+      <PageHeader title="Gerador de Legendas" caption="Legendas para Instagram a partir de um tema ou de uma pauta" />
+      <div className="grid grid-cols-1 gap-4 px-4 pb-10 md:px-10 lg:grid-cols-[360px_1fr]">
+        <Panel as="aside" className="space-y-4 self-start">
+          <div className="space-y-1.5">
+            <p className="text-[13px] font-medium text-px-ink">Origem do tema</p>
+            <Segmented label="Origem do tema" value={usarPauta ? "pauta" : "tema"} onChange={v => setUsarPauta(v === "pauta")}
+              options={[{ value: "tema", label: "Digitar tema" }, { value: "pauta", label: "Banco de pautas" }]} />
           </div>
-        }
-      />
 
-      <div className="p-4 md:p-8 space-y-4 md:space-y-6">
-        {/* Stats — 2 cols mobile, 3 desktop */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
-          <StatCard label="Geradas"          value={stats.geradas}  sub="nesta sessão" icon={Sparkles} accent="green" />
-          <StatCard label="Pautas"           value={stats.pautas}   sub="no banco"     icon={FileText} accent="blue"  />
-          <StatCard label="Formatos"         value={stats.formatos} sub="disponíveis"  icon={Instagram} accent="amber" />
-        </div>
-
-        {/* Main layout — 1 col mobile, 2 col desktop */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-
-          {/* ── Painel Esquerdo ── */}
-          <div className="space-y-4">
-
-            {/* Fonte do tema */}
-            <div className="bg-card border border-border rounded-lg p-4 md:p-5">
-              <div className="text-[10px] font-mono text-text-muted tracking-widest uppercase mb-3">Tema da Legenda</div>
-              <div className="flex gap-2 mb-4">
-                <button onClick={() => setUsarPauta(false)}
-                  className={cn("flex-1 py-2 rounded-lg text-[12px] font-medium border transition-all",
-                    !usarPauta ? "bg-accent-dim border-accent-border text-accent" : "border-border text-text-muted hover:text-text-secondary")}>
-                  Digitar Tema
-                </button>
-                <button onClick={() => setUsarPauta(true)}
-                  className={cn("flex-1 py-2 rounded-lg text-[12px] font-medium border transition-all",
-                    usarPauta ? "bg-accent-dim border-accent-border text-accent" : "border-border text-text-muted hover:text-text-secondary")}>
-                  Banco de Pautas
-                </button>
-              </div>
-
-              {!usarPauta ? (
-                <textarea
-                  value={topico}
-                  onChange={e => setTopico(e.target.value)}
-                  placeholder="Ex: Resistência insulínica em pessoas magras..."
-                  rows={3}
-                  className="w-full bg-background border border-border rounded-lg px-4 py-3 text-base md:text-[13px] text-text-primary placeholder:text-text-muted outline-none focus:border-accent/40 resize-none"
-                />
-              ) : (
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {pautas.length === 0 ? (
-                    <div className="text-center py-4 text-text-muted text-[12px]">Nenhuma pauta no banco ainda.</div>
-                  ) : pautas.map(p => (
-                    <button key={p.id} onClick={() => setPautaSel(p)}
-                      className={cn("w-full text-left px-3 py-2.5 rounded-lg border transition-all",
-                        pautaSel?.id === p.id ? "bg-accent-dim border-accent-border" : "border-border hover:border-border-hover")}>
-                      <div className={cn("text-[12px] font-medium leading-snug", pautaSel?.id === p.id ? "text-accent-text" : "text-text-primary")}>
-                        {p.titulo}
-                      </div>
-                      <div className="text-[10px] text-text-muted mt-0.5">{p.categoria}</div>
+          {!usarPauta ? (
+            <Field label="Tema" htmlFor="lg-tema">
+              <textarea id="lg-tema" value={topico} onChange={e => setTopico(e.target.value)} rows={3} placeholder="Resistência insulínica em pessoas magras" className={areaCls} />
+            </Field>
+          ) : (
+            <div role="group" aria-label="Pautas" className="max-h-56 space-y-1.5 overflow-y-auto">
+              {pautasErro
+                ? <p role="alert" className="text-[13px] text-px-danger">As pautas não puderam ser carregadas.</p>
+                : pautas.length === 0
+                  ? <p className="py-3 text-center text-[13px] text-px-muted">Nenhuma pauta no banco.</p>
+                  : pautas.map(p => (
+                    <button key={p.id} type="button" aria-pressed={pautaSel?.id === p.id} onClick={() => setPautaSel(p)}
+                      className={`w-full rounded-px-ctl border px-3 py-2 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-px-ink/40 ${pautaSel?.id === p.id ? "border-px-ink bg-px-ink text-white" : "border-px-ink/15 bg-white text-px-ink hover:border-px-ink/40"}`}>
+                      <span className="block text-[13.5px] font-medium leading-snug">{p.titulo}</span>
+                      <span className={`block text-[12px] ${pautaSel?.id === p.id ? "text-white/75" : "text-px-muted"}`}>{p.categoria}</span>
                     </button>
                   ))}
-                </div>
-              )}
             </div>
+          )}
 
-            {/* Formato */}
-            <div className="bg-card border border-border rounded-lg p-4 md:p-5">
-              <div className="text-[10px] font-mono text-text-muted tracking-widest uppercase mb-3">Formato do Post</div>
-              <div className="grid grid-cols-2 gap-2">
-                {FORMATOS.map(f => (
-                  <button key={f.id} onClick={() => setFormato(f.id)}
-                    className={cn("flex flex-col items-start px-3 py-3 rounded-lg border transition-all",
-                      formato === f.id ? "bg-accent-dim border-accent-border" : "border-border hover:border-border-hover")}>
-                    <span className="text-[18px] mb-1">{f.icon}</span>
-                    <span className={cn("text-[12px] font-medium", formato === f.id ? "text-accent-text" : "text-text-primary")}>{f.label}</span>
-                    <span className="text-[10px] text-text-muted">{f.desc}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Tom + emojis */}
-            <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-4">
-              <div>
-                <div className="text-[10px] font-mono text-text-muted tracking-widest uppercase mb-3">Tom de Voz</div>
-                <div className="flex flex-wrap gap-2">
-                  {TONS.map(t => (
-                    <button key={t} onClick={() => setTom(t)}
-                      className={cn("text-[11px] px-3 py-1.5 rounded-full border transition-all",
-                        tom === t ? "bg-accent-dim border-accent-border text-accent-text font-medium" : "border-border text-text-muted hover:text-text-secondary")}>
-                      {t}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="flex items-center justify-between pt-2 border-t border-border">
-                <span className="text-[12px] text-text-secondary">Incluir emojis</span>
-                <button onClick={() => setEmojis(v => !v)}
-                  className={cn("w-10 h-5 rounded-full transition-all relative", emojis ? "bg-accent" : "bg-border")}>
-                  <span className={cn("absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all", emojis ? "left-5" : "left-0.5")} />
+          <div>
+            <p className="mb-1.5 text-[13px] font-medium text-px-ink">Formato</p>
+            <div role="group" aria-label="Formato do post" className="grid grid-cols-2 gap-1.5">
+              {FORMATOS.map(f => (
+                <button key={f.id} type="button" aria-pressed={formato === f.id} onClick={() => setFormato(f.id)}
+                  className={`rounded-px-card border p-2.5 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-px-ink/40 ${formato === f.id ? "border-px-ink bg-px-ink text-white" : "border-px-ink/15 bg-white text-px-ink hover:border-px-ink/40"}`}>
+                  <span className="block text-[13.5px] font-semibold">{f.label}</span>
+                  <span className={`block text-[12px] ${formato === f.id ? "text-white/75" : "text-px-muted"}`}>{f.desc}</span>
                 </button>
-              </div>
+              ))}
             </div>
-
-            <button onClick={gerarLegenda} disabled={loading}
-              className="w-full flex items-center justify-center gap-3 py-3.5 rounded-lg bg-accent border border-accent text-background text-[14px] font-semibold hover:opacity-90 transition-opacity disabled:opacity-50">
-              {loading
-                ? <><RefreshCw className="w-4 h-4 animate-spin" /> Gerando com IA...</>
-                : <><Sparkles className="w-4 h-4" /> Gerar Legenda</>}
-            </button>
           </div>
 
-          {/* ── Painel Direito — Resultado ── */}
-          <div className="space-y-3">
-            {!legenda && !loading && (
-              <div className="bg-card border border-border rounded-lg p-8 flex flex-col items-center justify-center min-h-64 md:min-h-96 text-center gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-accent-dim border border-accent-border flex items-center justify-center">
-                  <Sparkles className="w-7 h-7 text-accent" />
-                </div>
-                <div>
-                  <div className="text-[15px] font-semibold text-text-primary mb-2">Pronto para criar</div>
-                  <div className="text-[12px] text-text-secondary">
-                    Digite um tema ou selecione uma pauta,<br />escolha o formato e clique em Gerar Legenda.
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {loading && (
-              <div className="bg-card border border-border rounded-lg p-8 flex flex-col items-center justify-center min-h-64 md:min-h-96 gap-4">
-                <RefreshCw className="w-10 h-10 text-accent animate-spin" />
-                <div className="text-[12px] font-mono text-text-muted tracking-widest">GERANDO LEGENDA...</div>
-              </div>
-            )}
-
-            {legenda && !loading && (
-              <div className="space-y-3">
-                <div className="bg-card border border-border rounded-lg p-4">
-                  <div className="text-[9px] font-mono text-accent tracking-widest uppercase mb-2">GANCHO</div>
-                  <p className="text-[13px] text-text-primary font-medium leading-relaxed">{legenda.gancho}</p>
-                </div>
-                <div className="bg-card border border-border rounded-lg p-4">
-                  <div className="text-[9px] font-mono text-text-muted tracking-widest uppercase mb-2">DESENVOLVIMENTO</div>
-                  <p className="text-[12px] text-text-secondary leading-relaxed whitespace-pre-line">{legenda.desenvolvimento}</p>
-                </div>
-                <div className="bg-card border border-border rounded-lg p-4">
-                  <div className="text-[9px] font-mono text-amber-400 tracking-widest uppercase mb-2">CTA</div>
-                  <p className="text-[13px] text-text-primary font-medium leading-relaxed">{legenda.cta}</p>
-                </div>
-                <div className="bg-card border border-border rounded-lg p-4">
-                  <div className="text-[9px] font-mono text-text-muted tracking-widest uppercase mb-2">HASHTAGS</div>
-                  <p className="text-[11px] text-text-secondary leading-relaxed">{legenda.hashtags}</p>
-                </div>
-                <div className="bg-card border border-accent-border rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="text-[9px] font-mono text-accent tracking-widest uppercase">LEGENDA COMPLETA</div>
-                    <button onClick={copiar}
-                      className={cn("flex items-center gap-1.5 text-[11px] font-medium px-3 py-1.5 rounded-lg border transition-all",
-                        copiado ? "bg-accent-dim border-accent-border text-accent" : "border-border text-text-muted hover:border-accent-border hover:text-accent")}>
-                      {copiado ? <><Check className="w-3 h-3" /> Copiado!</> : <><Copy className="w-3 h-3" /> Copiar tudo</>}
-                    </button>
-                  </div>
-                  <p className="text-[12px] text-text-secondary leading-relaxed whitespace-pre-line">{legenda.completa}</p>
-                </div>
-                <button onClick={gerarLegenda}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg border border-border text-text-muted text-[12px] hover:text-text-secondary hover:border-border-hover transition-all">
-                  <RefreshCw className="w-3.5 h-3.5" /> Gerar outra versão
-                </button>
-              </div>
-            )}
+          <div className="space-y-1.5">
+            <p className="text-[13px] font-medium text-px-ink">Tom de voz</p>
+            <Segmented label="Tom de voz" value={tom} onChange={setTom} options={TONS.map(t => ({ value: t, label: t }))} />
           </div>
+          <PxCheckbox label="Incluir emojis na legenda" checked={emojis} onChange={e => setEmojis(e.target.checked)} />
+
+          {erro && <p role="alert" className="rounded-px-card bg-px-danger-soft px-3 py-2 text-[13px] text-px-danger">{erro}</p>}
+          <PxButton fullWidth leftIcon={Sparkles} onClick={gerarLegenda} loading={loading} disabled={!tema?.trim()}>{loading ? "Gerando" : legenda ? "Gerar outra versão" : "Gerar legenda"}</PxButton>
+        </Panel>
+
+        <div className="min-w-0 space-y-3">
+          {loading && <p role="status" className="py-24 text-center text-[14px] font-medium text-px-ink">Escrevendo a legenda</p>}
+          {!legenda && !loading && (
+            <Panel className="py-16 text-center">
+              <p className="text-[15px] font-semibold text-px-ink">Escolha o tema e gere a legenda</p>
+              <p className="mt-1 text-[13px] text-px-muted">Você recebe gancho, desenvolvimento, CTA, hashtags e o texto completo para copiar.</p>
+            </Panel>
+          )}
+          {legenda && !loading && (
+            <>
+              <Bloco titulo="Gancho"><p className="text-[14px] font-medium leading-relaxed text-px-ink">{legenda.gancho}</p></Bloco>
+              <Bloco titulo="Desenvolvimento"><p className="whitespace-pre-line text-[13.5px] leading-relaxed text-px-ink/80">{legenda.desenvolvimento}</p></Bloco>
+              <Bloco titulo="Chamada para ação"><p className="text-[14px] font-medium leading-relaxed text-px-ink">{legenda.cta}</p></Bloco>
+              <Bloco titulo="Hashtags"><p className="text-[13px] leading-relaxed text-px-ink/80">{legenda.hashtags}</p></Bloco>
+              <Panel as="section" tone="strong" className="space-y-2">
+                <div className="flex items-center justify-between gap-3">
+                  <h2 className="text-[12.5px] font-medium text-px-muted">Legenda completa</h2>
+                  <CopyButton text={legenda.completa} label="Copiar tudo" />
+                </div>
+                <p className="whitespace-pre-line text-[13.5px] leading-relaxed text-px-ink">{legenda.completa}</p>
+              </Panel>
+            </>
+          )}
         </div>
       </div>
-
-      {toast && (
-        <div className="fixed bottom-6 right-6 flex items-center gap-2 bg-card border border-accent-border text-accent text-[12px] px-4 py-3 rounded-lg shadow-xl animate-fade-in z-50">
-          {toast}
-        </div>
-      )}
     </div>
   )
 }

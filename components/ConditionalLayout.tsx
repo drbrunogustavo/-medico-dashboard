@@ -9,7 +9,7 @@ import { AppProvider }         from "@/components/AppProvider"
 import { ScrollToTop }         from "@/components/ScrollToTop"
 
 // Routes that must NOT render the Sidebar or trigger any auth hooks.
-const PUBLIC_PATHS = new Set(["/", "/login", "/cadastro", "/demo", "/planos", "/landing", "/onboarding", "/captacao", "/privacidade", "/deletar-dados", "/termos", "/anunciar-curso", "/design", "/sobre", "/tour"])
+const PUBLIC_PATHS = new Set(["/", "/login", "/cadastro", "/demo", "/planos", "/landing", "/onboarding", "/captacao", "/privacidade", "/deletar-dados", "/termos", "/anunciar-curso", "/design", "/sobre", "/tour", "/praxis-social", "/praxis-consultorio", "/praxis-executivo", "/praxis-ia", "/praxis-academy"])
 const PUBLIC_PREFIXES = ["/nps/", "/indicar/"]
 
 export function ConditionalLayout({ children }: { children: React.ReactNode }) {

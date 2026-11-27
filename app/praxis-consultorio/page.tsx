@@ -1,144 +1,96 @@
 import type { Metadata } from "next"
-import { Bot, Check } from "lucide-react"
+import Image from "next/image"
+import Link from "next/link"
+import { Panel } from "@/components/px"
 import {
-  Users, Send, Stethoscope, Calculator, ClipboardList, Pill, Star, Gift,
-} from "lucide-react"
-import {
-  ModulePageShell, ModuleHero, ModuleScreenshot,
+  ModulePageShell, ModuleHero, ModuleScreenshot, ModuleSection,
   FeatureGrid, ModuleFinalCTA, ModuleFAQ, type FeatureItem, type FAQItem,
 } from "@/components/modules/shared"
-import { ProductMockup } from "@/components/ProductMockup"
-import { GOLD, DARK } from "@/lib/module-tokens"
-
-const ACCENT = GOLD
 
 export const metadata: Metadata = {
-  title: "PRAXIS Consultório — Converta leads em pacientes e fidelize quem já consulta",
-  description:
-    "CRM de Leads, nurturing automático via WhatsApp e Copiloto de Consulta com IA — converta mais leads em pacientes e documente consultas em segundos.",
-  keywords: [
-    "CRM médico", "CRM para clínicas", "copiloto de consulta", "prontuário com IA",
-    "nurturing WhatsApp médico", "calculadoras clínicas", "protocolos clínicos", "PRAXIS Consultório",
-  ],
+  title: "PRAXIS Consultório: CRM de leads e Copiloto de Consulta",
+  description: "CRM de leads, mensagens de acompanhamento por WhatsApp e Copiloto de Consulta para organizar o relato da consulta em prontuário estruturado.",
+  keywords: ["CRM médico", "CRM para clínicas", "copiloto de consulta", "prontuário com IA", "calculadoras clínicas", "PRAXIS Consultório"],
   alternates: { canonical: "/praxis-consultorio" },
   openGraph: {
-    title: "PRAXIS Consultório — Converta leads em pacientes e fidelize quem já consulta",
-    description: "CRM + IA Clínica para converter mais leads e documentar consultas em segundos.",
+    title: "PRAXIS Consultório",
+    description: "CRM de leads e Copiloto de Consulta para o dia a dia do consultório.",
     url: "/praxis-consultorio",
     type: "website",
   },
 }
 
+const FEATURES: FeatureItem[] = [
+  { title: "CRM de Leads", desc: "Funil visual do primeiro contato ao paciente ativo." },
+  { title: "Mensagens por WhatsApp", desc: "Sequências agendadas, enviadas pela integração Z-API configurada na sua conta." },
+  { title: "Copiloto de Consulta", desc: "Transforma o relato da consulta em resumo SOAP, plano e mensagens de acompanhamento." },
+  { title: "Calculadoras clínicas", desc: "32 calculadoras em 6 áreas, de IMC e HOMA-IR a escores de risco." },
+  { title: "Prescrição assistida", desc: "Sugestões de medicamentos para você revisar. A decisão é sempre do médico." },
+  { title: "Pesquisa NPS", desc: "Pesquisa de satisfação enviada após a consulta." },
+]
+
+const COPILOTO_SAIDAS = [
+  "Resumo clínico estruturado (SOAP)",
+  "Plano terapêutico com condutas",
+  "Orientações ao paciente em linguagem acessível",
+  "Mensagens de acompanhamento para D+1, D+7 e D+30",
+]
+
 const FAQ_ITEMS: FAQItem[] = [
   {
     q: "O Copiloto substitui o prontuário eletrônico?",
-    a: "Não substitui — complementa. O Copiloto gera a documentação estruturada (SOAP, plano, orientações) que você cola ou exporta para o seu sistema de prontuário atual. Ele elimina o tempo de digitação, não a ferramenta.",
+    a: "Não. Ele gera um rascunho estruturado para você revisar e levar ao sistema de prontuário que já usa. O que muda é o tempo de digitação.",
   },
   {
-    q: "Funciona com qualquer especialidade médica?",
-    a: "Sim. A IA é instruída com o contexto da sua especialidade ao configurar o perfil. Usada por endocrinologistas, dermatologistas, clínicos gerais, nutrologistas, ginecologistas e mais de 25 especialidades.",
+    q: "Funciona para qualquer especialidade?",
+    a: "A IA recebe a especialidade cadastrada no seu perfil e adapta o texto a ela. Sem especialidade informada, usa Clínica Geral. O conteúdo gerado sempre precisa de revisão médica.",
   },
   {
-    q: "Os dados dos pacientes são seguros?",
-    a: "Sim. O PRAXIS usa Supabase com Row Level Security — seus dados são isolados por usuário. Nenhuma informação clínica é usada para treinar modelos de IA. Estamos em conformidade com a LGPD.",
+    q: "O que acontece com os dados do relato?",
+    a: "O texto do relato é enviado ao modelo de IA para gerar o rascunho. Como os dados são tratados e armazenados está descrito na Política de Privacidade.",
   },
   {
-    q: "O CRM substitui minha secretária?",
-    a: "Não substitui — automatiza a parte repetitiva. O nurturing via WhatsApp e o acompanhamento de leads são automáticos. Sua secretária foca no que exige toque humano.",
+    q: "O CRM envia as mensagens sozinho?",
+    a: "Sim, desde que a integração Z-API esteja configurada na sua conta. As mensagens agendadas saem pelo seu número, e o andamento de cada lead fica registrado no CRM.",
   },
-]
-
-const FEATURES: FeatureItem[] = [
-  { icon: Users,        title: "CRM de Leads",            desc: "Funil visual do lead ao paciente ativo." },
-  { icon: Send,         title: "Nurturing Automático",     desc: "WhatsApp automático D+1, D+3, D+7." },
-  { icon: Stethoscope,  title: "Copiloto de Consulta",      desc: "Prontuário + follow-up em segundos." },
-  { icon: Calculator,   title: "Calculadoras Clínicas",     desc: "HOMA-IR, IMC, GLP-1 e mais 15 calculadoras." },
-  { icon: ClipboardList,title: "Protocolos Clínicos",       desc: "Obesidade, DM2, Menopausa e mais 20 protocolos." },
-  { icon: Pill,         title: "Prescrição Assistida",      desc: "Sugestões de medicamentos com doses e titulação." },
-  { icon: Star,         title: "Pesquisa NPS",              desc: "Satisfação automatizada após cada consulta." },
-  { icon: Gift,         title: "Programa de Indicações",    desc: "Member Get Member automatizado." },
 ]
 
 export default function PraxisConsultorioPage() {
   return (
-    <ModulePageShell active="PRAXIS Consultório">
+    <ModulePageShell active="/praxis-consultorio">
       <ModuleHero
-        badge="CRM + IA Clínica"
         title="PRAXIS Consultório"
-        accent={ACCENT}
-        subtitle="Converta leads em pacientes e fidelize quem já consulta — funil de vendas e IA clínica em uma só plataforma."
+        subtitle="Acompanhe cada lead até virar paciente e documente a consulta a partir do seu relato."
       />
 
-      <section className="max-w-5xl mx-auto px-6 pb-24">
-        <ModuleScreenshot
-          src="/screenshots/crm.png"
-          alt="PRAXIS Consultório — funil Kanban do CRM de Leads"
-          caption="Funil Kanban visual — do primeiro contato ao paciente fiel com nurturing automático."
-          color={ACCENT}
-          ctaLabel="Explorar o CRM"
-          ctaHref="/cadastro"
-        />
-      </section>
-
-      <FeatureGrid
-        items={FEATURES}
-        color={ACCENT}
-        title="Do primeiro contato ao paciente fidelizado"
+      <ModuleScreenshot
+        src="/screenshots/crm.png"
+        alt="Funil Kanban do CRM de Leads"
+        caption="CRM de Leads em formato Kanban."
       />
 
-      {/* ── DIFERENCIAL DO COPILOTO ─────────────────────────────────────────── */}
-      <section className="max-w-5xl mx-auto px-6 pb-24 animate-fade-in">
-        <div className="rounded-2xl overflow-hidden" style={{ background: DARK, border: `1px solid ${GOLD}20` }}>
-          <div className="grid grid-cols-1 lg:grid-cols-2">
-            <div className="p-10 md:p-14">
-              <div className="flex items-center gap-2 mb-6">
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: `${GOLD}20`, border: `1px solid ${GOLD}30` }}>
-                  <Bot style={{ width: 18, height: 18, color: GOLD }} />
-                </div>
-                <span style={{ fontSize: 10, fontFamily: "monospace", color: GOLD, letterSpacing: "2px", textTransform: "uppercase" }}>
-                  O recurso que nenhuma outra plataforma tem
-                </span>
-              </div>
-              <h2 style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: "clamp(20px, 3vw, 32px)", fontWeight: 700, color: "#F5F0E8", marginBottom: 12, lineHeight: 1.25 }}>
-                Copiloto de Consulta — sua IA clínica
-              </h2>
-              <p style={{ fontSize: 14, color: "rgba(245,240,232,0.70)", marginBottom: 20, lineHeight: 1.7 }}>
-                Durante ou após a consulta, descreva o caso clínico. Em segundos, o PRAXIS gera:
-              </p>
-              <ul className="space-y-2.5 mb-8">
-                {[
-                  "Resumo clínico estruturado (SOAP)",
-                  "Plano terapêutico com condutas",
-                  "Orientações em linguagem acessível ao paciente",
-                  "Mensagens de follow-up D+1, D+7 e D+30",
-                ].map(item => (
-                  <li key={item} className="flex items-start gap-2.5">
-                    <Check style={{ width: 14, height: 14, color: GOLD, flexShrink: 0, marginTop: 2 }} />
-                    <span style={{ fontSize: 13, color: "rgba(245,240,232,0.80)" }}>{item}</span>
-                  </li>
-                ))}
-              </ul>
-              <p style={{ fontSize: 11, color: "rgba(245,240,232,0.40)", fontFamily: "monospace", letterSpacing: "0.5px" }}>
-                Tudo revisável e exportável para o prontuário.
-              </p>
-            </div>
-            <div className="hidden lg:flex items-center justify-center p-10" style={{ borderLeft: `1px solid ${GOLD}15` }}>
-              <div style={{ width: "100%", maxWidth: 320, height: 340 }}>
-                <ProductMockup id={3} />
-              </div>
-            </div>
-          </div>
+      <FeatureGrid items={FEATURES} title="O que o módulo reúne" />
+
+      <ModuleSection title="Copiloto de Consulta" intro="Depois da consulta, você descreve o caso em texto livre e o PRAXIS organiza o conteúdo em um rascunho para revisão.">
+        <div className="grid grid-cols-1 items-center gap-6 lg:grid-cols-2">
+          <Panel as="div" className="space-y-4">
+            <ul className="space-y-2 text-[14.5px] text-px-ink">
+              {COPILOTO_SAIDAS.map(s => <li key={s} className="border-b border-px-line pb-2 last:border-0 last:pb-0">{s}</li>)}
+            </ul>
+            <p className="text-[13px] text-px-muted">O texto é um rascunho. A revisão e a assinatura são do médico. <Link href="/tour" className="text-px-accent underline underline-offset-2">Ver o tour</Link></p>
+          </Panel>
+          <figure className="space-y-2">
+            <Panel as="div" className="overflow-hidden !p-0">
+              <Image src="/screenshots/copiloto.png" alt="Ilustração do Copiloto de Consulta, com dados de exemplo" width={1600} height={1000} className="block h-auto w-full" unoptimized />
+            </Panel>
+            <figcaption className="text-[13px] text-px-muted">Ilustração com dados fictícios.</figcaption>
+          </figure>
         </div>
-      </section>
+      </ModuleSection>
 
-      <ModuleFAQ items={FAQ_ITEMS} color={ACCENT} />
+      <ModuleFAQ items={FAQ_ITEMS} />
 
-      <ModuleFinalCTA
-        title="Pronto para converter mais leads em pacientes?"
-        subtitle="Teste grátis por 7 dias. Nenhum cartão necessário."
-        ctaLabel="Teste grátis por 7 dias"
-        ctaHref="/cadastro"
-      />
+      <ModuleFinalCTA title="Quer ver o Consultório funcionando com os seus leads?" />
     </ModulePageShell>
   )
 }

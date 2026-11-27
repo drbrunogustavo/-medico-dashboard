@@ -1,311 +1,152 @@
 import Link from "next/link"
 import Image from "next/image"
-import { ArrowRight, type LucideIcon } from "lucide-react"
-import { BG, GOLD, DARK, TEXT2, MUTED, CARD, BORDER } from "@/lib/module-tokens"
+import { Panel, PxButton } from "@/components/px"
 
-// ─── Logo (idêntico ao da landing, sem hooks — server-safe) ───────────────────
+// Estrutura comum das páginas públicas de módulo (/praxis-*).
+// Cada página leva o próprio wrapper `px`, porque rotas públicas não passam pelo AppShell.
 
-export function ModuleLogo({ size = 26 }: { size?: number }) {
-  return (
-    <div className="flex items-center gap-3">
-      <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
-        <circle cx="16" cy="16" r="14" stroke={GOLD} strokeWidth="1.5"
-          strokeDasharray="70 18" strokeDashoffset="12" opacity="0.7" />
-        <path d="M10 22V10h5.5a4 4 0 0 1 0 8H10" stroke={DARK} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        <line x1="18" y1="14" x2="23" y2="22" stroke={GOLD} strokeWidth="2" strokeLinecap="round" opacity="0.9" />
-      </svg>
-      <span style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: size < 26 ? 13 : 15, fontWeight: 600, letterSpacing: "4px", color: DARK }}>
-        PRAXIS
-      </span>
-    </div>
-  )
-}
+export const MODULES = [
+  { label: "Social", href: "/praxis-social" },
+  { label: "Consultório", href: "/praxis-consultorio" },
+  { label: "Executivo", href: "/praxis-executivo" },
+  { label: "IA", href: "/praxis-ia" },
+  { label: "Academy", href: "/praxis-academy" },
+] as const
 
-export function SectionLabel({ children, color = GOLD }: { children: string; color?: string }) {
-  return <p style={{ fontSize: 10, fontFamily: "monospace", color, letterSpacing: "3px", textTransform: "uppercase", marginBottom: 12 }}>{children}</p>
-}
-
-// ─── Nav ────────────────────────────────────────────────────────────────────
-
-export function ModuleNav({ active }: { active: string }) {
-  return (
-    <nav className="sticky top-0 z-10 flex items-center justify-between px-6 md:px-12"
-      style={{ height: 64, background: "rgba(245,240,232,0.93)", borderBottom: `1px solid ${BORDER}`, backdropFilter: "blur(16px)" }}>
-      <Link href="/" className="flex items-center gap-3">
-        <ModuleLogo />
-        <span className="hidden sm:inline-block" style={{ fontSize: 11, color: MUTED, borderLeft: `1px solid ${BORDER}`, paddingLeft: 12 }}>
-          {active}
-        </span>
-      </Link>
-      <div className="flex items-center gap-4 md:gap-6">
-        <Link href="/" className="hidden md:block text-[12px]" style={{ color: TEXT2 }}>← Voltar ao início</Link>
-        <Link href="/planos" className="hidden md:block text-[12px]" style={{ color: TEXT2 }}>Planos</Link>
-        <Link href="/login" className="text-[12px]" style={{ color: TEXT2 }}>Entrar</Link>
-        <Link href="/cadastro"
-          className="inline-flex items-center gap-1.5 rounded-lg font-semibold text-[12px] transition-all hover:opacity-90"
-          style={{ padding: "8px 18px", background: DARK, color: GOLD }}>
-          Testar grátis <ArrowRight style={{ width: 12, height: 12 }} />
-        </Link>
-      </div>
-    </nav>
-  )
-}
-
-// ─── Footer ─────────────────────────────────────────────────────────────────
-
-const MODULE_LINKS = [
-  { l: "PRAXIS Social",       h: "/praxis-social"       },
-  { l: "PRAXIS Consultório",  h: "/praxis-consultorio"  },
-  { l: "PRAXIS Executivo",    h: "/praxis-executivo"    },
-  { l: "PRAXIS IA",           h: "/praxis-ia"            },
-  { l: "PRAXIS Academy",      h: "/praxis-academy"      },
-]
-
-export function ModuleFooter() {
-  return (
-    <footer className="px-6 pb-8 pt-10" style={{ borderTop: `1px solid rgba(13,27,42,0.08)` }}>
-      <div className="max-w-6xl mx-auto">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-6">
-          <Link href="/"><ModuleLogo size={24} /></Link>
-          <div className="flex flex-wrap items-center justify-center gap-6">
-            {[
-              { l: "Por que o PRAXIS?", h: "/sobre"       },
-              { l: "Planos",            h: "/planos"      },
-              { l: "Privacidade",       h: "/privacidade" },
-              { l: "Termos",            h: "/termos"      },
-              { l: "Contato",           h: "/captacao"    },
-            ].map(({ l, h }) => (
-              <Link key={l} href={h} className="text-[12px]" style={{ color: MUTED }}>{l}</Link>
-            ))}
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center justify-center gap-5 mb-6">
-          {MODULE_LINKS.map(({ l, h }) => (
-            <Link key={l} href={h} className="text-[11px] font-mono" style={{ color: GOLD }}>{l}</Link>
-          ))}
-        </div>
-        <div style={{ height: 1, background: "rgba(13,27,42,0.06)", marginBottom: 20 }} />
-        <p className="text-center" style={{ fontSize: 11, fontFamily: "monospace", color: MUTED, letterSpacing: "0.5px" }}>
-          © 2026 PRAXIS. Construído por médico, para médicos.
-        </p>
-      </div>
-    </footer>
-  )
-}
-
-// ─── Hero ───────────────────────────────────────────────────────────────────
-
-export function ModuleHero({
-  badge, title, accent, subtitle, ctaLabel = "Começar grátis", ctaHref = "/cadastro",
-}: {
-  badge: string
-  title: string
-  accent: string
-  subtitle: string
-  ctaLabel?: string
-  ctaHref?: string
-}) {
-  return (
-    <section className="max-w-4xl mx-auto px-6 pt-20 pb-16 text-center animate-fade-in">
-      <span style={{ display: "inline-block", fontSize: 11, fontFamily: "monospace", color: accent, letterSpacing: "2px", border: `1px solid ${accent}40`, padding: "4px 16px", borderRadius: 999, marginBottom: 28 }}>
-        {badge}
-      </span>
-      <h1 style={{
-        fontFamily: "var(--font-playfair), Georgia, serif",
-        fontSize: "clamp(28px, 5vw, 54px)",
-        fontWeight: 700, color: DARK, lineHeight: 1.15, marginBottom: 20,
-      }}>
-        {title}
-      </h1>
-      <p style={{ fontSize: "clamp(15px, 2vw, 19px)", color: TEXT2, lineHeight: 1.75, maxWidth: 620, margin: "0 auto 36px" }}>
-        {subtitle}
-      </p>
-      <Link href={ctaHref}
-        className="inline-flex items-center gap-2 rounded-xl font-bold transition-all hover:opacity-90 active:scale-[0.98]"
-        style={{ padding: "16px 36px", fontSize: 15, background: GOLD, color: DARK, boxShadow: `0 8px 40px ${GOLD}30` }}>
-        {ctaLabel} <ArrowRight style={{ width: 16, height: 16 }} />
-      </Link>
-    </section>
-  )
-}
-
-// ─── Problema / texto de destaque ──────────────────────────────────────────
-
-export function ProblemBlock({ label = "O PROBLEMA", color = GOLD, children }: { label?: string; color?: string; children: React.ReactNode }) {
-  return (
-    <section className="max-w-3xl mx-auto px-6 pb-20 text-center animate-fade-in">
-      <SectionLabel color={color}>{label}</SectionLabel>
-      <p style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: "clamp(20px, 3.4vw, 32px)", fontWeight: 600, color: DARK, lineHeight: 1.4 }}>
-        {children}
-      </p>
-    </section>
-  )
-}
-
-// ─── Screenshot com frame de browser ───────────────────────────────────────
-
-export function ModuleScreenshot({
-  src, alt, caption, color, ctaLabel, ctaHref,
-}: {
-  src: string
-  alt: string
-  caption: string
-  color: string
-  ctaLabel?: string
-  ctaHref?: string
-}) {
-  return (
-    <div className="animate-fade-in">
-      <div className="rounded-2xl overflow-hidden" style={{ boxShadow: `0 20px 80px rgba(13,27,42,0.15), 0 0 0 1px ${BORDER}` }}>
-        <div style={{ background: "#1a1a1c", padding: "10px 14px", display: "flex", alignItems: "center", gap: 8, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-          <div style={{ display: "flex", gap: 5 }}>
-            {["#ff5f57", "#febc2e", "#28c840"].map(c => (
-              <div key={c} style={{ width: 10, height: 10, borderRadius: "50%", background: c, opacity: 0.7 }} />
-            ))}
-          </div>
-          <div style={{ flex: 1, background: "rgba(255,255,255,0.06)", borderRadius: 5, padding: "3px 10px", fontSize: 10, color: "rgba(255,255,255,0.28)", textAlign: "center" }}>
-            app.praxisplataforma.com.br
-          </div>
-        </div>
-        <div className="relative w-full" style={{ background: "#0a0a0b" }}>
-          <Image src={src} alt={alt} width={1200} height={750} className="w-full h-auto block" unoptimized />
-        </div>
-      </div>
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-5 px-1">
-        <p style={{ fontSize: 14, color: TEXT2, lineHeight: 1.6 }}>{caption}</p>
-        {ctaLabel && ctaHref && (
-          <Link href={ctaHref}
-            className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg font-semibold text-[13px] transition-all hover:opacity-90 flex-shrink-0"
-            style={{ padding: "9px 20px", background: `${color}15`, color, border: `1px solid ${color}35` }}>
-            {ctaLabel} <ArrowRight style={{ width: 13, height: 13 }} />
-          </Link>
-        )}
-      </div>
-    </div>
-  )
-}
-
-// ─── Grid de funcionalidades ────────────────────────────────────────────────
-
-export interface FeatureItem {
-  icon: LucideIcon
-  title: string
-  desc: string
-}
-
-export function FeatureGrid({ items, color, label = "FUNCIONALIDADES", title }: {
-  items: FeatureItem[]
-  color: string
-  label?: string
-  title: string
-}) {
-  return (
-    <section className="max-w-5xl mx-auto px-6 pb-24">
-      <div className="text-center mb-10 animate-fade-in">
-        <SectionLabel color={color}>{label}</SectionLabel>
-        <h2 style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: "clamp(22px, 4vw, 38px)", fontWeight: 700, color: DARK }}>
-          {title}
-        </h2>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {items.map(({ icon: Icon, title: t, desc }) => (
-          <div key={t} className="rounded-2xl p-6 h-full flex flex-col animate-fade-in" style={{ background: CARD, border: `1px solid ${color}20` }}>
-            <div style={{ width: 40, height: 40, borderRadius: 12, background: `${color}12`, border: `1px solid ${color}28`, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14 }}>
-              <Icon style={{ width: 18, height: 18, color }} />
-            </div>
-            <h3 style={{ fontSize: 14, fontWeight: 700, color: DARK, marginBottom: 8, lineHeight: 1.35 }}>{t}</h3>
-            <p style={{ fontSize: 12.5, color: TEXT2, lineHeight: 1.7 }}>{desc}</p>
-          </div>
-        ))}
-      </div>
-    </section>
-  )
-}
-
-// ─── Resultado prometido ────────────────────────────────────────────────────
-
-export function ResultBanner({ color, children }: { color: string; children: React.ReactNode }) {
-  return (
-    <section className="max-w-3xl mx-auto px-6 pb-24 animate-fade-in">
-      <div className="text-center rounded-2xl px-8 py-10" style={{ background: `${color}08`, border: `1px solid ${color}25` }}>
-        <p style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: "clamp(18px, 2.8vw, 26px)", fontWeight: 600, color: DARK, lineHeight: 1.5 }}>
-          {children}
-        </p>
-      </div>
-    </section>
-  )
-}
-
-// ─── CTA final ───────────────────────────────────────────────────────────────
-
-export function ModuleFinalCTA({
-  title, subtitle, ctaLabel = "Teste grátis por 7 dias", ctaHref = "/cadastro",
-}: {
-  title: string
-  subtitle: string
-  ctaLabel?: string
-  ctaHref?: string
-}) {
-  return (
-    <section className="max-w-3xl mx-auto px-6 pb-28 animate-fade-in">
-      <div className="text-center rounded-2xl px-8 py-16 md:py-20" style={{ background: `${GOLD}08`, border: `1px solid ${GOLD}20` }}>
-        <h2 style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: "clamp(24px, 4vw, 42px)", fontWeight: 700, color: DARK, lineHeight: 1.2, marginBottom: 14 }}>
-          {title}
-        </h2>
-        <p style={{ fontSize: 15, color: TEXT2, lineHeight: 1.7, marginBottom: 32 }}>
-          {subtitle}
-        </p>
-        <Link href={ctaHref}
-          className="inline-flex items-center gap-2.5 rounded-xl font-bold transition-all hover:opacity-95 active:scale-[0.98]"
-          style={{ padding: "18px 44px", fontSize: 16, background: GOLD, color: DARK, boxShadow: `0 0 60px ${GOLD}25` }}>
-          {ctaLabel} <ArrowRight style={{ width: 16, height: 16 }} />
-        </Link>
-        <p style={{ fontSize: 12, color: MUTED, marginTop: 16 }}>
-          7 dias grátis &nbsp;•&nbsp; Sem cartão &nbsp;•&nbsp; Cancele quando quiser
-        </p>
-      </div>
-    </section>
-  )
-}
-
-// ─── FAQ ────────────────────────────────────────────────────────────────────
-
+export interface FeatureItem { title: string; desc: string }
 export interface FAQItem { q: string; a: string }
-
-export function ModuleFAQ({ items, color = GOLD }: { items: FAQItem[]; color?: string }) {
-  return (
-    <section className="max-w-3xl mx-auto px-6 pb-24 animate-fade-in">
-      <div className="text-center mb-10">
-        <SectionLabel color={color}>FAQ</SectionLabel>
-        <h2 style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: "clamp(22px, 4vw, 36px)", fontWeight: 700, color: DARK }}>
-          Perguntas frequentes
-        </h2>
-      </div>
-      <div className="space-y-3">
-        {items.map((item, i) => (
-          <details key={i} className="rounded-xl overflow-hidden group" style={{ background: CARD, border: `1px solid ${BORDER}` }}>
-            <summary className="flex items-center justify-between px-5 py-4 cursor-pointer list-none" style={{ fontSize: 14, fontWeight: 600, color: DARK }}>
-              {item.q}
-              <span style={{ fontSize: 18, color: MUTED, flexShrink: 0, marginLeft: 12 }}>+</span>
-            </summary>
-            <div className="px-5 pb-4" style={{ fontSize: 13, color: TEXT2, lineHeight: 1.7, borderTop: `1px solid ${BORDER}`, paddingTop: 12 }}>
-              {item.a}
-            </div>
-          </details>
-        ))}
-      </div>
-    </section>
-  )
-}
-
-// ─── Wrapper de página ──────────────────────────────────────────────────────
 
 export function ModulePageShell({ active, children }: { active: string; children: React.ReactNode }) {
   return (
-    <div className="fixed inset-0 z-[200] overflow-y-auto" style={{ background: BG, fontFamily: "Inter, sans-serif" }}>
-      <ModuleNav active={active} />
-      {children}
-      <ModuleFooter />
+    <div className="px relative min-h-screen">
+      <div className="px-stage" aria-hidden="true" />
+      <header className="px-glass sticky top-0 z-10 flex h-16 items-center justify-between gap-4 px-4 md:px-12">
+        <Link href="/" className="text-[15px] font-semibold tracking-[0.2em] text-px-ink">PRAXIS</Link>
+        <nav aria-label="Módulos" className="hidden items-center gap-1 md:flex">
+          {MODULES.map(m => (
+            <Link
+              key={m.href}
+              href={m.href}
+              aria-current={m.href === active ? "page" : undefined}
+              className={m.href === active
+                ? "rounded-px-ctl bg-px-ink px-3 py-1.5 text-[13px] font-medium text-white"
+                : "rounded-px-ctl px-3 py-1.5 text-[13px] text-px-muted hover:text-px-ink"}
+            >
+              {m.label}
+            </Link>
+          ))}
+        </nav>
+        <div className="flex items-center gap-2">
+          <Link href="/login" className="hidden px-2 text-[13px] text-px-muted hover:text-px-ink sm:block">Entrar</Link>
+          <PxButton size="sm" href="/cadastro">Testar 7 dias</PxButton>
+        </div>
+      </header>
+
+      <main className="relative mx-auto max-w-5xl space-y-14 px-4 pb-20 pt-12 md:px-10">{children}</main>
+
+      <footer className="relative mx-auto max-w-5xl space-y-4 px-4 pb-10 md:px-10">
+        <div className="flex flex-wrap gap-x-5 gap-y-2 border-t border-px-line pt-6 text-[13px] text-px-muted">
+          {MODULES.map(m => <Link key={m.href} href={m.href} className="hover:text-px-ink">PRAXIS {m.label}</Link>)}
+        </div>
+        <div className="flex flex-wrap gap-x-5 gap-y-2 text-[13px] text-px-muted">
+          <Link href="/sobre" className="hover:text-px-ink">Por que o PRAXIS</Link>
+          <Link href="/planos" className="hover:text-px-ink">Planos</Link>
+          <Link href="/privacidade" className="hover:text-px-ink">Privacidade</Link>
+          <Link href="/termos" className="hover:text-px-ink">Termos</Link>
+          <Link href="/captacao" className="hover:text-px-ink">Contato</Link>
+        </div>
+        <p className="text-[12.5px] text-px-muted">© 2026 PRAXIS</p>
+      </footer>
     </div>
+  )
+}
+
+export function ModuleHero({ title, subtitle, ctaLabel = "Testar 7 dias", ctaHref = "/cadastro" }: {
+  title: string; subtitle: string; ctaLabel?: string; ctaHref?: string
+}) {
+  return (
+    <section className="max-w-3xl space-y-5">
+      <h1 className="text-[clamp(30px,5vw,50px)] font-semibold leading-[1.1] text-px-ink">{title}</h1>
+      <p className="text-[clamp(16px,2vw,19px)] leading-relaxed text-px-muted">{subtitle}</p>
+      <PxButton href={ctaHref}>{ctaLabel}</PxButton>
+    </section>
+  )
+}
+
+export function ModuleSection({ title, intro, children }: { title: string; intro?: string; children: React.ReactNode }) {
+  return (
+    <section className="space-y-5">
+      <div className="max-w-2xl space-y-2">
+        <h2 className="text-[clamp(22px,3vw,30px)] font-semibold leading-tight text-px-ink">{title}</h2>
+        {intro && <p className="text-[15px] leading-relaxed text-px-muted">{intro}</p>}
+      </div>
+      {children}
+    </section>
+  )
+}
+
+export function FeatureGrid({ items, title, intro }: { items: FeatureItem[]; title: string; intro?: string }) {
+  return (
+    <ModuleSection title={title} intro={intro}>
+      <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {items.map(i => (
+          <li key={i.title}>
+            <Panel as="article" className="h-full space-y-1.5 !py-5">
+              <h3 className="text-[15px] font-semibold text-px-ink">{i.title}</h3>
+              <p className="text-[13.5px] leading-relaxed text-px-muted">{i.desc}</p>
+            </Panel>
+          </li>
+        ))}
+      </ul>
+    </ModuleSection>
+  )
+}
+
+export function ModuleScreenshot({ src, alt, caption }: { src: string; alt: string; caption: string }) {
+  return (
+    <figure className="space-y-3">
+      <Panel as="div" className="overflow-hidden !p-0">
+        <Image src={src} alt={alt} width={1200} height={750} className="block h-auto w-full" unoptimized />
+      </Panel>
+      <figcaption className="text-[13.5px] text-px-muted">{caption}</figcaption>
+    </figure>
+  )
+}
+
+export function ModuleFAQ({ items }: { items: FAQItem[] }) {
+  return (
+    <ModuleSection title="Perguntas frequentes">
+      <div className="max-w-3xl space-y-2">
+        {items.map(i => (
+          <Panel as="div" key={i.q} className="!py-0">
+            <details className="group">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 py-4 text-[15px] font-medium text-px-ink">
+                {i.q}
+                <span aria-hidden="true" className="text-px-muted group-open:hidden">+</span>
+                <span aria-hidden="true" className="hidden text-px-muted group-open:inline">-</span>
+              </summary>
+              <p className="pb-4 text-[14px] leading-relaxed text-px-muted">{i.a}</p>
+            </details>
+          </Panel>
+        ))}
+      </div>
+    </ModuleSection>
+  )
+}
+
+export function ModuleFinalCTA({ title, ctaLabel = "Testar 7 dias", ctaHref = "/cadastro" }: {
+  title: string; ctaLabel?: string; ctaHref?: string
+}) {
+  return (
+    <Panel tone="dark" as="section" className="space-y-4 !p-8 text-center md:!p-12">
+      <h2 className="mx-auto max-w-xl text-[clamp(22px,3.5vw,32px)] font-semibold leading-tight">{title}</h2>
+      <p className="mx-auto max-w-lg text-[14px] opacity-80">
+        O período de teste dura 7 dias. Depois dele, o plano escolhido é cobrado no cartão cadastrado. Valores e condições estão em Planos e nos Termos.
+      </p>
+      <div className="flex flex-wrap justify-center gap-2">
+        <PxButton variant="inverse" href={ctaHref}>{ctaLabel}</PxButton>
+        <PxButton variant="quiet" href="/planos" className="!text-white">Ver planos</PxButton>
+      </div>
+    </Panel>
   )
 }

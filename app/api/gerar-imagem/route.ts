@@ -12,7 +12,7 @@ const OPENAI_SIZE: Record<string, string> = {
 
 const GEMINI_ASPECT: Record<string, string> = {
   "9:16": "9:16",
-  "4:5":  "4:5",
+  "4:5":  "3:4",
   "1:1":  "1:1",
 }
 

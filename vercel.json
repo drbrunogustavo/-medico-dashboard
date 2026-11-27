@@ -1,6 +1,7 @@
 {
   "crons": [
     { "path": "/api/nurturing/processar", "schedule": "0 12 * * *" },
-    { "path": "/api/automacoes/diario",   "schedule": "0 9 * * *" }
+    { "path": "/api/automacoes/diario",   "schedule": "0 9 * * *" },
+    { "path": "/api/email/relatorio-semanal", "schedule": "0 11 * * 1" }
   ]
 }

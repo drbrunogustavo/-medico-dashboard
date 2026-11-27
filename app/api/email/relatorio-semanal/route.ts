@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { Resend } from "resend"
-import { createSupabaseServerClient } from "@/lib/supabase-server"
+import { createSupabaseServiceClient } from "@/lib/supabase-service"
 
 const getResend = () => new Resend(process.env.RESEND_API_KEY)
 const APP_URL   = process.env.NEXT_PUBLIC_APP_URL ?? "https://praxisplataforma.com.br"
@@ -22,7 +22,6 @@ interface Metrics {
   nome:           string
   leads_novos:    number
   leads_total:    number
-  consultas_mes:  number
   nps_score:      number | null
   pautas_total:   number
   receita_mes:    number
@@ -35,12 +34,11 @@ function buildHtml(m: Metrics): string {
     : "#ef4444"
 
   const metricCards = [
-    { label: "Leads novos",       value: m.leads_novos.toString(),                            color: "#10b981" },
-    { label: "Total no CRM",      value: m.leads_total.toString(),                            color: "#b8976a" },
-    { label: "Consultas/mês",     value: m.consultas_mes.toString(),                          color: "#b8976a" },
-    { label: "NPS Score",         value: m.nps_score !== null ? m.nps_score.toString() : "—", color: npsColor  },
-    { label: "Pautas salvas",     value: m.pautas_total.toString(),                           color: "#b8976a" },
-    { label: "Receita do mês",    value: `R$ ${m.receita_mes.toLocaleString("pt-BR")}`,       color: "#10b981" },
+    { label: "Leads novos (7 dias)", value: m.leads_novos.toString(),                            color: "#10b981" },
+    { label: "Total no CRM",         value: m.leads_total.toString(),                            color: "#b8976a" },
+    { label: "Receita do mês",       value: `R$ ${m.receita_mes.toLocaleString("pt-BR")}`,       color: "#10b981" },
+    { label: "Nota média NPS (30d)", value: m.nps_score !== null ? m.nps_score.toString() : "—", color: npsColor  },
+    { label: "Pautas salvas",        value: m.pautas_total.toString(),                           color: "#b8976a" },
   ]
 
   const primeiroNome = m.nome.replace(/^Dr\.?\s*/i, "").split(" ")[0] ?? m.nome
@@ -165,7 +163,13 @@ function buildHtml(m: Metrics): string {
 
 // ─── Route handler ────────────────────────────────────────────────────────────
 
-export async function POST(req: NextRequest) {
+const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms))
+
+const isoDia = (d: Date) => d.toISOString().slice(0, 10)
+
+// A Vercel dispara crons por GET com "Authorization: Bearer $CRON_SECRET".
+// O POST fica como atalho para disparo manual com o mesmo segredo.
+export async function GET(req: NextRequest) {
   if (!isCronAuthorized(req)) {
     return NextResponse.json({ error: "Não autorizado." }, { status: 401 })
   }
@@ -175,45 +179,66 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const supabase = createSupabaseServerClient()
+    // Cliente de serviço: o cron não tem sessão de usuário, então o cliente
+    // comum (anon + cookies) não enxerga nenhuma linha por causa do RLS.
+    const supabase = createSupabaseServiceClient()
 
-    // Fetch all users with profiles
-    const { data: perfis, error: perfisErr } = await supabase
-      .from("perfis")
-      .select("user_id, nome, email")
-      .not("email", "is", null)
+    // Destinatários: assinantes com plano ativo, mais o admin.
+    const { data: planos, error: planosErr } = await supabase
+      .from("user_planos")
+      .select("user_id")
+      .eq("status", "ativo")
+    if (planosErr) throw planosErr
 
-    if (perfisErr) throw perfisErr
-    if (!perfis || perfis.length === 0) {
-      return NextResponse.json({ ok: true, sent: 0, message: "Nenhum perfil encontrado." })
+    const ids = new Set<string>((planos ?? []).map(p => p.user_id as string))
+    if (process.env.DOCTOR_USER_ID) ids.add(process.env.DOCTOR_USER_ID)
+
+    if (ids.size === 0) {
+      return NextResponse.json({ ok: true, sent: 0, message: "Nenhum destinatário." })
     }
 
-    const results = await Promise.allSettled(
-      perfis.map(async (perfil) => {
-        // Fetch metrics per user
-        const [leadsRes, pautasRes] = await Promise.all([
-          supabase.from("leads").select("id, created_at").eq("user_id", perfil.user_id),
-          supabase.from("pautas").select("id").eq("user_id", perfil.user_id),
+    const agora       = new Date()
+    const semanaAtras = new Date(agora.getTime() - 7 * 24 * 60 * 60 * 1000)
+    const trintaDias  = new Date(agora.getTime() - 30 * 24 * 60 * 60 * 1000)
+    const inicioMes   = isoDia(new Date(Date.UTC(agora.getUTCFullYear(), agora.getUTCMonth(), 1)))
+
+    let sent = 0
+    const falhas: string[] = []
+
+    for (const userId of Array.from(ids)) {
+      try {
+        // O e-mail vem do Auth; a tabela perfis não tem essa coluna.
+        const { data: authUser } = await supabase.auth.admin.getUserById(userId)
+        const email = authUser?.user?.email
+        if (!email) { falhas.push(`${userId}: sem e-mail`); continue }
+
+        const [perfilRes, leadsRes, pautasRes, receitaRes, npsRes] = await Promise.all([
+          supabase.from("perfis").select("nome").eq("user_id", userId).maybeSingle(),
+          supabase.from("crm_leads").select("id, created_at").eq("user_id", userId),
+          supabase.from("pautas").select("id", { count: "exact", head: true }).eq("user_id", userId),
+          supabase.from("financeiro_lancamentos").select("valor")
+            .eq("user_id", userId).eq("tipo", "receita")
+            .gte("data", inicioMes).lte("data", isoDia(agora)),
+          supabase.from("nps_pesquisas").select("nota")
+            .eq("user_id", userId).eq("status", "respondido")
+            .gte("respondido_em", trintaDias.toISOString()),
         ])
 
-        const agora    = new Date()
-        const semanaAtras = new Date(agora.getTime() - 7 * 24 * 60 * 60 * 1000)
-        const leads    = leadsRes.data ?? []
-        const novos    = leads.filter(l => new Date(l.created_at) >= semanaAtras).length
+        const leads   = leadsRes.data ?? []
+        const notas   = (npsRes.data ?? []).map(n => Number(n.nota)).filter(n => Number.isFinite(n))
+        const receita = (receitaRes.data ?? []).reduce((s, l) => s + Number(l.valor ?? 0), 0)
+
+        const nome = (perfilRes.data?.nome as string | undefined) ?? "Médico"
+        const primeiroNome = nome.replace(/^Dr\.?\s*/i, "").split(" ")[0] ?? nome
 
         const metrics: Metrics = {
-          nome:          perfil.nome ?? "Médico",
-          leads_novos:   novos,
-          leads_total:   leads.length,
-          consultas_mes: 0,
-          nps_score:     null,
-          pautas_total:  pautasRes.data?.length ?? 0,
-          receita_mes:   0,
+          nome,
+          leads_novos:  leads.filter(l => new Date(l.created_at as string) >= semanaAtras).length,
+          leads_total:  leads.length,
+          nps_score:    notas.length ? Math.round((notas.reduce((a, b) => a + b, 0) / notas.length) * 10) / 10 : null,
+          pautas_total: pautasRes.count ?? 0,
+          receita_mes:  Math.round(receita * 100) / 100,
         }
-
-        const email = perfil.email as string
-        const nome  = (perfil.nome as string) ?? "Médico"
-        const primeiroNome = nome.replace(/^Dr\.?\s*/i, "").split(" ")[0] ?? nome
 
         const { error } = await getResend().emails.send({
           from:    FROM_EMAIL,
@@ -222,19 +247,24 @@ export async function POST(req: NextRequest) {
           subject: `📊 Seu relatório semanal PRAXIS, Dr. ${primeiroNome}`,
           html:    buildHtml(metrics),
         })
+        if (error) throw new Error(error.message)
 
-        if (error) throw new Error(`Falha para ${email}: ${error.message}`)
-        return { email, ok: true }
-      })
-    )
+        sent++
+        await sleep(600) // respeita o limite de requisições por segundo do Resend
+      } catch (e) {
+        falhas.push(`${userId}: ${e instanceof Error ? e.message : String(e)}`)
+      }
+    }
 
-    const sent   = results.filter(r => r.status === "fulfilled").length
-    const failed = results.filter(r => r.status === "rejected").length
-
-    return NextResponse.json({ ok: true, sent, failed })
+    if (falhas.length) console.error("[relatorio-semanal] falhas:", falhas)
+    return NextResponse.json({ ok: true, sent, failed: falhas.length })
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e)
     console.error("[relatorio-semanal]", msg)
     return NextResponse.json({ error: msg }, { status: 500 })
   }
+}
+
+export async function POST(req: NextRequest) {
+  return GET(req)
 }

@@ -17,15 +17,19 @@ interface PxModalProps {
 export function PxModal({ open, onClose, title, children, className }: PxModalProps) {
   const ref = React.useRef<HTMLDivElement>(null)
   const titleId = React.useId()
+  // onClose costuma ser uma função inline: guardada em ref para que o efeito rode só ao abrir e fechar,
+  // sem devolver o foco ao diálogo a cada tecla digitada num formulário.
+  const onCloseRef = React.useRef(onClose)
+  onCloseRef.current = onClose
 
   React.useEffect(() => {
     if (!open) return
     const origem = document.activeElement as HTMLElement | null
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose() }
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onCloseRef.current() }
     document.addEventListener("keydown", onKey)
     ref.current?.focus()
     return () => { document.removeEventListener("keydown", onKey); origem?.focus?.() }
-  }, [open, onClose])
+  }, [open])
 
   if (!open || typeof document === "undefined") return null
 

@@ -8,28 +8,31 @@ interface ToastProps {
   type?:   ToastType
 }
 
-const CONFIG: Record<ToastType, { Icon: React.ElementType; bg: string; border: string; text: string; iconCls: string }> = {
-  success: { Icon: Check,         bg: "bg-card",          border: "border-accent-border",    text: "text-accent",    iconCls: "text-accent"    },
-  error:   { Icon: X,             bg: "bg-red-950/95",    border: "border-red-500/50",       text: "text-red-200",   iconCls: "text-red-400"   },
-  info:    { Icon: Info,          bg: "bg-blue-950/95",   border: "border-blue-500/50",      text: "text-blue-200",  iconCls: "text-blue-400"  },
-  warning: { Icon: AlertTriangle, bg: "bg-amber-950/95",  border: "border-amber-500/50",     text: "text-amber-200", iconCls: "text-amber-400" },
+// Cores literais: o aviso aparece em páginas dentro e fora do escopo .px.
+// Todas com texto branco em contraste acima de 7:1.
+const CONFIG: Record<ToastType, { Icon: React.ElementType; bg: string }> = {
+  success: { Icon: Check,         bg: "bg-[#141414]" },
+  error:   { Icon: X,             bg: "bg-[#9B2C1F]" },
+  info:    { Icon: Info,          bg: "bg-[#3F3B36]" },
+  warning: { Icon: AlertTriangle, bg: "bg-[#7A4E00]" },
 }
 
 export function Toast({ message, type = "success" }: ToastProps) {
   if (!message) return null
-  const { Icon, bg, border, text, iconCls } = CONFIG[type]
+  const { Icon, bg } = CONFIG[type]
   return (
     <div
       role="status"
       aria-live="polite"
       className={cn(
-        "fixed bottom-6 left-4 right-4 md:left-auto md:right-6 md:max-w-sm",
-        "flex items-center gap-2.5 px-4 py-3 rounded-lg shadow-xl border animate-fade-in z-50",
-        bg, border, text
+        // acima do menu inferior flutuante
+        "fixed bottom-28 left-4 right-4 md:left-auto md:right-6 md:max-w-sm",
+        "z-[70] flex items-center gap-2.5 rounded-2xl px-4 py-3 text-white shadow-[0_10px_30px_rgba(20,20,20,0.25)] animate-fade-in",
+        bg
       )}
     >
-      <Icon className={cn("w-3.5 h-3.5 flex-shrink-0", iconCls)} />
-      <span className="text-[12px] font-medium flex-1">{message}</span>
+      <Icon className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
+      <span className="flex-1 text-[13.5px] font-medium">{message}</span>
     </div>
   )
 }

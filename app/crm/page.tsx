@@ -2,7 +2,6 @@
 
 import Link from "next/link"
 import { useState, useEffect, useCallback, useRef, useMemo } from "react"
-import { TopBar } from "@/components/TopBar"
 import { Toast } from "@/components/Toast"
 import { cn } from "@/lib/utils"
 import {
@@ -13,14 +12,12 @@ import {
 import { useDraggable, useDroppable } from "@dnd-kit/core"
 import { CSS } from "@dnd-kit/utilities"
 import {
-  Plus, X, Loader2, Users2, TrendingUp, DollarSign,
-  Sparkles, Phone, Instagram, CalendarDays, MessageSquare, MessageCircle,
+  Plus, X, Loader2, Phone, Instagram, CalendarDays, MessageSquare, MessageCircle,
   Edit2, Trash2, GripVertical, ChevronDown, Check,
-  Link2, ExternalLink, Zap, CheckCircle, Clock, Edit3,
+  ExternalLink, Zap, CheckCircle, Clock, Edit3, Sparkles,
 } from "lucide-react"
 import { ErrorState } from "@/components/ErrorState"
-import { EmptyState } from "@/components/EmptyState"
-import { Button }     from "@/components/ui/Button"
+import { Panel, PxButton, Tag, Field, PxInput, PxSelect, PxModal, PageHeader, Ring } from "@/components/px"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -49,81 +46,23 @@ interface NurturingSeq {
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const COLUMNS: {
-  id: string
-  emoji: string
-  label: string
-  color: string
-  bg: string
-  border: string
-  header: string
-}[] = [
-  {
-    id:     "novo",
-    emoji:  "🆕",
-    label:  "Novo Lead",
-    color:  "text-blue-400",
-    bg:     "bg-blue-500/5",
-    border: "border-blue-500/20",
-    header: "bg-blue-500/10",
-  },
-  {
-    id:     "contato",
-    emoji:  "📞",
-    label:  "Contato Feito",
-    color:  "text-amber-400",
-    bg:     "bg-amber-500/5",
-    border: "border-amber-500/20",
-    header: "bg-amber-500/10",
-  },
-  {
-    id:     "agendado",
-    emoji:  "📅",
-    label:  "Consulta Agendada",
-    color:  "text-purple-400",
-    bg:     "bg-purple-500/5",
-    border: "border-purple-500/20",
-    header: "bg-purple-500/10",
-  },
-  {
-    id:     "ativo",
-    emoji:  "✅",
-    label:  "Paciente Ativo",
-    color:  "text-emerald-400",
-    bg:     "bg-emerald-500/5",
-    border: "border-emerald-500/20",
-    header: "bg-emerald-500/10",
-  },
-  {
-    id:     "perdido",
-    emoji:  "❌",
-    label:  "Perdido",
-    color:  "text-red-400",
-    bg:     "bg-red-500/5",
-    border: "border-red-500/20",
-    header: "bg-red-500/10",
-  },
+type TagTone = "neutral" | "accent" | "danger" | "ok" | "warn"
+
+const COLUMNS: { id: string; label: string; short: string; tone: TagTone }[] = [
+  { id: "novo",     label: "Novo lead",         short: "Novo",     tone: "neutral" },
+  { id: "contato",  label: "Contato feito",     short: "Contato",  tone: "warn"    },
+  { id: "agendado", label: "Consulta agendada", short: "Agendado", tone: "accent"  },
+  { id: "ativo",    label: "Paciente ativo",    short: "Ativo",    tone: "ok"      },
+  { id: "perdido",  label: "Perdido",           short: "Perdido",  tone: "danger"  },
 ]
 
 const ORIGENS = ["Instagram", "Indicação", "Site", "WhatsApp", "Outro"] as const
 type Origem = typeof ORIGENS[number]
 
-const ORIGEM_BADGE: Record<string, string> = {
-  "Instagram": "bg-pink-500/10   text-pink-400   border-pink-500/25",
-  "Indicação": "bg-amber-500/10  text-amber-400  border-amber-500/25",
-  "Site":      "bg-blue-500/10   text-blue-400   border-blue-500/25",
-  "WhatsApp":  "bg-emerald-500/10 text-emerald-400 border-emerald-500/25",
-  "Outro":     "bg-surface-2     text-text-muted  border-border",
-}
-
-const EMPTY_FORM = {
-  nome:            "",
-  telefone:        "",
-  instagram:       "",
-  origem:          "Instagram" as Origem,
-  observacoes:     "",
-  valor_potencial: "",
-}
+const linkBtn =
+  "inline-flex h-11 items-center justify-center gap-2 rounded-px-ctl border border-px-line bg-white/60 px-4 text-[13.5px] font-semibold text-px-ink hover:bg-white/90"
+const areaTexto =
+  "w-full resize-none rounded-px-ctl border border-px-line bg-white px-3.5 py-3 text-[13.5px] text-px-ink placeholder:text-px-muted"
 
 function fmtDate(s: string) {
   if (!s) return "—"
@@ -142,15 +81,10 @@ function fmtPhone(v: string) {
   return `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`
 }
 
-// ── Lead Card Content (pure visual — no hooks, safe for DragOverlay) ──────────
+// ── Cartão do lead (visual puro, sem hooks: serve também ao DragOverlay) ───────
 
 function LeadCardContent({
-  lead,
-  onExpand,
-  onMoveStage,
-  isDragOverlay = false,
-  isDragging    = false,
-  hasNurturing  = false,
+  lead, onExpand, onMoveStage, isDragOverlay = false, isDragging = false, hasNurturing = false,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   dragListeners,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -173,74 +107,46 @@ function LeadCardContent({
 
   return (
     <div className={cn(
-      "bg-background border rounded-lg p-3 cursor-default select-none transition-all",
-      isActive
-        ? "border-accent/50 shadow-lg shadow-accent/10 rotate-[1deg]"
-        : "border-border hover:border-accent/30"
+      "select-none rounded-px-card p-3 transition-shadow",
+      isActive ? "rotate-[1deg] bg-white shadow-[0_12px_28px_rgba(20,20,20,0.25)] ring-1 ring-px-ink/40" : "bg-white/85 hover:bg-white"
     )}>
-      <div className="flex items-start gap-2">
+      <div className="flex items-start gap-1.5">
         <button
           {...(dragListeners ?? {})}
           {...(dragAttributes ?? {})}
-          className="p-1 -ml-1 text-text-muted hover:text-text-secondary cursor-grab active:cursor-grabbing flex-shrink-0 touch-none rounded"
-          aria-label="Arrastar"
+          className="-ml-1 flex h-8 w-7 shrink-0 cursor-grab touch-none items-center justify-center rounded text-px-muted hover:text-px-ink active:cursor-grabbing"
+          aria-label={`Arrastar ${lead.nome}`}
         >
-          <GripVertical className="w-5 h-5" />
+          <GripVertical className="h-5 w-5" aria-hidden="true" />
         </button>
 
-        <div className="flex-1 min-w-0">
-          <button
-            onClick={() => onExpand(lead)}
-            className="w-full text-left"
-          >
-          <div className="flex items-start justify-between gap-2 mb-2">
-            <span className="text-[13px] font-semibold text-text-primary leading-tight truncate">
-              {lead.nome}
-            </span>
-            <span className={cn(
-              "text-badge font-mono font-semibold px-1.5 py-0.5 rounded border whitespace-nowrap flex-shrink-0",
-              ORIGEM_BADGE[lead.origem] ?? ORIGEM_BADGE["Outro"]
-            )}>
-              {lead.origem}
-            </span>
-          </div>
+        <div className="min-w-0 flex-1">
+          <button type="button" onClick={() => onExpand(lead)} className="w-full text-left">
+            <div className="mb-1.5 flex items-start justify-between gap-2">
+              <span className="truncate text-[14px] font-semibold leading-tight text-px-ink">{lead.nome}</span>
+              <Tag className="shrink-0">{lead.origem}</Tag>
+            </div>
 
-          <div className="space-y-1">
-            {lead.telefone && (
-              <div className="flex items-center gap-1.5 text-[11px] text-text-muted">
-                <Phone className="w-3 h-3 flex-shrink-0" />
-                <span className="truncate">{lead.telefone}</span>
-              </div>
-            )}
-            {lead.instagram && (
-              <div className="flex items-center gap-1.5 text-[11px] text-text-muted">
-                <Instagram className="w-3 h-3 flex-shrink-0" />
-                <span className="truncate">{lead.instagram.startsWith("@") ? lead.instagram : `@${lead.instagram}`}</span>
-              </div>
-            )}
-          </div>
-
-          <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-border">
-            <div className="flex items-center gap-1.5">
-              <span className="text-[10px] font-mono text-text-muted">{fmtDate(lead.created_at)}</span>
-              {hasNurturing && (
-                <span className="flex items-center gap-0.5 text-[8px] font-mono font-bold px-1 py-0.5 rounded bg-accent-dim border border-accent-border text-accent">
-                  <Zap className="w-2.5 h-2.5" /> NUR
-                </span>
+            <div className="space-y-1 text-[12.5px] text-px-muted">
+              {lead.telefone && (
+                <div className="flex items-center gap-1.5"><Phone className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /><span className="truncate">{lead.telefone}</span></div>
+              )}
+              {lead.instagram && (
+                <div className="flex items-center gap-1.5"><Instagram className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /><span className="truncate">{lead.instagram.startsWith("@") ? lead.instagram : `@${lead.instagram}`}</span></div>
               )}
             </div>
-            {lead.valor_potencial > 0 && (
-              <span className="text-[10px] font-mono text-emerald-400">
-                {fmtCurrency(lead.valor_potencial)}
-              </span>
-            )}
-          </div>
 
-          {lead.estagio === "perdido" && lead.motivo_perda && (
-            <div className="mt-2 text-[10px] text-red-400/80 italic truncate">
-              {lead.motivo_perda}
+            <div className="mt-2.5 flex items-center justify-between gap-2 border-t border-px-line pt-2">
+              <span className="flex items-center gap-1.5 text-[12px] tabular-nums text-px-muted">
+                {fmtDate(lead.created_at)}
+                {hasNurturing && <Tag tone="accent"><Zap className="mr-1 h-3 w-3" aria-hidden="true" />Nurturing</Tag>}
+              </span>
+              {lead.valor_potencial > 0 && <span className="text-[12.5px] font-semibold tabular-nums text-px-ok">{fmtCurrency(lead.valor_potencial)}</span>}
             </div>
-          )}
+
+            {lead.estagio === "perdido" && lead.motivo_perda && (
+              <p className="mt-2 truncate text-[12.5px] text-px-danger">{lead.motivo_perda}</p>
+            )}
           </button>
 
           {lead.telefone && (
@@ -249,47 +155,38 @@ function LeadCardContent({
               target="_blank"
               rel="noopener noreferrer"
               onClick={e => e.stopPropagation()}
-              className="mt-1.5 flex items-center gap-1 text-[10px] text-emerald-400 hover:text-emerald-300 transition-colors w-fit"
-              aria-label="Abrir WhatsApp"
+              className="mt-2 flex w-fit items-center gap-1 text-[12.5px] font-semibold text-px-ok underline-offset-4 hover:underline"
+              aria-label={`Abrir WhatsApp de ${lead.nome}`}
             >
-              <MessageCircle className="w-3 h-3" />
+              <MessageCircle className="h-3.5 w-3.5" aria-hidden="true" />
               WhatsApp
             </a>
           )}
 
-          {/* Stage mover — inline pills, avoids overflow clipping */}
           {onMoveStage && !isDragOverlay && (
             <div>
               {!showMoveMenu ? (
                 <button
+                  type="button"
                   onClick={e => { e.stopPropagation(); setShowMoveMenu(true) }}
-                  className="mt-1.5 flex items-center gap-1 text-[10px] text-text-muted hover:text-text-primary transition-colors"
+                  className="mt-1.5 flex items-center gap-1 text-[12.5px] font-medium text-px-muted hover:text-px-ink"
                 >
-                  <ChevronDown className="w-3 h-3" /> Mover para
+                  <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" /> Mover para
                 </button>
               ) : (
-                <div className="mt-1.5 flex flex-wrap gap-1.5 items-center">
+                <div className="mt-2 flex flex-wrap items-center gap-1.5">
                   {otherCols.map(col => (
                     <button
                       key={col.id}
-                      onClick={e => {
-                        e.stopPropagation()
-                        onMoveStage(lead.id, col.id)
-                        setShowMoveMenu(false)
-                      }}
-                      className={cn(
-                        "text-[10px] font-mono px-2 py-0.5 rounded-full border transition-colors",
-                        col.color, col.border
-                      )}
+                      type="button"
+                      onClick={e => { e.stopPropagation(); onMoveStage(lead.id, col.id); setShowMoveMenu(false) }}
+                      className="rounded-full bg-px-ink/[0.08] px-2.5 py-1 text-[12px] font-medium text-px-ink hover:bg-px-ink/15"
                     >
-                      {col.emoji} {col.label.split(" ")[0]}
+                      {col.short}
                     </button>
                   ))}
-                  <button
-                    onClick={() => setShowMoveMenu(false)}
-                    className="text-[10px] text-text-muted hover:text-text-primary transition-colors px-1"
-                  >
-                    <X className="w-3 h-3" />
+                  <button type="button" onClick={() => setShowMoveMenu(false)} aria-label="Fechar" className="flex h-7 w-7 items-center justify-center rounded-full text-px-muted hover:bg-px-ink/10">
+                    <X className="h-3.5 w-3.5" aria-hidden="true" />
                   </button>
                 </div>
               )}
@@ -301,13 +198,10 @@ function LeadCardContent({
   )
 }
 
-// ── Lead Card (draggable wrapper) ──────────────────────────────────────────────
+// ── Cartão arrastável ─────────────────────────────────────────────────────────
 
 function LeadCard({
-  lead,
-  onExpand,
-  onMoveStage,
-  hasNurturing = false,
+  lead, onExpand, onMoveStage, hasNurturing = false,
 }: {
   lead: Lead
   onExpand: (l: Lead) => void
@@ -319,29 +213,15 @@ function LeadCard({
 
   return (
     <div ref={setNodeRef} style={style}>
-      <LeadCardContent
-        lead={lead}
-        onExpand={onExpand}
-        onMoveStage={onMoveStage}
-        isDragging={isDragging}
-        hasNurturing={hasNurturing}
-        dragListeners={listeners}
-        dragAttributes={attributes}
-      />
+      <LeadCardContent lead={lead} onExpand={onExpand} onMoveStage={onMoveStage} isDragging={isDragging} hasNurturing={hasNurturing} dragListeners={listeners} dragAttributes={attributes} />
     </div>
   )
 }
 
-// ── Kanban Column (droppable) ─────────────────────────────────────────────────
+// ── Coluna do kanban (área de soltar) ─────────────────────────────────────────
 
 function KanbanColumn({
-  col,
-  leads,
-  onExpand,
-  onAddLead,
-  nurturingMap,
-  onMoveStage,
-  quickAddNode,
+  col, leads, onExpand, onAddLead, nurturingMap, onMoveStage, quickAddNode,
 }: {
   col: typeof COLUMNS[number]
   leads: Lead[]
@@ -357,43 +237,32 @@ function KanbanColumn({
     <div
       ref={setNodeRef}
       className={cn(
-        "flex flex-col rounded-xl border transition-all flex-shrink-0",
-        "w-[260px] md:w-auto md:flex-1 min-h-[300px] md:min-h-[480px] max-h-[calc(100vh-220px)]",
-        col.bg, col.border,
-        isOver && "ring-2 ring-accent/40 border-accent/40"
+        "px-glass flex w-[272px] shrink-0 flex-col rounded-px-panel md:w-auto md:min-w-[230px] md:flex-1",
+        "min-h-[300px] max-h-[calc(100vh-260px)] md:min-h-[480px]",
+        isOver && "ring-2 ring-px-ink"
       )}
     >
-      {/* Column header */}
-      <div className={cn(
-        "flex items-center justify-between px-3 py-2.5 rounded-t-xl border-b",
-        col.header, col.border
-      )}>
+      <div className="flex items-center justify-between border-b border-px-line px-4 py-3">
         <div className="flex items-center gap-2">
-          <span className="text-[14px]">{col.emoji}</span>
-          <span className={cn("text-[12px] font-semibold", col.color)}>{col.label}</span>
-          <span className="text-[10px] font-mono text-text-muted bg-background/60 px-1.5 py-0.5 rounded-full border border-border">
-            {leads.length}
-          </span>
+          <Tag tone={col.tone}>{col.label}</Tag>
+          <span className="text-[13px] font-semibold tabular-nums text-px-ink" aria-label={`${leads.length} leads`}>{leads.length}</span>
         </div>
         <button
+          type="button"
           onClick={() => onAddLead(col.id)}
-          className="w-5 h-5 rounded flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-background/60 transition-colors"
-          aria-label="Adicionar lead"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-px-ink/[0.08] text-px-ink hover:bg-px-ink/15"
+          aria-label={`Adicionar lead em ${col.label}`}
         >
-          <Plus className="w-3.5 h-3.5" />
+          <Plus className="h-4 w-4" aria-hidden="true" />
         </button>
       </div>
 
-      {/* Cards */}
-      <div
-        className="flex-1 p-2 space-y-2 overflow-y-auto scrollbar-none"
-      >
+      <div className="flex-1 space-y-2 overflow-y-auto p-2.5 scrollbar-none">
         {quickAddNode}
         {leads.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-20 text-[11px] text-text-muted gap-1">
-            <span>Nenhum lead nesta etapa</span>
-            <span className="text-[10px] text-text-muted opacity-60">Use o campo acima para adicionar rapidamente</span>
-          </div>
+          <p className="px-2 py-6 text-center text-[13px] text-px-muted">
+            Nenhum lead nesta etapa.{col.id === "novo" ? " Use o campo acima para adicionar rápido." : ""}
+          </p>
         )}
         {leads.map(lead => (
           <LeadCard key={lead.id} lead={lead} onExpand={onExpand} onMoveStage={onMoveStage} hasNurturing={nurturingMap[lead.id] === true} />
@@ -403,14 +272,10 @@ function KanbanColumn({
   )
 }
 
-// ── New / Edit Lead Modal ─────────────────────────────────────────────────────
+// ── Novo lead / editar lead ───────────────────────────────────────────────────
 
 function LeadModal({
-  initial,
-  defaultEstagio,
-  onSave,
-  onClose,
-  saving,
+  initial, defaultEstagio, onSave, onClose, saving,
 }: {
   initial?: Lead
   defaultEstagio?: string
@@ -445,139 +310,54 @@ function LeadModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-md bg-surface border border-border rounded-xl shadow-2xl max-h-[90vh] flex flex-col">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border flex-shrink-0">
-          <h2 className="text-[15px] font-semibold text-text-primary">
-            {initial ? "Editar Lead" : "Novo Lead"}
-          </h2>
-          <Button variant="secondary" size="sm" onClick={onClose} className="w-7 h-7 p-0 border-0 hover:bg-surface-2" aria-label="Fechar">
-            <X className="w-4 h-4" />
-          </Button>
+    <PxModal open onClose={onClose} title={initial ? "Editar lead" : "Novo lead"} className="max-w-[460px]">
+      <form onSubmit={handleSubmit} className="max-h-[70vh] space-y-3 overflow-y-auto pr-0.5">
+        <Field label="Nome *" htmlFor="lead-nome">
+          <PxInput id="lead-nome" value={form.nome} onChange={e => set("nome", e.target.value)} placeholder="Nome completo do lead" required />
+        </Field>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Field label="Telefone" htmlFor="lead-tel">
+            <PxInput id="lead-tel" value={form.telefone} onChange={e => set("telefone", fmtPhone(e.target.value))} placeholder="(11) 99999-9999" />
+          </Field>
+          <Field label="Instagram" htmlFor="lead-ig">
+            <PxInput id="lead-ig" value={form.instagram} onChange={e => set("instagram", e.target.value)} placeholder="@perfil" />
+          </Field>
         </div>
-
-        <form onSubmit={handleSubmit} className="p-5 space-y-3.5 overflow-y-auto">
-          {/* Nome */}
-          <div>
-            <label className="block text-[11px] font-mono text-text-muted mb-1.5 tracking-wider uppercase">
-              Nome <span className="text-red-400">*</span>
-            </label>
-            <input
-              value={form.nome}
-              onChange={e => set("nome", e.target.value)}
-              placeholder="Nome completo do lead"
-              required
-              className="w-full bg-background border border-border rounded-lg px-3 py-2 text-[13px] text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/50 transition-colors"
-            />
-          </div>
-
-          {/* Telefone + Instagram */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-[11px] font-mono text-text-muted mb-1.5 tracking-wider uppercase">Telefone</label>
-              <input
-                value={form.telefone}
-                onChange={e => set("telefone", fmtPhone(e.target.value))}
-                placeholder="(11) 99999-9999"
-                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-[13px] text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/50 transition-colors"
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] font-mono text-text-muted mb-1.5 tracking-wider uppercase">Instagram</label>
-              <input
-                value={form.instagram}
-                onChange={e => set("instagram", e.target.value)}
-                placeholder="@handle"
-                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-[13px] text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/50 transition-colors"
-              />
-            </div>
-          </div>
-
-          {/* Origem + Estágio */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-[11px] font-mono text-text-muted mb-1.5 tracking-wider uppercase">Origem</label>
-              <select
-                value={form.origem}
-                onChange={e => set("origem", e.target.value)}
-                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-[13px] text-text-primary focus:outline-none focus:border-accent/50 transition-colors"
-              >
-                {ORIGENS.map(o => <option key={o} value={o}>{o}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-[11px] font-mono text-text-muted mb-1.5 tracking-wider uppercase">Estágio</label>
-              <select
-                value={form.estagio}
-                onChange={e => set("estagio", e.target.value)}
-                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-[13px] text-text-primary focus:outline-none focus:border-accent/50 transition-colors"
-              >
-                {COLUMNS.map(c => (
-                  <option key={c.id} value={c.id}>{c.emoji} {c.label}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {initial && (
-            <div>
-              <label className="block text-[11px] font-mono text-text-muted mb-1.5 tracking-wider uppercase">Valor Potencial (R$)</label>
-              <input
-                value={form.valor_potencial}
-                onChange={e => set("valor_potencial", e.target.value.replace(/[^0-9.,]/g, ""))}
-                placeholder="0,00"
-                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-[13px] text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/50 transition-colors"
-              />
-            </div>
-          )}
-
-          {initial && (
-            <div>
-              <label className="block text-[11px] font-mono text-text-muted mb-1.5 tracking-wider uppercase">Observações</label>
-              <textarea
-                value={form.observacoes}
-                onChange={e => set("observacoes", e.target.value)}
-                placeholder="Notas sobre o lead..."
-                rows={3}
-                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-[13px] text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/50 transition-colors resize-none"
-              />
-            </div>
-          )}
-
-          <div className="flex gap-2 pt-1">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 py-2 rounded-lg border border-border text-[13px] text-text-muted hover:text-text-primary hover:border-border-hover transition-all"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={saving || !form.nome.trim()}
-              className="flex-1 py-2 rounded-lg bg-accent text-[13px] font-semibold text-background hover:bg-accent/90 disabled:opacity-60 transition-all flex items-center justify-center gap-2"
-            >
-              {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-              {initial ? "Salvar" : "Criar Lead"}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Field label="Origem" htmlFor="lead-origem">
+            <PxSelect id="lead-origem" value={form.origem} onChange={e => set("origem", e.target.value)}>
+              {ORIGENS.map(o => <option key={o} value={o}>{o}</option>)}
+            </PxSelect>
+          </Field>
+          <Field label="Etapa" htmlFor="lead-etapa">
+            <PxSelect id="lead-etapa" value={form.estagio} onChange={e => set("estagio", e.target.value)}>
+              {COLUMNS.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+            </PxSelect>
+          </Field>
+        </div>
+        {initial && (
+          <Field label="Valor potencial (R$)" htmlFor="lead-valor">
+            <PxInput id="lead-valor" inputMode="decimal" value={form.valor_potencial} onChange={e => set("valor_potencial", e.target.value.replace(/[^0-9.,]/g, ""))} placeholder="0,00" />
+          </Field>
+        )}
+        {initial && (
+          <Field label="Observações" htmlFor="lead-obs">
+            <textarea id="lead-obs" value={form.observacoes} onChange={e => set("observacoes", e.target.value)} placeholder="Notas sobre o lead" rows={3} className={areaTexto} />
+          </Field>
+        )}
+        <div className="flex gap-2 pt-1">
+          <PxButton variant="secondary" onClick={onClose}>Cancelar</PxButton>
+          <PxButton type="submit" fullWidth leftIcon={Check} loading={saving} disabled={!form.nome.trim()}>{initial ? "Salvar" : "Criar lead"}</PxButton>
+        </div>
+      </form>
+    </PxModal>
   )
 }
 
-// ── Lead Detail Modal ─────────────────────────────────────────────────────────
+// ── Detalhe do lead ───────────────────────────────────────────────────────────
 
 function LeadDetailModal({
-  lead,
-  onEdit,
-  onDelete,
-  onClose,
-  onNurturing,
-  deleting,
-  hasNurturing,
+  lead, onEdit, onDelete, onClose, onNurturing, deleting, hasNurturing,
 }: {
   lead: Lead
   onEdit: () => void
@@ -591,256 +371,123 @@ function LeadDetailModal({
   const col = COLUMNS.find(c => c.id === lead.estagio)
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-md bg-surface border border-border rounded-xl shadow-2xl max-h-[90vh] flex flex-col">
-        {/* Header */}
-        <div className="flex items-start justify-between px-5 py-4 border-b border-border flex-shrink-0">
-          <div className="min-w-0 flex-1">
-            <h2 className="text-[16px] font-semibold text-text-primary truncate">{lead.nome}</h2>
-            {col && (
-              <span className={cn("text-[10px] font-mono", col.color)}>
-                {col.emoji} {col.label}
-              </span>
-            )}
-          </div>
-          <Button variant="secondary" size="sm" onClick={onClose} className="w-7 h-7 p-0 border-0 hover:bg-surface-2 ml-2 flex-shrink-0" aria-label="Fechar">
-            <X className="w-4 h-4" />
-          </Button>
+    <PxModal open onClose={onClose} title={lead.nome} className="max-w-[460px]">
+      <div className="max-h-[70vh] space-y-4 overflow-y-auto pr-0.5">
+        <div className="flex flex-wrap items-center gap-2">
+          {col && <Tag tone={col.tone}>{col.label}</Tag>}
+          <Tag>{lead.origem}</Tag>
+          <span className="ml-auto text-[14px] font-semibold tabular-nums text-px-ok">{fmtCurrency(lead.valor_potencial)}</span>
         </div>
 
-        {/* Body */}
-        <div className="p-5 space-y-4 overflow-y-auto">
-          {/* Contact info */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="bg-background border border-border rounded-lg p-3">
-              <div className="text-[9px] font-mono text-text-muted tracking-widest uppercase mb-1">Origem</div>
-              <span className={cn(
-                "text-[10px] font-mono font-semibold px-2 py-0.5 rounded border",
-                ORIGEM_BADGE[lead.origem] ?? ORIGEM_BADGE["Outro"]
-              )}>
-                {lead.origem}
-              </span>
-            </div>
-            <div className="bg-background border border-border rounded-lg p-3">
-              <div className="text-[9px] font-mono text-text-muted tracking-widest uppercase mb-1">Valor Potencial</div>
-              <div className="text-[14px] font-bold text-emerald-400">{fmtCurrency(lead.valor_potencial)}</div>
-            </div>
-          </div>
-
-          {(lead.telefone || lead.instagram) && (
-            <div className="space-y-2">
-              {lead.telefone && (
-                <a
-                  href={`tel:${lead.telefone.replace(/\D/g, "")}`}
-                  className="flex items-center gap-2.5 p-2.5 bg-background border border-border rounded-lg hover:border-accent/30 transition-colors group"
-                >
-                  <Phone className="w-3.5 h-3.5 text-text-muted group-hover:text-accent transition-colors" />
-                  <span className="text-[13px] text-text-primary">{lead.telefone}</span>
-                  <ExternalLink className="w-3 h-3 text-text-muted ml-auto" />
-                </a>
-              )}
-              {lead.instagram && (
-                <a
-                  href={`https://instagram.com/${lead.instagram.replace("@", "")}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2.5 p-2.5 bg-background border border-border rounded-lg hover:border-pink-500/30 transition-colors group"
-                >
-                  <Instagram className="w-3.5 h-3.5 text-text-muted group-hover:text-pink-400 transition-colors" />
-                  <span className="text-[13px] text-text-primary">
-                    {lead.instagram.startsWith("@") ? lead.instagram : `@${lead.instagram}`}
-                  </span>
-                  <ExternalLink className="w-3 h-3 text-text-muted ml-auto" />
-                </a>
-              )}
-            </div>
-          )}
-
-          {lead.observacoes && (
-            <div>
-              <div className="text-[9px] font-mono text-text-muted tracking-widest uppercase mb-1.5">Observações</div>
-              <p className="text-[12px] text-text-secondary leading-relaxed bg-background border border-border rounded-lg p-3">
-                {lead.observacoes}
-              </p>
-            </div>
-          )}
-
-          {lead.estagio === "perdido" && lead.motivo_perda && (
-            <div>
-              <div className="text-[9px] font-mono text-text-muted tracking-widest uppercase mb-1.5">Motivo da Perda</div>
-              <p className="text-[12px] text-red-400 leading-relaxed bg-red-50 border border-red-200 rounded-lg p-3">
-                {lead.motivo_perda}
-              </p>
-            </div>
-          )}
-
-          {/* Quick actions */}
-          <div className="grid grid-cols-2 gap-2">
+        {(lead.telefone || lead.instagram) && (
+          <div className="space-y-2">
             {lead.telefone && (
-              <a
-                href={`https://wa.me/55${lead.telefone.replace(/\D/g, "")}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-1.5 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-[12px] font-medium hover:bg-emerald-500/15 transition-colors"
-              >
-                <MessageSquare className="w-3.5 h-3.5" />
-                WhatsApp
+              <a href={`tel:${lead.telefone.replace(/\D/g, "")}`} className={cn(linkBtn, "w-full justify-start")}>
+                <Phone className="h-4 w-4" aria-hidden="true" />
+                <span className="font-medium">{lead.telefone}</span>
+                <ExternalLink className="ml-auto h-3.5 w-3.5 text-px-muted" aria-hidden="true" />
               </a>
             )}
-            <Link
-              href="/agenda"
-              className="flex items-center justify-center gap-1.5 py-2 rounded-lg bg-blue-500/10 border border-blue-500/25 text-blue-400 text-[12px] font-medium hover:bg-blue-500/15 transition-colors"
-            >
-              <CalendarDays className="w-3.5 h-3.5" />
-              Agendar
-            </Link>
-            <Link
-              href={`/nutricao-leads?lead_id=${lead.id}`}
-              className="flex items-center justify-center gap-1.5 py-2 rounded-lg bg-purple-500/10 border border-purple-500/25 text-purple-400 text-[12px] font-medium hover:bg-purple-500/15 transition-colors"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              Nutrição
-            </Link>
-            <button
-              onClick={onNurturing}
-              className={cn(
-                "flex items-center justify-center gap-1.5 py-2 rounded-lg border text-[12px] font-medium transition-colors",
-                hasNurturing
-                  ? "bg-accent-dim border-accent-border text-accent hover:bg-accent/15"
-                  : "bg-surface-2 border-border text-text-muted hover:text-text-primary"
-              )}
-            >
-              <Zap className="w-3.5 h-3.5" />
-              Nurturing
-            </button>
-            <button
-              onClick={onEdit}
-              className="flex items-center justify-center gap-1.5 py-2 rounded-lg bg-surface-2 border border-border text-text-secondary text-[12px] font-medium hover:text-text-primary transition-colors"
-            >
-              <Edit2 className="w-3.5 h-3.5" />
-              Editar
-            </button>
-          </div>
-
-          {/* Timestamps */}
-          <div className="flex flex-wrap gap-x-3 gap-y-0.5 items-center text-[10px] font-mono text-text-muted pt-1 border-t border-border">
-            <span>Criado em {fmtDate(lead.created_at)}</span>
-            <span>Atualizado em {fmtDate(lead.updated_at)}</span>
-          </div>
-
-          {/* Delete */}
-          <div className="pt-1">
-            {confirmDel ? (
-              <div className="flex gap-2">
-                <button
-                  onClick={onDelete}
-                  disabled={deleting}
-                  className="flex-1 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-[12px] font-semibold hover:bg-red-500/15 transition-colors flex items-center justify-center gap-1.5"
-                >
-                  {deleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-                  Confirmar exclusão
-                </button>
-                <button
-                  onClick={() => setConfirmDel(false)}
-                  className="px-4 py-2 rounded-lg border border-border text-text-muted text-[12px] hover:text-text-primary transition-colors"
-                >
-                  Não
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => setConfirmDel(true)}
-                className="w-full py-2 rounded-lg border border-border text-text-muted text-[12px] hover:text-red-400 hover:border-red-500/30 transition-colors flex items-center justify-center gap-1.5"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                Excluir lead
-              </button>
+            {lead.instagram && (
+              <a href={`https://instagram.com/${lead.instagram.replace("@", "")}`} target="_blank" rel="noopener noreferrer" className={cn(linkBtn, "w-full justify-start")}>
+                <Instagram className="h-4 w-4" aria-hidden="true" />
+                <span className="font-medium">{lead.instagram.startsWith("@") ? lead.instagram : `@${lead.instagram}`}</span>
+                <ExternalLink className="ml-auto h-3.5 w-3.5 text-px-muted" aria-hidden="true" />
+              </a>
             )}
           </div>
+        )}
+
+        {lead.observacoes && (
+          <div>
+            <h3 className="mb-1.5 text-[13px] font-semibold text-px-ink">Observações</h3>
+            <p className="rounded-px-ctl bg-white/70 p-3 text-[13.5px] leading-relaxed text-px-ink">{lead.observacoes}</p>
+          </div>
+        )}
+
+        {lead.estagio === "perdido" && lead.motivo_perda && (
+          <div>
+            <h3 className="mb-1.5 text-[13px] font-semibold text-px-danger">Motivo da perda</h3>
+            <p className="rounded-px-ctl bg-px-danger-soft p-3 text-[13.5px] leading-relaxed text-px-danger">{lead.motivo_perda}</p>
+          </div>
+        )}
+
+        <div className="grid grid-cols-2 gap-2">
+          {lead.telefone && (
+            <a href={`https://wa.me/55${lead.telefone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className={linkBtn}>
+              <MessageSquare className="h-4 w-4" aria-hidden="true" />WhatsApp
+            </a>
+          )}
+          <PxButton variant="secondary" href="/agenda" leftIcon={CalendarDays}>Agendar</PxButton>
+          <PxButton variant="secondary" href={`/nutricao-leads?lead_id=${lead.id}`} leftIcon={Sparkles}>Nutrição</PxButton>
+          <PxButton variant={hasNurturing ? "primary" : "secondary"} leftIcon={Zap} onClick={onNurturing}>Nurturing</PxButton>
+          <PxButton variant="secondary" leftIcon={Edit2} onClick={onEdit}>Editar</PxButton>
         </div>
+
+        <p className="flex flex-wrap gap-x-3 border-t border-px-line pt-3 text-[12.5px] tabular-nums text-px-muted">
+          <span>Criado em {fmtDate(lead.created_at)}</span>
+          <span>Atualizado em {fmtDate(lead.updated_at)}</span>
+        </p>
+
+        {confirmDel ? (
+          <div className="flex gap-2">
+            <PxButton variant="danger" fullWidth leftIcon={Trash2} loading={deleting} onClick={onDelete}>Confirmar exclusão</PxButton>
+            <PxButton variant="secondary" onClick={() => setConfirmDel(false)}>Não</PxButton>
+          </div>
+        ) : (
+          <PxButton variant="quiet" fullWidth leftIcon={Trash2} onClick={() => setConfirmDel(true)}>Excluir lead</PxButton>
+        )}
       </div>
-    </div>
+    </PxModal>
   )
 }
 
-// ── Motivo Perda Modal ────────────────────────────────────────────────────────
+// ── Motivo da perda ───────────────────────────────────────────────────────────
+
+const MOTIVOS = ["Sem resposta", "Preço alto", "Escolheu outro médico", "Não era o momento", "Problema pessoal", "Outro"]
 
 function MotivoModal({
-  onConfirm,
-  onCancel,
-  saving,
+  onConfirm, onCancel, saving,
 }: {
   onConfirm: (motivo: string) => void
   onCancel: () => void
   saving: boolean
 }) {
   const [motivo, setMotivo] = useState("")
-  const MOTIVOS = ["Sem resposta", "Preço alto", "Escolheu outro médico", "Não era o momento", "Problema pessoal", "Outro"]
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onCancel} />
-      <div className="relative w-full max-w-sm bg-surface border border-border rounded-xl shadow-2xl">
-        <div className="px-5 py-4 border-b border-border">
-          <h2 className="text-[15px] font-semibold text-text-primary">❌ Motivo da perda</h2>
-          <p className="text-[12px] text-text-muted mt-0.5">Por que este lead foi perdido?</p>
+    <PxModal open onClose={onCancel} title="Por que este lead foi perdido?">
+      <div className="space-y-3">
+        <div className="flex flex-wrap gap-1.5" role="group" aria-label="Motivos comuns">
+          {MOTIVOS.map(m => (
+            <button
+              key={m}
+              type="button"
+              aria-pressed={motivo === m}
+              onClick={() => setMotivo(m)}
+              className={cn(
+                "rounded-full px-3 py-1.5 text-[12.5px] transition-colors",
+                motivo === m ? "bg-px-ink font-semibold text-white" : "bg-px-ink/[0.08] font-medium text-px-ink hover:bg-px-ink/15"
+              )}
+            >
+              {m}
+            </button>
+          ))}
         </div>
-
-        <div className="p-5 space-y-3">
-          <div className="flex flex-wrap gap-1.5">
-            {MOTIVOS.map(m => (
-              <button
-                key={m}
-                onClick={() => setMotivo(m)}
-                className={cn(
-                  "text-[11px] px-2.5 py-1 rounded-full border transition-all",
-                  motivo === m
-                    ? "bg-red-50 border-red-300 text-red-700"
-                    : "border-border text-text-muted hover:text-text-secondary hover:border-border-hover"
-                )}
-              >
-                {m}
-              </button>
-            ))}
-          </div>
-
-          <textarea
-            value={motivo}
-            onChange={e => setMotivo(e.target.value)}
-            placeholder="Descreva o motivo..."
-            rows={2}
-            className="w-full bg-background border border-border rounded-lg px-3 py-2 text-[13px] text-text-primary placeholder:text-text-muted focus:outline-none focus:border-red-500/40 transition-colors resize-none"
-          />
-
-          <div className="flex gap-2">
-            <button
-              onClick={onCancel}
-              className="flex-1 py-2 rounded-lg border border-border text-[13px] text-text-muted hover:text-text-primary transition-all"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={() => onConfirm(motivo)}
-              disabled={saving}
-              className="flex-1 py-2 rounded-lg bg-red-50 border border-red-200 text-red-700 text-[13px] font-semibold hover:bg-red-100 disabled:opacity-60 transition-all flex items-center justify-center gap-2"
-            >
-              {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
-              Confirmar
-            </button>
-          </div>
+        <textarea value={motivo} onChange={e => setMotivo(e.target.value)} placeholder="Descreva o motivo" aria-label="Motivo da perda" rows={2} className={areaTexto} />
+        <div className="flex gap-2">
+          <PxButton variant="secondary" onClick={onCancel}>Cancelar</PxButton>
+          <PxButton fullWidth loading={saving} onClick={() => onConfirm(motivo)}>Confirmar</PxButton>
         </div>
       </div>
-    </div>
+    </PxModal>
   )
 }
 
-// ── Nurturing Modal ───────────────────────────────────────────────────────────
+// ── Nurturing ─────────────────────────────────────────────────────────────────
 
 function NurturingModal({
-  leadId,
-  leadNome,
-  onClose,
+  leadId, leadNome, onClose,
 }: {
   leadId:   string
   leadNome: string
@@ -874,7 +521,6 @@ function NurturingModal({
         const err = await r.json().catch(() => ({})) as { error?: string }
         throw new Error(err.error ?? "Erro ao gerar sequência")
       }
-      // Reload sequences after generation
       const data = await fetch(`/api/nurturing?lead_id=${leadId}`)
         .then(res => res.ok ? res.json() as Promise<NurturingSeq[]> : [])
         .catch(() => [])
@@ -899,93 +545,71 @@ function NurturingModal({
     setSaving(false)
   }
 
-  function fmtDate(s: string) {
+  function fmtDia(s: string) {
     return new Date(s).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })
   }
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-lg bg-surface border border-border rounded-xl shadow-2xl max-h-[90vh] flex flex-col">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border flex-shrink-0">
-          <div>
-            <h2 className="text-[15px] font-semibold text-text-primary flex items-center gap-2">
-              <Zap className="w-4 h-4 text-accent" /> Nurturing — {leadNome}
-            </h2>
-            <p className="text-[11px] text-text-muted mt-0.5">Sequência automática de 4 mensagens</p>
-          </div>
-          <Button variant="secondary" size="sm" onClick={onClose} className="w-7 h-7 p-0 border-0 hover:bg-surface-2" aria-label="Fechar">
-            <X className="w-4 h-4" />
-          </Button>
-        </div>
-
-        <div className="p-5 space-y-3 flex-1 overflow-y-auto">
-          {loading ? (
-            <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-accent" /></div>
-          ) : seqs.length === 0 ? (
-            <div className="text-center py-10 space-y-3">
-              <Zap className="w-8 h-8 text-text-muted/30 mx-auto" />
-              <p className="text-[13px] text-text-muted">Nenhuma sequência gerada ainda.</p>
-              {genError && (
-                <p className="text-[11px] text-red-400 bg-red-950/30 border border-red-900/40 rounded-lg px-3 py-2">{genError}</p>
-              )}
-              <Button variant="accent-ghost" size="sm" onClick={gerarSequencia} loading={generating} leftIcon={Zap}>
-                {generating ? "Gerando sequência…" : "Gerar Sequência Agora"}
-              </Button>
+    <PxModal open onClose={onClose} title={`Nurturing de ${leadNome}`} className="max-w-[520px]">
+      <p className="-mt-2 mb-3 text-[13px] text-px-muted">Sequência automática de 4 mensagens.</p>
+      <div className="max-h-[65vh] space-y-3 overflow-y-auto pr-0.5">
+        {loading ? (
+          <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-px-ink" aria-label="Carregando" /></div>
+        ) : seqs.length === 0 ? (
+          <div className="space-y-3 py-8 text-center">
+            <p className="text-[14px] text-px-ink">Nenhuma sequência gerada ainda.</p>
+            {genError && <p role="alert" className="text-[13px] text-px-danger">{genError}</p>}
+            <div className="flex justify-center">
+              <PxButton leftIcon={Zap} loading={generating} onClick={gerarSequencia}>{generating ? "Gerando sequência" : "Gerar sequência agora"}</PxButton>
             </div>
-          ) : (
-            seqs.map(s => (
-              <div key={s.id} className="bg-background border border-border rounded-xl p-3.5 space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-mono font-bold text-accent bg-accent-dim border border-accent-border px-1.5 py-0.5 rounded">DIA {s.dia}</span>
-                    <span className="text-[10px] text-text-muted">{fmtDate(s.agendado_para)}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {s.status === "enviado" ? (
-                      <CheckCircle className="w-4 h-4 text-accent" />
-                    ) : (
-                      <div className="flex items-center gap-1 text-[10px] text-text-muted">
-                        <Clock className="w-3 h-3" /> Pendente
-                      </div>
-                    )}
-                    {s.status !== "enviado" && (
-                      <button
-                        onClick={() => { setEditId(s.id === editId ? null : s.id); setEditTxt(s.mensagem) }}
-                        className="w-6 h-6 rounded flex items-center justify-center text-text-muted hover:text-accent hover:bg-accent-dim transition-colors"
-                      >
-                        <Edit3 className="w-3 h-3" />
-                      </button>
-                    )}
+          </div>
+        ) : (
+          seqs.map(s => (
+            <div key={s.id} className="space-y-2 rounded-px-card bg-white/70 p-3.5">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Tag tone="accent">Dia {s.dia}</Tag>
+                  <span className="text-[12.5px] text-px-muted">{fmtDia(s.agendado_para)}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {s.status === "enviado" ? (
+                    <span className="flex items-center gap-1 text-[12.5px] font-medium text-px-ok"><CheckCircle className="h-4 w-4" aria-hidden="true" />Enviado</span>
+                  ) : (
+                    <span className="flex items-center gap-1 text-[12.5px] text-px-muted"><Clock className="h-3.5 w-3.5" aria-hidden="true" />Pendente</span>
+                  )}
+                  {s.status !== "enviado" && (
+                    <button
+                      type="button"
+                      onClick={() => { setEditId(s.id === editId ? null : s.id); setEditTxt(s.mensagem) }}
+                      aria-label={`Editar mensagem do dia ${s.dia}`}
+                      className="flex h-8 w-8 items-center justify-center rounded-full text-px-ink hover:bg-px-ink/10"
+                    >
+                      <Edit3 className="h-3.5 w-3.5" aria-hidden="true" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {editId === s.id ? (
+                <div className="space-y-2">
+                  <textarea value={editTxt} onChange={e => setEditTxt(e.target.value)} rows={4} aria-label={`Mensagem do dia ${s.dia}`} className={areaTexto} />
+                  <div className="flex gap-2">
+                    <PxButton size="sm" variant="secondary" fullWidth onClick={() => setEditId(null)}>Cancelar</PxButton>
+                    <PxButton size="sm" fullWidth leftIcon={Check} loading={saving} onClick={() => saveEdit(s.id)}>Salvar</PxButton>
                   </div>
                 </div>
-
-                {editId === s.id ? (
-                  <div className="space-y-2">
-                    <textarea
-                      value={editTxt}
-                      onChange={e => setEditTxt(e.target.value)}
-                      rows={4}
-                      className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-[12px] text-text-primary resize-none focus:outline-none focus:border-accent/50"
-                    />
-                    <div className="flex gap-2">
-                      <Button variant="secondary" size="sm" onClick={() => setEditId(null)} className="flex-1">Cancelar</Button>
-                      <Button variant="primary" size="sm" onClick={() => saveEdit(s.id)} loading={saving} leftIcon={Check} className="flex-1">Salvar</Button>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-[12px] text-text-secondary leading-relaxed line-clamp-3">{s.mensagem}</p>
-                )}
-              </div>
-            ))
-          )}
-        </div>
+              ) : (
+                <p className="line-clamp-3 text-[13.5px] leading-relaxed text-px-ink">{s.mensagem}</p>
+              )}
+            </div>
+          ))
+        )}
       </div>
-    </div>
+    </PxModal>
   )
 }
 
-// ── Main Page ─────────────────────────────────────────────────────────────────
+// ── Página ────────────────────────────────────────────────────────────────────
 
 export default function CRMPage() {
   const [leads, setLeads]         = useState<Lead[]>([])
@@ -1218,123 +842,91 @@ export default function CRMPage() {
   const activeLead = useMemo(() => leads.find(l => l.id === activeId) ?? null, [leads, activeId])
 
   return (
-    <div className="animate-fade-in flex flex-col min-h-screen">
-      <TopBar
-        title="CRM de Leads"
-        subtitle="FUNIL DE PACIENTES · KANBAN"
-        tagline="Acompanhe e organize seus leads do primeiro contato até se tornarem pacientes ativos."
-        actions={
-          <button
-            onClick={() => { setNewEstagio("novo"); setShowNew(true) }}
-            className="flex items-center gap-1.5 px-5 py-3 bg-accent text-background text-[14px] font-semibold rounded-lg hover:bg-accent/90 transition-colors min-h-[44px]"
-          >
-            <Plus className="w-4 h-4" />
-            Novo Lead
-          </button>
-        }
+    <div className="px px-ambient flex min-h-screen animate-fade-in flex-col">
+      <PageHeader
+        title="CRM"
+        caption="Funil de pacientes"
+        actions={<PxButton leftIcon={Plus} onClick={() => { setNewEstagio("novo"); setShowNew(true) }}>Novo lead</PxButton>}
       />
 
-      <div className="p-4 md:p-8 space-y-6 flex-1 overflow-hidden">
-        {/* Metrics */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div className="bg-card border border-border rounded-lg p-4 relative overflow-hidden">
-            <div className="absolute top-0 left-0 right-0 h-px bg-blue-400 opacity-60" />
-            <div className="text-[9px] font-mono text-text-muted tracking-widest uppercase mb-2">Total de Leads</div>
-            <div className="text-3xl font-bold text-blue-400">{total}</div>
-            <div className="text-[10px] text-text-muted mt-1">no funil</div>
+      <div className="flex-1 space-y-4 overflow-hidden px-4 pb-10 pt-4 md:px-10">
+        {/* Quantos leads, quantos viraram pacientes, quanto vale o funil */}
+        <Panel tone="dark" aria-label="Resumo do funil">
+          <div className="grid items-center gap-6 md:grid-cols-[auto_1fr]">
+            <Ring value={conversion} label={`${ativos} de ${total} viraram pacientes`} dark size={104} />
+            <dl className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div>
+                <dt className="text-[13px] text-white">Leads no funil</dt>
+                <dd className="mt-1 text-[34px] font-medium leading-none tracking-[-0.02em] tabular-nums text-white">{total}</dd>
+              </div>
+              <div>
+                <dt className="text-[13px] text-white">Valor potencial</dt>
+                <dd className="mt-1 truncate text-[34px] font-medium leading-none tracking-[-0.02em] tabular-nums text-white">{fmtCurrency(valorTotal)}</dd>
+              </div>
+              <div>
+                <dt className="text-[13px] text-white">Novos nos últimos 7 dias</dt>
+                <dd className="mt-1 text-[34px] font-medium leading-none tracking-[-0.02em] tabular-nums text-white">{novosSemanais}</dd>
+              </div>
+            </dl>
           </div>
-          <div className="bg-card border border-border rounded-lg p-4 relative overflow-hidden">
-            <div className="absolute top-0 left-0 right-0 h-px bg-accent opacity-60" />
-            <div className="text-[9px] font-mono text-text-muted tracking-widest uppercase mb-2">Conversão</div>
-            <div className="text-3xl font-bold text-accent">{conversion}%</div>
-            <div className="text-[10px] text-text-muted mt-1">{ativos} pacientes ativos</div>
-          </div>
-          <div className="bg-card border border-border rounded-lg p-4 relative overflow-hidden">
-            <div className="absolute top-0 left-0 right-0 h-px bg-emerald-400 opacity-60" />
-            <div className="text-[9px] font-mono text-text-muted tracking-widest uppercase mb-2">Valor Potencial</div>
-            <div className="text-2xl font-bold text-emerald-400 truncate">{fmtCurrency(valorTotal)}</div>
-            <div className="text-[10px] text-text-muted mt-1">funil ativo</div>
-          </div>
-          <div className="bg-card border border-border rounded-lg p-4 relative overflow-hidden">
-            <div className="absolute top-0 left-0 right-0 h-px bg-amber-400 opacity-60" />
-            <div className="text-[9px] font-mono text-text-muted tracking-widest uppercase mb-2">Novos esta semana</div>
-            <div className="text-3xl font-bold text-amber-400">{novosSemanais}</div>
-            <div className="text-[10px] text-text-muted mt-1">últimos 7 dias</div>
-          </div>
-        </div>
+        </Panel>
 
-        {/* Kanban */}
         {loading ? (
           <div className="flex gap-3 overflow-x-auto pb-2">
             {COLUMNS.map(col => (
-              <div key={col.id} className={cn("rounded-xl border flex-shrink-0 w-[280px] md:flex-1 overflow-hidden", col.bg, col.border)}>
-                <div className={cn("flex items-center gap-2 px-4 py-3 border-b", col.border, col.header)}>
-                  <div className="w-20 h-3 rounded bg-white/10 animate-pulse" />
-                </div>
-                <div className="p-3 space-y-2">
-                  {[1, 2, 3].map(i => (
-                    <div key={i} className="rounded-lg border border-white/5 bg-white/5 p-3 animate-pulse space-y-2">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full bg-white/10 flex-shrink-0" />
-                        <div className="flex-1 space-y-1">
-                          <div className="h-2.5 rounded bg-white/10 w-3/4" />
-                          <div className="h-2 rounded bg-white/[0.06] w-1/2" />
-                        </div>
-                      </div>
-                      <div className="h-2 rounded bg-white/[0.06] w-full" />
-                    </div>
-                  ))}
-                </div>
+              <div key={col.id} className="px-glass w-[272px] shrink-0 space-y-2 rounded-px-panel p-3 md:w-auto md:flex-1">
+                <div className="h-6 w-28 rounded-full bg-px-ink/10 shimmer" />
+                {[1, 2, 3].map(i => <div key={i} className="h-24 rounded-px-card bg-white/60 shimmer" />)}
               </div>
             ))}
           </div>
         ) : erro ? (
           <ErrorState message={erro} onRetry={fetchLeads} className="py-12" />
         ) : leads.length === 0 ? (
-          <EmptyState
-            icon={Users2}
-            title="Nenhum lead ainda"
-            subtitle="Adicione seu primeiro lead para começar a acompanhar seu funil de pacientes."
-            action={{ label: "Adicionar lead", onClick: () => { setNewEstagio("novo"); setShowNew(true) } }}
-          />
+          <Panel tone="light" className="py-10 text-center">
+            <p className="text-[16px] font-semibold text-px-ink">Nenhum lead ainda</p>
+            <p className="mx-auto mt-1 max-w-sm text-[14px] text-px-muted">Adicione o primeiro lead para acompanhar o funil de pacientes.</p>
+            <div className="mt-4 flex justify-center">
+              <PxButton leftIcon={Plus} onClick={() => { setNewEstagio("novo"); setShowNew(true) }}>Adicionar lead</PxButton>
+            </div>
+          </Panel>
         ) : (
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-            <div className="relative">
-              <div className="flex gap-3 overflow-x-auto pb-4 -mx-1 px-1">
-                {COLUMNS.map(col => (
-                  <KanbanColumn
-                    key={col.id}
-                    col={col}
-                    leads={leadsByEstagio[col.id] ?? []}
-                    onExpand={setExpanded}
-                    onAddLead={stage => { setNewEstagio(stage); setShowNew(true) }}
-                    nurturingMap={nurturingMap}
-                    onMoveStage={handleMoveStage}
-                    quickAddNode={col.id === "novo" ? (
-                      <div className="flex gap-1.5 mb-2">
-                        <input
-                          ref={quickNomeRef}
-                          placeholder="Nome..."
-                          value={quickNome}
-                          onChange={e => setQuickNome(e.target.value)}
-                          onKeyDown={e => e.key === "Enter" && handleQuickAdd()}
-                          disabled={quickSaving}
-                          className="flex-1 min-w-0 bg-surface-2 border border-border rounded-lg text-[12px] px-3 py-1.5 text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent transition-colors disabled:opacity-50"
-                        />
-                        <input
-                          placeholder="Tel"
-                          value={quickTel}
-                          onChange={e => setQuickTel(fmtPhone(e.target.value))}
-                          onKeyDown={e => e.key === "Enter" && handleQuickAdd()}
-                          disabled={quickSaving}
-                          className="w-[90px] bg-surface-2 border border-border rounded-lg text-[12px] px-3 py-1.5 text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent transition-colors disabled:opacity-50"
-                        />
-                      </div>
-                    ) : undefined}
-                  />
-                ))}
-              </div>
-              <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-background to-transparent" />
+            <div className="flex gap-3 overflow-x-auto pb-4">
+              {COLUMNS.map(col => (
+                <KanbanColumn
+                  key={col.id}
+                  col={col}
+                  leads={leadsByEstagio[col.id] ?? []}
+                  onExpand={setExpanded}
+                  onAddLead={stage => { setNewEstagio(stage); setShowNew(true) }}
+                  nurturingMap={nurturingMap}
+                  onMoveStage={handleMoveStage}
+                  quickAddNode={col.id === "novo" ? (
+                    <div className="mb-2 flex gap-1.5">
+                      <PxInput
+                        ref={quickNomeRef}
+                        placeholder="Nome"
+                        aria-label="Nome do novo lead"
+                        value={quickNome}
+                        onChange={e => setQuickNome(e.target.value)}
+                        onKeyDown={e => e.key === "Enter" && handleQuickAdd()}
+                        disabled={quickSaving}
+                        className="h-10 min-w-0 flex-1 px-3 text-[13px]"
+                      />
+                      <PxInput
+                        placeholder="Telefone"
+                        aria-label="Telefone do novo lead"
+                        value={quickTel}
+                        onChange={e => setQuickTel(fmtPhone(e.target.value))}
+                        onKeyDown={e => e.key === "Enter" && handleQuickAdd()}
+                        disabled={quickSaving}
+                        className="h-10 w-[104px] px-3 text-[13px]"
+                      />
+                    </div>
+                  ) : undefined}
+                />
+              ))}
             </div>
 
             <DragOverlay>
@@ -1348,27 +940,10 @@ export default function CRMPage() {
         )}
       </div>
 
-      {/* New Lead Modal */}
-      {showNew && (
-        <LeadModal
-          defaultEstagio={newEstagio}
-          onSave={createLead}
-          onClose={() => setShowNew(false)}
-          saving={saving}
-        />
-      )}
+      {showNew && <LeadModal defaultEstagio={newEstagio} onSave={createLead} onClose={() => setShowNew(false)} saving={saving} />}
 
-      {/* Edit Modal */}
-      {editing && (
-        <LeadModal
-          initial={editing}
-          onSave={data => updateLead(editing.id, data)}
-          onClose={() => setEditing(null)}
-          saving={saving}
-        />
-      )}
+      {editing && <LeadModal initial={editing} onSave={data => updateLead(editing.id, data)} onClose={() => setEditing(null)} saving={saving} />}
 
-      {/* Detail Modal */}
       {expanded && !editing && (
         <LeadDetailModal
           lead={expanded}
@@ -1381,7 +956,6 @@ export default function CRMPage() {
         />
       )}
 
-      {/* Motivo Perda Modal */}
       {pendingMove && (
         <MotivoModal
           onConfirm={motivo => {
@@ -1393,14 +967,7 @@ export default function CRMPage() {
         />
       )}
 
-      {/* Nurturing Modal */}
-      {showNurturing && (
-        <NurturingModal
-          leadId={showNurturing}
-          leadNome={nurturingLeadNome}
-          onClose={() => setShowNurturing(null)}
-        />
-      )}
+      {showNurturing && <NurturingModal leadId={showNurturing} leadNome={nurturingLeadNome} onClose={() => setShowNurturing(null)} />}
 
       <Toast message={toast} type={toastType} />
     </div>

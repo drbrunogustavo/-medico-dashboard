@@ -2,16 +2,9 @@
 
 import { useEffect, useState, useCallback, useRef, useMemo } from "react"
 import { useRouter } from "next/navigation"
-import { TopBar } from "@/components/TopBar"
-import { StatCard } from "@/components/StatCard"
-import { Button } from "@/components/ui/Button"
+import { ChevronLeft, ChevronRight, Plus, Search, Loader2, X, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils"
-import {
-  ArrowLeft, ChevronLeft, ChevronRight, Calendar, List,
-  Clock, RefreshCw, Filter, User, Plus,
-  Search, Loader2, X, Check, Bot, Stethoscope,
-  AlertCircle, Sparkles,
-} from "lucide-react"
+import { Panel, Tag, PxButton, PxInput, PxSelect, Field, PxModal, Segmented, PageHeader } from "@/components/px"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -62,8 +55,6 @@ interface StatusItem {
 
 type ViewMode = "lista" | "calendario"
 
-// ── Constants ──────────────────────────────────────────────────────────────────
-
 const DIAS_SEMANA  = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"]
 const MESES        = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"]
 const MESES_LONG   = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"]
@@ -83,45 +74,35 @@ const CAL_START = 7   // 07:00
 const CAL_END   = 20  // 20:00
 const SLOT_H    = 52  // px per hour
 
-// ── Status helpers ────────────────────────────────────────────────────────────
+// ── Status ────────────────────────────────────────────────────────────────────
+// A cor nunca fala sozinha: todo bloco leva o nome do status por escrito.
 
-const STATUS_STYLES: Record<string, string> = {
-  confirmado: "bg-emerald-500/12 text-emerald-400 border-emerald-500/30",
-  agendado:   "bg-blue-500/12    text-blue-400    border-blue-500/30",
-  aguardando: "bg-amber-500/12   text-amber-400   border-amber-500/30",
-  atendido:   "bg-blue-500/12    text-blue-400    border-blue-500/30",
-  cancelado:  "bg-red-500/12     text-red-400     border-red-500/30",
-  falta:      "bg-red-500/12     text-red-400     border-red-500/30",
-}
-
-const STATUS_BAR: Record<string, string> = {
-  confirmado: "#34d399",
-  agendado:   "#60a5fa",
-  aguardando: "#fbbf24",
-  atendido:   "#60a5fa",
-  cancelado:  "#f87171",
-  falta:      "#f87171",
-}
+type TagTone = "neutral" | "ink" | "accent" | "danger" | "ok" | "warn"
 
 function statusKey(s: string = ""): string {
-  return s.toLowerCase().replace(/\s+/g, "")
+  const k = s.toLowerCase().replace(/\s+/g, "")
+  for (const key of ["confirmado", "agendado", "aguardando", "atendido", "cancelado", "falta"]) {
+    if (k.includes(key)) return key
+  }
+  return ""
 }
 
-function statusStyle(s: string = ""): string {
-  const k = statusKey(s)
-  for (const key of Object.keys(STATUS_STYLES)) {
-    if (k.includes(key)) return STATUS_STYLES[key]
-  }
-  return "bg-surface text-text-muted border-border"
+const STATUS_TAG: Record<string, TagTone> = {
+  confirmado: "ok", agendado: "neutral", aguardando: "warn", atendido: "ink", cancelado: "danger", falta: "danger",
 }
 
-function statusBarColor(s: string = ""): string {
-  const k = statusKey(s)
-  for (const key of Object.keys(STATUS_BAR)) {
-    if (k.includes(key)) return STATUS_BAR[key]
-  }
-  return "var(--border)"
+// Aparência do bloco no calendário
+const STATUS_BLOCK: Record<string, string> = {
+  confirmado: "bg-px-ink text-white border-px-ink",
+  agendado:   "bg-white text-px-ink border-px-ink/40",
+  aguardando: "bg-px-accent text-white border-px-accent",
+  atendido:   "bg-px-slate text-white border-px-slate",
+  cancelado:  "bg-px-danger-soft text-px-danger border-px-danger/40 line-through",
+  falta:      "bg-px-danger-soft text-px-danger border-px-danger/40 line-through",
 }
+
+function statusTone(s: string): TagTone { return STATUS_TAG[statusKey(s)] ?? "neutral" }
+function statusBlock(s: string): string { return STATUS_BLOCK[statusKey(s)] ?? "bg-white text-px-ink border-px-ink/40" }
 
 // ── Appointment field accessors ───────────────────────────────────────────────
 
@@ -483,875 +464,327 @@ export default function AgendaPage() {
   }).length
 
   const horasEixo = Array.from({ length: CAL_END - CAL_START + 1 }, (_, i) => CAL_START + i)
+  const hojeISO = toISO(new Date())
+  const foraDaGrade = agendamentos.filter(a => {
+    const m = horaToMinutes(getApptHora(a))
+    return m < CAL_START * 60 || m >= CAL_END * 60
+  }).length
+
+  const abrir = (apt: Appointment) => { setSelected(apt); setNewStatusId(""); setStatusUpdateErro(""); setStatusUpdateOk(false) }
+
+  const itemLista = (apt: Appointment, i: number) => (
+    <li key={i}>
+      <button type="button" onClick={() => abrir(apt)} className="flex w-full items-center gap-4 rounded-px-card bg-white/70 px-4 py-3 text-left transition-colors hover:bg-white">
+        <span className="w-12 shrink-0 text-[15px] font-semibold tabular-nums text-px-ink">{getApptHora(apt).slice(0, 5) || "—"}</span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-[14px] font-semibold text-px-ink">{getApptNome(apt)}</span>
+          {getApptProc(apt) && <span className="block truncate text-[12.5px] text-px-muted">{getApptProc(apt)}</span>}
+        </span>
+        {(apt.profissional ?? apt.nomeUsuario) && <span className="hidden shrink-0 text-[12.5px] text-px-muted md:block">{String(apt.profissional ?? apt.nomeUsuario)}</span>}
+        <Tag tone={statusTone(getApptStatus(apt))}>{getApptStatus(apt) || "Sem status"}</Tag>
+      </button>
+    </li>
+  )
 
   return (
-    <div className="animate-fade-in">
-      <TopBar
-        title="Agenda Inteligente"
-        subtitle="ALA CLÍNICA · MEDX"
+    <div className="px px-ambient min-h-screen animate-fade-in">
+      <PageHeader
+        title="Agenda"
+        caption={`${fmtDateLong(weekStart)} a ${fmtDateLong(weekEnd)}, ${weekStart.getFullYear()}`}
         actions={
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => router.back()}
-              className="flex items-center gap-1 text-[11px] border border-border text-text-muted rounded-lg px-2.5 py-1.5 hover:border-border-hover hover:text-text-secondary transition-colors"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" /> Voltar
-            </button>
-            <button
-              onClick={gerarBriefing}
-              disabled={loadingResumo}
-              className="flex items-center gap-1.5 text-[11px] border border-border text-text-secondary rounded-lg px-3 py-1.5 hover:border-accent-border hover:text-accent transition-colors disabled:opacity-50"
-            >
-              {loadingResumo ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 text-accent" />}
-              <span className="hidden sm:inline">Briefing do dia</span>
-            </button>
-            {/* View toggle */}
-            <div className="flex gap-0.5 bg-surface border border-border rounded-lg p-0.5">
-              <button
-                onClick={() => setViewMode("lista")}
-                className={cn(
-                  "w-8 h-7 rounded flex items-center justify-center transition-all",
-                  viewMode === "lista"
-                    ? "bg-blue-500/15 text-blue-400"
-                    : "text-text-muted hover:text-text-secondary"
-                )}
-                title="Vista lista"
-              >
-                <List className="w-3.5 h-3.5" />
-              </button>
-              <button
-                onClick={() => setViewMode("calendario")}
-                className={cn(
-                  "w-8 h-7 rounded flex items-center justify-center transition-all",
-                  viewMode === "calendario"
-                    ? "bg-blue-500/15 text-blue-400"
-                    : "text-text-muted hover:text-text-secondary"
-                )}
-                title="Vista calendário"
-              >
-                <Calendar className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            <button
-              onClick={() => openNovo()}
-              className="flex items-center gap-1.5 text-[14px] bg-blue-500 text-white font-semibold rounded-lg px-5 py-3 hover:bg-blue-600 transition-colors min-h-[44px]"
-            >
-              <Plus className="w-4 h-4" />
-              <span className="hidden sm:inline">Agendamento</span>
-            </button>
-
-            <button
-              onClick={fetchAgenda}
-              disabled={loading}
-              className="flex items-center gap-1.5 text-[11px] border border-border text-text-secondary rounded-lg px-3 py-1.5 hover:border-border-hover transition-colors"
-            >
-              <RefreshCw className={cn("w-3.5 h-3.5", loading && "animate-spin")} />
-              <span className="hidden sm:inline">Atualizar</span>
-            </button>
-          </div>
+          <>
+            <PxButton variant="secondary" size="sm" leftIcon={loadingResumo ? Loader2 : Sparkles} onClick={gerarBriefing} disabled={loadingResumo}>Briefing do dia</PxButton>
+            <PxButton size="sm" leftIcon={Plus} onClick={() => openNovo()}>Novo agendamento</PxButton>
+          </>
         }
       />
 
-      <div className="p-4 md:p-8 space-y-5">
+      <div className="space-y-4 px-5 pb-10 pt-4 md:px-10">
 
         {resumoDia !== null && (
-          <div className="bg-card border border-accent-border rounded-lg p-5 animate-fade-in">
+          <Panel tone="strong" aria-label="Briefing do dia">
             <div className="flex items-start justify-between gap-3">
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <Sparkles className="w-4 h-4 text-accent" />
-                <span className="text-[11px] font-mono text-accent tracking-widest uppercase">Briefing do dia</span>
-              </div>
-              <button onClick={() => setResumoDia(null)} className="text-text-muted hover:text-text-secondary transition-colors flex-shrink-0">
-                <X className="w-4 h-4" />
-              </button>
+              <h2 className="text-[15px] font-semibold text-px-ink">Briefing do dia</h2>
+              <button type="button" onClick={() => setResumoDia(null)} aria-label="Fechar briefing" className="flex h-8 w-8 items-center justify-center rounded-full bg-px-ink/[0.08] text-px-ink hover:bg-px-ink/15"><X className="h-4 w-4" aria-hidden="true" /></button>
             </div>
-            <p className="mt-3 text-[13px] text-text-primary leading-relaxed">{resumoDia}</p>
-          </div>
+            <p className="mt-2 whitespace-pre-line text-[14px] leading-relaxed text-px-ink">{resumoDia || "Sem resumo para hoje."}</p>
+          </Panel>
         )}
 
-        {/* KPIs */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <StatCard label="Esta Semana"    value={totalSemana} sub="agendamentos"  icon={Calendar}    accent="blue"  />
-          <StatCard label="Hoje"           value={totalHoje}   sub="consultas"     icon={Clock}       accent="blue"  />
-          <StatCard label="Confirmados"    value={confirmados} sub="esta semana"   icon={Stethoscope} accent="green" />
-          <StatCard label="Profissionais"  value={usuarios.length || "—"} sub="na equipe" icon={User} accent="amber" />
-        </div>
-
-        {/* Week nav + filters */}
+        {/* Controles */}
         <div className="flex flex-wrap items-center gap-3">
-          {/* Week navigator */}
-          <div className="flex items-center gap-1 bg-surface border border-border rounded-xl p-1">
-            <button
-              onClick={() => setWeekStart(d => addDays(d, -7))}
-              className="w-7 h-7 rounded-lg flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <span className="px-2 text-[12px] font-medium text-text-primary whitespace-nowrap">
-              {toISO(weekStart).slice(5).replace("-","/")}
-              {" – "}
-              {toISO(weekEnd).slice(5).replace("-","/")}
-              <span className="ml-1.5 text-text-muted text-[11px]">{mesAno}</span>
-            </span>
-            <button
-              onClick={() => setWeekStart(d => addDays(d, 7))}
-              className="w-7 h-7 rounded-lg flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
+          <div className="flex items-center gap-1 rounded-full bg-white/70 p-1">
+            <button type="button" onClick={() => setWeekStart(d => addDays(d, -7))} aria-label="Semana anterior" className="flex h-9 w-9 items-center justify-center rounded-full text-px-ink hover:bg-px-ink/10"><ChevronLeft className="h-4 w-4" aria-hidden="true" /></button>
+            <span className="min-w-[96px] px-1 text-center text-[13px] font-semibold tabular-nums text-px-ink">{toISO(weekStart).slice(8)}/{toISO(weekStart).slice(5, 7)} a {toISO(weekEnd).slice(8)}/{toISO(weekEnd).slice(5, 7)}</span>
+            <button type="button" onClick={() => setWeekStart(d => addDays(d, 7))} aria-label="Próxima semana" className="flex h-9 w-9 items-center justify-center rounded-full text-px-ink hover:bg-px-ink/10"><ChevronRight className="h-4 w-4" aria-hidden="true" /></button>
           </div>
-
-          <button
-            onClick={() => setWeekStart(startOfWeek(new Date()))}
-            className="text-[11px] border border-border text-text-secondary rounded-lg px-3 py-1.5 hover:border-border-hover transition-colors"
-          >
-            Hoje
-          </button>
-
-          {/* Médico filter */}
+          <PxButton variant="secondary" size="sm" onClick={() => setWeekStart(startOfWeek(new Date()))}>Hoje</PxButton>
+          <Segmented label="Modo de exibição" value={viewMode} onChange={setViewMode} options={[{ value: "calendario", label: "Calendário" }, { value: "lista", label: "Lista" }]} />
           {usuarios.length > 0 && (
-            <div className="flex items-center gap-1.5 sm:ml-auto flex-wrap w-full sm:w-auto">
-              <Filter className="w-3.5 h-3.5 text-text-muted flex-shrink-0" />
-              <button
-                onClick={() => setUsuarioFiltro("all")}
-                className={cn(
-                  "text-[10px] px-2.5 py-1 rounded-full border transition-all",
-                  usuarioFiltro === "all"
-                    ? "bg-blue-500/12 border-blue-500/30 text-blue-400 font-medium"
-                    : "border-border text-text-muted hover:text-text-secondary"
-                )}
-              >
-                Todos
-              </button>
-              {usuarios.map(u => (
-                <button
-                  key={String(u.id)}
-                  onClick={() => setUsuarioFiltro(String(u.id))}
-                  className={cn(
-                    "text-[10px] px-2.5 py-1 rounded-full border transition-all",
-                    usuarioFiltro === String(u.id)
-                      ? "bg-blue-500/12 border-blue-500/30 text-blue-400 font-medium"
-                      : "border-border text-text-muted hover:text-text-secondary"
-                  )}
-                >
-                  {u.nome}
-                </button>
-              ))}
-            </div>
+            <Segmented
+              label="Profissional"
+              className="sm:ml-auto"
+              value={usuarioFiltro}
+              onChange={setUsuarioFiltro}
+              options={[{ value: "all", label: "Todos" }, ...usuarios.map(u => ({ value: String(u.id), label: u.nome }))]}
+            />
           )}
         </div>
 
+        <p className="text-[13px] text-px-muted" aria-live="polite">
+          {loading ? "Carregando a semana..." : <><span className="font-semibold text-px-ink tabular-nums">{totalHoje}</span> {totalHoje === 1 ? "consulta hoje" : "consultas hoje"}, <span className="font-semibold text-px-ink tabular-nums">{totalSemana}</span> na semana, <span className="font-semibold text-px-ink tabular-nums">{confirmados}</span> confirmadas ou agendadas.</>}
+        </p>
+
         {error && (
-          <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl px-4 py-3 text-[12px]">
-            <AlertCircle className="w-4 h-4 flex-shrink-0" />
-            {error}
-          </div>
+          <Panel tone="strong" role="alert" className="border border-px-danger/30">
+            <p className="text-[14px] text-px-danger">Não foi possível carregar a agenda ({error}).</p>
+            <div className="mt-3"><PxButton variant="secondary" size="sm" onClick={fetchAgenda}>Tentar de novo</PxButton></div>
+          </Panel>
         )}
 
-        {/* ── LISTA VIEW ───────────────────────────────────────────────────── */}
+        {viewMode === "calendario" && foraDaGrade > 0 && !loading && (
+          <p className="text-[13px] text-px-muted">{foraDaGrade} {foraDaGrade === 1 ? "agendamento fora" : "agendamentos fora"} do intervalo de {CAL_START}h às {CAL_END}h não aparece no calendário. Veja na lista.</p>
+        )}
+
+        {/* LISTA */}
         {viewMode === "lista" && (
           <div className="space-y-5">
             {loading ? (
-              <div className="space-y-3">
-                {[1,2,3].map(i => <div key={i} className="h-20 rounded-xl bg-surface border border-border animate-pulse" />)}
-              </div>
-            ) : (
-              dias.map(dia => {
-                const items = byDay(dia)
-                const isHoje = toISO(dia) === toISO(new Date())
-                return (
-                  <div key={toISO(dia)}>
-                    {/* Day header */}
-                    <div className={cn(
-                      "flex items-center gap-3 mb-2",
-                    )}>
-                      <div className={cn(
-                        "flex items-center gap-2 text-[11px] font-semibold uppercase tracking-widest font-mono",
-                        isHoje ? "text-blue-400" : "text-text-muted"
-                      )}>
-                        <span>{DIAS_SEMANA[dia.getDay()]}</span>
-                        <span className={cn(
-                          "text-[16px] font-bold leading-none",
-                          isHoje ? "text-blue-400" : "text-text-secondary"
-                        )}>
-                          {dia.getDate()}
-                        </span>
-                        <span className="text-[10px] font-normal">{fmtDateLong(dia)}</span>
-                      </div>
-                      {isHoje && (
-                        <span className="text-badge font-mono font-semibold px-2 py-0.5 rounded-full bg-blue-500/12 border border-blue-500/30 text-blue-400">
-                          HOJE
-                        </span>
-                      )}
-                      {items.length > 0 && (
-                        <span className="text-[10px] text-text-muted ml-auto">
-                          {items.length} {items.length === 1 ? "consulta" : "consultas"}
-                        </span>
-                      )}
-                    </div>
-
-                    {items.length === 0 ? (
-                      <div className="border border-dashed border-border rounded-xl px-5 py-4 text-[12px] text-text-muted flex items-center justify-between">
-                        <span>Sem agendamentos</span>
-                        <button
-                          onClick={() => openNovo(toISO(dia))}
-                          className="flex items-center gap-1 text-[11px] text-blue-400 hover:text-blue-300 transition-colors"
-                        >
-                          <Plus className="w-3.5 h-3.5" /> Adicionar
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="space-y-1.5">
-                        {items.map((apt, i) => (
-                          <button
-                            key={i}
-                            onClick={() => { setSelected(apt); setNewStatusId(""); setStatusUpdateErro("") }}
-                            className="w-full text-left bg-surface border border-border rounded-xl px-4 py-3 hover:border-blue-500/30 hover:bg-blue-500/[0.03] transition-all group flex items-center gap-4"
-                          >
-                            {/* Status bar */}
-                            <div
-                              className="w-1 self-stretch rounded-full flex-shrink-0"
-                              style={{ background: statusBarColor(getApptStatus(apt)) }}
-                            />
-                            {/* Time */}
-                            <div className="flex-shrink-0 w-12 text-center">
-                              <div className="text-[13px] font-mono font-bold text-text-primary">
-                                {getApptHora(apt).slice(0, 5) || "—"}
-                              </div>
-                            </div>
-                            {/* Info */}
-                            <div className="flex-1 min-w-0">
-                              <div className="text-[13px] font-medium text-text-primary truncate">
-                                {getApptNome(apt)}
-                              </div>
-                              {getApptProc(apt) && (
-                                <div className="text-[11px] text-text-muted truncate mt-0.5">
-                                  {getApptProc(apt)}
-                                </div>
-                              )}
-                            </div>
-                            {/* Profissional */}
-                            {(apt.profissional ?? apt.nomeUsuario) && (
-                              <div className="hidden md:flex items-center gap-1.5 text-[11px] text-text-muted flex-shrink-0">
-                                <User className="w-3 h-3" />
-                                {String(apt.profissional ?? apt.nomeUsuario)}
-                              </div>
-                            )}
-                            {/* Status badge */}
-                            <span className={cn(
-                              "text-badge font-mono font-semibold px-2 py-0.5 rounded-full border flex-shrink-0",
-                              statusStyle(getApptStatus(apt))
-                            )}>
-                              {getApptStatus(apt) || "—"}
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
+              <div className="space-y-3">{[1, 2, 3].map(i => <div key={i} className="h-16 animate-pulse rounded-px-card bg-px-ink/10" />)}</div>
+            ) : dias.map(dia => {
+              const items = byDay(dia)
+              const hoje = toISO(dia) === hojeISO
+              return (
+                <section key={toISO(dia)} aria-label={`${DIAS_SEMANA[dia.getDay()]} ${dia.getDate()}`}>
+                  <div className="mb-2 flex items-baseline gap-3">
+                    <h2 className="text-[15px] font-semibold text-px-ink">{DIAS_SEMANA[dia.getDay()]}, {fmtDateLong(dia)}</h2>
+                    {hoje && <Tag tone="ink">Hoje</Tag>}
+                    {items.length > 0 && <span className="ml-auto text-[12.5px] text-px-muted">{items.length} {items.length === 1 ? "consulta" : "consultas"}</span>}
                   </div>
-                )
-              })
-            )}
+                  {items.length === 0 ? (
+                    <div className="flex items-center justify-between rounded-px-card border border-dashed border-px-ink/25 px-4 py-3 text-[13px] text-px-muted">
+                      <span>Sem agendamentos</span>
+                      <button type="button" onClick={() => openNovo(toISO(dia))} className="font-semibold text-px-accent underline-offset-4 hover:underline">Adicionar</button>
+                    </div>
+                  ) : <ul className="space-y-1.5">{items.map(itemLista)}</ul>}
+                </section>
+              )
+            })}
           </div>
         )}
 
-        {/* ── CALENDÁRIO VIEW ──────────────────────────────────────────────── */}
+        {/* CALENDÁRIO */}
         {viewMode === "calendario" && (
-          <div className="bg-surface border border-border rounded-xl overflow-hidden">
-            {/* Mobile: single-day navigation */}
+          <Panel tone="light" className="overflow-hidden !p-0">
+            {/* Celular: um dia por vez */}
             <div className="md:hidden">
-              <div className="flex items-center justify-between px-3 py-2.5 border-b border-border">
-                <button
-                  onClick={() => setMobileCalIdx(i => Math.max(0, i - 1))}
-                  disabled={mobileCalIdx === 0}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-text-primary disabled:opacity-30 hover:bg-surface-2 transition-colors"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                <div className="text-center flex-1">
-                  <div className={cn(
-                    "text-[12px] font-semibold",
-                    toISO(dias[mobileCalIdx]) === toISO(new Date()) ? "text-blue-400" : "text-text-primary"
-                  )}>
-                    {DIAS_SEMANA[dias[mobileCalIdx].getDay()]}, {fmtDateLong(dias[mobileCalIdx])}
-                  </div>
-                  {toISO(dias[mobileCalIdx]) === toISO(new Date()) && (
-                    <span className="text-[9px] font-mono text-blue-400 tracking-widest">HOJE</span>
-                  )}
+              <div className="flex items-center justify-between border-b border-px-line px-3 py-2.5">
+                <button type="button" onClick={() => setMobileCalIdx(i => Math.max(0, i - 1))} disabled={mobileCalIdx === 0} aria-label="Dia anterior" className="flex h-10 w-10 items-center justify-center rounded-full text-px-ink hover:bg-px-ink/10 disabled:opacity-30"><ChevronLeft className="h-4 w-4" aria-hidden="true" /></button>
+                <div className="text-center text-[14px] font-semibold text-px-ink">
+                  {DIAS_SEMANA[dias[mobileCalIdx].getDay()]}, {fmtDateLong(dias[mobileCalIdx])}
+                  {toISO(dias[mobileCalIdx]) === hojeISO && <span className="ml-2 align-middle"><Tag tone="ink">Hoje</Tag></span>}
                 </div>
-                <button
-                  onClick={() => setMobileCalIdx(i => Math.min(6, i + 1))}
-                  disabled={mobileCalIdx === 6}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-text-primary disabled:opacity-30 hover:bg-surface-2 transition-colors"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
+                <button type="button" onClick={() => setMobileCalIdx(i => Math.min(6, i + 1))} disabled={mobileCalIdx === 6} aria-label="Próximo dia" className="flex h-10 w-10 items-center justify-center rounded-full text-px-ink hover:bg-px-ink/10 disabled:opacity-30"><ChevronRight className="h-4 w-4" aria-hidden="true" /></button>
               </div>
-
               {loading ? (
-                <div className="p-3 space-y-2">
-                  {[1, 2, 3].map(i => (
-                    <div key={i} className="h-14 rounded-xl bg-surface border border-border animate-pulse" />
-                  ))}
-                </div>
+                <div className="space-y-2 p-3">{[1, 2, 3].map(i => <div key={i} className="h-14 animate-pulse rounded-px-card bg-px-ink/10" />)}</div>
               ) : (() => {
-                const mobileItems = byDay(dias[mobileCalIdx])
-                return mobileItems.length === 0 ? (
-                  <div className="flex items-center justify-between px-4 py-5 text-[12px] text-text-muted">
+                const doDia = byDay(dias[mobileCalIdx])
+                return doDia.length === 0 ? (
+                  <div className="flex items-center justify-between px-4 py-5 text-[13px] text-px-muted">
                     <span>Sem agendamentos</span>
-                    <button
-                      onClick={() => openNovo(toISO(dias[mobileCalIdx]))}
-                      className="flex items-center gap-1 text-[11px] text-blue-400 hover:text-blue-300 transition-colors"
-                    >
-                      <Plus className="w-3.5 h-3.5" /> Adicionar
-                    </button>
+                    <button type="button" onClick={() => openNovo(toISO(dias[mobileCalIdx]))} className="font-semibold text-px-accent underline-offset-4 hover:underline">Adicionar</button>
                   </div>
                 ) : (
-                  <div className="divide-y divide-border">
-                    {mobileItems.map((apt, j) => (
-                      <button
-                        key={j}
-                        onClick={() => { setSelected(apt); setNewStatusId(""); setStatusUpdateErro("") }}
-                        className="w-full text-left flex items-center gap-3 px-4 py-3 hover:bg-surface-2 transition-colors"
-                      >
-                        <div className="w-1 self-stretch rounded-full flex-shrink-0" style={{ background: statusBarColor(getApptStatus(apt)) }} />
-                        <div className="w-12 text-center flex-shrink-0">
-                          <div className="text-[13px] font-mono font-bold text-text-primary">
-                            {getApptHora(apt).slice(0, 5) || "—"}
-                          </div>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-[13px] font-medium text-text-primary truncate">{getApptNome(apt)}</div>
-                          {getApptProc(apt) && (
-                            <div className="text-[11px] text-text-muted truncate">{getApptProc(apt)}</div>
-                          )}
-                        </div>
-                        <span className={cn(
-                          "text-badge font-mono font-semibold px-2 py-0.5 rounded-full border flex-shrink-0",
-                          statusStyle(getApptStatus(apt))
-                        )}>
-                          {getApptStatus(apt) || "—"}
-                        </span>
-                      </button>
-                    ))}
-                    <div className="flex justify-center p-2 border-t border-border">
-                      <button
-                        onClick={() => openNovo(toISO(dias[mobileCalIdx]))}
-                        className="flex items-center gap-1 text-[11px] text-blue-400 hover:text-blue-300 px-3 py-1.5 transition-colors"
-                      >
-                        <Plus className="w-3.5 h-3.5" /> Adicionar
-                      </button>
-                    </div>
+                  <div className="p-3">
+                    <ul className="space-y-1.5">{doDia.map(itemLista)}</ul>
+                    <div className="mt-3 flex justify-center"><PxButton variant="quiet" size="sm" leftIcon={Plus} onClick={() => openNovo(toISO(dias[mobileCalIdx]))}>Adicionar</PxButton></div>
                   </div>
                 )
               })()}
             </div>
 
-            {/* Day headers — desktop */}
-            <div className="hidden md:grid grid-cols-[48px_repeat(7,1fr)] border-b border-border">
-              <div /> {/* spacer for time axis */}
-              {dias.map((dia, i) => {
-                const isHoje = toISO(dia) === toISO(new Date())
-                const count  = byDay(dia).length
-                return (
-                  <div
-                    key={i}
-                    className={cn(
-                      "px-2 py-3 text-center border-l border-border",
-                      isHoje && "bg-blue-500/[0.06]"
-                    )}
-                  >
-                    <div className={cn(
-                      "text-[9px] font-mono uppercase tracking-widest",
-                      isHoje ? "text-blue-400" : "text-text-muted"
-                    )}>
-                      {DIAS_SEMANA[dia.getDay()]}
+            {/* Computador: semana */}
+            <div className="hidden md:block">
+              <div className="grid grid-cols-[48px_repeat(7,1fr)] border-b border-px-line">
+                <div />
+                {dias.map((dia, i) => {
+                  const hoje = toISO(dia) === hojeISO
+                  const n = byDay(dia).length
+                  return (
+                    <div key={i} className="border-l border-px-line px-2 py-3 text-center">
+                      <div className="text-[12px] text-px-muted">{DIAS_SEMANA[dia.getDay()]}</div>
+                      <div className={cn("mx-auto mt-1 flex h-9 w-9 items-center justify-center rounded-full text-[16px] font-semibold tabular-nums", hoje ? "bg-px-ink text-white" : "text-px-ink")}>{dia.getDate()}</div>
+                      <div className="mt-1 h-4 text-[11.5px] text-px-muted">{n > 0 ? `${n} ${n === 1 ? "consulta" : "consultas"}` : ""}</div>
                     </div>
-                    <div className={cn(
-                      "text-[18px] font-semibold mt-0.5",
-                      isHoje ? "text-blue-400" : "text-text-primary"
-                    )}>
-                      {dia.getDate()}
-                    </div>
-                    {count > 0 && (
-                      <div className="text-[9px] text-text-muted">
-                        {count} {count === 1 ? "consulta" : "consultas"}
+                  )
+                })}
+              </div>
+              <div className="overflow-y-auto" style={{ maxHeight: 640 }}>
+                {loading ? (
+                  <div className="space-y-3 p-4">{[1, 2, 3, 4].map(i => <div key={i} className="h-10 animate-pulse rounded-px-ctl bg-px-ink/10" />)}</div>
+                ) : (
+                  <div className="relative grid grid-cols-[48px_repeat(7,1fr)]" style={{ height: (CAL_END - CAL_START + 1) * SLOT_H }}>
+                    {horasEixo.map(h => (
+                      <div key={h} className="contents">
+                        <div className="absolute left-0 flex w-12 justify-end pr-2 text-[11.5px] tabular-nums text-px-muted" style={{ top: (h - CAL_START) * SLOT_H - 7 }}>{String(h).padStart(2, "0")}h</div>
+                        <div className="absolute left-12 right-0 border-t border-px-line" style={{ top: (h - CAL_START) * SLOT_H }} />
                       </div>
-                    )}
+                    ))}
+                    {dias.map((dia, colIdx) => {
+                      const items = byDay(dia)
+                      return (
+                        <div key={colIdx} className={cn("relative border-l border-px-line", toISO(dia) === hojeISO && "bg-white/40")} style={{ gridColumn: colIdx + 2 }}>
+                          <button type="button" onClick={() => openNovo(toISO(dia))} aria-label={`Novo agendamento em ${fmtDateLong(dia)}`} className="absolute inset-0 z-0 h-full w-full opacity-0 transition-opacity hover:bg-px-ink/[0.04] hover:opacity-100 focus-visible:opacity-100" />
+                          {computeColumns(items).map(({ apt, col, maxCols }, j) => {
+                            const hora = getApptHora(apt)
+                            const mins = horaToMinutes(hora)
+                            if (mins < CAL_START * 60 || mins >= CAL_END * 60) return null
+                            const height = eventHeight(hora, apt.horaFim as string | undefined)
+                            const st = getApptStatus(apt)
+                            const wPct = 100 / maxCols
+                            return (
+                              <button
+                                key={j}
+                                type="button"
+                                onClick={e => { e.stopPropagation(); abrir(apt) }}
+                                aria-label={`${hora.slice(0, 5)} ${getApptNome(apt)}, ${st || "sem status"}`}
+                                className={cn("absolute z-10 overflow-hidden rounded-px-ctl border px-2 py-1 text-left transition-shadow hover:z-20 hover:shadow-[0_4px_14px_rgba(20,20,20,0.25)]", statusBlock(st))}
+                                style={{ top: eventTop(hora) + 2, height: Math.max(height - 4, 26), left: `calc(${col * wPct}% + 2px)`, width: `calc(${wPct}% - 4px)` }}
+                              >
+                                <span className="block truncate text-[11.5px] font-semibold leading-tight">{hora.slice(0, 5)} {getApptNome(apt)}</span>
+                                {height > 44 && <span className="block truncate text-[11px] leading-tight opacity-90">{st || getApptProc(apt)}</span>}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      )
+                    })}
                   </div>
-                )
-              })}
+                )}
+              </div>
             </div>
-
-            {/* Scrollable time grid — desktop only */}
-            <div className="hidden md:block overflow-y-auto" style={{ maxHeight: 640 }}>
-              {loading ? (
-                <div className="p-4 space-y-3">
-                  {[1, 2, 3, 4].map(i => (
-                    <div key={i} className="animate-pulse flex gap-3 items-start">
-                      <div className="w-10 h-3 rounded bg-surface flex-shrink-0 mt-1" />
-                      {[...Array(7)].map((_, j) => (
-                        <div key={j} className="flex-1 h-10 rounded-lg bg-surface" style={{ opacity: Math.random() > 0.7 ? 1 : 0.3 }} />
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div
-                  className="grid grid-cols-[48px_repeat(7,1fr)] relative"
-                  style={{ height: (CAL_END - CAL_START + 1) * SLOT_H }}
-                >
-                  {/* Time axis + hour lines */}
-                  {horasEixo.map(h => (
-                    <div
-                      key={h}
-                      className="contents"
-                    >
-                      {/* Hour label */}
-                      <div
-                        className="absolute left-0 w-12 flex items-start justify-end pr-2 text-[9px] font-mono text-text-muted"
-                        style={{ top: (h - CAL_START) * SLOT_H - 6 }}
-                      >
-                        {String(h).padStart(2,"0")}h
-                      </div>
-                      {/* Horizontal line */}
-                      <div
-                        className="absolute left-12 right-0 border-t border-border"
-                        style={{ top: (h - CAL_START) * SLOT_H }}
-                      />
-                    </div>
-                  ))}
-
-                  {/* Day columns with events */}
-                  {dias.map((dia, colIdx) => {
-                    const items  = byDay(dia)
-                    const isHoje = toISO(dia) === toISO(new Date())
-                    return (
-                      <div
-                        key={colIdx}
-                        className={cn(
-                          "relative border-l border-border",
-                          isHoje && "bg-blue-500/[0.02]"
-                        )}
-                        style={{ gridColumn: colIdx + 2 }}
-                      >
-                        {/* "Add" click target */}
-                        <button
-                          onClick={() => openNovo(toISO(dia))}
-                          className="absolute inset-0 w-full h-full opacity-0 hover:opacity-100 hover:bg-blue-500/[0.04] transition-opacity z-0"
-                        />
-                        {items.length === 0 && (
-                          <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity pointer-events-none">
-                            <Plus className="w-4 h-4 text-blue-400/50" />
-                          </div>
-                        )}
-                        {/* Events */}
-                        {computeColumns(items).map(({ apt, col, maxCols }, j) => {
-                          const hora   = getApptHora(apt)
-                          const mins   = horaToMinutes(hora)
-                          if (mins < CAL_START * 60 || mins >= CAL_END * 60) return null
-                          const top    = eventTop(hora)
-                          const height = eventHeight(hora, apt.horaFim as string | undefined)
-                          const sColor = statusBarColor(getApptStatus(apt))
-                          const wPct   = 100 / maxCols
-                          const lPct   = col * wPct
-                          return (
-                            <button
-                              key={j}
-                              onClick={e => { e.stopPropagation(); setSelected(apt); setNewStatusId(""); setStatusUpdateErro("") }}
-                              className="absolute z-10 rounded-lg border text-left overflow-hidden hover:z-20 hover:scale-[1.02] transition-transform"
-                              style={{
-                                top:             top + 2,
-                                height:          Math.max(height - 4, 24),
-                                left:            `calc(${lPct}% + 2px)`,
-                                width:           `calc(${wPct}% - 4px)`,
-                                borderColor:     `${sColor}55`,
-                                backgroundColor: `${sColor}18`,
-                              }}
-                            >
-                              <div
-                                className="absolute left-0 top-0 bottom-0 w-0.5 rounded-l-full"
-                                style={{ background: sColor }}
-                              />
-                              <div className="pl-2 pr-1 py-0.5">
-                                <div className="text-[9px] font-mono font-semibold text-text-secondary leading-none">
-                                  {hora.slice(0, 5)}
-                                </div>
-                                <div className="text-[10px] font-medium text-text-primary leading-snug line-clamp-2 mt-0.5">
-                                  {getApptNome(apt)}
-                                </div>
-                                {height > 40 && getApptProc(apt) && (
-                                  <div className="text-[8px] text-text-muted truncate mt-0.5">
-                                    {getApptProc(apt)}
-                                  </div>
-                                )}
-                              </div>
-                            </button>
-                          )
-                        })}
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
+          </Panel>
         )}
 
-        {/* Status legend */}
-        <div className="flex flex-wrap gap-2">
-          {Object.entries({
-            Confirmado: "confirmado",
-            Agendado:   "agendado",
-            Aguardando: "aguardando",
-            Atendido:   "atendido",
-            Cancelado:  "cancelado",
-          }).map(([label, key]) => (
-            <div key={key} className={cn(
-              "flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-full border",
-              STATUS_STYLES[key]
-            )}>
-              <div className="w-1.5 h-1.5 rounded-full bg-current" />
-              {label}
-            </div>
+        {/* Legenda */}
+        <div className="flex flex-wrap items-center gap-2" aria-label="Legenda dos status">
+          {[["Confirmado", "confirmado"], ["Agendado", "agendado"], ["Aguardando", "aguardando"], ["Atendido", "atendido"], ["Cancelado", "cancelado"]].map(([label, key]) => (
+            <span key={key} className={cn("inline-flex items-center rounded-px-ctl border px-2.5 py-1 text-[12px] font-medium", STATUS_BLOCK[key])}>{label}</span>
           ))}
         </div>
-
       </div>
 
-      {/* ── DETAIL MODAL ─────────────────────────────────────────────────────── */}
-      {selected && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-          onClick={() => setSelected(null)}
-        >
-          <div
-            className="bg-surface border border-border rounded-2xl w-full max-w-md shadow-2xl overflow-hidden"
-            onClick={e => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="px-6 py-4 border-b border-border flex items-start justify-between gap-3">
-              <div>
-                <div
-                  className="text-[17px] font-semibold text-text-primary"
-                  style={{ fontFamily: "var(--font-playfair)" }}
-                >
-                  {getApptNome(selected)}
-                </div>
-                <div className="text-[12px] text-text-muted mt-0.5 font-mono">
-                  {getApptDate(selected).split("-").reverse().join("/")}
-                  {getApptHora(selected) && ` · ${getApptHora(selected).slice(0,5)}`}
-                </div>
-              </div>
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <span className={cn(
-                  "text-badge font-mono font-semibold px-2 py-0.5 rounded-full border",
-                  statusStyle(getApptStatus(selected))
-                )}>
-                  {getApptStatus(selected) || "—"}
-                </span>
-                <Button variant="secondary" size="sm" onClick={() => setSelected(null)} className="w-7 h-7 p-0 border-0 hover:bg-surface-2" aria-label="Fechar">
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
+      {/* Detalhe */}
+      <PxModal open={selected !== null} onClose={() => setSelected(null)} title={selected ? getApptNome(selected) : ""}>
+        {selected && (
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center gap-2 text-[13px] text-px-muted">
+              <span className="tabular-nums">{getApptDate(selected).split("-").reverse().join("/")}{getApptHora(selected) && `, ${getApptHora(selected).slice(0, 5)}`}{selected.horaFim ? ` às ${String(selected.horaFim).slice(0, 5)}` : ""}</span>
+              <Tag tone={statusTone(getApptStatus(selected))}>{getApptStatus(selected) || "Sem status"}</Tag>
             </div>
+            <dl className="space-y-2 text-[13.5px]">
+              {getApptProc(selected) && <Row label="Procedimento" value={getApptProc(selected)} />}
+              {(selected.profissional ?? selected.nomeUsuario) && <Row label="Profissional" value={String(selected.profissional ?? selected.nomeUsuario)} />}
+              {selected.observacao && <Row label="Observação" value={String(selected.observacao)} />}
+              {getApptPatientId(selected) && <Row label="Paciente" value={`#${getApptPatientId(selected)}`} />}
+            </dl>
 
-            {/* Body */}
-            <div className="px-6 py-4 space-y-2.5 text-[12px]">
-              {getApptProc(selected) && (
-                <Row label="Procedimento" value={getApptProc(selected)} />
-              )}
-              {(selected.profissional ?? selected.nomeUsuario) && (
-                <Row label="Profissional" value={String(selected.profissional ?? selected.nomeUsuario)} />
-              )}
-              {selected.horaFim && (
-                <Row label="Horário" value={`${getApptHora(selected).slice(0,5)} – ${String(selected.horaFim).slice(0,5)}`} />
-              )}
-              {selected.observacao && (
-                <Row label="Observação" value={String(selected.observacao)} />
-              )}
-              {getApptPatientId(selected) && (
-                <Row label="ID Paciente" value={`#${getApptPatientId(selected)}`} mono />
-              )}
-            </div>
-
-            {/* Update status */}
             {statusList.length > 0 && (
-              <div className="px-6 pb-4 space-y-2">
-                <label className="text-[10px] font-mono text-text-muted uppercase tracking-widest block">
-                  Atualizar Status
-                </label>
-                <div className="flex gap-2">
-                  <select
-                    value={newStatusId}
-                    onChange={e => setNewStatusId(e.target.value)}
-                    className="flex-1 bg-surface-2 border border-border rounded-lg px-3 py-2 text-[12px] text-text-primary outline-none focus:border-blue-500/40 transition-colors"
-                  >
-                    <option value="">Selecionar status...</option>
-                    {statusList.map(s => (
-                      <option key={String(s.id)} value={String(s.id)}>
-                        {s.nome}
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    onClick={atualizarStatus}
-                    disabled={!newStatusId || updatingStatus || statusUpdateOk}
-                    className={cn(
-                      "flex items-center gap-1.5 px-3 py-2 rounded-lg text-[12px] font-semibold transition-all",
-                      statusUpdateOk
-                        ? "bg-emerald-500/10 border border-emerald-500/30 text-emerald-400"
-                        : "bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-40"
-                    )}
-                  >
-                    {updatingStatus  ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                     : statusUpdateOk ? <Check   className="w-3.5 h-3.5" />
-                     : <Check className="w-3.5 h-3.5" />}
-                    {statusUpdateOk ? "Salvo!" : "Salvar"}
-                  </button>
-                </div>
-
-                {statusUpdateErro && (
-                  <div className="bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg px-3 py-2 text-[11px]">
-                    {statusUpdateErro}
+              <div>
+                <Field label="Atualizar status" htmlFor="agenda-status" error={statusUpdateErro || undefined}>
+                  <div className="flex gap-2">
+                    <PxSelect id="agenda-status" value={newStatusId} onChange={e => setNewStatusId(e.target.value)}>
+                      <option value="">Selecione</option>
+                      {statusList.map(s => <option key={String(s.id)} value={String(s.id)}>{s.nome}</option>)}
+                    </PxSelect>
+                    <PxButton onClick={atualizarStatus} loading={updatingStatus} disabled={!newStatusId || statusUpdateOk}>{statusUpdateOk ? "Salvo" : "Salvar"}</PxButton>
                   </div>
-                )}
-                {statusUpdateOk && !statusUpdateErro && (
-                  <div className="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-lg px-3 py-2 text-[11px]">
-                    <Check className="w-3 h-3" /> Status atualizado com sucesso!
-                  </div>
-                )}
+                </Field>
+                {statusUpdateOk && <p role="status" className="mt-2 text-[12.5px] font-medium text-px-ok">Status atualizado.</p>}
               </div>
             )}
 
-            {/* Footer actions */}
-            <div className="px-6 pb-5 pt-2 flex gap-2">
-              {getApptPatientId(selected) && (
-                <button
-                  onClick={() => router.push(`/copiloto?pacienteId=${getApptPatientId(selected)}`)}
-                  className="flex-1 flex items-center justify-center gap-2 bg-blue-500/12 border border-blue-500/30 text-blue-400 text-[12px] font-semibold rounded-xl py-2.5 hover:bg-blue-500/20 transition-all"
-                >
-                  <Bot className="w-3.5 h-3.5" />
-                  Abrir no Copiloto
-                </button>
-              )}
-              <button
-                onClick={() => setSelected(null)}
-                className={cn(
-                  "text-[12px] border border-border text-text-secondary rounded-xl py-2.5 hover:border-border-hover transition-colors",
-                  getApptPatientId(selected) ? "px-4" : "flex-1"
-                )}
-              >
-                Fechar
-              </button>
+            <div className="flex gap-2 pt-1">
+              {getApptPatientId(selected) && <PxButton fullWidth variant="secondary" onClick={() => router.push(`/copiloto?pacienteId=${getApptPatientId(selected)}`)}>Abrir no Copiloto</PxButton>}
+              <PxButton fullWidth variant="quiet" onClick={() => setSelected(null)}>Fechar</PxButton>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </PxModal>
 
-      {/* ── NOVO AGENDAMENTO MODAL ─────────────────────────────────────────── */}
-      {novoOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-          onClick={() => setNovoOpen(false)}
-        >
-          <div
-            className="bg-surface border border-border rounded-2xl w-full max-w-md shadow-2xl overflow-hidden"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-              <div
-                className="text-[15px] font-semibold text-text-primary"
-                style={{ fontFamily: "var(--font-playfair)" }}
-              >
-                Novo Agendamento
-              </div>
-              <Button variant="secondary" size="sm" onClick={() => setNovoOpen(false)} className="w-7 h-7 p-0 border-0 hover:bg-surface-2" aria-label="Fechar">
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-
-            <div className="px-6 py-5 space-y-4">
-
-              {/* Patient search */}
+      {/* Novo agendamento */}
+      <PxModal open={novoOpen} onClose={() => setNovoOpen(false)} title="Novo agendamento">
+        <div className="space-y-4">
+          <div className="relative">
+            <Field label="Paciente" htmlFor="ag-pac">
               <div className="relative">
-                <label className="text-[10px] font-mono text-text-muted uppercase tracking-widest block mb-1.5">
-                  Paciente
-                </label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted pointer-events-none" />
-                  {novoPacLoad && (
-                    <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted animate-spin" />
-                  )}
-                  <input
-                    value={novoPacSel ? getPacNome(novoPacSel) : novoPacQ}
-                    onChange={e => {
-                      if (novoPacSel) { setNovoPacSel(null); setNovoPacRes([]) }
-                      buscarPaciente(e.target.value)
-                    }}
-                    placeholder="Digite o nome do paciente..."
-                    className="w-full bg-surface-2 border border-border rounded-lg pl-9 pr-9 py-2.5 text-[12px] text-text-primary placeholder:text-text-muted focus:border-blue-500/40 outline-none transition-colors"
-                  />
-                  {novoPacSel && (
-                    <button
-                      onClick={() => { setNovoPacSel(null); setNovoPacQ(""); setNovoPacRes([]) }}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                </div>
-                {novoPacRes.length > 0 && !novoPacSel && (
-                  <div className="absolute top-full left-0 right-0 z-20 bg-surface border border-border rounded-xl mt-1 shadow-xl overflow-hidden">
-                    {novoPacRes.map((p, i) => (
-                      <button
-                        key={i}
-                        onClick={() => { setNovoPacSel(p); setNovoPacRes([]) }}
-                        className="w-full text-left px-4 py-2.5 text-[12px] text-text-secondary hover:bg-surface-2 transition-colors border-b border-border last:border-b-0"
-                      >
-                        <span className="font-medium">{getPacNome(p)}</span>
-                        {getPacId(p) && (
-                          <span className="ml-2 text-[10px] text-text-muted font-mono">#{getPacId(p)}</span>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Date + Times */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                <div>
-                  <label className="text-[10px] font-mono text-text-muted uppercase tracking-widest block mb-1.5">Data</label>
-                  <input
-                    type="date"
-                    value={novoForm.data}
-                    onChange={e => setNovoForm(f => ({ ...f, data: e.target.value }))}
-                    className="w-full bg-surface-2 border border-border rounded-lg px-2 py-2.5 text-[11px] text-text-primary outline-none focus:border-blue-500/40 transition-colors"
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] font-mono text-text-muted uppercase tracking-widest block mb-1.5">Início</label>
-                  <input
-                    type="time"
-                    value={novoForm.hora}
-                    onChange={e => setNovoForm(f => ({ ...f, hora: e.target.value }))}
-                    className="w-full bg-surface-2 border border-border rounded-lg px-2 py-2.5 text-[11px] text-text-primary outline-none focus:border-blue-500/40 transition-colors"
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] font-mono text-text-muted uppercase tracking-widest block mb-1.5">Fim</label>
-                  <input
-                    type="time"
-                    value={novoForm.horaFim}
-                    onChange={e => setNovoForm(f => ({ ...f, horaFim: e.target.value }))}
-                    className="w-full bg-surface-2 border border-border rounded-lg px-2 py-2.5 text-[11px] text-text-primary outline-none focus:border-blue-500/40 transition-colors"
-                  />
-                </div>
-              </div>
-
-              {/* Doctor */}
-              <div>
-                <label className="text-[10px] font-mono text-text-muted uppercase tracking-widest block mb-1.5">Profissional</label>
-                {usuarios.length > 0 ? (
-                  <div className="flex gap-2 flex-wrap">
-                    {usuarios.map(u => (
-                      <button
-                        key={String(u.id)}
-                        onClick={() => setNovoForm(f => ({ ...f, idUsuario: String(u.id) }))}
-                        className={cn(
-                          "text-[11px] px-3 py-1.5 rounded-full border transition-all",
-                          novoForm.idUsuario === String(u.id)
-                            ? "bg-blue-500/12 border-blue-500/30 text-blue-400 font-medium"
-                            : "border-border text-text-muted hover:text-text-secondary"
-                        )}
-                      >
-                        {u.nome}
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <input
-                    value={novoForm.idUsuario}
-                    onChange={e => setNovoForm(f => ({ ...f, idUsuario: e.target.value }))}
-                    placeholder="ID do profissional"
-                    className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2 text-[12px] text-text-primary outline-none focus:border-blue-500/40"
-                  />
-                )}
-              </div>
-
-              {/* Procedure */}
-              <div>
-                <label className="text-[10px] font-mono text-text-muted uppercase tracking-widest block mb-1.5">Tipo de Consulta</label>
-                <select
-                  value={novoForm.procedimento}
-                  onChange={e => setNovoForm(f => ({ ...f, procedimento: e.target.value }))}
-                  className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2.5 text-[12px] text-text-primary outline-none focus:border-blue-500/40 transition-colors truncate"
-                >
-                  {TIPOS_CONSULTA.map(t => <option key={t}>{t}</option>)}
-                </select>
-              </div>
-
-              {/* Observação */}
-              <div>
-                <label className="text-[10px] font-mono text-text-muted uppercase tracking-widest block mb-1.5">Observação</label>
-                <input
-                  value={novoForm.observacao}
-                  onChange={e => setNovoForm(f => ({ ...f, observacao: e.target.value }))}
-                  placeholder="Opcional"
-                  className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2.5 text-[12px] text-text-primary placeholder:text-text-muted focus:border-blue-500/40 outline-none transition-colors"
+                <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-px-muted" aria-hidden="true" />
+                <PxInput
+                  id="ag-pac"
+                  className="pl-10"
+                  value={novoPacSel ? getPacNome(novoPacSel) : novoPacQ}
+                  onChange={e => { if (novoPacSel) { setNovoPacSel(null); setNovoPacRes([]) } buscarPaciente(e.target.value) }}
+                  placeholder="Digite o nome do paciente"
+                  autoComplete="off"
                 />
+                {novoPacLoad && <Loader2 className="absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-px-muted" aria-hidden="true" />}
               </div>
+            </Field>
+            {novoPacRes.length > 0 && !novoPacSel && (
+              <ul className="px-glass-strong absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-px-card shadow-[0_10px_30px_rgba(20,20,20,0.18)]">
+                {novoPacRes.map((p, i) => (
+                  <li key={i}>
+                    <button type="button" onClick={() => { setNovoPacSel(p); setNovoPacRes([]) }} className="flex min-h-[44px] w-full items-center justify-between gap-3 px-4 text-left text-[13.5px] text-px-ink hover:bg-px-ink/10">
+                      <span className="truncate font-medium">{getPacNome(p)}</span>
+                      {getPacId(p) && <span className="shrink-0 text-[12px] tabular-nums text-px-muted">#{getPacId(p)}</span>}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
 
-              {novoError && (
-                <div className="bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl px-4 py-2.5 text-[12px]">
-                  {novoError}
-                </div>
-              )}
-            </div>
+          <div className="grid grid-cols-3 gap-2">
+            <Field label="Data" htmlFor="ag-data"><PxInput id="ag-data" type="date" className="px-2" value={novoForm.data} onChange={e => setNovoForm(f => ({ ...f, data: e.target.value }))} /></Field>
+            <Field label="Início" htmlFor="ag-ini"><PxInput id="ag-ini" type="time" className="px-2" value={novoForm.hora} onChange={e => setNovoForm(f => ({ ...f, hora: e.target.value }))} /></Field>
+            <Field label="Fim" htmlFor="ag-fim"><PxInput id="ag-fim" type="time" className="px-2" value={novoForm.horaFim} onChange={e => setNovoForm(f => ({ ...f, horaFim: e.target.value }))} /></Field>
+          </div>
 
-            {/* Footer */}
-            <div className="px-6 pb-5 flex gap-2">
-              <button
-                onClick={() => setNovoOpen(false)}
-                className="px-4 py-2.5 rounded-xl text-[12px] text-text-muted border border-border hover:border-border-hover transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={salvarAgendamento}
-                disabled={novoSaving || novoOk || !novoPacSel}
-                className={cn(
-                  "flex-1 flex items-center justify-center gap-2 text-[12px] font-semibold rounded-xl py-2.5 transition-all",
-                  novoOk
-                    ? "bg-emerald-500/10 border border-emerald-500/30 text-emerald-400"
-                    : "bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-40"
-                )}
-              >
-                {novoSaving ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : novoOk ? (
-                  <><Check className="w-3.5 h-3.5" /> Agendamento criado!</>
-                ) : (
-                  <><Calendar className="w-3.5 h-3.5" /> Confirmar Agendamento</>
-                )}
-              </button>
-            </div>
+          {usuarios.length > 0 ? (
+            <Field label="Profissional">
+              <Segmented label="Profissional" value={novoForm.idUsuario} onChange={v => setNovoForm(f => ({ ...f, idUsuario: v }))} options={usuarios.map(u => ({ value: String(u.id), label: u.nome }))} />
+            </Field>
+          ) : (
+            <Field label="Profissional" htmlFor="ag-prof"><PxInput id="ag-prof" value={novoForm.idUsuario} onChange={e => setNovoForm(f => ({ ...f, idUsuario: e.target.value }))} placeholder="ID do profissional" /></Field>
+          )}
+
+          <Field label="Tipo de consulta" htmlFor="ag-tipo">
+            <PxSelect id="ag-tipo" value={novoForm.procedimento} onChange={e => setNovoForm(f => ({ ...f, procedimento: e.target.value }))}>
+              {TIPOS_CONSULTA.map(t => <option key={t}>{t}</option>)}
+            </PxSelect>
+          </Field>
+
+          <Field label="Observação" htmlFor="ag-obs"><PxInput id="ag-obs" value={novoForm.observacao} onChange={e => setNovoForm(f => ({ ...f, observacao: e.target.value }))} placeholder="Opcional" /></Field>
+
+          {novoError && <p role="alert" className="text-[13px] text-px-danger">{novoError}</p>}
+          {novoOk && <p role="status" className="text-[13px] font-medium text-px-ok">Agendamento criado.</p>}
+
+          <div className="flex gap-2 pt-1">
+            <PxButton variant="quiet" onClick={() => setNovoOpen(false)}>Cancelar</PxButton>
+            <PxButton fullWidth onClick={salvarAgendamento} loading={novoSaving} disabled={novoOk || !novoPacSel}>Confirmar agendamento</PxButton>
           </div>
         </div>
-      )}
+      </PxModal>
     </div>
   )
 }
 
-// ── Small helper component ────────────────────────────────────────────────────
-
-function Row({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex gap-3 text-[12px]">
-      <span className="text-text-muted w-24 flex-shrink-0">{label}</span>
-      <span className={cn("text-text-secondary", mono && "font-mono")}>{value}</span>
+    <div className="flex gap-3">
+      <dt className="w-28 shrink-0 text-px-muted">{label}</dt>
+      <dd className="text-px-ink">{value}</dd>
     </div>
   )
 }

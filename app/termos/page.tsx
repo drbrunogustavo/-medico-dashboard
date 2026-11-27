@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react"
 export const metadata = {
   title: "Termos de Uso — PRAXIS",
   description: "Termos e condições de uso da plataforma PRAXIS para médicos.",
+  alternates: { canonical: "/termos" },
 }
 
 function Section({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {

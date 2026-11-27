@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/landing" },
   title: "PRAXIS — Plataforma Clínica com IA para Médicos",
   description:
     "Copiloto de consulta com voz, CRM de pacientes, gestão financeira e marketing médico integrado. Tudo em uma plataforma para médicos brasileiros.",
@@ -8,7 +9,7 @@ export const metadata: Metadata = {
     title: "PRAXIS — Plataforma Clínica com IA para Médicos",
     description:
       "Copiloto de consulta com voz, CRM de pacientes, gestão financeira e marketing médico integrado.",
-    url: "https://praxisplataforma.com.br/landing",
+    url: "/landing",
     siteName: "PRAXIS",
     locale: "pt_BR",
     type: "website",

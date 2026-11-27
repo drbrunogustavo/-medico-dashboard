@@ -20,13 +20,14 @@ const playfair = Playfair_Display({
 })
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://www.praxisplataforma.com.br"),
   title: "PRAXIS — A plataforma que transforma clínicas",
   description: "Plataforma completa para médicos: marketing digital, gestão clínica, CRM de leads, IA estratégica e muito mais.",
   keywords: ["médicos", "marketing médico", "gestão clínica", "plataforma médica", "CRM médico", "conteúdo médico", "IA para médicos"],
   openGraph: {
     title: "PRAXIS — Para médicos que pensam grande",
     description: "Plataforma completa para médicos: marketing digital, gestão clínica, CRM de leads, IA estratégica e muito mais.",
-    url: "https://praxisplataforma.com.br",
+    url: "/",
     siteName: "PRAXIS",
     locale: "pt_BR",
     type: "website",
@@ -41,9 +42,6 @@ export const metadata: Metadata = {
   robots: {
     index: true,
     follow: true,
-  },
-  alternates: {
-    canonical: "https://praxisplataforma.com.br",
   },
   manifest: "/manifest.json",
   appleWebApp: {

@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react"
 export const metadata = {
   title: "Política de Privacidade — PRAXIS",
   description: "Como a PRAXIS coleta, usa e protege seus dados pessoais.",
+  alternates: { canonical: "/privacidade" },
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {

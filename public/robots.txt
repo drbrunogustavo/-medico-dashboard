@@ -5,4 +5,4 @@ Disallow: /api
 Disallow: /onboarding
 Disallow: /configuracoes
 Disallow: /perfil
-Sitemap: https://praxisplataforma.com.br/sitemap.xml
+Sitemap: https://www.praxisplataforma.com.br/sitemap.xml

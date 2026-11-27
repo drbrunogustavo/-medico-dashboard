@@ -109,7 +109,7 @@ function parseFollowup(f?: string | FollowupMessages): FollowupMessages | null {
 interface ProntuarioBloco { key: string; label: string; content: string }
 
 const PRONTUARIO_SECTIONS = [
-  { key: "queixa",       label: "Queixa Principal",         iconColor: "text-blue-400",    patterns: ["QUEIXA PRINCIPAL"] },
+  { key: "queixa",       label: "Queixa Principal",         iconColor: "text-px-accent",    patterns: ["QUEIXA PRINCIPAL"] },
   { key: "hda",          label: "História da Doença Atual", iconColor: "text-indigo-400",  patterns: ["HISTÓRIA DA DOENÇA ATUAL", "HISTORIA DA DOENÇA ATUAL", "HDA"] },
   { key: "antecedentes", label: "Antecedentes",             iconColor: "text-violet-400",  patterns: ["ANTECEDENTES"] },
   { key: "exame",        label: "Exame Físico",             iconColor: "text-cyan-400",    patterns: ["EXAME FÍSICO", "EXAME FISICO"] },
@@ -158,7 +158,7 @@ function parseProntuario(text: string): ProntuarioBloco[] | null {
 const TIPOS = ["Nova consulta", "Retorno", "Primeira consulta", "Urgência", "Teleconsulta"]
 
 const FOLLOWUP_META = {
-  d1:  { label: "D+1",  badge: "bg-blue-500/12 border-blue-500/30 text-blue-400",    bg: "bg-blue-500/5  border-blue-500/15"    },
+  d1:  { label: "D+1",  badge: "bg-px-ink/10 border-px-ink/20 text-px-accent",    bg: "bg-px-ink/10  border-px-ink/20"    },
   d7:  { label: "D+7",  badge: "bg-amber-500/12 border-amber-500/30 text-amber-400",  bg: "bg-amber-500/5  border-amber-500/15"  },
   d30: { label: "D+30", badge: "bg-emerald-500/12 border-emerald-500/30 text-emerald-400", bg: "bg-emerald-500/5 border-emerald-500/15" },
 } as const
@@ -209,7 +209,7 @@ function CopyBtn({ text, className }: { text: string; className?: string }) {
         "flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-lg border transition-all flex-shrink-0",
         copied
           ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-          : "border-border text-text-muted hover:border-blue-500/30 hover:text-blue-400",
+          : "border-border text-text-muted hover:border-px-ink/40 hover:text-px-ink",
         className,
       )}
     >
@@ -264,8 +264,8 @@ function Skeleton() {
 function RightPanelEmpty() {
   return (
     <div className="flex flex-col items-center justify-center py-16 gap-4 text-center px-8">
-      <div className="w-16 h-16 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
-        <Bot className="w-8 h-8 text-blue-400" />
+      <div className="w-16 h-16 rounded-2xl bg-px-ink/10 border border-px-ink/20 flex items-center justify-center">
+        <Bot className="w-8 h-8 text-px-accent" />
       </div>
       <div>
         <h3 className="text-[16px] font-semibold text-text-primary" style={{ fontFamily: "var(--font-playfair)" }}>
@@ -273,7 +273,7 @@ function RightPanelEmpty() {
         </h3>
         <p className="text-[12px] text-text-muted mt-2 leading-relaxed max-w-xs">
           Preencha o briefing ao lado e clique em{" "}
-          <span className="text-blue-400 font-medium">Gerar Copiloto</span>{" "}
+          <span className="text-px-accent font-medium">Gerar Copiloto</span>{" "}
           para receber o resumo clínico completo.
         </p>
       </div>
@@ -889,14 +889,14 @@ function CopilotoContent() {
                 className={cn(
                   "flex items-center gap-1.5 text-[11px] border rounded-lg px-3 py-1.5 transition-colors",
                   showHistorico
-                    ? "bg-blue-500/10 border-blue-500/30 text-blue-400"
+                    ? "bg-px-ink/10 border-px-ink/20 text-px-accent"
                     : "border-border text-text-secondary hover:border-border-hover"
                 )}
               >
                 <Clock className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Histórico</span>
                 {historico.length > 0 && (
-                  <span className="text-[9px] font-mono bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded-full">
+                  <span className="text-[9px] font-mono bg-px-ink/10 text-px-accent px-1.5 py-0.5 rounded-full">
                     {historico.length}
                   </span>
                 )}
@@ -938,7 +938,7 @@ function CopilotoContent() {
                 <div className="absolute left-2 top-0 bottom-0 w-px bg-border pointer-events-none" />
                 {historicoFiltrado.map(entry => (
                   <div key={entry.id} className="relative group">
-                    <div className="absolute -left-[18px] top-1.5 w-2.5 h-2.5 rounded-full bg-blue-500/30 border-2 border-blue-500/50" />
+                    <div className="absolute -left-[18px] top-1.5 w-2.5 h-2.5 rounded-full bg-px-ink/10 border-2 border-px-ink/20" />
                     <div className="flex items-start gap-2">
                       <button onClick={() => loadFromHistorico(entry)} className="flex-1 text-left min-w-0">
                         <div className="flex items-center gap-2 flex-wrap mb-0.5">
@@ -946,7 +946,7 @@ function CopilotoContent() {
                             {fmtDateLong(entry.created_at)}
                           </span>
                           {entry.tipo_consulta && (
-                            <span className="text-badge font-mono bg-blue-500/10 border border-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded-full">
+                            <span className="text-badge font-mono bg-px-ink/10 border border-px-ink/20 text-px-accent px-1.5 py-0.5 rounded-full">
                               {entry.tipo_consulta}
                             </span>
                           )}
@@ -1049,7 +1049,7 @@ function CopilotoContent() {
                   onChange={e => handleQuery(e.target.value)}
                   onFocus={() => results.length > 0 && setShowDrop(true)}
                   placeholder="Buscar paciente pelo nome..."
-                  className="w-full bg-surface border border-border rounded-xl pl-9 pr-9 py-2.5 text-[12px] text-text-primary placeholder:text-text-muted focus:border-blue-500/40 outline-none transition-colors"
+                  className="w-full bg-surface border border-border rounded-xl pl-9 pr-9 py-2.5 text-[12px] text-text-primary placeholder:text-text-muted focus:border-px-ink/50 outline-none transition-colors"
                 />
                 {showDrop && results.length > 0 && (
                   <div className="absolute top-full left-0 right-0 mt-1 bg-surface border border-border rounded-xl shadow-2xl overflow-hidden z-50 max-h-52 overflow-y-auto">
@@ -1059,7 +1059,7 @@ function CopilotoContent() {
                         onClick={() => selectPatient(p)}
                         className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-surface-2 transition-colors text-left border-b border-border last:border-b-0"
                       >
-                        <div className="w-7 h-7 rounded-full bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-[10px] font-bold text-blue-400 flex-shrink-0">
+                        <div className="w-7 h-7 rounded-full bg-px-ink/10 border border-px-ink/20 flex items-center justify-center text-[10px] font-bold text-px-accent flex-shrink-0">
                           {initials(getPacNome(p))}
                         </div>
                         <div className="min-w-0">
@@ -1077,17 +1077,17 @@ function CopilotoContent() {
               </div>
 
               {patient && (
-                <div className="flex items-center gap-2.5 px-3 py-2 bg-blue-500/10 border border-blue-500/25 rounded-lg">
-                  <div className="w-6 h-6 rounded-full bg-blue-500/20 border border-blue-500/40 flex items-center justify-center text-[9px] font-bold text-blue-400 flex-shrink-0">
+                <div className="flex items-center gap-2.5 px-3 py-2 bg-px-ink/10 border border-px-ink/20 rounded-lg">
+                  <div className="w-6 h-6 rounded-full bg-px-ink/10 border border-px-ink/20 flex items-center justify-center text-[9px] font-bold text-px-accent flex-shrink-0">
                     {initials(getPacNome(patient))}
                   </div>
-                  <span className="text-[12px] text-blue-400 font-medium truncate flex-1">{getPacNome(patient)}</span>
+                  <span className="text-[12px] text-px-accent font-medium truncate flex-1">{getPacNome(patient)}</span>
                   {getPacId(patient) && (
-                    <span className="text-[9px] font-mono text-blue-400/60">#{getPacId(patient)}</span>
+                    <span className="text-[9px] font-mono text-px-accent">#{getPacId(patient)}</span>
                   )}
                   <button
                     onClick={() => router.push("/pacientes")}
-                    className="text-[10px] text-blue-400/70 hover:text-blue-400 transition-colors"
+                    className="text-[10px] text-px-accent hover:text-px-ink transition-colors"
                   >
                     <User className="w-3 h-3" />
                   </button>
@@ -1106,7 +1106,7 @@ function CopilotoContent() {
                     className={cn(
                       "text-[11px] px-3 py-1.5 rounded-full border transition-all",
                       tipoConsulta === t
-                        ? "bg-blue-500/12 border-blue-500/30 text-blue-400 font-medium"
+                        ? "bg-px-ink/10 border-px-ink/20 text-px-accent font-medium"
                         : "border-border text-text-muted hover:text-text-secondary"
                     )}
                   >
@@ -1171,7 +1171,7 @@ function CopilotoContent() {
                 onChange={e => setRelato(e.target.value)}
                 rows={6}
                 placeholder="Descreva as queixas do paciente, exame físico, hipóteses diagnósticas, conduta discutida..."
-                className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3 text-[12px] text-text-primary placeholder:text-text-muted focus:border-blue-500/40 outline-none resize-none transition-colors leading-relaxed"
+                className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3 text-[12px] text-text-primary placeholder:text-text-muted focus:border-px-ink/50 outline-none resize-none transition-colors leading-relaxed"
               />
             </div>
 
@@ -1198,7 +1198,7 @@ function CopilotoContent() {
                 )}
               </select>
               {!protocolosLoading && protocolosList.length === 0 && (
-                <a href="/memoria" className="text-[10px] text-blue-400 hover:text-blue-300 transition-colors">
+                <a href="/memoria" className="text-[10px] text-px-accent hover:text-px-ink transition-colors">
                   Criar protocolos em Memória Clínica →
                 </a>
               )}
@@ -1210,7 +1210,7 @@ function CopilotoContent() {
                 <label className="text-[10px] font-mono text-text-muted uppercase tracking-widest">Dados Objetivos</label>
                 <div className="flex items-center gap-2">
                   {isTranscribingDados && (
-                    <span className="text-[10px] text-blue-400 flex items-center gap-1">
+                    <span className="text-[10px] text-px-accent flex items-center gap-1">
                       <Loader2 className="w-3 h-3 animate-spin" /> transcrevendo...
                     </span>
                   )}
@@ -1224,7 +1224,7 @@ function CopilotoContent() {
                         "flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-lg border transition-all",
                         isRecordingDados
                           ? "bg-red-500/15 border-red-500/40 text-red-400 animate-pulse"
-                          : "border-border text-text-muted hover:border-blue-500/30 hover:text-blue-400 disabled:opacity-40"
+                          : "border-border text-text-muted hover:border-px-ink/40 hover:text-px-ink disabled:opacity-40"
                       )}
                     >
                       {isRecordingDados
@@ -1243,7 +1243,7 @@ function CopilotoContent() {
                 onChange={e => setDados(e.target.value)}
                 rows={4}
                 placeholder="Sinais vitais, resultados de exames, medicamentos atuais, alergias, peso/altura..."
-                className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3 text-[12px] text-text-primary placeholder:text-text-muted focus:border-blue-500/40 outline-none resize-none transition-colors leading-relaxed"
+                className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3 text-[12px] text-text-primary placeholder:text-text-muted focus:border-px-ink/50 outline-none resize-none transition-colors leading-relaxed"
               />
 
               {/* Memória clínica proativa */}
@@ -1260,7 +1260,7 @@ function CopilotoContent() {
                     <div className="flex flex-wrap gap-2">
                       {memoriaChips.map((chip, i) => {
                         const style = {
-                          exame:       "bg-blue-500/10 border-blue-500/25 text-blue-400",
+                          exame:       "bg-px-ink/10 border-px-ink/20 text-px-accent",
                           medicamento: "bg-green-500/10 border-green-500/25 text-green-400",
                           diagnostico: "bg-amber-500/10 border-amber-500/25 text-amber-400",
                         }[chip.tipo] ?? "bg-surface border-border text-text-secondary"
@@ -1296,8 +1296,8 @@ function CopilotoContent() {
                 className={cn(
                   "w-full flex items-center justify-center gap-2 text-[13px] font-semibold rounded-xl py-3 transition-all",
                   phase === "loading"
-                    ? "bg-blue-500/10 border border-blue-500/30 text-blue-400 cursor-wait"
-                    : "bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-40"
+                    ? "bg-px-ink/10 border border-px-ink/20 text-px-accent cursor-wait"
+                    : "bg-px-ink text-white hover:bg-px-ink/85 disabled:opacity-40"
                 )}
               >
                 {phase === "loading"
@@ -1329,7 +1329,7 @@ function CopilotoContent() {
                 </span>
                 <button
                   onClick={gerar}
-                  className="flex items-center gap-1.5 text-[10px] text-text-muted hover:text-blue-400 border border-border hover:border-blue-500/30 rounded-lg px-2.5 py-1 transition-all"
+                  className="flex items-center gap-1.5 text-[10px] text-text-muted hover:text-px-ink border border-border hover:border-px-ink/40 rounded-lg px-2.5 py-1 transition-all"
                 >
                   <RefreshCw className="w-3 h-3" /> Re-gerar
                 </button>
@@ -1340,7 +1340,7 @@ function CopilotoContent() {
                 <SectionCard
                   title="Resumo Clínico"
                   icon={FileText}
-                  iconColor="text-blue-400"
+                  iconColor="text-px-accent"
                   extra={<CopyBtn text={editedResumo} />}
                 >
                   <AutoTextarea value={editedResumo} onChange={setEditedResumo} />
@@ -1390,7 +1390,7 @@ function CopilotoContent() {
                 <SectionCard
                   title="Plano Terapêutico"
                   icon={Stethoscope}
-                  iconColor="text-blue-400"
+                  iconColor="text-px-accent"
                   extra={<CopyBtn text={editedPlano} />}
                 >
                   <AutoTextarea value={editedPlano} onChange={setEditedPlano} />
@@ -1544,7 +1544,7 @@ function CopilotoContent() {
                     {
                       icon: CalendarDays, label: "Agendar retorno",
                       onClick: () => router.push("/agenda"),
-                      cls: "text-blue-400 bg-blue-500/10 border-blue-500/25 hover:bg-blue-500/20",
+                      cls: "text-px-accent bg-px-ink/10 border-px-ink/20 hover:bg-px-ink/15",
                     },
                     {
                       icon: FileText, label: "Carta de encaminhamento",
@@ -1572,7 +1572,7 @@ function CopilotoContent() {
                 <SectionCard
                   title="Prontuário Gerado"
                   icon={ClipboardList}
-                  iconColor="text-blue-400"
+                  iconColor="text-px-accent"
                   extra={
                     <div className="flex gap-2 flex-wrap">
                       <CopyBtn text={
@@ -1586,8 +1586,8 @@ function CopilotoContent() {
                         className={cn(
                           "flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-lg border transition-all",
                           sendingMedx
-                            ? "border-blue-500/30 text-blue-400 bg-blue-500/10 cursor-wait"
-                            : "border-blue-500/30 text-blue-400 bg-blue-500/10 hover:bg-blue-500/20"
+                            ? "border-px-ink/20 text-px-accent bg-px-ink/10 cursor-wait"
+                            : "border-px-ink/20 text-px-accent bg-px-ink/10 hover:bg-px-ink/15"
                         )}
                       >
                         {sendingMedx ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
@@ -1601,7 +1601,7 @@ function CopilotoContent() {
                       {prontuarioBlocos.map(bloco => {
                         const Icon      = getProntuarioIcon(bloco.key)
                         const section   = PRONTUARIO_SECTIONS.find(s => s.key === bloco.key)
-                        const iconColor = section?.iconColor ?? "text-blue-400"
+                        const iconColor = section?.iconColor ?? "text-px-accent"
                         return (
                           <div key={bloco.key} className="border border-border rounded-lg overflow-hidden">
                             <div className="flex items-center gap-2 px-4 py-2 bg-surface-2 border-b border-border">
@@ -1644,8 +1644,8 @@ function CopilotoContent() {
           className={cn(
             "w-full flex items-center justify-center gap-2 text-[13px] font-semibold rounded-xl py-3 transition-all",
             phase === "loading"
-              ? "bg-blue-500/10 border border-blue-500/30 text-blue-400 cursor-wait"
-              : "bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-40"
+              ? "bg-px-ink/10 border border-px-ink/20 text-px-accent cursor-wait"
+              : "bg-px-ink text-white hover:bg-px-ink/85 disabled:opacity-40"
           )}
         >
           {phase === "loading"
@@ -1667,8 +1667,8 @@ function CopilotoContent() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-surface border border-border rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center flex-shrink-0">
-                <ShieldCheck className="w-5 h-5 text-blue-400" />
+              <div className="w-10 h-10 rounded-xl bg-px-ink/10 border border-px-ink/20 flex items-center justify-center flex-shrink-0">
+                <ShieldCheck className="w-5 h-5 text-px-accent" />
               </div>
               <div>
                 <h3 className="text-[14px] font-semibold text-text-primary">Autorizar gravação de voz</h3>
@@ -1693,7 +1693,7 @@ function CopilotoContent() {
               </button>
               <button
                 onClick={aceitarConsentimento}
-                className="flex-1 text-[12px] py-2 rounded-xl bg-blue-500 text-white font-semibold hover:bg-blue-600 transition-colors"
+                className="flex-1 text-[12px] py-2 rounded-xl bg-px-ink text-white font-semibold hover:bg-px-ink/85 transition-colors"
               >
                 Autorizar e gravar
               </button>
@@ -1803,7 +1803,7 @@ function CopilotoContent() {
                 }}
                 className="w-full flex items-center gap-3 text-left px-4 py-3 rounded-xl border border-border hover:border-border-hover text-text-secondary hover:text-text-primary transition-all"
               >
-                <CalendarDays className="w-4 h-4 flex-shrink-0 text-blue-400" />
+                <CalendarDays className="w-4 h-4 flex-shrink-0 text-px-accent" />
                 <div className="flex-1 min-w-0">
                   <p className="text-[13px] font-semibold">Agendar retorno</p>
                   <p className="text-[10px] text-text-muted">
@@ -1917,7 +1917,7 @@ function CopilotoContent() {
                   value={docModal.texto}
                   onChange={e => setDocModal(m => m ? { ...m, texto: e.target.value } : null)}
                   rows={20}
-                  className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3 text-[12px] text-text-primary leading-relaxed font-mono resize-y outline-none focus:border-blue-500/40 transition-colors"
+                  className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3 text-[12px] text-text-primary leading-relaxed font-mono resize-y outline-none focus:border-px-ink/50 transition-colors"
                 />
               )}
             </div>

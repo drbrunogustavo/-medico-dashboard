@@ -1,168 +1,119 @@
-// Salvar em: app/titulos/page.tsx
 'use client'
-import { useState, useEffect } from 'react'
-import { Copy, Check, Loader2, Sparkles, ClipboardList, PenLine } from "lucide-react"
-import { PautasModal } from '@/components/PautasModal'
-import { Toast } from '@/components/Toast'
-import { AI_MODEL } from "@/lib/ai-config"
-import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
 
-const D = {
-  bg:'var(--background)',surface:'var(--surface)',card:'var(--surface-2)',border:'var(--border)',
-  text:'var(--text-primary)',text2:'var(--text-secondary)',muted:'var(--text-muted)',
-  accent:'var(--accent)',adim:'var(--accent-dim)',aborder:'var(--accent-border)',atext:'var(--accent-text)',
-  font:"'Inter', system-ui, sans-serif",mono:"'JetBrains Mono', monospace",
-}
-const inputSty = { background:D.card, border:`1px solid ${D.border}`, color:D.text, borderRadius:8, padding:'10px 14px', fontSize:13, width:'100%', fontFamily:"'Inter'", outline:'none' } as React.CSSProperties
+import { useState } from "react"
+import { Copy, Check, ClipboardList } from "lucide-react"
+import { PautasModal } from "@/components/PautasModal"
+import { pedirJSON, mensagemErroIA } from "@/lib/ia-json"
+import { Panel, PxButton, Segmented, Field, Tag, PageHeader } from "@/components/px"
 
-const FORMATOS = ['Reel','Carrossel','Feed','Stories']
+const FORMATOS = ["Reel", "Carrossel", "Feed", "Stories"]
 const OBJETIVOS = [
-  { v:'curiosidade', l:'Curiosidade', e:'🤔' },
-  { v:'autoridade',  l:'Autoridade',  e:'🏆' },
-  { v:'urgencia',    l:'Urgência',    e:'⚡' },
-  { v:'pergunta',    l:'Pergunta',    e:'❓' },
-  { v:'choque',      l:'Dado Chocante', e:'😱' },
+  { v: "curiosidade", l: "Curiosidade" },
+  { v: "autoridade",  l: "Autoridade" },
+  { v: "urgencia",    l: "Urgência" },
+  { v: "pergunta",    l: "Pergunta" },
+  { v: "choque",      l: "Dado chocante" },
 ]
 
 interface Titulo { texto: string; tipo: string }
 
+const areaCls = "w-full resize-none rounded-px-ctl border border-px-line bg-white px-3.5 py-2.5 text-[13.5px] text-px-ink placeholder:text-px-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-px-ink/40"
+
 function CopyBtn({ text }: { text: string }) {
-  const [ok, setOk] = useState(false)
+  const [estado, setEstado] = useState<"" | "ok" | "erro">("")
+  async function copiar() {
+    try { await navigator.clipboard.writeText(text); setEstado("ok") } catch { setEstado("erro") }
+    setTimeout(() => setEstado(""), 1800)
+  }
   return (
-    <button onClick={() => { navigator.clipboard.writeText(text); setOk(true); setTimeout(()=>setOk(false),1600) }}
-      style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'5px 12px', borderRadius:6, border:`1px solid rgba(200,168,76,0.3)`, background: ok?'rgba(200,168,76,0.12)':'none', color: ok?D.accent:D.muted, fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:"'Inter'" }}>
-      {ok ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />} {ok ? 'Copiado' : 'Copiar'}
-    </button>
+    <PxButton variant="secondary" size="sm" leftIcon={estado === "ok" ? Check : Copy} onClick={copiar}>
+      {estado === "ok" ? "Copiado" : estado === "erro" ? "Não foi possível copiar" : "Copiar"}
+    </PxButton>
   )
 }
 
 export default function TitulosPage() {
-  const [tema,       setTema]       = useState('')
-  const [formato,    setFormato]    = useState('Reel')
-  const [objetivo,   setObjetivo]   = useState('curiosidade')
-  const [titulos,    setTitulos]    = useState<Titulo[]>([])
-  const [loading,    setLoading]    = useState(false)
+  const [tema, setTema] = useState("")
+  const [formato, setFormato] = useState("Reel")
+  const [objetivo, setObjetivo] = useState("curiosidade")
+  const [titulos, setTitulos] = useState<Titulo[]>([])
+  const [loading, setLoading] = useState(false)
   const [showPautas, setShowPautas] = useState(false)
-  const [isMob,   setIsMob]   = useState(false)
-  const [errMsg,  setErrMsg]  = useState<string | null>(null)
-  useEffect(() => { setIsMob(window.innerWidth < 768) }, [])
-  const showErr = (msg: string) => { setErrMsg(msg); setTimeout(() => setErrMsg(null), 4000) }
+  const [erro, setErro] = useState<string | null>(null)
 
   const gerar = async () => {
     if (!tema.trim()) return
-    setLoading(true)
+    setLoading(true); setErro(null)
     try {
       const obj = OBJETIVOS.find(o => o.v === objetivo)
       const prompt =
-        'Crie 10 títulos/headlines para um post de ' + formato + ' do médico usuário — Clínico-Geral, Endocrinologia e Nutrologia.\n' +
-        'TEMA: ' + tema + '\nOBJETIVO: ' + obj?.l + '\n' +
-        'REGRAS: diretos, sem enrolação, máx 12 palavras cada, sem clichês de IA.\n' +
+        "Crie 10 títulos/headlines para um post de " + formato + " do médico usuário — Clínico-Geral, Endocrinologia e Nutrologia.\n" +
+        "TEMA: " + tema + "\nOBJETIVO: " + obj?.l + "\n" +
+        "REGRAS: diretos, sem enrolação, máx 12 palavras cada, sem clichês de IA.\n" +
         'Retorne SOMENTE JSON: {"titulos":[{"texto":"...","tipo":"' + obj?.l + '"}]}'
-      const res  = await fetch('/api/titulos', { method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ model:AI_MODEL, max_tokens:1000, messages:[{role:'user',content:prompt}] }) })
-      const data = await res.json()
-      const raw  = (data.content?.[0]?.text||'{}').replace(/```json/g,'').replace(/```/g,'').trim()
-      const startIdx = raw.indexOf('{'); const jsonStr = startIdx >= 0 ? raw.slice(startIdx) : raw; const json = JSON.parse(jsonStr)
-      if (!json.titulos){console.error('API response:',json);throw new Error('Resposta inesperada da IA. Tente novamente.')}
+      const json = await pedirJSON<{ titulos?: Titulo[] }>("/api/titulos", prompt, 1000)
+      if (!Array.isArray(json.titulos)) throw new Error("sem titulos")
       setTitulos(json.titulos)
-    } catch(e) { const m=String(e); showErr(m.includes('rate_limit') ? 'Limite de requisições atingido. Aguarde 1 minuto e tente novamente.' : 'Erro ao gerar títulos. Tente novamente.') }
-    setLoading(false)
+    } catch (e) {
+      console.error("[titulos] erro ao gerar:", e)
+      setErro(mensagemErroIA(e, "A IA devolveu uma resposta inesperada. Tente novamente."))
+    } finally { setLoading(false) }
   }
 
   return (
-    <div className="min-h-screen" style={{ fontFamily:D.font, color:D.text }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800;900&display=swap'); *{box-sizing:border-box}`}</style>
-      <MobileOnlyHeader title="Gerador de Títulos" />
-      {showPautas && <PautasModal onSelect={(t)=>{setTema(t);setShowPautas(false)}} onClose={()=>setShowPautas(false)} />}
+    <div className="animate-fade-in">
+      <PageHeader title="Gerador de Títulos" caption="Títulos com mais potencial de clique para vídeos e posts" />
+      {showPautas && <PautasModal onSelect={t => setTema(t)} onClose={() => setShowPautas(false)} />}
 
-      {/* Header */}
-      <div className="border-b border-border bg-surface" style={{ padding:isMob?'14px 16px':'18px 32px', display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:12 }}>
-        <div>
-          <h1 style={{ fontSize:22, fontWeight:900, color:D.accent, letterSpacing:1, margin:0 }}>Gerador de Títulos</h1>
-          <p style={{ fontSize:11, color:D.text2, margin:'4px 0 0', fontFamily:D.font }}>Encontre títulos com mais potencial de cliques para seus vídeos e posts.</p>
-        </div>
-        <button onClick={gerar} disabled={loading||!tema.trim()}
-          style={{ background:tema.trim()?D.accent:D.border, color:tema.trim()?D.bg:D.muted, padding:'12px 28px', borderRadius:10, border:'none', fontWeight:900, fontSize:13, cursor:tema.trim()?'pointer':'not-allowed', fontFamily:"'Inter'", width:isMob?'100%':undefined }}>
-          {loading ? <><Loader2 className="animate-spin" style={{ width:14, height:14, verticalAlign:'-0.15em', marginRight:5 }} />Gerando...</> : <><Sparkles style={{ width:14, height:14, verticalAlign:'-0.15em', marginRight:5 }} />Gerar Títulos</>}
-        </button>
-      </div>
+      <div className="grid grid-cols-1 gap-4 px-4 pb-10 md:px-10 lg:grid-cols-[300px_1fr]">
+        <Panel as="aside" className="space-y-4 self-start">
+          <Field label="Tema" htmlFor="tt-tema">
+            <textarea id="tt-tema" value={tema} onChange={e => setTema(e.target.value)} rows={3} placeholder="Resistência à insulina em pessoas magras" className={areaCls} />
+          </Field>
+          <PxButton variant="secondary" size="sm" leftIcon={ClipboardList} onClick={() => setShowPautas(true)}>Usar uma pauta do banco</PxButton>
+          <div className="space-y-1.5">
+            <p className="text-[13px] font-medium text-px-ink">Formato</p>
+            <Segmented label="Formato" value={formato} onChange={setFormato} options={FORMATOS.map(f => ({ value: f, label: f }))} />
+          </div>
+          <div className="space-y-1.5">
+            <p className="text-[13px] font-medium text-px-ink">Objetivo</p>
+            <Segmented label="Objetivo" value={objetivo} onChange={setObjetivo} options={OBJETIVOS.map(o => ({ value: o.v, label: o.l }))} />
+          </div>
+          <PxButton fullWidth onClick={gerar} loading={loading} disabled={!tema.trim()}>{loading ? "Gerando" : titulos.length ? "Gerar novamente" : "Gerar títulos"}</PxButton>
+        </Panel>
 
-      <div style={{ display:'flex', flexDirection:isMob?'column':'row', height:isMob?'auto':'calc(100vh - 74px)' }}>
-        {/* Left */}
-        <div className="bg-card border-r border-border md:border-b-0 border-b" style={{ width:isMob?'100%':280, flexShrink:0, overflowY:'auto', padding:24, display:'flex', flexDirection:'column', gap:20 }}>
-          <div>
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
-              <label style={{ fontSize:11, fontWeight:700, color:D.muted, letterSpacing:3, textTransform:'uppercase' as const }}>Tema</label>
-              <button onClick={()=>setShowPautas(true)} style={{ fontSize:10, fontWeight:700, color:D.accent, background:'rgba(200,168,76,0.08)', border:'1px solid rgba(200,168,76,0.25)', borderRadius:6, padding:'4px 10px', cursor:'pointer', fontFamily:"'Inter'" }}>
-                <ClipboardList style={{ width:12, height:12, verticalAlign:'-0.15em', marginRight:4 }} />Banco de Pautas
-              </button>
-            </div>
-            <textarea value={tema} onChange={e=>setTema(e.target.value)} rows={3} placeholder="Ex: Resistência à insulina em pessoas magras" style={{ ...inputSty, resize:'none', display:'block' }} />
-          </div>
-          <div>
-            <label style={{ fontSize:11, fontWeight:700, color:D.muted, letterSpacing:3, textTransform:'uppercase' as const, display:'block', marginBottom:8 }}>Formato</label>
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:6 }}>
-              {FORMATOS.map(f => (
-                <button key={f} onClick={()=>setFormato(f)}
-                  style={{ padding:'9px', borderRadius:8, border:'none', cursor:'pointer', fontWeight:700, fontSize:12, background:formato===f?D.accent:D.card, color:formato===f?D.bg:D.muted, fontFamily:"'Inter'" }}>
-                  {f}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div>
-            <label style={{ fontSize:11, fontWeight:700, color:D.muted, letterSpacing:3, textTransform:'uppercase' as const, display:'block', marginBottom:8 }}>Objetivo</label>
-            <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
-              {OBJETIVOS.map(o => (
-                <button key={o.v} onClick={()=>setObjetivo(o.v)}
-                  style={{ padding:'10px 14px', borderRadius:8, border:'none', cursor:'pointer', textAlign:'left', display:'flex', alignItems:'center', gap:10, background:objetivo===o.v?D.accent:D.card, color:objetivo===o.v?D.bg:D.muted, fontFamily:"'Inter'", fontWeight:700, fontSize:12 }}>
-                  <span>{o.e}</span><span>{o.l}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
+        <div className="min-w-0 space-y-4">
+          {erro && <p role="alert" className="rounded-px-card bg-px-danger-soft px-4 py-3 text-[13px] text-px-danger">{erro}</p>}
+          {loading && <p role="status" className="py-24 text-center text-[14px] font-medium text-px-ink">Criando os títulos</p>}
 
-        {/* Center */}
-        <div className="bg-background" style={{ flex:1, overflowY:'auto', padding:isMob?16:32 }}>
           {!titulos.length && !loading && (
-            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'60vh', gap:12, opacity:.5 }}>
-              <PenLine style={{ width:48, height:48 }} />
-              <div style={{ color:D.muted, fontSize:13, fontWeight:700, letterSpacing:2, textTransform:'uppercase' as const, textAlign:'center' }}>Defina o tema e clique em<br />Gerar Títulos</div>
-            </div>
+            <Panel className="py-16 text-center">
+              <p className="text-[15px] font-semibold text-px-ink">Defina o tema e gere os títulos</p>
+              <p className="mt-1 text-[13px] text-px-muted">Você recebe 10 opções no objetivo escolhido.</p>
+            </Panel>
           )}
-          {loading && (
-            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'60vh', gap:16 }}>
-              <div style={{ width:44, height:44, border:'3px solid rgba(200,168,76,0.2)', borderTop:`3px solid ${D.accent}`, borderRadius:'50%', animation:'spin 0.8s linear infinite' }} />
-              <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-              <div style={{ color:D.accent, fontSize:13, fontWeight:700, letterSpacing:2 }}>CRIANDO TÍTULOS...</div>
-            </div>
-          )}
+
           {!loading && titulos.length > 0 && (
             <>
-              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
-                <div style={{ color:D.muted, fontSize:11, fontWeight:700, letterSpacing:3, textTransform:'uppercase' as const }}>{titulos.length} títulos gerados · {formato}</div>
-                <button onClick={gerar} style={{ padding:'7px 16px', borderRadius:8, border:`1px solid ${D.border}`, background:'none', color:D.muted, fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:"'Inter'" }}>↺ Regerar tudo</button>
-              </div>
-              <div style={{ display:'grid', gridTemplateColumns:isMob?'1fr':'1fr 1fr', gap:12 }}>
+              <p className="text-[13px] text-px-muted">{titulos.length} títulos para {formato}</p>
+              <ol className="grid grid-cols-1 gap-3 md:grid-cols-2">
                 {titulos.map((t, i) => (
-                  <div key={i} style={{ background:D.card, border:`1px solid ${D.border}`, borderRadius:10, padding:'18px 20px', display:'flex', flexDirection:'column', gap:12 }}>
-                    <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:10 }}>
-                      <div style={{ color:D.muted, fontSize:11, fontWeight:900, minWidth:24 }}>{String(i+1).padStart(2,'0')}</div>
-                      <div style={{ color:D.accent, fontSize:10, fontWeight:700, letterSpacing:2, padding:'2px 8px', borderRadius:99, background:'rgba(200,168,76,0.1)', border:'1px solid rgba(200,168,76,0.2)', whiteSpace:'nowrap' as const }}>{t.tipo}</div>
-                    </div>
-                    <div style={{ color:D.text, fontSize:15, fontWeight:700, lineHeight:1.5, flex:1 }}>{t.texto}</div>
-                    <div style={{ display:'flex', justifyContent:'flex-end' }}>
-                      <CopyBtn text={t.texto} />
-                    </div>
-                  </div>
+                  <li key={i}>
+                    <Panel as="article" className="flex h-full flex-col gap-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="text-[13px] font-semibold text-px-muted">{String(i + 1).padStart(2, "0")}</span>
+                        <Tag tone="neutral">{t.tipo}</Tag>
+                      </div>
+                      <p className="flex-1 text-[15px] font-semibold leading-relaxed text-px-ink">{t.texto}</p>
+                      <div className="flex justify-end"><CopyBtn text={t.texto} /></div>
+                    </Panel>
+                  </li>
                 ))}
-              </div>
+              </ol>
             </>
           )}
         </div>
       </div>
-      <Toast message={errMsg} type="error" />
     </div>
   )
 }

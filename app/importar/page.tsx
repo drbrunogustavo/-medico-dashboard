@@ -2,13 +2,9 @@
 
 import { useCallback, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
-import Link from "next/link"
-import {
-  ArrowLeft, ArrowRight, Upload, Check, AlertTriangle, X,
-  ChevronDown, ChevronUp, FileSpreadsheet, Users, Loader2, RefreshCw,
-} from "lucide-react"
+import { Upload, Check, ChevronDown, ChevronUp, FileSpreadsheet, Users, RefreshCw, ArrowLeft, ArrowRight } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
+import { Panel, PxButton, Tag, PxSelect, PxCheckbox, PageHeader } from "@/components/px"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -32,7 +28,7 @@ interface ResultadoImport {
 }
 
 const CAMPOS: { value: CampoDestino; label: string }[] = [
-  { value: "ignorar",          label: "— Ignorar esta coluna —" },
+  { value: "ignorar",          label: "Ignorar esta coluna" },
   { value: "nome",             label: "Nome do paciente" },
   { value: "telefone",         label: "Telefone / WhatsApp" },
   { value: "email",            label: "Email" },
@@ -93,42 +89,60 @@ async function parseExcel(file: File): Promise<{ headers: string[]; rows: string
   }
 }
 
-// ─── Subcomponents ────────────────────────────────────────────────────────────
+// ─── Subcomponentes ───────────────────────────────────────────────────────────
 
-function StepDot({ n, active, done }: { n: number; active: boolean; done: boolean }) {
+function Passo({ n, rotulo, ativo, feito }: { n: number; rotulo: string; ativo: boolean; feito: boolean }) {
   return (
-    <div className={cn(
-      "w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold transition-all flex-shrink-0",
-      done   ? "bg-accent text-white"
-             : active ? "bg-accent-dim border border-accent-border text-accent"
-                      : "bg-surface-2 border border-border text-text-muted"
-    )}>
-      {done ? <Check className="w-3.5 h-3.5" /> : n}
+    <div className="flex items-center gap-2">
+      <span className={cn(
+        "flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-[12px] font-semibold",
+        feito ? "bg-px-ink text-white" : ativo ? "bg-white text-px-ink ring-2 ring-px-ink" : "bg-px-ink/10 text-px-muted"
+      )}>
+        {feito ? <Check className="h-3.5 w-3.5" aria-hidden /> : n}
+      </span>
+      <span className={cn("hidden text-[12.5px] sm:block", ativo ? "font-semibold text-px-ink" : "text-px-muted")}>{rotulo}</span>
     </div>
   )
 }
 
-function AccordionItem({ title, children }: { title: string; children: React.ReactNode }) {
+function Acordeao({ title, children }: { title: string; children: React.ReactNode }) {
   const [open, setOpen] = useState(false)
   return (
-    <div className="rounded-xl border overflow-hidden" style={{ borderColor: "var(--border)" }}>
+    <div className="overflow-hidden rounded-px-card border border-px-line bg-white/50">
       <button
+        type="button"
         onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between px-4 py-3 text-left transition-colors hover:bg-surface-2"
+        aria-expanded={open}
+        className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-white/60"
       >
-        <span className="text-[13px] font-medium text-text-primary">{title}</span>
-        {open ? <ChevronUp className="w-4 h-4 text-text-muted flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-text-muted flex-shrink-0" />}
+        <span className="text-[13.5px] font-medium text-px-ink">{title}</span>
+        {open ? <ChevronUp className="h-4 w-4 flex-shrink-0 text-px-muted" aria-hidden /> : <ChevronDown className="h-4 w-4 flex-shrink-0 text-px-muted" aria-hidden />}
       </button>
-      {open && (
-        <div className="px-4 pb-4 border-t" style={{ borderColor: "var(--border)" }}>
-          {children}
-        </div>
-      )}
+      {open && <div className="border-t border-px-line px-4 pb-4">{children}</div>}
     </div>
   )
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+function Tabela({ colunas, linhas }: { colunas: string[]; linhas: React.ReactNode[][] }) {
+  return (
+    <div className="overflow-x-auto rounded-px-card border border-px-line bg-white/60">
+      <table className="w-full text-[12.5px]">
+        <thead>
+          <tr className="border-b border-px-line text-left text-px-muted">
+            {colunas.map(c => <th key={c} scope="col" className="whitespace-nowrap px-3 py-2 font-medium">{c}</th>)}
+          </tr>
+        </thead>
+        <tbody>
+          {linhas.map((l, i) => (
+            <tr key={i} className="border-t border-px-line">
+              {l.map((c, j) => <td key={j} className="max-w-[160px] truncate px-3 py-2 text-px-ink">{c}</td>)}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
 
 export default function ImportarPage() {
   const router = useRouter()
@@ -246,359 +260,240 @@ export default function ImportarPage() {
   const mapped     = step >= 2 ? buildMapped() : []
   const dupeCount  = step >= 2 ? findDuplicates(mapped) : 0
   const phoneErros = step >= 2 ? mapped.filter(p => p.telefone && !phoneValid(p.telefone)).length : 0
+  const camposPreview = CAMPOS.filter(c => c.value !== "ignorar" && c.value !== "ultima_consulta")
 
   return (
     <div className="animate-fade-in">
-      <MobileOnlyHeader title="Importar Pacientes" />
-      {/* ── Header ── */}
-      <div className="px-4 py-5 border-b" style={{ borderColor: "var(--border)" }}>
-        <div className="max-w-3xl mx-auto flex items-center gap-3">
-          <Link href="/pacientes" className="text-text-muted hover:text-text-primary transition-colors">
-            <ArrowLeft className="w-4 h-4" />
-          </Link>
-          <div className="flex-1">
-            <h1 className="text-[17px] font-semibold text-text-primary">Importar Pacientes</h1>
-            <p className="text-[11px] text-text-muted">Migração guiada de qualquer sistema para o PRAXIS</p>
-          </div>
-          <FileSpreadsheet className="w-5 h-5 text-text-muted" />
-        </div>
-      </div>
+      <PageHeader title="Importar" caption="Traga pacientes de outro sistema" back />
 
-      <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+      <div className="mx-auto max-w-3xl space-y-4 px-4 pb-10 md:px-10">
 
-        {/* ── Stepper ── */}
-        <div className="flex items-center gap-2">
+        <ol aria-label="Etapas" className="flex items-center gap-2 px-1">
           {STEP_LABELS.map((label, i) => (
-            <div key={i} className="flex items-center gap-2 flex-1">
-              <div className="flex items-center gap-1.5">
-                <StepDot n={i + 1} active={step === i} done={step > i} />
-                <span className={cn("text-[11px] font-medium hidden sm:block", step === i ? "text-accent" : step > i ? "text-text-secondary" : "text-text-muted")}>
-                  {label}
-                </span>
-              </div>
-              {i < STEP_LABELS.length - 1 && (
-                <div className="flex-1 h-px" style={{ background: step > i ? "var(--accent)" : "var(--border)" }} />
-              )}
-            </div>
+            <li key={label} aria-current={step === i ? "step" : undefined} className="flex flex-1 items-center gap-2 last:flex-none">
+              <Passo n={i + 1} rotulo={label} ativo={step === i} feito={step > i} />
+              {i < STEP_LABELS.length - 1 && <span aria-hidden className={cn("h-px flex-1", step > i ? "bg-px-ink" : "bg-px-line")} />}
+            </li>
           ))}
-        </div>
+        </ol>
 
-        {/* ── Error banner ── */}
         {erroGlobal && (
-          <div className="flex items-center gap-2 rounded-xl px-4 py-3" style={{ background: "rgba(220,38,38,0.08)", border: "1px solid rgba(220,38,38,0.2)" }}>
-            <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0" />
-            <p className="text-[12px] text-red-400">{erroGlobal}</p>
-            <button onClick={() => setErroGlobal("")} className="ml-auto text-red-400 hover:text-red-300"><X className="w-3.5 h-3.5" /></button>
-          </div>
+          <Panel tone="light" className="flex items-center justify-between gap-3">
+            <p role="alert" className="text-[13.5px] text-px-danger">{erroGlobal}</p>
+            <PxButton size="sm" variant="secondary" onClick={() => setErroGlobal("")}>Fechar</PxButton>
+          </Panel>
         )}
 
-        {/* ─────────────────────── ETAPA 1 — UPLOAD ─────────────────────────── */}
+        {/* Etapa 1: envio do arquivo */}
         {step === 0 && (
-          <div className="space-y-5">
-            <div className="text-center space-y-1">
-              <h2 className="text-[18px] font-semibold text-text-primary">Importe seus pacientes de outro sistema</h2>
-              <p className="text-[13px] text-text-muted">
-                Aceita arquivos CSV ou Excel (.xlsx) exportados de qualquer sistema: prontuário eletrônico, planilha ou outro CRM.
+          <Panel tone="light" className="space-y-5">
+            <div>
+              <h2 className="text-[17px] font-semibold text-px-ink">Importe pacientes de outro sistema</h2>
+              <p className="mt-0.5 text-[13px] text-px-muted">
+                Aceita CSV ou Excel (.xlsx, .xls) exportados de prontuário eletrônico, planilha ou outro CRM.
               </p>
             </div>
 
-            {/* Drop area */}
-            <div
+            <input ref={fileRef} id="imp-arquivo" type="file" accept=".csv,.xlsx,.xls" onChange={onFileInput} className="sr-only" />
+            <label
+              htmlFor="imp-arquivo"
               onDragOver={e => { e.preventDefault(); setDragging(true) }}
               onDragLeave={() => setDragging(false)}
               onDrop={onDrop}
-              onClick={() => fileRef.current?.click()}
               className={cn(
-                "relative rounded-2xl border-2 border-dashed cursor-pointer transition-all py-14 flex flex-col items-center gap-3",
-                dragging ? "border-accent bg-accent-dim" : "border-border hover:border-border-hover hover:bg-surface-2"
+                "flex cursor-pointer flex-col items-center gap-3 rounded-px-card border-2 border-dashed py-12 text-center transition-colors focus-within:ring-2 focus-within:ring-px-ink",
+                dragging ? "border-px-ink bg-white/80" : "border-px-ink/30 hover:bg-white/50"
               )}
             >
-              <input ref={fileRef} type="file" accept=".csv,.xlsx,.xls" onChange={onFileInput} className="hidden" />
               {loading ? (
-                <><Loader2 className="w-10 h-10 text-accent animate-spin" /><p className="text-[13px] text-text-secondary">{loadingMsg}</p></>
+                <p role="status" className="text-[13.5px] text-px-ink">{loadingMsg}</p>
               ) : (
                 <>
-                  <Upload className={cn("w-10 h-10 transition-colors", dragging ? "text-accent" : "text-text-muted")} />
-                  <div className="text-center">
-                    <p className="text-[14px] font-medium text-text-primary">Arraste seu arquivo aqui</p>
-                    <p className="text-[12px] text-text-muted mt-0.5">ou clique para selecionar — .csv, .xlsx, .xls</p>
-                  </div>
-                  <span className="text-[10px] font-mono px-3 py-1 rounded-full border border-border text-text-muted">
-                    Processamento 100% no seu navegador — nenhum dado sai do seu computador
+                  <Upload className="h-9 w-9 text-px-muted" aria-hidden />
+                  <span>
+                    <span className="block text-[14.5px] font-medium text-px-ink">Arraste o arquivo aqui ou clique para selecionar</span>
+                    <span className="mt-0.5 block text-[12.5px] text-px-muted">.csv, .xlsx ou .xls</span>
                   </span>
+                  <span className="text-[12px] text-px-muted">A leitura acontece no seu navegador. O arquivo não é enviado para nenhum servidor nesta etapa.</span>
                 </>
               )}
-            </div>
+            </label>
 
-            {/* Instructions accordion */}
             <div className="space-y-2">
-              <p className="text-[11px] font-mono text-text-muted uppercase tracking-widest">Como exportar do seu sistema</p>
+              <h3 className="text-[13px] font-semibold text-px-ink">Como exportar do seu sistema</h3>
 
-              <AccordionItem title="Excel / Google Sheets">
-                <div className="mt-3 space-y-2 text-[12px] text-text-secondary">
-                  <p><strong>Excel:</strong> Arquivo → Salvar como → CSV UTF-8 (delimitado por vírgula)</p>
-                  <p><strong>Google Sheets:</strong> Arquivo → Fazer download → Valores separados por vírgula (.csv)</p>
-                  <p className="text-text-muted">O arquivo deve ter uma linha de cabeçalho (nomes das colunas) na 1ª linha.</p>
+              <Acordeao title="Excel e Google Sheets">
+                <div className="mt-3 space-y-2 text-[13px] text-px-ink">
+                  <p><strong>Excel:</strong> Arquivo, Salvar como, CSV UTF-8 (delimitado por vírgula).</p>
+                  <p><strong>Google Sheets:</strong> Arquivo, Fazer download, Valores separados por vírgula (.csv).</p>
+                  <p className="text-px-muted">A primeira linha deve ter os nomes das colunas.</p>
                 </div>
-              </AccordionItem>
+              </Acordeao>
 
-              <AccordionItem title="Prontuários eletrônicos comuns">
-                <div className="mt-3 space-y-3 text-[12px] text-text-secondary">
-                  <div><strong className="text-text-primary">iClinic:</strong> Pacientes → Exportar → Exportar em CSV</div>
-                  <div><strong className="text-text-primary">Doctoralia:</strong> Configurações → Dados → Exportar pacientes</div>
-                  <div><strong className="text-text-primary">MedPlus / Nibo:</strong> Relatórios → Pacientes → Exportar planilha</div>
-                  <div><strong className="text-text-primary">Qualquer sistema:</strong> Procure por "Exportar", "Relatórios" ou "Backup" nas configurações. Selecione CSV ou Excel como formato.</div>
+              <Acordeao title="Prontuários eletrônicos comuns">
+                <div className="mt-3 space-y-2 text-[13px] text-px-ink">
+                  <p><strong>iClinic:</strong> Pacientes, Exportar, Exportar em CSV.</p>
+                  <p><strong>Doctoralia:</strong> Configurações, Dados, Exportar pacientes.</p>
+                  <p><strong>MedPlus e Nibo:</strong> Relatórios, Pacientes, Exportar planilha.</p>
+                  <p><strong>Outros:</strong> procure por Exportar, Relatórios ou Backup nas configurações e escolha CSV ou Excel.</p>
                 </div>
-              </AccordionItem>
+              </Acordeao>
 
-              <AccordionItem title="Não sei como exportar — prefiro cadastrar manualmente">
-                <div className="mt-3 text-[12px] text-text-secondary">
-                  <p className="mb-3">Sem problema. Você pode cadastrar pacientes individualmente na tela de Gestão de Pacientes.</p>
-                  <Link href="/pacientes" className="inline-flex items-center gap-1.5 text-accent hover:underline font-medium">
-                    Ir para Gestão de Pacientes <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
+              <Acordeao title="Não sei exportar e prefiro cadastrar manualmente">
+                <div className="mt-3 text-[13px] text-px-ink">
+                  <p className="mb-3">Sem problema. Você pode cadastrar os pacientes um a um na tela de Pacientes.</p>
+                  <PxButton size="sm" variant="secondary" href="/pacientes" rightIcon={ArrowRight}>Ir para Pacientes</PxButton>
                 </div>
-              </AccordionItem>
+              </Acordeao>
             </div>
-          </div>
+          </Panel>
         )}
 
-        {/* ─────────────────────── ETAPA 2 — MAPEAMENTO ─────────────────────── */}
+        {/* Etapa 2: mapeamento */}
         {step === 1 && (
-          <div className="space-y-5">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <FileSpreadsheet className="w-4 h-4 text-accent" />
-                <span className="text-[13px] font-semibold text-text-primary">{fileName}</span>
-                <span className="text-[11px] text-text-muted">· {rows.length} registros · {headers.length} colunas</span>
+          <div className="space-y-4">
+            <Panel tone="light" className="space-y-4">
+              <div>
+                <p className="flex flex-wrap items-center gap-2 text-[14px] font-semibold text-px-ink">
+                  <FileSpreadsheet className="h-4 w-4 text-px-accent" aria-hidden /> {fileName}
+                  <span className="text-[12.5px] font-normal text-px-muted">{rows.length} registros e {headers.length} colunas</span>
+                </p>
+                <p className="mt-1 text-[13px] text-px-muted">Indique o que cada coluna do arquivo representa.</p>
               </div>
-              <p className="text-[13px] text-text-muted">
-                Identificamos estas colunas no seu arquivo. Indique o que cada uma representa:
-              </p>
-            </div>
 
-            {/* Column mapping */}
-            <div className="rounded-2xl border overflow-hidden" style={{ borderColor: "var(--border)" }}>
-              <div className="grid grid-cols-2 gap-px text-[10px] font-mono text-text-muted uppercase tracking-widest px-4 py-2"
-                style={{ background: "var(--surface-2, var(--card))", borderBottom: "1px solid var(--border)" }}>
-                <span>Coluna no arquivo</span>
-                <span>Representa</span>
-              </div>
-              <div className="divide-y" style={{ borderColor: "var(--border)" }}>
+              <ul className="divide-y divide-px-line rounded-px-card border border-px-line bg-white/50">
                 {headers.map((h, i) => (
-                  <div key={i} className="grid grid-cols-2 items-center gap-3 px-4 py-2.5">
-                    <div>
-                      <div className="text-[12px] font-medium text-text-primary truncate">{h}</div>
-                      <div className="text-[10px] text-text-muted truncate mt-0.5">{rows[0]?.[i] ?? ""}</div>
+                  <li key={i} className="grid grid-cols-1 items-center gap-2 px-4 py-3 sm:grid-cols-2 sm:gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-[13.5px] font-medium text-px-ink">{h}</p>
+                      <p className="truncate text-[12px] text-px-muted">Exemplo: {rows[0]?.[i] || "vazio"}</p>
                     </div>
-                    <select
+                    <PxSelect
+                      aria-label={`O que representa a coluna ${h}`}
                       value={mapping[i] ?? "ignorar"}
                       onChange={e => setMapping(m => ({ ...m, [i]: e.target.value as CampoDestino }))}
-                      className="w-full text-[12px] px-2.5 py-1.5 rounded-lg outline-none transition-all"
-                      style={{ background: "var(--card)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
+                      className="h-10 text-[13px]"
                     >
                       {CAMPOS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-                    </select>
-                  </div>
+                    </PxSelect>
+                  </li>
                 ))}
-              </div>
-            </div>
+              </ul>
+            </Panel>
 
-            {/* Preview */}
-            <div>
-              <p className="text-[11px] font-mono text-text-muted uppercase tracking-widest mb-2">Preview — primeiros 5 registros mapeados</p>
-              <div className="overflow-x-auto rounded-xl border" style={{ borderColor: "var(--border)" }}>
-                <table className="w-full text-[11px]">
-                  <thead>
-                    <tr style={{ background: "var(--surface)", borderBottom: "1px solid var(--border)" }}>
-                      {CAMPOS.filter(c => c.value !== "ignorar" && c.value !== "ultima_consulta").map(c => (
-                        <th key={c.value} className="text-left px-3 py-2 font-mono text-text-muted whitespace-nowrap">{c.label}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {buildMapped().slice(0, 5).map((p, i) => (
-                      <tr key={i} className="border-t" style={{ borderColor: "var(--border)" }}>
-                        {CAMPOS.filter(c => c.value !== "ignorar" && c.value !== "ultima_consulta").map(c => (
-                          <td key={c.value} className="px-3 py-2 text-text-secondary truncate max-w-[140px]">
-                            {(p as Record<string, string>)[c.value] ?? "—"}
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            <Panel tone="light" className="space-y-3">
+              <h3 className="text-[14px] font-semibold text-px-ink">Primeiros 5 registros mapeados</h3>
+              <Tabela
+                colunas={camposPreview.map(c => c.label)}
+                linhas={buildMapped().slice(0, 5).map(p => camposPreview.map(c => (p as Record<string, string>)[c.value] ?? "Sem dado"))}
+              />
+            </Panel>
 
-            <div className="flex items-center justify-between">
-              <button onClick={() => setStep(0)} className="text-[12px] text-text-muted hover:text-text-primary flex items-center gap-1">
-                <ArrowLeft className="w-3.5 h-3.5" /> Trocar arquivo
-              </button>
-              <button
-                onClick={() => { if (buildMapped().length > 0) { setStep(2) } else { setErroGlobal("Nenhum registro válido encontrado. Verifique o mapeamento.") } }}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-bold transition-all hover:opacity-90"
-                style={{ background: "var(--accent)", color: "#080808" }}
-              >
-                Continuar <ArrowRight className="w-4 h-4" />
-              </button>
+            <div className="flex items-center justify-between gap-3">
+              <PxButton variant="secondary" leftIcon={ArrowLeft} onClick={() => setStep(0)}>Trocar arquivo</PxButton>
+              <PxButton rightIcon={ArrowRight} onClick={() => { if (buildMapped().length > 0) { setStep(2) } else { setErroGlobal("Nenhum registro válido encontrado. Verifique o mapeamento.") } }}>
+                Continuar
+              </PxButton>
             </div>
           </div>
         )}
 
-        {/* ─────────────────────── ETAPA 3 — REVISÃO ────────────────────────── */}
+        {/* Etapa 3: revisão */}
         {step === 2 && (
-          <div className="space-y-5">
-            <div className="text-center">
-              <h2 className="text-[17px] font-semibold text-text-primary mb-1">Revisão antes de importar</h2>
-              <p className="text-[13px] text-text-muted">Verifique os dados antes de confirmar a importação.</p>
-            </div>
-
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-3">
-              {[
-                { label: "Pacientes prontos",  value: mapped.length,  color: "var(--accent)"   },
-                { label: "Telefones inválidos", value: phoneErros,     color: phoneErros > 0 ? "#f59e0b" : "var(--text-muted)" },
-                { label: "Duplicados (est.)",   value: dupeCount,      color: dupeCount > 0 ? "#f59e0b" : "var(--text-muted)"  },
-              ].map(s => (
-                <div key={s.label} className="rounded-xl p-4 text-center" style={{ background: "var(--card)", border: "1px solid var(--border)" }}>
-                  <div className="text-[24px] font-bold" style={{ color: s.color }}>{s.value}</div>
-                  <div className="text-[10px] font-mono text-text-muted mt-1 leading-snug">{s.label}</div>
+          <div className="space-y-4">
+            <Panel tone="dark">
+              <h2 className="mb-3 text-[15px] font-semibold text-white">Revise antes de importar</h2>
+              <dl className="grid grid-cols-3 gap-4 text-white">
+                <div>
+                  <dt className="text-[12px] text-white/80">Pacientes prontos</dt>
+                  <dd className="mt-1 text-[30px] font-semibold leading-none tabular-nums">{mapped.length}</dd>
                 </div>
-              ))}
-            </div>
+                <div>
+                  <dt className="text-[12px] text-white/80">Telefones inválidos</dt>
+                  <dd className="mt-1 text-[30px] font-semibold leading-none tabular-nums">{phoneErros}</dd>
+                </div>
+                <div>
+                  <dt className="text-[12px] text-white/80">Duplicados (estimativa)</dt>
+                  <dd className="mt-1 text-[30px] font-semibold leading-none tabular-nums">{dupeCount}</dd>
+                </div>
+              </dl>
+            </Panel>
 
-            {/* Warnings */}
             {(phoneErros > 0 || dupeCount > 0) && (
-              <div className="rounded-xl p-4 space-y-2" style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.2)" }}>
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0" />
-                  <span className="text-[12px] font-semibold text-amber-400">Avisos antes de importar</span>
-                </div>
+              <Panel tone="light" className="space-y-2">
+                <p className="text-[14px] font-semibold text-px-warn">Avisos antes de importar</p>
                 {phoneErros > 0 && (
-                  <p className="text-[12px] text-amber-300/80 pl-6">
-                    {phoneErros} paciente{phoneErros > 1 ? "s" : ""} com telefone em formato inválido. Serão importados sem o telefone — você pode corrigir depois.
+                  <p className="text-[13px] text-px-ink">
+                    {phoneErros} paciente{phoneErros > 1 ? "s" : ""} com telefone em formato inválido. Serão importados sem o telefone e você pode corrigir depois.
                   </p>
                 )}
                 {dupeCount > 0 && (
-                  <p className="text-[12px] text-amber-300/80 pl-6">
-                    Estimativa de {dupeCount} registro{dupeCount > 1 ? "s" : ""} duplicado{dupeCount > 1 ? "s" : ""} no arquivo. O sistema evitará duplicados por telefone ao salvar.
+                  <p className="text-[13px] text-px-ink">
+                    Estimativa de {dupeCount} registro{dupeCount > 1 ? "s" : ""} duplicado{dupeCount > 1 ? "s" : ""} no arquivo. O sistema evita duplicados por telefone ao salvar.
                   </p>
                 )}
-              </div>
+              </Panel>
             )}
 
-            {/* CRM checkbox */}
-            <label className="flex items-start gap-3 cursor-pointer p-4 rounded-xl transition-colors"
-              style={{ background: addCrm ? "var(--accent-dim)" : "var(--card)", border: `1px solid ${addCrm ? "var(--accent-border)" : "var(--border)"}` }}>
-              <input
-                type="checkbox"
-                checked={addCrm}
-                onChange={e => setAddCrm(e.target.checked)}
-                className="mt-0.5 w-4 h-4 cursor-pointer flex-shrink-0"
-                style={{ accentColor: "var(--accent)" }}
+            <Panel tone="light" className="space-y-1">
+              <PxCheckbox label="Também adicionar ao CRM como pacientes ativos" checked={addCrm} onChange={e => setAddCrm(e.target.checked)} />
+              <p className="pl-[26px] text-[12.5px] text-px-muted">Os pacientes aparecem no CRM na etapa Paciente Ativo, para acompanhamento.</p>
+            </Panel>
+
+            <Panel tone="light" className="space-y-3">
+              <h3 className="text-[14px] font-semibold text-px-ink">Amostra: {Math.min(mapped.length, 10)} de {mapped.length}</h3>
+              <Tabela
+                colunas={["Nome", "Telefone", "Email", "Nascimento"]}
+                linhas={mapped.slice(0, 10).map(p => [
+                  p.nome ?? "Sem dado",
+                  p.telefone && !phoneValid(p.telefone) ? <span key="t" className="text-px-warn">{p.telefone} (inválido)</span> : (p.telefone ?? "Sem dado"),
+                  p.email ?? "Sem dado",
+                  p.data_nascimento ?? "Sem dado",
+                ])}
               />
-              <div>
-                <span className="text-[13px] font-semibold text-text-primary block">
-                  Também adicionar ao CRM como pacientes ativos
-                </span>
-                <span className="text-[11px] text-text-muted">
-                  Os pacientes importados aparecerão no CRM de Leads na etapa "Paciente Ativo" para acompanhamento.
-                </span>
-              </div>
-            </label>
+            </Panel>
 
-            {/* Preview table */}
-            <div>
-              <p className="text-[11px] font-mono text-text-muted uppercase tracking-widest mb-2">Amostra ({Math.min(mapped.length, 10)} de {mapped.length})</p>
-              <div className="overflow-x-auto rounded-xl border" style={{ borderColor: "var(--border)" }}>
-                <table className="w-full text-[11px]">
-                  <thead>
-                    <tr style={{ background: "var(--surface)", borderBottom: "1px solid var(--border)" }}>
-                      {["Nome", "Telefone", "Email", "Nascimento"].map(h => (
-                        <th key={h} className="text-left px-3 py-2 font-mono text-text-muted whitespace-nowrap">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {mapped.slice(0, 10).map((p, i) => (
-                      <tr key={i} className="border-t" style={{ borderColor: "var(--border)" }}>
-                        <td className="px-3 py-2 text-text-primary font-medium truncate max-w-[160px]">{p.nome ?? "—"}</td>
-                        <td className={cn("px-3 py-2 truncate", p.telefone && !phoneValid(p.telefone) ? "text-amber-400" : "text-text-secondary")}>{p.telefone ?? "—"}</td>
-                        <td className="px-3 py-2 text-text-secondary truncate max-w-[140px]">{p.email ?? "—"}</td>
-                        <td className="px-3 py-2 text-text-muted">{p.data_nascimento ?? "—"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <button onClick={() => setStep(1)} className="text-[12px] text-text-muted hover:text-text-primary flex items-center gap-1">
-                <ArrowLeft className="w-3.5 h-3.5" /> Ajustar mapeamento
-              </button>
-              <button
-                onClick={doImport}
-                disabled={loading || mapped.length === 0}
-                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-[13px] font-bold transition-all hover:opacity-90 disabled:opacity-50"
-                style={{ background: "var(--accent)", color: "#080808" }}
-              >
-                {loading ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" />{loadingMsg}</>
-                ) : (
-                  <><Users className="w-4 h-4" /> Importar {mapped.length} pacientes</>
-                )}
-              </button>
+            <div className="flex items-center justify-between gap-3">
+              <PxButton variant="secondary" leftIcon={ArrowLeft} onClick={() => setStep(1)}>Ajustar mapeamento</PxButton>
+              <PxButton leftIcon={Users} loading={loading} disabled={loading || mapped.length === 0} onClick={doImport}>
+                {loading ? loadingMsg : `Importar ${mapped.length} pacientes`}
+              </PxButton>
             </div>
           </div>
         )}
 
-        {/* ─────────────────────── ETAPA 4 — RESULTADO ──────────────────────── */}
+        {/* Etapa 4: resultado */}
         {step === 3 && resultado && (
-          <div className="space-y-5">
-            <div className="text-center rounded-2xl p-10" style={{ background: "var(--card)", border: "1px solid var(--border)" }}>
-              <div className="w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-5"
-                style={{ background: "var(--accent-dim)", border: "1px solid var(--accent-border)" }}>
-                <Check className="w-8 h-8 text-accent" />
-              </div>
-              <h2 className="text-[22px] font-bold text-text-primary mb-1">
-                {resultado.importados} paciente{resultado.importados !== 1 ? "s" : ""} importado{resultado.importados !== 1 ? "s" : ""}!
+          <div className="space-y-4">
+            <Panel tone="light" className="py-10 text-center">
+              <h2 className="text-[24px] font-semibold text-px-ink">
+                {resultado.importados} paciente{resultado.importados !== 1 ? "s" : ""} importado{resultado.importados !== 1 ? "s" : ""}
               </h2>
-              <p className="text-[13px] text-text-muted">
-                {addCrm ? "Pacientes adicionados ao banco de pacientes e ao CRM de Leads." : "Pacientes adicionados ao banco de pacientes."}
+              <p className="mt-1 text-[13.5px] text-px-muted">
+                {addCrm ? "Adicionados ao banco de pacientes e ao CRM." : "Adicionados ao banco de pacientes."}
               </p>
-            </div>
+            </Panel>
 
-            {/* Errors */}
             {resultado.erros.length > 0 && (
-              <div className="rounded-2xl border overflow-hidden" style={{ borderColor: "rgba(220,38,38,0.2)" }}>
-                <div className="flex items-center gap-2 px-4 py-3" style={{ background: "rgba(220,38,38,0.06)", borderBottom: "1px solid rgba(220,38,38,0.15)" }}>
-                  <AlertTriangle className="w-4 h-4 text-red-400" />
-                  <span className="text-[12px] font-semibold text-red-400">{resultado.erros.length} erro{resultado.erros.length > 1 ? "s" : ""} durante a importação</span>
-                </div>
-                <div className="divide-y max-h-52 overflow-y-auto" style={{ borderColor: "var(--border)" }}>
+              <Panel tone="light" className="overflow-hidden p-0">
+                <p className="flex items-center gap-2 px-5 py-4 text-[14px] font-semibold text-px-danger">
+                  <Tag tone="danger">{resultado.erros.length}</Tag> erro{resultado.erros.length > 1 ? "s" : ""} durante a importação
+                </p>
+                <ul className="max-h-52 divide-y divide-px-line overflow-y-auto border-t border-px-line">
                   {resultado.erros.map((e, i) => (
-                    <div key={i} className="px-4 py-2 text-[11px] text-text-muted">
-                      <span className="font-mono text-red-400">Linha {e.linha}:</span> {e.msg}
-                    </div>
+                    <li key={i} className="px-5 py-2.5 text-[13px] text-px-ink">
+                      <span className="font-semibold text-px-danger">Linha {e.linha}:</span> {e.msg}
+                    </li>
                   ))}
-                </div>
-              </div>
+                </ul>
+              </Panel>
             )}
 
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Link href="/pacientes" className="flex-1 text-center inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-[13px] font-bold transition-all hover:opacity-90"
-                style={{ background: "var(--accent)", color: "#080808" }}>
-                <Users className="w-4 h-4" /> Ver pacientes importados
-              </Link>
-              <button
-                onClick={() => { setStep(0); setFileName(""); setHeaders([]); setRows([]); setMapping({}); setResultado(null) }}
-                className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-[13px] font-medium transition-all hover:bg-surface-2"
-                style={{ background: "var(--card)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
-              >
-                <RefreshCw className="w-4 h-4" /> Importar mais arquivos
-              </button>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <PxButton fullWidth href="/pacientes" leftIcon={Users}>Ver pacientes importados</PxButton>
+              <PxButton fullWidth variant="secondary" leftIcon={RefreshCw} onClick={() => { setStep(0); setFileName(""); setHeaders([]); setRows([]); setMapping({}); setResultado(null) }}>
+                Importar outro arquivo
+              </PxButton>
             </div>
           </div>
         )}

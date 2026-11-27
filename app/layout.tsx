@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { Inter, Playfair_Display } from "next/font/google"
+import { Inter, Playfair_Display, Manrope } from "next/font/google"
 import "./globals.css"
 import { ConditionalLayout } from "@/components/ConditionalLayout"
 import { ThemeProvider } from "@/components/ThemeProvider"
@@ -15,6 +15,13 @@ const inter = Inter({
 const playfair = Playfair_Display({
   subsets: ["latin"],
   variable: "--font-playfair",
+  display: "swap",
+  weight: ["400", "500", "600", "700"],
+})
+
+const manrope = Manrope({
+  subsets: ["latin"],
+  variable: "--font-manrope",
   display: "swap",
   weight: ["400", "500", "600", "700"],
 })
@@ -53,7 +60,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" suppressHydrationWarning className={`${inter.variable} ${playfair.variable}`}>
+    <html lang="pt-BR" suppressHydrationWarning className={`${inter.variable} ${playfair.variable} ${manrope.variable}`}>
       <head>
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />

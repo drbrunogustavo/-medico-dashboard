@@ -68,6 +68,24 @@ module.exports = {
         /* ── Dark / Cream — fundo escuro e claro das páginas públicas ── */
         dark:  { DEFAULT: "#0D1B2A" },
         cream: { DEFAULT: "#F5F0E8", border: "#e8ddd0" },
+
+        /* ── Sistema px (redesign 2026): valem dentro de .px ──────────── */
+        px: {
+          bg:            "var(--px-bg)",
+          ink:           "rgb(var(--px-ink-rgb) / <alpha-value>)",
+          muted:         "rgb(var(--px-muted-rgb) / <alpha-value>)",
+          accent:        "rgb(var(--px-accent-rgb) / <alpha-value>)",
+          "accent-soft": "var(--px-accent-soft)",
+          danger:        "rgb(var(--px-danger-rgb) / <alpha-value>)",
+          "danger-soft": "var(--px-danger-soft)",
+          ok:            "rgb(var(--px-ok-rgb) / <alpha-value>)",
+          "ok-soft":     "var(--px-ok-soft)",
+          warn:          "rgb(var(--px-warn-rgb) / <alpha-value>)",
+          "warn-soft":   "var(--px-warn-soft)",
+          line:          "var(--px-line)",
+          "dark-panel":  "var(--px-dark-panel)",
+          slate:         "rgb(var(--px-slate-rgb) / <alpha-value>)",
+        },
       },
       fontSize: {
         badge: ['0.5625rem', { lineHeight: '1rem' }],
@@ -76,11 +94,15 @@ module.exports = {
         sans:  ["var(--font-inter)", "system-ui", "sans-serif"],
         serif: ["var(--font-playfair)", "Georgia", "serif"],
         mono:  ["JetBrains Mono", "monospace"],
+        px:    ["var(--font-manrope)", "system-ui", "sans-serif"],
       },
       borderRadius: {
         lg: "12px",
         md: "8px",
         sm: "4px",
+        "px-panel": "28px",
+        "px-card":  "20px",
+        "px-ctl":   "12px",
       },
       keyframes: {
         "accordion-down": { from: { height: "0" }, to: { height: "var(--radix-accordion-content-height)" } },

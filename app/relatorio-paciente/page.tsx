@@ -1,19 +1,18 @@
 "use client"
 
 import { useState } from "react"
-import { TopBar } from "@/components/TopBar"
-import { cn } from "@/lib/utils"
-import {
-  FileHeart, Loader2, Copy, Check, AlertCircle, MessageCircle, RefreshCw,
-} from "lucide-react"
+import { FileHeart, Copy, Check, MessageCircle, RefreshCw } from "lucide-react"
+import { Panel, PxButton, Tag, Segmented, Field, PxInput, PageHeader } from "@/components/px"
 
 type Tom = "Simples" | "Detalhado" | "Motivacional"
 
 const TOM_OPTIONS: { value: Tom; label: string; desc: string }[] = [
   { value: "Simples",      label: "Simples",      desc: "Frases curtas, linguagem acessível" },
-  { value: "Detalhado",    label: "Detalhado",     desc: "Explicações completas sobre cada achado" },
-  { value: "Motivacional", label: "Motivacional",  desc: "Tom encorajador e empoderador" },
+  { value: "Detalhado",    label: "Detalhado",    desc: "Explicações completas sobre cada achado" },
+  { value: "Motivacional", label: "Motivacional", desc: "Tom encorajador e empoderador" },
 ]
+
+const areaCls = "w-full resize-y rounded-px-ctl border border-px-line bg-white/70 px-3.5 py-2.5 text-[14px] text-px-ink placeholder:text-px-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-px-ink/40"
 
 export default function RelatorioPacientePage() {
   const [nome,     setNome]     = useState("")
@@ -36,7 +35,7 @@ export default function RelatorioPacientePage() {
         body:    JSON.stringify({ nome, exames, contexto, conduta, tom }),
       })
       const data = await res.json()
-      if (data.error) throw new Error(data.error)
+      if (!res.ok || data.error || !data.texto) throw new Error(data.error ?? "resposta vazia")
       setRelatorio(data.texto)
     } catch (e) {
       console.error('[relatorio-paciente]', e)
@@ -56,7 +55,7 @@ export default function RelatorioPacientePage() {
 
   const enviarWhatsApp = () => {
     if (!relatorio) return
-    const texto = encodeURIComponent(`*Relatório de Exames — ${nome}*\n\n${relatorio}`)
+    const texto = encodeURIComponent(`*Relatório de exames de ${nome}*\n\n${relatorio}`)
     window.open(`https://wa.me/?text=${texto}`, "_blank")
   }
 
@@ -65,211 +64,92 @@ export default function RelatorioPacientePage() {
     setNome(""); setExames(""); setContexto(""); setConduta("")
   }
 
+  const tomAtual = TOM_OPTIONS.find(o => o.value === tom)!
+
   return (
     <div className="animate-fade-in">
-      <TopBar
-        title="Relatório para Paciente"
-        subtitle="COMUNICAÇÃO MÉDICA EMPÁTICA · LINGUAGEM SIMPLES · GERADO POR IA"
-        actions={
-          relatorio ? (
-            <button
-              onClick={limpar}
-              className="flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg border transition-colors"
-              style={{ background: "var(--surface)", borderColor: "var(--border)", color: "var(--text-muted)" }}
-            >
-              <RefreshCw className="w-3 h-3" /> Novo relatório
-            </button>
-          ) : undefined
-        }
+      <PageHeader
+        title="Relatório para paciente"
+        caption="Exames em linguagem simples"
+        actions={relatorio ? <PxButton variant="secondary" leftIcon={RefreshCw} onClick={limpar}>Novo relatório</PxButton> : undefined}
       />
 
-      <div className="p-4 md:p-8 space-y-5 max-w-3xl mx-auto">
-
+      <div className="mx-auto max-w-3xl space-y-4 px-4 pb-10 md:px-10">
         {!relatorio ? (
           <>
-            {/* Formulário */}
-            <div className="rounded-2xl border p-5 space-y-4"
-              style={{ background: "var(--card)", borderColor: "var(--border)" }}>
-              <div>
-                <h3 className="text-[13px] font-bold mb-0.5" style={{ color: "var(--text-primary)" }}>
-                  Dados do Paciente e Exames
-                </h3>
-                <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
-                  Preencha os campos e gere um relatório em linguagem simples para enviar ao paciente.
-                </p>
-              </div>
+            <Panel tone="light" className="space-y-5">
+              <p className="text-[13px] text-px-muted">Preencha os campos e gere um relatório em linguagem simples para enviar ao paciente.</p>
 
-              {/* Nome */}
-              <div>
-                <label className="block text-[11px] font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>
-                  Nome do paciente *
-                </label>
-                <input
-                  value={nome}
-                  onChange={e => setNome(e.target.value)}
-                  placeholder="Ex: Maria Oliveira"
-                  className="w-full px-3 py-2.5 rounded-xl text-[13px] outline-none transition-colors"
-                  style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
-                  onFocus={e => (e.currentTarget.style.borderColor = "var(--accent)")}
-                  onBlur={e => (e.currentTarget.style.borderColor = "var(--border)")}
-                />
-              </div>
+              <Field label="Nome do paciente (obrigatório)" htmlFor="rp-nome">
+                <PxInput id="rp-nome" value={nome} onChange={e => setNome(e.target.value)} placeholder="Ex: Maria Oliveira" />
+              </Field>
 
-              {/* Exames */}
-              <div>
-                <label className="block text-[11px] font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>
-                  Resultados dos exames *
-                </label>
+              <Field label="Resultados dos exames (obrigatório)" htmlFor="rp-exames">
                 <textarea
+                  id="rp-exames"
                   value={exames}
                   onChange={e => setExames(e.target.value)}
-                  placeholder={"TSH: 4,8 mUI/L (ref: 0,4–4,0)\nT4 livre: 1,0 ng/dL (normal)\nFerritina: 18 ng/mL (ref: 13–150)\nVitamina D: 22 ng/mL (ref: >30)\nHbA1c: 5,9% (ref: <5,7)"}
+                  placeholder={"TSH: 4,8 mUI/L (ref: 0,4 a 4,0)\nT4 livre: 1,0 ng/dL (normal)\nFerritina: 18 ng/mL (ref: 13 a 150)\nVitamina D: 22 ng/mL (ref: acima de 30)\nHbA1c: 5,9% (ref: abaixo de 5,7)"}
                   rows={6}
-                  className="w-full px-3 py-2.5 rounded-xl text-[12px] font-mono outline-none transition-colors resize-y"
-                  style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
-                  onFocus={e => (e.currentTarget.style.borderColor = "var(--accent)")}
-                  onBlur={e => (e.currentTarget.style.borderColor = "var(--border)")}
+                  className={areaCls + " font-mono text-[13px]"}
                 />
-              </div>
+              </Field>
 
-              {/* Contexto e Conduta */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[11px] font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>
-                    Contexto clínico <span style={{ color: "var(--text-muted)" }}>(opcional)</span>
-                  </label>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <Field label="Contexto clínico (opcional)" htmlFor="rp-ctx">
                   <textarea
+                    id="rp-ctx"
                     value={contexto}
                     onChange={e => setContexto(e.target.value)}
                     placeholder="Ex: Paciente de 42 anos com queixa de fadiga há 3 meses, sem doenças prévias."
                     rows={3}
-                    className="w-full px-3 py-2.5 rounded-xl text-[12px] outline-none transition-colors resize-y"
-                    style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
-                    onFocus={e => (e.currentTarget.style.borderColor = "var(--accent)")}
-                    onBlur={e => (e.currentTarget.style.borderColor = "var(--border)")}
+                    className={areaCls}
                   />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>
-                    Conduta definida <span style={{ color: "var(--text-muted)" }}>(opcional)</span>
-                  </label>
+                </Field>
+                <Field label="Conduta definida (opcional)" htmlFor="rp-cond">
                   <textarea
+                    id="rp-cond"
                     value={conduta}
                     onChange={e => setConduta(e.target.value)}
                     placeholder="Ex: Iniciar levotiroxina 25mcg, repor vitamina D 10.000UI/dia, repetir exames em 3 meses."
                     rows={3}
-                    className="w-full px-3 py-2.5 rounded-xl text-[12px] outline-none transition-colors resize-y"
-                    style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
-                    onFocus={e => (e.currentTarget.style.borderColor = "var(--accent)")}
-                    onBlur={e => (e.currentTarget.style.borderColor = "var(--border)")}
+                    className={areaCls}
                   />
-                </div>
+                </Field>
               </div>
 
-              {/* Tom */}
-              <div>
-                <label className="block text-[11px] font-medium mb-2" style={{ color: "var(--text-secondary)" }}>
-                  Tom de comunicação
-                </label>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  {TOM_OPTIONS.map(opt => (
-                    <button
-                      key={opt.value}
-                      onClick={() => setTom(opt.value)}
-                      className="text-left px-3 py-2.5 rounded-xl transition-all"
-                      style={{
-                        background: tom === opt.value ? "var(--accent-dim)" : "var(--surface)",
-                        border: `1px solid ${tom === opt.value ? "var(--accent-border)" : "var(--border)"}`,
-                      }}
-                    >
-                      <div className="text-[12px] font-semibold"
-                        style={{ color: tom === opt.value ? "var(--accent)" : "var(--text-primary)" }}>
-                        {opt.label}
-                      </div>
-                      <div className="text-[10px] mt-0.5" style={{ color: "var(--text-muted)" }}>
-                        {opt.desc}
-                      </div>
-                    </button>
-                  ))}
-                </div>
+              <div className="space-y-2">
+                <p className="text-[13px] font-medium text-px-ink">Tom de comunicação</p>
+                <Segmented label="Tom de comunicação" value={tom} onChange={setTom} options={TOM_OPTIONS.map(o => ({ value: o.value, label: o.label }))} />
+                <p className="text-[12px] text-px-muted">{tomAtual.desc}</p>
               </div>
 
-              {/* Button */}
-              <button
-                onClick={gerar}
-                disabled={loading || !nome.trim() || !exames.trim()}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-[13px] font-bold transition-all disabled:opacity-50"
-                style={{ background: "var(--accent)", color: "#080808" }}
-              >
-                {loading
-                  ? <><Loader2 className="w-4 h-4 animate-spin" /> Gerando relatório...</>
-                  : <><FileHeart className="w-4 h-4" /> Gerar Relatório para Paciente</>}
-              </button>
+              <PxButton fullWidth leftIcon={FileHeart} loading={loading} disabled={loading || !nome.trim() || !exames.trim()} onClick={gerar}>
+                {loading ? "Gerando relatório" : "Gerar relatório para paciente"}
+              </PxButton>
               {loading && (
-                <p className="text-center text-[10px] text-text-muted mt-1.5">
-                  A geração pode levar 30–60 segundos. Não feche a página.
-                </p>
+                <p role="status" className="text-center text-[12px] text-px-muted">A geração pode levar de 30 a 60 segundos. Não feche a página.</p>
               )}
-            </div>
+            </Panel>
 
-            {error && (
-              <div className="flex items-start gap-3 rounded-xl p-4 bg-red-50 border border-red-200">
-                <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
-                <p className="text-[12px] text-red-700 leading-relaxed">{error}</p>
-              </div>
-            )}
+            {error && <p role="alert" className="rounded-px-card bg-px-danger-soft px-4 py-3 text-[13px] leading-relaxed text-px-danger">{error}</p>}
           </>
         ) : (
           <>
-            {/* Resultado */}
-            <div className="rounded-2xl border overflow-hidden"
-              style={{ background: "var(--card)", borderColor: "var(--border)" }}>
-              <div className="flex items-center justify-between px-5 py-3 border-b"
-                style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
+            <Panel tone="light" className="space-y-4">
+              <div className="flex items-start justify-between gap-3 border-b border-px-line pb-3">
                 <div>
-                  <div className="text-[10px] font-mono uppercase tracking-wider" style={{ color: "var(--accent)" }}>
-                    Relatório gerado para
-                  </div>
-                  <div className="text-[14px] font-bold mt-0.5" style={{ color: "var(--text-primary)" }}>
-                    {nome}
-                  </div>
+                  <p className="text-[12px] text-px-muted">Relatório gerado para</p>
+                  <h2 className="mt-0.5 text-[16px] font-semibold text-px-ink">{nome}</h2>
                 </div>
-                <span className="text-badge font-mono px-2 py-0.5 rounded-full border"
-                  style={{ background: "var(--accent-dim)", borderColor: "var(--accent-border)", color: "var(--accent)" }}>
-                  {tom}
-                </span>
+                <Tag tone="neutral">{tom}</Tag>
               </div>
+              <p className="whitespace-pre-line text-[14px] leading-relaxed text-px-ink">{relatorio}</p>
+            </Panel>
 
-              <div className="p-5">
-                <p className="text-[13px] leading-relaxed whitespace-pre-line"
-                  style={{ color: "var(--text-secondary)" }}>
-                  {relatorio}
-                </p>
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              <button
-                onClick={copiar}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[12px] font-medium transition-all"
-                style={{
-                  background: copied ? "var(--accent-dim)" : "var(--surface)",
-                  border: `1px solid ${copied ? "var(--accent-border)" : "var(--border)"}`,
-                  color: copied ? "var(--accent)" : "var(--text-secondary)",
-                }}
-              >
-                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                {copied ? "Copiado!" : "Copiar relatório"}
-              </button>
-              <button
-                onClick={enviarWhatsApp}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[12px] font-bold transition-all"
-                style={{ background: "#25d366", color: "#fff" }}
-              >
-                <MessageCircle className="w-4 h-4" />
-                Enviar por WhatsApp
-              </button>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <PxButton fullWidth variant="secondary" leftIcon={copied ? Check : Copy} onClick={copiar}>{copied ? "Copiado" : "Copiar relatório"}</PxButton>
+              <PxButton fullWidth leftIcon={MessageCircle} onClick={enviarWhatsApp}>Enviar por WhatsApp</PxButton>
             </div>
           </>
         )}

@@ -2,12 +2,8 @@
 
 import { useState, useMemo } from "react"
 import { useAppContext } from "@/components/AppProvider"
-import { TopBar } from "@/components/TopBar"
-import { cn } from "@/lib/utils"
-import {
-  BookOpen, Search, Loader2, AlertCircle, ChevronDown, ChevronRight,
-  FlaskConical, Copy, Check, Zap,
-} from "lucide-react"
+import { FlaskConical, Zap, ChevronDown, ChevronRight, Copy, Check, BookOpen } from "lucide-react"
+import { Panel, PxButton, Segmented, PxInput, Tag, PageHeader } from "@/components/px"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -235,7 +231,7 @@ const DATABASE: TemaEstudo[] = [
         n: 4209,
         duracao: "10 anos",
         desfechoPrincipal: "Complicações micro e macrovasculares no DM2",
-        resultado: "Metformina reduziu mortalidade geral em 36% e eventos coronarianos em 39% em obesos com DM2 — superando sulfonilureias e insulina no desfecho macrovascular.",
+        resultado: "Metformina reduziu mortalidade geral em 36% e eventos coronarianos em 39% em obesos com DM2, superando sulfonilureias e insulina no desfecho macrovascular.",
         nivelEvidencia: "A",
         aplicacaoClinica: "Metformina permanece como pedra angular do DM2. Benefício cardiovascular independente do controle glicêmico. Manter sempre que TFG ≥30.",
         ano: 1998,
@@ -315,23 +311,29 @@ function sugestoesPorEsp(esp?: string | null): string[] {
   return SUGESTOES_FALLBACK
 }
 
-// ─── Config maps ──────────────────────────────────────────────────────────────
+// ─── Mapas de configuração ────────────────────────────────────────────────────
 
-const EVIDENCIA_CONFIG: Record<Evidencia, { label: string; color: string; bg: string; border: string }> = {
-  A: { label: "Nível A", color: "text-green-700",  bg: "bg-green-50",  border: "border-green-200"  },
-  B: { label: "Nível B", color: "text-amber-700",  bg: "bg-amber-50",  border: "border-amber-200"  },
-  C: { label: "Nível C", color: "text-red-700",    bg: "bg-red-50",    border: "border-red-200"    },
+type Tone = "neutral" | "ink" | "accent" | "danger" | "ok" | "warn"
+
+const EVIDENCIA_CONFIG: Record<Evidencia, { label: string; tone: Tone }> = {
+  A: { label: "Nível A", tone: "ok" },
+  B: { label: "Nível B", tone: "warn" },
+  C: { label: "Nível C", tone: "danger" },
 }
 
-const TIPO_CONFIG: Record<Tipo, string> = {
-  "ECR":                  "text-blue-700 bg-blue-50 border-blue-200",
-  "Metanálise":           "text-purple-700 bg-purple-50 border-purple-200",
-  "Coorte":               "text-cyan-700 bg-cyan-50 border-cyan-200",
-  "Revisão Sistemática":  "text-indigo-700 bg-indigo-50 border-indigo-200",
-  "Estudo Observacional": "text-slate-500 bg-slate-100 border-slate-300",
-}
+const PERIODOS: { key: string; label: string; value: number | null }[] = [
+  { key: "0.5",   label: "6 meses", value: 0.5  },
+  { key: "2",     label: "2 anos",  value: 2    },
+  { key: "5",     label: "5 anos",  value: 5    },
+  { key: "10",    label: "10 anos", value: 10   },
+  { key: "todos", label: "Todos",   value: null },
+]
 
-// ─── Components ───────────────────────────────────────────────────────────────
+// ─── Componentes ──────────────────────────────────────────────────────────────
+
+function Rotulo({ children, accent = false }: { children: React.ReactNode; accent?: boolean }) {
+  return <p className={accent ? "mb-1 text-[12px] font-medium text-px-accent" : "mb-1 text-[12px] font-medium text-px-muted"}>{children}</p>
+}
 
 function EstudoCard({ estudo, copied, onCopy }: {
   estudo: Estudo
@@ -342,7 +344,7 @@ function EstudoCard({ estudo, copied, onCopy }: {
   const ev = EVIDENCIA_CONFIG[estudo.nivelEvidencia]
 
   const copyText = [
-    `${estudo.nome} (${estudo.ano}) — ${estudo.journal}`,
+    `${estudo.nome} (${estudo.ano}), ${estudo.journal}`,
     `Tipo: ${estudo.tipo} · N=${estudo.n.toLocaleString("pt-BR")} · Duração: ${estudo.duracao}`,
     `Desfecho: ${estudo.desfechoPrincipal}`,
     `Resultado: ${estudo.resultado}`,
@@ -351,85 +353,60 @@ function EstudoCard({ estudo, copied, onCopy }: {
   ].join("\n")
 
   return (
-    <div className="rounded-xl overflow-hidden" style={{ background: "var(--card)", border: "1px solid var(--border)" }}>
+    <Panel as="article" tone="light" className="overflow-hidden p-0">
       <button
+        type="button"
+        aria-expanded={open}
         onClick={() => setOpen(o => !o)}
-        className="w-full flex items-start justify-between px-4 py-3 hover:bg-white/[0.02] transition-colors text-left gap-3"
+        className="flex w-full items-start justify-between gap-3 px-4 py-3.5 text-left"
       >
-        <div className="flex-1 min-w-0">
-          <div className="flex flex-wrap items-center gap-2 mb-1">
-            <span className={cn("text-badge font-mono font-semibold px-2 py-0.5 rounded-full border", TIPO_CONFIG[estudo.tipo])}>
-              {estudo.tipo}
-            </span>
-            <span className={cn("text-badge font-mono font-semibold px-2 py-0.5 rounded-full border", ev.color, ev.bg, ev.border)}>
-              {ev.label}
-            </span>
-            <span className="text-[10px] font-mono" style={{ color: "var(--text-muted)" }}>
-              {estudo.ano} · {estudo.journal.split(" ").slice(0,3).join(" ")}
-            </span>
+        <div className="min-w-0 flex-1">
+          <div className="mb-1.5 flex flex-wrap items-center gap-2">
+            <Tag>{estudo.tipo}</Tag>
+            <Tag tone={ev.tone}>{ev.label}</Tag>
+            <span className="text-[12px] text-px-muted">{estudo.ano}, {estudo.journal.split(" ").slice(0, 3).join(" ")}</span>
           </div>
-          <div className="text-[13px] font-semibold leading-snug" style={{ color: "var(--text-primary)" }}>
-            {estudo.nome}
-          </div>
-          <div className="flex flex-wrap gap-3 mt-1.5">
-            <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
-              N = <span style={{ color: "var(--text-secondary)" }}>{estudo.n.toLocaleString("pt-BR")}</span>
-            </span>
-            <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
-              {estudo.duracao}
-            </span>
-          </div>
+          <p className="text-[14px] font-semibold leading-snug text-px-ink">{estudo.nome}</p>
+          <p className="mt-1.5 text-[12.5px] text-px-muted">
+            N = {estudo.n.toLocaleString("pt-BR")}, {estudo.duracao}
+          </p>
         </div>
         {open
-          ? <ChevronDown className="w-4 h-4 flex-shrink-0 mt-1" style={{ color: "var(--text-muted)" }} />
-          : <ChevronRight className="w-4 h-4 flex-shrink-0 mt-1" style={{ color: "var(--text-muted)" }} />}
+          ? <ChevronDown className="mt-1 h-4 w-4 shrink-0 text-px-muted" aria-hidden="true" />
+          : <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-px-muted" aria-hidden="true" />}
       </button>
 
       {open && (
-        <div className="px-4 pb-4 space-y-3 border-t" style={{ borderColor: "var(--border)" }}>
-          <div className="pt-3 space-y-3">
-            <div>
-              <div className="text-[10px] font-mono uppercase tracking-wider mb-1" style={{ color: "var(--text-muted)" }}>
-                Desfecho principal
-              </div>
-              <p className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{estudo.desfechoPrincipal}</p>
-            </div>
-            <div>
-              <div className="text-[10px] font-mono uppercase tracking-wider mb-1" style={{ color: "var(--text-muted)" }}>
-                Resultado
-              </div>
-              <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-primary)" }}>{estudo.resultado}</p>
-            </div>
-            <div className="rounded-lg p-3" style={{ background: "rgba(0,192,127,0.06)", border: "1px solid rgba(0,192,127,0.2)" }}>
-              <div className="text-[10px] font-mono uppercase tracking-wider mb-1" style={{ color: "var(--accent)" }}>
-                Aplicação clínica prática
-              </div>
-              <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-                {estudo.aplicacaoClinica}
-              </p>
-            </div>
-            <div className="flex justify-end">
-              <button
-                onClick={() => onCopy(estudo.id, copyText)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all"
-                style={{
-                  background: copied === estudo.id ? "var(--accent-dim)" : "var(--surface)",
-                  border: `1px solid ${copied === estudo.id ? "var(--accent-border)" : "var(--border)"}`,
-                  color: copied === estudo.id ? "var(--accent)" : "var(--text-muted)",
-                }}
-              >
-                {copied === estudo.id ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                {copied === estudo.id ? "Copiado!" : "Copiar referência"}
-              </button>
-            </div>
+        <div className="space-y-3 border-t border-px-ink/10 px-4 py-4">
+          <div>
+            <Rotulo>Desfecho principal</Rotulo>
+            <p className="text-[13px] text-px-ink/75">{estudo.desfechoPrincipal}</p>
+          </div>
+          <div>
+            <Rotulo>Resultado</Rotulo>
+            <p className="text-[13px] leading-relaxed text-px-ink">{estudo.resultado}</p>
+          </div>
+          <div className="rounded-px-card bg-px-accent-soft px-4 py-3">
+            <Rotulo accent>Aplicação clínica prática</Rotulo>
+            <p className="text-[13px] leading-relaxed text-px-ink">{estudo.aplicacaoClinica}</p>
+          </div>
+          <div className="flex justify-end">
+            <PxButton
+              size="sm"
+              variant="secondary"
+              leftIcon={copied === estudo.id ? Check : Copy}
+              onClick={() => onCopy(estudo.id, copyText)}
+            >
+              {copied === estudo.id ? "Copiado" : "Copiar referência"}
+            </PxButton>
           </div>
         </div>
       )}
-    </div>
+    </Panel>
   )
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// ─── Página ───────────────────────────────────────────────────────────────────
 
 export default function EstudosPage() {
   const ctx          = useAppContext()
@@ -451,7 +428,7 @@ export default function EstudosPage() {
     navigator.clipboard.writeText(text).then(() => {
       setCopied(id)
       setTimeout(() => setCopied(null), 2000)
-    })
+    }).catch(() => { /* área de transferência indisponível */ })
   }
 
   const searchLower = search.toLowerCase().trim()
@@ -501,6 +478,10 @@ export default function EstudosPage() {
         setError(`Erro ao buscar estudos: ${String(data.error)}`)
         return
       }
+      if (!Array.isArray(data.estudos)) {
+        setError("A busca não devolveu estudos nesse formato. Tente novamente.")
+        return
+      }
       setAiResult({ ...(data as unknown as TemaEstudo), cor: "#a78bfa", id: `ai-${tema}` })
     } catch (e) {
       console.error("[estudos] erro inesperado:", e)
@@ -511,233 +492,140 @@ export default function EstudosPage() {
   }
 
   const totalEstudos = DATABASE.reduce((s, t) => s + t.estudos.length, 0)
+  const periodoAtual = PERIODOS.find(p => p.value === anos)?.key ?? "todos"
+  const sugestaoAtual = SUGESTOES.find(s => s.toLowerCase() === search.toLowerCase()) ?? ""
 
   return (
     <div className="animate-fade-in">
-      <TopBar
-        title="Banco de Estudos Científicos"
-        subtitle="MEDICINA BASEADA EM EVIDÊNCIAS · TRIALS CLÍNICOS · APLICAÇÃO PRÁTICA"
-        actions={
-          <span className="text-[10px] font-mono px-3 py-1.5 rounded-lg border"
-            style={{ background: "var(--surface)", borderColor: "var(--border)", color: "var(--text-muted)" }}>
-            {totalEstudos} estudos · {DATABASE.length} temas
-          </span>
-        }
+      <PageHeader
+        title="Banco de Estudos"
+        caption={`Evidência clínica com aplicação prática: ${totalEstudos} estudos em ${DATABASE.length} temas`}
       />
 
-      <div className="p-4 md:p-8 space-y-5">
+      <div className="space-y-5 px-4 pb-10 md:px-10">
 
-        {/* Search */}
         <div className="space-y-3">
           <form
+            className="flex flex-col gap-2 sm:flex-row"
             onSubmit={e => {
               e.preventDefault()
               if (search.trim()) buscarComIA(search.trim())
             }}
           >
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--text-muted)" }} />
-              <input
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder="Buscar estudo, medicamento ou tema…"
-                className="w-full pl-9 py-2.5 rounded-xl text-[13px] outline-none"
-                style={{
-                  paddingRight: search.trim() ? "2.75rem" : "1rem",
-                  background: "var(--card)",
-                  border: "1px solid var(--border)",
-                  color: "var(--text-primary)",
-                }}
-                onFocus={e => (e.currentTarget.style.borderColor = "var(--accent)")}
-                onBlur={e => (e.currentTarget.style.borderColor = "var(--border)")}
-              />
-              {search.trim() && (
-                <button
-                  type="submit"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center rounded-lg transition-all"
-                  style={{ background: "var(--accent-dim)", border: "1px solid var(--accent-border)" }}
-                >
-                  <Zap className="w-3.5 h-3.5" style={{ color: "var(--accent)" }} />
-                </button>
-              )}
-            </div>
+            <PxInput
+              type="search"
+              aria-label="Buscar estudo, medicamento ou tema"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Buscar estudo, medicamento ou tema"
+              className="flex-1"
+            />
+            <PxButton type="submit" leftIcon={Zap} loading={loading} disabled={!search.trim()}>
+              Buscar com IA
+            </PxButton>
           </form>
 
-          {/* Quick pills */}
-          <div className="flex flex-wrap gap-2">
-            {SUGESTOES.map(s => (
-              <button
-                key={s}
-                onClick={() => {
-                  const match = DATABASE.find(t => t.tema.toLowerCase() === s.toLowerCase())
-                  if (match) {
-                    setSearch(s)
-                    setAiResult(null)
-                  } else {
-                    buscarComIA(s)
-                  }
-                }}
-                className="text-[11px] px-2.5 py-1 rounded-full border transition-all"
-                style={{
-                  background: search.toLowerCase() === s.toLowerCase() ? "var(--accent-dim)" : "var(--surface)",
-                  borderColor: search.toLowerCase() === s.toLowerCase() ? "var(--accent-border)" : "var(--border)",
-                  color: search.toLowerCase() === s.toLowerCase() ? "var(--accent)" : "var(--text-muted)",
-                }}
-              >
-                {s}
-              </button>
-            ))}
-          </div>
+          <Segmented
+            label="Sugestões de tema"
+            value={sugestaoAtual}
+            onChange={s => {
+              const match = DATABASE.find(t => t.tema.toLowerCase() === s.toLowerCase())
+              if (match) {
+                setSearch(s)
+                setAiResult(null)
+              } else {
+                buscarComIA(s)
+              }
+            }}
+            options={SUGESTOES.map(s => ({ value: s, label: s }))}
+          />
 
-          {/* Período */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-[10px] font-mono" style={{ color: "var(--text-muted)" }}>PERÍODO:</span>
-            {([
-              { label: "6 meses", value: 0.5  },
-              { label: "2 anos",  value: 2    },
-              { label: "5 anos",  value: 5    },
-              { label: "10 anos", value: 10   },
-              { label: "Todos",   value: null },
-            ] as { label: string; value: number | null }[]).map(p => {
-              const ativo = anos === p.value
-              return (
-                <button
-                  key={p.label}
-                  onClick={() => setAnos(p.value)}
-                  className="text-[11px] px-2.5 py-1 rounded-full border transition-all"
-                  style={{
-                    background:  ativo ? "rgba(59,127,255,0.12)" : "var(--surface)",
-                    borderColor: ativo ? "rgba(59,127,255,0.3)"  : "var(--border)",
-                    color:       ativo ? "#3b7fff"                : "var(--text-muted)",
-                    fontWeight:  ativo ? 600 : 400,
-                  }}
-                >
-                  {p.label}
-                </button>
-              )
-            })}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[12.5px] text-px-muted">Período da busca com IA</span>
+            <Segmented
+              label="Período da busca com IA"
+              value={periodoAtual}
+              onChange={k => setAnos(PERIODOS.find(p => p.key === k)?.value ?? null)}
+              options={PERIODOS.map(p => ({ value: p.key, label: p.label }))}
+            />
           </div>
         </div>
 
-        {/* Loading */}
         {loading && (
-          <div className="flex flex-col items-center justify-center py-16 gap-4">
-            <FlaskConical className="w-10 h-10 text-accent animate-pulse" />
+          <div role="status" className="flex flex-col items-center justify-center gap-3 py-14">
+            <FlaskConical className="h-9 w-9 animate-pulse text-px-ink" aria-hidden="true" />
             <div className="text-center">
-              <div className="text-[14px] font-semibold" style={{ color: "var(--text-primary)" }}>
-                Consultando evidências científicas…
-              </div>
-              <div className="text-[10px] font-mono mt-1" style={{ color: "var(--text-muted)" }}>
-                CLAUDE ANALISANDO LITERATURA MÉDICA
-              </div>
+              <p className="text-[15px] font-semibold text-px-ink">Consultando evidências científicas</p>
+              <p className="mt-1 text-[12.5px] text-px-muted">A IA está analisando a literatura médica</p>
             </div>
           </div>
         )}
 
-        {/* Error */}
-        {error && (
-          <div className="flex items-start gap-3 rounded-xl p-4 bg-red-50 border border-red-200">
-            <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
-            <p className="text-[12px] text-red-700">{error}</p>
-          </div>
-        )}
+        {error && <p role="alert" className="rounded-px-card bg-px-danger-soft px-4 py-3 text-[13px] text-px-danger">{error}</p>}
 
-        {/* AI result */}
         {aiResult && !loading && (
-          <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(167,139,250,0.3)" }}>
-            <div className="flex items-center justify-between px-5 py-3"
-              style={{ background: "rgba(167,139,250,0.08)" }}>
-              <div className="flex items-center gap-2">
-                <Zap className="w-4 h-4" style={{ color: "#a78bfa" }} />
-                <span className="text-[13px] font-bold" style={{ color: "var(--text-primary)" }}>
-                  {aiResult.tema}
-                </span>
-                <span className="text-badge font-mono px-2 py-0.5 rounded-full bg-purple-500/20 border border-purple-500/30 text-purple-300">
-                  GERADO POR IA
-                </span>
-              </div>
+          <Panel tone="light" className="space-y-3 p-0">
+            <div className="flex flex-wrap items-center gap-2 px-5 pt-4">
+              <h2 className="text-[16px] font-semibold text-px-ink">{aiResult.tema}</h2>
+              <Tag tone="ink">Gerado por IA</Tag>
             </div>
             {aiResult.resumo && (
-              <div className="px-5 py-3 border-b" style={{ borderColor: "rgba(167,139,250,0.2)", background: "var(--card)" }}>
-                <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>{aiResult.resumo}</p>
-              </div>
+              <p className="px-5 text-[13px] leading-relaxed text-px-ink/75">{aiResult.resumo}</p>
             )}
-            <div className="p-4 space-y-3" style={{ background: "var(--background)" }}>
+            <div className="space-y-3 p-4">
               {aiResult.estudos.map(e => (
                 <EstudoCard key={e.id} estudo={e} copied={copied} onCopy={copy} />
               ))}
             </div>
-          </div>
+          </Panel>
         )}
 
-        {/* No match — prompt IA search */}
         {!loading && !aiResult && searchLower && !hasMatch && (
-          <div className="rounded-xl p-6 text-center" style={{ background: "var(--card)", border: "1px solid var(--border)" }}>
-            <BookOpen className="w-10 h-10 mx-auto mb-3" style={{ color: "var(--text-muted)" }} />
-            <p className="text-[13px] font-semibold mb-1" style={{ color: "var(--text-primary)" }}>
-              Nenhum estudo pré-carregado para &quot;{search}&quot;
-            </p>
-            <p className="text-[11px] mb-4" style={{ color: "var(--text-muted)" }}>
-              Clique abaixo para buscar evidências com Claude IA
-            </p>
-            <button
-              onClick={() => buscarComIA(search.trim())}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[12px] font-bold mx-auto transition-all"
-              style={{ background: "var(--accent-dim)", border: "1px solid var(--accent-border)", color: "var(--accent)" }}
-            >
-              <Zap className="w-3.5 h-3.5" /> Buscar com IA
-            </button>
-          </div>
+          <Panel className="py-10 text-center">
+            <BookOpen className="mx-auto mb-3 h-8 w-8 text-px-muted" aria-hidden="true" />
+            <p className="mb-1 text-[14px] font-semibold text-px-ink">Nenhum estudo carregado para &quot;{search}&quot;</p>
+            <p className="mb-4 text-[13px] text-px-muted">Busque as evidências com a IA para esse tema.</p>
+            <PxButton leftIcon={Zap} onClick={() => buscarComIA(search.trim())}>Buscar com IA</PxButton>
+          </Panel>
         )}
 
-        {/* Legend */}
-        <div className="flex flex-wrap gap-3">
-          {(Object.entries(EVIDENCIA_CONFIG) as [Evidencia, typeof EVIDENCIA_CONFIG[Evidencia]][]).map(([k, v]) => (
-            <div key={k} className={cn("flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-mono", v.color, v.bg, v.border)}>
-              {v.label}
-            </div>
-          ))}
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-mono text-blue-700 bg-blue-50 border-blue-200">
-            ECR = Ensaio Clínico Randomizado
-          </div>
-        </div>
+        <p className="text-[12.5px] text-px-muted">
+          Nível de evidência: A, B ou C. ECR significa ensaio clínico randomizado.
+        </p>
 
-        {/* Database */}
         {!loading && (
-          <div className="space-y-4">
-            {(searchLower ? filtered : DATABASE).map(tema => (
-              <div key={tema.id} className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
-                <button
-                  onClick={() => setOpenTemas(prev => ({ ...prev, [tema.id]: !prev[tema.id] }))}
-                  className="w-full flex items-center justify-between px-5 py-4 transition-colors hover:bg-white/[0.02]"
-                  style={{ background: "var(--card)" }}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: tema.cor }} />
-                    <div className="text-left">
-                      <div className="text-[14px] font-bold" style={{ color: "var(--text-primary)" }}>{tema.tema}</div>
-                      <div className="text-[11px] mt-0.5 pr-4" style={{ color: "var(--text-muted)" }}>{tema.resumo}</div>
+          <div className="space-y-3">
+            {(searchLower ? filtered : DATABASE).map(tema => {
+              const aberto = openTemas[tema.id] || !!searchLower
+              return (
+                <Panel key={tema.id} as="section" tone="light" className="overflow-hidden p-0">
+                  <button
+                    type="button"
+                    aria-expanded={aberto}
+                    onClick={() => setOpenTemas(prev => ({ ...prev, [tema.id]: !prev[tema.id] }))}
+                    className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-[15px] font-semibold text-px-ink">{tema.tema}</p>
+                      <p className="mt-0.5 pr-4 text-[12.5px] text-px-muted">{tema.resumo}</p>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded"
-                      style={{ background: "var(--surface)", color: "var(--text-muted)" }}>
-                      {tema.estudos.length} estudo{tema.estudos.length !== 1 ? "s" : ""}
-                    </span>
-                    {openTemas[tema.id]
-                      ? <ChevronDown className="w-4 h-4" style={{ color: "var(--text-muted)" }} />
-                      : <ChevronRight className="w-4 h-4" style={{ color: "var(--text-muted)" }} />}
-                  </div>
-                </button>
-                {(openTemas[tema.id] || !!searchLower) && (
-                  <div className="p-4 space-y-3" style={{ background: "var(--background)", borderTop: "1px solid var(--border)" }}>
-                    {tema.estudos.map(e => (
-                      <EstudoCard key={e.id} estudo={e} copied={copied} onCopy={copy} />
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
+                    <div className="flex shrink-0 items-center gap-2">
+                      <Tag>{tema.estudos.length} {tema.estudos.length === 1 ? "estudo" : "estudos"}</Tag>
+                      {aberto
+                        ? <ChevronDown className="h-4 w-4 text-px-muted" aria-hidden="true" />
+                        : <ChevronRight className="h-4 w-4 text-px-muted" aria-hidden="true" />}
+                    </div>
+                  </button>
+                  {aberto && (
+                    <div className="space-y-3 border-t border-px-ink/10 p-4">
+                      {tema.estudos.map(e => (
+                        <EstudoCard key={e.id} estudo={e} copied={copied} onCopy={copy} />
+                      ))}
+                    </div>
+                  )}
+                </Panel>
+              )
+            })}
           </div>
         )}
       </div>

@@ -1,15 +1,14 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { TopBar } from "@/components/TopBar"
 import { cn } from "@/lib/utils"
 import {
-  Brain, BookOpen, Star, History, Tag, Database, Info,
-  Plus, Trash2, Edit2, Check, X, Loader2, Heart,
-  Copy, Search, ChevronDown, ChevronRight,
+  Brain, History, Plus, Trash2, Pencil, Check, Heart,
+  Copy, ChevronDown, ChevronRight,
 } from "lucide-react"
+import { Panel, PxButton, Segmented, Field, PxInput, PxModal, Tag, PageHeader } from "@/components/px"
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// ─── Tipos ───────────────────────────────────────────────────────────────────
 
 type Tipo = "protocolo" | "script" | "historico" | "tema" | "conhecimento"
 
@@ -31,148 +30,173 @@ interface HistoricoItem {
   created_at:    string
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// ─── Constantes ──────────────────────────────────────────────────────────────
 
-const ABAS: { id: Tipo; label: string; icon: React.ElementType; desc: string; color: string }[] = [
-  { id: "protocolo",   label: "Protocolos",         icon: BookOpen,  desc: "Protocolos clínicos salvos",       color: "#3b7fff" },
-  { id: "script",      label: "Scripts",            icon: Star,      desc: "Scripts e textos favoritos",       color: "#d4af37" },
-  { id: "historico",   label: "Histórico",          icon: History,   desc: "Consultas recentes",               color: "#a78bfa" },
-  { id: "tema",        label: "Temas de Conteúdo",  icon: Tag,       desc: "Temas para redes sociais",         color: "var(--accent)" },
-  { id: "conhecimento",label: "Base de Conhecimento",icon: Database,  desc: "Conhecimento da clínica",         color: "#ec4899" },
+const ABAS: { id: Tipo; label: string; novo: string; desc: string }[] = [
+  { id: "protocolo",    label: "Protocolos",          novo: "protocolo",            desc: "Protocolos clínicos salvos" },
+  { id: "script",       label: "Scripts",             novo: "script",               desc: "Scripts e textos favoritos" },
+  { id: "historico",    label: "Histórico",           novo: "item",                 desc: "Consultas recentes" },
+  { id: "tema",         label: "Temas de conteúdo",   novo: "tema de conteúdo",     desc: "Temas para redes sociais" },
+  { id: "conhecimento", label: "Base de conhecimento", novo: "item de conhecimento", desc: "Conhecimento da clínica" },
 ]
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+const areaCls = "w-full resize-none rounded-px-ctl border border-px-line bg-white px-3.5 py-2.5 text-[13.5px] text-px-ink placeholder:text-px-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-px-ink/40"
+const iconBtn = "flex h-9 w-9 shrink-0 items-center justify-center rounded-px-ctl border border-px-line bg-white/60 text-px-ink hover:bg-white/90 disabled:opacity-40"
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })
 }
 
-function CopyBtn({ text }: { text: string }) {
+function CopyBtn({ text, label }: { text: string; label: string }) {
   const [ok, setOk] = useState(false)
   return (
     <button
-      onClick={() => { navigator.clipboard.writeText(text); setOk(true); setTimeout(() => setOk(false), 1800) }}
-      className="p-1.5 rounded-lg border border-border text-text-muted hover:text-accent hover:border-accent-border transition-all flex-shrink-0"
+      type="button"
+      aria-label={ok ? "Copiado" : label}
+      onClick={() => {
+        navigator.clipboard.writeText(text).then(() => {
+          setOk(true)
+          setTimeout(() => setOk(false), 1800)
+        }).catch(() => { /* área de transferência indisponível */ })
+      }}
+      className={iconBtn}
     >
-      {ok ? <Check className="w-3 h-3 text-accent" /> : <Copy className="w-3 h-3" />}
+      {ok ? <Check className="h-4 w-4" aria-hidden="true" /> : <Copy className="h-4 w-4" aria-hidden="true" />}
     </button>
   )
 }
 
-// ─── Card de item de memória ──────────────────────────────────────────────────
+// ─── Card de item de memória ─────────────────────────────────────────────────
 
 function ItemCard({
   item, onDelete, onToggleFav, onEdit,
 }: {
   item: MemoriaItem
-  onDelete: (id: string) => void
+  onDelete: (id: string) => Promise<void>
   onToggleFav: (id: string, val: boolean) => void
   onEdit: (item: MemoriaItem) => void
 }) {
   const [expanded, setExpanded] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [confirmando, setConfirmando] = useState(false)
 
   const handleDelete = async () => {
     setDeleting(true)
-    await fetch(`/api/memoria?id=${item.id}`, { method: "DELETE" })
-    onDelete(item.id)
+    await onDelete(item.id)
+    setDeleting(false)
+    setConfirmando(false)
   }
 
   return (
-    <div className={cn(
-      "bg-card border rounded-xl transition-all",
-      item.favorito ? "border-[#d4af37]/40" : "border-border",
-    )}>
+    <Panel as="article" className="p-0">
       <div className="flex items-start gap-3 p-4">
         <button
+          type="button"
+          aria-pressed={item.favorito}
+          aria-label={item.favorito ? `Remover ${item.titulo} dos favoritos` : `Favoritar ${item.titulo}`}
           onClick={() => onToggleFav(item.id, !item.favorito)}
-          className={cn("flex-shrink-0 mt-0.5 transition-colors", item.favorito ? "text-[#d4af37]" : "text-text-muted hover:text-[#d4af37]")}
+          className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-px-ink hover:bg-px-ink/10"
         >
-          <Heart className={cn("w-3.5 h-3.5", item.favorito ? "fill-current" : "")} />
+          <Heart className={cn("h-4 w-4", item.favorito && "fill-current")} aria-hidden="true" />
         </button>
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0 flex-1">
           <button
+            type="button"
+            aria-expanded={expanded}
             onClick={() => setExpanded(e => !e)}
-            className="flex items-center gap-1.5 w-full text-left"
+            className="flex w-full items-center gap-1.5 text-left"
           >
-            <span className="text-[13px] font-semibold text-text-primary truncate">{item.titulo}</span>
+            <span className="truncate text-[14px] font-semibold text-px-ink">{item.titulo}</span>
             {expanded
-              ? <ChevronDown className="w-3 h-3 text-text-muted flex-shrink-0" />
-              : <ChevronRight className="w-3 h-3 text-text-muted flex-shrink-0" />}
+              ? <ChevronDown className="h-4 w-4 shrink-0 text-px-muted" aria-hidden="true" />
+              : <ChevronRight className="h-4 w-4 shrink-0 text-px-muted" aria-hidden="true" />}
           </button>
           {item.tags?.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-1.5">
-              {item.tags.map(t => (
-                <span key={t} className="text-badge font-mono px-1.5 py-0.5 rounded-full bg-accent-dim border border-accent-border text-accent">{t}</span>
-              ))}
+            <div className="mt-1.5 flex flex-wrap gap-1">
+              {item.tags.map(t => <Tag key={t} tone="accent">{t}</Tag>)}
             </div>
           )}
           {expanded && (
-            <div className="mt-3 text-[12px] text-text-secondary leading-relaxed whitespace-pre-wrap bg-background border border-border rounded-lg p-3">
+            <div className="mt-3 whitespace-pre-wrap rounded-px-card bg-px-ink/[0.05] p-3.5 text-[13px] leading-relaxed text-px-ink/80">
               {item.conteudo}
             </div>
           )}
-          <div className="text-[10px] text-text-muted mt-2">{fmtDate(item.criado_em)}</div>
+          <p className="mt-2 text-[12px] text-px-muted">{fmtDate(item.criado_em)}</p>
         </div>
-        <div className="flex items-center gap-1 flex-shrink-0">
-          <CopyBtn text={item.conteudo} />
-          <button onClick={() => onEdit(item)} className="p-1.5 rounded-lg border border-border text-text-muted hover:text-blue-400 hover:border-blue-400/40 transition-all">
-            <Edit2 className="w-3 h-3" />
+        <div className="flex shrink-0 items-center gap-1.5">
+          <CopyBtn text={item.conteudo} label={`Copiar ${item.titulo}`} />
+          <button type="button" aria-label={`Editar ${item.titulo}`} onClick={() => onEdit(item)} className={iconBtn}>
+            <Pencil className="h-4 w-4" aria-hidden="true" />
           </button>
-          <button onClick={handleDelete} disabled={deleting} className="p-1.5 rounded-lg border border-border text-text-muted hover:text-red-400 hover:border-red-400/40 transition-all disabled:opacity-40">
-            {deleting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
+          <button type="button" aria-label={`Excluir ${item.titulo}`} onClick={() => setConfirmando(true)} disabled={deleting} className={iconBtn}>
+            <Trash2 className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
       </div>
-    </div>
+      {confirmando && (
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-px-ink/10 px-4 py-3">
+          <p className="text-[13px] text-px-ink">Excluir este item? Não dá para desfazer.</p>
+          <div className="flex gap-2">
+            <PxButton size="sm" variant="secondary" onClick={() => setConfirmando(false)} disabled={deleting}>Cancelar</PxButton>
+            <PxButton size="sm" variant="danger" onClick={handleDelete} loading={deleting}>Excluir</PxButton>
+          </div>
+        </div>
+      )}
+    </Panel>
   )
 }
 
-// ─── Card histórico consulta ──────────────────────────────────────────────────
+// ─── Card histórico de consulta ──────────────────────────────────────────────
 
 function HistoricoCard({ item }: { item: HistoricoItem }) {
   const [expanded, setExpanded] = useState(false)
   const res = item.resultado as Record<string, string>
 
   return (
-    <div className="bg-card border border-border rounded-xl">
-      <button onClick={() => setExpanded(e => !e)} className="flex items-start gap-3 p-4 w-full text-left">
-        <div className="w-8 h-8 rounded-lg bg-[#a78bfa]/10 border border-[#a78bfa]/30 flex items-center justify-center flex-shrink-0">
-          <History className="w-3.5 h-3.5 text-[#a78bfa]" />
+    <Panel as="article" className="p-0">
+      <button
+        type="button"
+        aria-expanded={expanded}
+        onClick={() => setExpanded(e => !e)}
+        className="flex w-full items-start gap-3 p-4 text-left"
+      >
+        <div className="min-w-0 flex-1">
+          <p className="text-[14px] font-semibold text-px-ink">{item.paciente_nome ?? "Consulta sem nome"}</p>
+          <p className="mt-0.5 text-[12.5px] text-px-muted">{item.tipo_consulta ?? "Consulta geral"}, {fmtDate(item.created_at)}</p>
         </div>
-        <div className="flex-1 min-w-0">
-          <div className="text-[13px] font-semibold text-text-primary">{item.paciente_nome ?? "Consulta sem nome"}</div>
-          <div className="text-[11px] text-text-muted mt-0.5">{item.tipo_consulta ?? "Consulta geral"} · {fmtDate(item.created_at)}</div>
-        </div>
-        {expanded ? <ChevronDown className="w-3 h-3 text-text-muted flex-shrink-0 mt-1" /> : <ChevronRight className="w-3 h-3 text-text-muted flex-shrink-0 mt-1" />}
+        {expanded
+          ? <ChevronDown className="mt-1 h-4 w-4 shrink-0 text-px-muted" aria-hidden="true" />
+          : <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-px-muted" aria-hidden="true" />}
       </button>
       {expanded && res.resumo && (
-        <div className="px-4 pb-4 space-y-2.5">
-          <div className="bg-background border border-border rounded-lg p-3">
-            <div className="text-[10px] font-mono text-text-muted uppercase tracking-widest mb-1">Resumo</div>
-            <p className="text-[12px] text-text-secondary leading-relaxed">{res.resumo}</p>
+        <div className="space-y-2.5 px-4 pb-4">
+          <div className="rounded-px-card bg-px-ink/[0.05] p-3.5">
+            <p className="mb-1 text-[12px] font-medium text-px-muted">Resumo</p>
+            <p className="text-[13px] leading-relaxed text-px-ink/80">{res.resumo}</p>
           </div>
           {res.plano && (
-            <div className="bg-background border border-border rounded-lg p-3">
-              <div className="text-[10px] font-mono text-text-muted uppercase tracking-widest mb-1">Plano</div>
-              <p className="text-[12px] text-text-secondary leading-relaxed whitespace-pre-line">{res.plano}</p>
+            <div className="rounded-px-card bg-px-ink/[0.05] p-3.5">
+              <p className="mb-1 text-[12px] font-medium text-px-muted">Plano</p>
+              <p className="whitespace-pre-line text-[13px] leading-relaxed text-px-ink/80">{res.plano}</p>
             </div>
           )}
         </div>
       )}
-    </div>
+    </Panel>
   )
 }
 
-// ─── Modal de criação/edição ──────────────────────────────────────────────────
+// ─── Modal de criação e edição ───────────────────────────────────────────────
 
 function EditModal({
   tipo, initial, onSave, onClose,
 }: {
-  tipo:    Tipo
+  tipo:     Tipo
   initial?: MemoriaItem
-  onSave:  (item: MemoriaItem) => void
-  onClose: () => void
+  onSave:   (item: MemoriaItem) => void
+  onClose:  () => void
 }) {
   const [titulo,   setTitulo]   = useState(initial?.titulo   ?? "")
   const [conteudo, setConteudo] = useState(initial?.conteudo ?? "")
@@ -185,6 +209,7 @@ function EditModal({
   const save = async () => {
     if (!titulo.trim() || !conteudo.trim()) { setError("Título e conteúdo são obrigatórios."); return }
     setSaving(true)
+    setError(null)
     const tagsArr = tags.split(",").map(t => t.trim()).filter(Boolean)
     try {
       let res: Response
@@ -201,116 +226,106 @@ function EditModal({
           body: JSON.stringify({ tipo, titulo, conteudo, tags: tagsArr }),
         })
       }
-      const data = await res.json() as MemoriaItem
-      if (!res.ok) throw new Error((data as unknown as { error: string }).error)
+      const data = await res.json().catch(() => null) as (MemoriaItem & { error?: string }) | null
+      if (!res.ok || !data) throw new Error(data?.error || "Não foi possível salvar. Tente novamente.")
       onSave(data)
     } catch (e) {
-      setError(String(e))
+      setError(e instanceof Error ? e.message : String(e))
     } finally {
       setSaving(false)
     }
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-card border border-border rounded-2xl p-6 w-full max-w-lg shadow-2xl">
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: aba.color + "18", border: `1px solid ${aba.color}40` }}>
-              <aba.icon className="w-4 h-4" style={{ color: aba.color }} />
-            </div>
-            <h3 className="text-[15px] font-semibold text-text-primary">
-              {initial ? "Editar" : "Novo"} {aba.label.slice(0, -1)}
-            </h3>
-          </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg text-text-muted hover:text-text-primary transition-colors">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-        <div className="space-y-3">
-          <div>
-            <label className="block text-[10px] font-mono text-text-muted uppercase tracking-wide mb-1.5">Título *</label>
-            <input
-              value={titulo} onChange={e => setTitulo(e.target.value)}
-              placeholder="Ex: Protocolo GLP-1 inicial"
-              className="w-full bg-background border border-border rounded-lg px-3 py-2.5 text-[13px] text-text-primary placeholder:text-text-muted outline-none focus:border-accent/40 transition-colors"
-            />
-          </div>
-          <div>
-            <label className="block text-[10px] font-mono text-text-muted uppercase tracking-wide mb-1.5">Conteúdo *</label>
-            <textarea
-              value={conteudo} onChange={e => setConteudo(e.target.value)} rows={6}
-              placeholder="Conteúdo completo do item..."
-              className="w-full bg-background border border-border rounded-lg px-3 py-2.5 text-[13px] text-text-primary placeholder:text-text-muted outline-none focus:border-accent/40 transition-colors resize-none"
-            />
-          </div>
-          <div>
-            <label className="block text-[10px] font-mono text-text-muted uppercase tracking-wide mb-1.5">Tags <span className="normal-case font-normal tracking-normal text-text-muted/60">(separadas por vírgula)</span></label>
-            <input
-              value={tags} onChange={e => setTags(e.target.value)}
-              placeholder="glp-1, emagrecimento, protocolo"
-              className="w-full bg-background border border-border rounded-lg px-3 py-2.5 text-[13px] text-text-primary placeholder:text-text-muted outline-none focus:border-accent/40 transition-colors"
-            />
-          </div>
-          {error && <p className="text-[11px] text-red-400">{error}</p>}
-          <div className="flex gap-2 pt-1">
-            <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-border text-text-muted text-[13px] hover:border-border-hover transition-all">
-              Cancelar
-            </button>
-            <button
-              onClick={save} disabled={saving}
-              className="flex-1 py-2.5 rounded-xl bg-accent text-background text-[13px] font-bold hover:bg-accent/90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-              {saving ? "Salvando..." : "Salvar"}
-            </button>
-          </div>
+    <PxModal open onClose={onClose} title={`${initial ? "Editar" : "Novo"} ${aba.novo}`} className="max-w-lg">
+      <div className="space-y-3">
+        <Field label="Título (obrigatório)" htmlFor="mem-titulo">
+          <PxInput id="mem-titulo" value={titulo} onChange={e => setTitulo(e.target.value)} placeholder="Ex.: Protocolo GLP-1 inicial" />
+        </Field>
+        <Field label="Conteúdo (obrigatório)" htmlFor="mem-conteudo">
+          <textarea
+            id="mem-conteudo"
+            value={conteudo}
+            onChange={e => setConteudo(e.target.value)}
+            rows={6}
+            placeholder="Conteúdo completo do item"
+            className={areaCls}
+          />
+        </Field>
+        <Field label="Tags" hint="Separadas por vírgula" htmlFor="mem-tags">
+          <PxInput id="mem-tags" value={tags} onChange={e => setTags(e.target.value)} placeholder="glp-1, emagrecimento, protocolo" />
+        </Field>
+        {error && <p role="alert" className="rounded-px-card bg-px-danger-soft px-4 py-3 text-[13px] text-px-danger">{error}</p>}
+        <div className="flex gap-2 pt-1">
+          <PxButton variant="secondary" fullWidth onClick={onClose}>Cancelar</PxButton>
+          <PxButton fullWidth onClick={save} loading={saving}>{saving ? "Salvando" : "Salvar"}</PxButton>
         </div>
       </div>
-    </div>
+    </PxModal>
   )
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// ─── Página ──────────────────────────────────────────────────────────────────
 
 export default function MemoriaPage() {
-  const [aba,       setAba]      = useState<Tipo>("protocolo")
-  const [items,     setItems]    = useState<MemoriaItem[]>([])
+  const [aba,       setAba]       = useState<Tipo>("protocolo")
+  const [items,     setItems]     = useState<MemoriaItem[]>([])
   const [historico, setHistorico] = useState<HistoricoItem[]>([])
-  const [loading,   setLoading]  = useState(true)
-  const [search,    setSearch]   = useState("")
-  const [modal,     setModal]    = useState<{ open: boolean; item?: MemoriaItem }>({ open: false })
+  const [loading,   setLoading]   = useState(true)
+  const [loadError, setLoadError] = useState(false)
+  const [aviso,     setAviso]     = useState("")
+  const [search,    setSearch]    = useState("")
+  const [modal,     setModal]     = useState<{ open: boolean; item?: MemoriaItem }>({ open: false })
 
   const fetchData = useCallback(async (tipo: Tipo) => {
     setLoading(true)
+    setLoadError(false)
     try {
       const res  = await fetch(`/api/memoria?tipo=${tipo}`)
       if (!res.ok) throw new Error("API error")
       const data = await res.json()
       if (tipo === "historico") setHistorico(Array.isArray(data) ? data as HistoricoItem[] : [])
       else setItems(Array.isArray(data) ? data as MemoriaItem[] : [])
-    } catch (e) { console.error("[memoria] erro ao carregar dados:", e) }
+    } catch (e) {
+      console.error("[memoria] erro ao carregar dados:", e)
+      setLoadError(true)
+    }
     finally { setLoading(false) }
   }, [])
 
   useEffect(() => { fetchData(aba) }, [aba, fetchData])
 
+  const termo = search.toLowerCase()
   const filtered = items.filter(i =>
-    i.titulo.toLowerCase().includes(search.toLowerCase()) ||
-    i.conteudo.toLowerCase().includes(search.toLowerCase()) ||
-    i.tags?.some(t => t.toLowerCase().includes(search.toLowerCase()))
+    i.titulo.toLowerCase().includes(termo) ||
+    i.conteudo.toLowerCase().includes(termo) ||
+    i.tags?.some(t => t.toLowerCase().includes(termo))
   )
 
-  const handleDelete = (id: string) => setItems(prev => prev.filter(i => i.id !== id))
+  const handleDelete = async (id: string) => {
+    setAviso("")
+    try {
+      const res = await fetch(`/api/memoria?id=${id}`, { method: "DELETE" })
+      if (!res.ok) throw new Error("falhou")
+      setItems(prev => prev.filter(i => i.id !== id))
+    } catch {
+      setAviso("Não foi possível excluir o item. Ele continua na lista.")
+    }
+  }
 
   const handleToggleFav = async (id: string, val: boolean) => {
-    await fetch("/api/memoria", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, favorito: val }),
-    })
-    setItems(prev => prev.map(i => i.id === id ? { ...i, favorito: val } : i))
+    setAviso("")
+    try {
+      const res = await fetch("/api/memoria", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, favorito: val }),
+      })
+      if (!res.ok) throw new Error("falhou")
+      setItems(prev => prev.map(i => i.id === id ? { ...i, favorito: val } : i))
+    } catch {
+      setAviso("Não foi possível atualizar o favorito. Tente novamente.")
+    }
   }
 
   const handleSave = (saved: MemoriaItem) => {
@@ -323,124 +338,88 @@ export default function MemoriaPage() {
   }
 
   const abaInfo = ABAS.find(a => a.id === aba)!
+  const semana = items.filter(i => new Date(i.criado_em) > new Date(Date.now() - 7 * 86400e3)).length
 
   return (
     <div className="animate-fade-in">
-      <TopBar
+      <PageHeader
         title="Memória Clínica"
-        subtitle="PROTOCOLOS · SCRIPTS · CONSULTAS · TEMAS · BASE DE CONHECIMENTO"
-        tagline="Guarde protocolos, condutas e anotações clínicas para consultar rapidamente depois."
+        caption="Protocolos, condutas e anotações para consultar rápido"
         actions={
           aba !== "historico" ? (
-            <button
-              onClick={() => setModal({ open: true })}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-accent text-background text-[12px] font-bold hover:bg-accent/90 transition-all"
-            >
-              <Plus className="w-3.5 h-3.5" /> Novo
-            </button>
+            <PxButton size="sm" leftIcon={Plus} onClick={() => setModal({ open: true })}>Novo item</PxButton>
           ) : undefined
         }
       />
 
-      <div className="p-4 md:p-8 space-y-5">
-
-        {/* ── Tabs ───────────────────────────────────────────────────────── */}
-        <div className="flex gap-1.5 flex-wrap">
-          {ABAS.map(a => (
-            <button
-              key={a.id}
-              onClick={() => { setAba(a.id); setSearch("") }}
-              className={cn(
-                "flex items-center gap-2 px-3.5 py-2 rounded-xl border text-[12px] font-medium transition-all",
-                aba === a.id ? "border-border bg-card shadow-sm" : "border-transparent text-text-muted hover:text-text-secondary",
-              )}
-            >
-              <a.icon className="w-3.5 h-3.5" style={{ color: aba === a.id ? a.color : undefined }} />
-              <span className={aba === a.id ? "text-text-primary" : ""}>{a.label}</span>
-            </button>
-          ))}
+      <div className="space-y-4 px-4 pb-10 md:px-10">
+        <div className="overflow-x-auto">
+          <Segmented
+            label="Tipo de memória"
+            value={aba}
+            onChange={v => { setAba(v); setSearch(""); setAviso("") }}
+            options={ABAS.map(a => ({ value: a.id, label: a.label }))}
+          />
         </div>
 
-        {/* ── Section header ─────────────────────────────────────────────── */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: abaInfo.color + "18", border: `1px solid ${abaInfo.color}40` }}>
-              <abaInfo.icon className="w-4 h-4" style={{ color: abaInfo.color }} />
-            </div>
-            <div>
-              <h2 className="text-[14px] font-semibold text-text-primary">{abaInfo.label}</h2>
-              <p className="text-[11px] text-text-muted">{abaInfo.desc}</p>
-            </div>
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2 className="text-[16px] font-semibold text-px-ink">{abaInfo.label}</h2>
+            <p className="text-[13px] text-px-muted">
+              {aba === "historico"
+                ? abaInfo.desc
+                : `${abaInfo.desc}, ${items.length} ${items.length === 1 ? "item" : "itens"}, ${items.filter(i => i.favorito).length} favoritos, ${semana} nesta semana`}
+            </p>
           </div>
           {aba !== "historico" && (
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-text-muted" />
-              <input
-                value={search} onChange={e => setSearch(e.target.value)}
-                placeholder="Buscar..."
-                className="bg-background border border-border rounded-lg pl-7 pr-3 py-2 text-[12px] text-text-primary placeholder:text-text-muted outline-none focus:border-accent/40 transition-colors w-44"
-              />
-            </div>
+            <PxInput
+              type="search"
+              aria-label="Buscar na aba atual"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Buscar"
+              className="w-full sm:w-56"
+            />
           )}
         </div>
 
-        {/* ── Stats ──────────────────────────────────────────────────────── */}
-        {aba !== "historico" && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {[
-              { label: "Total",      value: items.length },
-              { label: "Favoritos",  value: items.filter(i => i.favorito).length },
-              { label: "Com tags",   value: items.filter(i => i.tags?.length).length },
-              { label: "Esta semana",value: items.filter(i => new Date(i.criado_em) > new Date(Date.now() - 7 * 86400e3)).length },
-            ].map(s => (
-              <div key={s.label} className="bg-card border border-border rounded-xl p-3.5 text-center">
-                <div className="text-[22px] font-black text-text-primary">{s.value}</div>
-                <div className="text-[10px] font-mono text-text-muted uppercase tracking-wide">{s.label}</div>
-              </div>
-            ))}
-          </div>
-        )}
-
         {aba === "protocolo" && (
-          <div className="flex items-start gap-2 px-3.5 py-2.5 rounded-xl border border-blue-500/20 bg-blue-500/8 text-[11px] text-blue-400">
-            <Info className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
-            <span>Protocolos marcados como favoritos <Heart className="w-3 h-3 inline fill-current text-[#d4af37]" /> são injetados automaticamente no Copiloto de Consulta ao gerar a conduta.</span>
-          </div>
+          <p className="rounded-px-card bg-px-ink/[0.06] px-4 py-3 text-[13px] text-px-ink">
+            Os protocolos favoritados entram automaticamente no Copiloto de Consulta quando ele gera a conduta.
+          </p>
         )}
 
-        {/* ── Content ────────────────────────────────────────────────────── */}
+        {aviso && <p role="alert" className="rounded-px-card bg-px-danger-soft px-4 py-3 text-[13px] text-px-danger">{aviso}</p>}
+
         {loading ? (
-          <div className="space-y-3">
+          <div className="space-y-3" aria-busy="true" aria-label="Carregando">
             {[1, 2, 3].map(i => (
-              <div key={i} className="bg-card border border-border rounded-xl p-4 animate-pulse">
-                <div className="flex gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-border" />
-                  <div className="flex-1 space-y-2">
-                    <div className="h-4 bg-border rounded w-48" />
-                    <div className="h-3 bg-border rounded w-24" />
-                  </div>
-                </div>
-              </div>
+              <div key={i} className="px-glass h-[76px] animate-pulse rounded-px-panel" />
             ))}
           </div>
+        ) : loadError ? (
+          <Panel className="py-10 text-center">
+            <p className="mb-3 text-[14px] text-px-ink">Não foi possível carregar esta lista.</p>
+            <PxButton variant="secondary" onClick={() => fetchData(aba)}>Tentar de novo</PxButton>
+          </Panel>
         ) : aba === "historico" ? (
           <div className="space-y-3">
             {historico.length === 0 ? (
-              <div className="text-center py-16 text-text-muted">
-                <History className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                <p className="text-[13px]">Nenhuma consulta registrada ainda.</p>
-              </div>
+              <Panel className="py-12 text-center">
+                <History className="mx-auto mb-3 h-8 w-8 text-px-muted" aria-hidden="true" />
+                <p className="text-[14px] text-px-ink">Nenhuma consulta registrada ainda.</p>
+              </Panel>
             ) : historico.map(h => <HistoricoCard key={h.id} item={h} />)}
           </div>
         ) : (
           <div className="space-y-3">
             {filtered.length === 0 ? (
-              <div className="text-center py-16 text-text-muted">
-                <Brain className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                <p className="text-[13px]">
-                  {search ? "Nenhum resultado encontrado." : "Nenhum item ainda. Clique em + Novo para começar."}
+              <Panel className="py-12 text-center">
+                <Brain className="mx-auto mb-3 h-8 w-8 text-px-muted" aria-hidden="true" />
+                <p className="text-[14px] text-px-ink">
+                  {search ? "Nenhum resultado para essa busca." : "Nenhum item ainda. Toque em Novo item para começar."}
                 </p>
-              </div>
+              </Panel>
             ) : filtered.map(item => (
               <ItemCard
                 key={item.id}
@@ -454,7 +433,6 @@ export default function MemoriaPage() {
         )}
       </div>
 
-      {/* ── Modal ────────────────────────────────────────────────────────── */}
       {modal.open && (
         <EditModal
           tipo={aba === "historico" ? "conhecimento" : aba}

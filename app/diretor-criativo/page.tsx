@@ -7,8 +7,8 @@ export default function DiretorCriativoPage() {
   const router = useRouter()
   useEffect(() => { router.replace(`/imagens${window.location.search}`) }, [router])
   return (
-    <div className="flex items-center justify-center h-screen">
-      <p className="text-text-muted text-sm font-mono">Redirecionando para Diretor Criativo...</p>
+    <div className="flex h-screen items-center justify-center">
+      <p role="status" className="text-[13px] text-px-muted">Abrindo o Diretor Criativo</p>
     </div>
   )
 }

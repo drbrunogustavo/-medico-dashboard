@@ -11,7 +11,7 @@ interface Modulo {
 }
 
 const MODULOS: Modulo[] = [
-  { id: "copiloto", label: "Copiloto de Consulta", href: "/praxis-consultorio", screenshot: null,
+  { id: "copiloto", label: "Copiloto de Consulta", href: "/praxis-consultorio", screenshot: "/screenshots/copiloto.png",
     title: "Documente a consulta a partir do seu relato",
     tagline: "Descreva o caso e revise o que a IA organiza",
     description: "Narre o caso clínico em texto livre. O PRAXIS gera resumo SOAP, plano terapêutico, exames, orientações ao paciente e mensagens de acompanhamento. Todo conteúdo precisa ser revisado pelo médico.",
@@ -89,7 +89,7 @@ export default function TourPage() {
           <div className={`grid grid-cols-1 items-start gap-8 ${m.screenshot ? "lg:grid-cols-2" : ""}`}>
             {m.screenshot && (
               <Panel as="div" className="overflow-hidden !p-0">
-                <Image src={m.screenshot} alt={`Tela do módulo ${m.label}`} width={800} height={500} className="block h-auto w-full" unoptimized />
+                <Image src={m.screenshot} alt={m.id === "copiloto" ? "Ilustração do Copiloto de Consulta, com dados de exemplo" : `Tela do módulo ${m.label}`} width={800} height={500} className="block h-auto w-full" unoptimized />
               </Panel>
             )}
             <Panel as="article" className="space-y-4">

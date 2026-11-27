@@ -104,7 +104,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <main className="flex min-h-screen min-w-0 flex-1 flex-col bg-background pb-28">
+      <main className="px-bridge flex min-h-screen min-w-0 flex-1 flex-col bg-background pb-28">
         <div className="flex-1">{children}</div>
       </main>
       <div className="px">

@@ -109,7 +109,7 @@ export function PraxisCopilot() {
     <>
       {/* Onboarding hint tooltip */}
       {showHint && (
-        <div className="fixed bottom-20 right-4 z-50 animate-fade-in pointer-events-none">
+        <div className="fixed bottom-40 right-4 lg:bottom-20 z-50 animate-fade-in pointer-events-none">
           <div className="relative bg-card border border-accent-border rounded-xl shadow-2xl px-4 py-3 max-w-[230px] pointer-events-auto">
             {/* Arrow pointing down-right toward the FAB */}
             <div className="absolute bottom-[-7px] right-[22px] w-3.5 h-3.5 rotate-45 bg-card border-r border-b border-accent-border" />
@@ -131,7 +131,7 @@ export function PraxisCopilot() {
       {/* FAB trigger */}
       <button
         onClick={() => { dismissHint(); openCopilot() }}
-        className="fixed bottom-5 right-5 z-40 w-12 h-12 rounded-full bg-card border border-accent-border shadow-xl flex items-center justify-center hover:bg-accent-dim transition-all group"
+        className="fixed bottom-24 right-4 lg:bottom-5 lg:right-5 z-40 w-12 h-12 rounded-full bg-card border border-accent-border shadow-xl flex items-center justify-center hover:bg-accent-dim transition-all group"
         title="Praxis Copilot"
       >
         <Sparkles className="w-5 h-5 text-accent group-hover:scale-110 transition-transform" />

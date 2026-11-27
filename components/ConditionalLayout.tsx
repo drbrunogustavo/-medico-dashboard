@@ -1,7 +1,7 @@
 "use client"
 
 import { usePathname } from "next/navigation"
-import { Sidebar }            from "@/components/Sidebar"
+import { AppShell }           from "@/components/px/AppShell"
 import { MobileMenuProvider } from "@/components/MobileMenuProvider"
 import { PraxisCopilot }      from "@/components/PraxisCopilot"
 import { CommandBar }          from "@/components/CommandBar"
@@ -24,12 +24,7 @@ export function ConditionalLayout({ children }: { children: React.ReactNode }) {
     <AppProvider>
       <MobileMenuProvider>
         <ScrollToTop />
-        <div className="flex min-h-screen">
-          <Sidebar />
-          <main className="flex-1 min-w-0 min-h-screen bg-background flex flex-col md:ml-60">
-            <div className="flex-1">{children}</div>
-          </main>
-        </div>
+        <AppShell>{children}</AppShell>
         <PraxisCopilot />
         <CommandBar />
       </MobileMenuProvider>

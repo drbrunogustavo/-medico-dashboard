@@ -1,7 +1,9 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { Panel, PxButton, PxInput, Field } from "@/components/px"
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser"
 
 interface BannerAd {
@@ -13,236 +15,90 @@ interface BannerAd {
   anunciante_foto_url: string | null
 }
 
+const linkSeguro = (u: string) => /^https?:\/\//i.test(u)
+
 export default function LoginPage() {
-  const [email,   setEmail]   = useState("")
-  const [senha,   setSenha]   = useState("")
+  const [email, setEmail] = useState("")
+  const [senha, setSenha] = useState("")
   const [loading, setLoading] = useState(false)
-  const [erro,    setErro]    = useState("")
-  const [banner,  setBanner]  = useState<BannerAd | null>(null)
+  const [erro, setErro] = useState("")
+  const [banner, setBanner] = useState<BannerAd | null>(null)
   const router = useRouter()
 
   useEffect(() => {
     fetch("/api/anuncios-cursos/publico")
-      .then(r => r.json())
-      .then((data: { anuncio: BannerAd | null }) => { if (data?.anuncio) setBanner(data.anuncio) })
-      .catch(() => {})
+      .then(r => (r.ok ? r.json() : null))
+      .then((data: { anuncio: BannerAd | null } | null) => { if (data?.anuncio && linkSeguro(data.anuncio.link_destino)) setBanner(data.anuncio) })
+      .catch(e => console.error("[login] erro ao carregar anúncio:", e))
   }, [])
 
-  async function handleLogin() {
-    setLoading(true)
-    setErro("")
-    const supabase = getSupabaseBrowserClient()
-    const { error } = await supabase.auth.signInWithPassword({ email, password: senha })
-    if (error) {
-      setErro("Email ou senha incorretos.")
+  async function entrar(e: React.FormEvent) {
+    e.preventDefault()
+    if (loading) return
+    if (!email.trim() || !senha) { setErro("Informe e-mail e senha."); return }
+    setLoading(true); setErro("")
+    try {
+      const supabase = getSupabaseBrowserClient()
+      const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password: senha })
+      if (error) { setErro("E-mail ou senha incorretos."); setLoading(false); return }
+      router.push("/dashboard")
+    } catch (err) {
+      console.error("[login] erro ao entrar:", err)
+      setErro("Não foi possível entrar agora. Verifique a conexão e tente de novo.")
       setLoading(false)
-      return
     }
-    router.push("/dashboard")
-  }
-
-  const inputStyle: React.CSSProperties = {
-    width: "100%",
-    padding: "14px 16px",
-    borderRadius: "10px",
-    border: "1px solid #444",
-    backgroundColor: "#2a2a2a",
-    color: "#f5f5f5",
-    fontSize: "15px",
-    outline: "none",
-    boxSizing: "border-box",
-    WebkitTextFillColor: "#f5f5f5",
-    caretColor: "#f5f5f5",
   }
 
   return (
-    <div style={{
-      minHeight: "100vh",
-      backgroundColor: "#0a0a0a",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "center",
-      fontFamily: "Inter, sans-serif",
-      padding: "20px",
-      gap: "16px",
-    }}>
-      <div style={{
-        width: "100%",
-        maxWidth: "420px",
-        backgroundColor: "#141414",
-        borderRadius: "20px",
-        padding: "48px 40px",
-        border: "1px solid #222",
-      }}>
+    <div className="px relative flex min-h-screen flex-col items-center justify-center gap-4 px-4 py-10">
+      <div className="px-stage" aria-hidden="true" />
+      <main className="relative w-full max-w-[420px] space-y-4">
+        <Panel as="section" className="space-y-6 !p-8">
+          <div className="text-center">
+            <h1 className="text-[26px] font-semibold tracking-[0.2em] text-px-ink">PRAXIS</h1>
+            <p className="mt-1 text-[14px] text-px-muted">Acesse sua plataforma</p>
+          </div>
+          <form onSubmit={entrar} className="space-y-4" noValidate>
+            <Field label="E-mail" htmlFor="l-email">
+              <PxInput id="l-email" type="email" autoComplete="email" placeholder="seu@email.com" value={email} onChange={e => setEmail(e.target.value)} />
+            </Field>
+            <Field label="Senha" htmlFor="l-senha">
+              <PxInput id="l-senha" type="password" autoComplete="current-password" value={senha} onChange={e => setSenha(e.target.value)} />
+            </Field>
+            {erro && <p role="alert" className="rounded-px-card bg-px-danger-soft px-3 py-2 text-[13px] text-px-danger">{erro}</p>}
+            <PxButton type="submit" loading={loading} fullWidth>{loading ? "Entrando" : "Entrar"}</PxButton>
+          </form>
+          <div className="space-y-2 text-center text-[13px]">
+            <p><Link href="/cadastro" className="font-medium text-px-ink underline underline-offset-2">Criar conta gratuita</Link></p>
+            <p><Link href="/" className="text-px-muted underline underline-offset-2">Voltar para o início</Link></p>
+          </div>
+        </Panel>
 
-        {/* Logo */}
-        <div style={{ textAlign: "center", marginBottom: "32px" }}>
-          <h1 style={{
-            fontSize: "28px",
-            fontWeight: "700",
-            color: "#ffffff",
-            fontFamily: "Playfair Display, serif",
-            margin: 0,
-            letterSpacing: "4px",
-          }}>
-            PRAXIS
-          </h1>
-          <p style={{ color: "#888", fontSize: "14px", marginTop: "8px", margin: "8px 0 0" }}>
-            Acesse sua plataforma
-          </p>
-        </div>
-
-        {/* Email */}
-        <div style={{ marginBottom: "16px" }}>
-          <label style={{ display: "block", color: "#aaa", fontSize: "13px", marginBottom: "6px" }}>
-            Email
-          </label>
-          <input
-            type="email"
-            autoComplete="email"
-            placeholder="seu@email.com"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            style={inputStyle}
-          />
-        </div>
-
-        {/* Senha */}
-        <div style={{ marginBottom: "24px" }}>
-          <label style={{ display: "block", color: "#aaa", fontSize: "13px", marginBottom: "6px" }}>
-            Senha
-          </label>
-          <input
-            type="password"
-            autoComplete="current-password"
-            placeholder="••••••••"
-            value={senha}
-            onChange={e => setSenha(e.target.value)}
-            onKeyDown={e => e.key === "Enter" && handleLogin()}
-            style={inputStyle}
-          />
-        </div>
-
-        {/* Erro */}
-        {erro && (
-          <p style={{
-            color: "#ef4444",
-            fontSize: "13px",
-            marginBottom: "16px",
-            textAlign: "center",
-            margin: "0 0 16px",
-          }}>
-            {erro}
-          </p>
+        {banner && (
+          <a href={banner.link_destino} target="_blank" rel="noopener noreferrer" className="block focus-visible:outline focus-visible:outline-2 focus-visible:outline-px-ink/40 rounded-px-panel">
+            <Panel as="article" className="space-y-2 !p-4">
+              <div className="flex items-center gap-3">
+                {banner.anunciante_foto_url
+                  // eslint-disable-next-line @next/next/no-img-element
+                  ? <img src={banner.anunciante_foto_url} alt="" className="h-9 w-9 shrink-0 rounded-full object-cover" />
+                  : <span aria-hidden="true" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-px-ink/10 text-[14px] font-semibold text-px-ink">{banner.anunciante_nome.charAt(0).toUpperCase()}</span>}
+                <div className="min-w-0 flex-1">
+                  <p className="text-[13px] font-semibold text-px-ink">{banner.titulo}</p>
+                  <p className="text-[12px] text-px-muted">{banner.anunciante_nome}</p>
+                </div>
+                <span className="shrink-0 text-[12px] font-medium text-px-ink underline underline-offset-2">Ver curso</span>
+              </div>
+              <p className="text-[12.5px] leading-relaxed text-px-ink/80">{banner.chamada}</p>
+              <p className="text-[11px] text-px-muted">Espaço patrocinado</p>
+            </Panel>
+          </a>
         )}
 
-        {/* Botão */}
-        <button
-          onClick={handleLogin}
-          disabled={loading}
-          style={{
-            width: "100%",
-            padding: "14px",
-            borderRadius: "10px",
-            backgroundColor: "#00c07f",
-            color: "#000",
-            fontSize: "15px",
-            fontWeight: "700",
-            border: "none",
-            cursor: loading ? "wait" : "pointer",
-            opacity: loading ? 0.7 : 1,
-          }}
-        >
-          {loading ? "Entrando..." : "Entrar"}
-        </button>
-
-        {/* Criar conta */}
-        <div style={{ textAlign: "center", marginTop: "20px" }}>
-          <a href="/cadastro" style={{ color: "#888", fontSize: "13px", textDecoration: "none" }}>
-            Não tem conta? Criar conta gratuita
-          </a>
-        </div>
-
-        {/* Voltar */}
-        <div style={{ textAlign: "center", marginTop: "16px" }}>
-          <a href="/" style={{ color: "#555", fontSize: "13px", textDecoration: "none" }}>
-            ← Voltar para o início
-          </a>
-        </div>
-
-      </div>
-
-      {banner && (
-        <a
-          href={banner.link_destino}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            display: "block",
-            width: "100%",
-            maxWidth: "420px",
-            backgroundColor: "#141414",
-            borderRadius: "16px",
-            padding: "16px 20px",
-            border: "1px solid #222",
-            textDecoration: "none",
-            cursor: "pointer",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" }}>
-            {banner.anunciante_foto_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={banner.anunciante_foto_url}
-                alt={banner.anunciante_nome}
-                style={{ width: "36px", height: "36px", borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
-              />
-            ) : (
-              <div style={{
-                width: "36px", height: "36px", borderRadius: "50%", background: "#1c1c1c",
-                border: "1px solid #333", display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: "14px", fontWeight: 700, color: "#888", flexShrink: 0,
-              }}>
-                {banner.anunciante_nome.charAt(0).toUpperCase()}
-              </div>
-            )}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ margin: 0, fontSize: "13px", fontWeight: 700, color: "#f5f5f5" }}>{banner.titulo}</p>
-              <p style={{ margin: "2px 0 0", fontSize: "12px", color: "#888" }}>{banner.anunciante_nome}</p>
-            </div>
-            <span style={{
-              fontSize: "11px", fontWeight: 600, color: "#00c07f",
-              background: "rgba(0,192,127,0.10)", border: "1px solid rgba(0,192,127,0.25)",
-              borderRadius: "20px", padding: "3px 10px", whiteSpace: "nowrap", flexShrink: 0,
-            }}>
-              Ver curso →
-            </span>
-          </div>
-          <p style={{ margin: 0, fontSize: "12px", color: "#999", lineHeight: "1.5" }}>{banner.chamada}</p>
-          <p style={{ margin: "10px 0 0", fontSize: "10px", color: "#444", fontFamily: "monospace" }}>
-            Espaço patrocinado
-          </p>
-        </a>
-      )}
-
-      {/* CTA anunciantes — sempre visível */}
-      <div style={{
-        width: "100%", maxWidth: "420px",
-        borderTop: "1px solid rgba(255,255,255,0.12)",
-        paddingTop: "16px", marginTop: "20px", textAlign: "center",
-      }}>
-        <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)", marginBottom: "8px" }}>
-          Você é especialista e quer divulgar seu curso aqui?
+        <p className="pt-2 text-center text-[12px] text-px-muted">
+          Especialista e quer divulgar seu curso aqui?{" "}
+          <Link href="/anunciar-curso" className="font-medium text-px-ink underline underline-offset-2">Anunciar curso</Link>
         </p>
-        <a href="/anunciar-curso" style={{
-          fontSize: "12px", fontWeight: 700, color: "var(--accent)",
-          textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "5px",
-        }}>
-          Clique aqui para anunciar →
-        </a>
-      </div>
-
+      </main>
     </div>
   )
 }

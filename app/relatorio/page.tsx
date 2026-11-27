@@ -1,14 +1,10 @@
 "use client"
 
-import { useState } from "react"
-import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
-import {
-  FileBarChart, Play, Loader2, Download, TrendingUp,
-  DollarSign, Users, Star, Lightbulb, AlertTriangle,
-  Target, CheckCircle2, BarChart3, FileText,
-} from "lucide-react"
+import { useEffect, useRef, useState } from "react"
+import { Download } from "lucide-react"
+import { Panel, PxButton, Field, PxSelect, BarList, PageHeader } from "@/components/px"
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// ─── Tipos ────────────────────────────────────────────────────────────────────
 
 interface Metricas {
   totalLeads:       number
@@ -42,81 +38,89 @@ interface Relatorio {
   analise:  Analise
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Auxiliares ──────────────────────────────────────────────────────────────
 
 const MESES = [
-  "Janeiro","Fevereiro","Março","Abril","Maio","Junho",
-  "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro",
+  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
 ]
 
-function fmtBRL(v: number) {
-  return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
-}
-
-function fmtN(v: number) {
-  return v.toLocaleString("pt-BR")
-}
+const fmtBRL = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
+const fmtN   = (v: number) => v.toLocaleString("pt-BR")
 
 const LOADING_MSGS = [
-  "Coletando dados do mês...",
-  "Analisando leads e conversões...",
-  "Processando indicadores financeiros...",
-  "Avaliando NPS e relacionamento...",
-  "Consultando IA estratégica...",
-  "Gerando insights personalizados...",
-  "Finalizando recomendações...",
+  "Coletando dados do mês",
+  "Analisando leads e conversões",
+  "Processando indicadores financeiros",
+  "Avaliando NPS e relacionamento",
+  "Consultando a IA estratégica",
+  "Gerando insights personalizados",
+  "Finalizando recomendações",
 ]
 
-// ─── Section card ─────────────────────────────────────────────────────────────
-
-function Section({ icon: Icon, title, color, children }: {
-  icon: React.ElementType; title: string; color: string; children: React.ReactNode
-}) {
+function Numero({ label, value, negativo = false }: { label: string; value: string; negativo?: boolean }) {
   return (
-    <div className="rounded-xl border overflow-hidden" style={{ borderColor: "var(--border)" }}>
-      <div className="flex items-center gap-2.5 px-5 py-3.5"
-        style={{ background: `${color}08`, borderBottom: "1px solid var(--border)" }}>
-        <Icon style={{ width: 15, height: 15, color }} />
-        <span className="text-[13px] font-bold" style={{ color: "var(--text-primary)" }}>{title}</span>
-      </div>
-      <div className="p-5" style={{ background: "var(--card)" }}>{children}</div>
-    </div>
+    <Panel as="div" className="p-4">
+      <p className="text-[12.5px] text-px-muted">{label}</p>
+      <p className={`mt-1 text-[22px] font-medium leading-none tracking-[-0.02em] ${negativo ? "text-px-danger" : "text-px-ink"}`}>{value}</p>
+    </Panel>
   )
 }
 
-function MetricPill({ label, value, color }: { label: string; value: string; color: string }) {
+function Lista({ items }: { items: string[] }) {
   return (
-    <div className="flex flex-col items-center justify-center p-3 rounded-xl text-center"
-      style={{ background: `${color}08`, border: `1px solid ${color}20` }}>
-      <div className="text-[18px] font-bold" style={{ color }}>{value}</div>
-      <div className="text-[10px] font-mono mt-0.5 uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>{label}</div>
-    </div>
-  )
-}
-
-function BulletList({ items, color }: { items: string[]; color: string }) {
-  return (
-    <ul className="space-y-1.5 mt-2">
-      {items.map((item, i) => (
-        <li key={i} className="flex items-start gap-2 text-[12px]" style={{ color: "var(--text-secondary)" }}>
-          <span className="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0" style={{ background: color }} />
-          {item}
-        </li>
-      ))}
+    <ul className="list-disc space-y-1.5 pl-5 text-[13px] leading-relaxed text-px-ink/80">
+      {(items ?? []).map((item, i) => <li key={i}>{item}</li>)}
     </ul>
   )
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+function Bloco({ titulo, children }: { titulo: string; children: React.ReactNode }) {
+  return (
+    <Panel as="section" className="space-y-4 print:break-inside-avoid">
+      <h2 className="text-[15px] font-semibold text-px-ink">{titulo}</h2>
+      {children}
+    </Panel>
+  )
+}
+
+function Parecer({ avaliacao, fortes, rotuloFortes, rotuloAtencao, atencao }: {
+  avaliacao: string; fortes: string[]; rotuloFortes: string; rotuloAtencao: string; atencao: string
+}) {
+  return (
+    <>
+      <p className="text-[13.5px] leading-relaxed text-px-ink/80">{avaliacao}</p>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
+          <h3 className="mb-1.5 text-[13px] font-semibold text-px-ink">{rotuloFortes}</h3>
+          <Lista items={fortes} />
+        </div>
+        <div>
+          <h3 className="mb-1.5 text-[13px] font-semibold text-px-ink">{rotuloAtencao}</h3>
+          <p className="text-[13px] leading-relaxed text-px-ink/80">{atencao}</p>
+        </div>
+      </div>
+    </>
+  )
+}
+
+// ─── Página ───────────────────────────────────────────────────────────────────
 
 export default function RelatorioPage() {
-  const now   = new Date()
+  const now = new Date()
+  const anoAtual = now.getFullYear()
   const [mes, setMes] = useState(now.getMonth() + 1)
-  const [ano, setAno] = useState(now.getFullYear())
+  const [ano, setAno] = useState(anoAtual)
   const [relatorio,  setRelatorio]  = useState<Relatorio | null>(null)
   const [loading,    setLoading]    = useState(false)
   const [loadingMsg, setLoadingMsg] = useState(LOADING_MSGS[0])
   const [error,      setError]      = useState<string | null>(null)
+  const timer = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  useEffect(() => () => { if (timer.current) clearInterval(timer.current) }, [])
+
+  const anos: number[] = []
+  for (let y = 2024; y <= anoAtual; y++) anos.push(y)
 
   async function gerar() {
     setLoading(true)
@@ -124,7 +128,9 @@ export default function RelatorioPage() {
     setRelatorio(null)
 
     let i = 0
-    const interval = setInterval(() => {
+    setLoadingMsg(LOADING_MSGS[0])
+    if (timer.current) clearInterval(timer.current)
+    timer.current = setInterval(() => {
       i = (i + 1) % LOADING_MSGS.length
       setLoadingMsg(LOADING_MSGS[i])
     }, 1800)
@@ -135,275 +141,127 @@ export default function RelatorioPage() {
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({ mes, ano }),
       })
-      const data = await res.json()
-      if (data.error) { setError(data.error); return }
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || data.error) { setError(data.error ?? "Não foi possível gerar o relatório. Tente novamente."); return }
       setRelatorio(data)
     } catch (e) {
       console.error("[relatorio] erro ao gerar relatório:", e)
       setError("Erro de conexão. Tente novamente.")
     } finally {
-      clearInterval(interval)
+      if (timer.current) { clearInterval(timer.current); timer.current = null }
       setLoading(false)
     }
   }
 
-  function exportar() {
-    window.print()
-  }
-
   const r = relatorio
   const m = r?.metricas
+  const origem = m ? Object.entries(m.origemLeads).sort((a, b) => b[1] - a[1]).map(([rotulo, valor]) => ({ rotulo, valor })) : []
 
   return (
     <div className="animate-fade-in">
-      <MobileOnlyHeader title="Relatório Mensal" />
-      <div className="p-4 md:p-8 space-y-6 print:p-4">
-        {/* Header */}
-        <div className="flex items-center justify-between print:hidden">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl flex items-center justify-center"
-              style={{ background: "rgba(167,139,250,0.12)", border: "1px solid rgba(167,139,250,0.25)" }}>
-              <FileBarChart style={{ width: 16, height: 16, color: "#a78bfa" }} />
-            </div>
-            <div>
-              <h1 className="text-[17px] font-bold" style={{ color: "var(--text-primary)" }}>Relatório Mensal</h1>
-              <p className="text-[11px] font-mono tracking-wider uppercase" style={{ color: "var(--text-muted)" }}>
-                PRAXIS EXECUTIVO · ANÁLISE AUTOMÁTICA COM IA
-              </p>
-            </div>
-          </div>
-          {r && (
-            <button onClick={exportar}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-semibold transition-all hover:opacity-80"
-              style={{ background: "rgba(167,139,250,0.12)", border: "1px solid rgba(167,139,250,0.25)", color: "#a78bfa" }}>
-              <Download style={{ width: 13, height: 13 }} />
-              Exportar PDF
-            </button>
-          )}
-        </div>
+      <div className="print:hidden">
+        <PageHeader
+          title="Relatório Mensal"
+          caption="Análise do mês com IA"
+          actions={r ? <PxButton variant="secondary" size="sm" leftIcon={Download} onClick={() => window.print()}>Exportar PDF</PxButton> : undefined}
+        />
+      </div>
 
-        {/* Controls */}
-        <div className="flex flex-col sm:flex-row sm:items-end gap-3 sm:gap-4 print:hidden">
-          <div>
-            <label className="block text-[11px] font-medium mb-1" style={{ color: "var(--text-secondary)" }}>Mês</label>
-            <select
-              value={mes}
-              onChange={e => setMes(parseInt(e.target.value, 10))}
-              className="px-3 py-2 rounded-xl text-[13px] outline-none appearance-none"
-              style={{
-                background: "var(--card)", border: "1px solid var(--border)",
-                color: "var(--text-primary)", minWidth: 140,
-              }}>
-              {MESES.map((m, i) => (
-                <option key={i} value={i + 1}>{m}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-[11px] font-medium mb-1" style={{ color: "var(--text-secondary)" }}>Ano</label>
-            <select
-              value={ano}
-              onChange={e => setAno(parseInt(e.target.value, 10))}
-              className="px-3 py-2 rounded-xl text-[13px] outline-none appearance-none"
-              style={{
-                background: "var(--card)", border: "1px solid var(--border)",
-                color: "var(--text-primary)", minWidth: 100,
-              }}>
-              {[2024, 2025, 2026, 2027].map(y => (
-                <option key={y} value={y}>{y}</option>
-              ))}
-            </select>
-          </div>
-          <button
-            onClick={gerar}
-            disabled={loading}
-            className="flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-2.5 sm:py-2 rounded-xl text-[13px] font-bold disabled:opacity-50 transition-all hover:opacity-80"
-            style={{ background: "#a78bfa", color: "#080808" }}>
-            {loading
-              ? <Loader2 className="w-4 h-4 animate-spin" />
-              : <Play style={{ width: 14, height: 14 }} />
-            }
-            {loading ? "Gerando..." : "Gerar Relatório"}
-          </button>
-        </div>
+      <div className="max-w-5xl space-y-4 px-4 pb-10 md:px-10 print:p-4">
+        <Panel className="flex flex-col gap-3 sm:flex-row sm:items-end print:hidden">
+          <Field label="Mês" htmlFor="rel-mes">
+            <PxSelect id="rel-mes" value={mes} onChange={e => setMes(parseInt(e.target.value, 10))} className="sm:min-w-[160px]">
+              {MESES.map((nome, i) => <option key={nome} value={i + 1}>{nome}</option>)}
+            </PxSelect>
+          </Field>
+          <Field label="Ano" htmlFor="rel-ano">
+            <PxSelect id="rel-ano" value={ano} onChange={e => setAno(parseInt(e.target.value, 10))} className="sm:min-w-[110px]">
+              {anos.map(y => <option key={y} value={y}>{y}</option>)}
+            </PxSelect>
+          </Field>
+          <PxButton onClick={gerar} loading={loading}>{loading ? "Gerando" : "Gerar relatório"}</PxButton>
+        </Panel>
 
-        {/* Error */}
-        {error && (
-          <div className="rounded-xl p-4 flex items-center gap-3"
-            style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)" }}>
-            <AlertTriangle style={{ width: 16, height: 16, color: "#ef4444", flexShrink: 0 }} />
-            <p className="text-[13px]" style={{ color: "#f87171" }}>{error}</p>
-          </div>
-        )}
+        {error && <p role="alert" className="rounded-px-card bg-px-danger-soft px-4 py-3 text-[13px] text-px-danger print:hidden">{error}</p>}
 
-        {/* Loading */}
         {loading && (
-          <div className="flex flex-col items-center justify-center py-20 gap-5">
-            <div className="w-14 h-14 rounded-2xl flex items-center justify-center"
-              style={{ background: "rgba(167,139,250,0.12)", border: "1px solid rgba(167,139,250,0.25)" }}>
-              <Loader2 className="w-6 h-6 animate-spin" style={{ color: "#a78bfa" }} />
-            </div>
-            <p className="text-[14px] font-medium" style={{ color: "var(--text-secondary)" }}>{loadingMsg}</p>
-            <div className="flex gap-1">
-              {LOADING_MSGS.map((_, i) => (
-                <div key={i} className="w-1.5 h-1.5 rounded-full transition-all"
-                  style={{
-                    background: loadingMsg === LOADING_MSGS[i] ? "#a78bfa" : "var(--border)",
-                    transform:  loadingMsg === LOADING_MSGS[i] ? "scale(1.3)" : "scale(1)",
-                  }} />
-              ))}
-            </div>
+          <div className="py-20 text-center">
+            <p role="status" className="text-[14px] font-medium text-px-ink">{loadingMsg}</p>
+            <p className="mt-1 text-[12.5px] text-px-muted">Isso leva alguns segundos.</p>
           </div>
         )}
 
-        {/* Report */}
         {r && m && (
-          <div className="space-y-5">
-            {/* Print header */}
-            <div className="hidden print:block mb-6">
+          <div className="space-y-4">
+            <div className="hidden print:block">
               <h1 className="text-[22px] font-bold">Relatório Mensal PRAXIS</h1>
               <p className="text-[14px] text-gray-500">{MESES[r.mes - 1]} de {r.ano}</p>
               <hr className="mt-3" />
             </div>
 
-            {/* Resumo Executivo */}
-            <Section icon={BarChart3} title="Resumo Executivo" color="#a78bfa">
-              <p className="text-[13px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-                {r.analise.resumoExecutivo}
-              </p>
-            </Section>
+            <Bloco titulo={`Resumo executivo de ${MESES[r.mes - 1]} de ${r.ano}`}>
+              <p className="text-[13.5px] leading-relaxed text-px-ink/80">{r.analise.resumoExecutivo}</p>
+            </Bloco>
 
-            {/* KPIs rápidos */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
-              <MetricPill label="Receita"      value={fmtBRL(m.totalReceitas)}   color="#00c07f" />
-              <MetricPill label="Lucro Liq."   value={fmtBRL(m.lucroLiquido)}    color={m.lucroLiquido >= 0 ? "#00c07f" : "#ef4444"} />
-              <MetricPill label="Leads"        value={fmtN(m.totalLeads)}         color="#3b7fff" />
-              <MetricPill label="Conversão"    value={`${m.taxaConversao}%`}      color="#3b7fff" />
-              <MetricPill label="NPS"          value={m.npsScore !== null ? `${m.npsScore}` : "N/A"} color="#d4af37" />
-              <MetricPill label="Pautas pub."  value={fmtN(m.pautasPublicadas)}   color="#a78bfa" />
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-6">
+              <Numero label="Receita"          value={fmtBRL(m.totalReceitas)} />
+              <Numero label="Lucro líquido"    value={fmtBRL(m.lucroLiquido)} negativo={m.lucroLiquido < 0} />
+              <Numero label="Leads"            value={fmtN(m.totalLeads)} />
+              <Numero label="Conversão"        value={`${m.taxaConversao}%`} />
+              <Numero label="NPS"              value={m.npsScore !== null ? String(m.npsScore) : "Sem dados"} />
+              <Numero label="Pautas publicadas" value={fmtN(m.pautasPublicadas)} />
             </div>
 
-            {/* Financeiro */}
-            <Section icon={DollarSign} title="Financeiro" color="#00c07f">
-              <p className="text-[13px] leading-relaxed mb-4" style={{ color: "var(--text-secondary)" }}>
-                {r.analise.financeiro.avaliacao}
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-                <MetricPill label="Receita bruta" value={fmtBRL(m.totalReceitas)} color="#00c07f" />
-                <MetricPill label="Despesas"      value={fmtBRL(m.totalDespesas)} color="#ef4444" />
-                <MetricPill label="Lucro líquido" value={fmtBRL(m.lucroLiquido)}  color={m.lucroLiquido >= 0 ? "#00c07f" : "#ef4444"} />
+            <Bloco titulo="Financeiro">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <Numero label="Receita bruta"  value={fmtBRL(m.totalReceitas)} />
+                <Numero label="Despesas"       value={fmtBRL(m.totalDespesas)} />
+                <Numero label="Lucro líquido"  value={fmtBRL(m.lucroLiquido)} negativo={m.lucroLiquido < 0} />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-[11px] font-mono font-semibold mb-1" style={{ color: "#00c07f" }}>PONTOS FORTES</p>
-                  <BulletList items={r.analise.financeiro.pontosFortes} color="#00c07f" />
-                </div>
-                <div>
-                  <p className="text-[11px] font-mono font-semibold mb-1" style={{ color: "#f59e0b" }}>ATENÇÃO</p>
-                  <p className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{r.analise.financeiro.atencao}</p>
-                </div>
-              </div>
-            </Section>
+              <Parecer avaliacao={r.analise.financeiro.avaliacao} fortes={r.analise.financeiro.pontosFortes} rotuloFortes="Pontos fortes" rotuloAtencao="Atenção" atencao={r.analise.financeiro.atencao} />
+            </Bloco>
 
-            {/* Marketing */}
-            <Section icon={TrendingUp} title="Marketing e Leads" color="#3b7fff">
-              <p className="text-[13px] leading-relaxed mb-4" style={{ color: "var(--text-secondary)" }}>
-                {r.analise.marketing.avaliacao}
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-                <MetricPill label="Total leads"   value={fmtN(m.totalLeads)}         color="#3b7fff" />
-                <MetricPill label="Convertidos"   value={fmtN(m.leadsConvertidos)}    color="#00c07f" />
-                <MetricPill label="Taxa conv."    value={`${m.taxaConversao}%`}        color="#3b7fff" />
+            <Bloco titulo="Marketing e leads">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <Numero label="Total de leads" value={fmtN(m.totalLeads)} />
+                <Numero label="Convertidos"    value={fmtN(m.leadsConvertidos)} />
+                <Numero label="Taxa de conversão" value={`${m.taxaConversao}%`} />
               </div>
-              {Object.keys(m.origemLeads).length > 0 && (
-                <div className="mb-4">
-                  <p className="text-[11px] font-mono font-semibold mb-2" style={{ color: "var(--text-muted)" }}>ORIGEM DOS LEADS</p>
-                  <div className="space-y-1.5">
-                    {Object.entries(m.origemLeads).sort((a,b)=>b[1]-a[1]).map(([origem, qtd]) => {
-                      const pct = m.totalLeads > 0 ? Math.round((qtd / m.totalLeads) * 100) : 0
-                      return (
-                        <div key={origem} className="flex items-center gap-3">
-                          <span className="text-[12px] w-28 truncate" style={{ color: "var(--text-secondary)" }}>{origem}</span>
-                          <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "var(--border)" }}>
-                            <div className="h-full rounded-full" style={{ width: `${pct}%`, background: "#3b7fff" }} />
-                          </div>
-                          <span className="text-[11px] font-mono w-8 text-right" style={{ color: "var(--text-muted)" }}>{pct}%</span>
-                        </div>
-                      )
-                    })}
-                  </div>
+              {origem.length > 0 && (
+                <div>
+                  <h3 className="mb-2 text-[13px] font-semibold text-px-ink">Origem dos leads</h3>
+                  <BarList data={origem} />
                 </div>
               )}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-[11px] font-mono font-semibold mb-1" style={{ color: "#3b7fff" }}>PONTOS FORTES</p>
-                  <BulletList items={r.analise.marketing.pontosFortes} color="#3b7fff" />
-                </div>
-                <div>
-                  <p className="text-[11px] font-mono font-semibold mb-1" style={{ color: "#f59e0b" }}>OPORTUNIDADE</p>
-                  <p className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{r.analise.marketing.atencao}</p>
-                </div>
-              </div>
-            </Section>
+              <Parecer avaliacao={r.analise.marketing.avaliacao} fortes={r.analise.marketing.pontosFortes} rotuloFortes="Pontos fortes" rotuloAtencao="Oportunidade" atencao={r.analise.marketing.atencao} />
+            </Bloco>
 
-            {/* Clínico / NPS */}
-            <Section icon={Star} title="Clínico · NPS" color="#d4af37">
-              <p className="text-[13px] leading-relaxed mb-4" style={{ color: "var(--text-secondary)" }}>
-                {r.analise.clinico.avaliacao}
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-                <MetricPill label="NPS Score"     value={m.npsScore !== null ? `${m.npsScore}` : "N/A"} color="#d4af37" />
-                <MetricPill label="Nota média"    value={m.npsMedia}     color="#d4af37" />
-                <MetricPill label="Respostas"     value={fmtN(m.npsNotas)} color="#d4af37" />
+            <Bloco titulo="Clínico e NPS">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <Numero label="NPS"         value={m.npsScore !== null ? String(m.npsScore) : "Sem dados"} />
+                <Numero label="Nota média"  value={m.npsMedia} />
+                <Numero label="Respostas"   value={fmtN(m.npsNotas)} />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-[11px] font-mono font-semibold mb-1" style={{ color: "#d4af37" }}>POSITIVO</p>
-                  <BulletList items={r.analise.clinico.pontosFortes} color="#d4af37" />
-                </div>
-                <div>
-                  <p className="text-[11px] font-mono font-semibold mb-1" style={{ color: "#f59e0b" }}>ATENÇÃO</p>
-                  <p className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{r.analise.clinico.atencao}</p>
-                </div>
-              </div>
-            </Section>
+              <Parecer avaliacao={r.analise.clinico.avaliacao} fortes={r.analise.clinico.pontosFortes} rotuloFortes="Positivo" rotuloAtencao="Atenção" atencao={r.analise.clinico.atencao} />
+            </Bloco>
 
-            {/* Destaques + Atenção + Recomendações */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Section icon={CheckCircle2} title="Destaques do Mês" color="#00c07f">
-                <BulletList items={r.analise.destaques} color="#00c07f" />
-              </Section>
-              <Section icon={AlertTriangle} title="Pontos de Atenção" color="#f59e0b">
-                <BulletList items={r.analise.pontosAtencao} color="#f59e0b" />
-              </Section>
-              <Section icon={Lightbulb} title="Recomendações" color="#a78bfa">
-                <BulletList items={r.analise.recomendacoes} color="#a78bfa" />
-              </Section>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <Bloco titulo="Destaques do mês"><Lista items={r.analise.destaques} /></Bloco>
+              <Bloco titulo="Pontos de atenção"><Lista items={r.analise.pontosAtencao} /></Bloco>
+              <Bloco titulo="Recomendações"><Lista items={r.analise.recomendacoes} /></Bloco>
             </div>
 
-            {/* Footer */}
-            <div className="text-center py-4">
-              <p className="text-[11px] font-mono" style={{ color: "var(--text-muted)" }}>
-                Relatório gerado automaticamente pela PRAXIS IA · {MESES[r.mes - 1]} {r.ano}
-              </p>
-            </div>
+            <p className="py-2 text-center text-[12.5px] text-px-muted">
+              Relatório gerado pela IA do PRAXIS, {MESES[r.mes - 1]} de {r.ano}
+            </p>
           </div>
         )}
 
-        {/* Empty state */}
         {!r && !loading && !error && (
-          <div className="flex flex-col items-center justify-center py-20 gap-4">
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
-              style={{ background: "rgba(167,139,250,0.08)", border: "1px solid rgba(167,139,250,0.2)" }}>
-              <FileBarChart style={{ width: 28, height: 28, color: "#a78bfa" }} />
-            </div>
-            <p className="text-[14px] font-medium" style={{ color: "var(--text-secondary)" }}>
-              Selecione o mês e clique em <strong>Gerar Relatório</strong>
-            </p>
-            <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
-              A IA vai analisar seus dados e gerar um relatório completo em segundos
-            </p>
-          </div>
+          <Panel className="py-14 text-center print:hidden">
+            <p className="text-[15px] font-semibold text-px-ink">Escolha o mês e gere o relatório</p>
+            <p className="mt-1 text-[13px] text-px-muted">A IA analisa seus dados de receita, leads e NPS e monta um relatório completo.</p>
+          </Panel>
         )}
       </div>
     </div>

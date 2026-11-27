@@ -43,7 +43,7 @@ export function PillNav({ groups, activeId, currentHref, action, trailing, extra
   const aberto = groups.find(g => g.id === openId)
 
   return (
-    <nav ref={root} aria-label="Principal" className={cn("fixed inset-x-0 bottom-6 z-40 flex flex-col items-center gap-3 px-3", className)}>
+    <nav ref={root} aria-label="Principal" className={cn("fixed inset-x-0 bottom-6 z-40 flex flex-col items-center gap-3 px-3 print:hidden", className)}>
       {extraPanel}
       {aberto ? (
         <div className="px-glass-strong w-full max-w-[560px] rounded-px-panel p-3 shadow-[0_10px_30px_rgba(20,20,20,0.16)]">

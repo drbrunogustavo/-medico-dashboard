@@ -1,17 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import {
-  Loader2, AlertCircle, ChevronRight, ChevronLeft,
-  Copy, Check, RotateCcw, Zap,
-  X,
-} from "lucide-react"
-import {
-  RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
-  ResponsiveContainer, Tooltip,
-} from "recharts"
-
-// ─── Types ────────────────────────────────────────────────────────────────────
+import { useState } from "react"
+import { ChevronRight, ChevronLeft, RotateCcw, Sparkles } from "lucide-react"
+import { Panel, PxButton, Segmented, Tag, BarList, CopyButton } from "@/components/px"
 
 interface Pergunta {
   id: string
@@ -22,14 +13,13 @@ interface Pergunta {
 interface Fator {
   id: string
   nome: string
-  cor: string
   descricao: string
   perguntas: Pergunta[]
 }
 
 interface AiTopFator {
   nome: string
-  score: number
+  score?: number
   mecanismo: string
   exames: string[]
   intervencoes: string[]
@@ -42,13 +32,12 @@ interface AiResult {
   resumoMedico: string
 }
 
-// ─── Fatores ─────────────────────────────────────────────────────────────────
+// Fatores avaliados
 
 const FATORES: Fator[] = [
   {
     id: "ri",
     nome: "Resistência Insulínica",
-    cor: "#f59e0b",
     descricao: "Principal bloqueio metabólico ao emagrecimento",
     perguntas: [
       {
@@ -77,7 +66,7 @@ const FATORES: Fator[] = [
           { label: "Raramente", score: 0 },
           { label: "Às vezes", score: 1 },
           { label: "Frequentemente", score: 2 },
-          { label: "Sempre — difícil controlar", score: 3 },
+          { label: "Sempre, difícil controlar", score: 3 },
         ],
       },
     ],
@@ -85,7 +74,6 @@ const FATORES: Fator[] = [
   {
     id: "sarcopenia",
     nome: "Sarcopenia",
-    cor: "#8b5cf6",
     descricao: "Perda de massa muscular reduz gasto energético basal",
     perguntas: [
       {
@@ -123,8 +111,7 @@ const FATORES: Fator[] = [
   {
     id: "apneia",
     nome: "Apneia do Sono",
-    cor: "#3b7fff",
-    descricao: "Desregula grelina, leptina e cortisol — bloqueia emagrecimento",
+    descricao: "Desregula grelina, leptina e cortisol e bloqueia o emagrecimento",
     perguntas: [
       {
         id: "ap_ronco",
@@ -161,7 +148,6 @@ const FATORES: Fator[] = [
   {
     id: "cortisol",
     nome: "Cortisol / Estresse",
-    cor: "#ef4444",
     descricao: "Hipercortisolismo aumenta deposição de gordura visceral",
     perguntas: [
       {
@@ -199,7 +185,6 @@ const FATORES: Fator[] = [
   {
     id: "sono",
     nome: "Sono",
-    cor: "#06b6d4",
     descricao: "Privação de sono aumenta grelina e reduz leptina",
     perguntas: [
       {
@@ -216,10 +201,10 @@ const FATORES: Fator[] = [
         id: "sono_qualidade",
         texto: "Qualidade do sono?",
         opcoes: [
-          { label: "Boa — acorda descansado", score: 0 },
-          { label: "Regular — acorda razoável", score: 1 },
-          { label: "Ruim — sono fragmentado", score: 2 },
-          { label: "Péssima — insônia ou sono não reparador", score: 3 },
+          { label: "Boa, acorda descansado", score: 0 },
+          { label: "Regular, acorda razoável", score: 1 },
+          { label: "Ruim, sono fragmentado", score: 2 },
+          { label: "Péssima, insônia ou sono não reparador", score: 3 },
         ],
       },
       {
@@ -237,7 +222,6 @@ const FATORES: Fator[] = [
   {
     id: "tireoidismo",
     nome: "Hipotireoidismo",
-    cor: "#10b981",
     descricao: "TSH elevado reduz termogênese e gasto metabólico basal",
     perguntas: [
       {
@@ -265,7 +249,6 @@ const FATORES: Fator[] = [
   {
     id: "hormonal",
     nome: "Menopausa / Andropausa",
-    cor: "#e1306c",
     descricao: "Queda hormonal redistribui gordura e reduz massa muscular",
     perguntas: [
       {
@@ -285,7 +268,7 @@ const FATORES: Fator[] = [
           { label: "Não", score: 0 },
           { label: "Levemente (fogachos, humor)", score: 1 },
           { label: "Moderadamente (ganho de peso abdominal, sarcopenia)", score: 2 },
-          { label: "Intensamente — peso não controlável mesmo com dieta", score: 3 },
+          { label: "Intensamente, peso não controlável mesmo com dieta", score: 3 },
         ],
       },
     ],
@@ -293,7 +276,6 @@ const FATORES: Fator[] = [
   {
     id: "comportamento",
     nome: "Comportamento Alimentar",
-    cor: "#f97316",
     descricao: "Compulsão alimentar e restrição cíclica sabotam qualquer protocolo",
     perguntas: [
       {
@@ -323,7 +305,7 @@ const FATORES: Fator[] = [
           { label: "Raramente", score: 0 },
           { label: "Às vezes", score: 1 },
           { label: "Frequentemente", score: 2 },
-          { label: "Sempre — a maior parte das calorias é à noite", score: 3 },
+          { label: "Sempre, a maior parte das calorias é à noite", score: 3 },
         ],
       },
     ],
@@ -331,7 +313,6 @@ const FATORES: Fator[] = [
   {
     id: "inflamacao",
     nome: "Inflamação / Gut Health",
-    cor: "#84cc16",
     descricao: "Inflamação crônica e disbiose bloqueiam sinalização hormonal do peso",
     perguntas: [
       {
@@ -369,7 +350,6 @@ const FATORES: Fator[] = [
   {
     id: "sedentarismo",
     nome: "Sedentarismo / NEAT",
-    cor: "#a78bfa",
     descricao: "NEAT (Non-Exercise Activity Thermogenesis) é 15–30% do gasto total",
     perguntas: [
       {
@@ -379,7 +359,7 @@ const FATORES: Fator[] = [
           { label: "≥5x/semana (aeróbico + resistido)", score: 0 },
           { label: "3–4x/semana", score: 1 },
           { label: "1–2x/semana", score: 2 },
-          { label: "Sedentário — não pratica", score: 3 },
+          { label: "Sedentário, não pratica", score: 3 },
         ],
       },
       {
@@ -406,470 +386,225 @@ const FATORES: Fator[] = [
   },
 ]
 
-// ─── Radar custom label ───────────────────────────────────────────────────────
+type Sexo = "" | "F" | "M"
+const lista = (v: unknown): string[] => (Array.isArray(v) ? v.map(String) : [])
 
-function RadarLabel({ x, y, payload }: { x?: number; y?: number; payload?: { value: string } }) {
-  if (!x || !y || !payload) return null
-  const words = (payload.value ?? "").split(" ")
+function Pill({ ativo, onClick, children }: { ativo: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
-    <text x={x} y={y} textAnchor="middle" fontSize={10} fill="var(--text-muted)">
-      {words.map((w, i) => (
-        <tspan key={i} x={x} dy={i === 0 ? 0 : 12}>{w}</tspan>
-      ))}
-    </text>
+    <button type="button" aria-pressed={ativo} onClick={onClick}
+      className={`shrink-0 rounded-full border px-3 py-1.5 text-[12.5px] font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-px-ink/40 ${ativo ? "border-px-ink bg-px-ink text-white" : "border-px-ink/15 bg-white text-px-ink hover:border-px-ink/40"}`}>{children}</button>
   )
 }
 
-// ─── Tab ─────────────────────────────────────────────────────────────────────
-
 export function EmagrecimentoTab() {
   const [respostas, setRespostas] = useState<Record<string, number>>({})
-  const [fase,    setFase]   = useState<"form" | "resultado">("form")
-  const [sexo,    setSexo]   = useState<"M" | "F" | null>(null)
+  const [fase, setFase] = useState<"form" | "resultado">("form")
+  const [sexo, setSexo] = useState<Sexo>("")
   const [loading, setLoading] = useState(false)
-  const [error,   setError]  = useState<string | null>(null)
-  const [result,  setResult] = useState<AiResult | null>(null)
-  const [copied,  setCopied] = useState<"medico" | "paciente" | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [result, setResult] = useState<AiResult | null>(null)
   const [fatorIdx, setFatorIdx] = useState(0)
 
-  // Resetar para fator 1 ao mudar sexo (evita index out of bounds)
-  useEffect(() => { setFatorIdx(0) }, [sexo])
-
-  // Menopausa/Andropausa só obrigatória para Feminino
-  const fatoresVisiveis = FATORES.filter(f => sexo === "F" ? true : f.id !== "hormonal")
-
-  const responder = (perguntaId: string, score: number) => {
-    setRespostas(prev => ({ ...prev, [perguntaId]: score }))
-  }
+  // Menopausa e andropausa só entra para o sexo feminino (comportamento original mantido)
+  const fatoresVisiveis = FATORES.filter(f => sexo === "F" || f.id !== "hormonal")
+  const idx = Math.min(fatorIdx, fatoresVisiveis.length - 1)
+  const fatorAtual = fatoresVisiveis[idx]
 
   const fatoresComScore = fatoresVisiveis.map(f => {
     const maxScore = f.perguntas.reduce((s, p) => s + Math.max(...p.opcoes.map(o => o.score)), 0)
-    const score    = f.perguntas.reduce((s, p) => s + (respostas[p.id] ?? 0), 0)
+    const score = f.perguntas.reduce((s, p) => s + (respostas[p.id] ?? 0), 0)
     return { ...f, score, maxScore, pct: Math.round((score / maxScore) * 100) }
   })
+  // Média dos percentuais: sempre de 0 a 100, com 9 ou 10 fatores
+  const totalScore = Math.round(fatoresComScore.reduce((s, f) => s + f.pct, 0) / fatoresComScore.length)
 
-  const totalScore = Math.round(
-    fatoresComScore.reduce((s, f) => s + (f.score / f.maxScore) * 10, 0)
-  )
+  const todasPerguntas = fatoresVisiveis.flatMap(f => f.perguntas)
+  const respondidas = todasPerguntas.filter(p => p.id in respostas).length
+  const todasRespondidas = respondidas === todasPerguntas.length
+  const faltam = todasPerguntas.length - respondidas
 
-  const perguntasRespondidas = fatoresVisiveis.flatMap(f => f.perguntas).filter(p => p.id in respostas).length
-  const totalPerguntas       = fatoresVisiveis.flatMap(f => f.perguntas).length
+  const nivel = totalScore < 30
+    ? { tag: "ok" as const, texto: "Baixo bloqueio" }
+    : totalScore < 60 ? { tag: "warn" as const, texto: "Bloqueio moderado" } : { tag: "danger" as const, texto: "Bloqueio elevado" }
 
-  const radarData = fatoresComScore.map(f => ({
-    fator:  f.nome.split(" ")[0],
-    value:  f.pct,
-    fullMark: 100,
-  }))
-
-  const copiar = (tipo: "medico" | "paciente") => {
-    if (!result) return
-    const text = tipo === "medico" ? result.resumoMedico : result.textoParaPaciente
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(tipo)
-      setTimeout(() => setCopied(null), 2000)
-    })
-  }
-
-  const analisar = async () => {
+  async function analisar() {
     setLoading(true); setError(null)
     try {
-      const payload = {
-        fatores: fatoresComScore.map(f => ({ id: f.id, nome: f.nome, score: f.score, maxScore: f.maxScore })),
-        scores: respostas,
-        total: totalScore,
-        sexo,
-      }
-      const res  = await fetch("/api/emagrecimento", {
-        method:  "POST",
+      const res = await fetch("/api/emagrecimento", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify(payload),
+        body: JSON.stringify({
+          fatores: fatoresComScore.map(f => ({ id: f.id, nome: f.nome, score: f.score, maxScore: f.maxScore })),
+          scores: respostas,
+          total: totalScore,
+          sexo: sexo || null,
+        }),
       })
-      const data = await res.json()
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const data = await res.json() as Partial<AiResult> & { error?: string }
       if (data.error) throw new Error(data.error)
-      setResult(data)
+      if (!Array.isArray(data.topFatores) || !data.plano90dias) throw new Error("resposta incompleta")
+      setResult(data as AiResult)
       setFase("resultado")
     } catch (e) {
       console.error("[emagrecimento] erro ao gerar análise:", e)
-      setError("Erro ao gerar análise. Tente novamente.")
+      setError("Não foi possível gerar a análise. Suas respostas foram mantidas. Tente novamente.")
     } finally {
       setLoading(false)
     }
   }
 
-  const reiniciar = () => {
-    setRespostas({}); setFase("form"); setResult(null); setFatorIdx(0)
+  function reiniciar() {
+    setRespostas({}); setFase("form"); setResult(null); setFatorIdx(0); setError(null)
   }
 
-  const fatorAtual = fatoresVisiveis[fatorIdx] ?? fatoresVisiveis[0]
-  const todasRespondidas = fatoresVisiveis.every(f => f.perguntas.every(p => p.id in respostas))
-
   return (
-    <div className="p-4 md:p-8 space-y-5 max-w-4xl mx-auto w-full">
-
+    <div className="animate-fade-in space-y-4 px-4 pb-10 md:px-10">
       {fase === "form" && (
         <>
-          {/* Sexo do paciente */}
-          <div className="rounded-xl p-4" style={{ background: "var(--card)", border: "1px solid var(--border)" }}>
-            <div className="text-[10px] font-mono uppercase tracking-widest mb-3" style={{ color: "var(--text-muted)" }}>
-              Sexo do Paciente
-            </div>
-            <div className="flex items-center gap-2">
-              {([{ v: "F", l: "Feminino" }, { v: "M", l: "Masculino" }] as { v: "F" | "M"; l: string }[]).map(op => (
-                <button
-                  key={op.v}
-                  onClick={() => setSexo(op.v)}
-                  className="px-4 py-1.5 rounded-full text-[11px] border transition-all"
-                  style={{
-                    background:  sexo === op.v ? "var(--accent-dim)"    : "var(--surface)",
-                    borderColor: sexo === op.v ? "var(--accent-border)" : "var(--border)",
-                    color:       sexo === op.v ? "var(--accent-text)"   : "var(--text-muted)",
-                    fontWeight:  sexo === op.v ? 600 : 400,
-                  }}
-                >
-                  {op.l}
-                </button>
-              ))}
-              {sexo && (
-                <button
-                  onClick={() => setSexo(null)}
-                  className="px-2.5 py-1.5 rounded-full text-[10px] border transition-all flex items-center justify-center"
-                  style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              )}
-            </div>
+          <Panel as="section" className="space-y-3">
+            <Segmented
+              label="Sexo do paciente"
+              value={sexo}
+              onChange={(v: Sexo) => setSexo(v)}
+              options={[{ value: "", label: "Não informado" }, { value: "F", label: "Feminino" }, { value: "M", label: "Masculino" }]}
+            />
             {sexo !== "F" && (
-              <p className="text-[10px] mt-2" style={{ color: "var(--text-muted)" }}>
-                Seção "Menopausa / Andropausa" oculta — selecione Feminino para incluir.
-              </p>
+              <p className="text-[12.5px] text-px-muted">O fator Menopausa e andropausa só entra na avaliação quando o sexo é Feminino.</p>
             )}
-          </div>
+          </Panel>
 
-          {/* Progress */}
-          <div className="rounded-xl p-4" style={{ background: "var(--card)", border: "1px solid var(--border)" }}>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[12px] font-semibold" style={{ color: "var(--text-primary)" }}>
-                {fatorIdx + 1} de {fatoresVisiveis.length} fatores — {fatorAtual.nome}
-              </span>
-              <span className="text-[11px] font-mono" style={{ color: "var(--text-muted)" }}>
-                {perguntasRespondidas}/{totalPerguntas} perguntas
-              </span>
+          <Panel as="section" className="space-y-3">
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <p className="text-[14px] font-semibold text-px-ink">Fator {idx + 1} de {fatoresVisiveis.length}: {fatorAtual.nome}</p>
+              <p className="text-[12.5px] text-px-muted" role="status">{respondidas} de {todasPerguntas.length} perguntas respondidas</p>
             </div>
-            <div className="h-1.5 rounded-full" style={{ background: "var(--surface)" }}>
-              <div
-                className="h-1.5 rounded-full transition-all"
-                style={{ width: `${((fatorIdx + 1) / fatoresVisiveis.length) * 100}%`, background: fatorAtual.cor }}
-              />
+            <div role="group" aria-label="Fatores" className="flex gap-2 overflow-x-auto pb-1">
+              {fatoresVisiveis.map((f, i) => {
+                const completo = f.perguntas.every(p => p.id in respostas)
+                return <Pill key={f.id} ativo={i === idx} onClick={() => setFatorIdx(i)}>{f.nome.split(" ")[0]}{completo ? " (completo)" : ""}</Pill>
+              })}
             </div>
-          </div>
+          </Panel>
 
-          {/* Factor tabs — scrollable */}
-          <div className="flex gap-1.5 overflow-x-auto scrollbar-none pb-1">
-            {fatoresVisiveis.map((f, i) => {
-              const allAnswered = f.perguntas.every(p => p.id in respostas)
-              return (
-                <button
-                  key={f.id}
-                  onClick={() => setFatorIdx(i)}
-                  className="flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] transition-all"
-                  style={{
-                    background: fatorIdx === i ? `${f.cor}15` : "var(--surface)",
-                    border: `1px solid ${fatorIdx === i ? f.cor + "40" : "var(--border)"}`,
-                    color: fatorIdx === i ? f.cor : "var(--text-muted)",
-                  }}
-                >
-                  {allAnswered && <Check className="w-2.5 h-2.5" />}
-                  {f.nome.split(" ")[0]}
-                </button>
-              )
-            })}
-          </div>
-
-          {/* Current factor */}
-          <div className="rounded-2xl overflow-hidden" style={{ border: `1px solid ${fatorAtual.cor}30` }}>
-            <div className="px-5 py-4" style={{ background: `${fatorAtual.cor}08` }}>
-              <div className="text-[10px] font-mono uppercase tracking-wider mb-1" style={{ color: fatorAtual.cor }}>
-                Fator {fatorIdx + 1} · {fatorAtual.descricao}
-              </div>
-              <div className="text-[16px] font-bold" style={{ color: "var(--text-primary)" }}>
-                {fatorAtual.nome}
-              </div>
+          <Panel as="section" className="space-y-5">
+            <div>
+              <h2 className="text-[16px] font-semibold text-px-ink">{fatorAtual.nome}</h2>
+              <p className="text-[13px] text-px-muted">{fatorAtual.descricao}</p>
             </div>
-
-            <div className="p-5 space-y-5" style={{ background: "var(--card)" }}>
-              {fatorAtual.perguntas.map(p => (
-                <div key={p.id}>
-                  <div className="text-[13px] font-semibold mb-3" style={{ color: "var(--text-primary)" }}>
-                    {p.texto}
-                  </div>
-                  <div className="space-y-2">
-                    {p.opcoes.map(op => (
-                      <button
-                        key={op.score}
-                        onClick={() => responder(p.id, op.score)}
-                        className="w-full text-left px-4 py-3 rounded-xl transition-all text-[12px]"
-                        style={{
-                          background: respostas[p.id] === op.score ? `${fatorAtual.cor}12` : "var(--surface)",
-                          border: `1px solid ${respostas[p.id] === op.score ? fatorAtual.cor + "40" : "var(--border)"}`,
-                          color: respostas[p.id] === op.score ? "var(--text-primary)" : "var(--text-secondary)",
-                        }}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span>{op.label}</span>
-                          {respostas[p.id] === op.score && (
-                            <Check className="w-3.5 h-3.5 flex-shrink-0" style={{ color: fatorAtual.cor }} />
-                          )}
-                        </div>
+            {fatorAtual.perguntas.map(p => (
+              <div key={p.id} role="group" aria-label={p.texto} className="space-y-2">
+                <p className="text-[14px] font-medium text-px-ink">{p.texto}</p>
+                <div className="space-y-2">
+                  {p.opcoes.map(op => {
+                    const sel = respostas[p.id] === op.score
+                    return (
+                      <button key={op.score} type="button" aria-pressed={sel}
+                        onClick={() => setRespostas(prev => ({ ...prev, [p.id]: op.score }))}
+                        className={`w-full rounded-px-card border px-4 py-3 text-left text-[13.5px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-px-ink/40 ${sel ? "border-px-ink bg-px-ink text-white" : "border-px-ink/15 bg-white text-px-ink hover:border-px-ink/40"}`}>
+                        {op.label}
                       </button>
-                    ))}
-                  </div>
+                    )
+                  })}
                 </div>
-              ))}
-            </div>
-          </div>
+              </div>
+            ))}
+          </Panel>
 
-          {/* Navigation */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-            <button
-              onClick={() => setFatorIdx(i => Math.max(0, i - 1))}
-              disabled={fatorIdx === 0}
-              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-[12px] font-medium transition-all disabled:opacity-40"
-              style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
-            >
-              <ChevronLeft className="w-4 h-4" /> Anterior
-            </button>
-
-            {fatorIdx < fatoresVisiveis.length - 1 ? (
-              <button
-                onClick={() => setFatorIdx(i => Math.min(fatoresVisiveis.length - 1, i + 1))}
-                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-[12px] font-bold transition-all"
-                style={{ background: fatorAtual.cor, color: "#080808" }}
-              >
-                Próximo <ChevronRight className="w-4 h-4" />
-              </button>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <PxButton variant="secondary" leftIcon={ChevronLeft} disabled={idx === 0} onClick={() => setFatorIdx(Math.max(0, idx - 1))}>Anterior</PxButton>
+            {idx < fatoresVisiveis.length - 1 ? (
+              <PxButton rightIcon={ChevronRight} onClick={() => setFatorIdx(idx + 1)}>Próximo fator</PxButton>
             ) : (
-              <button
-                onClick={analisar}
-                disabled={loading || !todasRespondidas}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[12px] font-bold transition-all disabled:opacity-50"
-                style={{ background: "var(--accent)", color: "#080808" }}
-              >
-                {loading
-                  ? <><Loader2 className="w-4 h-4 animate-spin" /> Analisando…</>
-                  : <><Zap className="w-4 h-4" /> Gerar Análise IA</>}
-              </button>
-            )}
-            {loading && (
-              <p className="text-center text-[10px] text-text-muted mt-1.5">
-                A geração pode levar 30–60 segundos. Não feche a página.
-              </p>
+              <PxButton leftIcon={Sparkles} loading={loading} disabled={loading || !todasRespondidas} onClick={analisar}>{loading ? "Analisando" : "Gerar análise"}</PxButton>
             )}
           </div>
 
-          {!todasRespondidas && fatorIdx === fatoresVisiveis.length - 1 && (
-            <p className="text-center text-[11px]" style={{ color: "var(--text-muted)" }}>
-              Responda todas as perguntas para gerar a análise
-            </p>
+          {idx === fatoresVisiveis.length - 1 && !todasRespondidas && (
+            <p className="text-center text-[12.5px] text-px-muted">Faltam {faltam} {faltam === 1 ? "pergunta" : "perguntas"} para gerar a análise. Use os botões acima para voltar aos fatores incompletos.</p>
           )}
-
-          {error && (
-            <div className="flex items-start gap-3 rounded-xl p-4 bg-red-50 border border-red-200">
-              <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
-              <p className="text-[12px] text-red-700">{error}</p>
-            </div>
-          )}
+          {loading && <p role="status" className="text-center text-[12.5px] text-px-muted">A análise pode levar de 30 a 60 segundos. Não feche a página.</p>}
+          {error && <p role="alert" className="rounded-px-card bg-px-danger-soft px-3 py-2 text-[13px] text-px-danger">{error}</p>}
         </>
       )}
 
       {fase === "resultado" && result && (
-        <div className="space-y-6">
-
-          {/* Nova avaliação */}
-          <div className="flex justify-end">
-            <button
-              onClick={reiniciar}
-              className="flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg border transition-colors"
-              style={{ background: "var(--surface)", borderColor: "var(--border)", color: "var(--text-muted)" }}
-            >
-              <RotateCcw className="w-3 h-3" /> Nova avaliação
-            </button>
+        <>
+          <div className="flex flex-wrap justify-end gap-2">
+            <PxButton variant="secondary" size="sm" leftIcon={ChevronLeft} onClick={() => setFase("form")}>Ajustar respostas</PxButton>
+            <PxButton variant="secondary" size="sm" leftIcon={RotateCcw} onClick={reiniciar}>Nova avaliação</PxButton>
           </div>
 
-          {/* Radar */}
-          <div className="rounded-2xl p-5" style={{ background: "var(--card)", border: "1px solid var(--border)" }}>
-            <div className="flex items-center justify-between mb-4">
+          <Panel as="section" className="space-y-4">
+            <div className="flex flex-wrap items-end justify-between gap-3">
               <div>
-                <div className="text-[10px] font-mono uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
-                  Score de bloqueio ao emagrecimento
-                </div>
-                <div className="text-[28px] font-bold mt-0.5" style={{ color: "var(--text-primary)" }}>
-                  {totalScore}
-                  <span className="text-[14px] font-normal ml-1" style={{ color: "var(--text-muted)" }}>/100</span>
-                </div>
+                <p className="text-[13px] text-px-muted">Escore de bloqueio ao emagrecimento</p>
+                <p className="text-[34px] font-semibold leading-none tabular-nums text-px-ink">{totalScore}<span className="ml-1 text-[15px] font-normal text-px-muted">de 100</span></p>
               </div>
-              <div className="text-right">
-                <div className="text-[12px]" style={{ color: totalScore < 30 ? "#00c07f" : totalScore < 60 ? "#f59e0b" : "#ef4444" }}>
-                  {totalScore < 30 ? "Baixo bloqueio" : totalScore < 60 ? "Bloqueio moderado" : "Bloqueio elevado"}
-                </div>
-              </div>
+              <Tag tone={nivel.tag}>{nivel.texto}</Tag>
             </div>
-            <ResponsiveContainer width="100%" height={240} className="md:!h-[320px]">
-              <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="70%">
-                <PolarGrid stroke="var(--border)" />
-                <PolarAngleAxis dataKey="fator" tick={<RadarLabel />} />
-                <PolarRadiusAxis angle={90} domain={[0, 100]} tick={false} axisLine={false} />
-                <Radar
-                  name="Bloqueio"
-                  dataKey="value"
-                  stroke="var(--accent)"
-                  fill="var(--accent)"
-                  fillOpacity={0.2}
-                  strokeWidth={2}
-                />
-                <Tooltip
-                  formatter={(v: unknown) => [`${v}%`, "Nível de bloqueio"]}
-                  contentStyle={{
-                    background: "var(--card)", border: "1px solid var(--border)",
-                    borderRadius: 8, fontSize: 11,
-                  }}
-                />
-              </RadarChart>
-            </ResponsiveContainer>
-          </div>
+            <div>
+              <p className="mb-2 text-[13px] text-px-muted">Percentual da pontuação máxima de cada fator, do maior para o menor.</p>
+              <BarList data={[...fatoresComScore].sort((a, b) => b.pct - a.pct).map(f => ({ rotulo: f.nome, valor: f.pct }))} />
+            </div>
+            <p className="text-[12.5px] text-px-muted">Escore de triagem desta ferramenta, com faixas de 30 e 60 definidas internamente. Não é uma escala clínica validada.</p>
+          </Panel>
 
-          {/* Top 3 fatores */}
-          <div>
-            <div className="text-[10px] font-mono uppercase tracking-wider mb-3" style={{ color: "var(--text-muted)" }}>
-              Top 3 Fatores Prioritários
-            </div>
-            <div className="space-y-4">
-              {result.topFatores.map((f, i) => {
-                const fatorData = FATORES.find(x => x.nome === f.nome) ?? FATORES[i]
-                return (
-                  <div key={i} className="rounded-xl overflow-hidden" style={{ border: `1px solid ${fatorData.cor}30` }}>
-                    <div className="px-4 py-3 flex items-center gap-3" style={{ background: `${fatorData.cor}08` }}>
-                      <div className="w-7 h-7 rounded-lg flex items-center justify-center text-[12px] font-bold flex-shrink-0"
-                        style={{ background: fatorData.cor, color: "#080808" }}>
-                        {i + 1}
-                      </div>
-                      <div>
-                        <div className="text-[13px] font-bold" style={{ color: "var(--text-primary)" }}>{f.nome}</div>
-                        <div className="text-[10px] font-mono" style={{ color: fatorData.cor }}>
-                          Score: {f.score}/10
-                        </div>
-                      </div>
+          <section aria-label="Fatores prioritários" className="space-y-3">
+            <h2 className="text-[15px] font-semibold text-px-ink">Fatores prioritários</h2>
+            {result.topFatores.slice(0, 3).map((f, i) => {
+              const local = fatoresComScore.find(x => x.nome === f.nome)
+              return (
+                <Panel key={i} as="article" className="space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h3 className="text-[14.5px] font-semibold text-px-ink">{i + 1}. {f.nome}</h3>
+                    {local && <Tag tone="ink">{local.score} de {local.maxScore} pontos ({local.pct}%)</Tag>}
+                  </div>
+                  <div>
+                    <p className="text-[12.5px] font-medium text-px-muted">Mecanismo</p>
+                    <p className="text-[13.5px] leading-relaxed text-px-ink/85">{f.mecanismo}</p>
+                  </div>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                      <p className="mb-1 text-[12.5px] font-medium text-px-muted">Exames a solicitar</p>
+                      <ul className="list-disc space-y-1 pl-5 text-[13px] text-px-ink/85">{lista(f.exames).map((e, j) => <li key={j}>{e}</li>)}</ul>
                     </div>
-                    <div className="p-4 space-y-3" style={{ background: "var(--card)" }}>
-                      <div>
-                        <div className="text-[10px] font-mono uppercase tracking-wider mb-1" style={{ color: "var(--text-muted)" }}>
-                          Mecanismo
-                        </div>
-                        <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>{f.mecanismo}</p>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                          <div className="text-[10px] font-mono uppercase tracking-wider mb-1.5" style={{ color: "var(--text-muted)" }}>
-                            Exames a solicitar
-                          </div>
-                          <div className="space-y-1">
-                            {f.exames.map((e, j) => (
-                              <div key={j} className="flex items-start gap-1.5">
-                                <span className="text-[9px] mt-0.5 flex-shrink-0" style={{ color: "#3b7fff" }}>▸</span>
-                                <span className="text-[11px]" style={{ color: "var(--text-secondary)" }}>{e}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-[10px] font-mono uppercase tracking-wider mb-1.5" style={{ color: "var(--text-muted)" }}>
-                            Intervenções
-                          </div>
-                          <div className="space-y-1">
-                            {f.intervencoes.map((iv, j) => (
-                              <div key={j} className="flex items-start gap-1.5">
-                                <span className="text-[9px] mt-0.5 flex-shrink-0" style={{ color: "var(--accent)" }}>→</span>
-                                <span className="text-[11px]" style={{ color: "var(--text-secondary)" }}>{iv}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
+                    <div>
+                      <p className="mb-1 text-[12.5px] font-medium text-px-muted">Intervenções</p>
+                      <ul className="list-disc space-y-1 pl-5 text-[13px] text-px-ink/85">{lista(f.intervencoes).map((e, j) => <li key={j}>{e}</li>)}</ul>
                     </div>
                   </div>
-                )
-              })}
-            </div>
-          </div>
+                </Panel>
+              )
+            })}
+          </section>
 
-          {/* Plano 90 dias */}
-          <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
-            <div className="px-5 py-3" style={{ background: "var(--card)" }}>
-              <div className="text-[10px] font-mono uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
-                Plano Integrado 90 Dias
-              </div>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x"
-              style={{ borderTop: "1px solid var(--border)", borderColor: "var(--border)" }}>
+          <section aria-label="Plano de 90 dias" className="space-y-3">
+            <h2 className="text-[15px] font-semibold text-px-ink">Plano integrado de 90 dias</h2>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
               {([
-                { label: "Mês 1 — Diagnóstico", items: result.plano90dias.mes1, cor: "#3b7fff" },
-                { label: "Mês 2 — Implementação", items: result.plano90dias.mes2, cor: "#f59e0b" },
-                { label: "Mês 3 — Consolidação", items: result.plano90dias.mes3, cor: "#00c07f" },
-              ] as const).map(m => (
-                <div key={m.label} className="p-4" style={{ background: "var(--background)" }}>
-                  <div className="text-[10px] font-mono font-bold mb-3" style={{ color: m.cor }}>
-                    {m.label}
-                  </div>
-                  <div className="space-y-1.5">
-                    {m.items.map((item, i) => (
-                      <div key={i} className="flex items-start gap-1.5">
-                        <span className="text-[9px] mt-0.5 flex-shrink-0" style={{ color: m.cor }}>▸</span>
-                        <span className="text-[11px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>{item}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                { label: "Mês 1: diagnóstico", items: lista(result.plano90dias.mes1) },
+                { label: "Mês 2: implementação", items: lista(result.plano90dias.mes2) },
+                { label: "Mês 3: consolidação", items: lista(result.plano90dias.mes3) },
+              ]).map(m => (
+                <Panel key={m.label} as="article" className="space-y-2">
+                  <h3 className="text-[13.5px] font-semibold text-px-ink">{m.label}</h3>
+                  <ul className="list-disc space-y-1.5 pl-5 text-[13px] leading-relaxed text-px-ink/85">{m.items.map((it, i) => <li key={i}>{it}</li>)}</ul>
+                </Panel>
               ))}
             </div>
-          </div>
+          </section>
 
-          {/* Texto para paciente */}
-          <div className="rounded-2xl p-5 space-y-3" style={{ background: "var(--card)", border: "1px solid var(--border)" }}>
-            <div className="text-[10px] font-mono uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
-              Texto para compartilhar com o paciente
+          <Panel as="section" className="space-y-3">
+            <h2 className="text-[15px] font-semibold text-px-ink">Texto para o paciente</h2>
+            <p className="whitespace-pre-line text-[13.5px] leading-relaxed text-px-ink/85">{result.textoParaPaciente}</p>
+            <div className="flex flex-wrap gap-2">
+              <CopyButton text={result.textoParaPaciente ?? ""} label="Copiar texto para o paciente" />
+              <CopyButton text={result.resumoMedico ?? ""} label="Copiar resumo para o prontuário" />
             </div>
-            <p className="text-[12px] leading-relaxed whitespace-pre-line" style={{ color: "var(--text-secondary)" }}>
-              {result.textoParaPaciente}
-            </p>
-            <div className="flex flex-col gap-2">
-              <button
-                onClick={() => copiar("paciente")}
-                className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-[11px] font-medium transition-all"
-                style={{
-                  background: copied === "paciente" ? "var(--accent-dim)" : "var(--surface)",
-                  border: `1px solid ${copied === "paciente" ? "var(--accent-border)" : "var(--border)"}`,
-                  color: copied === "paciente" ? "var(--accent)" : "var(--text-muted)",
-                }}
-              >
-                {copied === "paciente" ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                {copied === "paciente" ? "Copiado!" : "Copiar para paciente"}
-              </button>
-              <button
-                onClick={() => copiar("medico")}
-                className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-[11px] font-medium transition-all"
-                style={{
-                  background: copied === "medico" ? "var(--accent-dim)" : "var(--surface)",
-                  border: `1px solid ${copied === "medico" ? "var(--accent-border)" : "var(--border)"}`,
-                  color: copied === "medico" ? "var(--accent)" : "var(--text-muted)",
-                }}
-              >
-                {copied === "medico" ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                {copied === "medico" ? "Copiado!" : "Resumo para prontuário"}
-              </button>
-            </div>
-          </div>
-
-        </div>
+            <p className="text-[12.5px] text-px-muted">Conteúdo gerado por IA para apoiar a decisão clínica. Revise antes de usar com o paciente. A avaliação não é salva: copie o que precisar antes de sair.</p>
+          </Panel>
+        </>
       )}
     </div>
   )

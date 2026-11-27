@@ -1,15 +1,13 @@
 "use client"
 
-import { useState } from "react"
-import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
-import {
-  Calculator, Copy, Check, Scale, Activity, Flame,
-  Droplets, Heart, Pill, Microscope, Ruler, AlertTriangle,
-  Dumbbell, Baby, Stethoscope, Apple, TrendingUp,
-} from "lucide-react"
+import { useId, useState } from "react"
+import { Copy, Check, AlertTriangle } from "lucide-react"
+import { Panel, PxButton, Segmented, Field as PxField, PxInput, PxSelect, PageHeader } from "@/components/px"
 import { cn } from "@/lib/utils"
 
-// ─── Copy hook ────────────────────────────────────────────────────────────────
+type CalcProps = { copied: string | null; onCopy: (id: string, t: string) => void }
+
+// ─── Copiar ──────────────────────────────────────────────────────────────────
 
 function useCopy() {
   const [copied, setCopied] = useState<string | null>(null)
@@ -17,29 +15,43 @@ function useCopy() {
     navigator.clipboard.writeText(text).then(() => {
       setCopied(id)
       setTimeout(() => setCopied(null), 2000)
-    })
+    }).catch(() => {})
   }
   return { copied, copy }
 }
 
-// ─── Shared components ────────────────────────────────────────────────────────
+// ─── Componentes compartilhados ──────────────────────────────────────────────
+
+/** A cor que cada calculadora devolve vira um estado com texto escuro sobre fundo claro. */
+type ResultTone = "ok" | "warn" | "danger" | "neutral"
+
+function toneOf(color: string): ResultTone {
+  const c = color.toLowerCase()
+  if (c === "#00c07f" || c === "#84cc16") return "ok"
+  if (c === "#f59e0b" || c === "#fbbf24" || c === "#f97316") return "warn"
+  if (c === "#ef4444" || c === "#dc2626") return "danger"
+  return "neutral"
+}
+
+const BOX_TONE: Record<ResultTone, string> = {
+  ok: "bg-px-ok-soft",
+  warn: "bg-px-warn-soft",
+  danger: "bg-px-danger-soft",
+  neutral: "bg-px-ink/[0.06]",
+}
+
+function toneBox(color: string) {
+  return BOX_TONE[toneOf(color)]
+}
 
 function CopyButton({ id, text, copied, onCopy }: {
   id: string; text: string; copied: string | null; onCopy: (id: string, t: string) => void
 }) {
   const isCopied = copied === id
   return (
-    <button
-      onClick={() => onCopy(id, text)}
-      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all"
-      style={{
-        background: isCopied ? "rgba(0,192,127,0.12)" : "var(--surface-2, var(--surface))",
-        border: `1px solid ${isCopied ? "rgba(0,192,127,0.3)" : "var(--border)"}`,
-        color: isCopied ? "#00c07f" : "var(--text-muted)",
-      }}>
-      {isCopied ? <Check style={{ width: 11, height: 11 }} /> : <Copy style={{ width: 11, height: 11 }} />}
-      {isCopied ? "Copiado!" : "Copiar"}
-    </button>
+    <PxButton variant="secondary" size="sm" leftIcon={isCopied ? Check : Copy} onClick={() => onCopy(id, text)}>
+      {isCopied ? "Copiado" : "Copiar"}
+    </PxButton>
   )
 }
 
@@ -48,14 +60,11 @@ function ResultBox({ label, value, sub, color, copyId, copyText, copied, onCopy 
   copyId: string; copyText: string; copied: string | null; onCopy: (id: string, t: string) => void
 }) {
   return (
-    <div className="mt-4 rounded-xl p-4 flex items-center justify-between gap-3"
-      style={{ background: `${color}10`, border: `1px solid ${color}25` }}>
-      <div>
-        <div className="text-[10px] font-mono tracking-wider uppercase mb-1" style={{ color }}>
-          {label}
-        </div>
-        <div className="text-[22px] font-bold" style={{ color: "var(--text-primary)" }}>{value}</div>
-        {sub && <div className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>{sub}</div>}
+    <div role="status" className={cn("mt-4 flex items-center justify-between gap-3 rounded-px-card p-4", toneBox(color))}>
+      <div className="min-w-0">
+        <div className="mb-1 text-[12px] font-semibold text-px-ink">{label}</div>
+        <div className="text-[22px] font-semibold leading-tight text-px-ink">{value}</div>
+        {sub && <div className="mt-0.5 text-[12px] text-px-ink/75">{sub}</div>}
       </div>
       <CopyButton id={copyId} text={copyText} copied={copied} onCopy={onCopy} />
     </div>
@@ -66,53 +75,23 @@ function Field({ label, unit, value, onChange, min, max, step = "any" }: {
   label: string; unit?: string; value: string
   onChange: (v: string) => void; min?: number; max?: number; step?: string
 }) {
+  const id = useId()
   return (
-    <div>
-      <label className="block text-[11px] font-medium mb-1" style={{ color: "var(--text-secondary)" }}>
-        {label} {unit && <span style={{ color: "var(--text-muted)" }}>({unit})</span>}
-      </label>
-      <input
-        type="number"
-        value={value}
-        min={min}
-        max={max}
-        step={step}
-        onChange={e => onChange(e.target.value)}
-        className="w-full px-3 py-2 rounded-lg text-[13px] font-mono outline-none transition-colors"
-        style={{
-          background: "var(--surface)",
-          border: "1px solid var(--border)",
-          color: "var(--text-primary)",
-        }}
-        onFocus={e => (e.target.style.borderColor = "var(--accent)")}
-        onBlur={e => (e.target.style.borderColor = "var(--border)")}
-      />
-    </div>
+    <PxField label={unit ? `${label} (${unit})` : label} htmlFor={id}>
+      <PxInput id={id} type="number" inputMode="decimal" value={value} min={min} max={max} step={step}
+        onChange={e => onChange(e.target.value)} className="font-mono" />
+    </PxField>
   )
 }
 
 function FieldDate({ label, value, onChange }: {
   label: string; value: string; onChange: (v: string) => void
 }) {
+  const id = useId()
   return (
-    <div>
-      <label className="block text-[11px] font-medium mb-1" style={{ color: "var(--text-secondary)" }}>
-        {label}
-      </label>
-      <input
-        type="date"
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        className="w-full px-3 py-2 rounded-lg text-[13px] font-mono outline-none transition-colors"
-        style={{
-          background: "var(--surface)",
-          border: "1px solid var(--border)",
-          color: "var(--text-primary)",
-        }}
-        onFocus={e => (e.target.style.borderColor = "var(--accent)")}
-        onBlur={e => (e.target.style.borderColor = "var(--border)")}
-      />
-    </div>
+    <PxField label={label} htmlFor={id}>
+      <PxInput id={id} type="date" value={value} onChange={e => onChange(e.target.value)} className="font-mono" />
+    </PxField>
   )
 }
 
@@ -121,25 +100,15 @@ function Select({ label, value, options, onChange }: {
   options: { value: string; label: string }[]
   onChange: (v: string) => void
 }) {
+  const id = useId()
   return (
-    <div>
-      <label className="block text-[11px] font-medium mb-1" style={{ color: "var(--text-secondary)" }}>
-        {label}
-      </label>
-      <select
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        className="w-full px-3 py-2 rounded-lg text-[13px] outline-none appearance-none"
-        style={{
-          background: "var(--surface)",
-          border: "1px solid var(--border)",
-          color: "var(--text-primary)",
-        }}>
+    <PxField label={label} htmlFor={id}>
+      <PxSelect id={id} value={value} onChange={e => onChange(e.target.value)}>
         {options.map(o => (
           <option key={o.value} value={o.value}>{o.label}</option>
         ))}
-      </select>
-    </div>
+      </PxSelect>
+    </PxField>
   )
 }
 
@@ -148,42 +117,18 @@ function Toggle({ label, options, value, onChange }: {
 }) {
   return (
     <div>
-      <label className="block text-[11px] font-medium mb-1" style={{ color: "var(--text-secondary)" }}>
-        {label}
-      </label>
-      <div className="flex gap-1">
-        {options.map(o => (
-          <button
-            key={o}
-            onClick={() => onChange(o)}
-            className="flex-1 py-2 rounded-lg text-[12px] font-medium transition-all"
-            style={{
-              background: value === o ? "var(--accent-dim)" : "var(--surface)",
-              border: `1px solid ${value === o ? "var(--accent-border)" : "var(--border)"}`,
-              color: value === o ? "var(--accent)" : "var(--text-muted)",
-            }}>
-            {o}
-          </button>
-        ))}
-      </div>
+      <span className="mb-1.5 block text-[12.5px] font-medium text-px-muted">{label}</span>
+      <Segmented label={label} options={options.map(o => ({ value: o, label: o }))} value={value} onChange={onChange} />
     </div>
   )
 }
 
-function CalcCard({ icon: Icon, title, color, children }: {
-  icon: React.ElementType; title: string; color: string; children: React.ReactNode
-}) {
+function CalcCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border flex flex-col" style={{ background: "var(--card)", borderColor: "var(--border)" }}>
-      <div className="flex items-center gap-2.5 p-4 border-b" style={{ borderColor: "var(--border)" }}>
-        <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-          style={{ background: `${color}15`, border: `1px solid ${color}30` }}>
-          <Icon style={{ width: 14, height: 14, color }} />
-        </div>
-        <span className="text-[13px] font-bold" style={{ color: "var(--text-primary)" }}>{title}</span>
-      </div>
-      <div className="p-4 flex-1">{children}</div>
-    </div>
+    <Panel as="article" className="flex flex-col p-0">
+      <h2 className="border-b border-px-line px-5 py-3.5 text-[14px] font-semibold text-px-ink">{title}</h2>
+      <div className="flex-1 p-5">{children}</div>
+    </Panel>
   )
 }
 
@@ -191,24 +136,14 @@ function CheckItem({ label, points, checked, onChange }: {
   label: string; points: number; checked: boolean; onChange: (v: boolean) => void
 }) {
   return (
-    <label className="flex items-start gap-2.5 cursor-pointer group">
-      <div
-        className="mt-0.5 w-4 h-4 rounded flex items-center justify-center flex-shrink-0 transition-all"
-        style={{
-          background: checked ? "var(--accent-dim)" : "var(--surface)",
-          border: `1px solid ${checked ? "var(--accent-border)" : "var(--border)"}`,
-        }}
-        onClick={() => onChange(!checked)}>
-        {checked && <Check style={{ width: 9, height: 9, color: "var(--accent)" }} />}
-      </div>
-      <span className="text-[12px] flex-1 leading-relaxed" style={{ color: checked ? "var(--text-primary)" : "var(--text-secondary)" }}>
-        {label}
-      </span>
-      <span className="text-[11px] font-mono font-bold flex-shrink-0 px-1.5 py-0.5 rounded"
-        style={{
-          background: checked ? "var(--accent-dim)" : "var(--surface)",
-          color: checked ? "var(--accent)" : "var(--text-muted)",
-        }}>
+    <label className="flex cursor-pointer items-start gap-2.5">
+      <input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)}
+        className="mt-0.5 h-4 w-4 flex-shrink-0 accent-px-ink" />
+      <span className="flex-1 text-[12.5px] leading-relaxed text-px-ink">{label}</span>
+      <span className={cn(
+        "flex-shrink-0 rounded px-1.5 py-0.5 font-mono text-[12px] font-semibold",
+        checked ? "bg-px-ink text-white" : "bg-px-ink/[0.07] text-px-ink"
+      )}>
         {points > 0 ? `+${points}` : points}
       </span>
     </label>
@@ -217,25 +152,23 @@ function CheckItem({ label, points, checked, onChange }: {
 
 function WarningBox({ text }: { text: string }) {
   return (
-    <div className="flex items-start gap-2 p-3 rounded-lg"
-      style={{ background: "rgba(251,191,36,0.06)", border: "1px solid rgba(251,191,36,0.2)" }}>
-      <AlertTriangle style={{ width: 13, height: 13, color: "#fbbf24", flexShrink: 0, marginTop: 1 }} />
-      <span className="text-[11px] leading-relaxed" style={{ color: "#fbbf24" }}>{text}</span>
+    <div role="note" className="flex items-start gap-2 rounded-px-ctl bg-px-warn-soft p-3">
+      <AlertTriangle aria-hidden className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-px-warn" />
+      <span className="text-[12px] leading-relaxed text-px-warn">{text}</span>
     </div>
   )
 }
 
 function ContextCard({ items }: { items: string[] }) {
   return (
-    <div className="mt-2 p-3 rounded-lg space-y-1.5"
-      style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+    <ul className="mt-2 space-y-1.5 rounded-px-ctl bg-px-ink/[0.05] p-3">
       {items.map((item, i) => (
-        <div key={i} className="flex items-start gap-2">
-          <span className="text-[9px] font-mono mt-1 flex-shrink-0" style={{ color: "var(--accent)" }}>▸</span>
-          <span className="text-[11px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>{item}</span>
-        </div>
+        <li key={i} className="flex items-start gap-2">
+          <span aria-hidden className="mt-[7px] h-1 w-1 flex-shrink-0 rounded-full bg-px-ink/50" />
+          <span className="text-[12px] leading-relaxed text-px-ink/80">{item}</span>
+        </li>
       ))}
-    </div>
+    </ul>
   )
 }
 
@@ -267,9 +200,9 @@ function CalcIMC({ copied, onCopy }: { copied: string | null; onCopy: (id: strin
     return               { label: "Obesidade Grau III",color: "#dc2626" }
   }
   const cls  = imc ? classify(imc) : null
-  const text = imc ? `IMC: ${imc.toFixed(1)} kg/m² — ${cls?.label} (Faixa ideal: 18.5–24.9)` : ""
+  const text = imc ? `IMC: ${imc.toFixed(1)} kg/m², ${cls?.label} (Faixa ideal: 18.5–24.9)` : ""
   return (
-    <CalcCard icon={Scale} title="IMC" color="#3b7fff">
+    <CalcCard title="IMC">
       <div className="space-y-3">
         <div className="grid grid-cols-2 gap-3">
           <Field label="Peso" unit="kg" value={peso} onChange={setPeso} min={0} />
@@ -278,7 +211,7 @@ function CalcIMC({ copied, onCopy }: { copied: string | null; onCopy: (id: strin
         {imc && cls && (
           <>
             <ResultBox label="Resultado" value={`${imc.toFixed(1)} kg/m²`}
-              sub={`${cls.label} · Faixa ideal: 18.5–24.9`}
+              sub={`${cls.label}, Faixa ideal: 18.5–24.9`}
               color={cls.color} copyId="imc" copyText={text} copied={copied} onCopy={onCopy} />
             <ContextCard items={
               imc < 18.5 ? [
@@ -286,7 +219,7 @@ function CalcIMC({ copied, onCopy }: { copied: string | null; onCopy: (id: strin
                 "Investigar causas: má absorção, distúrbios alimentares, neoplasia oculta.",
                 "Avaliar albumina sérica, prega cutânea tricipital e circunferência do braço.",
               ] : imc < 25 ? [
-                "Peso adequado — manter com alimentação equilibrada e exercício regular.",
+                "Peso adequado: manter com alimentação equilibrada e exercício regular.",
                 "Reavaliar IMC periodicamente; valores limítrofes superiores podem mascarar gordura visceral elevada.",
               ] : imc < 30 ? [
                 "Sobrepeso aumenta risco de HAS, dislipidemia, DM2 e apneia do sono.",
@@ -323,9 +256,9 @@ function CalcHOMA({ copied, onCopy }: { copied: string | null; onCopy: (id: stri
     return             { label: "Resistência grave", color: "#ef4444" }
   }
   const cls  = homa ? classify(homa) : null
-  const text = homa ? `HOMA-IR: ${homa.toFixed(2)} — ${cls?.label}` : ""
+  const text = homa ? `HOMA-IR: ${homa.toFixed(2)}, ${cls?.label}` : ""
   return (
-    <CalcCard icon={Activity} title="HOMA-IR" color="#f59e0b">
+    <CalcCard title="HOMA-IR">
       <div className="space-y-3">
         <div className="grid grid-cols-2 gap-3">
           <Field label="Glicemia jejum" unit="mg/dL" value={gli} onChange={setGli} min={0} />
@@ -334,11 +267,11 @@ function CalcHOMA({ copied, onCopy }: { copied: string | null; onCopy: (id: stri
         {homa && cls && (
           <>
             <ResultBox label="HOMA-IR" value={homa.toFixed(2)}
-              sub={`${cls.label} · <2.5 normal · 2.5–4.0 leve · >4.0 grave`}
+              sub={`${cls.label}, <2.5 normal, 2.5–4.0 leve, >4.0 grave`}
               color={cls.color} copyId="homa" copyText={text} copied={copied} onCopy={onCopy} />
             <ContextCard items={
               homa < 2.5 ? [
-                "Sensibilidade insulínica preservada — manter MEV para prevenção.",
+                "Sensibilidade insulínica preservada: manter MEV para prevenção.",
               ] : homa < 4.0 ? [
                 "Resistência insulínica leve. Associada a progressão para pré-diabetes e DM2 a médio prazo.",
                 "Avaliar complementar: relação TG/HDL (>3.0 = risco metabólico), circunferência abdominal, HbA1c.",
@@ -370,9 +303,9 @@ function CalcTMB({ copied, onCopy }: { copied: string | null; onCopy: (id: strin
       : 447.6 + (9.2 * p) + (3.1 * h) - (4.3 * a)
   }
   const gasto = tmb ? Math.round(tmb * f) : null
-  const text  = tmb ? `TMB: ${Math.round(tmb)} kcal/dia · Gasto total (${ATIVIDADES.find(x => x.value === fator)?.label}): ${gasto} kcal/dia` : ""
+  const text  = tmb ? `TMB: ${Math.round(tmb)} kcal/dia, Gasto total (${ATIVIDADES.find(x => x.value === fator)?.label}): ${gasto} kcal/dia` : ""
   return (
-    <CalcCard icon={Flame} title="TMB (Harris-Benedict)" color="#f97316">
+    <CalcCard title="TMB (Harris-Benedict)">
       <div className="space-y-3">
         <div className="grid grid-cols-2 gap-3">
           <Field label="Peso" unit="kg" value={peso} onChange={setPeso} min={0} />
@@ -384,8 +317,8 @@ function CalcTMB({ copied, onCopy }: { copied: string | null; onCopy: (id: strin
         {tmb && gasto && (
           <div className="mt-2 space-y-2">
             <div className="flex justify-between text-[12px]">
-              <span style={{ color: "var(--text-muted)" }}>TMB (metabolismo basal)</span>
-              <span className="font-bold font-mono" style={{ color: "var(--text-primary)" }}>{Math.round(tmb)} kcal</span>
+              <span className="text-px-muted">TMB (metabolismo basal)</span>
+              <span className="font-bold font-mono text-px-ink">{Math.round(tmb)} kcal</span>
             </div>
             <ResultBox label="Gasto Calórico Total" value={`${gasto} kcal/dia`}
               sub={ATIVIDADES.find(x => x.value === fator)?.label}
@@ -393,7 +326,7 @@ function CalcTMB({ copied, onCopy }: { copied: string | null; onCopy: (id: strin
             <ContextCard items={[
               `Deficit de 500 kcal/dia (~${gasto - 500} kcal): perda esperada ~0,5 kg/semana.`,
               `Deficit de 750 kcal/dia (~${gasto - 750} kcal): perda esperada ~0,75 kg/semana.`,
-              "Não ultrapassar deficit de 1000 kcal/dia — risco de perda de massa muscular e efeito rebote.",
+              "Não ultrapassar deficit de 1000 kcal/dia: risco de perda de massa muscular e efeito rebote.",
               "Para ganho de massa: superavit de 200–400 kcal/dia com proteína ≥1,6g/kg/dia.",
             ]} />
           </div>
@@ -425,12 +358,12 @@ function CalcAgua({ copied, onCopy }: { copied: string | null; onCopy: (id: stri
     : ""
   const sub = coposMin && coposMax
     ? (coposMin === coposMax
-        ? `${coposMin} copos de 200ml · ${fatorMin}ml/kg`
-        : `${coposMin}–${coposMax} copos de 200ml · ${fatorMin}–${fatorMax}ml/kg`)
+        ? `${coposMin} copos de 200ml, ${fatorMin}ml/kg`
+        : `${coposMin}–${coposMax} copos de 200ml, ${fatorMin}–${fatorMax}ml/kg`)
     : ""
   const text = value ? `Água diária recomendada (${atividade}): ${value} (${sub})` : ""
   return (
-    <CalcCard icon={Droplets} title="Água Diária" color="#06b6d4">
+    <CalcCard title="Água Diária">
       <div className="space-y-3">
         <Field label="Peso" unit="kg" value={peso} onChange={setPeso} min={0} />
         <Toggle label="Nível de atividade / clima"
@@ -441,7 +374,7 @@ function CalcAgua({ copied, onCopy }: { copied: string | null; onCopy: (id: stri
             <ResultBox label="Ingestão Recomendada" value={value} sub={sub}
               color="#06b6d4" copyId="agua" copyText={text} copied={copied} onCopy={onCopy} />
             <ContextCard items={[
-              "Distribuir ao longo do dia — não esperar sentir sede, especialmente em idosos.",
+              "Distribuir ao longo do dia: não esperar sentir sede, especialmente em idosos.",
               "Principais fontes: água, chás, sopas, frutas e vegetais hidratados (melancia, pepino).",
               "Urina amarelo-pálha = hidratação adequada; amarelo escuro = ingestão insuficiente.",
               atividade === "Muito ativo" ? "Atletas: adicionar 500–1000 ml/h de exercício intenso + eletrólitos em atividades >60 min." : "Diuréticos ou sudorese intensa: aumentar ingestão além da recomendação base.",
@@ -567,9 +500,9 @@ function CalcFramingham({ copied, onCopy }: { copied: string | null; onCopy: (id
     return             { label: "Alto risco",           color: "#ef4444" }
   }
   const cls  = risco ? classify(risco) : null
-  const text = risco ? `Risco Cardiovascular Framingham (10 anos): ${risco}% — ${cls?.label}` : ""
+  const text = risco ? `Risco Cardiovascular Framingham (10 anos): ${risco}%, ${cls?.label}` : ""
   return (
-    <CalcCard icon={Heart} title="Risco Cardiovascular (Framingham)" color="#ef4444">
+    <CalcCard title="Risco Cardiovascular (Framingham)">
       <div className="space-y-3">
         <Toggle label="Sexo" options={["Homem", "Mulher"]} value={sexo} onChange={setSexo} />
         <div className="grid grid-cols-2 gap-3">
@@ -585,7 +518,7 @@ function CalcFramingham({ copied, onCopy }: { copied: string | null; onCopy: (id
         {risco && cls && (
           <>
             <ResultBox label="Risco em 10 anos" value={`${risco}%`}
-              sub={`${cls.label} · <10% baixo · 10–20% intermediário · >20% alto`}
+              sub={`${cls.label}, <10% baixo, 10–20% intermediário, >20% alto`}
               color={cls.color} copyId="fram" copyText={text} copied={copied} onCopy={onCopy} />
             <ContextCard items={
               risco < 10 ? [
@@ -618,19 +551,19 @@ function CalcGLP1({ copied, onCopy }: { copied: string | null; onCopy: (id: stri
   let resultado = ""
   if (p > 0 || im > 0) {
     if (farmaco === "Semaglutida") {
-      resultado = `Semaglutida (Ozempic/Wegovy) — ${indicacao}:\n` +
+      resultado = `Semaglutida (Ozempic/Wegovy) para ${indicacao}:\n` +
         `Sem 1–4: 0,25 mg/semana SC\n` +
         `Sem 5–8: 0,5 mg/semana SC\n` +
         `Sem 9–12: 1,0 mg/semana SC\n` +
         `Sem 13+: 1,7–2,4 mg/semana SC (ajustar conforme resposta)`
     } else if (farmaco === "Liraglutida") {
-      resultado = `Liraglutida (Victoza/Saxenda) — ${indicacao}:\n` +
+      resultado = `Liraglutida (Victoza/Saxenda) para ${indicacao}:\n` +
         `Sem 1: 0,6 mg/dia SC\n` +
         `Sem 2: 1,2 mg/dia SC\n` +
         `Sem 3+: 1,8 mg/dia SC (manutenção)\n` +
         `Obesidade (Saxenda): máx 3,0 mg/dia SC`
     } else {
-      resultado = `Tirzepatida (Mounjaro) — ${indicacao}:\n` +
+      resultado = `Tirzepatida (Mounjaro) para ${indicacao}:\n` +
         `Sem 1–4: 2,5 mg/semana SC\n` +
         `Sem 5–8: 5,0 mg/semana SC\n` +
         `Sem 9–12: 7,5 mg/semana SC\n` +
@@ -639,10 +572,10 @@ function CalcGLP1({ copied, onCopy }: { copied: string | null; onCopy: (id: stri
         `Sem 21+: 15,0 mg/semana SC (dose máxima)`
     }
   }
-  const aviso = "Dose inicial — ajustar conforme resposta clínica. Prescrição é responsabilidade médica."
+  const aviso = "Dose inicial: ajustar conforme resposta clínica. Prescrição é responsabilidade médica."
   const text  = resultado ? `${resultado}\n\nAviso: ${aviso}` : ""
   return (
-    <CalcCard icon={Pill} title="Protocolo GLP-1" color="#a78bfa">
+    <CalcCard title="Protocolo GLP-1">
       <div className="space-y-3">
         <div className="grid grid-cols-2 gap-3">
           <Field label="Peso" unit="kg" value={peso} onChange={setPeso} min={0} />
@@ -659,13 +592,12 @@ function CalcGLP1({ copied, onCopy }: { copied: string | null; onCopy: (id: stri
         <Toggle label="Fármaco" options={["Semaglutida","Liraglutida","Tirzepatida"]} value={farmaco} onChange={setFarmaco} />
         {resultado && (
           <div>
-            <div className="mt-3 rounded-xl p-4"
-              style={{ background: "rgba(167,139,250,0.08)", border: "1px solid rgba(167,139,250,0.2)" }}>
-              <div className="text-[10px] font-mono tracking-wider uppercase mb-2" style={{ color: "#a78bfa" }}>
+            <div className="mt-3 rounded-px-card bg-px-ink/[0.06] p-4">
+              <div className="mb-2 text-[12px] font-semibold text-px-ink">
                 Protocolo de Titulação
               </div>
               {resultado.split("\n").map((line, idx) => (
-                <p key={idx} className="text-[12px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                <p key={idx} className="text-[12px] leading-relaxed text-px-ink/75">
                   {line}
                 </p>
               ))}
@@ -673,16 +605,16 @@ function CalcGLP1({ copied, onCopy }: { copied: string | null; onCopy: (id: stri
             <div className="mt-2">
               <ContextCard items={
                 farmaco === "Tirzepatida" ? [
-                  "Tirzepatida (GIP + GLP-1): maior eficácia de perda de peso — SURMOUNT-1: -20,9% peso vs. placebo.",
-                  "Titular lentamente: náusea e vômito são os principais limitantes — não saltar etapas.",
+                  "Tirzepatida (GIP + GLP-1): maior eficácia de perda de peso, SURMOUNT-1: -20,9% peso vs. placebo.",
+                  "Titular lentamente: náusea e vômito são os principais limitantes, não saltar etapas.",
                   "Monitorar: frequência cardíaca, PA, função renal, amilase/lipase em sintomas abdominais.",
                 ] : farmaco === "Semaglutida" ? [
                   "Semaglutida SC: STEP-1 mostrou -14,9% do peso. SELECT (2023): redução de 20% em eventos CV.",
-                  "Nausea melhora após 4–8 semanas — orientar o paciente para não desistir precocemente.",
+                  "Nausea melhora após 4–8 semanas: orientar o paciente para não desistir precocemente.",
                   "Contraindicações: carcinoma medular de tireoide pessoal/familiar, NEM-2, gastroparesia grave.",
                 ] : [
                   "Liraglutida: eficácia menor que semaglutida e tirzepatida, mas opção válida em tolerância.",
-                  "Dose máxima (3mg) tem adesão mais baixa por ser diária — ponderar vs. formulações semanais.",
+                  "Dose máxima (3mg) tem adesão mais baixa por ser diária: ponderar vs. formulações semanais.",
                 ]
               } />
             </div>
@@ -721,9 +653,9 @@ function CalcTFG({ copied, onCopy }: { copied: string | null; onCopy: (id: strin
     return              { estadio: "G5",  label: "Falência renal",     color: "#dc2626" }
   }
   const cls  = tfg ? classify(tfg) : null
-  const text = tfg ? `TFG CKD-EPI: ${tfg} mL/min/1,73m² — Estádio ${cls?.estadio} (${cls?.label})` : ""
+  const text = tfg ? `TFG CKD-EPI: ${tfg} mL/min/1,73m², Estádio ${cls?.estadio} (${cls?.label})` : ""
   return (
-    <CalcCard icon={Microscope} title="TFG CKD-EPI" color="#06b6d4">
+    <CalcCard title="TFG CKD-EPI">
       <div className="space-y-3">
         <Toggle label="Sexo" options={["Homem","Mulher"]} value={sexo} onChange={setSexo} />
         <div className="grid grid-cols-2 gap-3">
@@ -732,7 +664,7 @@ function CalcTFG({ copied, onCopy }: { copied: string | null; onCopy: (id: strin
         </div>
         {tfg && cls && (
           <>
-            <ResultBox label={`TFG · Estádio ${cls.estadio}`} value={`${tfg} mL/min/1,73m²`}
+            <ResultBox label={`TFG, Estádio ${cls.estadio}`} value={`${tfg} mL/min/1,73m²`}
               sub={cls.label} color={cls.color}
               copyId="tfg" copyText={text} copied={copied} onCopy={onCopy} />
             <ContextCard items={
@@ -743,15 +675,15 @@ function CalcTFG({ copied, onCopy }: { copied: string | null; onCopy: (id: strin
                 "Evitar AINEs e contraste iodado sem pré-hidratação adequada.",
                 "Microalbuminúria anual; monitorar eletrólitos e hemoglobina.",
               ] : tfg >= 30 ? [
-                "DRC estádio G3 — encaminhamento precoce ao nefrologista é recomendado.",
+                "DRC estádio G3: encaminhamento precoce ao nefrologista é recomendado.",
                 "Avaliar: anemia (EPO endógena ↓), hiperparatireoidismo secundário (PTH, Ca, P), bicarbonato.",
                 "Restringir proteínas a 0,6–0,8g/kg/dia. Ajustar doses de medicamentos renais.",
               ] : tfg >= 15 ? [
-                "DRC estádio G4 — acompanhamento nefrológico obrigatório. Planejamento para TRS.",
+                "DRC estádio G4: acompanhamento nefrológico obrigatório. Planejamento para TRS.",
                 "Preparar acesso vascular para hemodiálise ou encaminhar para avaliação de transplante.",
                 "Dieta baixa em potássio, fósforo e sódio. Corrigir acidose metabólica.",
               ] : [
-                "Falência renal (G5) — diálise ou transplante. Manejo imediato com nefrologista.",
+                "Falência renal (G5): diálise ou transplante. Manejo imediato com nefrologista.",
                 "Monitorar potássio sérico (risco de hipercalemia fatal), volemia e acidose.",
               ]
             } />
@@ -781,11 +713,11 @@ function CalcMetabolico({ copied, onCopy }: { copied: string | null; onCopy: (id
   const ref  = sexo === "Homem" ? "normal <94 / risco ≥94 / alto ≥102 cm" : "normal <80 / risco ≥80 / alto ≥88 cm"
   const text = v > 0 && cls ? `Risco Metabólico (CA: ${v}cm, ${sexo}): ${cls.label}. ${cls.rec}` : ""
   return (
-    <CalcCard icon={Ruler} title="Risco Metabólico (CA)" color="#e1306c">
+    <CalcCard title="Risco Metabólico (CA)">
       <div className="space-y-3">
         <Toggle label="Sexo" options={["Homem","Mulher"]} value={sexo} onChange={setSexo} />
         <Field label="Circunferência abdominal" unit="cm" value={ca} onChange={setCa} min={0} />
-        <div className="text-[11px] p-2 rounded-lg" style={{ background: "var(--surface)", color: "var(--text-muted)" }}>
+        <div className="rounded-px-ctl bg-px-ink/[0.05] p-2.5 text-[12px] text-px-ink/75">
           Referência ({sexo}): {ref}
         </div>
         {v > 0 && cls && (
@@ -794,13 +726,13 @@ function CalcMetabolico({ copied, onCopy }: { copied: string | null; onCopy: (id
               color={cls.color} copyId="meta" copyText={text} copied={copied} onCopy={onCopy} />
             <ContextCard items={
               cls.label === "Normal" ? [
-                "Circunferência abdominal adequada — manter com exercício regular e dieta equilibrada.",
+                "Circunferência abdominal adequada: manter com exercício regular e dieta equilibrada.",
               ] : cls.label === "Risco aumentado" ? [
                 "Gordura visceral aumentada: risco moderado de SM, DM2 e DCV.",
                 "Meta: redução de 5–7% do peso corporal com MEV estruturada.",
                 "Priorizar exercício aeróbico ≥150 min/semana + resistido ≥2x/semana.",
               ] : [
-                "Gordura visceral marcadamente aumentada — risco elevado de síndrome metabólica.",
+                "Gordura visceral marcadamente aumentada: risco elevado de síndrome metabólica.",
                 "Solicitar glicemia, insulina, HOMA-IR, TG/HDL, transaminases (DHGNA).",
                 "Farmacoterapia frequentemente indicada: GLP-1 RA, metformina ou combinação.",
               ]
@@ -845,10 +777,10 @@ function CalcCastelli({ copied, onCopy }: { copied: string | null; onCopy: (id: 
   const cls1 = c1 ? classifyC1(c1, sexo) : null
   const cls2 = c2 ? classifyC2(c2, sexo) : null
   const text = c1 && cls1
-    ? `Castelli I: ${c1.toFixed(2)} (${cls1.label})${c2 && cls2 ? ` · Castelli II: ${c2.toFixed(2)} (${cls2.label})` : ""}`
+    ? `Castelli I: ${c1.toFixed(2)} (${cls1.label})${c2 && cls2 ? `, Castelli II: ${c2.toFixed(2)} (${cls2.label})` : ""}`
     : ""
   return (
-    <CalcCard icon={TrendingUp} title="Índice de Castelli" color="#8b5cf6">
+    <CalcCard title="Índice de Castelli">
       <div className="space-y-3">
         <Toggle label="Sexo" options={["Homem","Mulher"]} value={sexo} onChange={setSexo} />
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -858,28 +790,26 @@ function CalcCastelli({ copied, onCopy }: { copied: string | null; onCopy: (id: 
         </div>
         {c1 && cls1 && (
           <div className="space-y-2 mt-2">
-            <div className="rounded-xl p-3 flex items-center justify-between"
-              style={{ background: `${cls1.color}10`, border: `1px solid ${cls1.color}25` }}>
+            <div className={cn("rounded-px-card p-3.5 flex items-center justify-between", toneBox(cls1.color))}>
               <div>
-                <div className="text-[10px] font-mono uppercase tracking-wider mb-0.5" style={{ color: cls1.color }}>
+                <div className="mb-0.5 text-[12px] font-semibold text-px-ink">
                   Castelli I (CT/HDL)
                 </div>
-                <div className="text-[18px] font-bold" style={{ color: "var(--text-primary)" }}>{c1.toFixed(2)}</div>
-                <div className="text-[11px]" style={{ color: "var(--text-muted)" }}>
-                  {cls1.label} · {sexo === "Homem" ? "ótimo <3.5 / limítrofe 3.5–5.0 / alto >5.0" : "ótimo <3.0 / limítrofe 3.0–4.4 / alto >4.4"}
+                <div className="text-[20px] font-semibold text-px-ink">{c1.toFixed(2)}</div>
+                <div className="text-[12px] text-px-ink/75">
+                  {cls1.label}, {sexo === "Homem" ? "ótimo <3.5 / limítrofe 3.5–5.0 / alto >5.0" : "ótimo <3.0 / limítrofe 3.0–4.4 / alto >4.4"}
                 </div>
               </div>
             </div>
             {c2 && cls2 && (
-              <div className="rounded-xl p-3 flex items-center justify-between"
-                style={{ background: `${cls2.color}10`, border: `1px solid ${cls2.color}25` }}>
+              <div className={cn("rounded-px-card p-3.5 flex items-center justify-between", toneBox(cls2.color))}>
                 <div>
-                  <div className="text-[10px] font-mono uppercase tracking-wider mb-0.5" style={{ color: cls2.color }}>
+                  <div className="mb-0.5 text-[12px] font-semibold text-px-ink">
                     Castelli II (LDL/HDL)
                   </div>
-                  <div className="text-[18px] font-bold" style={{ color: "var(--text-primary)" }}>{c2.toFixed(2)}</div>
-                  <div className="text-[11px]" style={{ color: "var(--text-muted)" }}>
-                    {cls2.label} · {sexo === "Homem" ? "ótimo <2.0 / limítrofe 2.0–3.5 / alto >3.5" : "ótimo <1.5 / limítrofe 1.5–3.0 / alto >3.0"}
+                  <div className="text-[20px] font-semibold text-px-ink">{c2.toFixed(2)}</div>
+                  <div className="text-[12px] text-px-ink/75">
+                    {cls2.label}, {sexo === "Homem" ? "ótimo <2.0 / limítrofe 2.0–3.5 / alto >3.5" : "ótimo <1.5 / limítrofe 1.5–3.0 / alto >3.0"}
                   </div>
                 </div>
               </div>
@@ -890,7 +820,7 @@ function CalcCastelli({ copied, onCopy }: { copied: string | null; onCopy: (id: 
             {c1 && cls1 && (
               <ContextCard items={
                 cls1.label === "Ótimo" && (!cls2 || cls2.label === "Ótimo") ? [
-                  "Índices de Castelli ótimos — perfil lipídico com baixa aterogenicidade.",
+                  "Índices de Castelli ótimos: perfil lipídico com baixa aterogenicidade.",
                   "Manter com MEV: dieta mediterrânea, exercício regular, controle do tabagismo.",
                 ] : [
                   "Índices elevados indicam maior aterogenicidade e risco de placa aterosclerótica.",
@@ -931,9 +861,9 @@ function CalcLevotiroxina({ copied, onCopy }: { copied: string | null; onCopy: (
     }
   }
   const doseStr = doseMin === doseMax ? `${doseMin} mcg/dia` : `${doseMin}–${doseMax} mcg/dia`
-  const text = p > 0 && i > 0 ? `Levotiroxina: ${doseStr} · ${estrategia}` : ""
+  const text = p > 0 && i > 0 ? `Levotiroxina: ${doseStr}, ${estrategia}` : ""
   return (
-    <CalcCard icon={Pill} title="Dose de Levotiroxina" color="#06b6d4">
+    <CalcCard title="Dose de Levotiroxina">
       <div className="space-y-3">
         <div className="grid grid-cols-2 gap-3">
           <Field label="Peso" unit="kg" value={peso} onChange={setPeso} min={0} />
@@ -948,12 +878,12 @@ function CalcLevotiroxina({ copied, onCopy }: { copied: string | null; onCopy: (
               copyId="levo" copyText={text} copied={copied} onCopy={onCopy} />
             <ContextCard items={[
               "Tomar em jejum 30–60 min antes do café da manhã para máxima absorção.",
-              "Controle de TSH após 4–6 semanas de início ou ajuste de dose — meta TSH 0,5–2,5 mUI/L.",
-              "Interações: ferro, cálcio, antiácidos e colestiramina reduzem absorção — intervalo de 2–4h.",
+              "Controle de TSH após 4–6 semanas de início ou ajuste de dose: meta TSH 0,5–2,5 mUI/L.",
+              "Interações: ferro, cálcio, antiácidos e colestiramina reduzem absorção, intervalo de 2–4h.",
               "Gestantes: TSH alvo <2,5 mUI/L no 1º trimestre; monitoramento a cada 4 semanas.",
               "Após emagrecimento significativo: rever dose pois pode ser necessário reduzir.",
             ]} />
-            <WarningBox text="Dose inicial — ajustar conforme TSH de controle a cada 6–8 semanas." />
+            <WarningBox text="Dose inicial: ajustar conforme TSH de controle a cada 6–8 semanas." />
           </div>
         )}
       </div>
@@ -981,9 +911,9 @@ function CalcFINDRISC({ copied, onCopy }: { copied: string | null; onCopy: (id: 
     return              { label: "Muito alto",  color: "#ef4444", prob: ">50%" }
   }
   const cls  = classify(score)
-  const text = `FINDRISC: ${score} pontos — Risco ${cls.label} de DM2 em 10 anos (${cls.prob})`
+  const text = `FINDRISC: ${score} pontos, Risco ${cls.label} de DM2 em 10 anos (${cls.prob})`
   return (
-    <CalcCard icon={Activity} title="Score FINDRISC (Risco DM2)" color="#f59e0b">
+    <CalcCard title="Score FINDRISC (Risco DM2)">
       <div className="space-y-3">
         <Toggle label="Sexo (para CA)" options={["Homem","Mulher"]} value={sexo} onChange={setSexo} />
         <Select label="Idade" value={idadeGrp}
@@ -1012,14 +942,14 @@ function CalcFINDRISC({ copied, onCopy }: { copied: string | null; onCopy: (id: 
         <Select label="Familiar com DM" value={familiar}
           options={[{ value:"0",label:"Nenhum" },{ value:"3",label:"Avós, tio, primo" },{ value:"5",label:"Pai, mãe ou irmão(ã)" }]}
           onChange={setFamiliar} />
-        <ResultBox label={`Score FINDRISC · Risco ${cls.label}`} value={`${score} pts`}
+        <ResultBox label={`Score FINDRISC, Risco ${cls.label}`} value={`${score} pts`}
           sub={`Probabilidade DM2 em 10 anos: ${cls.prob}`}
           color={cls.color} copyId="findrisc" copyText={text} copied={copied} onCopy={onCopy} />
         <ContextCard items={
           score < 7 ? [
-            "Risco baixo — manutenção de hábitos saudáveis e reavaliação em 3–5 anos.",
+            "Risco baixo: manutenção de hábitos saudáveis e reavaliação em 3–5 anos.",
           ] : score < 12 ? [
-            "Risco leve — iniciar intervenção preventiva: redução de peso, atividade física ≥150min/semana.",
+            "Risco leve: iniciar intervenção preventiva: redução de peso, atividade física ≥150min/semana.",
             "Solicitar glicemia de jejum e HbA1c para rastreio basal.",
           ] : score < 15 ? [
             "Risco moderado (~17%): MEV estruturada obrigatória. Encaminhar para nutricionista.",
@@ -1064,12 +994,12 @@ function CalcBillewicz({ copied, onCopy }: { copied: string | null; onCopy: (id:
     return              { label: "Hipotireoidismo improvável", color: "#00c07f" }
   }
   const cls  = classify(score)
-  const text = `Escore Billewicz: ${score} — ${cls.label}`
+  const text = `Escore Billewicz: ${score}, ${cls.label}`
   const toggle = (idx: number) => {
     setItems(prev => prev.map((it, i) => i === idx ? { ...it, checked: !it.checked } : it))
   }
   return (
-    <CalcCard icon={Stethoscope} title="Escore de Billewicz (Hipotireoidismo)" color="#8b5cf6">
+    <CalcCard title="Escore de Billewicz (Hipotireoidismo)">
       <div className="space-y-2">
         {items.map((it, idx) => (
           <CheckItem key={idx} label={it.label} points={it.pts}
@@ -1135,11 +1065,11 @@ function CalcPercentilOMS({ copied, onCopy }: { copied: string | null; onCopy: (
 
   const cls  = zscore !== null ? classifyZ(zscore) : null
   const text = zscore !== null && cls
-    ? `Percentil OMS (${sexo}, ${idades}m, ${p}kg): Z-score ${zscore.toFixed(2)} — ${cls.label}`
+    ? `Percentil OMS (${sexo}, ${idades}m, ${p}kg): Z-score ${zscore.toFixed(2)}, ${cls.label}`
     : ""
 
   return (
-    <CalcCard icon={Baby} title="Percentil Peso/Idade OMS (0–60m)" color="#06b6d4">
+    <CalcCard title="Percentil Peso/Idade OMS (0–60m)">
       <div className="space-y-3">
         <Toggle label="Sexo" options={["Menino", "Menina"]} value={sexo} onChange={setSexo} />
         <div className="grid grid-cols-2 gap-3">
@@ -1147,8 +1077,8 @@ function CalcPercentilOMS({ copied, onCopy }: { copied: string | null; onCopy: (
           <Field label="Peso atual" unit="kg" value={peso} onChange={setPeso} min={0} step="0.1" />
         </div>
         {ref && (
-          <div className="text-[11px] p-2 rounded-lg" style={{ background: "var(--surface)", color: "var(--text-muted)" }}>
-            Referência OMS ({sexo}, ~{idades}m): mediana {ref.median.toFixed(1)} kg · DP {ref.sd.toFixed(2)}
+          <div className="rounded-px-ctl bg-px-ink/[0.05] p-2.5 text-[12px] text-px-ink/75">
+            Referência OMS ({sexo}, ~{idades}m): mediana {ref.median.toFixed(1)} kg, DP {ref.sd.toFixed(2)}
           </div>
         )}
         {zscore !== null && cls && (
@@ -1157,10 +1087,10 @@ function CalcPercentilOMS({ copied, onCopy }: { copied: string | null; onCopy: (
               color={cls.color} copyId="percentilOMS" copyText={text} copied={copied} onCopy={onCopy} />
             <ContextCard items={
               zscore < -2 ? [
-                "Déficit ponderal significativo — investigar causas: má absorção, doença crônica, déficit alimentar.",
+                "Déficit ponderal significativo: investigar causas: má absorção, doença crônica, déficit alimentar.",
                 "Encaminhar a pediatra/nutricionista. Curvas de crescimento seriadas são essenciais.",
               ] : zscore > 2 ? [
-                "Excesso de peso em lactente/criança pequena — avaliar padrão alimentar e introdução de alimentos.",
+                "Excesso de peso em lactente/criança pequena: avaliar padrão alimentar e introdução de alimentos.",
                 "Excesso precoce aumenta risco de obesidade na infância e comorbidades na vida adulta.",
               ] : [
                 "Peso adequado para a idade. Manter acompanhamento com curvas de crescimento.",
@@ -1211,11 +1141,11 @@ function CalcZscoreEstatura({ copied, onCopy }: { copied: string | null; onCopy:
 
   const cls  = zscore !== null ? classifyZ(zscore) : null
   const text = zscore !== null && cls
-    ? `Z-score Estatura/Idade OMS (${sexo}, ${idades}m, ${h}cm): ${zscore.toFixed(2)} — ${cls.label}`
+    ? `Z-score Estatura/Idade OMS (${sexo}, ${idades}m, ${h}cm): ${zscore.toFixed(2)}, ${cls.label}`
     : ""
 
   return (
-    <CalcCard icon={Ruler} title="Z-score Estatura/Idade OMS (0–60m)" color="#8b5cf6">
+    <CalcCard title="Z-score Estatura/Idade OMS (0–60m)">
       <div className="space-y-3">
         <Toggle label="Sexo" options={["Menino", "Menina"]} value={sexo} onChange={setSexo} />
         <div className="grid grid-cols-2 gap-3">
@@ -1223,8 +1153,8 @@ function CalcZscoreEstatura({ copied, onCopy }: { copied: string | null; onCopy:
           <Field label="Estatura/Comprimento" unit="cm" value={altura} onChange={setAltura} min={0} step="0.1" />
         </div>
         {ref && (
-          <div className="text-[11px] p-2 rounded-lg" style={{ background: "var(--surface)", color: "var(--text-muted)" }}>
-            Referência OMS ({sexo}, ~{idades}m): mediana {ref.median.toFixed(1)} cm · DP {ref.sd.toFixed(1)}
+          <div className="rounded-px-ctl bg-px-ink/[0.05] p-2.5 text-[12px] text-px-ink/75">
+            Referência OMS ({sexo}, ~{idades}m): mediana {ref.median.toFixed(1)} cm, DP {ref.sd.toFixed(1)}
           </div>
         )}
         {zscore !== null && cls && (
@@ -1233,12 +1163,12 @@ function CalcZscoreEstatura({ copied, onCopy }: { copied: string | null; onCopy:
               color={cls.color} copyId="zEstat" copyText={text} copied={copied} onCopy={onCopy} />
             <ContextCard items={
               zscore < -2 ? [
-                "Baixa estatura para a idade — avaliar causas: deficiência de GH, hipotireoidismo, doença celíaca, síndrome genética.",
+                "Baixa estatura para a idade: avaliar causas: deficiência de GH, hipotireoidismo, doença celíaca, síndrome genética.",
                 "Solicitar: IGF-1, IGFBP-3, TSH, T4L, hemograma, e radiografia de mão para idade óssea.",
                 "Encaminhar à endocrinologia pediátrica se confirmado atraso de crescimento.",
               ] : [
                 "Crescimento linear adequado. Acompanhar nas consultas de puericultura.",
-                "Registrar em curva de crescimento — tendência é mais importante que um único ponto.",
+                "Registrar em curva de crescimento: tendência é mais importante que um único ponto.",
               ]
             } />
           </>
@@ -1269,7 +1199,7 @@ function CalcDoseGH({ copied, onCopy }: { copied: string | null; onCopy: (id: st
     : ""
 
   return (
-    <CalcCard icon={Activity} title="Dose de GH (Somatropina)" color="#00c07f">
+    <CalcCard title="Dose de GH (Somatropina)">
       <div className="space-y-3">
         <Field label="Peso" unit="kg" value={peso} onChange={setPeso} min={0} step="0.1" />
         <Select label="Indicação" value={indicacao}
@@ -1278,12 +1208,12 @@ function CalcDoseGH({ copied, onCopy }: { copied: string | null; onCopy: (id: st
         {doseMin && doseMax && (
           <>
             <ResultBox label="Dose Diária SC" value={`${doseMin}–${doseMax} mg/dia`}
-              sub={`${(ind.doseMin * 1000).toFixed(0)}–${(ind.doseMax * 1000).toFixed(0)} mcg/kg/dia · ${ind.label}`}
+              sub={`${(ind.doseMin * 1000).toFixed(0)}–${(ind.doseMax * 1000).toFixed(0)} mcg/kg/dia, ${ind.label}`}
               color="#00c07f" copyId="doseGH" copyText={text} copied={copied} onCopy={onCopy} />
             <ContextCard items={[
               "Administração SC diária, preferencialmente à noite para mimetizar pulso fisiológico.",
               "Monitorar IGF-1 a cada 3–6 meses; ajustar dose para manter IGF-1 entre +1 e +2 DP.",
-              "Efeitos adversos: retenção hídrica, cefaleia, resistência insulínica — monitorar glicemia.",
+              "Efeitos adversos: retenção hídrica, cefaleia, resistência insulínica, monitorar glicemia.",
               "Contraindicações: neoplasia ativa, retinopatia diabética proliferativa, Prader-Willi com obesidade grave.",
             ]} />
           </>
@@ -1318,11 +1248,11 @@ function CalcProteina({ copied, onCopy }: { copied: string | null; onCopy: (id: 
     ? (gMin === gMax ? `${gMin} g/dia` : `${gMin}–${gMax} g/dia`)
     : ""
   const subStr = refMin && refMax
-    ? (refMin === refMax ? `${refMin} g/refeição (4 refeições) · ${min} g/kg` : `${refMin}–${refMax} g/refeição (÷4) · ${min}–${max} g/kg`)
+    ? (refMin === refMax ? `${refMin} g/refeição (4 refeições), ${min} g/kg` : `${refMin}–${refMax} g/refeição (÷4), ${min}–${max} g/kg`)
     : ""
-  const text = valueStr ? `Necessidade proteica (${objetivo}): ${valueStr} · ${subStr}` : ""
+  const text = valueStr ? `Necessidade proteica (${objetivo}): ${valueStr}, ${subStr}` : ""
   return (
-    <CalcCard icon={Dumbbell} title="Necessidade Proteica" color="#f97316">
+    <CalcCard title="Necessidade Proteica">
       <div className="space-y-3">
         <Field label="Peso" unit="kg" value={peso} onChange={setPeso} min={0} />
         <Select label="Objetivo" value={objetivo}
@@ -1342,17 +1272,17 @@ function CalcProteina({ copied, onCopy }: { copied: string | null; onCopy: (id: 
               objetivo === "hipertrofia" ? [
                 "Distribuir em 4–5 refeições com pelo menos 3–4g de leucina por refeição para maximizar MPS.",
                 "Proteína animal (carne, ovos, laticínios) tem melhor biodisponibilidade e perfil de aminoácidos.",
-                "Whey protein é prático para complementar — absorção rápida ideal no pós-treino.",
+                "Whey protein é prático para complementar: absorção rápida ideal no pós-treino.",
               ] : objetivo === "emagrec" ? [
                 "Proteína elevada durante emagrecimento preserva massa magra e aumenta saciedade.",
                 "Priorizar proteínas magras: frango, peixe, ovos, atum, ricota, iogurte grego.",
                 "Distribuição equitativa nas refeições é mais eficaz que concentrar no jantar.",
               ] : objetivo === "idoso" ? [
-                "Idosos têm resistência anabólica — doses >30g/refeição podem ser necessárias para ativar MPS.",
+                "Idosos têm resistência anabólica: doses >30g/refeição podem ser necessárias para ativar MPS.",
                 "Suplementar leucina (3g/refeição) ou BCAA para superar a resistência anabólica.",
                 "Creatina (3–5g/dia) potencializa o efeito do exercício e da proteína em idosos.",
               ] : [
-                "Distribuir uniformemente nas refeições — evitar concentrar toda proteína em uma refeição.",
+                "Distribuir uniformemente nas refeições: evitar concentrar toda proteína em uma refeição.",
                 "Fontes variadas garantem todos os aminoácidos essenciais.",
               ]
             } />
@@ -1373,10 +1303,10 @@ function CalcDeficit({ copied, onCopy }: { copied: string | null; onCopy: (id: s
   const alvo   = get ? get - deficit : null
   const alerta = deficit > 1000
   const text   = get && alvo
-    ? `GET: ${get} kcal/dia · Déficit: ${deficit} kcal/dia · Alvo: ${alvo} kcal/dia (meta: -${meta} kg/semana)`
+    ? `GET: ${get} kcal/dia, Déficit: ${deficit} kcal/dia, Alvo: ${alvo} kcal/dia (meta: -${meta} kg/semana)`
     : ""
   return (
-    <CalcCard icon={Flame} title="Déficit Calórico para Emagrecimento" color="#ef4444">
+    <CalcCard title="Déficit Calórico para Emagrecimento">
       <div className="space-y-3">
         <Field label="TMB (Harris-Benedict)" unit="kcal" value={tmb} onChange={setTmb} min={0} />
         <Select label="Nível de atividade" value={fator} options={ATIVIDADES} onChange={setFator} />
@@ -1391,21 +1321,21 @@ function CalcDeficit({ copied, onCopy }: { copied: string | null; onCopy: (id: s
         {get && alvo && (
           <div className="space-y-2 mt-2">
             <div className="flex justify-between text-[12px]">
-              <span style={{ color: "var(--text-muted)" }}>GET (gasto energético total)</span>
-              <span className="font-bold font-mono" style={{ color: "var(--text-primary)" }}>{get} kcal</span>
+              <span className="text-px-muted">GET (gasto energético total)</span>
+              <span className="font-bold font-mono text-px-ink">{get} kcal</span>
             </div>
             <div className="flex justify-between text-[12px]">
-              <span style={{ color: "var(--text-muted)" }}>Déficit necessário</span>
-              <span className="font-bold font-mono" style={{ color: alerta ? "#ef4444" : "var(--text-primary)" }}>{deficit} kcal/dia</span>
+              <span className="text-px-muted">Déficit necessário</span>
+              <span className={cn("font-bold font-mono", alerta ? "text-px-danger" : "text-px-ink")}>{deficit} kcal/dia</span>
             </div>
             <ResultBox label="Calorias Alvo/Dia" value={`${alvo} kcal`}
-              sub={`Déficit de ${deficit} kcal · meta ${meta} kg/semana`}
+              sub={`Déficit de ${deficit} kcal, meta ${meta} kg/semana`}
               color={alerta ? "#ef4444" : "#00c07f"}
               copyId="deficit" copyText={text} copied={copied} onCopy={onCopy} />
             <ContextCard items={[
               `Meta conservadora (${meta} kg/sem): sustentável a longo prazo e preserva mais massa magra.`,
               "Ciclos de realimentação a cada 10–14 dias (refeed day) atenuam a queda de leptina e metabolismo.",
-              "Monitorar peso no mesmo horário e condição — variações diárias de 1–2 kg são normais (hidratação/intestino).",
+              "Monitorar peso no mesmo horário e condição: variações diárias de 1–2 kg são normais (hidratação/intestino).",
             ]} />
             {alerta && <WarningBox text="Déficit > 1000 kcal/dia pode causar perda de massa magra. Avalie com cautela." />}
           </div>
@@ -1436,28 +1366,28 @@ function CalcIAC({ copied, onCopy }: { copied: string | null; onCopy: (id: strin
   }
   const cls  = iac ? classify(iac, sexo) : null
   const ref  = sexo === "Homem" ? "magro <8 / normal 8–19 / sobrepeso 20–25 / obeso >25" : "magra <21 / normal 21–32 / sobrepeso 33–38 / obesa >38"
-  const text = iac && cls ? `IAC: ${iac.toFixed(1)}% — ${cls.label}` : ""
+  const text = iac && cls ? `IAC: ${iac.toFixed(1)}%, ${cls.label}` : ""
   return (
-    <CalcCard icon={Scale} title="Índice de Adiposidade Corporal (IAC)" color="#8b5cf6">
+    <CalcCard title="Índice de Adiposidade Corporal (IAC)">
       <div className="space-y-3">
         <Toggle label="Sexo" options={["Homem","Mulher"]} value={sexo} onChange={setSexo} />
         <div className="grid grid-cols-2 gap-3">
           <Field label="Quadril" unit="cm" value={quadril} onChange={setQuadril} min={0} />
           <Field label="Altura" unit="cm" value={altura} onChange={setAltura} min={0} />
         </div>
-        <div className="text-[11px] p-2 rounded-lg" style={{ background: "var(--surface)", color: "var(--text-muted)" }}>
+        <div className="rounded-px-ctl bg-px-ink/[0.05] p-2.5 text-[12px] text-px-ink/75">
           Referência ({sexo}): {ref}
         </div>
         {iac && cls && (
           <>
             <ResultBox label="IAC" value={`${iac.toFixed(1)}%`}
-              sub={`${cls.label} · Fórmula: (quadril / altura^1.5) − 18`}
+              sub={`${cls.label}, Fórmula: (quadril / altura^1.5) − 18`}
               color={cls.color} copyId="iac" copyText={text} copied={copied} onCopy={onCopy} />
             <ContextCard items={
               cls.label === "Normal" ? [
                 "IAC dentro da normalidade. Combinar com circunferência abdominal para avaliação de gordura visceral.",
               ] : [
-                "IAC elevado indica excesso de gordura corporal total — risco cardiometabólico aumentado.",
+                "IAC elevado indica excesso de gordura corporal total: risco cardiometabólico aumentado.",
                 "Complementar com bioimpedância ou DEXA para quantificar gordura visceral separadamente.",
                 "Exercício resistido + aeróbico e dieta hipocalórica são as intervenções de primeira linha.",
               ]
@@ -1478,10 +1408,10 @@ function CalcGanzoni({ copied, onCopy }: { copied: string | null; onCopy: (id: s
   const ht = parseFloat(hbAlvo); const r = parseFloat(reserva)
   const ferro = p > 0 && ha > 0 && ht > 0 ? Math.round(p * (ht - ha) * 2.4 + r) : null
   const text  = ferro
-    ? `Ferro EV (Ganzoni): ${ferro} mg · Peso ${p}kg · Hb atual ${ha} g/dL → alvo ${ht} g/dL`
+    ? `Ferro EV (Ganzoni): ${ferro} mg, Peso ${p}kg, Hb atual ${ha} g/dL, alvo ${ht} g/dL`
     : ""
   return (
-    <CalcCard icon={Droplets} title="Ferro EV — Fórmula de Ganzoni" color="#ef4444">
+    <CalcCard title="Ferro EV: Fórmula de Ganzoni">
       <div className="space-y-3">
         <div className="grid grid-cols-2 gap-3">
           <Field label="Peso" unit="kg" value={peso} onChange={setPeso} min={0} step="0.1" />
@@ -1489,7 +1419,7 @@ function CalcGanzoni({ copied, onCopy }: { copied: string | null; onCopy: (id: s
           <Field label="Hb alvo" unit="g/dL" value={hbAlvo} onChange={setHbAlvo} min={0} step="0.1" />
           <Field label="Reserva" unit="mg" value={reserva} onChange={setReserva} min={0} />
         </div>
-        <div className="text-[11px] p-2 rounded-lg" style={{ background: "var(--surface)", color: "var(--text-muted)" }}>
+        <div className="rounded-px-ctl bg-px-ink/[0.05] p-2.5 text-[12px] text-px-ink/75">
           Fórmula: Ferro (mg) = Peso × (Hb alvo − Hb atual) × 2,4 + Reserva
           <br />Reserva padrão: 500 mg (&gt;35 kg) ou 15 mg/kg (&lt;35 kg)
         </div>
@@ -1499,9 +1429,9 @@ function CalcGanzoni({ copied, onCopy }: { copied: string | null; onCopy: (id: s
               sub={`Reposição + reserva de depósito`}
               color="#ef4444" copyId="ganzoni" copyText={text} copied={copied} onCopy={onCopy} />
             <ContextCard items={[
-              "Dose total a ser infundida EV — fracionada conforme produto disponível (sacarato ou carboximaltose).",
-              "Ferro sacarato (Noripurum®): máx. 200 mg/infusão — calcular número de sessões.",
-              "Carboximaltose férrica (Ferinject®): máx. 1000 mg/sessão em dose única — reduz sessões.",
+              "Dose total a ser infundida EV: fracionada conforme produto disponível (sacarato ou carboximaltose).",
+              "Ferro sacarato (Noripurum®): máx. 200 mg/infusão, calcular número de sessões.",
+              "Carboximaltose férrica (Ferinject®): máx. 1000 mg/sessão em dose única, reduz sessões.",
               "Reavaliar ferritina e Hb após 4–8 semanas da última infusão.",
               "Indicações: intolerância ao ferro oral, má absorção, anemia grave pré-operatória, DRC, EII.",
             ]} />
@@ -1535,10 +1465,10 @@ function CalcGestacional({ copied, onCopy }: { copied: string | null; onCopy: (i
   }
   const ganhoTrimStr = tr === 1 ? "0,5–2 kg" : tr === 2 ? "4–5 kg" : "4–5 kg"
   const text = faixa
-    ? `Ganho gestacional recomendado (${faixa.label}): ${faixa.min}–${faixa.max} kg total · Trim ${tr}: ${ganhoTrimStr}`
+    ? `Ganho gestacional recomendado (${faixa.label}): ${faixa.min}–${faixa.max} kg total, Trim ${tr}: ${ganhoTrimStr}`
     : ""
   return (
-    <CalcCard icon={Baby} title="Ganho de Peso Gestacional (IOM)" color="#e1306c">
+    <CalcCard title="Ganho de Peso Gestacional (IOM)">
       <div className="space-y-3">
         <Field label="IMC pré-gestacional" unit="kg/m²" value={imcPre} onChange={setImcPre} min={0} step="0.1" />
         <Select label="Trimestre atual" value={trim}
@@ -1548,15 +1478,15 @@ function CalcGestacional({ copied, onCopy }: { copied: string | null; onCopy: (i
         {faixa && (
           <div className="space-y-2 mt-2">
             <ResultBox label="Ganho Total Recomendado" value={`${faixa.min}–${faixa.max} kg`}
-              sub={`${faixa.label} · Ganho esperado no ${tr}º trim: ${ganhoTrimStr}`}
+              sub={`${faixa.label}, Ganho esperado no ${tr}º trim: ${ganhoTrimStr}`}
               color="#e1306c" copyId="gest" copyText={text} copied={copied} onCopy={onCopy} />
             <ContextCard items={
               imc >= 30 ? [
                 "Ganho excessivo em gestante obesa aumenta risco de DMG, PE, macrossomia e cesárea.",
-                "Orientar dieta equilibrada — nunca dieta restritiva na gestação (mínimo 1800 kcal/dia).",
+                "Orientar dieta equilibrada: nunca dieta restritiva na gestação (mínimo 1800 kcal/dia).",
                 "Exercício moderado (caminhada, hidroginástica) é seguro e reduz ganho excessivo.",
               ] : imc < 18.5 ? [
-                "Ganho adequado é essencial — baixo peso gestacional aumenta risco de RCIU e prematuridade.",
+                "Ganho adequado é essencial: baixo peso gestacional aumenta risco de RCIU e prematuridade.",
                 "Avaliar suporte nutricional e investigar causas de baixo peso pré-gestacional.",
               ] : [
                 "Monitorar ganho trimestral: 0,5–2 kg no 1º trimestre, depois ~0,4–0,5 kg/semana.",
@@ -1591,18 +1521,18 @@ function CalcPreeclampsia({ copied, onCopy }: { copied: string | null; onCopy: (
     return            { label: "Alto risco",           color: "#ef4444", rec: "Recomenda AAS 100–150 mg/dia até 36 semanas" }
   }
   const cls  = classify(score)
-  const text = `Score PE: ${score} pontos — ${cls.label}. ${cls.rec}`
+  const text = `Score PE: ${score} pontos, ${cls.label}. ${cls.rec}`
   const toggle = (idx: number) => {
     setItems(prev => prev.map((it, i) => i === idx ? { ...it, checked: !it.checked } : it))
   }
   return (
-    <CalcCard icon={Heart} title="Score de Risco de Pré-eclâmpsia" color="#ef4444">
+    <CalcCard title="Score de Risco de Pré-eclâmpsia">
       <div className="space-y-2">
         {items.map((it, idx) => (
           <CheckItem key={idx} label={it.label} points={it.pts}
             checked={it.checked} onChange={() => toggle(idx)} />
         ))}
-        <ResultBox label={`Score PE · ${cls.label}`} value={`${score} pts`}
+        <ResultBox label={`Score PE, ${cls.label}`} value={`${score} pts`}
           sub={cls.rec} color={cls.color}
           copyId="pe" copyText={text} copied={copied} onCopy={onCopy} />
       </div>
@@ -1622,10 +1552,10 @@ function CalcJanelaFertil({ copied, onCopy }: { copied: string | null; onCopy: (
   }
   const fmt = (dt: Date) => dt.toLocaleDateString("pt-BR", { day:"2-digit", month:"2-digit", year:"numeric" })
   const text = ovulacao && janelaInicio && janelaFim
-    ? `Ovulação provável: ${fmt(ovulacao)} · Janela fértil: ${fmt(janelaInicio)} a ${fmt(janelaFim)}`
+    ? `Ovulação provável: ${fmt(ovulacao)}, Janela fértil: ${fmt(janelaInicio)} a ${fmt(janelaFim)}`
     : ""
   return (
-    <CalcCard icon={Baby} title="Janela Fértil" color="#a78bfa">
+    <CalcCard title="Janela Fértil">
       <div className="space-y-3">
         <div className="grid grid-cols-2 gap-3">
           <Field label="Duração do ciclo" unit="dias" value={ciclo} onChange={setCiclo} min={21} max={35} />
@@ -1634,8 +1564,8 @@ function CalcJanelaFertil({ copied, onCopy }: { copied: string | null; onCopy: (
         {ovulacao && janelaInicio && janelaFim && (
           <div className="space-y-2 mt-2">
             <div className="flex justify-between text-[12px]">
-              <span style={{ color: "var(--text-muted)" }}>Ovulação provável</span>
-              <span className="font-bold font-mono" style={{ color: "var(--text-primary)" }}>{fmt(ovulacao)}</span>
+              <span className="text-px-muted">Ovulação provável</span>
+              <span className="font-bold font-mono text-px-ink">{fmt(ovulacao)}</span>
             </div>
             <ResultBox label="Janela Fértil" value={`${fmt(janelaInicio)} – ${fmt(janelaFim)}`}
               sub={`Ovulação no dia ${c - 14} do ciclo (±2 dias)`}
@@ -1668,17 +1598,17 @@ function CalcIdadeGestacional({ copied, onCopy }: { copied: string | null; onCop
   }
 
   const text = semanas !== null && dias !== null
-    ? `Idade Gestacional: ${semanas} semanas e ${dias} dias (DUM: ${dum}) — ${trimestre(semanas)}`
+    ? `Idade Gestacional: ${semanas} semanas e ${dias} dias (DUM: ${dum}), ${trimestre(semanas)}`
     : ""
 
   return (
-    <CalcCard icon={Baby} title="Idade Gestacional (DUM)" color="#e1306c">
+    <CalcCard title="Idade Gestacional (DUM)">
       <div className="space-y-3">
         <FieldDate label="Data da Última Menstruação (DUM)" value={dum} onChange={setDum} />
         {semanas !== null && dias !== null && semanas >= 0 && (
           <>
             <ResultBox label="Idade Gestacional" value={`${semanas}s ${dias}d`}
-              sub={`${trimestre(semanas)} · Cálculo pela DUM`}
+              sub={`${trimestre(semanas)}, Cálculo pela DUM`}
               color="#e1306c" copyId="idGest" copyText={text} copied={copied} onCopy={onCopy} />
             <ContextCard items={[
               semanas < 13 ? "1º Trimestre: 1ª consulta pré-natal, hemograma, VDRL, toxoplasmose, rubéola, CMV, HIV, urina." :
@@ -1715,7 +1645,7 @@ function CalcDPP({ copied, onCopy }: { copied: string | null; onCopy: (id: strin
   }
   const text = dpp ? `DPP (Naegele) a partir da DUM ${dum}: ${dpp}` : ""
   return (
-    <CalcCard icon={Baby} title="DPP — Regra de Naegele" color="#8b5cf6">
+    <CalcCard title="DPP: Regra de Naegele">
       <div className="space-y-3">
         <FieldDate label="Data da Última Menstruação (DUM)" value={dum} onChange={setDum} />
         {dpp && (
@@ -1760,48 +1690,36 @@ function CalcKupperman({ copied, onCopy }: { copied: string | null; onCopy: (id:
     return             { label: "Sintomas intensos",     color: "#ef4444" }
   }
   const cls  = classify(total)
-  const text = `Índice de Kupperman: ${total} pontos — ${cls.label}`
+  const text = `Índice de Kupperman: ${total} pontos, ${cls.label}`
 
   return (
-    <CalcCard icon={Activity} title="Índice de Kupperman (Climatério)" color="#f59e0b">
+    <CalcCard title="Índice de Kupperman (Climatério)">
       <div className="space-y-3">
-        <div className="text-[11px]" style={{ color: "var(--text-muted)" }}>
-          Intensidade: 0 = ausente · 1 = leve · 2 = moderada · 3 = intensa
+        <div className="text-[12px] text-px-muted">
+          Intensidade: 0 = ausente, 1 = leve, 2 = moderada, 3 = intensa
         </div>
         <div className="space-y-2">
           {items.map((item, i) => (
             <div key={i} className="flex items-center gap-3">
-              <span className="flex-1 text-[11px]" style={{ color: "var(--text-secondary)" }}>
-                {item.label} <span className="font-mono text-[9px]" style={{ color: "var(--text-muted)" }}>×{item.weight}</span>
+              <span className="flex-1 text-[12px] text-px-ink/75">
+                {item.label} <span className="font-mono text-[12px] text-px-muted">×{item.weight}</span>
               </span>
-              <div className="flex gap-1">
-                {[0,1,2,3].map(v => (
-                  <button key={v} onClick={() => setItems(prev => prev.map((x, j) => j === i ? { ...x, score: v } : x))}
-                    className="w-7 h-7 rounded text-[11px] font-mono transition-all"
-                    style={{
-                      background: item.score === v ? "var(--accent-dim)" : "var(--surface)",
-                      border: `1px solid ${item.score === v ? "var(--accent-border)" : "var(--border)"}`,
-                      color: item.score === v ? "var(--accent)" : "var(--text-muted)",
-                    }}>
-                    {v}
-                  </button>
-                ))}
-              </div>
+              <Segmented label={item.label} options={[0,1,2,3].map(v => ({ value: String(v), label: String(v) }))} value={String(item.score)} onChange={v => setItems(prev => prev.map((x, j) => j === i ? { ...x, score: Number(v) } : x))} />
             </div>
           ))}
         </div>
-        <ResultBox label="Índice de Kupperman" value={`${total} pts`} sub={`${cls.label} · ≤19 leve · 20–35 moderado · >35 intenso`}
+        <ResultBox label="Índice de Kupperman" value={`${total} pts`} sub={`${cls.label}, ≤19 leve, 20–35 moderado, >35 intenso`}
           color={cls.color} copyId="kupp" copyText={text} copied={copied} onCopy={onCopy} />
         <ContextCard items={
           total <= 19 ? [
-            "Sintomatologia climatérica leve — MEV, fitoestrógenos e avaliação individualizada.",
+            "Sintomatologia climatérica leve: MEV, fitoestrógenos e avaliação individualizada.",
           ] : total <= 35 ? [
-            "Sintomas moderados — discutir terapia hormonal (TH) conforme perfil de risco individual.",
+            "Sintomas moderados: discutir terapia hormonal (TH) conforme perfil de risco individual.",
             "Avaliar contraindicações à TH: câncer de mama, TEV prévio, sangramento uterino a esclarecer.",
             "Fitoestrógenos, isoflavonas e terapias não hormonais (venlafaxina, clonidina) como alternativas.",
           ] : [
-            "Sintomas intensos — TH formal é recomendada para a maioria das pacientes sem contraindicações.",
-            "Individualizar via de administração (oral vs. transdérmica — transdérmica tem menor risco trombótico).",
+            "Sintomas intensos: TH formal é recomendada para a maioria das pacientes sem contraindicações.",
+            "Individualizar via de administração (oral vs. transdérmica: transdérmica tem menor risco trombótico).",
             "Reavaliar com índice de Kupperman após 3 meses de tratamento.",
           ]
         } />
@@ -1835,31 +1753,19 @@ function CalcMRS({ copied, onCopy }: { copied: string | null; onCopy: (id: strin
     return             { label: "Sintomas graves",             color: "#ef4444" }
   }
   const cls  = classify(soma)
-  const text = `MRS Total: ${soma} (Somático: ${somatorio.somatic}, Psicológico: ${somatorio.psych}, Urogenital: ${somatorio.uro}) — ${cls.label}`
+  const text = `MRS Total: ${soma} (Somático: ${somatorio.somatic}, Psicológico: ${somatorio.psych}, Urogenital: ${somatorio.uro}), ${cls.label}`
 
   return (
-    <CalcCard icon={Activity} title="MRS — Menopause Rating Scale" color="#e1306c">
+    <CalcCard title="MRS: Menopause Rating Scale">
       <div className="space-y-3">
-        <div className="text-[11px]" style={{ color: "var(--text-muted)" }}>
-          Intensidade: 0 = nenhum · 1 = leve · 2 = moderado · 3 = grave · 4 = muito grave
+        <div className="text-[12px] text-px-muted">
+          Intensidade: 0 = nenhum, 1 = leve, 2 = moderado, 3 = grave, 4 = muito grave
         </div>
         <div className="space-y-2">
           {items.map((item, i) => (
             <div key={i} className="flex items-center gap-3">
-              <span className="flex-1 text-[11px]" style={{ color: "var(--text-secondary)" }}>{item.label}</span>
-              <div className="flex gap-1">
-                {[0,1,2,3,4].map(v => (
-                  <button key={v} onClick={() => setItems(prev => prev.map((x, j) => j === i ? { ...x, score: v } : x))}
-                    className="w-6 h-6 rounded text-[10px] font-mono transition-all"
-                    style={{
-                      background: item.score === v ? "var(--accent-dim)" : "var(--surface)",
-                      border: `1px solid ${item.score === v ? "var(--accent-border)" : "var(--border)"}`,
-                      color: item.score === v ? "var(--accent)" : "var(--text-muted)",
-                    }}>
-                    {v}
-                  </button>
-                ))}
-              </div>
+              <span className="flex-1 text-[12px] text-px-ink/75">{item.label}</span>
+              <Segmented label={item.label} options={[0,1,2,3,4].map(v => ({ value: String(v), label: String(v) }))} value={String(item.score)} onChange={v => setItems(prev => prev.map((x, j) => j === i ? { ...x, score: Number(v) } : x))} />
             </div>
           ))}
         </div>
@@ -1869,9 +1775,9 @@ function CalcMRS({ copied, onCopy }: { copied: string | null; onCopy: (id: strin
             { label: "Psicológico", v: somatorio.psych, limit: "≤4 / ≤8 / ≤11" },
             { label: "Urogenital", v: somatorio.uro, limit: "≤3 / ≤5 / ≤8" },
           ].map(d => (
-            <div key={d.label} className="rounded-lg p-2" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-              <div className="text-[9px] font-mono" style={{ color: "var(--text-muted)" }}>{d.label}</div>
-              <div className="text-[16px] font-bold mt-0.5" style={{ color: "var(--text-primary)" }}>{d.v}</div>
+            <div key={d.label} className="rounded-px-ctl bg-px-ink/[0.05] p-2">
+              <div className="text-[12px] font-mono text-px-muted">{d.label}</div>
+              <div className="text-[16px] font-bold mt-0.5 text-px-ink">{d.v}</div>
             </div>
           ))}
         </div>
@@ -1882,8 +1788,8 @@ function CalcMRS({ copied, onCopy }: { copied: string | null; onCopy: (id: strin
             "Sintomatologia climatérica leve a ausente. MEV e acompanhamento regular.",
           ] : [
             "Score elevado indica impacto significativo na qualidade de vida.",
-            "Domínio urogenital ≥5: síndrome geniturinária da menopausa — estrogênio vaginal local ou TH sistêmica.",
-            "Domínio psicológico ≥9: avaliar depressão e ansiedade — ISRS ou IRSN podem ser associados à TH.",
+            "Domínio urogenital ≥5: síndrome geniturinária da menopausa, estrogênio vaginal local ou TH sistêmica.",
+            "Domínio psicológico ≥9: avaliar depressão e ansiedade, ISRS ou IRSN podem ser associados à TH.",
             "Reavaliar MRS após 3–6 meses de tratamento para monitorar resposta.",
           ]
         } />
@@ -1914,31 +1820,31 @@ function CalcWells({ copied, onCopy }: { copied: string | null; onCopy: (id: str
     return            { label: "Alta probabilidade",           color: "#ef4444" }
   }
   const cls  = classify(score)
-  const text = `Wells TEP: ${score} pontos — ${cls.label}`
+  const text = `Wells TEP: ${score} pontos, ${cls.label}`
   const toggle = (idx: number) => {
     setItems(prev => prev.map((it, i) => i === idx ? { ...it, checked: !it.checked } : it))
   }
   return (
-    <CalcCard icon={Heart} title="Score de Wells (TEP)" color="#ef4444">
+    <CalcCard title="Score de Wells (TEP)">
       <div className="space-y-2">
         {items.map((it, idx) => (
           <CheckItem key={idx} label={it.label} points={it.pts}
             checked={it.checked} onChange={() => toggle(idx)} />
         ))}
-        <ResultBox label={`Wells TEP · ${cls.label}`} value={`${score} pts`}
-          sub="≤1 baixa · 2–6 intermediária · ≥7 alta probabilidade"
+        <ResultBox label={`Wells TEP, ${cls.label}`} value={`${score} pts`}
+          sub="≤1 baixa, 2–6 intermediária, ≥7 alta probabilidade"
           color={cls.color} copyId="wells" copyText={text} copied={copied} onCopy={onCopy} />
         <ContextCard items={
           score <= 1 ? [
             "Probabilidade baixa: D-Dímero (<500 ng/mL) exclui TEP com segurança.",
-            "Se D-Dímero negativo, TEP é praticamente descartado — sem necessidade de angiotomografia.",
+            "Se D-Dímero negativo, TEP é praticamente descartado: sem necessidade de angiotomografia.",
           ] : score <= 6 ? [
             "Probabilidade intermediária: D-Dímero obrigatório; se positivo, angiotomografia de tórax.",
             "Considerar anticoagulação empírica se demora na imagem em paciente com alta suspeita clínica.",
           ] : [
-            "Alta probabilidade: indicação direta de angiotomografia — não aguardar D-Dímero.",
+            "Alta probabilidade: indicação direta de angiotomografia, não aguardar D-Dímero.",
             "Iniciar anticoagulação imediata (enoxaparina 1 mg/kg SC 12/12h ou heparina EV) se sem contraindicação.",
-            "Avaliar estabilidade hemodinâmica: TEP maciço → trombólise sistêmica ou embolectomia.",
+            "Avaliar estabilidade hemodinâmica: TEP maciço: trombólise sistêmica ou embolectomia.",
           ]
         } />
       </div>
@@ -1950,13 +1856,13 @@ function CalcCHA2DS2({ copied, onCopy }: { copied: string | null; onCopy: (id: s
   const [sexo, setSexo] = useState("Homem")
   type Item = { label: string; pts: number; checked: boolean }
   const [items, setItems] = useState<Item[]>([
-    { label: "C — ICC ou FEVE < 40%",                              pts: 1, checked: false },
-    { label: "H — Hipertensão arterial",                           pts: 1, checked: false },
-    { label: "A₂ — Idade ≥ 75 anos",                              pts: 2, checked: false },
-    { label: "D — Diabetes mellitus",                              pts: 1, checked: false },
-    { label: "S₂ — AVC / AIT / Tromboembolismo prévio",           pts: 2, checked: false },
-    { label: "V — Doença vascular (IAM, placa aórtica, DAP)",     pts: 1, checked: false },
-    { label: "A — Idade 65–74 anos",                              pts: 1, checked: false },
+    { label: "C: ICC ou FEVE < 40%",                              pts: 1, checked: false },
+    { label: "H: Hipertensão arterial",                           pts: 1, checked: false },
+    { label: "A₂: Idade ≥ 75 anos",                              pts: 2, checked: false },
+    { label: "D: Diabetes mellitus",                              pts: 1, checked: false },
+    { label: "S₂: AVC / AIT / Tromboembolismo prévio",           pts: 2, checked: false },
+    { label: "V: Doença vascular (IAM, placa aórtica, DAP)",     pts: 1, checked: false },
+    { label: "A: Idade 65–74 anos",                              pts: 1, checked: false },
   ])
   const checkScore = items.reduce((s, it) => it.checked ? s + it.pts : s, 0)
   const scSexo = sexo === "Mulher" ? 1 : 0
@@ -1973,12 +1879,12 @@ function CalcCHA2DS2({ copied, onCopy }: { copied: string | null; onCopy: (id: s
     }
   }
   const cls  = classify(score, sexo)
-  const text = `CHA₂DS₂-VASc: ${score} pontos — ${cls.label}. ${cls.rec}`
+  const text = `CHA₂DS₂-VASc: ${score} pontos, ${cls.label}. ${cls.rec}`
   const toggle = (idx: number) => {
     setItems(prev => prev.map((it, i) => i === idx ? { ...it, checked: !it.checked } : it))
   }
   return (
-    <CalcCard icon={Heart} title="CHA₂DS₂-VASc (Fibrilação Atrial)" color="#3b7fff">
+    <CalcCard title="CHA₂DS₂-VASc (Fibrilação Atrial)">
       <div className="space-y-2">
         <Toggle label="Sexo" options={["Homem","Mulher"]} value={sexo} onChange={setSexo} />
         {items.map((it, idx) => (
@@ -1986,26 +1892,26 @@ function CalcCHA2DS2({ copied, onCopy }: { copied: string | null; onCopy: (id: s
             checked={it.checked} onChange={() => toggle(idx)} />
         ))}
         {sexo === "Mulher" && (
-          <div className="text-[11px] p-2 rounded-lg" style={{ background: "var(--surface)", color: "var(--text-muted)" }}>
+          <div className="rounded-px-ctl bg-px-ink/[0.05] p-2.5 text-[12px] text-px-ink/75">
             Sexo feminino: +1 ponto (Sc) adicionado automaticamente
           </div>
         )}
         <ResultBox label={`CHA₂DS₂-VASc`} value={`${score} pts`}
-          sub={`${cls.label} · ${cls.rec}`}
+          sub={`${cls.label}, ${cls.rec}`}
           color={cls.color} copyId="chads" copyText={text} copied={copied} onCopy={onCopy} />
         <ContextCard items={
           cls.label.includes("recomendada") ? [
-            "Anticoagulação oral indicada: preferir ACO diretos (DOACs) — apixabana, rivaroxabana ou dabigatrana.",
+            "Anticoagulação oral indicada: preferir ACO diretos (DOACs), apixabana, rivaroxabana ou dabigatrana.",
             "Warfarina apenas se válvula mecânica, estenose mitral reumática ou contraindicação a DOAC.",
             "Avaliar escore HAS-BLED antes de iniciar anticoagulação (risco de sangramento).",
-            "Controle de FA por cardioversão ou ablação não substitui anticoagulação — manter mesmo em ritmo sinusal.",
+            "Controle de FA por cardioversão ou ablação não substitui anticoagulação: manter mesmo em ritmo sinusal.",
           ] : cls.label.includes("Considerar") ? [
             "Score limítrofe: avaliar individualmente perfil de risco/benefício da anticoagulação.",
             "Fatores que pesam a favor: labilidade do INR, queda frequente, interações medicamentosas.",
             "Reavaliação anual ou com mudança do status clínico.",
           ] : [
             "Sem indicação de anticoagulação no momento (baixo risco de AVC).",
-            "Reavaliação anual do escore — novos fatores de risco podem mudar a indicação.",
+            "Reavaliação anual do escore: novos fatores de risco podem mudar a indicação.",
           ]
         } />
       </div>
@@ -2031,10 +1937,10 @@ function CalcPressao({ copied, onCopy }: { copied: string | null; onCopy: (id: s
   const clsPP  = pp  !== null ? classifyPP(pp)   : null
   const clsPAM = pam !== null ? classifyPAM(pam) : null
   const text = pp && pam && clsPP && clsPAM
-    ? `PP: ${pp} mmHg (${clsPP.label}) · PAM: ${pam} mmHg (${clsPAM.label})`
+    ? `PP: ${pp} mmHg (${clsPP.label}), PAM: ${pam} mmHg (${clsPAM.label})`
     : ""
   return (
-    <CalcCard icon={Activity} title="Pressão de Pulso e PAM" color="#8b5cf6">
+    <CalcCard title="Pressão de Pulso e PAM">
       <div className="space-y-3">
         <div className="grid grid-cols-2 gap-3">
           <Field label="PAS" unit="mmHg" value={pas} onChange={setPas} min={0} />
@@ -2042,23 +1948,23 @@ function CalcPressao({ copied, onCopy }: { copied: string | null; onCopy: (id: s
         </div>
         {pp !== null && pam !== null && clsPP && clsPAM && (
           <div className="space-y-2 mt-2">
-            <div className="rounded-xl p-3" style={{ background: `${clsPP.color}10`, border: `1px solid ${clsPP.color}25` }}>
-              <div className="text-[10px] font-mono uppercase tracking-wider mb-0.5" style={{ color: clsPP.color }}>
+            <div className={cn("rounded-px-card p-3.5", toneBox(clsPP.color))}>
+              <div className="mb-0.5 text-[12px] font-semibold text-px-ink">
                 Pressão de Pulso (PP = PAS − PAD)
               </div>
-              <div className="text-[18px] font-bold" style={{ color: "var(--text-primary)" }}>{pp} mmHg</div>
-              <div className="text-[11px]" style={{ color: "var(--text-muted)" }}>
-                {clsPP.label} · normal &lt;40 mmHg · aumentada &gt;60 mmHg
+              <div className="text-[20px] font-semibold text-px-ink">{pp} mmHg</div>
+              <div className="text-[12px] text-px-ink/75">
+                {clsPP.label}, normal &lt;40 mmHg, aumentada &gt;60 mmHg
               </div>
             </div>
-            <div className="rounded-xl p-3" style={{ background: `${clsPAM.color}10`, border: `1px solid ${clsPAM.color}25` }}>
-              <div className="text-[10px] font-mono uppercase tracking-wider mb-0.5" style={{ color: clsPAM.color }}>
+            <div className={cn("rounded-px-card p-3.5", toneBox(clsPAM.color))}>
+              <div className="mb-0.5 text-[12px] font-semibold text-px-ink">
                 Pressão Arterial Média (PAD + PP/3)
               </div>
-              <div className="text-[18px] font-bold" style={{ color: "var(--text-primary)" }}>{pam} mmHg</div>
+              <div className="text-[20px] font-semibold text-px-ink">{pam} mmHg</div>
 
-              <div className="text-[11px]" style={{ color: "var(--text-muted)" }}>
-                {clsPAM.label} · normal 70–100 mmHg · meta UTI ≥65 mmHg
+              <div className="text-[12px] text-px-ink/75">
+                {clsPAM.label}, normal 70–100 mmHg, meta UTI ≥65 mmHg
               </div>
             </div>
             <div className="flex justify-end">
@@ -2066,11 +1972,11 @@ function CalcPressao({ copied, onCopy }: { copied: string | null; onCopy: (id: s
             </div>
             <ContextCard items={
               (pp ?? 0) >= 60 ? [
-                "PP alargada (≥60 mmHg) é marcador independente de risco cardiovascular — indica rigidez arterial.",
+                "PP alargada (≥60 mmHg) é marcador independente de risco cardiovascular: indica rigidez arterial.",
                 "Associada à calcificação vascular, doença aterosclerótica e maior mortalidade CV.",
                 "Avaliar: escore de cálcio coronariano, velocidade de onda de pulso se disponível.",
               ] : (pam ?? 0) < 65 ? [
-                "PAM <65 mmHg: hipoperfusão tecidual — monitorar sinais de choque e débito urinário.",
+                "PAM <65 mmHg: hipoperfusão tecidual, monitorar sinais de choque e débito urinário.",
                 "Em UTI: meta PAM ≥65 mmHg (sepse: ≥65 mmHg com vasopressores se necessário).",
               ] : [
                 "Parâmetros hemodinâmicos dentro da normalidade.",
@@ -2099,32 +2005,32 @@ function CalcCargaGlicemica({ copied, onCopy }: { copied: string | null; onCopy:
     return            { label: "Carga alta",   color: "#ef4444" }
   }
   const cls  = cg ? classify(cg) : null
-  const text = cg && cls ? `Carga Glicêmica: ${cg.toFixed(1)} — ${cls.label} (IG: ${igV}, Carbo: ${carbV}g)` : ""
+  const text = cg && cls ? `Carga Glicêmica: ${cg.toFixed(1)}, ${cls.label} (IG: ${igV}, Carbo: ${carbV}g)` : ""
   return (
-    <CalcCard icon={Apple} title="Carga Glicêmica" color="#00c07f">
+    <CalcCard title="Carga Glicêmica">
       <div className="space-y-3">
         <div className="grid grid-cols-2 gap-3">
           <Field label="Índice Glicêmico" unit="0–100" value={ig} onChange={setIg} min={0} max={100} />
           <Field label="Carboidratos disponíveis" unit="g/porção" value={carbo} onChange={setCarbo} min={0} />
         </div>
-        <div className="text-[11px] p-2 rounded-lg" style={{ background: "var(--surface)", color: "var(--text-muted)" }}>
-          CG = (IG × carboidratos) / 100 · baixa &lt;10 / média 11–19 / alta ≥20
+        <div className="rounded-px-ctl bg-px-ink/[0.05] p-2.5 text-[12px] text-px-ink/75">
+          CG = (IG × carboidratos) / 100, baixa &lt;10 / média 11–19 / alta ≥20
         </div>
         {cg && cls && (
           <>
             <ResultBox label="Carga Glicêmica" value={cg.toFixed(1)}
-              sub={`${cls.label} · baixa <10 / média 11–19 / alta ≥20`}
+              sub={`${cls.label}, baixa <10 / média 11–19 / alta ≥20`}
               color={cls.color} copyId="cg" copyText={text} copied={copied} onCopy={onCopy} />
             <ContextCard items={
               cg >= 20 ? [
-                "Carga glicêmica alta provoca pico insulínico excessivo — desfavorável para RI e emagrecimento.",
+                "Carga glicêmica alta provoca pico insulínico excessivo: desfavorável para RI e emagrecimento.",
                 "Estratégias para reduzir CG: diminuir porção, combinar com proteína/gordura/fibra, optar por versões integrais.",
                 "Refeições com CG alta concentradas à noite aumentam desproporcionalmente o acúmulo de gordura.",
               ] : cg >= 10 ? [
-                "Carga glicêmica moderada — adequada para a maioria das pessoas sem RI.",
+                "Carga glicêmica moderada: adequada para a maioria das pessoas sem RI.",
                 "Pacientes com DM2 ou RI devem preferir alimentos com CG <10.",
               ] : [
-                "Carga glicêmica baixa — ideal para controle glicêmico e saúde metabólica.",
+                "Carga glicêmica baixa: ideal para controle glicêmico e saúde metabólica.",
                 "Manter padrão alimentar com CG total diária <100 é favorável para prevenção de DM2.",
               ]
             } />
@@ -2153,28 +2059,28 @@ function CalcRCQ({ copied, onCopy }: { copied: string | null; onCopy: (id: strin
   }
   const cls  = rcq ? classify(rcq, sexo) : null
   const ref  = sexo === "Homem" ? "baixo <0.90 / moderado 0.90–0.99 / alto ≥1.0" : "baixo <0.80 / moderado 0.80–0.84 / alto ≥0.85"
-  const text = rcq && cls ? `RCQ: ${rcq.toFixed(2)} — ${cls.label} (${sexo})` : ""
+  const text = rcq && cls ? `RCQ: ${rcq.toFixed(2)}, ${cls.label} (${sexo})` : ""
   return (
-    <CalcCard icon={Ruler} title="Relação Cintura/Quadril (RCQ)" color="#f59e0b">
+    <CalcCard title="Relação Cintura/Quadril (RCQ)">
       <div className="space-y-3">
         <Toggle label="Sexo" options={["Homem","Mulher"]} value={sexo} onChange={setSexo} />
         <div className="grid grid-cols-2 gap-3">
           <Field label="Cintura" unit="cm" value={cintura} onChange={setCintura} min={0} />
           <Field label="Quadril" unit="cm" value={quadril} onChange={setQuadril} min={0} />
         </div>
-        <div className="text-[11px] p-2 rounded-lg" style={{ background: "var(--surface)", color: "var(--text-muted)" }}>
+        <div className="rounded-px-ctl bg-px-ink/[0.05] p-2.5 text-[12px] text-px-ink/75">
           Referência ({sexo}): {ref}
         </div>
         {rcq && cls && (
           <>
             <ResultBox label="RCQ" value={rcq.toFixed(2)}
-              sub={`${cls.label} · risco cardiovascular`}
+              sub={`${cls.label}, risco cardiovascular`}
               color={cls.color} copyId="rcq" copyText={text} copied={copied} onCopy={onCopy} />
             <ContextCard items={
               cls.label === "Risco baixo" ? [
-                "Distribuição de gordura favorável — gordura periférica (glúteo-femoral) é metabolicamente mais segura.",
+                "Distribuição de gordura favorável: gordura periférica (glúteo-femoral) é metabolicamente mais segura.",
               ] : [
-                "RCQ elevado indica predominância de gordura abdominal/visceral — maior risco metabólico e cardiovascular.",
+                "RCQ elevado indica predominância de gordura abdominal/visceral: maior risco metabólico e cardiovascular.",
                 "Combinar com circunferência abdominal e IMC para avaliação completa do risco.",
                 "Exercício aeróbico ≥150 min/semana é a intervenção mais eficaz para reduzir gordura visceral.",
               ]
@@ -2202,9 +2108,9 @@ function CalcMifflin({ copied, onCopy }: { copied: string | null; onCopy: (id: s
   const prot = get ? Math.round((get * 0.30) / 4) : null
   const carb  = get ? Math.round((get * 0.45) / 4) : null
   const gord  = get ? Math.round((get * 0.25) / 9) : null
-  const text  = tmb && get ? `TMB Mifflin: ${Math.round(tmb)} kcal · GET: ${get} kcal · Proteínas: ${prot}g · Carboidratos: ${carb}g · Gorduras: ${gord}g` : ""
+  const text  = tmb && get ? `TMB Mifflin: ${Math.round(tmb)} kcal, GET: ${get} kcal, Proteínas: ${prot}g, Carboidratos: ${carb}g, Gorduras: ${gord}g` : ""
   return (
-    <CalcCard icon={Flame} title="GET Mifflin-St Jeor + Macros" color="#f97316">
+    <CalcCard title="GET Mifflin-St Jeor + Macros">
       <div className="space-y-3">
         <div className="grid grid-cols-2 gap-3">
           <Field label="Peso" unit="kg" value={peso} onChange={setPeso} min={0} />
@@ -2216,15 +2122,15 @@ function CalcMifflin({ copied, onCopy }: { copied: string | null; onCopy: (id: s
         {tmb && get && prot && carb && gord && (
           <div className="space-y-2 mt-2">
             <div className="flex justify-between text-[12px]">
-              <span style={{ color: "var(--text-muted)" }}>TMB (Mifflin-St Jeor)</span>
-              <span className="font-bold font-mono" style={{ color: "var(--text-primary)" }}>{Math.round(tmb)} kcal</span>
+              <span className="text-px-muted">TMB (Mifflin-St Jeor)</span>
+              <span className="font-bold font-mono text-px-ink">{Math.round(tmb)} kcal</span>
             </div>
             <ResultBox label="GET + Macros" value={`${get} kcal/dia`}
-              sub={`P: ${prot}g (30%) · C: ${carb}g (45%) · G: ${gord}g (25%)`}
+              sub={`P: ${prot}g (30%), C: ${carb}g (45%), G: ${gord}g (25%)`}
               color="#f97316" copyId="mifflin" copyText={text} copied={copied} onCopy={onCopy} />
             <ContextCard items={[
               "Mifflin-St Jeor é mais precisa que Harris-Benedict para adultos moderadamente ativos.",
-              "Distribuição de macros é padrão — ajustar para objetivos: mais proteína em hipertrofia, menos carboidrato em RI.",
+              "Distribuição de macros é padrão: ajustar para objetivos: mais proteína em hipertrofia, menos carboidrato em RI.",
               "Carboidratos no pré e pós-treino maximizam desempenho e recuperação.",
             ]} />
           </div>
@@ -2249,128 +2155,43 @@ const TABS: { id: TabId; label: string }[] = [
   { id: "nutricao",       label: "Nutrição" },
 ]
 
+const TAB_CALCS: Record<TabId, React.ComponentType<CalcProps>[]> = {
+  geral: [CalcIMC, CalcHOMA, CalcTMB, CalcAgua, CalcFramingham, CalcGLP1, CalcTFG, CalcMetabolico, CalcCastelli],
+  endocrinologia: [CalcLevotiroxina, CalcFINDRISC, CalcBillewicz, CalcPercentilOMS, CalcZscoreEstatura, CalcDoseGH],
+  nutrologia: [CalcProteina, CalcDeficit, CalcIAC, CalcGanzoni],
+  ginecologia: [CalcGestacional, CalcPreeclampsia, CalcJanelaFertil, CalcIdadeGestacional, CalcDPP, CalcKupperman, CalcMRS],
+  cardiologia: [CalcWells, CalcCHA2DS2, CalcPressao],
+  nutricao: [CalcCargaGlicemica, CalcRCQ, CalcMifflin],
+}
+
 // ════════════════════════════════════════════════════════════════════════════
 // PAGE
 // ════════════════════════════════════════════════════════════════════════════
 
 export default function CalculadorasPage() {
-  const { copied, copy }         = useCopy()
+  const { copied, copy } = useCopy()
   const [activeTab, setActiveTab] = useState<TabId>("geral")
 
-  const countMap: Record<TabId, number> = {
-    geral: 9, endocrinologia: 6, nutrologia: 4, ginecologia: 7, cardiologia: 3, nutricao: 3,
-  }
+  const total = Object.values(TAB_CALCS).reduce((a, list) => a + list.length, 0)
+  const Calcs = TAB_CALCS[activeTab]
 
   return (
     <div className="animate-fade-in">
-      <MobileOnlyHeader title="Calculadoras Clínicas" />
-      <div className="p-4 md:p-8 space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-xl flex items-center justify-center"
-          style={{ background: "rgba(59,127,255,0.12)", border: "1px solid rgba(59,127,255,0.25)" }}>
-          <Calculator style={{ width: 16, height: 16, color: "#3b7fff" }} />
-        </div>
-        <div>
-          <h1 className="text-[17px] font-bold" style={{ color: "var(--text-primary)" }}>Calculadoras Clínicas</h1>
-          <p className="text-[11px] font-mono tracking-wider uppercase" style={{ color: "var(--text-muted)" }}>
-            PRAXIS CONSULTÓRIO · {Object.values(countMap).reduce((a, b) => a + b, 0)} FERRAMENTAS · CÁLCULO EM TEMPO REAL
-          </p>
-        </div>
-      </div>
+      <PageHeader title="Calculadoras clínicas" caption={`${total} calculadoras, resultado na hora`} />
 
-      {/* Tabs */}
-      <div className="flex gap-1 flex-wrap p-1 rounded-xl"
-        style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-        {TABS.map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all"
-            style={{
-              background: activeTab === tab.id ? "var(--accent-dim)" : "transparent",
-              border: `1px solid ${activeTab === tab.id ? "var(--accent-border)" : "transparent"}`,
-              color: activeTab === tab.id ? "var(--accent)" : "var(--text-muted)",
-            }}>
-            {tab.label}
-            <span className="text-[9px] font-mono px-1 py-0.5 rounded"
-              style={{
-                background: activeTab === tab.id ? "var(--accent-dim)" : "var(--card)",
-                color: activeTab === tab.id ? "var(--accent)" : "var(--text-muted)",
-              }}>
-              {countMap[tab.id]}
-            </span>
-          </button>
-        ))}
-      </div>
+      <div className="space-y-5 px-4 pb-10 md:px-10">
+        <Segmented
+          label="Especialidade"
+          value={activeTab}
+          onChange={setActiveTab}
+          options={TABS.map(t => ({ value: t.id, label: `${t.label} (${TAB_CALCS[t.id].length})` }))}
+        />
 
-      {/* Tab: Geral */}
-      {activeTab === "geral" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <CalcIMC        copied={copied} onCopy={copy} />
-          <CalcHOMA       copied={copied} onCopy={copy} />
-          <CalcTMB        copied={copied} onCopy={copy} />
-          <CalcAgua       copied={copied} onCopy={copy} />
-          <CalcFramingham copied={copied} onCopy={copy} />
-          <CalcGLP1       copied={copied} onCopy={copy} />
-          <CalcTFG        copied={copied} onCopy={copy} />
-          <CalcMetabolico copied={copied} onCopy={copy} />
-          <CalcCastelli   copied={copied} onCopy={copy} />
+        <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2">
+          {Calcs.map((Calc, i) => (
+            <Calc key={`${activeTab}-${i}`} copied={copied} onCopy={copy} />
+          ))}
         </div>
-      )}
-
-      {/* Tab: Endocrinologia */}
-      {activeTab === "endocrinologia" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <CalcLevotiroxina    copied={copied} onCopy={copy} />
-          <CalcFINDRISC        copied={copied} onCopy={copy} />
-          <CalcBillewicz       copied={copied} onCopy={copy} />
-          <CalcPercentilOMS    copied={copied} onCopy={copy} />
-          <CalcZscoreEstatura  copied={copied} onCopy={copy} />
-          <CalcDoseGH          copied={copied} onCopy={copy} />
-        </div>
-      )}
-
-      {/* Tab: Nutrologia */}
-      {activeTab === "nutrologia" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <CalcProteina copied={copied} onCopy={copy} />
-          <CalcDeficit  copied={copied} onCopy={copy} />
-          <CalcIAC      copied={copied} onCopy={copy} />
-          <CalcGanzoni  copied={copied} onCopy={copy} />
-        </div>
-      )}
-
-      {/* Tab: Ginecologia */}
-      {activeTab === "ginecologia" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <CalcGestacional      copied={copied} onCopy={copy} />
-          <CalcPreeclampsia     copied={copied} onCopy={copy} />
-          <CalcJanelaFertil     copied={copied} onCopy={copy} />
-          <CalcIdadeGestacional copied={copied} onCopy={copy} />
-          <CalcDPP              copied={copied} onCopy={copy} />
-          <CalcKupperman        copied={copied} onCopy={copy} />
-          <CalcMRS              copied={copied} onCopy={copy} />
-        </div>
-      )}
-
-      {/* Tab: Cardiologia */}
-      {activeTab === "cardiologia" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <CalcWells   copied={copied} onCopy={copy} />
-          <CalcCHA2DS2 copied={copied} onCopy={copy} />
-          <CalcPressao copied={copied} onCopy={copy} />
-        </div>
-      )}
-
-      {/* Tab: Nutrição */}
-      {activeTab === "nutricao" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <CalcCargaGlicemica copied={copied} onCopy={copy} />
-          <CalcRCQ            copied={copied} onCopy={copy} />
-          <CalcMifflin        copied={copied} onCopy={copy} />
-        </div>
-      )}
       </div>
     </div>
   )

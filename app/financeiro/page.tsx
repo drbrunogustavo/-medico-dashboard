@@ -1,25 +1,10 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
-import { TopBar } from "@/components/TopBar"
-import { StatCard } from "@/components/StatCard"
-import { SkeletonList } from "@/components/LoadingPulse"
-import { ErrorState } from "@/components/ErrorState"
-import { EmptyState } from "@/components/EmptyState"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/Button"
-import {
-  TrendingUp, TrendingDown, DollarSign, Hash, PlusCircle,
-  Trash2, Filter, X, Loader2, ChevronLeft, ChevronRight,
-} from "lucide-react"
-import dynamic from "next/dynamic"
+import { useState, useEffect, useCallback, useRef } from "react"
+import { Plus, Trash2, ChevronLeft, ChevronRight } from "lucide-react"
+import { Panel, PxButton, Segmented, Field, PxInput, PxSelect, PxModal, Tag, PillBars, PageHeader } from "@/components/px"
 
-const FinanceiroWeeklyChart = dynamic(() => import("@/components/charts/FinanceiroWeeklyChart"), {
-  ssr: false,
-  loading: () => <div className="h-[120px] bg-border/30 rounded-xl animate-pulse" />,
-})
-
-// ── Types ─────────────────────────────────────────────────────────────────────
+// ── Tipos ─────────────────────────────────────────────────────────────────────
 
 interface Lancamento {
   id:               string
@@ -34,14 +19,7 @@ interface Lancamento {
 
 type TipoFilter = "todos" | "receita" | "despesa"
 
-// ── Constants ──────────────────────────────────────────────────────────────────
-
-const PALETTE = ["#00c07f", "#3b7fff", "#d4af37", "#a855f7", "#f97316", "#ef4444", "#06b6d4", "#ec4899"]
-
-function unitColor(sortedUnits: string[], u: string): string {
-  const idx = sortedUnits.indexOf(u)
-  return idx >= 0 ? (PALETTE[idx % PALETTE.length] ?? "#888") : "#888"
-}
+// ── Constantes ────────────────────────────────────────────────────────────────
 
 const FORMAS = ["PIX", "Dinheiro", "Cartão de Crédito", "Cartão de Débito", "Transferência", "Convênio", "Boleto"]
 
@@ -50,45 +28,51 @@ const MESES = [
   "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
 ]
 
-function fmt(v: number) {
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v)
-}
+const fmt = (v: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v)
 
-function fmtDate(s: string) {
-  return s ? s.slice(0, 10).split("-").reverse().join("/") : "—"
-}
+const fmtDate = (s: string) => (s ? s.slice(0, 10).split("-").reverse().join("/") : "Sem data")
 
 function monthRange(year: number, month: number) {
-  const pad   = (n: number) => String(n).padStart(2, "0")
-  const last  = new Date(year, month + 1, 0).getDate()
-  return {
-    inicio: `${year}-${pad(month + 1)}-01`,
-    fim:    `${year}-${pad(month + 1)}-${pad(last)}`,
-  }
+  const pad  = (n: number) => String(n).padStart(2, "0")
+  const last = new Date(year, month + 1, 0).getDate()
+  return { inicio: `${year}-${pad(month + 1)}-01`, fim: `${year}-${pad(month + 1)}-${pad(last)}` }
 }
 
-// ── Page ─────────────────────────────────────────────────────────────────────
+const soma = (ls: Lancamento[], tipo: "receita" | "despesa") =>
+  ls.filter(l => l.tipo === tipo).reduce((s, l) => s + l.valor, 0)
+
+function Kpi({ label, value, sub, negativo = false }: { label: string; value: string; sub?: string; negativo?: boolean }) {
+  return (
+    <Panel as="div" className="p-4">
+      <p className="text-[12.5px] text-px-muted">{label}</p>
+      <p className={`mt-1 text-[22px] font-medium leading-none tracking-[-0.02em] ${negativo ? "text-px-danger" : "text-px-ink"}`}>{value}</p>
+      {sub && <p className="mt-1.5 text-[12px] text-px-muted">{sub}</p>}
+    </Panel>
+  )
+}
+
+// ── Página ────────────────────────────────────────────────────────────────────
 
 export default function FinanceiroPage() {
   const now = new Date()
 
   const [currentYear,  setCurrentYear]  = useState(now.getFullYear())
   const [currentMonth, setCurrentMonth] = useState(now.getMonth())
-
   const { inicio, fim } = monthRange(currentYear, currentMonth)
 
-  const [unidade,     setUnidade]     = useState("Todas")
-  const [tipoFilter,  setTipoFilter]  = useState<TipoFilter>("todos")
-  const [viewAll,      setViewAll]     = useState(false)
-  const [rawData,     setRawData]     = useState<Lancamento[]>([])
-  const [loading,     setLoading]     = useState(false)
-  const [deletingId,  setDeletingId]  = useState<string | null>(null)
+  const [unidade,    setUnidade]    = useState("Todas")
+  const [tipoFilter, setTipoFilter] = useState<TipoFilter>("todos")
+  const [viewAll,    setViewAll]    = useState(false)
+  const [rawData,    setRawData]    = useState<Lancamento[]>([])
+  const [prevData,   setPrevData]   = useState<Lancamento[] | null>(null)
+  const [loading,    setLoading]    = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
-  const [error,       setError]       = useState("")
-  const [modalOpen,   setModalOpen]   = useState(false)
-  const [saving,      setSaving]      = useState(false)
-  const [receitaAnt,  setReceitaAnt]  = useState<number | null>(null)
-  const [loadingAnt,  setLoadingAnt]  = useState(false)
+  const [error,      setError]      = useState("")
+  const [modalOpen,  setModalOpen]  = useState(false)
+  const [saving,     setSaving]     = useState(false)
+  const [erroModal,  setErroModal]  = useState("")
+  const reqId = useRef(0)
 
   const [form, setForm] = useState({
     unidade:         "",
@@ -110,8 +94,8 @@ export default function FinanceiroPage() {
   }
 
   const fetchData = useCallback(async () => {
+    const id = ++reqId.current
     setLoading(true)
-    setLoadingAnt(true)
     setError("")
     try {
       const params = new URLSearchParams(viewAll ? {} : { inicio, fim })
@@ -120,581 +104,309 @@ export default function FinanceiroPage() {
       const { inicio: pInicio, fim: pFim } = monthRange(prevY, prevM)
       const [res, resAnt] = await Promise.all([
         fetch(`/api/financeiro?${params}`),
-        viewAll ? Promise.resolve(null) : fetch(`/api/financeiro?inicio=${pInicio}&fim=${pFim}`),
+        viewAll ? Promise.resolve(null) : fetch(`/api/financeiro?inicio=${pInicio}&fim=${pFim}`).catch(() => null),
       ])
-      const json = await res.json()
-      if (json.error) throw new Error(json.error)
-      setRawData(Array.isArray(json) ? json : [])
-      if (resAnt) {
-        const jsonAnt = await resAnt.json()
-        if (Array.isArray(jsonAnt)) {
-          setReceitaAnt(
-            jsonAnt.filter((l: Lancamento) => l.tipo === "receita").reduce((s: number, l: Lancamento) => s + l.valor, 0)
-          )
-        }
-      } else {
-        setReceitaAnt(null)
+      const json = await res.json().catch(() => null)
+      if (!res.ok || json?.error) throw new Error(json?.error ?? `Erro ${res.status} ao carregar os lançamentos`)
+      let ant: Lancamento[] | null = null
+      if (resAnt && resAnt.ok) {
+        const jsonAnt = await resAnt.json().catch(() => null)
+        if (Array.isArray(jsonAnt)) ant = jsonAnt
       }
+      if (id !== reqId.current) return
+      setRawData(Array.isArray(json) ? json : [])
+      setPrevData(ant)
     } catch (e) {
+      if (id !== reqId.current) return
+      console.error("[financeiro] erro ao carregar:", e)
       setError(e instanceof Error ? e.message : String(e))
     } finally {
-      setLoading(false)
-      setLoadingAnt(false)
+      if (id === reqId.current) setLoading(false)
     }
   }, [inicio, fim, viewAll, currentMonth, currentYear])
 
   useEffect(() => { fetchData() }, [fetchData])
 
-  // Unique units derived from all loaded data
   const unidades = Array.from(new Set(rawData.map(l => l.unidade).filter(Boolean))).sort()
 
-  // Client-side filters
-  const data = rawData
-    .filter(l => unidade    === "Todas" || l.unidade === unidade)
-    .filter(l => tipoFilter === "todos" || l.tipo    === tipoFilter)
+  // O filtro de unidade vale para os totais e para a lista; o de tipo vale só para a lista.
+  const base = rawData.filter(l => unidade === "Todas" || l.unidade === unidade)
+  const data = base.filter(l => tipoFilter === "todos" || l.tipo === tipoFilter)
+
+  const valorNum = parseFloat(form.valor)
+  const podeSalvar = form.descricao.trim().length > 0 && Number.isFinite(valorNum) && valorNum > 0
 
   const salvar = async () => {
-    if (!form.descricao || !form.valor) return
-    setSaving(true)
+    if (!podeSalvar) return
+    setSaving(true); setErroModal("")
     try {
       const res  = await fetch("/api/financeiro", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ ...form, valor: parseFloat(form.valor) }),
+        body:    JSON.stringify({ ...form, descricao: form.descricao.trim(), valor: valorNum }),
       })
-      const json = await res.json()
-      if (json.error) throw new Error(json.error)
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok || json.error) throw new Error(json.error ?? `Erro ${res.status}`)
       setModalOpen(false)
       setForm(f => ({ ...f, descricao: "", valor: "", observacao: "" }))
       fetchData()
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
+      console.error("[financeiro] erro ao salvar:", e)
+      setErroModal("Não foi possível salvar o lançamento. Os dados foram mantidos, tente novamente.")
     } finally {
       setSaving(false)
     }
   }
 
   const excluir = async (id: string) => {
-    setDeletingId(id)
-    setConfirmDeleteId(null)
+    setDeletingId(id); setConfirmDeleteId(null); setError("")
     try {
       const res  = await fetch(`/api/financeiro?id=${id}`, { method: "DELETE" })
-      const json = await res.json()
-      if (json.error) throw new Error(json.error)
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok || json.error) throw new Error(json.error ?? `Erro ${res.status}`)
       fetchData()
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
+      console.error("[financeiro] erro ao excluir:", e)
+      setError("Não foi possível excluir o lançamento. Tente novamente.")
     } finally {
       setDeletingId(null)
     }
   }
 
-  // KPIs
-  const receitas   = data.filter(l => l.tipo === "receita").reduce((s, l) => s + l.valor, 0)
-  const despesas   = data.filter(l => l.tipo === "despesa").reduce((s, l) => s + l.valor, 0)
-  const saldo      = receitas - despesas
-  const totalCount = data.length
+  // Totais
+  const receitas = soma(base, "receita")
+  const despesas = soma(base, "despesa")
+  const saldo    = receitas - despesas
 
-  // Temporal analysis
-  const isCurrentMonth  = !viewAll && currentYear === now.getFullYear() && currentMonth === now.getMonth()
-  const hoje            = now.getDate()
-  const diasNoMes       = new Date(currentYear, currentMonth + 1, 0).getDate()
-  const projecao        = isCurrentMonth && hoje > 0 ? (receitas / hoje) * diasNoMes : null
-  const varPct          = !viewAll && receitaAnt !== null && receitaAnt > 0
-    ? ((receitas - receitaAnt) / receitaAnt) * 100
-    : null
+  // Comparação com o mês anterior e projeção usam a mesma base (unidade escolhida)
+  const isCurrentMonth = !viewAll && currentYear === now.getFullYear() && currentMonth === now.getMonth()
+  const hoje      = now.getDate()
+  const diasNoMes = new Date(currentYear, currentMonth + 1, 0).getDate()
+  const projecao  = isCurrentMonth ? (receitas / hoje) * diasNoMes : null
+  const receitaAnt = prevData ? soma(prevData.filter(l => unidade === "Todas" || l.unidade === unidade), "receita") : null
+  const varPct = !viewAll && receitaAnt !== null && receitaAnt > 0 ? ((receitas - receitaAnt) / receitaAnt) * 100 : null
 
   const receitaSemanal = [0, 1, 2, 3, 4].flatMap(idx => {
     const weekStart = idx * 7 + 1
     const weekEnd   = Math.min((idx + 1) * 7, diasNoMes)
     if (weekStart > diasNoMes) return []
-    const total = rawData
+    const total = base
       .filter(l => {
         const d = new Date(l.data + "T12:00:00")
-        return l.tipo === "receita"
-          && d.getDate() >= weekStart && d.getDate() <= weekEnd
+        return l.tipo === "receita" && d.getDate() >= weekStart && d.getDate() <= weekEnd
           && d.getMonth() === currentMonth && d.getFullYear() === currentYear
       })
       .reduce((s, l) => s + l.valor, 0)
-    return [{ semana: `S${idx + 1}`, total }]
+    return [{ rotulo: `Semana ${idx + 1}`, valor: total }]
   })
 
-  // Per-unit bar chart (unfiltered by tipo so bars show full picture)
   const porUnidade = unidades.map(u => {
-    const rec  = rawData.filter(l => l.unidade === u && l.tipo === "receita").reduce((s, l) => s + l.valor, 0)
-    const desp = rawData.filter(l => l.unidade === u && l.tipo === "despesa").reduce((s, l) => s + l.valor, 0)
+    const rec  = soma(rawData.filter(l => l.unidade === u), "receita")
+    const desp = soma(rawData.filter(l => l.unidade === u), "despesa")
     return { unidade: u, rec, desp, saldo: rec - desp }
   }).filter(u => u.rec > 0 || u.desp > 0)
-
   const maxVal = Math.max(...porUnidade.map(u => Math.max(u.rec, u.desp)), 1)
+
+  const periodo = viewAll ? "todos os períodos" : `${MESES[currentMonth]} de ${currentYear}`
+  const limparFiltros = () => { setUnidade("Todas"); setTipoFilter("todos") }
 
   return (
     <div className="animate-fade-in">
-      <TopBar
-        title="Financeiro por Unidade"
-        subtitle="ALA CLÍNICA · SUPABASE"
-        actions={
-          <div className="flex flex-wrap items-center gap-2">
-            {/* Month selector */}
-            <div className={cn(
-              "flex items-center gap-1 bg-surface border border-border rounded-lg px-2 py-1.5",
-              viewAll && "opacity-40 pointer-events-none"
-            )}>
-              <button onClick={prevMonth} className="text-text-muted hover:text-text-primary transition-colors p-0.5">
-                <ChevronLeft className="w-3.5 h-3.5" />
-              </button>
-              <span className="text-[11px] font-mono text-text-secondary whitespace-nowrap text-center">
-                {MESES[currentMonth]} {currentYear}
-              </span>
-              <button onClick={nextMonth} className="text-text-muted hover:text-text-primary transition-colors p-0.5">
-                <ChevronRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-            <button
-              onClick={() => setViewAll(v => !v)}
-              className={cn(
-                "text-[11px] font-medium rounded-lg px-3 py-1.5 border transition-colors",
-                viewAll
-                  ? "bg-accent-dim border-accent-border text-accent"
-                  : "border-border text-text-muted hover:text-text-secondary"
-              )}
-            >
-              Ver tudo
-            </button>
-            <Button variant="primary" size="sm" onClick={() => setModalOpen(true)} leftIcon={PlusCircle}>
-              Lançamento
-            </Button>
-          </div>
-        }
+      <PageHeader
+        title="Financeiro"
+        caption="Receitas e despesas por unidade"
+        actions={<PxButton leftIcon={Plus} onClick={() => { setErroModal(""); setModalOpen(true) }}>Novo lançamento</PxButton>}
       />
 
-      <div className="p-4 md:p-8 space-y-6">
+      <div className="max-w-6xl space-y-4 px-4 pb-10 md:px-10">
 
-        {/* KPI Cards */}
-        <div className={cn(
-          "grid grid-cols-1 sm:grid-cols-2 gap-3",
-          projecao !== null ? "lg:grid-cols-5" : "lg:grid-cols-4"
-        )}>
-          <StatCard label="Receitas"         value={fmt(receitas)} sub="no período"  icon={TrendingUp}   accent="green" />
-          <StatCard label="Despesas"         value={fmt(despesas)} sub="no período"  icon={TrendingDown} accent="red"   />
-          <StatCard label="Saldo do Período" value={fmt(saldo)}    sub="líquido"     icon={DollarSign}   accent={saldo >= 0 ? "green" : "red"} />
-          <StatCard label="Lançamentos"      value={totalCount}    sub="no período"  icon={Hash}         accent="blue"  />
-          {projecao !== null && (
-            <StatCard
-              label="Projeção do Mês"
-              value={fmt(projecao)}
-              sub={loadingAnt ? "calculando…" : "baseado no ritmo atual"}
-              icon={TrendingUp}
-              accent="blue"
-            />
+        {/* Período e filtros */}
+        <Panel className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-center">
+          <Segmented label="Período" value={viewAll ? "todos" : "mes"} onChange={v => setViewAll(v === "todos")}
+            options={[{ value: "mes", label: "Por mês" }, { value: "todos", label: "Todos os períodos" }]} />
+          {!viewAll && (
+            <div className="flex items-center gap-1">
+              <PxButton variant="quiet" size="sm" aria-label="Mês anterior" onClick={prevMonth} leftIcon={ChevronLeft} />
+              <span aria-live="polite" className="min-w-[140px] text-center text-[14px] font-medium text-px-ink">{MESES[currentMonth]} de {currentYear}</span>
+              <PxButton variant="quiet" size="sm" aria-label="Próximo mês" onClick={nextMonth} leftIcon={ChevronRight} />
+            </div>
           )}
-        </div>
-        {varPct !== null && (
-          <div className="flex items-center gap-2 text-[11px] font-mono">
-            <span className="text-text-muted">vs. mês anterior:</span>
-            <span className={cn(
-              "px-2 py-0.5 rounded-full border font-semibold",
-              varPct >= 0
-                ? "bg-accent-dim border-accent-border text-accent"
-                : "bg-red-500/10 border-red-500/30 text-red-400"
-            )}>
-              {varPct >= 0 ? "+" : ""}{varPct.toFixed(1)}%
-            </span>
-          </div>
-        )}
-
-        {/* Receita semanal */}
-        {!viewAll && receitaSemanal.some(s => s.total > 0) && (
-          <div className="bg-surface border border-border rounded-xl p-5">
-            <div className="text-[10px] font-mono text-text-muted uppercase tracking-widest mb-3">
-              Receita por Semana — {MESES[currentMonth]} {currentYear}
-            </div>
-            <FinanceiroWeeklyChart data={receitaSemanal} />
-          </div>
-        )}
-
-        {/* Tipo + unit filters */}
-        <div className="flex flex-col gap-2">
-          <div className="flex flex-wrap items-center gap-2">
-            {/* Tipo filter */}
-            <div className="flex gap-1">
-              {(["todos", "receita", "despesa"] as TipoFilter[]).map(t => (
-                <button
-                  key={t}
-                  onClick={() => setTipoFilter(t)}
-                  className={cn(
-                    "text-[10px] px-2.5 py-1 rounded-full border transition-all capitalize",
-                    tipoFilter === t
-                      ? t === "receita"
-                        ? "bg-accent-dim border-accent-border text-accent font-medium"
-                        : t === "despesa"
-                          ? "bg-red-500/10 border-red-500/30 text-red-400 font-medium"
-                          : "bg-accent-dim border-accent-border text-accent font-medium"
-                      : "border-border text-text-muted hover:text-text-secondary"
-                  )}
-                >
-                  {t === "todos" ? "Todos" : t === "receita" ? "Receitas" : "Despesas"}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Unit pills */}
+          <Segmented label="Tipo" value={tipoFilter} onChange={setTipoFilter}
+            options={[{ value: "todos", label: "Todos" }, { value: "receita", label: "Receitas" }, { value: "despesa", label: "Despesas" }]} />
           {unidades.length > 0 && (
-            <div className="flex items-center gap-1 flex-wrap">
-              <Filter className="w-3.5 h-3.5 text-text-muted flex-shrink-0" />
-              {["Todas", ...unidades].map(u => (
-                <button
-                  key={u}
-                  onClick={() => setUnidade(u)}
-                  className={cn(
-                    "text-[10px] px-2.5 py-1 rounded-full border transition-all",
-                    unidade === u
-                      ? "bg-accent-dim border-accent-border text-accent font-medium"
-                      : "border-border text-text-muted hover:text-text-secondary"
-                  )}
-                >
-                  {u}
-                </button>
-              ))}
-            </div>
+            <Segmented label="Unidade" value={unidade} onChange={setUnidade}
+              options={[{ value: "Todas", label: "Todas as unidades" }, ...unidades.map(u => ({ value: u, label: u }))]} />
           )}
-        </div>
+        </Panel>
 
         {error && (
-          <ErrorState compact message={error} onRetry={fetchData} />
+          <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-px-card bg-px-danger-soft px-4 py-3 text-[13px] text-px-danger">
+            <span>{error}</span>
+            <PxButton variant="secondary" size="sm" onClick={fetchData}>Tentar de novo</PxButton>
+          </div>
         )}
 
-        {/* Bar chart por unidade */}
+        {/* Totais */}
+        <div className={`grid grid-cols-2 gap-3 ${projecao !== null ? "lg:grid-cols-5" : "lg:grid-cols-4"}`}>
+          <Kpi label="Receitas" value={fmt(receitas)}
+            sub={varPct !== null ? `${varPct >= 0 ? "+" : ""}${varPct.toFixed(1).replace(".", ",")}% sobre o mês anterior` : `em ${periodo}`} />
+          <Kpi label="Despesas" value={fmt(despesas)} sub={`em ${periodo}`} />
+          <Kpi label="Saldo" value={fmt(saldo)} negativo={saldo < 0} sub="receitas menos despesas" />
+          <Kpi label="Lançamentos" value={String(data.length)} sub={tipoFilter === "todos" ? "na lista abaixo" : `só ${tipoFilter === "receita" ? "receitas" : "despesas"}`} />
+          {projecao !== null && <Kpi label="Projeção do mês" value={fmt(projecao)} sub="receita no ritmo atual" />}
+        </div>
+
+        {/* Receita semanal */}
+        {!viewAll && receitaSemanal.some(s => s.valor > 0) && (
+          <Panel as="section" className="space-y-3">
+            <h2 className="text-[15px] font-semibold text-px-ink">Receita por semana, {MESES[currentMonth]} de {currentYear}</h2>
+            <PillBars data={receitaSemanal} label={`Receita por semana em ${MESES[currentMonth]} de ${currentYear}`} format={fmt} />
+          </Panel>
+        )}
+
+        {/* Por unidade */}
         {porUnidade.length > 0 && (
-          <div className="bg-surface border border-border rounded-xl p-5">
-            <div className="text-[10px] font-mono text-text-muted uppercase tracking-widest mb-4">
-              Desempenho por Unidade — {MESES[currentMonth]} {currentYear}
-            </div>
-            <div className="space-y-4">
+          <Panel as="section" className="space-y-4">
+            <h2 className="text-[15px] font-semibold text-px-ink">Resultado por unidade, {periodo}</h2>
+            <ul className="space-y-4">
               {porUnidade.map(u => (
-                <div key={u.unidade}>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="w-2 h-2 rounded-full flex-shrink-0"
-                        style={{ background: unitColor(unidades, u.unidade) }}
-                      />
-                      <span className="text-[11px] text-text-secondary">{u.unidade}</span>
+                <li key={u.unidade}>
+                  <div className="mb-1.5 flex items-baseline justify-between gap-3">
+                    <span className="text-[13.5px] font-medium text-px-ink">{u.unidade}</span>
+                    <span className={`text-[13.5px] font-semibold ${u.saldo < 0 ? "text-px-danger" : "text-px-ink"}`}>Saldo {fmt(u.saldo)}</span>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-3">
+                      <span className="w-[130px] flex-shrink-0 text-[12.5px] text-px-muted">Receitas {fmt(u.rec)}</span>
+                      <div aria-hidden="true" className="h-2 flex-1 rounded-full bg-px-ink/[0.06]"><div className="h-full rounded-full bg-px-ink" style={{ width: `${(u.rec / maxVal) * 100}%` }} /></div>
                     </div>
-                    <span className={cn("text-[11px] font-mono", u.saldo >= 0 ? "text-accent" : "text-red-400")}>
-                      {fmt(u.saldo)}
-                    </span>
+                    <div className="flex items-center gap-3">
+                      <span className="w-[130px] flex-shrink-0 text-[12.5px] text-px-muted">Despesas {fmt(u.desp)}</span>
+                      <div aria-hidden="true" className="h-2 flex-1 rounded-full bg-px-ink/[0.06]"><div className="h-full rounded-full bg-px-ink/35" style={{ width: `${(u.desp / maxVal) * 100}%` }} /></div>
+                    </div>
                   </div>
-                  <div className="flex gap-1 h-2">
-                    <div
-                      className="rounded-full transition-all"
-                      style={{
-                        width:      `${(u.rec / maxVal) * 100}%`,
-                        background: unitColor(unidades, u.unidade),
-                        opacity:    0.85,
-                      }}
-                    />
-                    <div
-                      className="bg-red-400/50 rounded-full transition-all"
-                      style={{ width: `${(u.desp / maxVal) * 100}%` }}
-                    />
-                  </div>
-                  <div className="flex justify-between mt-1">
-                    <span className="text-[9px] font-mono text-text-muted">Rec: {fmt(u.rec)}</span>
-                    <span className="text-[9px] font-mono text-text-muted">Desp: {fmt(u.desp)}</span>
-                  </div>
-                </div>
+                </li>
               ))}
-              <div className="flex gap-4 pt-2 border-t border-border">
-                <div className="flex items-center gap-1.5 text-[10px] text-text-muted">
-                  <div className="w-2 h-2 rounded-full bg-accent" /> Receitas
-                </div>
-                <div className="flex items-center gap-1.5 text-[10px] text-text-muted">
-                  <div className="w-2 h-2 rounded-full bg-red-400/50" /> Despesas
-                </div>
-              </div>
-            </div>
-          </div>
+            </ul>
+          </Panel>
         )}
 
-        {/* Table */}
-        <div className="bg-surface border border-border rounded-xl overflow-hidden">
-          <div className="px-5 py-3 border-b border-border flex items-center justify-between">
-            <span className="text-[10px] font-mono text-text-muted uppercase tracking-widest">
+        {/* Lista */}
+        <Panel as="section" className="overflow-hidden p-0">
+          <div className="flex items-center justify-between border-b border-px-ink/10 px-4 py-3">
+            <h2 className="text-[15px] font-semibold text-px-ink">
               {data.length} lançamento{data.length !== 1 ? "s" : ""}
-              {unidade    !== "Todas" && ` · ${unidade}`}
-              {tipoFilter !== "todos" && ` · ${tipoFilter === "receita" ? "Receitas" : "Despesas"}`}
-            </span>
-            {loading && <Loader2 className="w-3.5 h-3.5 text-text-muted animate-spin" />}
-          </div>
-
-          {/* Column headers — hidden on small screens */}
-          <div className="hidden md:grid grid-cols-[100px_160px_80px_1fr_140px_120px_40px] gap-4 px-5 py-2 border-b border-border">
-            {["Data", "Unidade", "Tipo", "Descrição", "Forma de Pagamento", "Valor", ""].map(h => (
-              <span key={h} className="text-[10px] font-mono text-text-muted uppercase tracking-widest">{h}</span>
-            ))}
+              {unidade !== "Todas" && `, ${unidade}`}
+              {tipoFilter !== "todos" && `, ${tipoFilter === "receita" ? "receitas" : "despesas"}`}
+            </h2>
+            {loading && <span role="status" className="text-[12.5px] text-px-muted">Carregando</span>}
           </div>
 
           {loading && rawData.length === 0 ? (
-            <SkeletonList rows={5} />
+            <p className="py-12 text-center text-[13px] text-px-muted">Carregando lançamentos</p>
+          ) : error && rawData.length === 0 ? (
+            <p className="py-12 text-center text-[13px] text-px-muted">Os lançamentos não puderam ser carregados.</p>
           ) : data.length === 0 && !loading ? (
-            viewAll ? (
-              <EmptyState
-                icon={DollarSign}
-                title="Nenhum lançamento registrado"
-                subtitle="Registre sua primeira receita ou despesa para começar a acompanhar o financeiro da clínica."
-                action={{ label: "Registrar lançamento", onClick: () => setModalOpen(true) }}
-              />
+            rawData.length > 0 ? (
+              <div className="py-12 text-center">
+                <p className="mb-3 text-[13.5px] text-px-ink">Nenhum lançamento com esses filtros.</p>
+                <PxButton variant="secondary" onClick={limparFiltros}>Limpar filtros</PxButton>
+              </div>
+            ) : viewAll ? (
+              <div className="py-12 text-center">
+                <p className="text-[14px] font-semibold text-px-ink">Nenhum lançamento registrado</p>
+                <p className="mb-4 mt-1 text-[13px] text-px-muted">Registre a primeira receita ou despesa para acompanhar o financeiro da clínica.</p>
+                <PxButton leftIcon={Plus} onClick={() => { setErroModal(""); setModalOpen(true) }}>Novo lançamento</PxButton>
+              </div>
             ) : (
-              <div className="py-12 text-center text-[13px] text-text-muted">
-                Nenhum lançamento em {MESES[currentMonth]}.{" "}
-                <button onClick={() => setViewAll(true)} className="text-accent hover:underline">
-                  Ver todos os períodos
-                </button>
+              <div className="py-12 text-center">
+                <p className="mb-3 text-[13.5px] text-px-ink">Nenhum lançamento em {MESES[currentMonth]}.</p>
+                <PxButton variant="secondary" onClick={() => setViewAll(true)}>Ver todos os períodos</PxButton>
               </div>
             )
           ) : (
-            <div className="divide-y divide-border">
-              {data.map(l => (
-                <div
-                  key={l.id}
-                  className="group px-4 py-3 hover:bg-surface-2 transition-colors"
-                >
-                  {/* Mobile layout */}
-                  <div className="md:hidden space-y-1.5">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <span className={cn(
-                          "text-badge font-mono font-semibold px-2 py-0.5 rounded-full border uppercase tracking-wider flex-shrink-0",
-                          l.tipo === "receita"
-                            ? "bg-accent-dim border-accent-border text-accent"
-                            : "bg-red-500/10 border-red-500/30 text-red-400"
-                        )}>
-                          {l.tipo === "receita" ? "rec" : "desp"}
-                        </span>
-                        <span className="text-[12px] text-text-primary truncate">{l.descricao}</span>
-                      </div>
-                      <span className={cn(
-                        "text-[13px] font-semibold font-mono flex-shrink-0",
-                        l.tipo === "receita" ? "text-accent" : "text-red-400"
-                      )}>
-                        {l.tipo === "despesa" ? "−" : "+"}{fmt(l.valor)}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: unitColor(unidades, l.unidade) }} />
-                        <span className="text-[10px] text-text-muted">{l.unidade}</span>
-                        <span className="text-text-muted/40">·</span>
-                        <span className="text-[10px] text-text-muted">{fmtDate(l.data)}</span>
-                      </div>
-                      {confirmDeleteId === l.id ? (
-                        <div className="flex gap-1 items-center">
-                          <button onClick={() => excluir(l.id)} className="text-[10px] px-2 py-0.5 bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg font-semibold">Excluir</button>
-                          <button onClick={() => setConfirmDeleteId(null)} className="text-[10px] px-2 py-0.5 border border-border text-text-muted rounded-lg">Não</button>
-                        </div>
-                      ) : (
-                        <button onClick={() => setConfirmDeleteId(l.id)} disabled={deletingId === l.id}
-                          className="w-6 h-6 rounded-lg flex items-center justify-center text-text-muted hover:text-red-400 hover:bg-red-500/10 disabled:opacity-40 transition-all">
-                          {deletingId === l.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Desktop layout */}
-                  <div className="hidden md:grid md:grid-cols-[100px_160px_80px_1fr_140px_120px_auto] md:items-center md:gap-4">
-                    <span className="text-[11px] font-mono text-text-secondary">{fmtDate(l.data)}</span>
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: unitColor(unidades, l.unidade) }} />
-                      <span className="text-[11px] text-text-secondary truncate">{l.unidade}</span>
-                    </div>
-                    <span className={cn(
-                      "text-badge font-mono font-semibold px-2 py-0.5 rounded-full border uppercase tracking-wider inline-block",
-                      l.tipo === "receita"
-                        ? "bg-accent-dim border-accent-border text-accent"
-                        : "bg-red-500/10 border-red-500/30 text-red-400"
-                    )}>
-                      {l.tipo}
-                    </span>
-                    <span className="text-[12px] text-text-primary truncate">{l.descricao}</span>
-                    <span className="text-[11px] text-text-muted">{l.forma_pagamento ?? "—"}</span>
-                    <span className={cn(
-                      "text-[13px] font-semibold font-mono",
-                      l.tipo === "receita" ? "text-accent" : "text-red-400"
-                    )}>
-                      {l.tipo === "despesa" ? "−" : "+"}{fmt(l.valor)}
-                    </span>
-                    <div className="flex justify-end">
-                      {confirmDeleteId === l.id ? (
-                        <div className="flex gap-1 items-center">
-                          <button onClick={() => excluir(l.id)} className="text-[10px] px-2 py-1 bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg font-semibold hover:bg-red-500/20 transition-colors">Excluir</button>
-                          <button onClick={() => setConfirmDeleteId(null)} className="text-[10px] px-2 py-1 border border-border text-text-muted rounded-lg hover:text-text-secondary transition-colors">Não</button>
-                        </div>
-                      ) : (
-                        <button onClick={() => setConfirmDeleteId(l.id)} disabled={deletingId === l.id}
-                          className="opacity-100 md:opacity-0 md:group-hover:opacity-100 w-7 h-7 rounded-lg flex items-center justify-center text-text-muted hover:text-red-400 hover:bg-red-500/10 disabled:opacity-40 transition-all">
-                          {deletingId === l.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[760px] text-left">
+                <thead>
+                  <tr className="border-b border-px-ink/10 text-[12px] text-px-muted">
+                    <th scope="col" className="px-4 py-2.5 font-medium">Data</th>
+                    <th scope="col" className="px-3 py-2.5 font-medium">Unidade</th>
+                    <th scope="col" className="px-3 py-2.5 font-medium">Tipo</th>
+                    <th scope="col" className="px-3 py-2.5 font-medium">Descrição</th>
+                    <th scope="col" className="px-3 py-2.5 font-medium">Pagamento</th>
+                    <th scope="col" className="px-3 py-2.5 text-right font-medium">Valor</th>
+                    <th scope="col" className="px-4 py-2.5 font-medium"><span className="sr-only">Ações</span></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-px-ink/10">
+                  {data.map(l => (
+                    <tr key={l.id}>
+                      <td className="px-4 py-3 text-[13px] text-px-muted">{fmtDate(l.data)}</td>
+                      <td className="px-3 py-3 text-[13px] text-px-ink/80">{l.unidade || "Sem unidade"}</td>
+                      <td className="px-3 py-3"><Tag tone={l.tipo === "receita" ? "ok" : "danger"}>{l.tipo === "receita" ? "Receita" : "Despesa"}</Tag></td>
+                      <td className="max-w-[260px] px-3 py-3"><span className="block truncate text-[13.5px] text-px-ink">{l.descricao}</span></td>
+                      <td className="px-3 py-3 text-[13px] text-px-muted">{l.forma_pagamento ?? "Não informado"}</td>
+                      <td className="px-3 py-3 text-right text-[13.5px] font-semibold text-px-ink">{l.tipo === "despesa" ? "-" : "+"}{fmt(l.valor)}</td>
+                      <td className="px-4 py-3">
+                        {confirmDeleteId === l.id ? (
+                          <div className="flex items-center justify-end gap-1.5">
+                            <PxButton variant="danger" size="sm" onClick={() => excluir(l.id)}>Excluir</PxButton>
+                            <PxButton variant="quiet" size="sm" onClick={() => setConfirmDeleteId(null)}>Cancelar</PxButton>
+                          </div>
+                        ) : (
+                          <div className="flex justify-end">
+                            <PxButton variant="quiet" size="sm" leftIcon={Trash2} loading={deletingId === l.id} aria-label={`Excluir lançamento ${l.descricao}`} onClick={() => setConfirmDeleteId(l.id)} />
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
-        </div>
+        </Panel>
       </div>
 
-      {/* Modal overlay */}
-      {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            onClick={() => setModalOpen(false)}
-          />
-
-          {/* Modal */}
-          <div className="relative w-full max-w-lg bg-surface border border-border rounded-2xl shadow-2xl overflow-hidden">
-            {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-              <span
-                className="text-[15px] font-semibold text-text-primary"
-                style={{ fontFamily: "var(--font-playfair)" }}
-              >
-                Novo Lançamento
-              </span>
-              <Button variant="secondary" size="sm" onClick={() => setModalOpen(false)} className="w-7 h-7 p-0 border-0 hover:bg-surface-2" aria-label="Fechar">
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-
-            {/* Body */}
-            <div className="px-6 py-5 space-y-4">
-              {/* Tipo toggle */}
-              <div>
-                <label className="text-[10px] font-mono text-text-muted uppercase tracking-widest block mb-2">Tipo</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {(["receita", "despesa"] as const).map(t => (
-                    <button
-                      key={t}
-                      onClick={() => setForm(f => ({ ...f, tipo: t }))}
-                      className={cn(
-                        "py-2.5 rounded-xl text-[12px] font-semibold border transition-all",
-                        form.tipo === t
-                          ? t === "receita"
-                            ? "bg-accent-dim border-accent-border text-accent"
-                            : "bg-red-500/10 border-red-500/30 text-red-400"
-                          : "border-border text-text-muted hover:border-border-hover"
-                      )}
-                    >
-                      {t === "receita" ? "↑ Receita" : "↓ Despesa"}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {/* Unidade */}
-                <div>
-                  <label className="text-[10px] font-mono text-text-muted uppercase tracking-widest block mb-1.5">Unidade</label>
-                  <input
-                    list="unidades-datalist"
-                    value={form.unidade}
-                    onChange={e => setForm(f => ({ ...f, unidade: e.target.value }))}
-                    placeholder="Nome da unidade"
-                    className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2 text-[12px] text-text-primary placeholder:text-text-muted outline-none focus:border-accent/40 transition-colors"
-                  />
-                  <datalist id="unidades-datalist">
-                    {unidades.map(u => <option key={u} value={u} />)}
-                  </datalist>
-                </div>
-
-                {/* Data */}
-                <div>
-                  <label className="text-[10px] font-mono text-text-muted uppercase tracking-widest block mb-1.5">Data</label>
-                  <input
-                    type="date"
-                    value={form.data}
-                    onChange={e => setForm(f => ({ ...f, data: e.target.value }))}
-                    className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2 text-[12px] text-text-primary outline-none focus:border-accent/40 transition-colors"
-                  />
-                </div>
-              </div>
-
-              {/* Descrição */}
-              <div>
-                <label className="text-[10px] font-mono text-text-muted uppercase tracking-widest block mb-1.5">Descrição</label>
-                <input
-                  value={form.descricao}
-                  onChange={e => setForm(f => ({ ...f, descricao: e.target.value }))}
-                  placeholder="Ex: Consulta particular"
-                  className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2 text-[12px] text-text-primary placeholder:text-text-muted focus:border-accent/40 outline-none transition-colors"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {/* Valor */}
-                <div>
-                  <label className="text-[10px] font-mono text-text-muted uppercase tracking-widest block mb-1.5">Valor (R$)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={form.valor}
-                    onChange={e => setForm(f => ({ ...f, valor: e.target.value }))}
-                    placeholder="0,00"
-                    className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2 text-[12px] text-text-primary placeholder:text-text-muted focus:border-accent/40 outline-none transition-colors"
-                  />
-                </div>
-
-                {/* Forma de pagamento */}
-                <div>
-                  <label className="text-[10px] font-mono text-text-muted uppercase tracking-widest block mb-1.5">Pagamento</label>
-                  <select
-                    value={form.forma_pagamento}
-                    onChange={e => setForm(f => ({ ...f, forma_pagamento: e.target.value }))}
-                    className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2 text-[12px] text-text-primary outline-none focus:border-accent/40 transition-colors"
-                  >
-                    {FORMAS.map(f => <option key={f}>{f}</option>)}
-                  </select>
-                </div>
-              </div>
-
-              {/* Observação */}
-              <div>
-                <label className="text-[10px] font-mono text-text-muted uppercase tracking-widest block mb-1.5">Observação</label>
-                <input
-                  value={form.observacao}
-                  onChange={e => setForm(f => ({ ...f, observacao: e.target.value }))}
-                  placeholder="Opcional"
-                  className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2 text-[12px] text-text-primary placeholder:text-text-muted focus:border-accent/40 outline-none transition-colors"
-                />
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="px-6 py-4 border-t border-border flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2 sm:gap-3">
-              <button
-                onClick={() => setModalOpen(false)}
-                className="w-full sm:w-auto px-4 py-2.5 sm:py-2 rounded-xl text-[12px] text-text-muted border border-border hover:border-border-hover hover:text-text-secondary transition-all text-center"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={salvar}
-                disabled={saving || !form.descricao || !form.valor}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 bg-accent text-background text-[12px] font-semibold rounded-xl px-5 py-2.5 sm:py-2 hover:opacity-90 disabled:opacity-40 transition-all"
-              >
-                {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <PlusCircle className="w-3.5 h-3.5" />}
-                Salvar Lançamento
-              </button>
-            </div>
+      <PxModal open={modalOpen} onClose={() => setModalOpen(false)} title="Novo lançamento" className="max-w-lg">
+        <div className="space-y-4">
+          <div className="space-y-1.5">
+            <p className="text-[13px] font-medium text-px-ink">Tipo</p>
+            <Segmented label="Tipo do lançamento" value={form.tipo} onChange={t => setForm(f => ({ ...f, tipo: t }))}
+              options={[{ value: "receita", label: "Receita" }, { value: "despesa", label: "Despesa" }]} />
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Field label="Unidade" htmlFor="fin-un">
+              <PxInput id="fin-un" list="unidades-datalist" value={form.unidade} onChange={e => setForm(f => ({ ...f, unidade: e.target.value }))} placeholder="Nome da unidade" />
+              <datalist id="unidades-datalist">{unidades.map(u => <option key={u} value={u} />)}</datalist>
+            </Field>
+            <Field label="Data" htmlFor="fin-data">
+              <PxInput id="fin-data" type="date" value={form.data} onChange={e => setForm(f => ({ ...f, data: e.target.value }))} />
+            </Field>
+          </div>
+          <Field label="Descrição" htmlFor="fin-desc">
+            <PxInput id="fin-desc" value={form.descricao} onChange={e => setForm(f => ({ ...f, descricao: e.target.value }))} placeholder="Consulta particular" />
+          </Field>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Field label="Valor (R$)" htmlFor="fin-valor" error={form.valor && !(valorNum > 0) ? "Informe um valor maior que zero." : undefined}>
+              <PxInput id="fin-valor" type="number" min="0" step="0.01" inputMode="decimal" value={form.valor} onChange={e => setForm(f => ({ ...f, valor: e.target.value }))} placeholder="0,00" />
+            </Field>
+            <Field label="Pagamento" htmlFor="fin-pag">
+              <PxSelect id="fin-pag" value={form.forma_pagamento} onChange={e => setForm(f => ({ ...f, forma_pagamento: e.target.value }))}>
+                {FORMAS.map(f => <option key={f}>{f}</option>)}
+              </PxSelect>
+            </Field>
+          </div>
+          <Field label="Observação (opcional)" htmlFor="fin-obs">
+            <PxInput id="fin-obs" value={form.observacao} onChange={e => setForm(f => ({ ...f, observacao: e.target.value }))} />
+          </Field>
+          {erroModal && <p role="alert" className="text-[13px] text-px-danger">{erroModal}</p>}
+          <div className="flex gap-2 pt-1">
+            <PxButton variant="secondary" fullWidth onClick={() => setModalOpen(false)}>Cancelar</PxButton>
+            <PxButton fullWidth onClick={salvar} loading={saving} disabled={!podeSalvar}>Salvar lançamento</PxButton>
           </div>
         </div>
-      )}
+      </PxModal>
     </div>
   )
 }

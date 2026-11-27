@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <filter id="b" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="26"/></filter>
+    <linearGradient id="wall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E9E5DF"/><stop offset="1" stop-color="#CFCAC2"/></linearGradient>
+    <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#B9B1A6"/><stop offset="1" stop-color="#8F887E"/></linearGradient>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#DCE3E8"/></linearGradient>
+  </defs>
+  <g filter="url(#b)">
+    <rect width="1600" height="1000" fill="url(#wall)"/>
+    <rect x="-40" y="-40" width="420" height="760" fill="url(#sky)"/>
+    <rect x="1240" y="-40" width="400" height="720" fill="url(#sky)"/>
+    <rect x="170" y="-40" width="26" height="760" fill="#B8B2A8"/>
+    <rect x="1400" y="-40" width="26" height="720" fill="#B8B2A8"/>
+    <rect x="-40" y="640" width="1680" height="400" fill="url(#floor)"/>
+    <rect x="520" y="200" width="560" height="360" fill="#D8D3CB"/>
+    <ellipse cx="760" cy="700" rx="360" ry="70" fill="#7F786F" opacity=".55"/>
+    <ellipse cx="1180" cy="780" rx="230" ry="90" fill="#5E5851" opacity=".6"/>
+    <ellipse cx="300" cy="820" rx="200" ry="80" fill="#6A645C" opacity=".55"/>
+    <ellipse cx="1480" cy="560" rx="90" ry="190" fill="#7A8573" opacity=".55"/>
+    <rect x="600" y="600" width="400" height="26" fill="#4B4640" opacity=".55"/>
+  </g>
+</svg>

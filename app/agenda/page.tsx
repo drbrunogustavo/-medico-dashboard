@@ -489,6 +489,7 @@ export default function AgendaPage() {
   return (
     <div className="px px-ambient min-h-screen animate-fade-in">
       <PageHeader
+        back
         title="Agenda"
         caption={`${fmtDateLong(weekStart)} a ${fmtDateLong(weekEnd)}, ${weekStart.getFullYear()}`}
         actions={

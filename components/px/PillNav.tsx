@@ -70,13 +70,13 @@ export function PillNav({ groups, activeId, currentHref, action, trailing, extra
         </div>
       ) : null}
 
-      <div className="px-glass flex items-center gap-1 rounded-full p-1.5">
+      <div className="px-pill flex items-center gap-1 rounded-full p-1.5">
         {groups.map(g => {
           const on = g.id === activeId
           const open = g.id === openId
           const cls = cn(
             "inline-flex h-11 items-center rounded-full px-4 text-[13px] transition-colors sm:px-5",
-            on ? "bg-px-ink font-semibold text-white" : open ? "bg-px-ink/15 font-semibold text-px-ink" : "font-medium text-px-ink hover:bg-px-ink/10"
+            on ? "bg-white font-semibold text-px-ink" : open ? "bg-white/25 font-semibold text-white" : "font-medium text-white hover:bg-white/15"
           )
           if (g.href) {
             return <Link key={g.id} href={g.href} onClick={() => setOpenId(null)} aria-current={on ? "page" : undefined} className={cls}>{g.label}</Link>
@@ -96,7 +96,7 @@ export function PillNav({ groups, activeId, currentHref, action, trailing, extra
         })}
         {trailing}
         {action ? (
-          <button type="button" onClick={action.onClick} aria-label={action.label} className="ml-1 flex h-11 w-11 items-center justify-center rounded-full bg-px-ink text-white hover:bg-black">
+          <button type="button" onClick={action.onClick} aria-label={action.label} className="ml-1 flex h-11 w-11 items-center justify-center rounded-full bg-black text-white hover:bg-px-ink">
             <Plus className="h-5 w-5" aria-hidden="true" />
           </button>
         ) : null}

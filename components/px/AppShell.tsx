@@ -75,7 +75,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         onClick={() => setContaAberta(o => !o)}
         aria-expanded={contaAberta}
         aria-label="Conta"
-        className={cn("ml-1 flex h-11 w-11 items-center justify-center rounded-full text-[12px] font-semibold", contaAberta ? "bg-px-ink text-white" : "bg-px-ink/10 text-px-ink hover:bg-px-ink/15")}
+        className={cn("ml-1 flex h-11 w-11 items-center justify-center rounded-full text-[12px] font-semibold", contaAberta ? "bg-white text-px-ink" : "bg-white/20 text-white hover:bg-white/30")}
       >
         {iniciais(perfil?.nome, user?.email)}
       </button>
@@ -103,13 +103,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   )
 
   return (
-    <>
-      <main className="px-bridge flex min-h-screen min-w-0 flex-1 flex-col bg-background pb-28">
+    <div className="px">
+      <div className="px-stage" aria-hidden="true" />
+      <main className="px-bridge relative z-10 flex min-h-screen min-w-0 flex-1 flex-col pb-28">
         <div className="flex-1">{children}</div>
       </main>
-      <div className="px">
-        <PillNav groups={groups} activeId={groupIdForPath(pathname)} currentHref={pathname} trailing={conta} />
-      </div>
-    </>
+      <PillNav groups={groups} activeId={groupIdForPath(pathname)} currentHref={pathname} trailing={conta} />
+    </div>
   )
 }

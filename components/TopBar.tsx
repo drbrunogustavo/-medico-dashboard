@@ -38,7 +38,7 @@ const TIPO_COLOR: Record<string, string> = {
 
 // ─── Bell Dropdown ────────────────────────────────────────────────────────────
 
-export function BellMenu() {
+export function BellMenu({ square = false }: { square?: boolean }) {
   const [open,      setOpen]      = useState(false)
   const [items,     setItems]     = useState<Notificacao[]>([])
   const [naoLidas,  setNaoLidas]  = useState(0)
@@ -107,7 +107,7 @@ export function BellMenu() {
       {/* Bell button */}
       <button
         onClick={() => { setOpen(o => !o); if (!open) fetchNotifs() }}
-        className="relative w-9 h-9 flex items-center justify-center rounded-lg border border-border text-text-muted hover:text-text-primary hover:border-border-hover transition-all"
+        className={square ? "px-square relative flex h-12 w-12 items-center justify-center rounded-[18px] transition-colors md:h-14 md:w-14 md:rounded-[20px]" : "relative w-9 h-9 flex items-center justify-center rounded-lg border border-border text-text-muted hover:text-text-primary hover:border-border-hover transition-all"}
         aria-label="Notificações">
         <Bell className="w-4 h-4" />
         {naoLidas > 0 && (

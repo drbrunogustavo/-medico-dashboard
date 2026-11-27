@@ -5,7 +5,7 @@ import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { ErrorState } from "@/components/ErrorState"
 import { useAppContext } from "@/components/AppProvider"
-import { Panel, Tag, PageHeader, ColumnChart, LineSeries, BarList } from "@/components/px"
+import { Panel, Tag, PageHeader, PillBars, LineSeries, BarList, Ring } from "@/components/px"
 import { cn } from "@/lib/utils"
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -58,18 +58,15 @@ function BlockTitle({ children, aside }: { children: React.ReactNode; aside?: Re
 
 // ─── Blocos ───────────────────────────────────────────────────────────────────
 
-function Atalho({ href, valor, rotulo, loading }: { href: string; valor: string; rotulo: string; loading: boolean }) {
+function Numero({ href, valor, rotulo, loading }: { href: string; valor: string; rotulo: string; loading: boolean }) {
   return (
-    <Link href={href} className="block rounded-px-card bg-white/70 p-4 transition-colors hover:bg-white">
+    <Link href={href} className="block rounded-px-card bg-white/12 p-4 transition-colors hover:bg-white/20">
       {loading ? (
-        <>
-          <Skeleton className="h-8 w-16" />
-          <Skeleton className="mt-2 h-4 w-24" />
-        </>
+        <><Skeleton className="h-9 w-16 bg-white/25" /><Skeleton className="mt-2 h-4 w-24 bg-white/20" /></>
       ) : (
         <>
-          <div className="text-[30px] font-semibold leading-none tabular-nums text-px-ink">{valor}</div>
-          <div className="mt-2 text-[13px] text-px-muted">{rotulo}</div>
+          <div className="text-[34px] font-medium leading-none tracking-[-0.02em] tabular-nums text-white">{valor}</div>
+          <div className="mt-2 text-[13px] leading-snug text-white">{rotulo}</div>
         </>
       )}
     </Link>
@@ -102,7 +99,7 @@ function Alertas({ metrics, loading }: { metrics: ExecMetrics | null; loading: b
 function Sugestoes({ sugestoes, loading }: { sugestoes: SugestaoIA[]; loading: boolean }) {
   if (!loading && sugestoes.length === 0) return null
   return (
-    <Panel tone="light" aria-label="Sugestões">
+    <Panel tone="light" aria-label="Sugestões" className="h-full">
       <BlockTitle>O que fazer a seguir</BlockTitle>
       {loading ? (
         <div className="space-y-3"><Skeleton className="h-14" /><Skeleton className="h-14" /></div>
@@ -137,17 +134,10 @@ function AcademyBloco() {
   const total = 38
   const pct = Math.round((concluidas / total) * 100)
   return (
-    <Panel tone="light" aria-label="Academy">
-      <BlockTitle aside={<Link href="/academy" className="text-[13px] font-semibold text-px-accent underline-offset-4 hover:underline">{concluidas > 0 ? "Continuar" : "Começar"}</Link>}>
-        Academy
-      </BlockTitle>
-      <div className="flex items-baseline justify-between text-[13px]">
-        <span className="text-px-muted">{concluidas} de {total} aulas concluídas</span>
-        <span className="font-semibold tabular-nums text-px-ink">{pct}%</span>
-      </div>
-      <div className="mt-2 h-2 rounded-full bg-px-ink/10" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label="Progresso na Academy">
-        <div className="h-2 rounded-full bg-px-ink" style={{ width: `${pct}%` }} />
-      </div>
+    <Panel tone="dark" aria-label="Academy" className="flex h-full flex-col items-center justify-between gap-4 text-center">
+      <h2 className="self-start text-[15px] font-semibold text-white">Academy</h2>
+      <Ring value={pct} label={`${concluidas} de ${total} aulas`} dark />
+      <Link href="/academy" className="text-[13px] font-semibold text-white underline underline-offset-4">{concluidas > 0 ? "Continuar" : "Começar"}</Link>
     </Panel>
   )
 }
@@ -298,12 +288,13 @@ export default function DashboardPage() {
 
   const nome = perfil?.nome ? perfil.nome.replace(/^Dr\.?\s*/i, "Dr. ") : "Doutor"
   const novos = execMetrics?.leads_semana ?? 0
+  const origens = (execMetrics?.leads_origem ?? []).filter(o => o.count > 0).sort((a, b) => b.count - a.count).slice(0, 5)
 
   return (
     <div className="px px-ambient min-h-screen animate-fade-in">
       <PageHeader title={`${greet}, ${nome}`} caption={dateStr} />
 
-      <div className="space-y-4 px-5 pb-10 pt-4 md:px-10">
+      <div className="space-y-4 px-4 pb-10 pt-4 md:px-10">
 
         {semAcesso && (
           <Panel tone="strong" role="alert" className="border border-px-danger/30">
@@ -317,17 +308,41 @@ export default function DashboardPage() {
           </Panel>
         )}
 
-        {/* Hoje */}
-        <section aria-label="Hoje" className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          <Atalho href="/agenda" loading={rotinaLoading} valor={String(consultasHoje ?? "—")} rotulo={consultasHoje === 1 ? "consulta hoje" : "consultas hoje"} />
-          <Atalho href="/crm" loading={rotinaLoading} valor={String(leadsNaoLidos ?? "—")} rotulo={leadsNaoLidos === 1 ? "lead sem leitura" : "leads sem leitura"} />
-          <Atalho href="/pacientes" loading={rotinaLoading} valor={String(semRetornoCount ?? "—")} rotulo="pacientes sem retorno há 6 meses" />
-          <Atalho href="/financeiro" loading={rotinaLoading} valor={receitaHoje !== null ? fmtBRL(receitaHoje) : "—"} rotulo="receita de hoje" />
-        </section>
-
         {execError ? (
           <ErrorState compact message="Falha ao carregar as métricas. Verifique a conexão e tente de novo." onRetry={fetchExecMetrics} />
-        ) : isNewUser ? (
+        ) : null}
+
+        <div className="grid gap-4 lg:grid-cols-12">
+          {/* Hoje: painel cinza */}
+          <Panel tone="dark" aria-label="Hoje" className="lg:col-span-4">
+            <h2 className="mb-4 text-[15px] font-semibold text-white">Hoje</h2>
+            <div className="grid grid-cols-2 gap-3">
+              <Numero href="/agenda" loading={rotinaLoading} valor={String(consultasHoje ?? "—")} rotulo={consultasHoje === 1 ? "consulta" : "consultas"} />
+              <Numero href="/crm" loading={rotinaLoading} valor={String(leadsNaoLidos ?? "—")} rotulo={leadsNaoLidos === 1 ? "lead sem leitura" : "leads sem leitura"} />
+              <Numero href="/pacientes" loading={rotinaLoading} valor={String(semRetornoCount ?? "—")} rotulo="sem retorno há 6 meses" />
+              <Numero href="/financeiro" loading={rotinaLoading} valor={receitaHoje !== null ? fmtBRL(receitaHoje) : "—"} rotulo="receita do dia" />
+            </div>
+          </Panel>
+
+          {/* Receita */}
+          <Panel tone="light" className="lg:col-span-5">
+            <BlockTitle aside={<Link href="/financeiro" className="text-[13px] font-semibold text-px-accent underline-offset-4 hover:underline">Financeiro</Link>}>Receita nos últimos 6 meses</BlockTitle>
+            {execLoading ? <Skeleton className="h-[230px]" /> : fat6m.length > 0 ? (
+              <>
+                <div className="mb-3 flex flex-wrap items-baseline gap-x-3">
+                  <span className="text-[30px] font-medium tracking-[-0.02em] tabular-nums text-px-ink">{fmtBRL(execMetrics?.faturamento_mes ?? 0)}</span>
+                  <span className="text-[13px] text-px-muted">no mês{varPct !== null ? `, ${varPct >= 0 ? "alta" : "queda"} de ${Math.abs(varPct).toFixed(1).replace(".", ",")}% sobre o anterior` : ""}</span>
+                </div>
+                <PillBars label="Receita mensal dos últimos seis meses" data={fat6m.map(d => ({ rotulo: d.mes, valor: d.valor }))} />
+              </>
+            ) : <p className="text-[14px] text-px-muted">Ainda não há receita registrada no período.</p>}
+          </Panel>
+
+          {/* Academy */}
+          <div className="lg:col-span-3"><AcademyBloco /></div>
+        </div>
+
+        {isNewUser ? (
           <Panel tone="light" aria-label="Primeiros passos">
             <BlockTitle>Primeiros passos</BlockTitle>
             <p className="mb-4 max-w-xl text-[14px] text-px-muted">Os números aparecem aqui assim que houver pacientes, leads ou consultas registrados.</p>
@@ -345,65 +360,37 @@ export default function DashboardPage() {
             </div>
           </Panel>
         ) : (
-          <>
-            {/* Resumo do mês */}
-            <section aria-label="Resumo" className="grid gap-4 lg:grid-cols-3">
-              <Panel tone="dark" className="lg:col-span-1">
-                <p className="text-[13px] text-white/80">Faturamento do mês</p>
-                {execLoading ? (
-                  <Skeleton className="mt-3 h-10 w-40 bg-white/20" />
-                ) : (
-                  <p className="mt-2 text-[34px] font-semibold leading-none tabular-nums text-white">{fmtBRL(execMetrics?.faturamento_mes ?? 0)}</p>
-                )}
-                {varPct !== null && !execLoading && (
-                  <p className="mt-3 text-[13px] text-white/80">{varPct >= 0 ? "Alta" : "Queda"} de {Math.abs(varPct).toFixed(1).replace(".", ",")}% sobre o mês anterior</p>
-                )}
-                <dl className="mt-6 grid grid-cols-2 gap-4 border-t border-white/15 pt-4 text-[13px]">
-                  <div><dt className="text-white/70">Consultas no mês</dt><dd className="mt-1 text-[20px] font-semibold tabular-nums text-white">{execLoading ? "—" : execMetrics?.consultas_mes ?? 0}</dd></div>
-                  <div><dt className="text-white/70">Leads na semana</dt><dd className="mt-1 text-[20px] font-semibold tabular-nums text-white">{execLoading ? "—" : novos}</dd></div>
-                </dl>
-              </Panel>
+          <div className="grid gap-4 lg:grid-cols-12">
+            <Panel tone="light" className="lg:col-span-4">
+              <BlockTitle aside={<Link href="/crm" className="text-[13px] font-semibold text-px-accent underline-offset-4 hover:underline">CRM</Link>}>Leads por estágio</BlockTitle>
+              {execLoading ? <Skeleton className="h-[170px]" /> : (execMetrics?.leads_por_estagio ?? []).length > 0 ? (
+                <BarList data={(execMetrics?.leads_por_estagio ?? []).map(d => ({ rotulo: d.estagio, valor: d.count }))} />
+              ) : <p className="text-[14px] text-px-muted">Nenhum lead no funil.</p>}
+              {!execLoading && <p className="mt-4 text-[13px] text-px-muted"><span className="font-semibold tabular-nums text-px-ink">{novos}</span> {novos === 1 ? "lead novo" : "leads novos"} nesta semana, <span className="font-semibold tabular-nums text-px-ink">{execMetrics?.consultas_mes ?? 0}</span> consultas no mês.</p>}
+            </Panel>
 
-              <Panel tone="light" className="lg:col-span-2">
-                <BlockTitle aside={<Link href="/financeiro" className="text-[13px] font-semibold text-px-accent underline-offset-4 hover:underline">Financeiro</Link>}>Receita nos últimos 6 meses</BlockTitle>
-                {execLoading ? <Skeleton className="h-[190px]" /> : fat6m.length > 0 ? (
-                  <ColumnChart label="Receita mensal dos últimos seis meses" data={fat6m.map(d => ({ rotulo: d.mes, valor: d.valor }))} />
-                ) : <p className="text-[14px] text-px-muted">Ainda não há receita registrada no período.</p>}
-              </Panel>
-            </section>
+            <Panel tone="dark" className="lg:col-span-4">
+              <h2 className="mb-4 text-[15px] font-semibold text-white">De onde vêm os leads</h2>
+              {execLoading ? <Skeleton className="h-[170px] bg-white/20" /> : origens.length > 0 ? (
+                <BarList dark data={origens.map(o => ({ rotulo: o.origem, valor: o.count }))} />
+              ) : <p className="text-[14px] text-white">Sem origem registrada nos leads.</p>}
+            </Panel>
 
-            <section aria-label="Pacientes e leads" className="grid gap-4 lg:grid-cols-3">
-              <Panel tone="light">
-                <BlockTitle aside={<span className="text-[13px] tabular-nums text-px-muted">{execLoading || execMetrics?.nps_score == null ? "" : `atual ${execMetrics.nps_score}`}</span>}>Satisfação (NPS)</BlockTitle>
-                {execLoading ? <Skeleton className="h-[170px]" /> : (execMetrics?.nps_6m ?? []).some(d => d.nps !== null) ? (
-                  <LineSeries label="NPS dos últimos seis meses" data={(execMetrics?.nps_6m ?? []).map(d => ({ rotulo: d.mes, valor: d.nps }))} />
-                ) : <p className="text-[14px] text-px-muted">Sem respostas de NPS no período.</p>}
-              </Panel>
-
-              <Panel tone="light">
-                <BlockTitle aside={<Link href="/crm" className="text-[13px] font-semibold text-px-accent underline-offset-4 hover:underline">CRM</Link>}>Leads por estágio</BlockTitle>
-                {execLoading ? <Skeleton className="h-[170px]" /> : (execMetrics?.leads_por_estagio ?? []).length > 0 ? (
-                  <BarList data={(execMetrics?.leads_por_estagio ?? []).map(d => ({ rotulo: d.estagio, valor: d.count }))} />
-                ) : <p className="text-[14px] text-px-muted">Nenhum lead no funil.</p>}
-              </Panel>
-
-              <Panel tone="light">
-                <BlockTitle>De onde vêm os leads</BlockTitle>
-                {execLoading ? <Skeleton className="h-[170px]" /> : topOrigem ? (
-                  <BarList data={(execMetrics?.leads_origem ?? []).filter(o => o.count > 0).sort((a, b) => b.count - a.count).slice(0, 5).map(o => ({ rotulo: o.origem, valor: o.count }))} />
-                ) : <p className="text-[14px] text-px-muted">Sem origem registrada nos leads.</p>}
-              </Panel>
-            </section>
-
-            <Alertas metrics={execMetrics} loading={execLoading} />
-          </>
+            <Panel tone="light" className="lg:col-span-4">
+              <BlockTitle aside={<span className="text-[13px] tabular-nums text-px-muted">{execLoading || execMetrics?.nps_score == null ? "" : `atual ${execMetrics.nps_score}`}</span>}>Satisfação (NPS)</BlockTitle>
+              {execLoading ? <Skeleton className="h-[170px]" /> : (execMetrics?.nps_6m ?? []).some(d => d.nps !== null) ? (
+                <LineSeries label="NPS dos últimos seis meses" data={(execMetrics?.nps_6m ?? []).map(d => ({ rotulo: d.mes, valor: d.nps }))} />
+              ) : <p className="text-[14px] text-px-muted">Sem respostas de NPS no período.</p>}
+            </Panel>
+          </div>
         )}
 
-        <Sugestoes sugestoes={sugestoesIA} loading={sugestoesLoad} />
+        <Alertas metrics={execMetrics} loading={execLoading} />
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <Panel tone="light" aria-label="Conteúdo">
-            <BlockTitle aside={<Link href="/pautas" className="text-[13px] font-semibold text-px-accent underline-offset-4 hover:underline">Banco de pautas</Link>}>Conteúdo</BlockTitle>
+        <div className="grid gap-4 lg:grid-cols-12">
+          <div className="lg:col-span-8"><Sugestoes sugestoes={sugestoesIA} loading={sugestoesLoad} /></div>
+          <Panel tone="light" aria-label="Conteúdo" className="lg:col-span-4">
+            <BlockTitle aside={<Link href="/pautas" className="text-[13px] font-semibold text-px-accent underline-offset-4 hover:underline">Pautas</Link>}>Conteúdo</BlockTitle>
             <p className="text-[14px] text-px-ink"><span className="font-semibold tabular-nums">{pautasCount}</span> {pautasCount === 1 ? "pauta salva" : "pautas salvas"}, <span className="font-semibold tabular-nums">{postsCount}</span> {postsCount === 1 ? "publicada" : "publicadas"}.</p>
             {recentPautas.length > 0 && (
               <ul className="mt-3 divide-y divide-px-line text-[13px]">
@@ -413,10 +400,9 @@ export default function DashboardPage() {
               </ul>
             )}
           </Panel>
-          <AcademyBloco />
         </div>
 
-        {lastAccess && <p className="px-1 text-[12px] text-px-muted">Último acesso: {lastAccess}</p>}
+        {lastAccess && <p className="px-1 text-[12px] text-px-ink/80">Último acesso: {lastAccess}</p>}
       </div>
     </div>
   )

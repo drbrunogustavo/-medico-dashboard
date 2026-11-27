@@ -156,10 +156,10 @@
 .px-bridge {
   color-scheme: light;
   --background:     #E7E3DC;
-  --surface:        #F8F5F0;
-  --surface-2:      #EBE7DF;
-  --card:           #FBF9F5;
-  --border:         rgba(20, 20, 20, 0.14);
+  --surface:        rgba(255, 255, 255, 0.66);
+  --surface-2:      rgba(20, 20, 20, 0.06);
+  --card:           rgba(255, 255, 255, 0.74);
+  --border:         rgba(20, 20, 20, 0.12);
   --border-hover:   rgba(20, 20, 20, 0.32);
 
   --text-primary:   #141414;
@@ -179,7 +179,324 @@
     radial-gradient(ellipse 50% 45% at 85% 5%,   #F4F0E9 0%, transparent 70%),
     radial-gradient(ellipse 55% 40% at 50% 100%, #C9C1B4 0%, transparent 75%);
   background-attachment: fixed;
+
+  --font-playfair:  var(--font-manrope);
 }
+
+/* Forma e tipografia: painéis translúcidos, raios maiores, rótulos legíveis */
+.px-bridge .rounded-lg  { border-radius: 12px; }
+.px-bridge .rounded-xl  { border-radius: 20px; }
+.px-bridge .rounded-2xl { border-radius: 28px; }
+.px-bridge .font-mono   { font-family: var(--font-manrope), system-ui, sans-serif; font-variant-numeric: tabular-nums; }
+.px-bridge .uppercase   { text-transform: none; }
+.px-bridge .tracking-widest, .px-bridge .tracking-wider, .px-bridge .tracking-wide,
+.px-bridge .tracking-\[1px\], .px-bridge .tracking-\[2px\], .px-bridge .tracking-\[3px\] { letter-spacing: 0; }
+.px-bridge .text-badge, .px-bridge .text-\[8px\], .px-bridge .text-\[8\.5px\], .px-bridge .text-\[9px\] { font-size: 11px; }
+.px-bridge .text-\[10px\], .px-bridge .text-\[10\.5px\] { font-size: 11.5px; }
+
+/* Cores fixas antigas (azul, roxo, âmbar, verde, vermelho) levadas à paleta px.
+   Bloco gerado a partir das classes realmente usadas no código. */
+.px-bridge .active\:bg-red-500\/60:active{background-color:rgba(155,44,31,0.60)}
+.px-bridge .bg-amber-100{background-color:#F5E9CC}
+.px-bridge .bg-amber-400{background-color:#7A4E00}
+.px-bridge .bg-amber-400\/10{background-color:rgba(122,78,0,0.10)}
+.px-bridge .bg-amber-50{background-color:#F5E9CC}
+.px-bridge .bg-amber-500{background-color:#7A4E00}
+.px-bridge .bg-amber-500\/10{background-color:rgba(122,78,0,0.10)}
+.px-bridge .bg-amber-500\/12{background-color:rgba(122,78,0,0.12)}
+.px-bridge .bg-amber-500\/15{background-color:rgba(122,78,0,0.15)}
+.px-bridge .bg-amber-500\/20{background-color:rgba(122,78,0,0.20)}
+.px-bridge .bg-amber-500\/5{background-color:rgba(122,78,0,0.05)}
+.px-bridge .bg-amber-500\/70{background-color:rgba(122,78,0,0.70)}
+.px-bridge .bg-amber-900\/20{background-color:rgba(122,78,0,0.20)}
+.px-bridge .bg-amber-950\/95{background-color:rgba(122,78,0,0.95)}
+.px-bridge .bg-blue-100{background-color:#F1E6DA}
+.px-bridge .bg-blue-400{background-color:#141414}
+.px-bridge .bg-blue-50{background-color:#F1E6DA}
+.px-bridge .bg-blue-500{background-color:#141414}
+.px-bridge .bg-blue-500\/10{background-color:rgba(138,90,43,0.10)}
+.px-bridge .bg-blue-500\/12{background-color:rgba(138,90,43,0.12)}
+.px-bridge .bg-blue-500\/15{background-color:rgba(138,90,43,0.15)}
+.px-bridge .bg-blue-500\/20{background-color:rgba(138,90,43,0.20)}
+.px-bridge .bg-blue-500\/30{background-color:rgba(138,90,43,0.30)}
+.px-bridge .bg-blue-500\/5{background-color:rgba(138,90,43,0.05)}
+.px-bridge .bg-blue-500\/6{background-color:rgba(138,90,43,0.06)}
+.px-bridge .bg-blue-500\/8{background-color:rgba(138,90,43,0.08)}
+.px-bridge .bg-blue-600\/70{background-color:rgba(138,90,43,0.70)}
+.px-bridge .bg-blue-950\/95{background-color:rgba(138,90,43,0.95)}
+.px-bridge .bg-cyan-50{background-color:#F1E6DA}
+.px-bridge .bg-cyan-500{background-color:#141414}
+.px-bridge .bg-cyan-500\/20{background-color:rgba(138,90,43,0.20)}
+.px-bridge .bg-emerald-100{background-color:#DDEFE5}
+.px-bridge .bg-emerald-400{background-color:#1D6B47}
+.px-bridge .bg-emerald-400\/10{background-color:rgba(29,107,71,0.10)}
+.px-bridge .bg-emerald-50{background-color:#DDEFE5}
+.px-bridge .bg-emerald-500{background-color:#1D6B47}
+.px-bridge .bg-emerald-500\/10{background-color:rgba(29,107,71,0.10)}
+.px-bridge .bg-emerald-500\/12{background-color:rgba(29,107,71,0.12)}
+.px-bridge .bg-emerald-500\/20{background-color:rgba(29,107,71,0.20)}
+.px-bridge .bg-emerald-500\/5{background-color:rgba(29,107,71,0.05)}
+.px-bridge .bg-emerald-500\/90{background-color:rgba(29,107,71,0.90)}
+.px-bridge .bg-fuchsia-50{background-color:#F1E6DA}
+.px-bridge .bg-fuchsia-500{background-color:#141414}
+.px-bridge .bg-green-100{background-color:#DDEFE5}
+.px-bridge .bg-green-400{background-color:#1D6B47}
+.px-bridge .bg-green-50{background-color:#DDEFE5}
+.px-bridge .bg-green-500{background-color:#1D6B47}
+.px-bridge .bg-green-500\/10{background-color:rgba(29,107,71,0.10)}
+.px-bridge .bg-indigo-100{background-color:#F1E6DA}
+.px-bridge .bg-indigo-400{background-color:#141414}
+.px-bridge .bg-indigo-50{background-color:#F1E6DA}
+.px-bridge .bg-indigo-500{background-color:#141414}
+.px-bridge .bg-indigo-500\/12{background-color:rgba(138,90,43,0.12)}
+.px-bridge .bg-lime-400{background-color:#1D6B47}
+.px-bridge .bg-lime-50{background-color:#DDEFE5}
+.px-bridge .bg-lime-500{background-color:#1D6B47}
+.px-bridge .bg-orange-400{background-color:#7A4E00}
+.px-bridge .bg-orange-400\/10{background-color:rgba(122,78,0,0.10)}
+.px-bridge .bg-orange-50{background-color:#F5E9CC}
+.px-bridge .bg-orange-500{background-color:#7A4E00}
+.px-bridge .bg-orange-500\/10{background-color:rgba(122,78,0,0.10)}
+.px-bridge .bg-orange-500\/20{background-color:rgba(122,78,0,0.20)}
+.px-bridge .bg-pink-100{background-color:#F1E6DA}
+.px-bridge .bg-pink-400{background-color:#141414}
+.px-bridge .bg-pink-50{background-color:#F1E6DA}
+.px-bridge .bg-pink-500{background-color:#141414}
+.px-bridge .bg-pink-500\/10{background-color:rgba(138,90,43,0.10)}
+.px-bridge .bg-pink-500\/20{background-color:rgba(138,90,43,0.20)}
+.px-bridge .bg-pink-500\/6{background-color:rgba(138,90,43,0.06)}
+.px-bridge .bg-purple-100{background-color:#F1E6DA}
+.px-bridge .bg-purple-400{background-color:#141414}
+.px-bridge .bg-purple-50{background-color:#F1E6DA}
+.px-bridge .bg-purple-500{background-color:#141414}
+.px-bridge .bg-purple-500\/10{background-color:rgba(138,90,43,0.10)}
+.px-bridge .bg-purple-500\/12{background-color:rgba(138,90,43,0.12)}
+.px-bridge .bg-purple-500\/20{background-color:rgba(138,90,43,0.20)}
+.px-bridge .bg-purple-500\/5{background-color:rgba(138,90,43,0.05)}
+.px-bridge .bg-red-100{background-color:#F6DDD8}
+.px-bridge .bg-red-400{background-color:#9B2C1F}
+.px-bridge .bg-red-400\/10{background-color:rgba(155,44,31,0.10)}
+.px-bridge .bg-red-400\/50{background-color:rgba(155,44,31,0.50)}
+.px-bridge .bg-red-50{background-color:#F6DDD8}
+.px-bridge .bg-red-500{background-color:#9B2C1F}
+.px-bridge .bg-red-500\/10{background-color:rgba(155,44,31,0.10)}
+.px-bridge .bg-red-500\/12{background-color:rgba(155,44,31,0.12)}
+.px-bridge .bg-red-500\/15{background-color:rgba(155,44,31,0.15)}
+.px-bridge .bg-red-500\/25{background-color:rgba(155,44,31,0.25)}
+.px-bridge .bg-red-500\/5{background-color:rgba(155,44,31,0.05)}
+.px-bridge .bg-red-950\/30{background-color:rgba(155,44,31,0.30)}
+.px-bridge .bg-red-950\/95{background-color:rgba(155,44,31,0.95)}
+.px-bridge .bg-rose-50{background-color:#F6DDD8}
+.px-bridge .bg-rose-500{background-color:#9B2C1F}
+.px-bridge .bg-sky-50{background-color:#F1E6DA}
+.px-bridge .bg-sky-500{background-color:#141414}
+.px-bridge .bg-teal-50{background-color:#F1E6DA}
+.px-bridge .bg-teal-500{background-color:#141414}
+.px-bridge .bg-violet-400{background-color:#141414}
+.px-bridge .bg-violet-400\/15{background-color:rgba(138,90,43,0.15)}
+.px-bridge .bg-violet-50{background-color:#F1E6DA}
+.px-bridge .bg-violet-500{background-color:#141414}
+.px-bridge .bg-violet-500\/10{background-color:rgba(138,90,43,0.10)}
+.px-bridge .bg-violet-500\/6{background-color:rgba(138,90,43,0.06)}
+.px-bridge .bg-yellow-400\/15{background-color:rgba(122,78,0,0.15)}
+.px-bridge .bg-yellow-50{background-color:#F5E9CC}
+.px-bridge .bg-yellow-500{background-color:#7A4E00}
+.px-bridge .border-amber-200{border-color:rgba(122,78,0,0.30)}
+.px-bridge .border-amber-300{border-color:rgba(122,78,0,0.30)}
+.px-bridge .border-amber-400\/40{border-color:rgba(122,78,0,0.40)}
+.px-bridge .border-amber-400\/60{border-color:rgba(122,78,0,0.60)}
+.px-bridge .border-amber-500\/15{border-color:rgba(122,78,0,0.25)}
+.px-bridge .border-amber-500\/20{border-color:rgba(122,78,0,0.25)}
+.px-bridge .border-amber-500\/25{border-color:rgba(122,78,0,0.25)}
+.px-bridge .border-amber-500\/30{border-color:rgba(122,78,0,0.30)}
+.px-bridge .border-amber-500\/40{border-color:rgba(122,78,0,0.40)}
+.px-bridge .border-amber-500\/50{border-color:rgba(122,78,0,0.50)}
+.px-bridge .border-amber-700\/40{border-color:rgba(122,78,0,0.40)}
+.px-bridge .border-blue-200{border-color:rgba(138,90,43,0.30)}
+.px-bridge .border-blue-300{border-color:rgba(138,90,43,0.30)}
+.px-bridge .border-blue-500\/15{border-color:rgba(138,90,43,0.25)}
+.px-bridge .border-blue-500\/20{border-color:rgba(138,90,43,0.25)}
+.px-bridge .border-blue-500\/25{border-color:rgba(138,90,43,0.25)}
+.px-bridge .border-blue-500\/30{border-color:rgba(138,90,43,0.30)}
+.px-bridge .border-blue-500\/40{border-color:rgba(138,90,43,0.40)}
+.px-bridge .border-blue-500\/50{border-color:rgba(138,90,43,0.50)}
+.px-bridge .border-blue-500\/60{border-color:rgba(138,90,43,0.60)}
+.px-bridge .border-cyan-200{border-color:rgba(138,90,43,0.30)}
+.px-bridge .border-emerald-200{border-color:rgba(29,107,71,0.30)}
+.px-bridge .border-emerald-400\/40{border-color:rgba(29,107,71,0.40)}
+.px-bridge .border-emerald-500\/15{border-color:rgba(29,107,71,0.25)}
+.px-bridge .border-emerald-500\/20{border-color:rgba(29,107,71,0.25)}
+.px-bridge .border-emerald-500\/25{border-color:rgba(29,107,71,0.25)}
+.px-bridge .border-emerald-500\/30{border-color:rgba(29,107,71,0.30)}
+.px-bridge .border-emerald-500\/40{border-color:rgba(29,107,71,0.40)}
+.px-bridge .border-fuchsia-200{border-color:rgba(138,90,43,0.30)}
+.px-bridge .border-green-200{border-color:rgba(29,107,71,0.30)}
+.px-bridge .border-green-300{border-color:rgba(29,107,71,0.30)}
+.px-bridge .border-green-500\/20{border-color:rgba(29,107,71,0.25)}
+.px-bridge .border-green-500\/25{border-color:rgba(29,107,71,0.25)}
+.px-bridge .border-indigo-200{border-color:rgba(138,90,43,0.30)}
+.px-bridge .border-indigo-500\/30{border-color:rgba(138,90,43,0.30)}
+.px-bridge .border-lime-200{border-color:rgba(29,107,71,0.30)}
+.px-bridge .border-orange-200{border-color:rgba(122,78,0,0.30)}
+.px-bridge .border-orange-400\/40{border-color:rgba(122,78,0,0.40)}
+.px-bridge .border-orange-500\/40{border-color:rgba(122,78,0,0.40)}
+.px-bridge .border-pink-200{border-color:rgba(138,90,43,0.30)}
+.px-bridge .border-pink-500\/20{border-color:rgba(138,90,43,0.25)}
+.px-bridge .border-pink-500\/25{border-color:rgba(138,90,43,0.25)}
+.px-bridge .border-purple-200{border-color:rgba(138,90,43,0.30)}
+.px-bridge .border-purple-500\/20{border-color:rgba(138,90,43,0.25)}
+.px-bridge .border-purple-500\/25{border-color:rgba(138,90,43,0.25)}
+.px-bridge .border-purple-500\/30{border-color:rgba(138,90,43,0.30)}
+.px-bridge .border-purple-500\/50{border-color:rgba(138,90,43,0.50)}
+.px-bridge .border-red-200{border-color:rgba(155,44,31,0.30)}
+.px-bridge .border-red-300{border-color:rgba(155,44,31,0.30)}
+.px-bridge .border-red-400\/40{border-color:rgba(155,44,31,0.40)}
+.px-bridge .border-red-500\/10{border-color:rgba(155,44,31,0.25)}
+.px-bridge .border-red-500\/20{border-color:rgba(155,44,31,0.25)}
+.px-bridge .border-red-500\/25{border-color:rgba(155,44,31,0.25)}
+.px-bridge .border-red-500\/30{border-color:rgba(155,44,31,0.30)}
+.px-bridge .border-red-500\/40{border-color:rgba(155,44,31,0.40)}
+.px-bridge .border-red-500\/50{border-color:rgba(155,44,31,0.50)}
+.px-bridge .border-red-900\/40{border-color:rgba(155,44,31,0.40)}
+.px-bridge .border-rose-200{border-color:rgba(155,44,31,0.30)}
+.px-bridge .border-sky-200{border-color:rgba(138,90,43,0.30)}
+.px-bridge .border-teal-200{border-color:rgba(138,90,43,0.30)}
+.px-bridge .border-violet-200{border-color:rgba(138,90,43,0.30)}
+.px-bridge .border-violet-400\/35{border-color:rgba(138,90,43,0.35)}
+.px-bridge .border-violet-500\/20{border-color:rgba(138,90,43,0.25)}
+.px-bridge .border-violet-500\/25{border-color:rgba(138,90,43,0.25)}
+.px-bridge .border-violet-500\/30{border-color:rgba(138,90,43,0.30)}
+.px-bridge .border-yellow-200{border-color:rgba(122,78,0,0.30)}
+.px-bridge .border-yellow-400\/35{border-color:rgba(122,78,0,0.35)}
+.px-bridge .focus\:border-blue-500\/40:focus{border-color:rgba(138,90,43,0.40)}
+.px-bridge .focus\:border-blue-500\/50:focus{border-color:rgba(138,90,43,0.50)}
+.px-bridge .focus\:border-emerald-500\/40:focus{border-color:rgba(29,107,71,0.40)}
+.px-bridge .focus\:border-emerald-500\/50:focus{border-color:rgba(29,107,71,0.50)}
+.px-bridge .focus\:border-purple-500\/40:focus{border-color:rgba(138,90,43,0.40)}
+.px-bridge .focus\:border-red-500\/40:focus{border-color:rgba(155,44,31,0.40)}
+.px-bridge .group:hover .group-hover\:text-blue-400{color:#8A5A2B}
+.px-bridge .group:hover .group-hover\:text-pink-400{color:#8A5A2B}
+.px-bridge .hover\:bg-amber-400\/20:hover{background-color:rgba(122,78,0,0.20)}
+.px-bridge .hover\:bg-amber-500\/15:hover{background-color:rgba(122,78,0,0.15)}
+.px-bridge .hover\:bg-amber-500\/20:hover{background-color:rgba(122,78,0,0.20)}
+.px-bridge .hover\:bg-amber-500\/5:hover{background-color:rgba(122,78,0,0.05)}
+.px-bridge .hover\:bg-blue-400:hover{background-color:#141414}
+.px-bridge .hover\:bg-blue-500:hover{background-color:#141414}
+.px-bridge .hover\:bg-blue-500\/15:hover{background-color:rgba(138,90,43,0.15)}
+.px-bridge .hover\:bg-blue-500\/20:hover{background-color:rgba(138,90,43,0.20)}
+.px-bridge .hover\:bg-blue-500\/5:hover{background-color:rgba(138,90,43,0.05)}
+.px-bridge .hover\:bg-blue-600:hover{background-color:#000}
+.px-bridge .hover\:bg-emerald-400:hover{background-color:#1D6B47}
+.px-bridge .hover\:bg-emerald-400\/20:hover{background-color:rgba(29,107,71,0.20)}
+.px-bridge .hover\:bg-emerald-500\/10:hover{background-color:rgba(29,107,71,0.10)}
+.px-bridge .hover\:bg-emerald-500\/15:hover{background-color:rgba(29,107,71,0.15)}
+.px-bridge .hover\:bg-emerald-500\/20:hover{background-color:rgba(29,107,71,0.20)}
+.px-bridge .hover\:bg-emerald-500\/30:hover{background-color:rgba(29,107,71,0.30)}
+.px-bridge .hover\:bg-emerald-500\/5:hover{background-color:rgba(29,107,71,0.05)}
+.px-bridge .hover\:bg-green-500\/20:hover{background-color:rgba(29,107,71,0.20)}
+.px-bridge .hover\:bg-green-500\/5:hover{background-color:rgba(29,107,71,0.05)}
+.px-bridge .hover\:bg-orange-400\/20:hover{background-color:rgba(122,78,0,0.20)}
+.px-bridge .hover\:bg-orange-500\/20:hover{background-color:rgba(122,78,0,0.20)}
+.px-bridge .hover\:bg-pink-500\/5:hover{background-color:rgba(138,90,43,0.05)}
+.px-bridge .hover\:bg-purple-400:hover{background-color:#141414}
+.px-bridge .hover\:bg-purple-500\/10:hover{background-color:rgba(138,90,43,0.10)}
+.px-bridge .hover\:bg-purple-500\/15:hover{background-color:rgba(138,90,43,0.15)}
+.px-bridge .hover\:bg-red-100:hover{background-color:#F6DDD8}
+.px-bridge .hover\:bg-red-400\/20:hover{background-color:rgba(155,44,31,0.20)}
+.px-bridge .hover\:bg-red-50:hover{background-color:#F6DDD8}
+.px-bridge .hover\:bg-red-500\/10:hover{background-color:rgba(155,44,31,0.10)}
+.px-bridge .hover\:bg-red-500\/15:hover{background-color:rgba(155,44,31,0.15)}
+.px-bridge .hover\:bg-red-500\/20:hover{background-color:rgba(155,44,31,0.20)}
+.px-bridge .hover\:bg-red-500\/50:hover{background-color:rgba(155,44,31,0.50)}
+.px-bridge .hover\:bg-violet-500\/20:hover{background-color:rgba(138,90,43,0.20)}
+.px-bridge .hover\:bg-violet-500\/5:hover{background-color:rgba(138,90,43,0.05)}
+.px-bridge .hover\:border-amber-500\/30:hover{border-color:rgba(122,78,0,0.30)}
+.px-bridge .hover\:border-amber-500\/40:hover{border-color:rgba(122,78,0,0.40)}
+.px-bridge .hover\:border-blue-400\/30:hover{border-color:rgba(138,90,43,0.30)}
+.px-bridge .hover\:border-blue-400\/40:hover{border-color:rgba(138,90,43,0.40)}
+.px-bridge .hover\:border-blue-400\/50:hover{border-color:rgba(138,90,43,0.50)}
+.px-bridge .hover\:border-blue-500\/20:hover{border-color:rgba(138,90,43,0.25)}
+.px-bridge .hover\:border-blue-500\/30:hover{border-color:rgba(138,90,43,0.30)}
+.px-bridge .hover\:border-green-600\/30:hover{border-color:rgba(29,107,71,0.30)}
+.px-bridge .hover\:border-pink-500\/30:hover{border-color:rgba(138,90,43,0.30)}
+.px-bridge .hover\:border-purple-500\/30:hover{border-color:rgba(138,90,43,0.30)}
+.px-bridge .hover\:border-red-300:hover{border-color:rgba(155,44,31,0.30)}
+.px-bridge .hover\:border-red-400\/40:hover{border-color:rgba(155,44,31,0.40)}
+.px-bridge .hover\:border-red-500\/30:hover{border-color:rgba(155,44,31,0.30)}
+.px-bridge .hover\:border-red-500\/40:hover{border-color:rgba(155,44,31,0.40)}
+.px-bridge .hover\:text-blue-300:hover{color:#8A5A2B}
+.px-bridge .hover\:text-blue-400:hover{color:#8A5A2B}
+.px-bridge .hover\:text-blue-500:hover{color:#8A5A2B}
+.px-bridge .hover\:text-emerald-300:hover{color:#1D6B47}
+.px-bridge .hover\:text-purple-300:hover{color:#8A5A2B}
+.px-bridge .hover\:text-red-300:hover{color:#9B2C1F}
+.px-bridge .hover\:text-red-400:hover{color:#9B2C1F}
+.px-bridge .hover\:text-red-500:hover{color:#9B2C1F}
+.px-bridge .text-amber-100{color:#7A4E00}
+.px-bridge .text-amber-200{color:#7A4E00}
+.px-bridge .text-amber-300{color:#7A4E00}
+.px-bridge .text-amber-300\/80{color:#7A4E00}
+.px-bridge .text-amber-400{color:#7A4E00}
+.px-bridge .text-amber-400\/70{color:#7A4E00}
+.px-bridge .text-amber-500{color:#7A4E00}
+.px-bridge .text-amber-600{color:#7A4E00}
+.px-bridge .text-amber-700{color:#7A4E00}
+.px-bridge .text-blue-100{color:#8A5A2B}
+.px-bridge .text-blue-200{color:#8A5A2B}
+.px-bridge .text-blue-300{color:#8A5A2B}
+.px-bridge .text-blue-400{color:#8A5A2B}
+.px-bridge .text-blue-400\/60{color:#8A5A2B}
+.px-bridge .text-blue-400\/70{color:#8A5A2B}
+.px-bridge .text-blue-600{color:#8A5A2B}
+.px-bridge .text-blue-700{color:#8A5A2B}
+.px-bridge .text-cyan-400{color:#8A5A2B}
+.px-bridge .text-cyan-700{color:#8A5A2B}
+.px-bridge .text-emerald-300{color:#1D6B47}
+.px-bridge .text-emerald-400{color:#1D6B47}
+.px-bridge .text-emerald-400\/70{color:#1D6B47}
+.px-bridge .text-emerald-600{color:#1D6B47}
+.px-bridge .text-emerald-700{color:#1D6B47}
+.px-bridge .text-fuchsia-700{color:#8A5A2B}
+.px-bridge .text-green-300{color:#1D6B47}
+.px-bridge .text-green-400{color:#1D6B47}
+.px-bridge .text-green-500{color:#1D6B47}
+.px-bridge .text-green-600{color:#1D6B47}
+.px-bridge .text-green-700{color:#1D6B47}
+.px-bridge .text-indigo-400{color:#8A5A2B}
+.px-bridge .text-indigo-700{color:#8A5A2B}
+.px-bridge .text-lime-600{color:#1D6B47}
+.px-bridge .text-lime-700{color:#1D6B47}
+.px-bridge .text-orange-300{color:#7A4E00}
+.px-bridge .text-orange-400{color:#7A4E00}
+.px-bridge .text-orange-600{color:#7A4E00}
+.px-bridge .text-orange-700{color:#7A4E00}
+.px-bridge .text-pink-400{color:#8A5A2B}
+.px-bridge .text-pink-600{color:#8A5A2B}
+.px-bridge .text-pink-700{color:#8A5A2B}
+.px-bridge .text-purple-300{color:#8A5A2B}
+.px-bridge .text-purple-400{color:#8A5A2B}
+.px-bridge .text-purple-600{color:#8A5A2B}
+.px-bridge .text-purple-700{color:#8A5A2B}
+.px-bridge .text-red-200{color:#9B2C1F}
+.px-bridge .text-red-300{color:#9B2C1F}
+.px-bridge .text-red-400{color:#9B2C1F}
+.px-bridge .text-red-400\/70{color:#9B2C1F}
+.px-bridge .text-red-400\/80{color:#9B2C1F}
+.px-bridge .text-red-500{color:#9B2C1F}
+.px-bridge .text-red-600{color:#9B2C1F}
+.px-bridge .text-red-700{color:#9B2C1F}
+.px-bridge .text-rose-500{color:#9B2C1F}
+.px-bridge .text-rose-700{color:#9B2C1F}
+.px-bridge .text-sky-700{color:#8A5A2B}
+.px-bridge .text-teal-700{color:#8A5A2B}
+.px-bridge .text-violet-300{color:#8A5A2B}
+.px-bridge .text-violet-400{color:#8A5A2B}
+.px-bridge .text-violet-600{color:#8A5A2B}
+.px-bridge .text-violet-700{color:#8A5A2B}
+.px-bridge .text-yellow-400{color:#7A4E00}
+.px-bridge .text-yellow-700{color:#7A4E00}
+.px-bridge .bg-accent{background-color:#141414}
+.px-bridge .hover\:bg-accent\/90:hover{background-color:#000}
 
 /* ══════════════════════════════════════════════════════════════════════════════
    BASE

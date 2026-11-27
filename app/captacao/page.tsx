@@ -345,19 +345,29 @@ export default function CaptacaoPage() {
         <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <PraxisLogo />
           <div className="flex items-center gap-4 text-[12px] text-[#0D1B2A]/40">
-            <span className="flex items-center gap-1"><Stethoscope className="w-3 h-3" /> CRM/SP</span>
-            <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> São Paulo, SP</span>
+            <span className="flex items-center gap-1"><Stethoscope className="w-3 h-3" /> CRM/SP 174632</span>
           </div>
           <div className="flex items-center gap-3">
-            <a href="https://wa.me/55" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[12px] text-[#0D1B2A]/50 hover:text-[#b8976a] transition-colors">
-              <Phone className="w-3.5 h-3.5" /> WhatsApp
+            <a href="https://wa.me/5535997688008" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[12px] text-[#0D1B2A]/50 hover:text-[#b8976a] transition-colors">
+              <Phone className="w-3.5 h-3.5" /> WhatsApp MG
             </a>
-            <a href="https://instagram.com/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[12px] text-[#0D1B2A]/50 hover:text-[#b8976a] transition-colors">
+            <a href="https://wa.me/5547988631862" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[12px] text-[#0D1B2A]/50 hover:text-[#b8976a] transition-colors">
+              <Phone className="w-3.5 h-3.5" /> WhatsApp SC
+            </a>
+            <a href="https://instagram.com/drbrunogustavo" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[12px] text-[#0D1B2A]/50 hover:text-[#b8976a] transition-colors">
               <Instagram className="w-3.5 h-3.5" /> Instagram
             </a>
           </div>
         </div>
-        <p className="text-center text-[11px] text-[#0D1B2A]/30 mt-6">© 2026 PRAXIS. Todos os direitos reservados.</p>
+        <div className="mt-6 space-y-1 text-[12px] text-[#0D1B2A]/50">
+          <p className="flex items-center justify-center gap-1.5">
+            <MapPin className="w-3 h-3" /> WhatsApp MG: Poços de Caldas, Alfenas, São Paulo e online
+          </p>
+          <p className="flex items-center justify-center gap-1.5">
+            <MapPin className="w-3 h-3" /> WhatsApp SC: Balneário Camboriú e online, em horário comercial
+          </p>
+        </div>
+        <p className="text-center text-[11px] text-[#0D1B2A]/30 mt-2">© 2026 PRAXIS. Todos os direitos reservados.</p>
       </footer>
     </div>
   )

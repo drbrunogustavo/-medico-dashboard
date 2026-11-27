@@ -1,12 +1,9 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { TopBar } from "@/components/TopBar"
-import { cn } from "@/lib/utils"
-import {
-  Star, Plus, X, Loader2, Check, Send, Copy, CheckCircle,
-  MessageSquare, TrendingUp, Users,
-} from "lucide-react"
+import { Panel, PxButton, Tag, Field, PxInput, PxCheckbox, PxModal, PageHeader } from "@/components/px"
+import { Toast, type ToastType } from "@/components/Toast"
+import { Star, Plus, Send, Copy, Check, MessageSquare } from "lucide-react"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -19,13 +16,13 @@ interface NPS {
 
 interface Depoimento { instagram: string; google: string }
 
-const inputCls = "w-full bg-background border border-border rounded-lg px-3 py-2.5 text-[13px] text-text-primary placeholder-text-muted focus:outline-none focus:border-accent/50 transition-colors"
+type Tone = "neutral" | "ink" | "accent" | "danger" | "ok" | "warn"
 
-function notaBadge(nota: number | null) {
-  if (nota === null) return "bg-surface-2 text-text-muted border-border"
-  if (nota >= 9) return "bg-emerald-500/10 text-emerald-400 border-emerald-500/25"
-  if (nota >= 7) return "bg-amber-500/10 text-amber-400 border-amber-500/25"
-  return "bg-red-500/10 text-red-400 border-red-500/25"
+function notaTone(nota: number | null): Tone {
+  if (nota === null) return "neutral"
+  if (nota >= 9) return "ok"
+  if (nota >= 7) return "warn"
+  return "danger"
 }
 
 function notaLabel(nota: number | null) {
@@ -36,11 +33,16 @@ function notaLabel(nota: number | null) {
 }
 
 function fmtDate(s: string) {
-  if (!s) return "—"
+  if (!s) return "Sem data"
   return new Date(s).toLocaleDateString("pt-BR")
 }
 
-// ── Add NPS Modal ─────────────────────────────────────────────────────────────
+const STATUS_TAG: Record<string, { label: string; tone: Tone }> = {
+  respondido: { label: "Respondido", tone: "ok" },
+  enviado:    { label: "Enviado",    tone: "ink" },
+}
+
+// ── Modal: nova pesquisa ──────────────────────────────────────────────────────
 
 function AddModal({ onSave, onClose }: { onSave: (nome: string, tel: string) => Promise<void>; onClose: () => void }) {
   const [saving, setSaving] = useState(false)
@@ -56,50 +58,39 @@ function AddModal({ onSave, onClose }: { onSave: (nome: string, tel: string) => 
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-sm bg-surface border border-border rounded-xl shadow-2xl">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-          <h2 className="text-[15px] font-semibold text-text-primary">Nova Pesquisa NPS</h2>
-          <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors"><X className="w-4 h-4" /></button>
+    <PxModal open onClose={onClose} title="Nova pesquisa NPS" className="max-w-sm">
+      <form onSubmit={submit} className="space-y-4">
+        <Field label="Nome do paciente" htmlFor="nps-nome">
+          <PxInput id="nps-nome" value={nome} onChange={e => setNome(e.target.value)} required placeholder="Nome completo" />
+        </Field>
+        <Field label="WhatsApp" htmlFor="nps-tel" hint="O link da pesquisa é enviado por WhatsApp em 24 horas.">
+          <PxInput id="nps-tel" value={tel} onChange={e => setTel(e.target.value)} required placeholder="(11) 99999-9999" inputMode="tel" />
+        </Field>
+        <div className="flex gap-2 pt-1">
+          <PxButton variant="secondary" fullWidth onClick={onClose}>Cancelar</PxButton>
+          <PxButton type="submit" fullWidth loading={saving} disabled={saving || !nome.trim() || !tel.trim()} leftIcon={Check}>Criar</PxButton>
         </div>
-        <form onSubmit={submit} className="p-5 space-y-3">
-          <div>
-            <label className="block text-[11px] font-mono text-text-muted mb-1.5 uppercase tracking-wider">Nome do Paciente</label>
-            <input value={nome} onChange={e => setNome(e.target.value)} required placeholder="Nome completo" className={inputCls} />
-          </div>
-          <div>
-            <label className="block text-[11px] font-mono text-text-muted mb-1.5 uppercase tracking-wider">WhatsApp</label>
-            <input value={tel} onChange={e => setTel(e.target.value)} required placeholder="(11) 99999-9999" className={inputCls} />
-          </div>
-          <p className="text-[10px] text-text-muted">O link NPS será enviado via WhatsApp em 24h automaticamente.</p>
-          <div className="flex gap-2 pt-1">
-            <button type="button" onClick={onClose} className="flex-1 py-2 rounded-lg border border-border text-[13px] text-text-muted">Cancelar</button>
-            <button type="submit" disabled={saving || !nome.trim() || !tel.trim()} className="flex-1 py-2 rounded-lg bg-accent text-[13px] font-semibold text-background disabled:opacity-60 flex items-center justify-center gap-2">
-              {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-              Criar
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+      </form>
+    </PxModal>
   )
 }
 
-// ── Depoimento Modal ──────────────────────────────────────────────────────────
+// ── Modal: depoimento ─────────────────────────────────────────────────────────
 
 function DepoimentoModal({ nps, onClose }: { nps: NPS; onClose: () => void }) {
   const [form, setForm] = useState({
     resultado: "", tempo_paciente: "", transformacao: "", usar_nome_completo: true, telefone: nps.paciente_telefone,
   })
-  const [loading,    setLoading]    = useState(false)
-  const [result,     setResult]     = useState<Depoimento | null>(null)
-  const [copied,     setCopied]     = useState<string | null>(null)
-  const [sending,    setSending]    = useState(false)
-  const [sendOk,     setSendOk]     = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [result,  setResult]  = useState<Depoimento | null>(null)
+  const [copied,  setCopied]  = useState<string | null>(null)
+  const [sending, setSending] = useState(false)
+  const [sendOk,  setSendOk]  = useState(false)
+  const [erro,    setErro]    = useState("")
 
   async function gerar() {
     setLoading(true)
+    setErro("")
     try {
       const r = await fetch("/api/depoimentos", {
         method: "POST",
@@ -114,7 +105,10 @@ function DepoimentoModal({ nps, onClose }: { nps: NPS; onClose: () => void }) {
       })
       if (!r.ok) throw new Error()
       setResult(await r.json())
-    } catch (e) { console.error("[nps] erro ao gerar conteúdo IA:", e) }
+    } catch (e) {
+      console.error("[nps] erro ao gerar conteúdo IA:", e)
+      setErro("Não foi possível gerar o depoimento. Tente de novo.")
+    }
     finally { setLoading(false) }
   }
 
@@ -126,6 +120,7 @@ function DepoimentoModal({ nps, onClose }: { nps: NPS; onClose: () => void }) {
 
   async function enviarAprovacao() {
     setSending(true)
+    setErro("")
     try {
       const r = await fetch("/api/depoimentos", {
         method: "POST",
@@ -138,107 +133,81 @@ function DepoimentoModal({ nps, onClose }: { nps: NPS; onClose: () => void }) {
         }),
       })
       if (r.ok) setSendOk(true)
-    } catch (e) { console.error("[nps] erro ao enviar aprovação:", e) }
+      else setErro("Não foi possível enviar para aprovação.")
+    } catch (e) {
+      console.error("[nps] erro ao enviar aprovação:", e)
+      setErro("Não foi possível enviar para aprovação.")
+    }
     finally { setSending(false) }
   }
 
+  const campos: { key: keyof Depoimento; label: string }[] = [
+    { key: "instagram", label: "Instagram" },
+    { key: "google",    label: "Google" },
+  ]
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-2xl bg-surface border border-border rounded-xl shadow-2xl max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 flex items-center justify-between px-5 py-4 border-b border-border bg-surface">
-          <h2 className="text-[15px] font-semibold text-text-primary">Gerar Depoimento — {nps.paciente_nome}</h2>
-          <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors"><X className="w-4 h-4" /></button>
+    <PxModal open onClose={onClose} title={`Depoimento de ${nps.paciente_nome}`} className="max-w-2xl">
+      <div className="space-y-4">
+        <div className="rounded-px-card border border-px-line bg-white/50 p-4">
+          <p className="mb-1 text-[12px] text-px-muted">Avaliação original</p>
+          <Tag tone={notaTone(nps.nota)}>{nps.nota}/10, {notaLabel(nps.nota)}</Tag>
+          {nps.comentario && <p className="mt-2 text-[13px] italic text-px-ink">&ldquo;{nps.comentario}&rdquo;</p>}
         </div>
 
-        <div className="p-5 space-y-4">
-          {/* Base info */}
-          <div className="bg-background border border-border rounded-lg p-3">
-            <div className="text-[11px] font-mono text-text-muted mb-1">Avaliação original</div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className={cn("text-[10px] font-mono font-bold px-1.5 py-0.5 rounded border", notaBadge(nps.nota))}>
-                {nps.nota}/10 — {notaLabel(nps.nota)}
-              </span>
-            </div>
-            {nps.comentario && <p className="text-[12px] text-text-secondary italic">"{nps.comentario}"</p>}
-          </div>
+        <Field label="Resultado obtido" htmlFor="dp-res">
+          <PxInput id="dp-res" value={form.resultado} onChange={e => setForm(f => ({ ...f, resultado: e.target.value }))} placeholder="Ex: perdeu 8 kg em 3 meses" />
+        </Field>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Field label="Tempo como paciente" htmlFor="dp-tempo">
+            <PxInput id="dp-tempo" value={form.tempo_paciente} onChange={e => setForm(f => ({ ...f, tempo_paciente: e.target.value }))} placeholder="Ex: 6 meses" />
+          </Field>
+          <Field label="Principal transformação" htmlFor="dp-transf">
+            <PxInput id="dp-transf" value={form.transformacao} onChange={e => setForm(f => ({ ...f, transformacao: e.target.value }))} placeholder="Ex: mais energia e disposição" />
+          </Field>
+        </div>
+        <PxCheckbox label="Usar o nome completo no depoimento" checked={form.usar_nome_completo} onChange={e => setForm(f => ({ ...f, usar_nome_completo: e.target.checked }))} />
 
-          {/* Extra fields */}
-          <div className="space-y-3">
-            <div>
-              <label className="block text-[11px] font-mono text-text-muted mb-1.5 uppercase tracking-wider">Resultado obtido</label>
-              <input value={form.resultado} onChange={e => setForm(f => ({ ...f, resultado: e.target.value }))} placeholder="Ex: Perdeu 8kg em 3 meses" className={inputCls} />
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-[11px] font-mono text-text-muted mb-1.5 uppercase tracking-wider">Tempo como paciente</label>
-                <input value={form.tempo_paciente} onChange={e => setForm(f => ({ ...f, tempo_paciente: e.target.value }))} placeholder="Ex: 6 meses" className={inputCls} />
-              </div>
-              <div>
-                <label className="block text-[11px] font-mono text-text-muted mb-1.5 uppercase tracking-wider">Principal transformação</label>
-                <input value={form.transformacao} onChange={e => setForm(f => ({ ...f, transformacao: e.target.value }))} placeholder="Ex: Mais energia e disposição" className={inputCls} />
-              </div>
-            </div>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" checked={form.usar_nome_completo} onChange={e => setForm(f => ({ ...f, usar_nome_completo: e.target.checked }))} className="rounded" />
-              <span className="text-[12px] text-text-secondary">Usar nome completo no depoimento</span>
-            </label>
-          </div>
+        {erro && <p role="alert" className="rounded-px-card bg-px-danger-soft px-4 py-3 text-[13px] text-px-danger">{erro}</p>}
 
-          <button
-            onClick={gerar}
-            disabled={loading}
-            className="w-full py-2.5 rounded-lg bg-accent text-background text-[13px] font-semibold disabled:opacity-60 flex items-center justify-center gap-2"
-          >
-            {loading ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Gerando com IA...</> : <><Star className="w-3.5 h-3.5" /> Gerar com IA</>}
-          </button>
+        <PxButton fullWidth leftIcon={Star} loading={loading} disabled={loading} onClick={gerar}>
+          {loading ? "Gerando com IA" : "Gerar com IA"}
+        </PxButton>
 
-          {result && (
-            <div className="grid md:grid-cols-2 gap-3">
-              {[
-                { key: "instagram", label: "Instagram", icon: "📸" },
-                { key: "google",    label: "Google",    icon: "🔍" },
-              ].map(({ key, label, icon }) => (
-                <div key={key} className="bg-background border border-border rounded-xl p-4 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-mono text-text-muted uppercase tracking-wider">{icon} {label}</span>
-                    <button
-                      onClick={() => copy(result[key as keyof Depoimento], key)}
-                      className="flex items-center gap-1 px-2 py-1 rounded bg-surface-2 border border-border text-[10px] text-text-muted hover:text-accent transition-colors"
-                    >
-                      {copied === key ? <><CheckCircle className="w-3 h-3 text-accent" /> Copiado</> : <><Copy className="w-3 h-3" /> Copiar</>}
-                    </button>
-                  </div>
-                  <p className="text-[12px] text-text-secondary leading-relaxed whitespace-pre-wrap">{result[key as keyof Depoimento]}</p>
+        {result && (
+          <div className="grid gap-3 md:grid-cols-2">
+            {campos.map(({ key, label }) => (
+              <div key={key} className="space-y-2 rounded-px-card border border-px-line bg-white/50 p-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-[13px] font-semibold text-px-ink">{label}</span>
+                  <PxButton size="sm" variant="secondary" leftIcon={copied === key ? Check : Copy} aria-label={`Copiar texto do ${label}`} onClick={() => copy(result[key], key)}>
+                    {copied === key ? "Copiado" : "Copiar"}
+                  </PxButton>
                 </div>
-              ))}
-            </div>
-          )}
+                <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-px-ink">{result[key]}</p>
+              </div>
+            ))}
+          </div>
+        )}
 
-          {result && (
-            <div className="flex gap-2 pt-2 border-t border-border">
-              <input
-                value={form.telefone}
-                onChange={e => setForm(f => ({ ...f, telefone: e.target.value }))}
-                placeholder="Telefone para aprovação"
-                className={cn(inputCls, "flex-1")}
-              />
-              <button
-                onClick={enviarAprovacao}
-                disabled={sending || sendOk}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-[12px] font-semibold disabled:opacity-60 flex-shrink-0 transition-all"
-              >
-                {sendOk ? <><CheckCircle className="w-3.5 h-3.5" /> Enviado!</> : sending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <><Send className="w-3.5 h-3.5" /> Enviar para aprovação</>}
-              </button>
-            </div>
-          )}
-        </div>
+        {result && (
+          <div className="flex flex-wrap gap-2 border-t border-px-line pt-3">
+            <PxInput
+              aria-label="Telefone para aprovação"
+              value={form.telefone}
+              onChange={e => setForm(f => ({ ...f, telefone: e.target.value }))}
+              placeholder="Telefone para aprovação"
+              className="min-w-0 flex-1"
+            />
+            <PxButton variant="secondary" leftIcon={sendOk ? Check : Send} loading={sending} disabled={sending || sendOk} onClick={enviarAprovacao}>
+              {sendOk ? "Enviado" : "Enviar para aprovação"}
+            </PxButton>
+          </div>
+        )}
       </div>
-    </div>
+    </PxModal>
   )
 }
-
-// ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function NPSPage() {
   const [items,   setItems]   = useState<NPS[]>([])
@@ -246,9 +215,12 @@ export default function NPSPage() {
   const [showAdd, setShowAdd] = useState(false)
   const [depoimento, setDepoimento] = useState<NPS | null>(null)
   const [toast,   setToast]   = useState<string | null>(null)
+  const [toastType, setToastType] = useState<ToastType>("success")
   const [sending, setSending] = useState<string | null>(null)
 
-  function showToast(msg: string) { setToast(msg); setTimeout(() => setToast(null), 3000) }
+  function showToast(msg: string, type: ToastType = "success") {
+    setToastType(type); setToast(msg); setTimeout(() => setToast(null), 3000)
+  }
 
   const fetch_ = useCallback(async () => {
     setLoading(true)
@@ -267,7 +239,7 @@ export default function NPSPage() {
       body: JSON.stringify({ paciente_nome: nome, paciente_telefone: tel }),
     })
     if (r.ok) { showToast("Pesquisa criada! Será enviada em 24h."); setShowAdd(false); await fetch_() }
-    else showToast("Erro ao criar pesquisa")
+    else showToast("Erro ao criar pesquisa", "error")
   }
 
   async function enviarAgora(id: string) {
@@ -277,129 +249,102 @@ export default function NPSPage() {
       headers: {},
     })
     setSending(null)
-    if (r.ok) { showToast("Enviando..."); await fetch_() }
+    if (r.ok) { showToast("Envio iniciado"); await fetch_() }
+    else showToast("Não foi possível enviar agora", "error")
   }
 
-  // NPS Score calc
+  // Cálculo do NPS
   const respondidas = items.filter(i => i.nota !== null)
   const promotores  = respondidas.filter(i => (i.nota ?? 0) >= 9).length
   const detratores  = respondidas.filter(i => (i.nota ?? 0) <= 6).length
+  const neutros     = respondidas.length - promotores - detratores
   const score       = respondidas.length
     ? Math.round(((promotores - detratores) / respondidas.length) * 100)
     : 0
-  const scoreColor  = score >= 50 ? "text-emerald-400" : score >= 0 ? "text-amber-400" : "text-red-400"
 
   return (
     <div className="animate-fade-in">
-      <TopBar
-        title="NPS & Satisfação"
-        subtitle="ALA CLÍNICA · PACIENTES"
-        actions={
-          <button
-            onClick={() => setShowAdd(true)}
-            className="flex items-center gap-1.5 px-5 py-3 bg-accent text-background text-[14px] font-semibold rounded-lg hover:bg-accent/90 transition-colors min-h-[44px]"
-          >
-            <Plus className="w-4 h-4" /> Nova Pesquisa
-          </button>
-        }
+      <PageHeader
+        title="NPS"
+        caption="Satisfação dos pacientes"
+        actions={<PxButton leftIcon={Plus} onClick={() => setShowAdd(true)}>Nova pesquisa</PxButton>}
       />
 
-      <div className="p-4 md:p-8 space-y-6">
-        {/* Score header */}
-        <div className="bg-surface border border-border rounded-xl p-6 flex flex-col md:flex-row items-center gap-6">
-          <div className="text-center">
-            <div className={cn("text-6xl font-bold tabular-nums", scoreColor)}>{score}</div>
-            <div className="text-[11px] font-mono text-text-muted uppercase tracking-widest mt-1">Score NPS</div>
-          </div>
-          <div className="w-px h-16 bg-border hidden md:block" />
-          <div className="grid grid-cols-3 gap-3 sm:gap-6 flex-1">
-            {[
-              { label: "Promotores",  value: promotores, cls: "text-emerald-400", sub: "nota 9-10" },
-              { label: "Neutros",     value: respondidas.length - promotores - detratores, cls: "text-amber-400", sub: "nota 7-8" },
-              { label: "Detratores",  value: detratores,  cls: "text-red-400",    sub: "nota 0-6" },
-            ].map(s => (
-              <div key={s.label} className="text-center">
-                <div className={cn("text-2xl font-bold", s.cls)}>{s.value}</div>
-                <div className="text-[11px] text-text-muted">{s.label}</div>
-                <div className="text-[9px] font-mono text-text-muted/60">{s.sub}</div>
+      <div className="space-y-4 px-4 pb-10 md:px-10">
+        <Panel tone="dark">
+          <div className="flex flex-col gap-5 md:flex-row md:items-center md:gap-10 text-white">
+            <div>
+              <p className="text-[12px] text-white/80">Score NPS</p>
+              <p className="mt-1 text-[56px] font-semibold leading-none tabular-nums">{score}</p>
+              <p className="mt-1 text-[12px] text-white/80">{score >= 50 ? "Excelente" : score >= 0 ? "Bom, com espaço para melhorar" : "Crítico"}</p>
+            </div>
+            <dl className="grid flex-1 grid-cols-2 gap-4 sm:grid-cols-4">
+              <div>
+                <dt className="text-[12px] text-white/80">Promotores (9 a 10)</dt>
+                <dd className="mt-1 text-[28px] font-semibold leading-none tabular-nums">{promotores}</dd>
               </div>
-            ))}
+              <div>
+                <dt className="text-[12px] text-white/80">Neutros (7 a 8)</dt>
+                <dd className="mt-1 text-[28px] font-semibold leading-none tabular-nums">{neutros}</dd>
+              </div>
+              <div>
+                <dt className="text-[12px] text-white/80">Detratores (0 a 6)</dt>
+                <dd className="mt-1 text-[28px] font-semibold leading-none tabular-nums">{detratores}</dd>
+              </div>
+              <div>
+                <dt className="text-[12px] text-white/80">Respostas de {items.length}</dt>
+                <dd className="mt-1 text-[28px] font-semibold leading-none tabular-nums">{respondidas.length}</dd>
+              </div>
+            </dl>
           </div>
-          <div className="w-px h-16 bg-border hidden md:block" />
-          <div className="text-center">
-            <div className="text-2xl font-bold text-blue-400">{respondidas.length}</div>
-            <div className="text-[11px] text-text-muted">Respostas</div>
-            <div className="text-[9px] font-mono text-text-muted/60">de {items.length} enviadas</div>
-          </div>
-        </div>
+        </Panel>
 
-        {/* Responses list */}
         {loading ? (
-          <div className="space-y-3">{[1, 2, 3].map(i => <div key={i} className="h-16 bg-surface rounded-xl border border-border animate-pulse" />)}</div>
+          <div className="space-y-3" aria-busy="true">{[1, 2, 3].map(i => <div key={i} className="px-glass h-[84px] animate-pulse rounded-px-panel" />)}</div>
         ) : items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-3">
-            <Star className="w-10 h-10 text-text-muted/30" />
-            <p className="text-text-muted text-[13px]">Nenhuma pesquisa criada ainda</p>
-          </div>
+          <Panel tone="light" className="py-14 text-center">
+            <p className="text-[14px] text-px-ink">Nenhuma pesquisa criada ainda.</p>
+            <div className="mt-4 flex justify-center">
+              <PxButton leftIcon={Plus} onClick={() => setShowAdd(true)}>Criar primeira pesquisa</PxButton>
+            </div>
+          </Panel>
         ) : (
-          <div className="space-y-2">
-            {items.map(nps => (
-              <div key={nps.id} className="bg-surface border border-border rounded-xl p-4 flex items-start gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <span className="text-[13px] font-semibold text-text-primary">{nps.paciente_nome}</span>
-                    {nps.nota !== null && (
-                      <span className={cn("text-[10px] font-mono font-bold px-2 py-0.5 rounded border", notaBadge(nps.nota))}>
-                        {nps.nota}/10 — {notaLabel(nps.nota)}
-                      </span>
-                    )}
-                    <span className={cn(
-                      "text-badge font-mono px-1.5 py-0.5 rounded border",
-                      nps.status === "respondido" ? "bg-emerald-500/10 border-emerald-500/25 text-emerald-400"
-                        : nps.status === "enviado" ? "bg-blue-500/10 border-blue-500/25 text-blue-400"
-                        : "bg-surface-2 border-border text-text-muted"
-                    )}>
-                      {nps.status === "respondido" ? "RESPONDIDO" : nps.status === "enviado" ? "ENVIADO" : "PENDENTE"}
-                    </span>
-                  </div>
-                  {nps.comentario && <p className="text-[12px] text-text-secondary italic line-clamp-2">"{nps.comentario}"</p>}
-                  <div className="text-[10px] font-mono text-text-muted mt-1">
-                    {nps.respondido_em ? `Respondido em ${fmtDate(nps.respondido_em)}` : `Agendado para ${fmtDate(nps.agendado_para)}`}
-                  </div>
-                </div>
-                <div className="flex flex-col gap-1.5 flex-shrink-0">
-                  {nps.nota !== null && nps.nota >= 9 && (
-                    <button
-                      onClick={() => setDepoimento(nps)}
-                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-accent-dim border border-accent-border text-accent text-[11px] font-semibold hover:bg-accent/15 transition-colors"
-                    >
-                      <MessageSquare className="w-3 h-3" /> Depoimento
-                    </button>
-                  )}
-                  {nps.status === "pendente" && (
-                    <button
-                      onClick={() => enviarAgora(nps.id)}
-                      disabled={sending === nps.id}
-                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-border text-text-muted text-[11px] hover:text-accent hover:border-accent/30 transition-colors"
-                    >
-                      {sending === nps.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />} Enviar
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
+          <ul className="space-y-3">
+            {items.map(nps => {
+              const st = STATUS_TAG[nps.status] ?? { label: "Pendente", tone: "neutral" as Tone }
+              return (
+                <li key={nps.id}>
+                  <Panel tone="light" className="flex items-start gap-4">
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-1 flex flex-wrap items-center gap-2">
+                        <span className="text-[14px] font-semibold text-px-ink">{nps.paciente_nome}</span>
+                        {nps.nota !== null && <Tag tone={notaTone(nps.nota)}>{nps.nota}/10, {notaLabel(nps.nota)}</Tag>}
+                        <Tag tone={st.tone}>{st.label}</Tag>
+                      </div>
+                      {nps.comentario && <p className="line-clamp-2 text-[13px] italic text-px-ink">&ldquo;{nps.comentario}&rdquo;</p>}
+                      <p className="mt-1 text-[12px] text-px-muted">
+                        {nps.respondido_em ? `Respondido em ${fmtDate(nps.respondido_em)}` : `Agendado para ${fmtDate(nps.agendado_para)}`}
+                      </p>
+                    </div>
+                    <div className="flex flex-shrink-0 flex-col gap-1.5">
+                      {nps.nota !== null && nps.nota >= 9 && (
+                        <PxButton size="sm" variant="secondary" leftIcon={MessageSquare} onClick={() => setDepoimento(nps)}>Depoimento</PxButton>
+                      )}
+                      {nps.status === "pendente" && (
+                        <PxButton size="sm" variant="secondary" leftIcon={Send} loading={sending === nps.id} disabled={sending === nps.id} onClick={() => enviarAgora(nps.id)}>Enviar</PxButton>
+                      )}
+                    </div>
+                  </Panel>
+                </li>
+              )
+            })}
+          </ul>
         )}
       </div>
 
-      {showAdd  && <AddModal onSave={createNPS} onClose={() => setShowAdd(false)} />}
+      {showAdd && <AddModal onSave={createNPS} onClose={() => setShowAdd(false)} />}
       {depoimento && <DepoimentoModal nps={depoimento} onClose={() => setDepoimento(null)} />}
-
-      {toast && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 bg-surface border border-border rounded-xl shadow-xl text-[13px] text-text-primary">
-          {toast}
-        </div>
-      )}
+      <Toast message={toast} type={toastType} />
     </div>
   )
 }

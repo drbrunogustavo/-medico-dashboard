@@ -1,12 +1,11 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { Lightbulb, Send, Trash2, Loader2, ChevronRight, User, Bot } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
+import { Send, Trash2 } from "lucide-react"
+import { Panel, PxButton, PageHeader } from "@/components/px"
 import { useAppContext } from "@/components/AppProvider"
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// ─── Tipos ────────────────────────────────────────────────────────────────────
 
 interface Msg {
   role:    "user" | "assistant"
@@ -27,7 +26,7 @@ interface ClinicaCtx {
 const ANALISES_RAPIDAS = [
   "Por que minha agenda está vazia?",
   "Como aumentar meu ticket médio?",
-  "Meu faturamento estagnou — o que fazer?",
+  "Meu faturamento estagnou, o que fazer?",
   "Como me livrar dos convênios?",
   "Como montar um protocolo premium?",
   "Como estruturar minha equipe?",
@@ -35,81 +34,54 @@ const ANALISES_RAPIDAS = [
   "Análise completa da minha clínica",
 ]
 
-// ─── Message Bubble ──────────────────────────────────────────────────────────
+const ERRO_CONEXAO = "Erro ao conectar com o consultor. Tente novamente."
+
+// ─── Mensagem ────────────────────────────────────────────────────────────────
 
 function MsgBubble({ msg }: { msg: Msg }) {
   const isUser = msg.role === "user"
   return (
-    <div className={cn("flex gap-3", isUser && "flex-row-reverse")}>
-      <div className={cn(
-        "w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5",
-        isUser ? "bg-purple-500/20 border border-purple-500/30" : "bg-accent/10 border border-accent/20"
-      )}>
-        {isUser
-          ? <User className="w-3.5 h-3.5 text-purple-400" />
-          : <Bot  className="w-3.5 h-3.5 text-accent" />}
-      </div>
-      <div className={cn(
-        "max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed",
-        isUser
-          ? "bg-purple-500/10 border border-purple-500/20 text-text-primary rounded-tr-sm"
-          : "bg-[--surface] border border-[--border] text-text-secondary rounded-tl-sm"
-      )}>
+    <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
+      <div className={`max-w-[85%] rounded-px-card px-4 py-3 text-[13.5px] leading-relaxed ${isUser ? "bg-px-ink text-white" : "bg-px-ink/[0.05] text-px-ink"}`}>
+        <span className="sr-only">{isUser ? "Você: " : "Consultor: "}</span>
         <pre className="whitespace-pre-wrap font-sans">{msg.content}</pre>
       </div>
     </div>
   )
 }
 
-// ─── Typing indicator ────────────────────────────────────────────────────────
-
-function TypingDots() {
-  return (
-    <div className="flex gap-3">
-      <div className="w-7 h-7 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center flex-shrink-0">
-        <Bot className="w-3.5 h-3.5 text-accent" />
-      </div>
-      <div className="bg-[--surface] border border-[--border] rounded-2xl rounded-tl-sm px-4 py-3 flex items-center gap-1">
-        {[0,1,2].map(i => (
-          <div key={i} className="w-1.5 h-1.5 rounded-full bg-text-muted animate-bounce" style={{ animationDelay: `${i*0.15}s` }} />
-        ))}
-      </div>
-    </div>
-  )
-}
-
-// ─── Context Panel ───────────────────────────────────────────────────────────
+// ─── Contexto da clínica ─────────────────────────────────────────────────────
 
 function ContextPanel({ ctx }: { ctx: ClinicaCtx }) {
   const items = [
-    ctx.especialidade  && { label: "Especialidade",    value: ctx.especialidade },
-    ctx.cidade         && { label: "Cidade",           value: ctx.cidade },
+    ctx.especialidade && { label: "Especialidade", value: ctx.especialidade },
+    ctx.cidade        && { label: "Cidade",        value: ctx.cidade },
     ctx.faturamento_mes !== undefined && {
-      label: "Faturamento/Mês",
+      label: "Faturamento no mês",
       value: ctx.faturamento_mes.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }),
     },
     ctx.leads_total !== undefined && { label: "Leads no CRM", value: String(ctx.leads_total) },
-    ctx.nps_score   !== null && ctx.nps_score !== undefined && { label: "Score NPS", value: String(ctx.nps_score) },
+    ctx.nps_score !== null && ctx.nps_score !== undefined && { label: "NPS", value: String(ctx.nps_score) },
   ].filter(Boolean) as { label: string; value: string }[]
 
   if (!items.length) return null
 
   return (
-    <div className="rounded-xl border border-[--border] bg-[--surface] p-4">
-      <p className="text-[10px] font-mono text-text-muted uppercase tracking-widest mb-3">Contexto da Clínica</p>
-      <div className="space-y-1.5">
+    <Panel as="aside" className="p-4">
+      <h2 className="mb-2 text-[13px] font-semibold text-px-ink">Dados que o consultor usa</h2>
+      <dl className="space-y-1.5">
         {items.map(i => (
-          <div key={i.label} className="flex items-center justify-between gap-2">
-            <span className="text-[11px] text-text-muted">{i.label}</span>
-            <span className="text-[11px] font-semibold text-text-secondary font-mono">{i.value}</span>
+          <div key={i.label} className="flex items-baseline justify-between gap-2">
+            <dt className="text-[12.5px] text-px-muted">{i.label}</dt>
+            <dd className="text-[12.5px] font-semibold text-px-ink">{i.value}</dd>
           </div>
         ))}
-      </div>
-    </div>
+      </dl>
+    </Panel>
   )
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// ─── Página ───────────────────────────────────────────────────────────────────
 
 export default function ConsultorPage() {
   const appCtx      = useAppContext()
@@ -118,10 +90,9 @@ export default function ConsultorPage() {
   const [loading,   setLoading]   = useState(false)
   const [streaming, setStreaming] = useState(false)
   const [ctx,       setCtx]       = useState<ClinicaCtx>({})
+  const [avisoLimpar, setAvisoLimpar] = useState("")
   const bottomRef                 = useRef<HTMLDivElement>(null)
-  const inputRef                  = useRef<HTMLTextAreaElement>(null)
 
-  // Load exec data and history (once on mount)
   useEffect(() => {
     Promise.all([
       fetch("/api/executivo").then(r => r.json()).catch(e => { console.error("[consultor] ctx executivo falhou:", e); return null }),
@@ -144,7 +115,6 @@ export default function ConsultorPage() {
     })
   }, [])
 
-  // Sync perfil fields from context
   useEffect(() => {
     setCtx(prev => ({
       ...prev,
@@ -153,18 +123,17 @@ export default function ConsultorPage() {
     }))
   }, [appCtx?.perfil])
 
-  // Scroll to bottom on new messages
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" })
+    bottomRef.current?.scrollIntoView?.({ behavior: "smooth" })
   }, [messages, streaming])
 
   async function send(text?: string) {
     const content = text ?? input.trim()
     if (!content || loading || streaming) return
     setInput("")
+    setAvisoLimpar("")
 
-    const newMsg: Msg = { role: "user", content }
-    const updated     = [...messages, newMsg]
+    const updated = [...messages, { role: "user", content } as Msg]
     setMessages(updated)
     setLoading(true)
 
@@ -200,7 +169,11 @@ export default function ConsultorPage() {
       }
     } catch (e) {
       console.error("[consultor] erro ao enviar mensagem:", e)
-      setMessages(prev => [...prev, { role: "assistant", content: "Erro ao conectar com o consultor. Tente novamente." }])
+      setMessages(prev => {
+        const last = prev[prev.length - 1]
+        const base = last?.role === "assistant" && last.content === "" ? prev.slice(0, -1) : prev
+        return [...base, { role: "assistant", content: ERRO_CONEXAO }]
+      })
     } finally {
       setLoading(false)
       setStreaming(false)
@@ -208,81 +181,69 @@ export default function ConsultorPage() {
   }
 
   async function clearHistory() {
-    await fetch("/api/consultor/historico", { method: "DELETE" }).catch(e => console.error("[consultor] erro ao limpar histórico:", e))
-    setMessages([])
+    setAvisoLimpar("")
+    try {
+      const res = await fetch("/api/consultor/historico", { method: "DELETE" })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      setMessages([])
+    } catch (e) {
+      console.error("[consultor] erro ao limpar histórico:", e)
+      setAvisoLimpar("Não foi possível limpar o histórico. Tente novamente.")
+    }
   }
 
-  const canSend = input.trim().length > 0 && !loading && !streaming
+  const ocupado = loading || streaming
+  const canSend = input.trim().length > 0 && !ocupado
 
   return (
-    <div className="animate-fade-in flex flex-col" style={{ height: "calc(100vh - 1px)" }}>
-      <MobileOnlyHeader title="Consultor Estratégico" />
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-[--border] flex-shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
-            <Lightbulb className="w-4 h-4 text-purple-400" />
-          </div>
-          <div>
-            <h1 className="text-base font-bold text-text-primary">Consultor Estratégico</h1>
-            <p className="text-[10px] font-mono text-text-muted">PRAXIS IA · GESTÃO DE CLÍNICAS</p>
-            <p className="text-[10px] text-text-secondary mt-0.5">Converse com a IA sobre estratégia de crescimento e gestão da sua clínica.</p>
-          </div>
-        </div>
-        {messages.length > 0 && (
-          <button
-            onClick={clearHistory}
-            className="flex items-center gap-1.5 text-[11px] font-mono text-text-muted hover:text-red-400 transition-colors"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-            Limpar
-          </button>
-        )}
-      </div>
+    <div className="animate-fade-in">
+      <PageHeader
+        title="Consultor Estratégico"
+        caption="Converse com a IA sobre crescimento e gestão da sua clínica"
+        actions={messages.length > 0 ? (
+          <PxButton variant="quiet" size="sm" onClick={clearHistory} leftIcon={Trash2}>Limpar conversa</PxButton>
+        ) : undefined}
+      />
 
-      <div className="flex flex-1 min-h-0">
-        {/* Sidebar: análises rápidas + contexto */}
-        <aside className="w-56 flex-shrink-0 border-r border-[--border] overflow-y-auto p-4 space-y-4 hidden lg:block">
-          <div>
-            <p className="text-[10px] font-mono text-text-muted uppercase tracking-widest mb-2">Análises Rápidas</p>
-            <div className="space-y-1">
+      <div className="grid gap-4 px-4 pb-10 md:px-10 lg:grid-cols-[250px_1fr]">
+        <div className="hidden space-y-4 lg:block">
+          <Panel as="aside" className="p-4">
+            <h2 className="mb-2 text-[13px] font-semibold text-px-ink">Perguntas rápidas</h2>
+            <ul className="space-y-0.5">
               {ANALISES_RAPIDAS.map(a => (
-                <button
-                  key={a}
-                  onClick={() => send(a)}
-                  disabled={loading || streaming}
-                  className="w-full text-left text-xs text-text-muted hover:text-text-secondary hover:bg-white/[0.03] rounded-lg px-2.5 py-2 transition-colors flex items-center gap-1.5 group"
-                >
-                  <ChevronRight className="w-3 h-3 text-purple-400 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  {a}
-                </button>
+                <li key={a}>
+                  <button
+                    type="button"
+                    onClick={() => send(a)}
+                    disabled={ocupado}
+                    className="w-full rounded-px-ctl px-2.5 py-2 text-left text-[13px] text-px-ink hover:bg-px-ink/[0.05] focus:outline-none focus-visible:ring-2 focus-visible:ring-px-ink/40 disabled:opacity-50"
+                  >
+                    {a}
+                  </button>
+                </li>
               ))}
-            </div>
-          </div>
+            </ul>
+          </Panel>
           <ContextPanel ctx={ctx} />
-        </aside>
+        </div>
 
-        {/* Chat area */}
-        <div className="flex-1 flex flex-col min-w-0">
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-4">
+        <Panel className="flex min-h-[420px] flex-col p-0">
+          <div role="log" aria-live="polite" aria-label="Conversa com o consultor" className="max-h-[60vh] min-h-[320px] flex-1 space-y-3 overflow-y-auto p-5">
             {messages.length === 0 && !loading && (
-              <div className="flex flex-col items-center justify-center h-full gap-4 py-12">
-                <div className="w-14 h-14 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
-                  <Lightbulb className="w-7 h-7 text-purple-400" />
-                </div>
-                <div className="text-center">
-                  <p className="text-sm font-semibold text-text-primary">Consultor Estratégico PRAXIS</p>
-                  <p className="text-xs text-text-muted mt-1 max-w-xs">
-                    Especialista em gestão, marketing e escalabilidade de clínicas médicas no Brasil.
+              <div className="flex h-full flex-col items-center justify-center gap-4 py-8 text-center">
+                <div>
+                  <p className="text-[15px] font-semibold text-px-ink">Pergunte sobre a sua clínica</p>
+                  <p className="mx-auto mt-1 max-w-xs text-[13px] text-px-muted">
+                    Gestão, marketing e crescimento de clínicas médicas no Brasil, com base nos dados da sua clínica.
                   </p>
                 </div>
-                <div className="flex flex-wrap gap-2 justify-center max-w-md">
+                <div className="flex max-w-md flex-wrap justify-center gap-2">
                   {ANALISES_RAPIDAS.slice(0, 4).map(a => (
                     <button
                       key={a}
+                      type="button"
                       onClick={() => send(a)}
-                      className="text-xs border border-purple-500/20 bg-purple-500/5 text-purple-300 px-3 py-1.5 rounded-full hover:bg-purple-500/10 transition-colors"
+                      className="rounded-full border border-px-line bg-white/60 px-3.5 py-1.5 text-[13px] text-px-ink hover:bg-white/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-px-ink/40"
                     >
                       {a}
                     </button>
@@ -292,40 +253,29 @@ export default function ConsultorPage() {
             )}
 
             {messages.map((m, i) => <MsgBubble key={i} msg={m} />)}
-            {loading && !streaming && <TypingDots />}
+            {loading && !streaming && <p role="status" className="text-[13px] text-px-muted">O consultor está respondendo</p>}
+            {avisoLimpar && <p role="alert" className="text-[13px] text-px-danger">{avisoLimpar}</p>}
             <div ref={bottomRef} />
           </div>
 
-          {/* Input */}
-          <div className="flex-shrink-0 px-4 md:px-6 py-4 border-t border-[--border]">
-            <div className="flex gap-3 items-end">
+          <div className="border-t border-px-ink/10 p-4">
+            <div className="flex items-end gap-3">
               <textarea
-                ref={inputRef}
+                aria-label="Mensagem para o consultor"
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send() } }}
-                placeholder="Pergunte ao seu consultor estratégico..."
+                placeholder="Pergunte ao seu consultor estratégico"
                 rows={2}
-                className="flex-1 bg-[--surface] border border-[--border] rounded-xl px-4 py-3 text-sm text-text-primary resize-none focus:outline-none focus:border-purple-500/40 transition-colors placeholder:text-text-muted"
+                className="w-full resize-none rounded-px-ctl border border-px-line bg-white px-3.5 py-2.5 text-[13.5px] text-px-ink placeholder:text-px-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-px-ink/40"
               />
-              <button
-                onClick={() => send()}
-                disabled={!canSend}
-                className={cn(
-                  "w-10 h-10 rounded-xl flex items-center justify-center transition-all flex-shrink-0",
-                  canSend
-                    ? "bg-purple-500 text-white hover:bg-purple-400"
-                    : "bg-[--surface] border border-[--border] text-text-muted cursor-not-allowed"
-                )}
-              >
-                {loading || streaming
-                  ? <Loader2 className="w-4 h-4 animate-spin" />
-                  : <Send className="w-4 h-4" />}
-              </button>
+              <PxButton onClick={() => send()} disabled={!canSend} loading={ocupado} leftIcon={Send} aria-label="Enviar mensagem">
+                Enviar
+              </PxButton>
             </div>
-            <p className="text-[10px] text-text-muted font-mono mt-1.5">Enter para enviar · Shift+Enter para nova linha</p>
+            <p className="mt-1.5 text-[12px] text-px-muted">Enter envia, Shift+Enter cria uma nova linha.</p>
           </div>
-        </div>
+        </Panel>
       </div>
     </div>
   )

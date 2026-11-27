@@ -1,16 +1,12 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useAppContext } from "@/components/AppProvider"
-import {
-  MessageCircle, Plus, Loader2, Copy, Check, Users, X,
-  Sparkles, Download, AlertCircle, FileSpreadsheet, Upload,
-} from "lucide-react"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/Button"
-import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
+import { MessageCircle, Plus, Copy, Check, Sparkles, Download, FileSpreadsheet, Upload } from "lucide-react"
+import { Panel, PxButton, Tag, Segmented, Field, PxInput, PxSelect, PxCheckbox, PxModal, PageHeader } from "@/components/px"
+import { Toast, type ToastType } from "@/components/Toast"
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// ─── Tipos ────────────────────────────────────────────────────────────────────
 
 interface Paciente {
   id:                          string
@@ -56,30 +52,34 @@ function calcularIdade(dataNasc?: string | null): number | null {
   return idade
 }
 
-function urgenciaBadge(dias: number) {
-  if (dias >= 90) return { label: "+90 dias",   cls: "bg-slate-100 border-slate-300 text-slate-500" }
-  if (dias >= 60) return { label: "60-90 dias",  cls: "bg-red-50 border-red-200 text-red-700" }
-  return           { label: "30-60 dias",        cls: "bg-amber-50 border-amber-200 text-amber-700" }
+type Tone = "neutral" | "danger" | "warn"
+
+function urgenciaTag(dias: number): { label: string; tone: Tone } {
+  if (dias >= 90) return { label: "Mais de 90 dias", tone: "neutral" }
+  if (dias >= 60) return { label: "60 a 90 dias",    tone: "danger" }
+  return                 { label: "30 a 60 dias",    tone: "warn" }
 }
 
-function CopyBtn({ text }: { text: string }) {
+function CopyBtn({ text, label }: { text: string; label: string }) {
   const [copied, setCopied] = useState(false)
   return (
-    <button
+    <PxButton
+      size="sm"
+      variant="secondary"
+      leftIcon={copied ? Check : Copy}
+      aria-label={label}
       onClick={() => {
         navigator.clipboard.writeText(text)
         setCopied(true)
         setTimeout(() => setCopied(false), 2000)
       }}
-      className="flex items-center gap-1 text-[10px] font-mono px-2 py-1 rounded border border-[--border] text-text-muted hover:text-accent hover:border-accent/30 transition-colors"
     >
-      {copied ? <Check className="w-3 h-3 text-accent" /> : <Copy className="w-3 h-3" />}
       {copied ? "Copiado" : "Copiar"}
-    </button>
+    </PxButton>
   )
 }
 
-// ─── ImportarPlanilhaModal ────────────────────────────────────────────────────
+// ─── Importar planilha ────────────────────────────────────────────────────────
 
 interface ImportResult {
   importados:  number
@@ -87,14 +87,7 @@ interface ImportResult {
   erros:       Array<{ nome: string; msg: string }>
 }
 
-function ImportarPlanilhaModal({
-  onClose,
-  onSuccess,
-}: {
-  onClose:   () => void
-  onSuccess: () => void
-}) {
-  const fileRef                 = useRef<HTMLInputElement>(null)
+function ImportarPlanilhaModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
   const [dragging, setDragging] = useState(false)
   const [loading,  setLoading]  = useState(false)
   const [result,   setResult]   = useState<ImportResult | null>(null)
@@ -125,215 +118,163 @@ function ImportarPlanilhaModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-md bg-[--card] border border-[--border] rounded-2xl shadow-2xl overflow-hidden">
-
-        <div className="flex items-center justify-between p-5 border-b border-[--border]">
-          <div className="flex items-center gap-2">
-            <FileSpreadsheet className="w-4 h-4 text-accent" />
-            <h3 className="text-base font-semibold text-text-primary">Importar Planilha</h3>
-          </div>
-          <button onClick={onClose} className="text-text-muted hover:text-text-secondary">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-
-        <div className="p-5 space-y-4">
-          {!result && (
-            <>
-              <p className="text-[12px] text-text-muted">
-                Importe pacientes inativos de uma planilha CSV ou Excel. Colunas reconhecidas:{" "}
-                <span className="font-mono text-text-secondary">nome, telefone, ultimo_contato, motivo_saida</span>{" "}
-                (e variações em português/inglês).
-              </p>
-              <div
-                onDragOver={e => { e.preventDefault(); setDragging(true) }}
-                onDragLeave={() => setDragging(false)}
-                onDrop={e => {
-                  e.preventDefault()
-                  setDragging(false)
-                  const f = e.dataTransfer.files[0]
-                  if (f) handleFile(f)
-                }}
-                onClick={() => { if (!loading) fileRef.current?.click() }}
-                className={cn(
-                  "rounded-xl border-2 border-dashed transition-all py-10 flex flex-col items-center gap-3",
-                  loading ? "opacity-50" : "cursor-pointer",
-                  dragging
-                    ? "border-accent bg-accent/5"
-                    : "border-[--border] hover:border-[--border-hover] hover:bg-[--surface]"
-                )}
-              >
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept=".csv,.xlsx,.xls"
-                  className="hidden"
-                  onChange={e => {
-                    const f = e.target.files?.[0]
-                    if (f) handleFile(f)
-                    e.target.value = ""
-                  }}
-                />
-                {loading ? (
-                  <>
-                    <Loader2 className="w-8 h-8 text-accent animate-spin" />
-                    <p className="text-sm text-text-muted">Processando…</p>
-                  </>
-                ) : (
-                  <>
-                    <Upload className={cn("w-8 h-8 transition-colors", dragging ? "text-accent" : "text-text-muted")} />
-                    <div className="text-center">
-                      <p className="text-sm font-medium text-text-primary">Arraste o arquivo aqui</p>
-                      <p className="text-[11px] text-text-muted mt-0.5">ou clique — .csv, .xlsx, .xls</p>
-                    </div>
-                  </>
-                )}
-              </div>
-            </>
-          )}
-
-          {erro && (
-            <div className="flex items-start gap-2 rounded-lg border border-red-500/20 bg-red-500/5 px-3 py-2.5">
-              <AlertCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0 mt-0.5" />
-              <p className="text-[12px] text-red-400">{erro}</p>
-            </div>
-          )}
-
-          {result && (
-            <div className="space-y-3">
-              <div className="grid grid-cols-3 gap-2">
-                {[
-                  { label: "Novos",       value: result.importados,   color: "text-accent"   },
-                  { label: "Atualizados", value: result.atualizados,  color: "text-blue-400" },
-                  { label: "Erros",       value: result.erros.length, color: "text-red-400"  },
-                ].map(s => (
-                  <div key={s.label} className="rounded-xl border border-[--border] bg-[--surface] p-3 text-center">
-                    <p className={cn("text-xl font-bold", s.color)}>{s.value}</p>
-                    <p className="text-[9px] font-mono text-text-muted mt-0.5">{s.label}</p>
-                  </div>
-                ))}
-              </div>
-              {result.erros.length > 0 && (
-                <div className="rounded-lg border border-[--border] bg-[--surface] max-h-36 overflow-y-auto">
-                  {result.erros.map((e, i) => (
-                    <div key={i} className="px-3 py-1.5 border-b border-[--border] last:border-0 text-[11px]">
-                      <span className="font-mono text-red-400">{e.nome}:</span>
-                      <span className="text-text-muted ml-1">{e.msg}</span>
-                    </div>
-                  ))}
-                </div>
+    <PxModal open onClose={onClose} title="Importar planilha" className="max-w-md">
+      <div className="space-y-4">
+        {!result && (
+          <>
+            <p className="text-[13px] text-px-muted">
+              Importe pacientes inativos de uma planilha CSV ou Excel. Colunas reconhecidas: nome, telefone, ultimo_contato, motivo_saida (e variações em português ou inglês).
+            </p>
+            <input
+              id="reat-arquivo"
+              type="file"
+              accept=".csv,.xlsx,.xls"
+              className="sr-only"
+              disabled={loading}
+              onChange={e => {
+                const f = e.target.files?.[0]
+                if (f) handleFile(f)
+                e.target.value = ""
+              }}
+            />
+            <label
+              htmlFor="reat-arquivo"
+              onDragOver={e => { e.preventDefault(); setDragging(true) }}
+              onDragLeave={() => setDragging(false)}
+              onDrop={e => {
+                e.preventDefault()
+                setDragging(false)
+                const f = e.dataTransfer.files[0]
+                if (f && !loading) handleFile(f)
+              }}
+              className={
+                "flex cursor-pointer flex-col items-center gap-3 rounded-px-card border-2 border-dashed py-10 text-center " +
+                (dragging ? "border-px-ink bg-px-ink/[0.06]" : "border-px-line hover:bg-px-ink/[0.04]") +
+                (loading ? " opacity-60" : "")
+              }
+            >
+              <Upload className="h-7 w-7 text-px-muted" aria-hidden />
+              {loading ? (
+                <span role="status" className="text-[14px] text-px-ink">Processando o arquivo</span>
+              ) : (
+                <>
+                  <span className="text-[14px] font-medium text-px-ink">Arraste o arquivo aqui ou clique para escolher</span>
+                  <span className="text-[12px] text-px-muted">.csv, .xlsx ou .xls</span>
+                </>
               )}
-              <Button variant="primary" size="lg" fullWidth onClick={onClose}>Fechar</Button>
-            </div>
-          )}
-        </div>
+            </label>
+          </>
+        )}
+
+        {erro && <p role="alert" className="rounded-px-card bg-px-danger-soft px-4 py-3 text-[13px] text-px-danger">{erro}</p>}
+
+        {result && (
+          <div className="space-y-3">
+            <dl className="grid grid-cols-3 gap-2">
+              {[
+                { label: "Novos",       value: result.importados },
+                { label: "Atualizados", value: result.atualizados },
+                { label: "Erros",       value: result.erros.length },
+              ].map(st => (
+                <div key={st.label} className="rounded-px-card border border-px-line bg-white/50 p-3 text-center">
+                  <dd className="text-[22px] font-semibold tabular-nums text-px-ink">{st.value}</dd>
+                  <dt className="mt-0.5 text-[12px] text-px-muted">{st.label}</dt>
+                </div>
+              ))}
+            </dl>
+            {result.erros.length > 0 && (
+              <ul className="max-h-36 overflow-y-auto rounded-px-card border border-px-line bg-white/50">
+                {result.erros.map((e, i) => (
+                  <li key={i} className="border-b border-px-line px-3 py-2 text-[12px] last:border-0">
+                    <span className="font-semibold text-px-danger">{e.nome}:</span>{" "}
+                    <span className="text-px-ink">{e.msg}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <PxButton fullWidth onClick={onClose}>Fechar</PxButton>
+          </div>
+        )}
       </div>
-    </div>
+    </PxModal>
   )
 }
 
-// ─── Add Paciente Modal ───────────────────────────────────────────────────────
+// ─── Adicionar paciente ───────────────────────────────────────────────────────
 
-function AddModal({
-  onAdd,
-  onClose,
-}: {
-  onAdd:   (p: Omit<Paciente, "id" | "status">) => void
-  onClose: () => void
-}) {
-  const [nome,          setNome]          = useState("")
-  const [telefone,      setTelefone]      = useState("")
-  const [ultimo,        setUltimo]        = useState("")
-  const [motivo,        setMotivo]        = useState("")
-  const [sexo,          setSexo]          = useState("")
-  const [dataNasc,      setDataNasc]      = useState("")
-  const [saving,        setSaving]        = useState(false)
+function AddModal({ onAdded, onClose }: { onAdded: () => void; onClose: () => void }) {
+  const [nome,     setNome]     = useState("")
+  const [telefone, setTelefone] = useState("")
+  const [ultimo,   setUltimo]   = useState("")
+  const [motivo,   setMotivo]   = useState("")
+  const [sexo,     setSexo]     = useState("")
+  const [dataNasc, setDataNasc] = useState("")
+  const [saving,   setSaving]   = useState(false)
+  const [erro,     setErro]     = useState("")
 
   async function salvar() {
     if (!nome.trim() || !telefone.trim()) return
     setSaving(true)
-    await fetch("/api/reativacao", {
-      method:  "POST",
-      headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify({
-        nome, telefone,
-        ultimo_contato:  ultimo   || null,
-        motivo_saida:    motivo   || null,
-        sexo:            sexo     || null,
-        data_nascimento: dataNasc || null,
-      }),
-    })
-    onAdd({
-      nome, telefone,
-      ultimo_contato:  ultimo   || undefined,
-      motivo_saida:    motivo   || undefined,
-      sexo:            sexo     || null,
-      data_nascimento: dataNasc || null,
-    })
-    setSaving(false)
+    setErro("")
+    try {
+      const r = await fetch("/api/reativacao", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({
+          nome, telefone,
+          ultimo_contato:  ultimo   || null,
+          motivo_saida:    motivo   || null,
+          sexo:            sexo     || null,
+          data_nascimento: dataNasc || null,
+        }),
+      })
+      if (!r.ok) throw new Error(`HTTP ${r.status}`)
+      onAdded()
+    } catch (e) {
+      console.error("[reativacao] erro ao adicionar paciente:", e)
+      setErro("Não foi possível adicionar o paciente. Tente novamente.")
+    } finally {
+      setSaving(false)
+    }
   }
 
-  const inputCls = "w-full bg-[--surface] border border-[--border] rounded-lg px-3 py-2.5 text-sm text-text-primary focus:outline-none focus:border-accent/50 transition-colors placeholder:text-text-muted"
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-sm bg-[--card] border border-[--border] rounded-2xl p-6 shadow-2xl">
-        <div className="flex items-center justify-between mb-5">
-          <h3 className="text-base font-semibold text-text-primary">Adicionar Paciente Inativo</h3>
-          <button onClick={onClose} className="text-text-muted hover:text-text-secondary">
-            <X className="w-4 h-4" />
-          </button>
+    <PxModal open onClose={onClose} title="Adicionar paciente inativo" className="max-w-sm">
+      <div className="space-y-3">
+        <Field label="Nome (obrigatório)" htmlFor="reat-nome">
+          <PxInput id="reat-nome" value={nome} onChange={e => setNome(e.target.value)} placeholder="Nome do paciente" />
+        </Field>
+        <Field label="Telefone (obrigatório)" htmlFor="reat-tel">
+          <PxInput id="reat-tel" type="tel" value={telefone} onChange={e => setTelefone(e.target.value)} placeholder="(11) 99999-9999" />
+        </Field>
+        <Field label="Último contato" htmlFor="reat-ultimo">
+          <PxInput id="reat-ultimo" type="date" value={ultimo} onChange={e => setUltimo(e.target.value)} />
+        </Field>
+        <Field label="Motivo provável" htmlFor="reat-motivo">
+          <PxInput id="reat-motivo" value={motivo} onChange={e => setMotivo(e.target.value)} placeholder="Ex: preço, esqueceu" />
+        </Field>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Sexo" htmlFor="reat-sexo">
+            <PxSelect id="reat-sexo" value={sexo} onChange={e => setSexo(e.target.value)}>
+              <option value="">Não informado</option>
+              <option value="M">Masculino</option>
+              <option value="F">Feminino</option>
+            </PxSelect>
+          </Field>
+          <Field label="Nascimento" htmlFor="reat-nasc">
+            <PxInput id="reat-nasc" type="date" value={dataNasc} onChange={e => setDataNasc(e.target.value)} />
+          </Field>
         </div>
-        <div className="space-y-3">
-          {[
-            { label: "Nome *",          val: nome,     set: setNome,     ph: "Nome do paciente",       type: "text" },
-            { label: "Telefone *",      val: telefone, set: setTelefone, ph: "(11) 99999-9999",        type: "tel"  },
-            { label: "Último contato",  val: ultimo,   set: setUltimo,   ph: "",                       type: "date" },
-            { label: "Motivo provável", val: motivo,   set: setMotivo,   ph: "Ex: preço, esqueceu...", type: "text" },
-          ].map(f => (
-            <div key={f.label} className="space-y-1">
-              <label className="text-[11px] font-mono text-text-muted uppercase">{f.label}</label>
-              <input type={f.type} value={f.val} onChange={e => f.set(e.target.value)}
-                placeholder={f.ph} className={inputCls} />
-            </div>
-          ))}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <label className="text-[11px] font-mono text-text-muted uppercase">Sexo</label>
-              <select value={sexo} onChange={e => setSexo(e.target.value)}
-                className={inputCls + " appearance-none"}>
-                <option value="">Não informado</option>
-                <option value="M">Masculino</option>
-                <option value="F">Feminino</option>
-              </select>
-            </div>
-            <div className="space-y-1">
-              <label className="text-[11px] font-mono text-text-muted uppercase">Nascimento</label>
-              <input type="date" value={dataNasc} onChange={e => setDataNasc(e.target.value)}
-                className={inputCls} />
-            </div>
-          </div>
-        </div>
-        <Button variant="primary" size="lg" fullWidth onClick={salvar} loading={saving} disabled={!nome.trim() || !telefone.trim()} leftIcon={Plus} className="mt-5">Adicionar</Button>
+        {erro && <p role="alert" className="rounded-px-card bg-px-danger-soft px-4 py-3 text-[13px] text-px-danger">{erro}</p>}
+        <PxButton fullWidth leftIcon={Plus} loading={saving} disabled={saving || !nome.trim() || !telefone.trim()} onClick={salvar}>Adicionar</PxButton>
       </div>
-    </div>
+    </PxModal>
   )
 }
 
-// ─── Campanha Modal ───────────────────────────────────────────────────────────
+// ─── Campanha ─────────────────────────────────────────────────────────────────
 
-function CampanhaModal({
-  pacientes,
-  perfil,
-  onClose,
-}: {
-  pacientes: Paciente[]
-  perfil:    Perfil | null
-  onClose:   () => void
-}) {
+function CampanhaModal({ pacientes, perfil, onClose }: { pacientes: Paciente[]; perfil: Perfil | null; onClose: () => void }) {
   const [loading, setLoading] = useState(false)
   const [msgs,    setMsgs]    = useState<MsgCampanha[]>([])
   const [error,   setError]   = useState("")
@@ -356,7 +297,7 @@ function CampanhaModal({
         }),
       })
       const data = await res.json()
-      if (!res.ok || data.error) { setError(data.error ?? "Erro"); return }
+      if (!res.ok || data.error) { setError(data.error ?? "Erro ao gerar a campanha"); return }
       setMsgs(data.mensagens ?? [])
     } catch (e) {
       console.error("[reativacao] erro ao gerar mensagens:", e)
@@ -370,63 +311,51 @@ function CampanhaModal({
   useEffect(() => { gerar() }, [])
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-lg bg-[--card] border border-[--border] rounded-2xl shadow-2xl overflow-hidden">
-        <div className="flex items-center justify-between p-5 border-b border-[--border]">
-          <h3 className="text-base font-semibold text-text-primary">Campanha de Reativação</h3>
-          <button onClick={onClose} className="text-text-muted hover:text-text-secondary">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-        <div className="p-5 max-h-[70vh] overflow-y-auto">
-          {loading && (
-            <div className="flex flex-col items-center gap-3 py-8">
-              <Loader2 className="w-6 h-6 text-accent animate-spin" />
-              <p className="text-sm text-text-muted">Gerando sequência de mensagens...</p>
-            </div>
-          )}
-          {error && (
-            <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
-              {error}
-            </p>
-          )}
-          {msgs.length > 0 && (
-            <div className="space-y-4">
-              <p className="text-xs text-text-muted">
-                Para {pacientes.length} paciente(s). Substitua [NOME] pelo nome de cada um.
-              </p>
+    <PxModal open onClose={onClose} title="Campanha de reativação" className="max-w-lg">
+      <div className="max-h-[65vh] space-y-4 overflow-y-auto">
+        {loading && <p role="status" className="py-8 text-center text-[14px] text-px-ink">Gerando a sequência de mensagens.</p>}
+        {error && (
+          <div className="space-y-3">
+            <p role="alert" className="rounded-px-card bg-px-danger-soft px-4 py-3 text-[13px] text-px-danger">{error}</p>
+            <PxButton variant="secondary" onClick={gerar}>Tentar de novo</PxButton>
+          </div>
+        )}
+        {msgs.length > 0 && (
+          <>
+            <p className="text-[13px] text-px-muted">Para {pacientes.length} {pacientes.length === 1 ? "paciente" : "pacientes"}. Substitua [NOME] pelo nome de cada um.</p>
+            <ul className="space-y-3">
               {msgs.map(m => (
-                <div key={m.numero} className="rounded-xl border border-[--border] bg-[--surface] p-4">
-                  <div className="flex items-center justify-between mb-2">
+                <li key={m.numero} className="rounded-px-card border border-px-line bg-white/50 p-4">
+                  <div className="mb-2 flex items-start justify-between gap-2">
                     <div>
-                      <span className="text-xs font-mono font-semibold text-accent">
-                        Mensagem {m.numero} — {m.titulo}
-                      </span>
-                      <span className="text-[10px] text-text-muted ml-2 font-mono">{m.intervalo}</span>
+                      <p className="text-[13px] font-semibold text-px-ink">Mensagem {m.numero}: {m.titulo}</p>
+                      <p className="text-[12px] text-px-muted">{m.intervalo}</p>
                     </div>
-                    <CopyBtn text={m.texto} />
+                    <CopyBtn text={m.texto} label={`Copiar mensagem ${m.numero}`} />
                   </div>
-                  <pre className="text-sm text-text-secondary font-sans whitespace-pre-wrap leading-relaxed">
-                    {m.texto}
-                  </pre>
-                </div>
+                  <pre className="whitespace-pre-wrap font-sans text-[14px] leading-relaxed text-px-ink">{m.texto}</pre>
+                </li>
               ))}
-            </div>
-          )}
-        </div>
+            </ul>
+          </>
+        )}
       </div>
-    </div>
+    </PxModal>
   )
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// ─── Página ───────────────────────────────────────────────────────────────────
+
+type FiltroInat  = "todos" | "30-60" | "60-90" | "90+"
+type FiltroSexo  = "todos" | "M" | "F"
+type FiltroFaixa = "todos" | "0-18" | "19-40" | "41-60" | "60+"
 
 export default function ReativacaoPage() {
   const appCtx = useAppContext()
 
   const [pacientes,            setPacientes]            = useState<Paciente[]>([])
   const [loading,              setLoading]              = useState(true)
+  const [loadErr,              setLoadErr]              = useState(false)
   const [showAdd,              setShowAdd]              = useState(false)
   const [showImportarPlanilha, setShowImportarPlanilha] = useState(false)
   const [selecionados,         setSelecionados]         = useState<string[]>([])
@@ -436,18 +365,33 @@ export default function ReativacaoPage() {
   const [importResult,         setImportResult]         = useState<{ importados: number; sem_telefone: number } | null>(null)
   const [importErro,           setImportErro]           = useState<string | null>(null)
   const [perfil,               setPerfil]               = useState<Perfil | null>(null)
-  const [filtroInatividade,    setFiltroInatividade]    = useState<"todos" | "30-60" | "60-90" | "90+">("todos")
-  const [filtroSexo,           setFiltroSexo]           = useState<"todos" | "M" | "F">("todos")
-  const [filtroFaixaEtaria,    setFiltroFaixaEtaria]    = useState<"todos" | "0-18" | "19-40" | "41-60" | "60+">("todos")
+  const [filtroInatividade,    setFiltroInatividade]    = useState<FiltroInat>("todos")
+  const [filtroSexo,           setFiltroSexo]           = useState<FiltroSexo>("todos")
+  const [filtroFaixaEtaria,    setFiltroFaixaEtaria]    = useState<FiltroFaixa>("todos")
+  const [toast,                setToast]                = useState<string | null>(null)
+  const [toastType,            setToastType]            = useState<ToastType>("success")
 
-  useEffect(() => {
-    fetch("/api/reativacao")
-      .then(r => r.json())
-      .then(pac => { setPacientes(Array.isArray(pac) ? pac : []) })
-      .finally(() => setLoading(false))
-  }, [])
+  function showToast(msg: string, type: ToastType = "success") {
+    setToastType(type); setToast(msg); setTimeout(() => setToast(null), 3000)
+  }
 
-  // Sync perfil from context
+  async function carregar() {
+    setLoading(true); setLoadErr(false)
+    try {
+      const r = await fetch("/api/reativacao")
+      if (!r.ok) throw new Error(`HTTP ${r.status}`)
+      const pac = await r.json()
+      setPacientes(Array.isArray(pac) ? pac : [])
+    } catch (e) {
+      console.error("[reativacao] erro ao carregar:", e)
+      setLoadErr(true)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => { carregar() }, [])
+
   useEffect(() => {
     setPerfil(appCtx?.perfil
       ? { nome: appCtx.perfil.nome ?? undefined, especialidade: appCtx.perfil.especialidade ?? undefined }
@@ -456,8 +400,14 @@ export default function ReativacaoPage() {
   }, [appCtx?.perfil])
 
   async function refreshLista() {
-    const lista = await fetch("/api/reativacao").then(r => r.json())
-    setPacientes(Array.isArray(lista) ? lista : [])
+    try {
+      const r = await fetch("/api/reativacao")
+      if (!r.ok) return
+      const lista = await r.json()
+      setPacientes(Array.isArray(lista) ? lista : [])
+    } catch (e) {
+      console.error("[reativacao] erro ao atualizar lista:", e)
+    }
   }
 
   async function handleImportarMedx() {
@@ -498,9 +448,11 @@ export default function ReativacaoPage() {
         }),
       })
       const data = await res.json()
-      if (data.texto) {
-        setPacientes(prev => prev.map(x => x.id === p.id ? { ...x, mensagem_gerada: data.texto } : x))
-      }
+      if (!res.ok || !data.texto) throw new Error(data.error ?? "sem texto")
+      setPacientes(prev => prev.map(x => x.id === p.id ? { ...x, mensagem_gerada: data.texto } : x))
+    } catch (e) {
+      console.error("[reativacao] erro ao gerar mensagem:", e)
+      showToast(`Não foi possível gerar a mensagem de ${p.nome}`, "error")
     } finally {
       setGerandoMsg(null)
     }
@@ -517,11 +469,11 @@ export default function ReativacaoPage() {
       if (filtroSexo !== "todos" && p.sexo !== filtroSexo) return false
       if (filtroFaixaEtaria !== "todos") {
         const idade = calcularIdade(p.data_nascimento)
-        if (idade === null)                                                          return false
-        if (filtroFaixaEtaria === "0-18"  && idade > 18)                            return false
-        if (filtroFaixaEtaria === "19-40" && !(idade >= 19 && idade <= 40))         return false
-        if (filtroFaixaEtaria === "41-60" && !(idade >= 41 && idade <= 60))         return false
-        if (filtroFaixaEtaria === "60+"   && idade <= 60)                           return false
+        if (idade === null)                                                  return false
+        if (filtroFaixaEtaria === "0-18"  && idade > 18)                    return false
+        if (filtroFaixaEtaria === "19-40" && !(idade >= 19 && idade <= 40)) return false
+        if (filtroFaixaEtaria === "41-60" && !(idade >= 41 && idade <= 60)) return false
+        if (filtroFaixaEtaria === "60+"   && idade <= 60)                   return false
       }
       return true
     })
@@ -529,359 +481,175 @@ export default function ReativacaoPage() {
 
   const pacSelecionados = pacientes.filter(p => selecionados.includes(p.id))
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[70vh]">
-        <Loader2 className="w-5 h-5 text-accent animate-spin" />
-      </div>
-    )
-  }
+  const cont = (fn: (p: Paciente) => boolean) => pacientes.filter(fn).length
+  const idadeDe = (p: Paciente) => calcularIdade(p.data_nascimento)
+  const optsInat: { value: FiltroInat; label: string }[] = [
+    { value: "todos", label: `Todos (${pacientes.length})` },
+    { value: "30-60", label: `30 a 60 dias (${cont(p => { const d = diasInativos(p.ultimo_contato); return d >= 30 && d < 60 })})` },
+    { value: "60-90", label: `60 a 90 dias (${cont(p => { const d = diasInativos(p.ultimo_contato); return d >= 60 && d < 90 })})` },
+    { value: "90+",   label: `Mais de 90 dias (${cont(p => diasInativos(p.ultimo_contato) >= 90)})` },
+  ]
+  const optsSexo: { value: FiltroSexo; label: string }[] = [
+    { value: "todos", label: `Todos os sexos (${pacientes.length})` },
+    { value: "M",     label: `Masculino (${cont(p => p.sexo === "M")})` },
+    { value: "F",     label: `Feminino (${cont(p => p.sexo === "F")})` },
+  ]
+  const optsFaixa: { value: FiltroFaixa; label: string }[] = [
+    { value: "todos", label: `Todas as idades (${pacientes.length})` },
+    { value: "0-18",  label: `Até 18 anos (${cont(p => { const i = idadeDe(p); return i !== null && i <= 18 })})` },
+    { value: "19-40", label: `19 a 40 anos (${cont(p => { const i = idadeDe(p); return i !== null && i >= 19 && i <= 40 })})` },
+    { value: "41-60", label: `41 a 60 anos (${cont(p => { const i = idadeDe(p); return i !== null && i >= 41 && i <= 60 })})` },
+    { value: "60+",   label: `Mais de 60 anos (${cont(p => { const i = idadeDe(p); return i !== null && i > 60 })})` },
+  ]
+  const hasSexo        = pacientes.some(p => p.sexo)
+  const hasFaixaEtaria = pacientes.some(p => p.data_nascimento)
 
   return (
     <div className="animate-fade-in">
-      <MobileOnlyHeader title="Reativação de Pacientes" />
-
-      {showAdd && (
-        <AddModal
-          onAdd={p => {
-            setPacientes(prev => [{ ...p, id: Date.now().toString(), status: "inativo" }, ...prev])
-            setShowAdd(false)
-          }}
-          onClose={() => setShowAdd(false)}
-        />
-      )}
-      {showCampanha && (
-        <CampanhaModal
-          pacientes={pacSelecionados}
-          perfil={perfil}
-          onClose={() => setShowCampanha(false)}
-        />
-      )}
-      {showImportarPlanilha && (
-        <ImportarPlanilhaModal
-          onClose={() => setShowImportarPlanilha(false)}
-          onSuccess={refreshLista}
-        />
-      )}
-
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between p-4 md:p-8 pb-0 gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-text-primary tracking-tight">Reativação de Pacientes</h1>
-          <p className="text-sm text-text-muted mt-1 font-mono">CONSULTÓRIO · RECUPERAR PACIENTES PERDIDOS</p>
-          <p className="text-[12px] text-text-secondary mt-1.5">
-            Gere mensagens personalizadas para reconquistar pacientes que não retornam há um tempo.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {selecionados.length > 0 && (
-            <button
-              onClick={() => setShowCampanha(true)}
-              className="flex items-center gap-1.5 text-xs font-semibold bg-accent/10 border border-accent/30 text-accent px-3 py-2 rounded-lg hover:bg-accent/15 transition-colors"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              Campanha ({selecionados.length})
-            </button>
-          )}
-          <Button variant="secondary-soft" size="sm" onClick={handleImportarMedx} loading={importando} leftIcon={Download} className="py-2">
-            {importando ? "Importando…" : "Importar do MedX"}
-          </Button>
-          <Button variant="secondary-soft" size="sm" onClick={() => setShowImportarPlanilha(true)} leftIcon={FileSpreadsheet} className="py-2">
-            Importar planilha
-          </Button>
-          <Button variant="secondary-soft" size="sm" onClick={() => setShowAdd(true)} leftIcon={Plus} className="py-2">
-            Adicionar
-          </Button>
-        </div>
-      </div>
-
-      {importErro && (
-        <div className="mx-4 md:mx-8 mt-3 flex items-center justify-between gap-3 rounded-xl border border-red-500/30 bg-red-500/5 px-4 py-3">
-          <div className="flex items-center gap-2 min-w-0">
-            <AlertCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
-            <p className="text-xs text-red-400 truncate">Erro ao importar: {importErro}</p>
+      <PageHeader
+        title="Reativação"
+        caption="Recuperar pacientes que não voltaram"
+        actions={
+          <div className="flex flex-wrap gap-2">
+            {selecionados.length > 0 && (
+              <PxButton leftIcon={Sparkles} onClick={() => setShowCampanha(true)}>Campanha ({selecionados.length})</PxButton>
+            )}
+            <PxButton variant="secondary" leftIcon={Download} loading={importando} disabled={importando} onClick={handleImportarMedx}>
+              {importando ? "Importando" : "Importar do MedX"}
+            </PxButton>
+            <PxButton variant="secondary" leftIcon={FileSpreadsheet} onClick={() => setShowImportarPlanilha(true)}>Importar planilha</PxButton>
+            <PxButton variant="secondary" leftIcon={Plus} onClick={() => setShowAdd(true)}>Adicionar</PxButton>
           </div>
-          <button onClick={() => setImportErro(null)} className="text-text-muted hover:text-text-secondary flex-shrink-0">
-            <X className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      )}
+        }
+      />
 
-      {importResult && (
-        <div className="mx-4 md:mx-8 mt-3 flex items-center justify-between gap-3 rounded-xl border border-accent/30 bg-accent/5 px-4 py-3">
-          <p className="text-xs text-text-secondary">
-            <span className="font-semibold text-accent">{importResult.importados} pacientes</span> importados do MedX
-            {importResult.sem_telefone > 0 && ` — ${importResult.sem_telefone} ignorados (sem telefone)`}
-          </p>
-          <button onClick={() => setImportResult(null)} className="text-text-muted hover:text-text-secondary flex-shrink-0">
-            <X className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      )}
+      {showAdd && <AddModal onAdded={async () => { setShowAdd(false); await refreshLista(); showToast("Paciente adicionado") }} onClose={() => setShowAdd(false)} />}
+      {showCampanha && <CampanhaModal pacientes={pacSelecionados} perfil={perfil} onClose={() => setShowCampanha(false)} />}
+      {showImportarPlanilha && <ImportarPlanilhaModal onClose={() => setShowImportarPlanilha(false)} onSuccess={refreshLista} />}
 
-      <div className="p-4 md:p-8 space-y-4">
-        {pacientes.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-16 gap-4">
-            <div className="w-12 h-12 rounded-xl bg-[--surface] border border-[--border] flex items-center justify-center">
-              <Users className="w-6 h-6 text-text-muted" />
-            </div>
-            <p className="text-sm text-text-muted text-center">
-              Nenhum paciente inativo cadastrado.<br />Adicione manualmente ou importe do CRM.
+      <div className="space-y-4 px-4 pb-10 md:px-10">
+        {importErro && (
+          <div role="alert" className="flex items-center justify-between gap-3 rounded-px-card bg-px-danger-soft px-4 py-3">
+            <p className="text-[13px] text-px-danger">Erro ao importar: {importErro}</p>
+            <PxButton size="sm" variant="quiet" onClick={() => setImportErro(null)}>Fechar</PxButton>
+          </div>
+        )}
+
+        {importResult && (
+          <div role="status" className="flex items-center justify-between gap-3 rounded-px-card bg-px-ok-soft px-4 py-3">
+            <p className="text-[13px] text-px-ok">
+              <span className="font-semibold">{importResult.importados} {importResult.importados === 1 ? "paciente importado" : "pacientes importados"}</span> do MedX
+              {importResult.sem_telefone > 0 && `. ${importResult.sem_telefone} ignorados por falta de telefone.`}
             </p>
-            <button
-              onClick={() => setShowAdd(true)}
-              className="text-xs font-semibold text-accent border border-accent/30 px-4 py-2 rounded-lg hover:bg-accent/5 transition-colors"
-            >
-              + Adicionar Paciente
-            </button>
+            <PxButton size="sm" variant="quiet" onClick={() => setImportResult(null)}>Fechar</PxButton>
           </div>
         )}
 
-        {pacientes.length > 0 && (() => {
-          const PILLS: { key: "todos" | "30-60" | "60-90" | "90+"; label: string; color: string; activeCls: string; count: number }[] = [
-            { key: "todos",  label: "Todos",     color: "text-accent",        activeCls: "bg-accent-dim border-accent-border text-accent",              count: pacientes.length },
-            { key: "30-60",  label: "30–60 dias", color: "text-amber-400",     activeCls: "bg-amber-500/10 border-amber-500/30 text-amber-400",           count: pacientes.filter(p => { const d = diasInativos(p.ultimo_contato); return d >= 30 && d < 60 }).length },
-            { key: "60-90",  label: "60–90 dias", color: "text-red-400",       activeCls: "bg-red-500/10 border-red-500/30 text-red-400",                 count: pacientes.filter(p => { const d = diasInativos(p.ultimo_contato); return d >= 60 && d < 90 }).length },
-            { key: "90+",    label: "+90 dias",   color: "text-neutral-400",   activeCls: "bg-neutral-500/10 border-neutral-500/30 text-neutral-300",      count: pacientes.filter(p => diasInativos(p.ultimo_contato) >= 90).length },
-          ]
-          const hasSexo        = pacientes.some(p => p.sexo)
-          const hasFaixaEtaria = pacientes.some(p => p.data_nascimento)
+        {loading ? (
+          <div className="space-y-3" aria-busy="true">{[1, 2, 3].map(i => <div key={i} className="px-glass h-[88px] animate-pulse rounded-px-panel" />)}</div>
+        ) : loadErr ? (
+          <Panel tone="light" className="py-12 text-center">
+            <p role="alert" className="text-[14px] text-px-danger">Não foi possível carregar os pacientes inativos.</p>
+            <div className="mt-4 flex justify-center"><PxButton variant="secondary" onClick={carregar}>Tentar de novo</PxButton></div>
+          </Panel>
+        ) : pacientes.length === 0 ? (
+          <Panel tone="light" className="py-14 text-center">
+            <p className="text-[14px] text-px-ink">Nenhum paciente inativo cadastrado.</p>
+            <p className="mt-1 text-[13px] text-px-muted">Adicione manualmente ou importe do MedX ou de uma planilha.</p>
+            <div className="mt-4 flex justify-center"><PxButton leftIcon={Plus} onClick={() => setShowAdd(true)}>Adicionar paciente</PxButton></div>
+          </Panel>
+        ) : (
+          <>
+            <Panel tone="light" className="space-y-3">
+              <Segmented label="Filtrar por tempo de inatividade" value={filtroInatividade} onChange={v => { setFiltroInatividade(v); setSelecionados([]) }} options={optsInat} />
+              {hasSexo && <div><Segmented label="Filtrar por sexo" value={filtroSexo} onChange={v => { setFiltroSexo(v); setSelecionados([]) }} options={optsSexo} /></div>}
+              {hasFaixaEtaria && <div><Segmented label="Filtrar por faixa etária" value={filtroFaixaEtaria} onChange={v => { setFiltroFaixaEtaria(v); setSelecionados([]) }} options={optsFaixa} /></div>}
+            </Panel>
 
-          const PILLS_SEXO: { key: "todos" | "M" | "F"; label: string; count: number }[] = [
-            { key: "todos", label: "Todos sexos", count: pacientes.length },
-            { key: "M",     label: "Masc.",       count: pacientes.filter(p => p.sexo === "M").length },
-            { key: "F",     label: "Fem.",         count: pacientes.filter(p => p.sexo === "F").length },
-          ]
+            {pacientesFiltrados.length > 0 && (
+              <PxCheckbox
+                label={selecionados.length > 0 ? `${selecionados.length} ${selecionados.length === 1 ? "selecionado" : "selecionados"}` : "Selecionar todos para campanha"}
+                checked={selecionados.length > 0 && pacientesFiltrados.every(p => selecionados.includes(p.id))}
+                onChange={e => setSelecionados(e.target.checked ? pacientesFiltrados.map(p => p.id) : [])}
+              />
+            )}
 
-          const PILLS_FAIXA: { key: "todos" | "0-18" | "19-40" | "41-60" | "60+"; label: string; count: number }[] = [
-            { key: "todos",  label: "Todas idades", count: pacientes.length },
-            { key: "0-18",   label: "≤ 18 anos",    count: pacientes.filter(p => { const i = calcularIdade(p.data_nascimento); return i !== null && i <= 18 }).length },
-            { key: "19-40",  label: "19–40 anos",   count: pacientes.filter(p => { const i = calcularIdade(p.data_nascimento); return i !== null && i >= 19 && i <= 40 }).length },
-            { key: "41-60",  label: "41–60 anos",   count: pacientes.filter(p => { const i = calcularIdade(p.data_nascimento); return i !== null && i >= 41 && i <= 60 }).length },
-            { key: "60+",    label: "+60 anos",     count: pacientes.filter(p => { const i = calcularIdade(p.data_nascimento); return i !== null && i > 60 }).length },
-          ]
-
-          return (
-            <div className="space-y-2">
-              <div className="flex flex-wrap gap-2">
-                {PILLS.map(pill => {
-                  const ativo = filtroInatividade === pill.key
-                  return (
-                    <button
-                      key={pill.key}
-                      onClick={() => { setFiltroInatividade(pill.key); setSelecionados([]) }}
-                      className={cn(
-                        "flex items-center gap-2 px-3 py-2 rounded-xl border text-[11px] font-mono font-semibold transition-all",
-                        ativo
-                          ? pill.activeCls
-                          : "border-[--border] text-text-muted hover:text-text-secondary hover:border-[--border-hover]"
-                      )}
-                    >
-                      <span>{pill.label}</span>
-                      <span className={cn(
-                        "text-[10px] px-1.5 py-0.5 rounded-full border font-bold tabular-nums",
-                        ativo ? pill.activeCls : "border-[--border] text-text-muted"
-                      )}>
-                        {pill.count}
-                      </span>
-                    </button>
-                  )
-                })}
-              </div>
-
-              {hasSexo && (
-                <div className="flex flex-wrap gap-2">
-                  {PILLS_SEXO.map(pill => {
-                    const ativo = filtroSexo === pill.key
-                    const actCls = "bg-blue-500/10 border-blue-500/30 text-blue-400"
-                    return (
-                      <button
-                        key={pill.key}
-                        onClick={() => { setFiltroSexo(pill.key); setSelecionados([]) }}
-                        className={cn(
-                          "flex items-center gap-2 px-3 py-2 rounded-xl border text-[11px] font-mono font-semibold transition-all",
-                          ativo ? actCls : "border-[--border] text-text-muted hover:text-text-secondary hover:border-[--border-hover]"
-                        )}
-                      >
-                        <span>{pill.label}</span>
-                        <span className={cn(
-                          "text-[10px] px-1.5 py-0.5 rounded-full border font-bold tabular-nums",
-                          ativo ? actCls : "border-[--border] text-text-muted"
-                        )}>
-                          {pill.count}
-                        </span>
-                      </button>
-                    )
-                  })}
+            {pacientesFiltrados.length === 0 && (
+              <Panel tone="light" className="py-10 text-center">
+                <p className="text-[14px] text-px-ink">Nenhum paciente para os filtros selecionados.</p>
+                <div className="mt-3 flex justify-center">
+                  <PxButton variant="secondary" onClick={() => { setFiltroInatividade("todos"); setFiltroSexo("todos"); setFiltroFaixaEtaria("todos") }}>Limpar filtros</PxButton>
                 </div>
-              )}
+              </Panel>
+            )}
 
-              {hasFaixaEtaria && (
-                <div className="flex flex-wrap gap-2">
-                  {PILLS_FAIXA.map(pill => {
-                    const ativo  = filtroFaixaEtaria === pill.key
-                    const actCls = "bg-violet-500/10 border-violet-500/30 text-violet-400"
-                    return (
-                      <button
-                        key={pill.key}
-                        onClick={() => { setFiltroFaixaEtaria(pill.key); setSelecionados([]) }}
-                        className={cn(
-                          "flex items-center gap-2 px-3 py-2 rounded-xl border text-[11px] font-mono font-semibold transition-all",
-                          ativo ? actCls : "border-[--border] text-text-muted hover:text-text-secondary hover:border-[--border-hover]"
-                        )}
-                      >
-                        <span>{pill.label}</span>
-                        <span className={cn(
-                          "text-[10px] px-1.5 py-0.5 rounded-full border font-bold tabular-nums",
-                          ativo ? actCls : "border-[--border] text-text-muted"
-                        )}>
-                          {pill.count}
-                        </span>
-                      </button>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-          )
-        })()}
-
-        {pacientesFiltrados.length > 0 && (
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={selecionados.length > 0 && pacientesFiltrados.every(p => selecionados.includes(p.id))}
-              onChange={e => setSelecionados(e.target.checked ? pacientesFiltrados.map(p => p.id) : [])}
-              className="accent-accent"
-            />
-            <span className="text-xs text-text-muted">
-              {selecionados.length > 0 ? `${selecionados.length} selecionados` : "Selecionar todos para campanha"}
-            </span>
-          </div>
-        )}
-
-        {pacientesFiltrados.length === 0 && pacientes.length > 0 && (
-          <div className="flex flex-col items-center justify-center py-10 gap-2">
-            <p className="text-sm text-text-muted">Nenhum paciente para os filtros selecionados.</p>
-            <button onClick={() => {
-              setFiltroInatividade("todos")
-              setFiltroSexo("todos")
-              setFiltroFaixaEtaria("todos")
-            }} className="text-xs text-accent hover:underline">
-              Limpar filtros
-            </button>
-          </div>
-        )}
-
-        {pacientesFiltrados.map(p => {
-          const dias        = diasInativos(p.ultimo_contato)
-          const badge       = urgenciaBadge(dias)
-          const selecionado = selecionados.includes(p.id)
-          return (
-            <div
-              key={p.id}
-              className={cn(
-                "rounded-xl border bg-[--surface] p-5 transition-all",
-                selecionado ? "border-accent/30 bg-accent/3" : "border-[--border]"
-              )}
-            >
-              <div className="flex items-start gap-3">
-                <input
-                  type="checkbox"
-                  checked={selecionado}
-                  onChange={e =>
-                    setSelecionados(prev =>
-                      e.target.checked ? [...prev, p.id] : prev.filter(x => x !== p.id)
-                    )
-                  }
-                  className="mt-1 accent-accent"
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2 flex-wrap">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <p className="text-sm font-semibold text-text-primary">{p.nome}</p>
-                      <span className={cn("text-badge font-mono px-2 py-0.5 rounded-full border", badge.cls)}>
-                        {badge.label}
-                      </span>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        onClick={() => gerarMensagem(p)}
-                        disabled={gerandoMsg === p.id}
-                        className="flex items-center gap-1.5 text-[11px] font-mono px-2.5 py-1.5 rounded-lg border border-accent/30 text-accent hover:bg-accent/5 transition-colors disabled:opacity-50"
-                      >
-                        {gerandoMsg === p.id
-                          ? <Loader2 className="w-3 h-3 animate-spin" />
-                          : <Sparkles className="w-3 h-3" />}
-                        Gerar mensagem
-                      </button>
-                      <a
-                        href={`https://wa.me/55${p.telefone.replace(/\D/g, "")}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="flex items-center gap-1.5 text-[11px] font-mono px-2.5 py-1.5 rounded-lg border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/5 transition-colors"
-                      >
-                        <MessageCircle className="w-3 h-3" />
-                        WhatsApp
-                      </a>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-4 mt-1.5 flex-wrap">
-                    <span className="text-[11px] text-text-muted font-mono">{p.telefone}</span>
-                    {p.ultimo_contato && (
-                      <span className="text-[11px] text-text-muted font-mono">
-                        Último contato: {new Date(p.ultimo_contato).toLocaleDateString("pt-BR")} ({dias} dias)
-                      </span>
-                    )}
-                    {p.sexo && (
-                      <span className="text-[11px] text-text-muted font-mono">
-                        {p.sexo === "F" ? "Feminino" : "Masculino"}
-                      </span>
-                    )}
-                    {(() => { const i = calcularIdade(p.data_nascimento); return i !== null ? (
-                      <span className="text-[11px] text-text-muted font-mono">{i} anos</span>
-                    ) : null })()}
-                    {p.motivo_saida && (
-                      <span className="text-[11px] text-text-muted">Motivo: {p.motivo_saida}</span>
-                    )}
-                  </div>
-
-                  {p.mensagem_gerada && (
-                    <div className="mt-3 space-y-2">
-                      {p.enviado_automaticamente ? (
-                        <div className="flex items-center gap-2 rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-3 py-2">
-                          <Check className="w-3 h-3 text-emerald-400 flex-shrink-0" />
-                          <span className="text-[11px] text-emerald-400 font-mono">
-                            Enviado automaticamente via Z-API
-                            {p.enviado_automaticamente_em &&
-                              ` · ${new Date(p.enviado_automaticamente_em).toLocaleString("pt-BR")}`}
-                          </span>
+            <ul className="space-y-3">
+              {pacientesFiltrados.map(p => {
+                const dias        = diasInativos(p.ultimo_contato)
+                const tag         = urgenciaTag(dias)
+                const selecionado = selecionados.includes(p.id)
+                const idade       = calcularIdade(p.data_nascimento)
+                return (
+                  <li key={p.id}>
+                    <Panel tone="light" className={selecionado ? "ring-2 ring-px-ink" : undefined}>
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div className="flex min-w-0 flex-wrap items-center gap-2">
+                          <PxCheckbox
+                            label={p.nome}
+                            checked={selecionado}
+                            onChange={e => setSelecionados(prev => e.target.checked ? [...prev, p.id] : prev.filter(x => x !== p.id))}
+                          />
+                          <Tag tone={tag.tone}>{tag.label}</Tag>
                         </div>
-                      ) : (
-                        <div className="flex items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2">
-                          <AlertCircle className="w-3 h-3 text-amber-400 flex-shrink-0" />
-                          <span className="text-[11px] text-amber-400 font-mono">
-                            Agendado para envio automático às 9h BRT — clicar em WhatsApp abaixo envia uma segunda mensagem manual
-                          </span>
+                        <div className="flex flex-wrap gap-2">
+                          <PxButton size="sm" variant="secondary" leftIcon={Sparkles} loading={gerandoMsg === p.id} disabled={gerandoMsg === p.id} aria-label={`Gerar mensagem para ${p.nome}`} onClick={() => gerarMensagem(p)}>
+                            Gerar mensagem
+                          </PxButton>
+                          <PxButton size="sm" variant="secondary" leftIcon={MessageCircle} aria-label={`Abrir WhatsApp de ${p.nome}`} onClick={() => window.open(`https://wa.me/55${p.telefone.replace(/\D/g, "")}`, "_blank", "noopener,noreferrer")}>
+                            WhatsApp
+                          </PxButton>
                         </div>
-                      )}
-                      <div className="rounded-lg border border-accent/15 bg-accent/5 p-3">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-[10px] font-mono text-accent uppercase">Mensagem gerada</span>
-                          <CopyBtn text={p.mensagem_gerada} />
-                        </div>
-                        <pre className="text-xs text-text-secondary font-sans whitespace-pre-wrap leading-relaxed">
-                          {p.mensagem_gerada}
-                        </pre>
                       </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )
-        })}
+
+                      <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-px-muted">
+                        <span>{p.telefone}</span>
+                        {p.ultimo_contato && <span>Último contato: {new Date(p.ultimo_contato).toLocaleDateString("pt-BR")} ({dias} dias)</span>}
+                        {p.sexo && <span>{p.sexo === "F" ? "Feminino" : "Masculino"}</span>}
+                        {idade !== null && <span>{idade} anos</span>}
+                        {p.motivo_saida && <span>Motivo: {p.motivo_saida}</span>}
+                      </p>
+
+                      {p.mensagem_gerada && (
+                        <div className="mt-3 space-y-2">
+                          {p.enviado_automaticamente ? (
+                            <p className="rounded-px-card bg-px-ok-soft px-3 py-2 text-[12px] text-px-ok">
+                              Enviado automaticamente via Z-API
+                              {p.enviado_automaticamente_em && `, ${new Date(p.enviado_automaticamente_em).toLocaleString("pt-BR")}`}
+                            </p>
+                          ) : (
+                            <p className="rounded-px-card bg-px-warn-soft px-3 py-2 text-[12px] text-px-warn">
+                              Agendado para envio automático às 9h (horário de Brasília). Clicar em WhatsApp envia uma segunda mensagem, manual.
+                            </p>
+                          )}
+                          <div className="rounded-px-card border border-px-line bg-white/50 p-3">
+                            <div className="mb-2 flex items-center justify-between">
+                              <span className="text-[12px] font-semibold text-px-ink">Mensagem gerada</span>
+                              <CopyBtn text={p.mensagem_gerada} label={`Copiar mensagem de ${p.nome}`} />
+                            </div>
+                            <pre className="whitespace-pre-wrap font-sans text-[13px] leading-relaxed text-px-ink">{p.mensagem_gerada}</pre>
+                          </div>
+                        </div>
+                      )}
+                    </Panel>
+                  </li>
+                )
+              })}
+            </ul>
+          </>
+        )}
       </div>
+
+      <Toast message={toast} type={toastType} />
     </div>
   )
 }

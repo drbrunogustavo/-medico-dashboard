@@ -2,16 +2,8 @@
 
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { TopBar } from "@/components/TopBar"
-import { SkeletonCard } from "@/components/LoadingPulse"
-import { EmptyState }   from "@/components/EmptyState"
-import { ErrorState }   from "@/components/ErrorState"
-import {
-  Clock, FlaskConical, TrendingUp, TrendingDown,
-  Minus, Calendar, ChevronRight, RefreshCw,
-  Users, CircleDollarSign, Plug,
-} from "lucide-react"
-import { cn } from "@/lib/utils"
+import { Panel, PxButton, Tag, PageHeader } from "@/components/px"
+import { RefreshCw, ChevronRight, TrendingUp, TrendingDown, Minus } from "lucide-react"
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -72,56 +64,56 @@ function diasLabel(dias: number, ultima: string | null): string {
   return `${dias} dias sem retorno`
 }
 
-// ── Sub-components ─────────────────────────────────────────────────────────────
+// ── Subcomponentes ────────────────────────────────────────────────────────────
 
-function SectionLabel({ text }: { text: string }) {
+function Vazio({ text, action }: { text: string; action?: { label: string; href: string } }) {
   return (
-    <div className="text-[9px] font-mono font-semibold tracking-[2px] uppercase text-text-muted">
-      {text}
+    <div className="px-5 py-6 text-center">
+      <p className="text-[13px] text-px-muted">{text}</p>
+      {action && (
+        <div className="mt-3 flex justify-center">
+          <PxButton size="sm" variant="secondary" href={action.href}>{action.label}</PxButton>
+        </div>
+      )}
     </div>
   )
 }
 
-type ChipColor = "red" | "amber" | "blue" | "green" | "purple" | "muted"
-const CHIP_STYLE: Record<ChipColor, string> = {
-  red:    "bg-red-500/10 border-red-500/25 text-red-400",
-  amber:  "bg-amber-500/10 border-amber-500/25 text-amber-400",
-  blue:   "bg-blue-500/10 border-blue-500/25 text-blue-400",
-  green:  "bg-accent-dim border-accent-border text-accent",
-  purple: "bg-purple-500/10 border-purple-500/25 text-purple-400",
-  muted:  "bg-card border-border text-text-muted",
-}
-
-function Chip({ label, color, icon }: { label: string; color: ChipColor; icon?: React.ReactNode }) {
+function Bloco({ titulo, extra, children }: { titulo: string; extra?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[11px] font-medium", CHIP_STYLE[color])}>
-      {icon}
-      {label}
-    </div>
-  )
-}
-
-function EmptyRow({ text }: { text: string }) {
-  return <div className="px-4 py-5 text-center text-[12px] text-text-muted">{text}</div>
-}
-
-function CardHeader({ icon, label, action }: {
-  icon:    React.ReactNode
-  label:   string
-  action?: React.ReactNode
-}) {
-  return (
-    <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
-      <div className="flex items-center gap-2">
-        {icon}
-        <span className="text-[12px] font-semibold text-text-primary">{label}</span>
+    <Panel tone="light" className="overflow-hidden p-0">
+      <div className="flex items-center justify-between gap-2 px-5 py-4">
+        <h2 className="text-[15px] font-semibold text-px-ink">{titulo}</h2>
+        {extra}
       </div>
-      {action}
+      <div className="border-t border-px-line">{children}</div>
+    </Panel>
+  )
+}
+
+function Numero({ rotulo, valor }: { rotulo: string; valor: string | number }) {
+  return (
+    <div>
+      <dt className="text-[12px] text-white/80">{rotulo}</dt>
+      <dd className="mt-1 text-[30px] font-semibold leading-none tabular-nums md:text-[34px]">{valor}</dd>
     </div>
   )
 }
 
-// ── Main page ──────────────────────────────────────────────────────────────────
+function LinhaPaciente({ p, tom }: { p: PacItem; tom: "danger" | "warn" }) {
+  return (
+    <li className="flex items-center gap-3 px-5 py-3">
+      <div className="min-w-0 flex-1">
+        <Link href={`/pacientes/${p.id}`} className="block truncate text-[13.5px] font-medium text-px-ink hover:underline">
+          {p.nome}
+        </Link>
+        <span className="text-[12px] text-px-muted">{diasLabel(p.dias, p.ultima_consulta)}</span>
+      </div>
+      <Tag tone={tom}>{tom === "danger" ? "Crítico" : "Atenção"}</Tag>
+      {p.ultima_consulta && <span className="flex-shrink-0 text-[12px] text-px-muted tabular-nums">{fmtData(p.ultima_consulta)}</span>}
+    </li>
+  )
+}
 
 export default function RadarClinicaPage() {
   const [data,    setData]    = useState<RadarData | null>(null)
@@ -150,355 +142,172 @@ export default function RadarClinicaPage() {
 
   return (
     <div className="animate-fade-in">
-      <TopBar
-        title="Radar da Clínica"
-        subtitle="OPERACIONAL · PRAXIS"
-        tagline="Visão consolidada de atenção clínica, financeiro e agenda do dia."
-        actions={
-          <button
-            onClick={carregar}
-            disabled={loading}
-            className="flex items-center gap-1.5 px-3 py-1.5 border border-border rounded-lg text-[12px] text-text-muted hover:text-text-primary hover:border-border-hover transition-all disabled:opacity-40"
-          >
-            <RefreshCw className={cn("w-3.5 h-3.5", loading && "animate-spin")} />
-            Atualizar
-          </button>
-        }
+      <PageHeader
+        title="Radar"
+        caption="Atenção clínica, financeiro e agenda do dia"
+        actions={<PxButton variant="secondary" leftIcon={RefreshCw} loading={loading} disabled={loading} onClick={carregar}>Atualizar</PxButton>}
       />
 
-      <div className="p-6 md:p-8 space-y-6">
+      <div className="space-y-4 px-4 pb-10 md:px-10">
 
-        {/* Loading — 4 skeleton cards no layout real */}
         {loading && (
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <SkeletonCard />
-              <SkeletonCard />
-            </div>
-            <div className="space-y-4">
-              <SkeletonCard />
-              <SkeletonCard />
-            </div>
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2" aria-busy="true">
+            {[1, 2, 3, 4].map(i => <div key={i} className="px-glass h-40 animate-pulse rounded-px-panel" />)}
           </div>
         )}
 
-        {/* Erro */}
         {erro && !loading && (
-          <ErrorState message={erro} onRetry={carregar} />
+          <Panel tone="light" className="flex flex-wrap items-center justify-between gap-3">
+            <p role="alert" className="text-[13.5px] text-px-danger">{erro}</p>
+            <PxButton variant="secondary" size="sm" onClick={carregar}>Tentar de novo</PxButton>
+          </Panel>
         )}
 
         {data && !loading && (
           <>
+            <Panel tone="dark">
+              <dl className="grid grid-cols-2 gap-4 text-white md:grid-cols-4">
+                <Numero rotulo="Pacientes sem retorno" valor={semRetornoTotal} />
+                <Numero rotulo="Pacientes com exame pendente" valor={examesTotal} />
+                <Numero rotulo="Receita no mês" valor={fmtBRL(fin?.receita_mes ?? 0)} />
+                <Numero rotulo="Consultas hoje" valor={data.agenda !== null ? data.agenda.total : "sem agenda"} />
+              </dl>
+            </Panel>
 
-            {/* ── Chips de resumo ── */}
-            <div className="flex flex-wrap gap-3">
-              <Chip
-                label={semRetornoTotal === 0
-                  ? "Todos com retorno recente"
-                  : `${semRetornoTotal} sem retorno`}
-                color={semRetornoTotal > 0 ? "red" : "muted"}
-                icon={<Clock className="w-3 h-3" />}
-              />
-              <Chip
-                label={examesTotal === 0
-                  ? "Nenhum exame pendente"
-                  : `${examesTotal} exame${examesTotal !== 1 ? "s" : ""} pendente${examesTotal !== 1 ? "s" : ""}`}
-                color={examesTotal > 0 ? "blue" : "muted"}
-                icon={<FlaskConical className="w-3 h-3" />}
-              />
-              <Chip
-                label={fmtBRL(fin?.receita_mes ?? 0) + " no mês"}
-                color="green"
-                icon={<TrendingUp className="w-3 h-3" />}
-              />
-              {data.agenda !== null && (
-                <Chip
-                  label={`${data.agenda.total} consulta${data.agenda.total !== 1 ? "s" : ""} hoje`}
-                  color="purple"
-                  icon={<Calendar className="w-3 h-3" />}
-                />
-              )}
-            </div>
+            <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-2">
 
-            {/* ── Grid principal ── */}
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
-
-              {/* ── Coluna esquerda: Atenção ── */}
               <div className="space-y-4">
-                <SectionLabel text="ATENÇÃO NECESSÁRIA" />
-
-                {/* Sem retorno */}
-                <div className="bg-card border border-border rounded-xl overflow-hidden">
-                  <CardHeader
-                    icon={<Clock className="w-3.5 h-3.5 text-red-400" />}
-                    label="Sem retorno"
-                    action={
-                      <Link
-                        href="/pacientes"
-                        className="flex items-center gap-0.5 text-[10px] text-text-muted hover:text-accent transition-colors"
-                      >
-                        Ver pacientes <ChevronRight className="w-3 h-3" />
-                      </Link>
-                    }
-                  />
-                  <div className="divide-y divide-border/40">
-                    {semRetornoTotal === 0 ? (
-                      data.total_pacientes === 0 ? (
-                        <EmptyState
-                          icon={Users}
-                          title="Nenhum paciente cadastrado"
-                          subtitle="Cadastre seus pacientes para monitorar retornos e exames pendentes."
-                          action={{ label: "Ir para Pacientes", href: "/pacientes" }}
-                          className="py-10"
-                        />
-                      ) : (
-                        <EmptyRow text="Todos os pacientes com retorno nos últimos 90 dias" />
-                      )
+                <Bloco
+                  titulo="Sem retorno"
+                  extra={<Link href="/pacientes" className="flex items-center gap-0.5 text-[12px] text-px-muted hover:text-px-ink">Ver pacientes <ChevronRight className="h-3.5 w-3.5" aria-hidden /></Link>}
+                >
+                  {semRetornoTotal === 0 ? (
+                    data.total_pacientes === 0 ? (
+                      <Vazio text="Nenhum paciente cadastrado. Cadastre pacientes para monitorar retornos e exames." action={{ label: "Ir para Pacientes", href: "/pacientes" }} />
                     ) : (
-                      <>
-                        {/* Crítico: > 180 dias */}
-                        {data.sem_retorno.critico.slice(0, 5).map(p => (
-                          <div key={p.id} className="flex items-center gap-3 px-4 py-2.5">
-                            <div className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-red-400" />
-                            <div className="flex-1 min-w-0">
-                              <Link
-                                href={`/pacientes/${p.id}`}
-                                className="text-[12px] font-medium text-text-primary hover:text-accent transition-colors truncate block"
-                              >
-                                {p.nome}
-                              </Link>
-                              <div className="text-[10px] text-red-400/70">
-                                {diasLabel(p.dias, p.ultima_consulta)}
-                              </div>
-                            </div>
-                            {p.ultima_consulta && (
-                              <span className="text-[10px] font-mono text-text-muted flex-shrink-0">
-                                {fmtData(p.ultima_consulta)}
-                              </span>
-                            )}
-                          </div>
-                        ))}
-                        {/* Atenção: 90–180 dias */}
-                        {data.sem_retorno.atencao.slice(0, 3).map(p => (
-                          <div key={p.id} className="flex items-center gap-3 px-4 py-2.5">
-                            <div className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-amber-400" />
-                            <div className="flex-1 min-w-0">
-                              <Link
-                                href={`/pacientes/${p.id}`}
-                                className="text-[12px] font-medium text-text-primary hover:text-accent transition-colors truncate block"
-                              >
-                                {p.nome}
-                              </Link>
-                              <div className="text-[10px] text-amber-400/70">
-                                {diasLabel(p.dias, p.ultima_consulta)}
-                              </div>
-                            </div>
-                            <span className="text-[10px] font-mono text-text-muted flex-shrink-0">
-                              {fmtData(p.ultima_consulta)}
-                            </span>
-                          </div>
-                        ))}
-                        {semRetornoTotal > 8 && (
-                          <div className="px-4 py-2 text-[11px] text-text-muted border-t border-border/40">
-                            + {semRetornoTotal - 8} outros pacientes
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                {/* Exames pendentes */}
-                <div className="bg-card border border-border rounded-xl overflow-hidden">
-                  <CardHeader
-                    icon={<FlaskConical className="w-3.5 h-3.5 text-blue-400" />}
-                    label="Exames da última consulta"
-                  />
-                  <div className="divide-y divide-border/40">
-                    {examesTotal === 0 ? (
-                      <EmptyRow text="Nenhum exame solicitado na última consulta registrada" />
-                    ) : (
-                      <>
-                        {data.exames_pendentes.slice(0, 6).map((e, i) => (
-                          <div key={i} className="flex items-start justify-between gap-3 px-4 py-2.5">
-                            <div className="min-w-0">
-                              {e.id ? (
-                                <Link
-                                  href={`/pacientes/${e.id}`}
-                                  className="text-[12px] font-medium text-text-primary hover:text-accent transition-colors"
-                                >
-                                  {e.nome}
-                                </Link>
-                              ) : (
-                                <span className="text-[12px] font-medium text-text-primary">{e.nome}</span>
-                              )}
-                              <div className="text-[10px] text-text-muted mt-0.5 truncate">
-                                {e.exames.slice(0, 3).join(" · ")}
-                                {e.exames.length > 3 ? ` +${e.exames.length - 3}` : ""}
-                              </div>
-                            </div>
-                            <span className="text-[10px] font-mono text-text-muted flex-shrink-0">
-                              {fmtData(e.ultima_consulta)}
-                            </span>
-                          </div>
-                        ))}
-                        {examesTotal > 6 && (
-                          <div className="px-4 py-2 text-[11px] text-text-muted border-t border-border/40">
-                            + {examesTotal - 6} outros pacientes
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </div>
-                  {examesTotal > 0 && (
-                    <div className="px-4 py-2.5 border-t border-border/50 bg-blue-500/5">
-                      <p className="text-[10px] text-text-muted">
-                        Realização não confirmada — exames solicitados na última consulta sem retorno posterior.
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* ── Coluna direita: Financeiro + Agenda ── */}
-              <div className="space-y-4">
-                <SectionLabel text="FINANCEIRO" />
-
-                <div className="bg-card border border-border rounded-xl p-5 space-y-5">
-                  {data.total_lancamentos === 0 ? (
-                    <EmptyState
-                      icon={CircleDollarSign}
-                      title="Nenhum lançamento registrado"
-                      subtitle="Registre receitas e despesas para acompanhar o financeiro da clínica."
-                      action={{ label: "Registrar lançamento", href: "/financeiro" }}
-                      className="py-6"
-                    />
+                      <Vazio text="Todos os pacientes tiveram retorno nos últimos 90 dias." />
+                    )
                   ) : (
                     <>
-                      {/* Receita principal */}
+                      <ul className="divide-y divide-px-line">
+                        {data.sem_retorno.critico.slice(0, 5).map(p => <LinhaPaciente key={p.id} p={p} tom="danger" />)}
+                        {data.sem_retorno.atencao.slice(0, 3).map(p => <LinhaPaciente key={p.id} p={p} tom="warn" />)}
+                      </ul>
+                      {semRetornoTotal > 8 && (
+                        <p className="border-t border-px-line px-5 py-3 text-[12.5px] text-px-muted">+ {semRetornoTotal - 8} outros pacientes</p>
+                      )}
+                    </>
+                  )}
+                </Bloco>
+
+                <Bloco titulo="Exames da última consulta">
+                  {examesTotal === 0 ? (
+                    <Vazio text="Nenhum exame solicitado na última consulta registrada." />
+                  ) : (
+                    <>
+                      <ul className="divide-y divide-px-line">
+                        {data.exames_pendentes.slice(0, 6).map((e, i) => (
+                          <li key={i} className="flex items-start justify-between gap-3 px-5 py-3">
+                            <div className="min-w-0">
+                              {e.id ? (
+                                <Link href={`/pacientes/${e.id}`} className="text-[13.5px] font-medium text-px-ink hover:underline">{e.nome}</Link>
+                              ) : (
+                                <span className="text-[13.5px] font-medium text-px-ink">{e.nome}</span>
+                              )}
+                              <p className="mt-0.5 truncate text-[12px] text-px-muted">
+                                {e.exames.slice(0, 3).join(", ")}
+                                {e.exames.length > 3 ? ` e mais ${e.exames.length - 3}` : ""}
+                              </p>
+                            </div>
+                            <span className="flex-shrink-0 text-[12px] text-px-muted tabular-nums">{fmtData(e.ultima_consulta)}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      {examesTotal > 6 && (
+                        <p className="border-t border-px-line px-5 py-3 text-[12.5px] text-px-muted">+ {examesTotal - 6} outros pacientes</p>
+                      )}
+                      <p className="border-t border-px-line px-5 py-3 text-[12px] text-px-muted">
+                        Realização não confirmada: são exames pedidos na última consulta, sem retorno depois.
+                      </p>
+                    </>
+                  )}
+                </Bloco>
+              </div>
+
+              <div className="space-y-4">
+                <Panel tone="light" className="space-y-5">
+                  <h2 className="text-[15px] font-semibold text-px-ink">Financeiro do mês</h2>
+                  {data.total_lancamentos === 0 ? (
+                    <Vazio text="Nenhum lançamento registrado. Registre receitas e despesas para acompanhar o financeiro." action={{ label: "Registrar lançamento", href: "/financeiro" }} />
+                  ) : (
+                    <>
                       <div>
-                        <div className="text-[10px] font-mono text-text-muted uppercase tracking-wider">
-                          Receita do mês
-                        </div>
-                        <div className="text-[32px] font-bold text-text-primary mt-0.5 leading-tight">
-                          {fmtBRL(fin?.receita_mes ?? 0)}
-                        </div>
+                        <p className="text-[12.5px] text-px-muted">Receita do mês</p>
+                        <p className="mt-0.5 text-[34px] font-semibold leading-tight tabular-nums text-px-ink">{fmtBRL(fin?.receita_mes ?? 0)}</p>
                         {varPct !== null && (
-                          <div className={cn(
-                            "flex items-center gap-1 mt-1 text-[11px] font-medium",
-                            varPct > 0 ? "text-accent" : varPct < 0 ? "text-red-400" : "text-text-muted"
-                          )}>
-                            {varPct > 0
-                              ? <TrendingUp  className="w-3 h-3" />
-                              : varPct < 0
-                                ? <TrendingDown className="w-3 h-3" />
-                                : <Minus className="w-3 h-3" />}
-                            {varPct > 0 ? "+" : ""}{varPct}% vs mês anterior
-                            <span className="text-text-muted font-normal">
-                              ({fmtBRL(fin?.receita_ant ?? 0)})
-                            </span>
-                          </div>
+                          <p className={`mt-1 flex items-center gap-1 text-[12.5px] font-medium ${varPct > 0 ? "text-px-ok" : varPct < 0 ? "text-px-danger" : "text-px-muted"}`}>
+                            {varPct > 0 ? <TrendingUp className="h-3.5 w-3.5" aria-hidden /> : varPct < 0 ? <TrendingDown className="h-3.5 w-3.5" aria-hidden /> : <Minus className="h-3.5 w-3.5" aria-hidden />}
+                            {varPct > 0 ? "+" : ""}{varPct}% sobre o mês anterior
+                            <span className="font-normal text-px-muted">({fmtBRL(fin?.receita_ant ?? 0)})</span>
+                          </p>
                         )}
                         {varPct === null && fin && fin.receita_ant === 0 && (
-                          <div className="text-[11px] text-text-muted mt-1">Sem dados do mês anterior</div>
+                          <p className="mt-1 text-[12.5px] text-px-muted">Sem dados do mês anterior</p>
                         )}
                       </div>
 
-                      {/* Barra de progresso do mês */}
                       {fin && (
                         <div>
-                          <div className="flex justify-between text-[10px] text-text-muted mb-1.5">
+                          <div className="mb-1.5 flex justify-between text-[12px] text-px-muted">
                             <span>Dia {fin.dias_dec} de {fin.dias_tot}</span>
                             <span>{Math.round((fin.dias_dec / fin.dias_tot) * 100)}% do mês decorrido</span>
                           </div>
-                          <div className="h-1.5 bg-surface rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-accent rounded-full"
-                              style={{ width: `${Math.min(100, (fin.dias_dec / fin.dias_tot) * 100)}%` }}
-                            />
+                          <div className="h-2 overflow-hidden rounded-full bg-px-ink/10" role="progressbar" aria-label="Mês decorrido" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round((fin.dias_dec / fin.dias_tot) * 100)}>
+                            <div className="h-full rounded-full bg-px-ink" style={{ width: `${Math.min(100, (fin.dias_dec / fin.dias_tot) * 100)}%` }} />
                           </div>
                         </div>
                       )}
 
-                      {/* Estimativa */}
                       {fin?.estimativa !== null && fin?.estimativa !== undefined ? (
-                        <div className="bg-accent-dim border border-accent-border rounded-lg px-4 py-3">
-                          <div className="text-[10px] font-mono text-text-muted uppercase tracking-wider">
-                            Estimativa ao fim do mês
-                          </div>
-                          <div className="text-[22px] font-bold text-accent mt-0.5">
-                            {fmtBRL(fin.estimativa)}
-                          </div>
-                          <div className="text-[10px] text-text-muted mt-0.5">
-                            Projeção linear — baseada nos {fin.dias_dec} dias decorridos
-                          </div>
+                        <div className="rounded-px-card bg-px-accent-soft px-4 py-3">
+                          <p className="text-[12.5px] text-px-muted">Estimativa ao fim do mês</p>
+                          <p className="mt-0.5 text-[24px] font-semibold tabular-nums text-px-accent">{fmtBRL(fin.estimativa)}</p>
+                          <p className="mt-0.5 text-[12px] text-px-muted">Projeção linear sobre os {fin.dias_dec} dias decorridos</p>
                         </div>
                       ) : fin && fin.dias_dec < 3 ? (
-                        <div className="flex items-center gap-2 border border-border rounded-lg px-3 py-2.5 text-[11px] text-text-muted">
-                          <Clock className="w-3.5 h-3.5 flex-shrink-0" />
-                          Estimativa disponível a partir do dia 3 do mês
-                        </div>
+                        <p className="text-[12.5px] text-px-muted">A estimativa fica disponível a partir do dia 3 do mês.</p>
                       ) : fin && fin.receita_mes === 0 ? (
-                        <div className="text-[11px] text-text-muted">
-                          Sem receita registrada ainda este mês
-                        </div>
+                        <p className="text-[12.5px] text-px-muted">Sem receita registrada ainda neste mês.</p>
                       ) : null}
                     </>
                   )}
-                </div>
+                </Panel>
 
-                {/* ── Agenda ── */}
-                <SectionLabel text="AGENDA HOJE" />
-                <div className="bg-card border border-border rounded-xl overflow-hidden">
+                <Bloco titulo="Agenda de hoje">
                   {data.agenda === null ? (
-                    // MedX não configurado — explica e oferece CTA
-                    <EmptyState
-                      icon={Plug}
-                      title="Agenda não configurada"
-                      subtitle="Conecte o MedX para visualizar seus agendamentos do dia diretamente aqui."
-                      action={{ label: "Configurar integração", href: "/configuracoes" }}
-                      className="py-10"
-                    />
+                    <Vazio text="Agenda não configurada. Conecte o MedX para ver os agendamentos do dia aqui." action={{ label: "Configurar integração", href: "/configuracoes" }} />
+                  ) : data.agenda.total === 0 ? (
+                    <Vazio text="Nenhum agendamento hoje. Agenda livre." />
                   ) : (
                     <>
-                      <CardHeader
-                        icon={<Calendar className="w-3.5 h-3.5 text-purple-400" />}
-                        label={
-                          data.agenda.total === 0
-                            ? "Nenhum agendamento hoje"
-                            : `${data.agenda.total} consulta${data.agenda.total !== 1 ? "s" : ""} agendada${data.agenda.total !== 1 ? "s" : ""}`
-                        }
-                      />
-                      {data.agenda.total === 0 ? (
-                        <EmptyRow text="Agenda livre hoje" />
-                      ) : (
-                        <div className="divide-y divide-border/40">
-                          {data.agenda.appts.slice(0, 8).map((a, i) => (
-                            <div key={i} className="flex items-center gap-3 px-4 py-2.5">
-                              <span className="text-[11px] font-mono text-text-muted w-12 flex-shrink-0">
-                                {a.hora}
-                              </span>
-                              <div className="flex-1 min-w-0">
-                                <div className="text-[12px] text-text-primary truncate">{a.nome}</div>
-                                <div className="text-[10px] text-text-muted truncate">{a.proc}</div>
-                              </div>
-                              {a.status && (
-                                <span className="text-badge font-mono px-1.5 py-0.5 rounded border border-border text-text-muted flex-shrink-0">
-                                  {a.status}
-                                </span>
-                              )}
+                      <ul className="divide-y divide-px-line">
+                        {data.agenda.appts.slice(0, 8).map((a, i) => (
+                          <li key={i} className="flex items-center gap-3 px-5 py-3">
+                            <span className="w-12 flex-shrink-0 text-[13px] font-semibold tabular-nums text-px-ink">{a.hora}</span>
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-[13.5px] text-px-ink">{a.nome}</p>
+                              <p className="truncate text-[12px] text-px-muted">{a.proc}</p>
                             </div>
-                          ))}
-                          {data.agenda.total > 8 && (
-                            <div className="px-4 py-2 text-[11px] text-text-muted border-t border-border/40">
-                              + {data.agenda.total - 8} mais agendamentos
-                            </div>
-                          )}
-                        </div>
+                            {a.status && <Tag>{a.status}</Tag>}
+                          </li>
+                        ))}
+                      </ul>
+                      {data.agenda.total > 8 && (
+                        <p className="border-t border-px-line px-5 py-3 text-[12.5px] text-px-muted">+ {data.agenda.total - 8} mais agendamentos</p>
                       )}
                     </>
                   )}
-                </div>
+                </Bloco>
               </div>
 
             </div>

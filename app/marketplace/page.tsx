@@ -164,9 +164,13 @@ export default function MarketplacePage() {
 
   return (
     <div className="animate-fade-in">
-      <PageHeader title="Marketplace" caption={`${PARCEIROS.length} parceiros com condições para membros PRAXIS`} />
+      <PageHeader title="Marketplace" caption={`${PARCEIROS.length} parceiros de exemplo`} />
 
       <div className="space-y-6 px-4 pb-10 md:px-10">
+        <p role="note" className="rounded-px-card bg-px-ink/[0.05] px-4 py-3 text-[13px] text-px-ink/80">
+          Os parceiros abaixo são exemplos para ilustrar o Marketplace. Nomes, preços e benefícios não são reais.
+        </p>
+
         <div className="space-y-3">
           <PxInput
             type="search"
@@ -255,7 +259,10 @@ function ParceiroCard({ parceiro: p }: { parceiro: Parceiro }) {
           <h3 className="text-[14px] font-semibold leading-snug text-px-ink">{p.nome}</h3>
           <p className="mt-0.5 text-[12.5px] text-px-muted">{p.categoria}</p>
         </div>
-        {p.destaque && <Tag>Em destaque</Tag>}
+        <div className="flex shrink-0 flex-col items-end gap-1">
+          <Tag>Exemplo</Tag>
+          {p.destaque && <Tag tone="ink">Em destaque</Tag>}
+        </div>
       </div>
 
       <p className="text-[13px] leading-relaxed text-px-ink/80">{p.descricao}</p>

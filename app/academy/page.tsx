@@ -1,17 +1,11 @@
 "use client"
 
 import { useState, useEffect, useCallback, useMemo } from "react"
-import {
-  GraduationCap, Megaphone, BarChart3, TrendingUp, Rocket,
-  Users, Check, Clock, Search, X, ChevronDown, ChevronRight,
-  BookOpen, Play, Circle, Loader2, ArrowRight, ExternalLink,
-  CheckCircle, BarChart2, Award, Star, Trophy, Zap, Flame,
-} from "lucide-react"
-import { cn } from "@/lib/utils"
-import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
-import { EmptyState } from "@/components/EmptyState"
+import { Check, ChevronDown, ChevronRight, Circle, CheckCircle, Clock, ExternalLink, Play } from "lucide-react"
+import { Toast } from "@/components/Toast"
+import { Panel, PxButton, Segmented, Field, PxInput, PxModal, Tag, PageHeader } from "@/components/px"
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// ─── Tipos ───────────────────────────────────────────────────────────────────
 
 interface Aula {
   id:          string
@@ -33,27 +27,22 @@ interface Trilha {
   id:        string
   titulo:    string
   descricao: string
-  icon:      React.ElementType
-  color:     string
-  bg:        string
-  border:    string
   nivel:     string
   modulos:   Modulo[]
 }
 
 type ProgressoMap = Record<string, "nao_iniciada" | "em_andamento" | "concluida">
-type Tab = "trilhas" | "aulas" | "comunidade" | "progresso" | "casos"
+type Tab = "trilhas" | "aulas" | "casos" | "comunidade" | "progresso"
 
-// ─── Dados ────────────────────────────────────────────────────────────────────
+// ─── Dados ───────────────────────────────────────────────────────────────────
 
 const TRILHAS: Trilha[] = [
   {
-    id: "marketing", titulo: "Marketing Médico", nivel: "Iniciante → Avançado",
+    id: "marketing", titulo: "Marketing Médico", nivel: "Iniciante a Avançado",
     descricao: "Do zero à autoridade digital. Atraia pacientes pelo Instagram sem violar o CFM.",
-    icon: Megaphone, color: "var(--accent)", bg: "var(--accent-dim)", border: "var(--accent-border)",
     modulos: [
       {
-        id: "mkt-m1", nome: "Módulo 1 — Fundamentos",
+        id: "mkt-m1", nome: "Módulo 1: Fundamentos",
         aulas: [
           { id: "mkt-1", numero: 1, titulo: "Por que médicos falham no marketing digital", duracao: "18 min", nivel: "Iniciante",
             conteudo: "Os 5 erros mais comuns de médicos nas redes sociais. Como o CFM regula a publicidade médica. O que pode e não pode segundo a Resolução CFM 2.336/2023. Exemplos práticos de publicações aprovadas e reprovadas.", linkModulo: { label: "Radar de Tendências", href: "/radar" } },
@@ -66,7 +55,7 @@ const TRILHAS: Trilha[] = [
         ],
       },
       {
-        id: "mkt-m2", nome: "Módulo 2 — Crescimento",
+        id: "mkt-m2", nome: "Módulo 2: Crescimento",
         aulas: [
           { id: "mkt-5", numero: 5, titulo: "Como criar um Reel viral sobre sua especialidade", duracao: "28 min", nivel: "Intermediário",
             conteudo: "Estrutura comprovada: gancho (3s) + desenvolvimento (30s) + CTA (5s). Os 10 ganchos que mais funcionam para médicos. Como gravar sem medo de câmera. Roteiro template.", linkModulo: { label: "Gerador de Roteiros", href: "/roteiros" } },
@@ -79,7 +68,7 @@ const TRILHAS: Trilha[] = [
         ],
       },
       {
-        id: "mkt-m3", nome: "Módulo 3 — Autoridade",
+        id: "mkt-m3", nome: "Módulo 3: Autoridade",
         aulas: [
           { id: "mkt-9", numero: 9, titulo: "Como se tornar referência na sua especialidade", duracao: "27 min", nivel: "Avançado",
             conteudo: "Estratégia de conteúdo de autoridade: séries temáticas. Como citar estudos científicos sem ser chato. Posicionamento contra mitos comuns. Como lidar com comentários difíceis e críticas.", linkModulo: { label: "Radar de Tendências", href: "/radar" } },
@@ -96,10 +85,9 @@ const TRILHAS: Trilha[] = [
   {
     id: "gestao", titulo: "Gestão de Clínica", nivel: "Todos os níveis",
     descricao: "Gerencie sua clínica como empresa. Indicadores, finanças, equipe e crescimento sustentável.",
-    icon: BarChart3, color: "#3b82f6", bg: "rgba(59,130,246,0.08)", border: "rgba(59,130,246,0.22)",
     modulos: [
       {
-        id: "ges-m1", nome: "Módulo 1 — Fundamentos da Gestão",
+        id: "ges-m1", nome: "Módulo 1: Fundamentos da Gestão",
         aulas: [
           { id: "ges-1", numero: 1, titulo: "Por que 70% das clínicas fecham em 5 anos", duracao: "22 min", nivel: "Iniciante",
             conteudo: "Os erros de gestão mais comuns que levam clínicas à falência. Como pensar como empresário sem deixar de ser médico. A diferença entre clínica e consultório. Por onde começar quando você não sabe nada de gestão." },
@@ -110,7 +98,7 @@ const TRILHAS: Trilha[] = [
         ],
       },
       {
-        id: "ges-m2", nome: "Módulo 2 — Processos e Equipe",
+        id: "ges-m2", nome: "Módulo 2: Processos e Equipe",
         aulas: [
           { id: "ges-4", numero: 4, titulo: "SOPs: como documentar sua clínica", duracao: "24 min", nivel: "Intermediário",
             conteudo: "O que são SOPs e por que toda clínica precisa. Como criar procedimentos operacionais padrão para recepção, consulta e pós-atendimento. Templates prontos. Como implementar sem resistência da equipe." },
@@ -123,7 +111,7 @@ const TRILHAS: Trilha[] = [
         ],
       },
       {
-        id: "ges-m3", nome: "Módulo 3 — Crescimento",
+        id: "ges-m3", nome: "Módulo 3: Crescimento",
         aulas: [
           { id: "ges-8", numero: 8, titulo: "Como precificar sua consulta corretamente", duracao: "27 min", nivel: "Avançado",
             conteudo: "Método de precificação baseado em custo + valor. Como calcular o preço mínimo viável. Estratégia de preço premium. Como comunicar aumento de preço para pacientes antigos. Benchmarking por especialidade." },
@@ -136,12 +124,11 @@ const TRILHAS: Trilha[] = [
     ],
   },
   {
-    id: "comercial", titulo: "Comercial e Conversão", nivel: "Iniciante → Intermediário",
+    id: "comercial", titulo: "Comercial e Conversão", nivel: "Iniciante a Intermediário",
     descricao: "Transforme interessados em pacientes fiéis. Scripts, CRM, fidelização e reativação.",
-    icon: TrendingUp, color: "#10b981", bg: "rgba(16,185,129,0.08)", border: "rgba(16,185,129,0.22)",
     modulos: [
       {
-        id: "com-m1", nome: "Módulo 1 — Conversão",
+        id: "com-m1", nome: "Módulo 1: Conversão",
         aulas: [
           { id: "com-1", numero: 1, titulo: "A jornada do paciente moderno", duracao: "20 min", nivel: "Iniciante",
             conteudo: "Como o paciente de 2026 pesquisa, decide e escolhe seu médico. Os 5 momentos de decisão. O papel do Instagram, Google e indicações. Como aparecer em cada etapa. Por que 80% dos leads esfria antes de agendar.", linkModulo: { label: "CRM de Leads", href: "/nutricao-leads" } },
@@ -154,7 +141,7 @@ const TRILHAS: Trilha[] = [
         ],
       },
       {
-        id: "com-m2", nome: "Módulo 2 — Fidelização",
+        id: "com-m2", nome: "Módulo 2: Fidelização",
         aulas: [
           { id: "com-5", numero: 5, titulo: "Experiência premium do paciente", duracao: "24 min", nivel: "Iniciante",
             conteudo: "Os 12 pontos de contato do paciente com sua clínica. Como criar uma experiência que gera indicações espontâneas. Pequenos gestos de alto impacto. Pesquisa de NPS: como aplicar e interpretar." },
@@ -171,10 +158,9 @@ const TRILHAS: Trilha[] = [
   {
     id: "escala", titulo: "Escalabilidade", nivel: "Avançado",
     descricao: "Da clínica solo ao grupo médico. Telemedicina, segunda unidade, patrimônio e legado.",
-    icon: Rocket, color: "#8b5cf6", bg: "rgba(139,92,246,0.08)", border: "rgba(139,92,246,0.22)",
     modulos: [
       {
-        id: "esc-m1", nome: "Módulo 1 — Escala",
+        id: "esc-m1", nome: "Módulo 1: Escala",
         aulas: [
           { id: "esc-1", numero: 1, titulo: "Da clínica solo ao grupo médico", duracao: "38 min", nivel: "Avançado",
             conteudo: "Os modelos de expansão: franquia, sociedade, licença de marca. Como sair da operação sem perder qualidade. O papel do sócio operacional. Estrutura jurídica para grupos médicos. Cases de grupos que saíram do zero." },
@@ -187,7 +173,7 @@ const TRILHAS: Trilha[] = [
         ],
       },
       {
-        id: "esc-m2", nome: "Módulo 2 — Visão de Longo Prazo",
+        id: "esc-m2", nome: "Módulo 2: Visão de Longo Prazo",
         aulas: [
           { id: "esc-5", numero: 5, titulo: "Precificação premium: como cobrar o que vale", duracao: "31 min", nivel: "Avançado",
             conteudo: "A psicologia do preço premium. Como criar percepção de valor que justifica preços altos. O que clientes de alto padrão realmente buscam. Como fazer a transição para preços maiores sem perder todos os pacientes." },
@@ -203,15 +189,7 @@ const TRILHAS: Trilha[] = [
   },
 ]
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const NIVEL_STYLE: Record<string, string> = {
-  "Iniciante":     "bg-green-50 border-green-200 text-green-700",
-  "Intermediário": "bg-blue-50  border-blue-200  text-blue-700",
-  "Avançado":      "bg-purple-50 border-purple-200 text-purple-700",
-}
-
-// ─── Casos Clínicos ───────────────────────────────────────────────────────────
+// ─── Casos clínicos ──────────────────────────────────────────────────────────
 
 interface CasoClinico {
   id:           string
@@ -241,7 +219,7 @@ const CASOS: CasoClinico[] = [
     titulo: "Paciente de 58 anos com 'exames normais' e senescência celular precoce",
     contexto: "Mulher, 58 anos, TSH 2.8, vitamina D 32 ng/mL (normal pelo lab). Queixa de perda de massa muscular, unhas quebradiças, cognição reduzida. Médico anterior disse que 'está tudo bem'.",
     decisao: "Referenciar vitamina D funcional ≥ 60 ng/mL para longevidade. Iniciar reposição vitamina D3 10.000 UI + K2 200 mcg. Avaliar zinco, ferritina sérica, IGF-1 e testosterona livre.",
-    resultado: "Em 6 meses: vitamina D 68 ng/mL, melhora do sono e cognição, ganho de 1.2 kg de massa magra (DEXA). Zinco estava em 68 mcg/dL — suplementação iniciada.",
+    resultado: "Em 6 meses: vitamina D 68 ng/mL, melhora do sono e cognição, ganho de 1.2 kg de massa magra (DEXA). Zinco estava em 68 mcg/dL, suplementação iniciada.",
     aprendizado: "Valores 'normais' de laboratório foram estabelecidos para evitar doenças agudas, não para otimizar função. Médicos de longevidade trabalham com faixas funcionais, não apenas de referência.",
     dificuldade: "Avançado",
   },
@@ -262,7 +240,7 @@ const CASOS: CasoClinico[] = [
     contexto: "Homem, 49 anos, diagnóstico de esteatose hepática grau 2 (USG). Consumo de álcool negado. TGO 48, TGP 67. Triglicerídeos 280 mg/dL, HDL 38. IMC 31. Cardiologista prescreveu estatina.",
     decisao: "Interromper estatina (hepatotóxica na esteatose). Protocolo: jejum intermitente 16:8, frutose < 15g/dia, ômega-3 4g/dia, colina 500 mg/dia, perda de 7–10% do peso corporal.",
     resultado: "Em 16 semanas: peso −8.5 kg, TGP 28, TGO 24, triglicerídeos 145, HDL 52. USG controle: esteatose leve/ausente.",
-    aprendizado: "Frutose é o principal driver da esteatose não alcoólica — não a gordura alimentar. Colina e ômega-3 têm evidência robusta. Perda de 7-10% do peso é o maior preditor de reversão.",
+    aprendizado: "Frutose é o principal driver da esteatose não alcoólica, e não a gordura alimentar. Colina e ômega-3 têm evidência robusta. Perda de 7-10% do peso é o maior preditor de reversão.",
     dificuldade: "Avançado",
   },
   {
@@ -277,70 +255,52 @@ const CASOS: CasoClinico[] = [
   },
 ]
 
-const DIFICULDADE_STYLE: Record<string, string> = {
-  "Iniciante":     "bg-emerald-500/10 border-emerald-500/25 text-emerald-400",
-  "Intermediário": "bg-blue-500/10 border-blue-500/25 text-blue-400",
-  "Avançado":      "bg-violet-500/10 border-violet-500/25 text-violet-400",
-}
+// ─── Casos clínicos: componente ──────────────────────────────────────────────
 
 function AbaCasos() {
   const [aberto, setAberto] = useState<string | null>(null)
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between mb-2">
-        <p className="text-[11px] font-mono text-text-muted uppercase tracking-widest">
-          {CASOS.length} casos reais documentados
-        </p>
-      </div>
+    <div className="space-y-3">
+      <p className="text-[13px] text-px-muted">{CASOS.length} casos documentados</p>
       {CASOS.map(caso => {
         const isOpen = aberto === caso.id
-        const iniciais = caso.titulo.split(" ").slice(0, 2).map(w => w[0].toUpperCase()).join("")
         return (
-          <div
-            key={caso.id}
-            className="bg-card border border-border rounded-xl overflow-hidden transition-all duration-200 hover:border-border-hover"
-          >
+          <Panel key={caso.id} as="article" className="overflow-hidden p-0">
             <button
-              className="w-full flex items-start gap-4 p-5 text-left"
+              type="button"
+              aria-expanded={isOpen}
+              className="flex w-full items-start gap-4 p-5 text-left"
               onClick={() => setAberto(isOpen ? null : caso.id)}
             >
-              {/* Avatar */}
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 font-bold text-[13px] text-accent bg-accent-dim border border-accent-border">
-                {iniciais}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap mb-1">
-                  <span className="text-badge font-mono font-semibold px-2 py-0.5 rounded-full border bg-accent-dim border-accent-border text-accent">
-                    {caso.especialidade}
-                  </span>
-                  <span className={cn("text-badge font-mono px-2 py-0.5 rounded-full border", DIFICULDADE_STYLE[caso.dificuldade])}>
-                    {caso.dificuldade}
-                  </span>
+              <div className="min-w-0 flex-1">
+                <div className="mb-1.5 flex flex-wrap items-center gap-2">
+                  <Tag tone="accent">{caso.especialidade}</Tag>
+                  <Tag>{caso.dificuldade}</Tag>
                 </div>
-                <p className="text-[13px] font-semibold text-text-primary leading-snug">{caso.titulo}</p>
+                <p className="text-[14px] font-semibold leading-snug text-px-ink">{caso.titulo}</p>
               </div>
-              <ChevronDown className={cn("w-4 h-4 text-text-muted flex-shrink-0 mt-1 transition-transform", isOpen && "rotate-180")} />
+              <ChevronDown className={`mt-1 h-4 w-4 shrink-0 text-px-muted transition-transform ${isOpen ? "rotate-180" : ""}`} aria-hidden="true" />
             </button>
 
             {isOpen && (
-              <div className="px-5 pb-5 space-y-4 border-t border-border pt-4 animate-fade-in">
+              <div className="animate-fade-in space-y-4 border-t border-px-ink/10 px-5 pb-5 pt-4">
                 {[
-                  { label: "Contexto",    text: caso.contexto   },
-                  { label: "Decisão",     text: caso.decisao    },
-                  { label: "Resultado",   text: caso.resultado  },
+                  { label: "Contexto",  text: caso.contexto  },
+                  { label: "Decisão",   text: caso.decisao   },
+                  { label: "Resultado", text: caso.resultado },
                 ].map(({ label, text }) => (
                   <div key={label}>
-                    <p className="text-[10px] font-mono text-text-muted uppercase tracking-widest mb-1">{label}</p>
-                    <p className="text-[12px] text-text-secondary leading-relaxed">{text}</p>
+                    <p className="mb-1 text-[12px] font-medium text-px-muted">{label}</p>
+                    <p className="text-[13px] leading-relaxed text-px-ink/80">{text}</p>
                   </div>
                 ))}
-                <div className="rounded-lg border border-accent-border bg-accent-dim p-3.5">
-                  <p className="text-[9px] font-mono text-accent uppercase tracking-widest mb-1">Aprendizado-chave</p>
-                  <p className="text-[12px] text-text-primary leading-relaxed font-medium">{caso.aprendizado}</p>
+                <div className="rounded-px-card bg-px-accent-soft px-4 py-3">
+                  <p className="mb-1 text-[12px] font-medium text-px-accent">Aprendizado principal</p>
+                  <p className="text-[13px] font-medium leading-relaxed text-px-ink">{caso.aprendizado}</p>
                 </div>
               </div>
             )}
-          </div>
+          </Panel>
         )
       })}
     </div>
@@ -355,13 +315,13 @@ function todasAulasList() {
   return TRILHAS.flatMap(t => t.modulos.flatMap(m => m.aulas.map(a => ({ aula: a, trilha: t }))))
 }
 
-// ─── Sistema de níveis ────────────────────────────────────────────────────────
+// ─── Sistema de níveis ───────────────────────────────────────────────────────
 
 const NIVEIS = [
-  { label: "Bronze",  min: 0,  max: 25,  cor: "#cd7f32", textCls: "text-amber-600",  bgCls: "bg-amber-900/20",   borderCls: "border-amber-700/40" },
-  { label: "Prata",   min: 26, max: 50,  cor: "#94a3b8", textCls: "text-slate-400",  bgCls: "bg-slate-400/15",   borderCls: "border-slate-400/35" },
-  { label: "Ouro",    min: 51, max: 75,  cor: "#f59e0b", textCls: "text-yellow-400", bgCls: "bg-yellow-400/15",  borderCls: "border-yellow-400/35" },
-  { label: "Diamond", min: 76, max: 100, cor: "#a78bfa", textCls: "text-violet-400", bgCls: "bg-violet-400/15",  borderCls: "border-violet-400/35" },
+  { label: "Bronze",  min: 0,  max: 25  },
+  { label: "Prata",   min: 26, max: 50  },
+  { label: "Ouro",    min: 51, max: 75  },
+  { label: "Diamond", min: 76, max: 100 },
 ]
 
 function getNivel(pct: number) {
@@ -372,233 +332,202 @@ const XP_POR_NIVEL: Record<string, number> = { "Iniciante": 10, "Intermediário"
 function xpAula(a: Aula) { return XP_POR_NIVEL[a.nivel] ?? 10 }
 const XP_TOTAL = TRILHAS.flatMap(t => t.modulos.flatMap(m => m.aulas)).reduce((s, a) => s + xpAula(a), 0)
 
+function Barra({ pct, label, className }: { pct: number; label: string; className?: string }) {
+  return (
+    <div
+      role="progressbar"
+      aria-label={label}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={pct}
+      className={`h-2 w-full overflow-hidden rounded-full bg-px-ink/10 ${className ?? ""}`}
+    >
+      <div className="h-full rounded-full bg-px-ink transition-all duration-500" style={{ width: `${pct}%` }} />
+    </div>
+  )
+}
+
 function NivelBadge({ done, total, xp, xpMax }: { done: number; total: number; xp: number; xpMax: number }) {
   const pct    = total > 0 ? Math.round(done / total * 100) : 0
   const nivel  = getNivel(pct)
   const next   = NIVEIS.find(n => n.min > pct)
   const xpProx = next ? Math.ceil(xpMax * next.min / 100) : xpMax
   return (
-    <div className={cn("flex items-center gap-3 px-4 py-3 rounded-xl border", nivel.bgCls, nivel.borderCls)}>
-      <Trophy className={cn("w-5 h-5 flex-shrink-0", nivel.textCls)} />
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-          <span className={cn("text-[13px] font-bold", nivel.textCls)}>{nivel.label}</span>
-          <span className="text-[10px] font-mono" style={{ color: "var(--text-muted)" }}>
-            {xp} / {xpProx} XP
-          </span>
-          {next ? (
-            <span className="text-[10px] font-mono ml-auto" style={{ color: "var(--text-muted)" }}>
-              próximo: <span className={next.textCls}>{next.label}</span>
-            </span>
-          ) : (
-            <span className="text-[10px] font-mono ml-auto" style={{ color: "var(--text-muted)" }}>nível máximo</span>
-          )}
-        </div>
-        <div className="w-full h-1.5 bg-black/20 rounded-full overflow-hidden">
-          <div
-            className="h-full rounded-full transition-all duration-700"
-            style={{ width: `${pct}%`, background: nivel.cor }}
-          />
-        </div>
+    <Panel className="space-y-3 p-4">
+      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <span className="text-[16px] font-semibold text-px-ink">{nivel.label}</span>
+        <span className="text-[12.5px] text-px-muted">{xp} / {xpProx} XP</span>
+        <span className="text-[12.5px] text-px-muted">{done}/{total} aulas concluídas</span>
+        <span className="ml-auto text-[12.5px] text-px-muted">{next ? `próximo nível: ${next.label}` : "nível máximo"}</span>
       </div>
-    </div>
+      <Barra pct={pct} label="Progresso geral nas aulas" />
+    </Panel>
   )
 }
 
-// ─── Modal de aula ────────────────────────────────────────────────────────────
+// ─── Modal de aula ───────────────────────────────────────────────────────────
 
-function AulaModal({ aula, trilha, status, onClose, onConcluir, saving }: {
-  aula: Aula; trilha: Trilha; status: string
+function AulaModal({ aula, status, onClose, onConcluir, saving }: {
+  aula: Aula; status: string
   onClose: () => void; onConcluir: () => void; saving: boolean
 }) {
   const concluida = status === "concluida"
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)" }}
-      onClick={e => e.target === e.currentTarget && onClose()}
-    >
-      <div className="rounded-2xl w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto"
-        style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+    <PxModal open onClose={onClose} title={aula.titulo} className="max-w-lg">
+      <div className="space-y-4">
+        <p className="text-[12.5px] text-px-muted">Aula {aula.numero}, {aula.duracao}</p>
 
-        <div className="flex items-start justify-between px-6 py-4" style={{ borderBottom: "1px solid var(--border)" }}>
-          <div className="flex-1 min-w-0 pr-3">
-            <p className="text-[10px] font-mono uppercase tracking-widest mb-1" style={{ color: "var(--text-muted)" }}>
-              Aula {aula.numero} · {aula.duracao}
-            </p>
-            <h2 className="text-[15px] font-bold leading-snug" style={{ color: "var(--text-primary)" }}>{aula.titulo}</h2>
-          </div>
-          <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors mt-0.5 flex-shrink-0"
-            style={{ color: "var(--text-muted)" }} onMouseEnter={e => (e.currentTarget.style.background = "var(--surface-2)")} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-            <X className="w-4 h-4" />
-          </button>
+        <div className="flex aspect-video w-full flex-col items-center justify-center rounded-px-card bg-px-ink/[0.06]">
+          <Play className="mb-2 h-9 w-9 text-px-ink" aria-hidden="true" />
+          <p className="text-[13px] font-medium text-px-ink">Vídeo em breve</p>
         </div>
 
-        <div className="p-6 space-y-5">
-          {/* Thumbnail placeholder */}
-          <div className="w-full aspect-video rounded-xl flex flex-col items-center justify-center"
-            style={{ background: trilha.bg, border: `1px solid ${trilha.border}` }}>
-            <Play className="w-10 h-10 mb-2" style={{ color: trilha.color }} />
-            <p className="text-[11px] font-mono tracking-widest" style={{ color: trilha.color }}>CONTEÚDO EM BREVE</p>
-          </div>
+        <Tag>{aula.nivel}</Tag>
 
-          {/* Nível */}
-          <span className={cn("text-[10px] font-mono font-bold px-2.5 py-1 rounded-full border", NIVEL_STYLE[aula.nivel])}>
-            {aula.nivel}
-          </span>
+        <div>
+          <p className="mb-1.5 text-[12px] font-medium text-px-muted">O que você vai aprender</p>
+          <p className="text-[13.5px] leading-relaxed text-px-ink/80">{aula.conteudo}</p>
+        </div>
 
-          {/* Conteúdo */}
-          <div>
-            <p className="text-[10px] font-mono uppercase tracking-widest mb-2" style={{ color: "var(--text-muted)" }}>O que você vai aprender</p>
-            <p className="text-[13px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>{aula.conteudo}</p>
-          </div>
-
-          {/* Link módulo relacionado */}
-          {aula.linkModulo && (
-            <div className="rounded-xl px-4 py-3 flex items-center justify-between gap-3"
-              style={{ background: "var(--accent-dim)", border: "1px solid var(--accent-border)" }}>
-              <div>
-                <p className="text-[10px] font-mono uppercase tracking-widest mb-0.5" style={{ color: "var(--accent)" }}>Material relacionado</p>
-                <p className="text-[12px] font-medium" style={{ color: "var(--text-primary)" }}>Praticar no {aula.linkModulo.label}</p>
-              </div>
-              <a href={aula.linkModulo.href}
-                className="flex items-center gap-1.5 text-[11px] font-bold rounded-lg px-3 py-1.5 flex-shrink-0 transition-all"
-                style={{ border: "1px solid var(--accent-border)", color: "var(--accent)" }}
-                onMouseEnter={e => (e.currentTarget.style.background = "var(--accent-dim)")} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-                Abrir <ExternalLink className="w-3 h-3" />
-              </a>
+        {aula.linkModulo && (
+          <div className="flex items-center justify-between gap-3 rounded-px-card bg-px-accent-soft px-4 py-3">
+            <div>
+              <p className="mb-0.5 text-[12px] font-medium text-px-accent">Material relacionado</p>
+              <p className="text-[13px] font-medium text-px-ink">Praticar no {aula.linkModulo.label}</p>
             </div>
-          )}
+            <a
+              href={aula.linkModulo.href}
+              className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-px-ctl border border-px-line bg-white/60 px-3.5 text-[12.5px] font-semibold text-px-ink hover:bg-white/90"
+            >
+              Abrir <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+            </a>
+          </div>
+        )}
 
-          {/* Botão concluir */}
-          <button onClick={onConcluir} disabled={saving || concluida}
-            className={cn("w-full py-3 rounded-xl text-[14px] font-bold flex items-center justify-center gap-2 transition-all", concluida && "cursor-default")}
-            style={concluida
-              ? { background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.25)", color: "#10b981" }
-              : { background: "var(--accent)", color: "var(--background)" }
-            }>
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" />
-              : concluida ? <><CheckCircle className="w-4 h-4" /> Aula concluída</>
-              : <><Check className="w-4 h-4" /> Marcar como concluída</>}
-          </button>
-        </div>
+        <PxButton fullWidth onClick={onConcluir} loading={saving} disabled={concluida} leftIcon={Check}>
+          {concluida ? "Aula concluída" : "Marcar como concluída"}
+        </PxButton>
       </div>
-    </div>
+    </PxModal>
   )
 }
 
-// ─── ABA TRILHAS ─────────────────────────────────────────────────────────────
+// ─── Aba trilhas ─────────────────────────────────────────────────────────────
 
-function AbaTrilhas({ progresso, onMarcarConcluida }: { progresso: ProgressoMap; onMarcarConcluida: (a: Aula, t: Trilha) => Promise<void> }) {
-  const [expanded,    setExpanded]    = useState<Record<string, boolean>>({})
-  const [modExpanded, setModExpanded] = useState<Record<string, boolean>>({})
-  const [aulaModal,   setAulaModal]   = useState<{ aula: Aula; trilha: Trilha } | null>(null)
-  const [saving,      setSaving]      = useState(false)
+type MarcarFn = (a: Aula, t: Trilha) => Promise<boolean>
 
+function useAulaModal(onMarcarConcluida: MarcarFn) {
+  const [aulaModal, setAulaModal] = useState<{ aula: Aula; trilha: Trilha } | null>(null)
+  const [saving,    setSaving]    = useState(false)
   async function handleConcluir() {
     if (!aulaModal) return
     setSaving(true)
-    await onMarcarConcluida(aulaModal.aula, aulaModal.trilha)
+    const ok = await onMarcarConcluida(aulaModal.aula, aulaModal.trilha)
     setSaving(false)
-    setAulaModal(null)
+    if (ok) setAulaModal(null)
   }
+  return { aulaModal, setAulaModal, saving, handleConcluir }
+}
+
+function IconeStatus({ concluida }: { concluida: boolean }) {
+  return concluida
+    ? <CheckCircle className="h-4 w-4 shrink-0 text-px-ink" aria-label="Concluída" />
+    : <Circle className="h-4 w-4 shrink-0 text-px-muted" aria-label="Não concluída" />
+}
+
+function AbaTrilhas({ progresso, onMarcarConcluida }: { progresso: ProgressoMap; onMarcarConcluida: MarcarFn }) {
+  const [expanded,    setExpanded]    = useState<Record<string, boolean>>({})
+  const [modExpanded, setModExpanded] = useState<Record<string, boolean>>({})
+  const { aulaModal, setAulaModal, saving, handleConcluir } = useAulaModal(onMarcarConcluida)
 
   return (
     <>
-      <div className="space-y-4">
+      <div className="space-y-3">
         {TRILHAS.map(trilha => {
           const total  = totalAulas(trilha)
           const done   = concluidasT(trilha, progresso)
           const pct    = total > 0 ? Math.round((done / total) * 100) : 0
-          const isOpen = expanded[trilha.id]
-          const Icon   = trilha.icon
+          const isOpen = !!expanded[trilha.id]
 
           return (
-            <div key={trilha.id} className="rounded-2xl overflow-hidden transition-all"
-              style={{ background: isOpen ? trilha.bg : "var(--card)", border: `1px solid ${isOpen ? trilha.border : "var(--border)"}` }}>
-
-              <button onClick={() => setExpanded(e => ({ ...e, [trilha.id]: !isOpen }))}
-                className="w-full flex items-center gap-4 px-5 py-4 text-left">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ background: trilha.bg, border: `1px solid ${trilha.border}` }}>
-                  <Icon className="w-5 h-5" style={{ color: trilha.color }} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-[15px] font-bold" style={{ color: "var(--text-primary)" }}>{trilha.titulo}</h3>
-                    <span className="text-badge font-mono px-2 py-0.5 rounded-full border"
-                      style={{ background: trilha.bg, borderColor: trilha.border, color: trilha.color }}>{trilha.nivel}</span>
+            <Panel key={trilha.id} as="article" className="overflow-hidden p-0">
+              <button
+                type="button"
+                aria-expanded={isOpen}
+                onClick={() => setExpanded(e => ({ ...e, [trilha.id]: !isOpen }))}
+                className="flex w-full items-center gap-4 px-5 py-4 text-left"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="text-[16px] font-semibold text-px-ink">{trilha.titulo}</h3>
+                    <Tag>{trilha.nivel}</Tag>
                   </div>
-                  <p className="text-[12px] mt-0.5 truncate" style={{ color: "var(--text-muted)" }}>{trilha.descricao}</p>
-                  <div className="flex items-center gap-3 mt-2">
-                    <div className="flex-1 h-1.5 rounded-full max-w-[140px]" style={{ background: "var(--border)" }}>
-                      <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: trilha.color }} />
-                    </div>
-                    <span className="text-[10px] font-mono" style={{ color: "var(--text-muted)" }}>{done}/{total} aulas</span>
+                  <p className="mt-1 text-[13px] text-px-muted">{trilha.descricao}</p>
+                  <div className="mt-3 flex items-center gap-3">
+                    <Barra pct={pct} label={`Progresso em ${trilha.titulo}`} className="max-w-[160px]" />
+                    <span className="text-[12.5px] text-px-muted">{done}/{total} aulas</span>
                   </div>
                 </div>
-                <ChevronDown className="w-4 h-4 flex-shrink-0 transition-transform" style={{ color: "var(--text-muted)", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }} />
+                <ChevronDown className={`h-4 w-4 shrink-0 text-px-muted transition-transform ${isOpen ? "rotate-180" : ""}`} aria-hidden="true" />
               </button>
 
               {isOpen && (
-                <div className="px-5 pb-5 space-y-3" style={{ borderTop: `1px solid ${trilha.border}`, paddingTop: 16 }}>
+                <div className="space-y-3 border-t border-px-ink/10 px-4 pb-4 pt-4">
                   {trilha.modulos.map(mod => {
                     const modOpen = modExpanded[mod.id] !== false
                     return (
-                      <div key={mod.id} className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)", background: "var(--surface)" }}>
-                        <button onClick={() => setModExpanded(e => ({ ...e, [mod.id]: !modOpen }))}
-                          className="w-full flex items-center gap-2 px-4 py-3 text-left">
-                          <ChevronRight className="w-3.5 h-3.5 flex-shrink-0 transition-transform" style={{ color: "var(--text-muted)", transform: modOpen ? "rotate(90deg)" : "rotate(0deg)" }} />
-                          <span className="text-[12px] font-semibold flex-1" style={{ color: "var(--text-primary)" }}>{mod.nome}</span>
-                          <span className="text-[10px] font-mono" style={{ color: "var(--text-muted)" }}>{mod.aulas.length} aulas</span>
+                      <div key={mod.id} className="overflow-hidden rounded-px-card bg-white/60">
+                        <button
+                          type="button"
+                          aria-expanded={modOpen}
+                          onClick={() => setModExpanded(e => ({ ...e, [mod.id]: !modOpen }))}
+                          className="flex w-full items-center gap-2 px-4 py-3 text-left"
+                        >
+                          <ChevronRight className={`h-4 w-4 shrink-0 text-px-muted transition-transform ${modOpen ? "rotate-90" : ""}`} aria-hidden="true" />
+                          <span className="flex-1 text-[13.5px] font-semibold text-px-ink">{mod.nome}</span>
+                          <span className="text-[12.5px] text-px-muted">{mod.aulas.length} aulas</span>
                         </button>
 
                         {modOpen && (
-                          <div style={{ borderTop: "1px solid var(--border)" }}>
+                          <ul className="divide-y divide-px-ink/10 border-t border-px-ink/10">
                             {mod.aulas.map(aula => {
-                              const st = progresso[aula.id] ?? "nao_iniciada"
+                              const concluida = (progresso[aula.id] ?? "nao_iniciada") === "concluida"
                               return (
-                                <div key={aula.id}
-                                  className="flex items-center gap-3 px-4 py-3 transition-colors cursor-pointer group"
-                                  style={{ borderBottom: "1px solid var(--border)" }}
-                                  onClick={() => setAulaModal({ aula, trilha })}
-                                  onMouseEnter={e => (e.currentTarget.style.background = "var(--surface-2)")}
-                                  onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
-                                >
-                                  {st === "concluida"
-                                    ? <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
-                                    : <Circle className="w-4 h-4 flex-shrink-0" style={{ color: "var(--text-muted)" }} />}
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-[12px] font-medium truncate"
-                                      style={{ color: st === "concluida" ? "var(--text-muted)" : "var(--text-primary)", textDecoration: st === "concluida" ? "line-through" : "none" }}>
-                                      {aula.numero}. {aula.titulo}
-                                    </p>
-                                    <div className="flex items-center gap-2 mt-0.5">
-                                      <Clock className="w-3 h-3" style={{ color: "var(--text-muted)" }} />
-                                      <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{aula.duracao}</span>
-                                    </div>
-                                  </div>
-                                  <span className={cn("text-badge font-mono font-bold px-2 py-0.5 rounded-full border flex-shrink-0 hidden sm:block", NIVEL_STYLE[aula.nivel])}>
-                                    {aula.nivel.slice(0, 3).toUpperCase()}
-                                  </span>
-                                </div>
+                                <li key={aula.id}>
+                                  <button
+                                    type="button"
+                                    onClick={() => setAulaModal({ aula, trilha })}
+                                    className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-px-ink/[0.05]"
+                                  >
+                                    <IconeStatus concluida={concluida} />
+                                    <span className="min-w-0 flex-1">
+                                      <span className={`block truncate text-[13.5px] font-medium ${concluida ? "text-px-muted" : "text-px-ink"}`}>
+                                        {aula.numero}. {aula.titulo}
+                                      </span>
+                                      <span className="mt-0.5 flex items-center gap-1.5 text-[12px] text-px-muted">
+                                        <Clock className="h-3 w-3" aria-hidden="true" />{aula.duracao}
+                                      </span>
+                                    </span>
+                                    <span className="hidden shrink-0 sm:block"><Tag>{aula.nivel}</Tag></span>
+                                  </button>
+                                </li>
                               )
                             })}
-                          </div>
+                          </ul>
                         )}
                       </div>
                     )
                   })}
                 </div>
               )}
-            </div>
+            </Panel>
           )
         })}
       </div>
 
       {aulaModal && (
         <AulaModal
-          aula={aulaModal.aula} trilha={aulaModal.trilha}
+          aula={aulaModal.aula}
           status={progresso[aulaModal.aula.id] ?? "nao_iniciada"}
           onClose={() => setAulaModal(null)} onConcluir={handleConcluir} saving={saving}
         />
@@ -607,14 +536,13 @@ function AbaTrilhas({ progresso, onMarcarConcluida }: { progresso: ProgressoMap;
   )
 }
 
-// ─── ABA AULAS ────────────────────────────────────────────────────────────────
+// ─── Aba aulas ───────────────────────────────────────────────────────────────
 
-function AbaAulas({ progresso, onMarcarConcluida }: { progresso: ProgressoMap; onMarcarConcluida: (a: Aula, t: Trilha) => Promise<void> }) {
-  const [busca,     setBusca]     = useState("")
-  const [filtroT,   setFiltroT]   = useState("todas")
-  const [filtroN,   setFiltroN]   = useState("todos")
-  const [aulaModal, setAulaModal] = useState<{ aula: Aula; trilha: Trilha } | null>(null)
-  const [saving,    setSaving]    = useState(false)
+function AbaAulas({ progresso, onMarcarConcluida }: { progresso: ProgressoMap; onMarcarConcluida: MarcarFn }) {
+  const [busca,   setBusca]   = useState("")
+  const [filtroT, setFiltroT] = useState("todas")
+  const [filtroN, setFiltroN] = useState("todos")
+  const { aulaModal, setAulaModal, saving, handleConcluir } = useAulaModal(onMarcarConcluida)
 
   const lista = todasAulasList().filter(({ aula, trilha }) => {
     const q = busca.toLowerCase()
@@ -624,99 +552,64 @@ function AbaAulas({ progresso, onMarcarConcluida }: { progresso: ProgressoMap; o
     return true
   })
 
-  async function handleConcluir() {
-    if (!aulaModal) return
-    setSaving(true)
-    await onMarcarConcluida(aulaModal.aula, aulaModal.trilha)
-    setSaving(false)
-    setAulaModal(null)
-  }
-
   return (
     <>
-      <div className="space-y-3 mb-5">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style={{ color: "var(--text-muted)" }} />
-          <input value={busca} onChange={e => setBusca(e.target.value)} placeholder="Buscar aula..."
-            className="w-full rounded-xl pl-9 pr-4 py-2 text-[13px] outline-none transition-colors"
-            style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
-            onFocus={e => (e.currentTarget.style.borderColor = "var(--accent)")}
-            onBlur={e => (e.currentTarget.style.borderColor = "var(--border)")} />
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {[{ label: "Todas", val: "todas" }, ...TRILHAS.map(t => ({ label: t.titulo, val: t.id }))].map(o => (
-            <button key={o.val} onClick={() => setFiltroT(o.val)}
-              className="text-[11px] px-3 py-1.5 rounded-full border transition-all"
-              style={filtroT === o.val
-                ? { background: "var(--accent-dim)", borderColor: "var(--accent-border)", color: "var(--accent)", fontWeight: 600 }
-                : { borderColor: "var(--border)", color: "var(--text-muted)" }}>
-              {o.label}
-            </button>
-          ))}
-          <div className="ml-auto flex gap-2">
-            {["todos", "Iniciante", "Intermediário", "Avançado"].map(n => (
-              <button key={n} onClick={() => setFiltroN(n)}
-                className="text-[11px] px-3 py-1.5 rounded-full border transition-all"
-                style={filtroN === n
-                  ? { background: "var(--surface-2)", borderColor: "var(--border-hover)", color: "var(--text-primary)", fontWeight: 600 }
-                  : { borderColor: "var(--border)", color: "var(--text-muted)" }}>
-                {n === "todos" ? "Todos" : n}
-              </button>
-            ))}
-          </div>
+      <div className="mb-5 space-y-3">
+        <PxInput
+          type="search"
+          aria-label="Buscar aula"
+          value={busca}
+          onChange={e => setBusca(e.target.value)}
+          placeholder="Buscar aula"
+          className="max-w-md"
+        />
+        <div className="flex flex-wrap gap-3">
+          <Segmented
+            label="Filtrar por trilha"
+            value={filtroT}
+            onChange={setFiltroT}
+            options={[{ value: "todas", label: "Todas" }, ...TRILHAS.map(t => ({ value: t.id, label: t.titulo }))]}
+          />
+          <Segmented
+            label="Filtrar por nível"
+            value={filtroN}
+            onChange={setFiltroN}
+            options={["todos", "Iniciante", "Intermediário", "Avançado"].map(n => ({ value: n, label: n === "todos" ? "Todos os níveis" : n }))}
+          />
         </div>
       </div>
 
       <div className="space-y-2">
         {lista.length === 0 && (
-          <EmptyState
-            icon={Search}
-            title="Nenhuma aula encontrada"
-            subtitle="Tente outros termos ou limpe os filtros para ver todas as aulas."
-            action={{
-              label: "Limpar filtros",
-              onClick: () => { setBusca(""); setFiltroT("todas"); setFiltroN("todos") },
-            }}
-            className="rounded-xl border border-border"
-          />
+          <Panel className="py-10 text-center">
+            <p className="text-[14px] font-semibold text-px-ink">Nenhuma aula encontrada</p>
+            <p className="mb-4 mt-1 text-[13px] text-px-muted">Tente outros termos ou limpe os filtros para ver todas as aulas.</p>
+            <PxButton variant="secondary" onClick={() => { setBusca(""); setFiltroT("todas"); setFiltroN("todos") }}>Limpar filtros</PxButton>
+          </Panel>
         )}
         {lista.map(({ aula, trilha }) => {
-          const Icon = trilha.icon
-          const st   = progresso[aula.id] ?? "nao_iniciada"
+          const concluida = (progresso[aula.id] ?? "nao_iniciada") === "concluida"
           return (
-            <div key={aula.id}
-              className="rounded-xl px-4 py-3 flex items-center gap-3 transition-colors cursor-pointer group"
-              style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
+            <button
+              key={aula.id}
+              type="button"
               onClick={() => setAulaModal({ aula, trilha })}
-              onMouseEnter={e => (e.currentTarget.style.borderColor = "var(--border-hover)")}
-              onMouseLeave={e => (e.currentTarget.style.borderColor = "var(--border)")}
+              className="px-glass flex w-full items-center gap-3 rounded-px-card px-4 py-3 text-left hover:bg-white/80"
             >
-              {st === "concluida"
-                ? <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
-                : <Circle className="w-4 h-4 flex-shrink-0" style={{ color: "var(--text-muted)" }} />}
-              <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                style={{ background: trilha.bg, border: `1px solid ${trilha.border}` }}>
-                <Icon className="w-3.5 h-3.5" style={{ color: trilha.color }} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-medium truncate"
-                  style={{ color: st === "concluida" ? "var(--text-muted)" : "var(--text-primary)", textDecoration: st === "concluida" ? "line-through" : "none" }}>
-                  {aula.titulo}
-                </p>
-                <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>{trilha.titulo} · {aula.duracao}</p>
-              </div>
-              <span className={cn("text-badge font-mono font-bold px-2 py-0.5 rounded-full border flex-shrink-0 hidden sm:block", NIVEL_STYLE[aula.nivel])}>
-                {aula.nivel}
+              <IconeStatus concluida={concluida} />
+              <span className="min-w-0 flex-1">
+                <span className={`block truncate text-[14px] font-medium ${concluida ? "text-px-muted" : "text-px-ink"}`}>{aula.titulo}</span>
+                <span className="text-[12px] text-px-muted">{trilha.titulo}, {aula.duracao}</span>
               </span>
-              <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" style={{ color: "var(--text-muted)" }} />
-            </div>
+              <span className="hidden shrink-0 sm:block"><Tag>{aula.nivel}</Tag></span>
+            </button>
           )
         })}
       </div>
 
       {aulaModal && (
         <AulaModal
-          aula={aulaModal.aula} trilha={aulaModal.trilha}
+          aula={aulaModal.aula}
           status={progresso[aulaModal.aula.id] ?? "nao_iniciada"}
           onClose={() => setAulaModal(null)} onConcluir={handleConcluir} saving={saving}
         />
@@ -725,12 +618,19 @@ function AbaAulas({ progresso, onMarcarConcluida }: { progresso: ProgressoMap; o
   )
 }
 
-// ─── ABA COMUNIDADE ──────────────────────────────────────────────────────────
+// ─── Aba comunidade ──────────────────────────────────────────────────────────
+
+const FEATURES = [
+  { label: "Ranking mensal de crescimento",  desc: "Compare seu crescimento com outros médicos da sua especialidade." },
+  { label: "Desafios mensais com premiação", desc: "Participe de desafios e ganhe reconhecimento da comunidade." },
+  { label: "Benchmarking por especialidade", desc: "Dados anônimos para saber como você se compara ao mercado." },
+  { label: "Grupos por especialidade",       desc: "Conecte-se com médicos da mesma área para trocar experiências." },
+  { label: "Mentoria ao vivo",               desc: "Sessões mensais de perguntas e respostas ao vivo com especialistas PRAXIS." },
+]
 
 function AbaComunidade() {
   const [form, setForm] = useState({ nome: "", email: "", especialidade: "" })
   const [step, setStep] = useState<"idle" | "sending" | "done" | "error">("idle")
-  const [total] = useState(84)
 
   const valid = form.nome.trim() && form.email.includes("@")
   async function submit(e: React.FormEvent) {
@@ -745,82 +645,59 @@ function AbaComunidade() {
     } catch { setStep("error") }
   }
 
-  const FEATURES = [
-    { icon: Star,      label: "Ranking mensal de crescimento",  desc: "Compare seu crescimento com outros médicos da sua especialidade." },
-    { icon: Award,     label: "Desafios mensais com premiação", desc: "Participe de desafios e ganhe reconhecimento da comunidade." },
-    { icon: BarChart2, label: "Benchmarking por especialidade", desc: "Dados anônimos para saber como você se compara ao mercado." },
-    { icon: Users,     label: "Grupos por especialidade",       desc: "Conecte-se com médicos da mesma área para trocar experiências." },
-    { icon: GraduationCap, label: "Mentoria ao vivo",          desc: "Sessões mensais de Q&A ao vivo com especialistas PRAXIS." },
-  ]
-
-  const inputSt: React.CSSProperties = {
-    background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.18)",
-    borderRadius: 8, padding: "10px 12px", fontSize: 13, color: "#fff", outline: "none", width: "100%",
-  }
-
   return (
     <div className="space-y-6">
-      {/* Banner */}
-      <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(135deg,#0D1B2A 0%,#1a3a5c 100%)" }}>
-        <div className="px-6 py-8 text-center">
-          <div className="inline-flex items-center gap-2 mb-4 px-4 py-1.5 rounded-full"
-            style={{ background: "rgba(184,151,106,0.15)", border: "1px solid rgba(184,151,106,0.3)" }}>
-            <Users className="w-3.5 h-3.5" style={{ color: "#b8976a" }} />
-            <span className="text-[11px] font-mono tracking-widest" style={{ color: "#b8976a" }}>{total} MÉDICOS INTERESSADOS</span>
-          </div>
-          <h2 className="text-[22px] font-bold text-white mb-3"
-            style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}>
-            Comunidade PRAXIS — Em breve
-          </h2>
-          <p className="text-[14px] mb-6 max-w-md mx-auto leading-relaxed" style={{ color: "rgba(255,255,255,0.65)" }}>
-            Uma comunidade exclusiva de médicos que pensam como empresários. Deixe seu interesse e seja avisado no lançamento.
+      <Panel tone="dark" className="px-6 py-8 text-center">
+        <h2 className="mb-3 text-[24px] font-medium tracking-[-0.02em] text-white">Comunidade PRAXIS: em breve</h2>
+        <p className="mx-auto mb-6 max-w-md text-[14px] leading-relaxed text-white/75">
+          Uma comunidade exclusiva de médicos que pensam como empresários. Deixe seu interesse e seja avisado no lançamento.
+        </p>
+
+        {step === "done" ? (
+          <p role="status" className="inline-flex items-center gap-2 rounded-px-card bg-white/10 px-5 py-3 text-[13.5px] font-semibold text-white">
+            <CheckCircle className="h-4 w-4" aria-hidden="true" />
+            Você está na lista. Avisaremos no lançamento.
           </p>
+        ) : (
+          <form onSubmit={submit} className="mx-auto flex max-w-xl flex-col gap-2 sm:flex-row">
+            <PxInput aria-label="Seu nome" value={form.nome} onChange={e => setForm(f => ({ ...f, nome: e.target.value }))} placeholder="Seu nome" />
+            <PxInput aria-label="Seu e-mail" type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="Seu e-mail" />
+            <PxButton type="submit" variant="inverse" loading={step === "sending"} disabled={!valid}>Quero participar</PxButton>
+          </form>
+        )}
+        {step === "error" && (
+          <p role="alert" className="mx-auto mt-3 max-w-md rounded-px-card bg-white px-4 py-2.5 text-[13px] text-px-danger">
+            Não foi possível registrar seu interesse. Tente novamente.
+          </p>
+        )}
+      </Panel>
 
-          {step === "done" ? (
-            <div className="inline-flex items-center gap-2 px-5 py-3 rounded-xl"
-              style={{ background: "rgba(0,192,127,0.12)", border: "1px solid rgba(0,192,127,0.30)" }}>
-              <CheckCircle className="w-4 h-4 text-green-400" />
-              <span className="text-[13px] font-semibold text-green-300">Você está na lista! Te avisaremos no lançamento.</span>
-            </div>
-          ) : (
-            <form onSubmit={submit} className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto">
-              <input value={form.nome} onChange={e => setForm(f => ({ ...f, nome: e.target.value }))} placeholder="Seu nome" style={inputSt} />
-              <input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="Seu e-mail" style={inputSt} />
-              <button type="submit" disabled={!valid || step === "sending"}
-                className="px-5 py-2.5 rounded-lg font-bold text-[13px] transition-all disabled:opacity-50 flex items-center gap-2 flex-shrink-0"
-                style={{ background: "#b8976a", color: "#0D1B2A" }}>
-                {step === "sending" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Quero participar"}
-              </button>
-            </form>
-          )}
+      <section aria-labelledby="com-vem-ai">
+        <h3 id="com-vem-ai" className="mb-3 text-[15px] font-semibold text-px-ink">O que vem aí</h3>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
+          {FEATURES.map(f => (
+            <Panel key={f.label} as="article" className="p-4">
+              <p className="mb-0.5 text-[14px] font-semibold text-px-ink">{f.label}</p>
+              <p className="text-[13px] leading-snug text-px-muted">{f.desc}</p>
+            </Panel>
+          ))}
         </div>
-      </div>
-
-      {/* Features */}
-      <div>
-        <h3 className="text-[12px] font-mono uppercase tracking-widest mb-4" style={{ color: "var(--text-muted)" }}>O que vem aí</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {FEATURES.map((f, i) => {
-            const Icon = f.icon
-            return (
-              <div key={i} className="rounded-xl p-4 flex items-start gap-3" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "var(--accent-dim)", border: "1px solid var(--accent-border)" }}>
-                  <Icon className="w-4 h-4" style={{ color: "var(--accent)" }} />
-                </div>
-                <div>
-                  <p className="text-[12px] font-semibold mb-0.5" style={{ color: "var(--text-primary)" }}>{f.label}</p>
-                  <p className="text-[11px] leading-snug" style={{ color: "var(--text-muted)" }}>{f.desc}</p>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </div>
+      </section>
     </div>
   )
 }
 
-// ─── ABA PROGRESSO ────────────────────────────────────────────────────────────
+// ─── Aba progresso ───────────────────────────────────────────────────────────
+
+function Numero({ valor, titulo, apoio }: { valor: string | number; titulo: string; apoio: string }) {
+  return (
+    <Panel as="div" className="p-4 text-center">
+      <p className="text-[30px] font-medium leading-none tracking-[-0.02em] text-px-ink">{valor}</p>
+      <p className="mt-2 text-[13px] font-semibold text-px-ink">{titulo}</p>
+      <p className="text-[12px] text-px-muted">{apoio}</p>
+    </Panel>
+  )
+}
 
 function AbaProgresso({ progresso, xpGanho, xpMax, aulasNaSemana }: {
   progresso: ProgressoMap; xpGanho: number; xpMax: number; aulasNaSemana: number
@@ -851,137 +728,75 @@ function AbaProgresso({ progresso, xpGanho, xpMax, aulasNaSemana }: {
 
   return (
     <div className="space-y-6">
-      {/* Gamificação */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {/* XP */}
-        <div className="rounded-2xl p-4 flex flex-col items-center text-center" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center mb-2" style={{ background: "var(--accent-dim)", border: "1px solid var(--accent-border)" }}>
-            <Zap className="w-4 h-4" style={{ color: "var(--accent)" }} />
-          </div>
-          <div className="text-[28px] font-bold leading-none mb-1" style={{ color: "var(--accent)", fontFamily: "var(--font-playfair), Georgia, serif" }}>{xpGanho}</div>
-          <div className="text-[11px] font-semibold mb-0.5" style={{ color: "var(--text-primary)" }}>XP total</div>
-          <div className="text-[10px] font-mono" style={{ color: "var(--text-muted)" }}>de {xpMax} possíveis</div>
-        </div>
-
-        {/* Nível */}
-        <div className={cn("rounded-2xl p-4 flex flex-col items-center text-center border", nivel.bgCls, nivel.borderCls)}>
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center mb-2" style={{ background: "rgba(0,0,0,0.10)" }}>
-            <Trophy className={cn("w-4 h-4", nivel.textCls)} />
-          </div>
-          <div className={cn("text-[28px] font-bold leading-none mb-1", nivel.textCls)} style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}>{nivel.label}</div>
-          <div className="text-[11px] font-semibold mb-0.5" style={{ color: "var(--text-primary)" }}>Nível atual</div>
-          <div className="text-[10px] font-mono" style={{ color: "var(--text-muted)" }}>{pctGeral}% concluído</div>
-        </div>
-
-        {/* Semana */}
-        <div className="rounded-2xl p-4 flex flex-col items-center text-center" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center mb-2"
-            style={{ background: "rgba(251,146,60,0.12)", border: "1px solid rgba(251,146,60,0.25)" }}>
-            <Flame className="w-4 h-4" style={{ color: "#fb923c" }} />
-          </div>
-          <div className="text-[28px] font-bold leading-none mb-1" style={{ color: "#fb923c", fontFamily: "var(--font-playfair), Georgia, serif" }}>{aulasNaSemana}</div>
-          <div className="text-[11px] font-semibold mb-0.5" style={{ color: "var(--text-primary)" }}>Aulas esta semana</div>
-          <div className="text-[10px] font-mono" style={{ color: "var(--text-muted)" }}>últimos 7 dias</div>
-        </div>
-
-        {/* Trilha mais avançada */}
-        {(() => {
-          if (!trilhaMaisAvancada) return null
-          const Icon = trilhaMaisAvancada.trilha.icon
-          return (
-            <div className="rounded-2xl p-4 flex flex-col items-center text-center" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center mb-2"
-                style={{ background: trilhaMaisAvancada.trilha.bg, border: `1px solid ${trilhaMaisAvancada.trilha.border}` }}>
-                <Icon className="w-4 h-4" style={{ color: trilhaMaisAvancada.trilha.color }} />
-              </div>
-              <div className="text-[28px] font-bold leading-none mb-1" style={{ color: trilhaMaisAvancada.trilha.color, fontFamily: "var(--font-playfair), Georgia, serif" }}>
-                {trilhaMaisAvancada.pct}%
-              </div>
-              <div className="text-[11px] font-semibold mb-0.5 leading-tight px-1" style={{ color: "var(--text-primary)" }}>
-                {trilhaMaisAvancada.trilha.titulo}
-              </div>
-              <div className="text-[10px] font-mono" style={{ color: "var(--text-muted)" }}>mais avançada</div>
-            </div>
-          )
-        })()}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <Numero valor={xpGanho} titulo="XP total" apoio={`de ${xpMax} possíveis`} />
+        <Numero valor={nivel.label} titulo="Nível atual" apoio={`${pctGeral}% concluído`} />
+        <Numero valor={aulasNaSemana} titulo="Aulas esta semana" apoio="últimos 7 dias" />
+        {trilhaMaisAvancada && (
+          <Numero valor={`${trilhaMaisAvancada.pct}%`} titulo={trilhaMaisAvancada.trilha.titulo} apoio="trilha mais avançada" />
+        )}
       </div>
 
-      {/* Próxima aula */}
       {proxima && (
-        <div className="rounded-2xl p-5" style={{ background: "var(--surface)", border: "1px solid var(--accent-border)" }}>
-          <div className="flex items-center gap-2 mb-3">
-            <BookOpen className="w-4 h-4" style={{ color: "var(--accent)" }} />
-            <span className="text-[11px] font-mono uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>Próxima aula recomendada</span>
-          </div>
+        <Panel className="space-y-2">
+          <p className="text-[12.5px] font-medium text-px-muted">Próxima aula recomendada</p>
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ background: proxima.trilha.bg, border: `1px solid ${proxima.trilha.border}` }}>
-              <proxima.trilha.icon className="w-5 h-5" style={{ color: proxima.trilha.color }} />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[15px] font-semibold text-px-ink">{proxima.aula.titulo}</p>
+              <p className="text-[12.5px] text-px-muted">{proxima.trilha.titulo}, {proxima.aula.duracao}</p>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[14px] font-semibold truncate" style={{ color: "var(--text-primary)" }}>{proxima.aula.titulo}</p>
-              <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{proxima.trilha.titulo} · {proxima.aula.duracao}</p>
-            </div>
-            <span className={cn("text-badge font-mono font-bold px-2 py-0.5 rounded-full border flex-shrink-0", NIVEL_STYLE[proxima.aula.nivel])}>
-              {proxima.aula.nivel}
-            </span>
+            <Tag>{proxima.aula.nivel}</Tag>
           </div>
-        </div>
+        </Panel>
       )}
 
-      {/* Por trilha */}
-      <div>
-        <h3 className="text-[12px] font-mono uppercase tracking-widest mb-4" style={{ color: "var(--text-muted)" }}>Progresso por trilha</h3>
+      <section aria-labelledby="prog-trilhas">
+        <h3 id="prog-trilhas" className="mb-3 text-[15px] font-semibold text-px-ink">Progresso por trilha</h3>
         <div className="space-y-3">
           {TRILHAS.map(t => {
             const tot  = totalAulas(t)
             const done = concluidasT(t, progresso)
             const pct  = tot > 0 ? Math.round((done / tot) * 100) : 0
-            const Icon = t.icon
             return (
-              <div key={t.id} className="rounded-xl p-4" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                    style={{ background: t.bg, border: `1px solid ${t.border}` }}>
-                    <Icon className="w-3.5 h-3.5" style={{ color: t.color }} />
-                  </div>
-                  <span className="text-[13px] font-semibold flex-1" style={{ color: "var(--text-primary)" }}>{t.titulo}</span>
-                  <span className="text-[11px] font-mono" style={{ color: "var(--text-muted)" }}>{done}/{tot}</span>
-                  <span className="text-[12px] font-bold" style={{ color: t.color }}>{pct}%</span>
+              <Panel key={t.id} as="article" className="p-4">
+                <div className="mb-3 flex items-center gap-3">
+                  <span className="flex-1 text-[14px] font-semibold text-px-ink">{t.titulo}</span>
+                  <span className="text-[12.5px] text-px-muted">{done}/{tot}</span>
+                  <span className="text-[13px] font-semibold text-px-ink">{pct}%</span>
                 </div>
-                <div className="w-full h-2 rounded-full" style={{ background: "var(--border)" }}>
-                  <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: t.color }} />
-                </div>
-              </div>
+                <Barra pct={pct} label={`Progresso em ${t.titulo}`} />
+              </Panel>
             )
           })}
         </div>
-      </div>
+      </section>
 
-      {/* Certificados */}
-      <div className="rounded-2xl p-6 text-center" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-        <Award className="w-10 h-10 mx-auto mb-3" style={{ color: "var(--text-muted)" }} />
-        <h3 className="text-[14px] font-semibold mb-1" style={{ color: "var(--text-primary)" }}>Certificados</h3>
-        <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>Em breve — disponível ao concluir cada trilha completa.</p>
-      </div>
+      <Panel className="text-center">
+        <h3 className="mb-1 text-[15px] font-semibold text-px-ink">Certificados</h3>
+        <p className="text-[13px] text-px-muted">Em breve, disponíveis ao concluir cada trilha completa.</p>
+      </Panel>
     </div>
   )
 }
 
-// ─── MAIN PAGE ────────────────────────────────────────────────────────────────
+// ─── Página ──────────────────────────────────────────────────────────────────
 
 export default function AcademyPage() {
   const [tab,         setTab]         = useState<Tab>("trilhas")
   const [progresso,   setProgresso]   = useState<ProgressoMap>({})
   const [loadingProg, setLoadingProg] = useState(true)
-  const [celebrando,  setCelebrando]  = useState(false)
+  const [erroProg,    setErroProg]    = useState(false)
+  const [toast,       setToast]       = useState<{ msg: string; type: "success" | "error" } | null>(null)
   const [aulasDatas,  setAulasDatas]  = useState<Record<string, string>>({})
 
   const fetchProgresso = useCallback(async () => {
+    setLoadingProg(true)
+    setErroProg(false)
     try {
       const res  = await fetch("/api/academy/progresso")
-      if (!res.ok) return
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const data = await res.json() as Array<{ aula_id: string; status: string; concluida_em?: string }>
+      if (!Array.isArray(data)) throw new Error("formato inesperado")
       const map: ProgressoMap = {}
       const datas: Record<string, string> = {}
       data.forEach(r => {
@@ -990,31 +805,44 @@ export default function AcademyPage() {
       })
       setProgresso(map)
       setAulasDatas(datas)
+    } catch (e) {
+      console.error("[academy] erro ao carregar progresso:", e)
+      setErroProg(true)
     } finally { setLoadingProg(false) }
   }, [])
 
   useEffect(() => { fetchProgresso() }, [fetchProgresso])
 
-  async function marcarConcluida(aula: Aula, trilha: Trilha) {
-    if (progresso[aula.id] === "concluida") return
+  function avisar(msg: string, type: "success" | "error") {
+    setToast({ msg, type })
+    setTimeout(() => setToast(null), type === "success" ? 1800 : 3500)
+  }
+
+  async function marcarConcluida(aula: Aula, trilha: Trilha): Promise<boolean> {
+    if (progresso[aula.id] === "concluida") return true
     try {
-      await fetch("/api/academy/progresso", {
+      const res = await fetch("/api/academy/progresso", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ aula_id: aula.id, trilha_id: trilha.id, status: "concluida" }),
       })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
       setProgresso(p => ({ ...p, [aula.id]: "concluida" }))
       setAulasDatas(d => ({ ...d, [aula.id]: new Date().toISOString() }))
-      setCelebrando(true)
-      setTimeout(() => setCelebrando(false), 1800)
-    } catch (e) { console.error("[academy] erro ao marcar aula como concluída:", e) }
+      avisar("Aula concluída", "success")
+      return true
+    } catch (e) {
+      console.error("[academy] erro ao marcar aula como concluída:", e)
+      avisar("Não foi possível salvar o progresso. Tente novamente.", "error")
+      return false
+    }
   }
 
-  const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
-    { id: "trilhas",    label: "Trilhas",       icon: BookOpen    },
-    { id: "aulas",      label: "Aulas",         icon: Play        },
-    { id: "casos",      label: "Casos Reais",   icon: Star        },
-    { id: "comunidade", label: "Comunidade",    icon: Users       },
-    { id: "progresso",  label: "Meu Progresso", icon: BarChart2   },
+  const TABS: { id: Tab; label: string }[] = [
+    { id: "trilhas",    label: "Trilhas"       },
+    { id: "aulas",      label: "Aulas"         },
+    { id: "casos",      label: "Casos reais"   },
+    { id: "comunidade", label: "Comunidade"    },
+    { id: "progresso",  label: "Meu progresso" },
   ]
 
   const totalGeral  = TRILHAS.reduce((s, t) => s + totalAulas(t), 0)
@@ -1029,72 +857,25 @@ export default function AcademyPage() {
 
   return (
     <div className="animate-fade-in">
-      <MobileOnlyHeader title="PRAXIS Academy" />
+      <PageHeader title="PRAXIS Academy" caption="Aprenda a construir uma clínica de sucesso" />
 
-      {/* Celebração */}
-      {celebrando && (
-        <div className="fixed inset-0 z-[60] pointer-events-none flex items-end justify-center pb-24">
-          <div className="flex items-center gap-2.5 bg-emerald-500/90 text-white text-[13px] font-semibold px-5 py-3 rounded-full shadow-2xl animate-fade-in">
-            <CheckCircle className="w-4 h-4" /> Aula concluída!
-          </div>
-        </div>
-      )}
-
-      {/* Header */}
-      <div className="px-4 md:px-8 pt-6 md:pt-8 pb-0" style={{ borderBottom: "1px solid var(--border)" }}>
-        <div className="flex items-start justify-between gap-4 mb-4">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <GraduationCap className="w-5 h-5" style={{ color: "var(--accent)" }} />
-              <h1 className="text-[22px] font-bold" style={{ color: "var(--text-primary)" }}>PRAXIS Academy</h1>
-            </div>
-            <p className="text-[11px] font-mono uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
-              APRENDA A CONSTRUIR UMA CLÍNICA DE SUCESSO
-            </p>
-          </div>
-          <div className="text-right flex-shrink-0">
-            <div className="text-[20px] font-bold" style={{ color: "var(--accent)" }}>
-              {doneGeral}<span className="text-[13px] font-normal" style={{ color: "var(--text-muted)" }}>/{totalGeral}</span>
-            </div>
-            <div className="text-[10px] font-mono" style={{ color: "var(--text-muted)" }}>AULAS CONCLUÍDAS</div>
-          </div>
-        </div>
-
-        {/* Nível badge */}
-        {!loadingProg && (
-          <div className="mb-4">
-            <NivelBadge done={doneGeral} total={totalGeral} xp={xpGanho} xpMax={XP_TOTAL} />
-          </div>
+      <div className="space-y-4 px-4 pb-10 md:px-10">
+        {!loadingProg && !erroProg && (
+          <NivelBadge done={doneGeral} total={totalGeral} xp={xpGanho} xpMax={XP_TOTAL} />
         )}
 
-        {/* Tabs */}
-        <div className="flex">
-          {TABS.map(t => {
-            const Icon = t.icon
-            return (
-              <button key={t.id} onClick={() => setTab(t.id)}
-                className="flex items-center gap-2 px-4 py-3 text-[12px] font-medium transition-all border-b-2"
-                style={tab === t.id
-                  ? { borderColor: "var(--accent)", color: "var(--accent)" }
-                  : { borderColor: "transparent", color: "var(--text-muted)" }}>
-                <Icon className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">{t.label}</span>
-                {t.id === "casos" && (
-                  <span className="hidden sm:inline text-[8px] font-mono font-semibold px-1.5 py-0.5 rounded-full bg-accent-dim border border-accent-border text-accent">NOVO</span>
-                )}
-              </button>
-            )
-          })}
-        </div>
-      </div>
+        <Segmented label="Seção da Academy" value={tab} onChange={setTab} options={TABS.map(t => ({ value: t.id, label: t.label }))} />
 
-      <div className="p-4 md:p-8">
         {loadingProg ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-6 h-6 animate-spin" style={{ color: "var(--accent)" }} />
-          </div>
+          <div role="status" className="py-16 text-center text-[13px] text-px-muted">Carregando seu progresso</div>
         ) : (
           <>
+            {erroProg && (
+              <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-px-card bg-px-danger-soft px-4 py-3 text-[13px] text-px-danger">
+                <span>Não foi possível carregar seu progresso. As aulas aparecem como não concluídas.</span>
+                <PxButton size="sm" variant="secondary" onClick={fetchProgresso}>Tentar de novo</PxButton>
+              </div>
+            )}
             {tab === "trilhas"    && <AbaTrilhas    progresso={progresso} onMarcarConcluida={marcarConcluida} />}
             {tab === "aulas"      && <AbaAulas      progresso={progresso} onMarcarConcluida={marcarConcluida} />}
             {tab === "casos"      && <AbaCasos />}
@@ -1103,6 +884,8 @@ export default function AcademyPage() {
           </>
         )}
       </div>
+
+      {toast && <Toast message={toast.msg} type={toast.type} />}
     </div>
   )
 }

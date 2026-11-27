@@ -1,24 +1,22 @@
 "use client"
 
 import { useState } from "react"
-import { Search, Star, ExternalLink, Filter, Tag, Zap, Gift } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
+import { ExternalLink, Gift, Star } from "lucide-react"
+import { Panel, PxButton, Segmented, PxInput, Tag, PageHeader } from "@/components/px"
 
-// ─── Types & Data ─────────────────────────────────────────────────────────────
+// ─── Dados ────────────────────────────────────────────────────────────────────
 
 interface Parceiro {
-  id:          string
-  nome:        string
-  descricao:   string
-  categoria:   string
-  avaliacao:   number
-  preco:       string
-  beneficio:   string
-  destaque:    boolean
-  link:        string
-  iniciais:    string
-  cor:         string
+  id:        string
+  nome:      string
+  descricao: string
+  categoria: string
+  avaliacao: number
+  preco:     string
+  beneficio: string
+  destaque:  boolean
+  link:      string
+  iniciais:  string
 }
 
 const PARCEIROS: Parceiro[] = [
@@ -28,14 +26,14 @@ const PARCEIROS: Parceiro[] = [
     descricao: "Especialistas em tráfego pago para médicos e clínicas: Google Ads, Meta Ads e estratégia de captação de pacientes.",
     categoria: "Tráfego Pago", avaliacao: 4.9, preco: "A partir de R$ 800/mês",
     beneficio: "Auditoria gratuita de conta + 1 mês sem taxa de gestão", destaque: true,
-    link: "#", iniciais: "TM", cor: "bg-blue-100 text-blue-700",
+    link: "#", iniciais: "TM",
   },
   {
     id: "2", nome: "MedAds Agency",
     descricao: "Agência especializada em performance para saúde. ROI médio de 8x para clínicas parceiras.",
     categoria: "Tráfego Pago", avaliacao: 4.7, preco: "A partir de R$ 600/mês",
     beneficio: "Setup gratuito para membros PRAXIS", destaque: false,
-    link: "#", iniciais: "MA", cor: "bg-indigo-100 text-indigo-700",
+    link: "#", iniciais: "MA",
   },
   // Design
   {
@@ -43,14 +41,14 @@ const PARCEIROS: Parceiro[] = [
     descricao: "Design gráfico para médicos: identidade visual, templates de posts, materiais de sala de espera e embalagens.",
     categoria: "Design", avaliacao: 4.8, preco: "A partir de R$ 290/mês",
     beneficio: "Kit de identidade médica gratuito no 1º mês", destaque: true,
-    link: "#", iniciais: "CV", cor: "bg-pink-100 text-pink-700",
+    link: "#", iniciais: "CV",
   },
   {
     id: "4", nome: "Canva for Teams",
     descricao: "Design profissional para médicos: templates de posts, carrosséis, stories e materiais impressos.",
     categoria: "Design", avaliacao: 4.6, preco: "R$ 55/mês",
     beneficio: "2 meses grátis no plano anual via PRAXIS", destaque: false,
-    link: "#", iniciais: "CF", cor: "bg-purple-100 text-purple-700",
+    link: "#", iniciais: "CF",
   },
   // Edição de Vídeos
   {
@@ -58,29 +56,29 @@ const PARCEIROS: Parceiro[] = [
     descricao: "Edição de Reels médicos e educativos. Entrega em 48h, corte profissional e legendas automáticas.",
     categoria: "Edição de Vídeos", avaliacao: 4.9, preco: "A partir de R$ 120/vídeo",
     beneficio: "5 Reels no 1º mês por R$ 350 (economia de R$ 250)", destaque: true,
-    link: "#", iniciais: "RS", cor: "bg-red-100 text-red-700",
+    link: "#", iniciais: "RS",
   },
   {
     id: "6", nome: "CapCut Business",
     descricao: "Plataforma de edição de vídeo com IA: remoção de fundo, transcrição automática e templates virais.",
     categoria: "Edição de Vídeos", avaliacao: 4.5, preco: "R$ 45/mês",
     beneficio: "3 meses do plano Pro por R$ 79 (50% off)", destaque: false,
-    link: "#", iniciais: "CC", cor: "bg-black/10 text-gray-700",
+    link: "#", iniciais: "CC",
   },
   // Secretária Virtual
   {
-    id: "7", nome: "SecMed — Secretária Virtual",
+    id: "7", nome: "SecMed: Secretária Virtual",
     descricao: "Atendimento humanizado 24/7 para sua clínica: agendamentos, confirmações e primeira triagem de pacientes.",
     categoria: "Secretária Virtual", avaliacao: 4.8, preco: "A partir de R$ 350/mês",
     beneficio: "1 mês grátis + integração com seu sistema atual", destaque: true,
-    link: "#", iniciais: "SM", cor: "bg-green-100 text-green-700",
+    link: "#", iniciais: "SM",
   },
   {
     id: "8", nome: "DoutorBot",
     descricao: "Chatbot inteligente para WhatsApp: agenda consultas, responde dúvidas frequentes e qualifica pacientes.",
     categoria: "Secretária Virtual", avaliacao: 4.6, preco: "R$ 197/mês",
     beneficio: "Setup gratuito + 30 dias de trial sem cartão", destaque: false,
-    link: "#", iniciais: "DB", cor: "bg-emerald-100 text-emerald-700",
+    link: "#", iniciais: "DB",
   },
   // Fotografia Médica
   {
@@ -88,22 +86,22 @@ const PARCEIROS: Parceiro[] = [
     descricao: "Fotografia profissional para médicos: fotos de perfil, clínica e conteúdo editorial para redes sociais.",
     categoria: "Fotografia Médica", avaliacao: 4.9, preco: "A partir de R$ 490/sessão",
     beneficio: "Sessão completa + edição por R$ 390 para membros PRAXIS", destaque: true,
-    link: "#", iniciais: "MP", cor: "bg-amber-100 text-amber-700",
+    link: "#", iniciais: "MP",
   },
   // Gestão Financeira
   {
-    id: "10", nome: "FinMed — Gestão Clínica",
+    id: "10", nome: "FinMed: Gestão Clínica",
     descricao: "Controle financeiro completo para médicos: faturamento, DRE, fluxo de caixa e relatórios de rentabilidade.",
     categoria: "Gestão Financeira", avaliacao: 4.7, preco: "A partir de R$ 149/mês",
     beneficio: "3 meses grátis + consultoria de onboarding inclusa", destaque: true,
-    link: "#", iniciais: "FM", cor: "bg-blue-100 text-blue-700",
+    link: "#", iniciais: "FM",
   },
   {
     id: "11", nome: "Conta Simples PJ",
     descricao: "Conta PJ digital com Pix gratuito, cartão virtual e relatórios de gastos por categoria.",
     categoria: "Gestão Financeira", avaliacao: 4.4, preco: "Sem mensalidade",
     beneficio: "R$ 150 de cashback na abertura via PRAXIS", destaque: false,
-    link: "#", iniciais: "CS", cor: "bg-green-100 text-green-700",
+    link: "#", iniciais: "CS",
   },
   // Jurídico Médico
   {
@@ -111,7 +109,7 @@ const PARCEIROS: Parceiro[] = [
     descricao: "Assessoria jurídica especializada em direito médico: contratos, LGPD, defesa no CRM e questões éticas.",
     categoria: "Jurídico Médico", avaliacao: 4.8, preco: "Consulta inicial grátis",
     beneficio: "1ª hora de consultoria gratuita + desconto de 20% em contratos", destaque: true,
-    link: "#", iniciais: "ML", cor: "bg-gray-100 text-gray-700",
+    link: "#", iniciais: "ML",
   },
   // Tecnologia
   {
@@ -119,18 +117,18 @@ const PARCEIROS: Parceiro[] = [
     descricao: "Prontuário eletrônico completo com prescrição digital, telemedicina e gestão de agenda integrada.",
     categoria: "Tecnologia", avaliacao: 4.7, preco: "A partir de R$ 199/mês",
     beneficio: "15% de desconto permanente com código PRAXIS15", destaque: false,
-    link: "#", iniciais: "IC", cor: "bg-blue-100 text-blue-700",
+    link: "#", iniciais: "IC",
   },
   {
     id: "14", nome: "Conexa Saúde",
     descricao: "Plataforma líder em telemedicina no Brasil. Conformidade CFM, prontuário e assinatura digital.",
     categoria: "Tecnologia", avaliacao: 4.9, preco: "R$ 0,90/min de consulta",
     beneficio: "Setup gratuito + 50 consultas grátis para novos parceiros", destaque: false,
-    link: "#", iniciais: "CS", cor: "bg-purple-100 text-purple-700",
+    link: "#", iniciais: "CS",
   },
 ]
 
-const CATEGORIAS_ORDEM = [
+const CATEGORIAS = [
   "Todas",
   "Tráfego Pago",
   "Design",
@@ -141,22 +139,10 @@ const CATEGORIAS_ORDEM = [
   "Jurídico Médico",
   "Tecnologia",
 ]
-const CATEGORIAS = CATEGORIAS_ORDEM
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+const notaBR = (n: number) => n.toFixed(1).replace(".", ",")
 
-function RatingStars({ value }: { value: number }) {
-  return (
-    <div className="flex items-center gap-0.5">
-      {[1,2,3,4,5].map(i => (
-        <Star key={i} className={cn("w-3 h-3", i <= Math.round(value) ? "fill-amber-400 text-amber-400" : "text-border fill-border")} />
-      ))}
-      <span className="text-[10px] font-mono text-text-muted ml-1">{value}</span>
-    </div>
-  )
-}
-
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// ─── Página ───────────────────────────────────────────────────────────────────
 
 export default function MarketplacePage() {
   const [busca,      setBusca]      = useState("")
@@ -164,7 +150,7 @@ export default function MarketplacePage() {
   const [soDestaque, setSoDestaque] = useState(false)
 
   const filtrados = PARCEIROS.filter(p => {
-    const q = busca.toLowerCase()
+    const q = busca.trim().toLowerCase()
     const matchBusca = !q || p.nome.toLowerCase().includes(q) || p.descricao.toLowerCase().includes(q) || p.categoria.toLowerCase().includes(q)
     const matchCat   = categoria === "Todas" || p.categoria === categoria
     const matchDest  = !soDestaque || p.destaque
@@ -174,168 +160,131 @@ export default function MarketplacePage() {
   const destaques = filtrados.filter(p => p.destaque)
   const outros    = filtrados.filter(p => !p.destaque)
 
+  function limpar() { setBusca(""); setCategoria("Todas"); setSoDestaque(false) }
+
   return (
     <div className="animate-fade-in">
-      <MobileOnlyHeader title="Marketplace PRAXIS" />
-      {/* Top banner */}
-      <div className="bg-accent text-white px-8 py-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-[17px] font-bold tracking-tight">Marketplace PRAXIS</h1>
-            <p className="text-[11px] opacity-80 mt-0.5">Parceiros selecionados para médicos com benefícios exclusivos</p>
-          </div>
-          <div className="text-right">
-            <p className="text-[20px] font-bold">{PARCEIROS.length}</p>
-            <p className="text-[10px] opacity-80 font-mono">PARCEIROS</p>
-          </div>
-        </div>
-      </div>
+      <PageHeader title="Marketplace" caption={`${PARCEIROS.length} parceiros com condições para membros PRAXIS`} />
 
-      <div className="p-4 md:p-8 space-y-6">
-        {/* Filters */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted" />
-            <input
-              value={busca}
-              onChange={e => setBusca(e.target.value)}
-              placeholder="Buscar parceiros…"
-              className="w-full bg-surface border border-border rounded-xl pl-9 pr-4 py-2 text-[13px] text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/50 transition-colors"
+      <div className="space-y-6 px-4 pb-10 md:px-10">
+        <div className="space-y-3">
+          <PxInput
+            type="search"
+            aria-label="Buscar parceiro"
+            value={busca}
+            onChange={e => setBusca(e.target.value)}
+            placeholder="Buscar parceiro"
+            className="max-w-md"
+          />
+          <div className="flex flex-wrap items-center gap-3">
+            <Segmented
+              label="Filtrar por categoria"
+              value={categoria}
+              onChange={setCategoria}
+              options={CATEGORIAS.map(c => ({ value: c, label: c }))}
             />
-          </div>
-
-          <div className="flex items-center gap-2 flex-wrap">
-            {CATEGORIAS.map(c => (
-              <button key={c} onClick={() => setCategoria(c)}
-                className={cn(
-                  "text-[11px] px-3 py-1.5 rounded-full border transition-all",
-                  categoria === c
-                    ? "bg-accent-dim border-accent-border text-accent font-semibold"
-                    : "border-border text-text-muted hover:text-text-secondary"
-                )}>
-                {c}
-              </button>
-            ))}
-
-            <button onClick={() => setSoDestaque(v => !v)}
-              className={cn(
-                "text-[11px] px-3 py-1.5 rounded-full border transition-all flex items-center gap-1.5",
-                soDestaque
-                  ? "bg-amber-50 border-amber-200 text-amber-700 font-semibold"
-                  : "border-border text-text-muted hover:text-text-secondary"
-              )}>
-              <Zap className="w-3 h-3" />
-              Em destaque
+            <button
+              type="button"
+              aria-pressed={soDestaque}
+              onClick={() => setSoDestaque(v => !v)}
+              className={`inline-flex h-9 items-center rounded-px-ctl border px-3.5 text-[12.5px] font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-px-ink/40 ${
+                soDestaque ? "border-px-ink bg-px-ink text-white" : "border-px-line bg-white/60 text-px-ink hover:bg-white/90"
+              }`}
+            >
+              Só os em destaque
             </button>
           </div>
         </div>
 
-        {/* Destaques */}
         {destaques.length > 0 && (
-          <section>
-            <div className="flex items-center gap-2 mb-4">
-              <Zap className="w-4 h-4 text-amber-500" />
-              <h2 className="text-[13px] font-semibold text-text-primary">Parceiros em Destaque</h2>
-              <span className="text-[10px] font-mono text-text-muted ml-auto">{destaques.length} parceiros</span>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <section aria-labelledby="mk-dest">
+            <h2 id="mk-dest" className="mb-3 text-[15px] font-semibold text-px-ink">
+              Em destaque <span className="ml-1 text-[12.5px] font-normal text-px-muted">{destaques.length}</span>
+            </h2>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
               {destaques.map(p => <ParceiroCard key={p.id} parceiro={p} />)}
             </div>
           </section>
         )}
 
-        {/* Outros */}
         {outros.length > 0 && (
-          <section>
-            {destaques.length > 0 && (
-              <h2 className="text-[13px] font-semibold text-text-primary mb-4">Todos os Parceiros</h2>
-            )}
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <section aria-labelledby="mk-todos">
+            <h2 id="mk-todos" className="mb-3 text-[15px] font-semibold text-px-ink">
+              {destaques.length > 0 ? "Demais parceiros" : "Parceiros"} <span className="ml-1 text-[12.5px] font-normal text-px-muted">{outros.length}</span>
+            </h2>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
               {outros.map(p => <ParceiroCard key={p.id} parceiro={p} />)}
             </div>
           </section>
         )}
 
         {filtrados.length === 0 && (
-          <div className="rounded-xl border border-border bg-surface p-12 text-center">
-            <Search className="w-10 h-10 text-text-muted mx-auto mb-4" />
-            <p className="text-[14px] font-semibold text-text-primary mb-2">Nenhum parceiro encontrado</p>
-            <p className="text-[12px] text-text-muted">Tente ajustar os filtros ou a busca</p>
-          </div>
+          <Panel className="py-12 text-center">
+            <p className="text-[14px] font-semibold text-px-ink">Nenhum parceiro encontrado</p>
+            <p className="mb-4 mt-1 text-[13px] text-px-muted">Tente outros termos ou limpe os filtros para ver todos os parceiros.</p>
+            <PxButton variant="secondary" onClick={limpar}>Limpar filtros</PxButton>
+          </Panel>
         )}
 
-        {/* Banner parceria */}
-        <div className="rounded-xl border border-accent-border bg-accent-dim p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <Panel className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <div>
-            <p className="text-[14px] font-semibold text-text-primary">Quer ser parceiro PRAXIS?</p>
-            <p className="text-[12px] text-text-muted mt-0.5">
-              Conectamos sua empresa a milhares de médicos empreendedores em todo o Brasil.
-            </p>
+            <p className="text-[15px] font-semibold text-px-ink">Quer ser parceiro PRAXIS?</p>
+            <p className="mt-0.5 text-[13px] text-px-muted">Apresente sua empresa para médicos que gerem a própria clínica.</p>
           </div>
-          <a href="mailto:parcerias@praxis.med.br"
-            className="flex-shrink-0 flex items-center gap-2 bg-accent text-white text-[12px] font-semibold px-5 py-2.5 rounded-lg hover:bg-accent/90 transition-all whitespace-nowrap">
-            <ExternalLink className="w-3.5 h-3.5" />
-            Entre em contato
+          <a
+            href="mailto:parcerias@praxis.med.br"
+            className="inline-flex h-11 shrink-0 items-center gap-2 rounded-px-ctl bg-px-ink px-5 text-[13.5px] font-semibold text-white hover:bg-px-ink/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-px-ink/40 focus-visible:ring-offset-2"
+          >
+            Entrar em contato <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
           </a>
-        </div>
+        </Panel>
       </div>
     </div>
   )
 }
 
 function ParceiroCard({ parceiro: p }: { parceiro: Parceiro }) {
+  const temLink = p.link && p.link !== "#"
   return (
-    <div className={cn(
-      "rounded-xl border bg-surface flex flex-col transition-all hover:shadow-sm",
-      p.destaque ? "border-amber-200" : "border-border"
-    )}>
-      {/* Card top */}
-      <div className="flex items-start gap-3.5 p-4">
-        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center text-[12px] font-bold flex-shrink-0", p.cor)}>
+    <Panel as="article" className="flex flex-col gap-3 p-5">
+      <div className="flex items-start gap-3">
+        <div aria-hidden="true" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-px-ctl bg-px-ink/[0.07] text-[12.5px] font-semibold text-px-ink">
           {p.iniciais}
         </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-1">
-            <h3 className="text-[13px] font-semibold text-text-primary leading-snug">{p.nome}</h3>
-            {p.destaque && (
-              <span className="text-[8px] font-mono px-1.5 py-0.5 rounded border border-amber-200 bg-amber-50 text-amber-700 flex-shrink-0 whitespace-nowrap">
-                <Star className="inline-block align-[-0.15em] w-2.5 h-2.5 mr-0.5 fill-current" /> Recomendado PRAXIS
-              </span>
-            )}
-          </div>
-          <p className="text-[10px] font-mono text-text-muted mt-0.5">{p.categoria}</p>
+        <div className="min-w-0 flex-1">
+          <h3 className="text-[14px] font-semibold leading-snug text-px-ink">{p.nome}</h3>
+          <p className="mt-0.5 text-[12.5px] text-px-muted">{p.categoria}</p>
         </div>
+        {p.destaque && <Tag>Em destaque</Tag>}
       </div>
 
-      {/* Description */}
-      <div className="px-4 pb-3">
-        <p className="text-[12px] text-text-secondary leading-relaxed">{p.descricao}</p>
+      <p className="text-[13px] leading-relaxed text-px-ink/80">{p.descricao}</p>
+
+      <div className="flex items-center justify-between gap-3 text-[12.5px] text-px-muted">
+        <span className="inline-flex items-center gap-1">
+          <Star className="h-3.5 w-3.5 fill-px-ink text-px-ink" aria-hidden="true" />
+          <span className="font-medium text-px-ink"><span className="sr-only">Avaliação </span>{notaBR(p.avaliacao)}</span>
+        </span>
+        <span>{p.preco}</span>
       </div>
 
-      {/* Rating */}
-      <div className="px-4 pb-3">
-        <RatingStars value={p.avaliacao} />
+      <div className="flex flex-1 items-start gap-2 rounded-px-card bg-px-accent-soft px-3 py-2.5">
+        <Gift className="mt-0.5 h-3.5 w-3.5 shrink-0 text-px-accent" aria-hidden="true" />
+        <p className="text-[12.5px] font-medium leading-snug text-px-ink">{p.beneficio}</p>
       </div>
 
-      {/* Pricing + benefit */}
-      <div className="px-4 pb-4 space-y-2 flex-1">
-        <div className="flex items-center gap-1.5">
-          <Tag className="w-3 h-3 text-text-muted flex-shrink-0" />
-          <span className="text-[11px] text-text-secondary">{p.preco}</span>
-        </div>
-        <div className="rounded-lg bg-accent-dim border border-accent-border px-2.5 py-1.5">
-          <p className="text-[10px] text-accent font-medium leading-snug"><Gift className="inline-block align-[-0.15em] w-3 h-3 mr-1" /> {p.beneficio}</p>
-        </div>
-      </div>
-
-      {/* CTA */}
-      <div className="p-4 pt-0">
-        <a href={p.link}
-          className="w-full flex items-center justify-center gap-2 text-[12px] font-semibold bg-text-primary text-surface rounded-lg py-2.5 hover:opacity-80 transition-opacity">
-          Conhecer
-          <ExternalLink className="w-3.5 h-3.5" />
+      {temLink ? (
+        <a
+          href={p.link}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-px-ctl bg-px-ink text-[13.5px] font-semibold text-white hover:bg-px-ink/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-px-ink/40 focus-visible:ring-offset-2"
+        >
+          Conhecer {p.nome} <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
         </a>
-      </div>
-    </div>
+      ) : (
+        <PxButton fullWidth variant="secondary" disabled aria-label={`${p.nome}: link em breve`}>Em breve</PxButton>
+      )}
+    </Panel>
   )
 }

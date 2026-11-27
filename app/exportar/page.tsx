@@ -1,11 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { TopBar } from "@/components/TopBar"
-import {
-  Download, CheckSquare, Square, Loader2,
-  FileText, Users, TrendingUp, CircleDollarSign, Star, Bot,
-} from "lucide-react"
+import { Panel, PxButton, PxCheckbox, Segmented, PageHeader } from "@/components/px"
+import { Download, FileText, Users, TrendingUp, CircleDollarSign, Star, Bot } from "lucide-react"
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -76,9 +73,7 @@ async function triggerDownload(blob: Blob, filename: string) {
   URL.revokeObjectURL(url)
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
-
-const GOLD = "#b8976a"
+// ─── Página ───────────────────────────────────────────────────────────────────
 
 export default function ExportarPage() {
   const [selected, setSelected] = useState<Set<string>>(
@@ -111,6 +106,7 @@ export default function ExportarPage() {
 
       const chosen  = EXPORT_TYPES.filter(t => selected.has(t.id))
       const allData: Record<string, unknown[]> = {}
+      const falhas: string[] = []
 
       for (const tipo of chosen) {
         const { data, error } = await supabase
@@ -118,7 +114,7 @@ export default function ExportarPage() {
           .select(tipo.cols.join(","))
           .eq("user_id", user.id)
           .order("created_at", { ascending: false })
-        if (error) console.warn(`[exportar] ${tipo.table}:`, error.message)
+        if (error) { console.warn(`[exportar] ${tipo.table}:`, error.message); falhas.push(tipo.label) }
         allData[tipo.id] = data ?? []
       }
 
@@ -139,13 +135,17 @@ export default function ExportarPage() {
           total += rows.length
           if (!rows.length) continue
           const csv  = Papa.unparse(rows as object[])
-          const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" })
+          const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" })
           await triggerDownload(blob, `praxis-${tipo.id}-${timestamp}.csv`)
           await new Promise(r => setTimeout(r, 250))
         }
       }
 
-      setResult({ ok: true, msg: `${total} registros exportados com sucesso.` })
+      if (falhas.length > 0) {
+        setResult({ ok: false, msg: `${total} registros exportados, mas não foi possível ler: ${falhas.join(", ")}. Esses dados não estão no arquivo.` })
+      } else {
+        setResult({ ok: true, msg: `${total} registros exportados.` })
+      }
     } catch (e) {
       setResult({ ok: false, msg: e instanceof Error ? e.message : "Erro ao exportar dados" })
     } finally {
@@ -155,173 +155,69 @@ export default function ExportarPage() {
 
   return (
     <div className="animate-fade-in">
-      <TopBar title="Exportar Dados" subtitle="SEUS DADOS · SUA DECISÃO" />
-      <div className="p-6 max-w-2xl space-y-6">
+      <PageHeader title="Exportar" caption="Leve seus dados quando quiser" back />
 
-        {/* Headline */}
-        <div
-          className="rounded-xl border p-5"
-          style={{ background: "var(--surface)", borderColor: "var(--border)" }}
-        >
-          <div className="flex items-center gap-3 mb-3">
-            <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ background: "rgba(184,151,106,0.12)", border: "1px solid rgba(184,151,106,0.25)" }}
-            >
-              <Download className="w-5 h-5" style={{ color: GOLD }} />
-            </div>
-            <div>
-              <h2 className="text-[14px] font-semibold" style={{ color: "var(--text-primary)" }}>
-                Seus dados são seus
-              </h2>
-              <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>
-                Exporte tudo quando quiser, sem burocracia
-              </p>
-            </div>
-          </div>
-          <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-            Você nunca fica preso à nossa plataforma. Exporte pacientes, leads, financeiro,
-            consultas e muito mais — a qualquer momento, em segundos.
+      <div className="mx-auto max-w-2xl space-y-4 px-4 pb-10 md:px-10">
+
+        <Panel tone="light">
+          <h2 className="text-[16px] font-semibold text-px-ink">Seus dados são seus</h2>
+          <p className="mt-1 text-[13.5px] leading-relaxed text-px-ink/80">
+            Exporte pacientes, leads, financeiro, consultas e demais registros a qualquer momento, sem depender de ninguém.
           </p>
-        </div>
+        </Panel>
 
-        {/* Select data */}
-        <div
-          className="rounded-xl border overflow-hidden"
-          style={{ background: "var(--surface)", borderColor: "var(--border)" }}
-        >
-          <div
-            className="flex items-center justify-between px-5 py-3 border-b"
-            style={{ borderColor: "var(--border)" }}
-          >
-            <span
-              className="text-[10px] font-mono font-semibold tracking-[2px] uppercase"
-              style={{ color: "var(--text-muted)" }}
-            >
-              O que exportar
-            </span>
-            <button
-              onClick={toggleAll}
-              className="text-[12px] font-semibold"
-              style={{ color: GOLD }}
-            >
-              {allSelected ? "Desmarcar tudo" : "Selecionar tudo"}
-            </button>
+        <Panel tone="light" className="overflow-hidden p-0">
+          <div className="flex items-center justify-between px-5 py-4">
+            <h2 className="text-[15px] font-semibold text-px-ink">O que exportar</h2>
+            <PxButton size="sm" variant="quiet" onClick={toggleAll}>{allSelected ? "Desmarcar tudo" : "Selecionar tudo"}</PxButton>
           </div>
-
-          {EXPORT_TYPES.map(tipo => {
-            const Icon    = tipo.icon
-            const checked = selected.has(tipo.id)
-            return (
-              <button
-                key={tipo.id}
-                onClick={() => toggle(tipo.id)}
-                className="w-full flex items-center gap-3 px-5 py-3.5 border-b last:border-0 text-left transition-colors"
-                style={{ borderColor: "var(--border)" }}
-              >
-                <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                  style={{
-                    background:   checked ? "rgba(184,151,106,0.12)" : "var(--surface-2)",
-                    border: `1px solid ${checked ? "rgba(184,151,106,0.3)" : "var(--border)"}`,
-                  }}
-                >
-                  <Icon className="w-4 h-4" style={{ color: checked ? GOLD : "var(--text-muted)" }} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>
-                    {tipo.label}
-                  </p>
-                  <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
-                    {tipo.desc}
-                  </p>
-                </div>
-                {checked
-                  ? <CheckSquare className="w-4 h-4 flex-shrink-0" style={{ color: GOLD }} />
-                  : <Square      className="w-4 h-4 flex-shrink-0" style={{ color: "var(--text-muted)" }} />
-                }
-              </button>
-            )
-          })}
-        </div>
-
-        {/* Format */}
-        <div
-          className="rounded-xl border overflow-hidden"
-          style={{ background: "var(--surface)", borderColor: "var(--border)" }}
-        >
-          <div className="px-5 py-3 border-b" style={{ borderColor: "var(--border)" }}>
-            <span
-              className="text-[10px] font-mono font-semibold tracking-[2px] uppercase"
-              style={{ color: "var(--text-muted)" }}
-            >
-              Formato do arquivo
-            </span>
-          </div>
-          <div className="flex gap-3 px-5 py-4">
-            {(["csv", "json"] as Format[]).map(f => (
-              <button
-                key={f}
-                onClick={() => setFormat(f)}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-lg border text-[12px] font-semibold transition-all"
-                style={{
-                  background:   format === f ? "rgba(184,151,106,0.1)" : "var(--surface-2)",
-                  borderColor:  format === f ? "rgba(184,151,106,0.35)" : "var(--border)",
-                  color:        format === f ? GOLD : "var(--text-muted)",
-                }}
-              >
-                {f === "csv" ? "CSV (Excel)" : "JSON (técnico)"}
-              </button>
+          <ul className="divide-y divide-px-line border-t border-px-line">
+            {EXPORT_TYPES.map(tipo => (
+              <li key={tipo.id} className="px-5 py-3.5">
+                <PxCheckbox
+                  label={tipo.label}
+                  checked={selected.has(tipo.id)}
+                  onChange={() => toggle(tipo.id)}
+                  className="font-medium"
+                />
+                <p className="pl-[26px] text-[12.5px] text-px-muted">{tipo.desc}</p>
+              </li>
             ))}
-          </div>
-          <p className="px-5 pb-4 text-[11px]" style={{ color: "var(--text-muted)" }}>
-            {format === "csv"
-              ? "Um arquivo .csv por tipo de dado — abre diretamente no Excel e Google Sheets."
-              : "Um arquivo .json consolidado com todos os dados selecionados — ideal para migração técnica."}
-          </p>
-        </div>
+          </ul>
+        </Panel>
 
-        {/* Result */}
+        <Panel tone="light" className="space-y-3">
+          <h2 className="text-[15px] font-semibold text-px-ink">Formato do arquivo</h2>
+          <Segmented
+            label="Formato do arquivo"
+            value={format}
+            onChange={v => setFormat(v as Format)}
+            options={[{ value: "csv", label: "CSV (Excel)" }, { value: "json", label: "JSON (técnico)" }]}
+          />
+          <p className="text-[12.5px] text-px-muted">
+            {format === "csv"
+              ? "Um arquivo .csv por tipo de dado. Abre direto no Excel e no Google Sheets."
+              : "Um único arquivo .json com todos os dados selecionados, indicado para migração técnica."}
+          </p>
+        </Panel>
+
         {result && (
-          <div
-            className="px-5 py-3 rounded-xl border text-[12px] font-medium"
-            style={{
-              background:  result.ok ? "rgba(16,185,129,0.08)" : "rgba(239,68,68,0.08)",
-              borderColor: result.ok ? "rgba(16,185,129,0.25)" : "rgba(239,68,68,0.25)",
-              color:       result.ok ? "#10b981" : "#ef4444",
-            }}
-          >
-            {result.msg}
-          </div>
+          <Panel tone="light">
+            <p role={result.ok ? "status" : "alert"} className={`text-[13.5px] font-medium ${result.ok ? "text-px-ok" : "text-px-danger"}`}>
+              {result.msg}
+            </p>
+          </Panel>
         )}
 
-        {/* CTA */}
-        <button
-          onClick={handleExport}
-          disabled={loading || selected.size === 0}
-          className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-[14px] font-bold transition-all"
-          style={{
-            background: selected.size === 0
-              ? "var(--surface-2)"
-              : "linear-gradient(135deg, #b8976a, #d4af37)",
-            color:   selected.size === 0 ? "var(--text-muted)" : "#fff",
-            opacity: loading ? 0.7 : 1,
-            cursor:  selected.size === 0 ? "not-allowed" : "pointer",
-          }}
-        >
+        <PxButton fullWidth leftIcon={Download} loading={loading} disabled={loading || selected.size === 0} onClick={handleExport}>
           {loading
-            ? <Loader2 className="w-4 h-4 animate-spin" />
-            : <Download className="w-4 h-4" />}
-          {loading
-            ? "Exportando..."
+            ? "Exportando"
             : `Exportar ${selected.size} tipo${selected.size !== 1 ? "s" : ""} de dado${selected.size !== 1 ? "s" : ""}`}
-        </button>
+        </PxButton>
 
-        <p className="text-center text-[11px]" style={{ color: "var(--text-muted)" }}>
-          Os arquivos são gerados e baixados diretamente no seu navegador. Nenhum dado é
-          enviado para servidores externos durante o download.
+        <p className="text-center text-[12px] text-px-muted">
+          Os arquivos são gerados e baixados no seu navegador, direto do banco de dados da sua conta.
         </p>
-
       </div>
     </div>
   )

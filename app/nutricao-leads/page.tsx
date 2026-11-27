@@ -2,17 +2,11 @@
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useSearchParams } from "next/navigation"
-import { TopBar } from "@/components/TopBar"
-import { StatCard } from "@/components/StatCard"
-import { EmptyState } from "@/components/EmptyState"
+import { Panel, PxButton, Tag, Field, PxInput, PxSelect, Segmented, PageHeader } from "@/components/px"
 import { Toast } from "@/components/Toast"
-import { cn } from "@/lib/utils"
 import {
-  GitBranch, Sparkles, Loader2, Check,
-  Copy, MessageSquare, Video, LayoutGrid, BookOpen,
-  ChevronDown, ChevronUp, RefreshCw, Save,
-  Users, TrendingUp, CheckCircle2,
-  AlertCircle, Smartphone, FileText, Send, Phone,
+  Sparkles, Check, Copy, MessageSquare, Video, LayoutGrid, BookOpen,
+  ChevronDown, ChevronUp, RefreshCw, Save, Send, GitBranch,
 } from "lucide-react"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -36,30 +30,32 @@ interface Lead {
   criado_em?:   string
 }
 
-// ── Constants ──────────────────────────────────────────────────────────────────
+// ── Constantes ────────────────────────────────────────────────────────────────
 
 const INTERESSES = ["Emagrecimento", "Estética", "Saúde geral", "Cirurgia", "Outro"] as const
 type Interesse = typeof INTERESSES[number]
 
-const STATUS_META: Record<string, { label: string; badge: string; dot: string }> = {
-  ativa:     { label: "Ativa",     badge: "bg-emerald-500/12 text-emerald-400 border-emerald-500/30", dot: "bg-emerald-400" },
-  pausada:   { label: "Pausada",   badge: "bg-amber-500/12   text-amber-400   border-amber-500/30",   dot: "bg-amber-400"   },
-  concluida: { label: "Concluída", badge: "bg-blue-500/12    text-blue-400    border-blue-500/30",    dot: "bg-blue-400"    },
-  cancelada: { label: "Cancelada", badge: "bg-red-500/12     text-red-400     border-red-500/30",     dot: "bg-red-400"     },
-  // backward-compat for older rows
-  aquecendo:      { label: "Aquecendo",      badge: "bg-amber-500/12  text-amber-400  border-amber-500/30", dot: "bg-amber-400"   },
-  consultou:      { label: "Consultou",      badge: "bg-blue-500/12   text-blue-400   border-blue-500/30",  dot: "bg-blue-400"    },
-  "nao-respondeu":{ label: "Não respondeu",  badge: "bg-red-500/12    text-red-400    border-red-500/30",   dot: "bg-red-400"     },
-  desqualificado: { label: "Desqualificado", badge: "bg-surface-2 text-text-muted border-border",          dot: "bg-text-muted"  },
+type Tone = "neutral" | "ink" | "accent" | "danger" | "ok" | "warn"
+
+const STATUS_META: Record<string, { label: string; tone: Tone }> = {
+  ativa:     { label: "Ativa",     tone: "ok"      },
+  pausada:   { label: "Pausada",   tone: "warn"    },
+  concluida: { label: "Concluída", tone: "ink"     },
+  cancelada: { label: "Cancelada", tone: "danger"  },
+  // linhas antigas
+  aquecendo:        { label: "Aquecendo",      tone: "warn"    },
+  consultou:        { label: "Consultou",      tone: "ink"     },
+  "nao-respondeu":  { label: "Não respondeu",  tone: "danger"  },
+  desqualificado:   { label: "Desqualificado", tone: "neutral" },
 }
 
 const STATUS_OPTIONS = ["ativa", "pausada", "concluida", "cancelada"]
 
-const TIPO_META: Record<string, { icon: React.ElementType; badge: string; canal: string }> = {
-  Story:     { icon: LayoutGrid,    badge: "bg-amber-500/12  text-amber-400  border-amber-500/30",  canal: "Conteúdo"  },
-  Vídeo:     { icon: Video,         badge: "bg-purple-500/12 text-purple-400 border-purple-500/30", canal: "Conteúdo"  },
-  Carrossel: { icon: BookOpen,      badge: "bg-indigo-500/12 text-indigo-400 border-indigo-500/30", canal: "Conteúdo"  },
-  Mensagem:  { icon: MessageSquare, badge: "bg-blue-500/12   text-blue-400   border-blue-500/30",   canal: "WhatsApp"  },
+const TIPO_META: Record<string, { icon: React.ElementType; canal: string }> = {
+  Story:     { icon: LayoutGrid,    canal: "Conteúdo" },
+  Vídeo:     { icon: Video,         canal: "Conteúdo" },
+  Carrossel: { icon: BookOpen,      canal: "Conteúdo" },
+  Mensagem:  { icon: MessageSquare, canal: "WhatsApp" },
 }
 
 function getMeta(tipo: string) {
@@ -76,79 +72,79 @@ function fmtDate(s?: string): string {
   return s.slice(0, 10).split("-").reverse().join("/")
 }
 
-// ── Subcomponents ─────────────────────────────────────────────────────────────
+const DURACOES = [
+  { value: "7",  label: "7 dias"  },
+  { value: "15", label: "15 dias" },
+  { value: "30", label: "30 dias" },
+]
 
-function CopyBtn({ text, className }: { text: string; className?: string }) {
+// ── Subcomponentes ────────────────────────────────────────────────────────────
+
+function CopyBtn({ text }: { text: string }) {
   const [done, setDone] = useState(false)
   return (
-    <button
+    <PxButton
+      size="sm"
+      variant="secondary"
+      leftIcon={done ? Check : Copy}
       onClick={() => { navigator.clipboard.writeText(text); setDone(true); setTimeout(() => setDone(false), 1800) }}
-      className={cn(
-        "flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg border transition-all",
-        done
-          ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-          : "border-border text-text-muted hover:border-blue-500/30 hover:text-blue-400",
-        className,
-      )}
     >
-      {done ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
       {done ? "Copiado" : "Copiar"}
-    </button>
+    </PxButton>
   )
 }
 
 function EnviarBtn({
-  text, phone, sendKey, sendingKey, onSend, className,
+  text, phone, sendKey, sendingKey, onSend,
 }: {
   text: string; phone: string; sendKey: string
   sendingKey: string | null
   onSend: (phone: string, message: string, key: string) => void
-  className?: string
 }) {
   const isLoading = sendingKey === sendKey
   const hasPhone  = phone.trim().length > 0
   return (
-    <button
+    <PxButton
+      size="sm"
+      variant="secondary"
+      leftIcon={Send}
+      loading={isLoading}
       disabled={isLoading || !hasPhone}
       onClick={() => onSend(phone, text, sendKey)}
-      title={!hasPhone ? "Informe o WhatsApp antes de enviar" : "Enviar via WhatsApp"}
-      className={cn(
-        "flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg border transition-all",
-        isLoading
-          ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400 cursor-wait"
-          : !hasPhone
-            ? "border-border text-text-muted/40 cursor-not-allowed"
-            : "border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10",
-        className,
-      )}
+      aria-label={hasPhone ? "Enviar pelo WhatsApp" : "Informe o WhatsApp para enviar"}
     >
-      {isLoading
-        ? <Loader2 className="w-3 h-3 animate-spin" />
-        : <Send    className="w-3 h-3" />}
-      {isLoading ? "Enviando…" : "Enviar"}
-    </button>
+      {isLoading ? "Enviando" : "Enviar"}
+    </PxButton>
   )
 }
 
-function DayBadge({ dia }: { dia: number }) {
+function ItemTrilhaCard({ item, phone, sendKey, sendingKey, onSend }: {
+  item: ItemTrilha; phone: string; sendKey: string
+  sendingKey: string | null
+  onSend: (phone: string, message: string, key: string) => void
+}) {
+  const meta = getMeta(item.tipo)
+  const Icon = meta.icon
   return (
-    <span className="text-badge font-mono font-semibold px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/25 text-blue-400">
-      D{dia}
-    </span>
+    <li className="rounded-px-card border border-px-line bg-white/50 p-4">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Tag tone="ink">D{item.dia}</Tag>
+          <Tag><Icon className="mr-1 h-3 w-3" aria-hidden />{item.tipo}</Tag>
+          <span className="text-[12px] text-px-muted">{meta.canal}</span>
+        </div>
+        {item.ehMensagem && (
+          <div className="flex shrink-0 items-center gap-1.5">
+            <CopyBtn text={item.texto} />
+            <EnviarBtn text={item.texto} phone={phone} sendKey={sendKey} sendingKey={sendingKey} onSend={onSend} />
+          </div>
+        )}
+      </div>
+      <p className="mt-2.5 text-[13.5px] font-semibold text-px-ink">{item.titulo}</p>
+      <p className="mt-1 whitespace-pre-wrap text-[13px] leading-relaxed text-px-ink/80">{item.texto}</p>
+    </li>
   )
 }
-
-function StatusBadge({ status }: { status: string }) {
-  const m = STATUS_META[status] ?? STATUS_META.ativa
-  return (
-    <span className={cn("flex items-center gap-1 text-badge font-mono font-semibold px-2 py-0.5 rounded-full border", m.badge)}>
-      <span className={cn("w-1.5 h-1.5 rounded-full flex-shrink-0", m.dot)} />
-      {m.label}
-    </span>
-  )
-}
-
-// ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function NutricaoLeadsPage() {
   const searchParams = useSearchParams()
@@ -338,467 +334,233 @@ export default function NutricaoLeadsPage() {
 
   return (
     <div className="animate-fade-in">
-      <TopBar
-        title="Nutrição de Leads"
-        subtitle="ALA CLÍNICA · TRILHAS DE CONVERSÃO"
-        tagline="Mantenha o relacionamento com futuros pacientes com trilhas de conteúdo personalizadas."
+      <PageHeader
+        title="Nutrição"
+        caption="Trilhas de conteúdo e mensagens para futuros pacientes"
         actions={
-          <button
-            onClick={fetchLeads}
-            disabled={loadingList}
-            className="flex items-center gap-1.5 text-[11px] border border-border text-text-secondary rounded-lg px-3 py-1.5 hover:border-border-hover transition-colors"
-          >
-            <RefreshCw className={cn("w-3.5 h-3.5", loadingList && "animate-spin")} />
+          <PxButton variant="secondary" leftIcon={RefreshCw} loading={loadingList} onClick={fetchLeads}>
             Atualizar
-          </button>
+          </PxButton>
         }
       />
 
-      <div className="p-4 md:p-6 space-y-5">
-
-        {/* KPIs */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <StatCard label="Total Leads"  value={leads.length} sub="cadastrados"   icon={Users}        accent="blue"  />
-          <StatCard label="Ativas"       value={ativas}        sub="em nutrição"   icon={GitBranch}    accent="green" />
-          <StatCard label="Concluídas"   value={concluidas}    sub="convertidas"   icon={CheckCircle2} accent="blue"  />
-          <StatCard label="Taxa"         value={`${taxa}%`}    sub="de conversão"  icon={TrendingUp}   accent="amber" />
-        </div>
-
-        {/* Two-panel layout */}
-        <div className="grid grid-cols-1 md:grid-cols-[2fr_3fr] gap-5 items-start">
-
-          {/* ── LEFT: Criar Trilha ─────────────────────────────────────────────── */}
-          <div className="space-y-4">
+      <div className="space-y-4 px-4 pb-10 md:px-10">
+        <Panel tone="dark">
+          <dl className="grid grid-cols-2 gap-4 text-white md:grid-cols-4">
             <div>
-              <h2
-                className="text-[15px] font-semibold text-text-primary"
-                style={{ fontFamily: "var(--font-playfair)" }}
-              >
-                Criar Trilha
-              </h2>
-              <p className="text-[11px] text-text-muted mt-0.5">
-                Preencha o perfil e gere uma sequência de conteúdo e mensagens.
-              </p>
+              <dt className="text-[12px] text-white/80">Leads cadastrados</dt>
+              <dd className="mt-1 text-[34px] font-semibold leading-none tabular-nums">{leads.length}</dd>
             </div>
+            <div>
+              <dt className="text-[12px] text-white/80">Em nutrição</dt>
+              <dd className="mt-1 text-[34px] font-semibold leading-none tabular-nums">{ativas}</dd>
+            </div>
+            <div>
+              <dt className="text-[12px] text-white/80">Concluídas</dt>
+              <dd className="mt-1 text-[34px] font-semibold leading-none tabular-nums">{concluidas}</dd>
+            </div>
+            <div>
+              <dt className="text-[12px] text-white/80">Taxa de conclusão</dt>
+              <dd className="mt-1 text-[34px] font-semibold leading-none tabular-nums">{taxa}%</dd>
+            </div>
+          </dl>
+        </Panel>
 
-            <div className="bg-surface border border-border rounded-xl p-5 space-y-4">
+        <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[2fr_3fr]">
 
-              {/* Nome */}
-              <div>
-                <label className="text-[10px] font-mono text-text-muted uppercase tracking-widest block mb-1.5">
-                  Nome do Lead
-                </label>
-                <input
-                  value={nome}
-                  onChange={e => setNome(e.target.value)}
-                  placeholder="Ex: Ana Souza"
-                  className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2.5 text-[12px] text-text-primary placeholder:text-text-muted focus:border-blue-500/40 outline-none transition-colors"
-                />
-              </div>
+          {/* Criar trilha */}
+          <div className="space-y-4">
+            <Panel tone="light">
+              <h2 className="text-[16px] font-semibold text-px-ink">Criar trilha</h2>
+              <p className="mb-4 mt-0.5 text-[13px] text-px-muted">Descreva o perfil e gere a sequência de conteúdo e mensagens.</p>
 
-              {/* Telefone */}
-              <div>
-                <label className="text-[10px] font-mono text-text-muted uppercase tracking-widest block mb-1.5">
-                  WhatsApp <span className="normal-case text-text-muted/60">(com DDI, ex: 5535999999999)</span>
-                </label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-text-muted pointer-events-none" />
-                  <input
-                    value={telefone}
-                    onChange={e => setTelefone(e.target.value)}
-                    placeholder="5535999999999"
-                    className="w-full bg-surface-2 border border-border rounded-lg pl-8 pr-3 py-2.5 text-[12px] text-text-primary placeholder:text-text-muted focus:border-emerald-500/40 outline-none transition-colors"
+              <div className="space-y-4">
+                <Field label="Nome do lead" htmlFor="nl-nome">
+                  <PxInput id="nl-nome" value={nome} onChange={e => setNome(e.target.value)} placeholder="Ex: Ana Souza" />
+                </Field>
+
+                <Field label="WhatsApp" htmlFor="nl-tel" hint="Com DDI, por exemplo 5535999999999">
+                  <PxInput id="nl-tel" value={telefone} onChange={e => setTelefone(e.target.value)} placeholder="5535999999999" inputMode="tel" />
+                </Field>
+
+                <div>
+                  <span className="mb-1.5 block text-[12.5px] font-medium text-px-muted">Interesse principal</span>
+                  <Segmented
+                    label="Interesse principal"
+                    value={interesse}
+                    onChange={v => setInteresse(v as Interesse)}
+                    options={INTERESSES.map(i => ({ value: i, label: i }))}
                   />
                 </div>
-              </div>
 
-              {/* Interesse */}
-              <div>
-                <label className="text-[10px] font-mono text-text-muted uppercase tracking-widest block mb-1.5">
-                  Interesse Principal
-                </label>
-                <div className="flex flex-wrap gap-1.5">
-                  {INTERESSES.map(i => (
-                    <button
-                      key={i}
-                      onClick={() => setInteresse(i)}
-                      className={cn(
-                        "text-[11px] px-3 py-1.5 rounded-full border transition-all",
-                        interesse === i
-                          ? "bg-blue-500/12 border-blue-500/30 text-blue-400 font-medium"
-                          : "border-border text-text-muted hover:text-text-secondary"
-                      )}
-                    >
-                      {i}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Perfil */}
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-[10px] font-mono text-text-muted uppercase tracking-widest">
-                    Perfil do Lead *
-                  </label>
-                  <button
-                    type="button"
-                    onClick={sugerirPerfil}
-                    disabled={suggestingPerfil || !nome.trim()}
-                    className="flex items-center gap-1 text-[10px] text-blue-400 hover:text-blue-300 disabled:opacity-40 transition-colors"
-                  >
-                    {suggestingPerfil
-                      ? <><Loader2 className="w-3 h-3 animate-spin" /> Sugerindo...</>
-                      : <><Sparkles className="w-3 h-3" /> Sugerir com IA</>}
-                  </button>
-                </div>
-                <textarea
-                  value={perfil}
-                  onChange={e => setPerfil(e.target.value)}
-                  rows={4}
-                  placeholder="Ex: Mulher, 42 anos, executiva, acompanha conteúdo sobre hormônios e bem-estar. Comentou no Reel sobre fadiga crônica e demonstrou interesse em consulta..."
-                  className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2.5 text-[12px] text-text-primary placeholder:text-text-muted focus:border-blue-500/40 outline-none resize-none transition-colors leading-relaxed"
-                />
-              </div>
-
-              {/* Duração */}
-              <div>
-                <label className="text-[10px] font-mono text-text-muted uppercase tracking-widest block mb-1.5">
-                  Duração da Trilha
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {([7, 15, 30] as const).map(d => (
-                    <button
-                      key={d}
-                      onClick={() => setDuracao(d)}
-                      className={cn(
-                        "py-2.5 rounded-xl text-[11px] font-medium border transition-all",
-                        duracao === d
-                          ? "bg-blue-500/12 border-blue-500/30 text-blue-400"
-                          : "border-border text-text-muted hover:border-border-hover"
-                      )}
-                    >
-                      <div className="font-semibold">{d} dias</div>
-                    </button>
-                  ))}
-                </div>
-                <p className="text-[10px] text-text-muted mt-1.5 px-0.5">
-                  {DURACAO_DESC[duracao]}
-                </p>
-              </div>
-
-              {genError && (
-                <div className="flex items-start gap-2 bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl px-4 py-3 text-[12px]">
-                  <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                  <span>{genError}</span>
-                </div>
-              )}
-
-              <button
-                onClick={gerar}
-                disabled={generating || !perfil.trim()}
-                className={cn(
-                  "w-full flex items-center justify-center gap-2 text-[14px] font-semibold rounded-xl py-3 min-h-[44px] transition-all",
-                  generating
-                    ? "bg-blue-500/10 border border-blue-500/30 text-blue-400 cursor-wait"
-                    : "bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-40"
-                )}
-              >
-                {generating
-                  ? <><Loader2 className="w-4 h-4 animate-spin" /> Gerando trilha...</>
-                  : <><Sparkles className="w-4 h-4" /> Gerar Trilha</>
-                }
-              </button>
-              {generating && (
-                <p className="text-center text-[10px] text-text-muted mt-1.5">
-                  A geração pode levar 30–60 segundos. Não feche a página.
-                </p>
-              )}
-            </div>
-
-            {/* Generated preview */}
-            {trilha && (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span
-                      className="text-[13px] font-semibold text-text-primary"
-                      style={{ fontFamily: "var(--font-playfair)" }}
-                    >
-                      Preview da Trilha
-                    </span>
-                    <p className="text-[10px] text-text-muted mt-0.5">
-                      {trilha.length} pontos · {duracao} dias
-                    </p>
+                <div>
+                  <div className="mb-1.5 flex items-center justify-between">
+                    <label htmlFor="nl-perfil" className="text-[12.5px] font-medium text-px-muted">Perfil do lead *</label>
+                    <PxButton size="sm" variant="quiet" leftIcon={Sparkles} loading={suggestingPerfil} disabled={suggestingPerfil || !nome.trim()} onClick={sugerirPerfil}>
+                      {suggestingPerfil ? "Sugerindo" : "Sugerir com IA"}
+                    </PxButton>
                   </div>
-                  <button
-                    onClick={salvar}
-                    disabled={saving}
-                    className={cn(
-                      "flex items-center gap-1.5 text-[11px] font-semibold rounded-lg px-3 py-1.5 transition-all",
-                      saving
-                        ? "bg-blue-500/10 border border-blue-500/30 text-blue-400 cursor-wait"
-                        : "bg-blue-500 text-white hover:bg-blue-600"
-                    )}
-                  >
-                    {saving
-                      ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      : <Save className="w-3.5 h-3.5" />}
-                    {saving ? "Salvando…" : "Salvar Trilha"}
-                  </button>
+                  <textarea
+                    id="nl-perfil"
+                    value={perfil}
+                    onChange={e => setPerfil(e.target.value)}
+                    rows={4}
+                    placeholder="Ex: mulher, 42 anos, executiva, comentou no Reel sobre fadiga crônica e demonstrou interesse em consulta."
+                    className="w-full resize-none rounded-px-ctl border border-px-line bg-white px-3.5 py-3 text-[13.5px] leading-relaxed text-px-ink placeholder:text-px-muted"
+                  />
                 </div>
 
-                <div className="space-y-2">
-                  {trilha.map((item, i) => {
-                    const meta  = getMeta(item.tipo)
-                    const Icon  = meta.icon
-                    const canal = meta.canal
-                    return (
-                      <div key={i} className="bg-surface border border-border rounded-xl p-4 space-y-2">
-                        {/* Header */}
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2 flex-wrap min-w-0">
-                            <DayBadge dia={item.dia} />
-                            <span className={cn(
-                              "flex items-center gap-1 text-badge font-mono font-semibold px-2 py-0.5 rounded-full border",
-                              meta.badge
-                            )}>
-                              <Icon className="w-2.5 h-2.5" />
-                              {item.tipo}
-                            </span>
-                            {/* Canal badge */}
-                            <span className={cn(
-                              "flex items-center gap-1 text-badge font-mono px-2 py-0.5 rounded-full border",
-                              canal === "WhatsApp"
-                                ? "bg-emerald-500/10 border-emerald-500/25 text-emerald-400"
-                                : "bg-surface-2 border-border text-text-muted"
-                            )}>
-                              {canal === "WhatsApp"
-                                ? <Smartphone className="w-2.5 h-2.5" />
-                                : <FileText    className="w-2.5 h-2.5" />}
-                              {canal}
-                            </span>
-                          </div>
-                          {item.ehMensagem && (
-                            <div className="flex items-center gap-1.5 shrink-0">
-                              <CopyBtn text={item.texto} />
-                              <EnviarBtn
-                                text={item.texto}
-                                phone={telefone}
-                                sendKey={`preview-${i}`}
-                                sendingKey={sendingKey}
-                                onSend={enviarMensagem}
-                              />
-                            </div>
-                          )}
-                        </div>
-                        {/* Title */}
-                        <div className="text-[11px] font-semibold text-text-primary">{item.titulo}</div>
-                        {/* Body */}
-                        <p className="text-[11px] text-text-secondary leading-relaxed whitespace-pre-wrap">
-                          {item.texto}
-                        </p>
-                      </div>
-                    )
-                  })}
+                <div>
+                  <span className="mb-1.5 block text-[12.5px] font-medium text-px-muted">Duração da trilha</span>
+                  <Segmented
+                    label="Duração da trilha"
+                    value={String(duracao)}
+                    onChange={v => setDuracao(Number(v) as 7 | 15 | 30)}
+                    options={DURACOES}
+                  />
+                  <p className="mt-1.5 text-[12px] text-px-muted">Pontos de contato: {DURACAO_DESC[duracao]}</p>
                 </div>
+
+                {genError && (
+                  <p role="alert" className="rounded-px-card bg-px-danger-soft px-4 py-3 text-[13px] text-px-danger">{genError}</p>
+                )}
+
+                <PxButton fullWidth leftIcon={Sparkles} loading={generating} disabled={generating || !perfil.trim()} onClick={gerar}>
+                  {generating ? "Gerando trilha" : "Gerar trilha"}
+                </PxButton>
+                {generating && (
+                  <p className="text-center text-[12px] text-px-muted">A geração leva de 30 a 60 segundos. Não feche a página.</p>
+                )}
               </div>
+            </Panel>
+
+            {trilha && (
+              <Panel tone="light">
+                <div className="mb-3 flex items-center justify-between gap-2">
+                  <div>
+                    <h2 className="text-[16px] font-semibold text-px-ink">Prévia da trilha</h2>
+                    <p className="text-[12px] text-px-muted">{trilha.length} pontos em {duracao} dias</p>
+                  </div>
+                  <PxButton leftIcon={Save} loading={saving} disabled={saving} onClick={salvar}>
+                    {saving ? "Salvando" : "Salvar trilha"}
+                  </PxButton>
+                </div>
+                <ul className="space-y-2">
+                  {trilha.map((item, i) => (
+                    <ItemTrilhaCard key={i} item={item} phone={telefone} sendKey={`preview-${i}`} sendingKey={sendingKey} onSend={enviarMensagem} />
+                  ))}
+                </ul>
+              </Panel>
             )}
           </div>
 
-          {/* ── RIGHT: Leads Cadastrados ─────────────────────────────────────── */}
+          {/* Leads cadastrados */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h2
-                className="text-[15px] font-semibold text-text-primary"
-                style={{ fontFamily: "var(--font-playfair)" }}
-              >
-                Leads Cadastrados
-              </h2>
-              <span className="text-[10px] font-mono text-text-muted">
-                {leads.length} {leads.length === 1 ? "lead" : "leads"}
-              </span>
+            <div className="flex items-baseline justify-between px-1">
+              <h2 className="text-[16px] font-semibold text-px-ink">Leads cadastrados</h2>
+              <span className="text-[12px] text-px-muted">{leads.length} {leads.length === 1 ? "lead" : "leads"}</span>
             </div>
 
             {loadingList ? (
-              <div className="space-y-2">
-                {[1, 2, 3].map(i => (
-                  <div key={i} className="bg-surface border border-border rounded-xl px-4 py-3.5 animate-pulse">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-surface-2 flex-shrink-0" />
-                      <div className="flex-1 space-y-1.5">
-                        <div className="h-3 bg-surface-2 rounded w-3/4" />
-                        <div className="h-2.5 bg-surface-2 rounded w-1/2" />
-                      </div>
-                      <div className="h-5 w-12 bg-surface-2 rounded-full" />
-                    </div>
-                  </div>
-                ))}
+              <div className="space-y-3" aria-busy="true">
+                {[1, 2, 3].map(i => <div key={i} className="px-glass h-[72px] animate-pulse rounded-px-panel" />)}
               </div>
             ) : leads.length === 0 ? (
-              <EmptyState
-                icon={GitBranch}
-                title="Nenhum lead cadastrado"
-                subtitle="Crie a primeira trilha de nutrição no painel ao lado."
-              />
+              <Panel tone="light" className="py-12 text-center">
+                <p className="text-[14px] text-px-ink">Nenhum lead cadastrado.</p>
+                <p className="mx-auto mt-1 max-w-sm text-[13px] text-px-muted">Crie a primeira trilha no painel ao lado.</p>
+              </Panel>
             ) : (
-              <div className="space-y-2">
+              <ul className="space-y-3">
                 {leads.map(lead => {
                   const isExpanded  = expandedId === lead.id
                   const nomeLead    = extractNome(lead.perfil)
                   const trilhaItems = Array.isArray(lead.trilha) ? lead.trilha : []
+                  const st          = STATUS_META[lead.status] ?? STATUS_META.ativa
 
                   return (
-                    <div
-                      key={lead.id}
-                      className="bg-surface border border-border rounded-xl overflow-hidden transition-all hover:border-blue-500/20"
-                    >
-                      {/* Card header */}
-                      <div className="px-4 py-3.5 flex items-center gap-3">
+                    <li key={lead.id}>
+                      <Panel tone="light" className="overflow-hidden p-0">
+                        <div className="flex items-center gap-3 px-5 py-4">
+                          <button
+                            type="button"
+                            onClick={() => setExpandedId(isExpanded ? null : lead.id)}
+                            aria-expanded={isExpanded}
+                            className="min-w-0 flex-1 text-left"
+                          >
+                            <span className="block truncate text-[14px] font-semibold text-px-ink">{nomeLead}</span>
+                            <span className="mt-0.5 block text-[12px] text-px-muted">
+                              {lead.interesse} · {lead.duracao_dias} dias{lead.criado_em ? ` · ${fmtDate(lead.criado_em)}` : ""}
+                            </span>
+                          </button>
 
-                        {/* Icon */}
-                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center flex-shrink-0">
-                          <GitBranch className="w-3.5 h-3.5 text-blue-400" />
-                        </div>
-
-                        {/* Info */}
-                        <button
-                          onClick={() => setExpandedId(isExpanded ? null : lead.id)}
-                          className="flex-1 text-left min-w-0"
-                        >
-                          <div className="text-[12px] font-medium text-text-primary truncate">
-                            {nomeLead}
-                          </div>
-                          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                            <span className="text-[10px] text-text-muted">{lead.interesse}</span>
-                            <span className="text-[10px] text-text-muted">·</span>
-                            <span className="text-[10px] text-text-muted">{lead.duracao_dias}d</span>
-                            {lead.criado_em && (
-                              <>
-                                <span className="text-[10px] text-text-muted">·</span>
-                                <span className="text-[10px] text-text-muted font-mono">{fmtDate(lead.criado_em)}</span>
-                              </>
+                          <div className="flex flex-shrink-0 items-center gap-2">
+                            <Tag tone={st.tone}>{st.label}</Tag>
+                            <PxSelect
+                              aria-label={`Status de ${nomeLead}`}
+                              value={STATUS_OPTIONS.includes(lead.status) ? lead.status : "ativa"}
+                              disabled={updatingId === lead.id}
+                              onChange={e => atualizarStatus(lead, e.target.value)}
+                              className="h-9 w-[128px] text-[12.5px]"
+                            >
+                              {STATUS_OPTIONS.map(o => (
+                                <option key={o} value={o}>{STATUS_META[o]?.label ?? o}</option>
+                              ))}
+                            </PxSelect>
+                            {trilhaItems.length > 0 && (
+                              <button
+                                type="button"
+                                aria-label={isExpanded ? "Recolher trilha" : "Ver trilha"}
+                                onClick={() => setExpandedId(isExpanded ? null : lead.id)}
+                                className="flex h-9 w-9 items-center justify-center rounded-full text-px-muted hover:bg-px-ink/10 hover:text-px-ink"
+                              >
+                                {isExpanded ? <ChevronUp className="h-4 w-4" aria-hidden /> : <ChevronDown className="h-4 w-4" aria-hidden />}
+                              </button>
                             )}
                           </div>
-                        </button>
+                        </div>
 
-                        {/* Status select */}
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          {updatingId === lead.id ? (
-                            <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />
-                          ) : (
-                            <select
-                              value={STATUS_OPTIONS.includes(lead.status) ? lead.status : "ativa"}
-                              onChange={e => atualizarStatus(lead, e.target.value)}
-                              onClick={e => e.stopPropagation()}
-                              className={cn(
-                                "appearance-none text-badge font-mono font-semibold px-2.5 py-1 rounded-full border outline-none cursor-pointer",
-                                (STATUS_META[lead.status] ?? STATUS_META.ativa).badge
-                              )}
-                              style={{ background: "transparent" }}
-                            >
-                              {STATUS_OPTIONS.map(s => (
-                                <option key={s} value={s}>{STATUS_META[s]?.label ?? s}</option>
+                        {isExpanded && trilhaItems.length > 0 && (
+                          <div className="space-y-3 border-t border-px-line px-5 pb-5 pt-4">
+                            <p className="text-[12px] text-px-muted">Trilha com {trilhaItems.length} pontos</p>
+
+                            {!lead.telefone && (
+                              <Field label="WhatsApp para envio" htmlFor={`nl-ph-${lead.id}`} hint="Este lead não tem telefone salvo. Informe para habilitar o envio.">
+                                <PxInput
+                                  id={`nl-ph-${lead.id}`}
+                                  value={leadPhones[lead.id] ?? ""}
+                                  onChange={e => setLeadPhones(prev => ({ ...prev, [lead.id]: e.target.value }))}
+                                  placeholder="5535999999999"
+                                  inputMode="tel"
+                                />
+                              </Field>
+                            )}
+
+                            <ul className="space-y-2">
+                              {trilhaItems.map((item, i) => (
+                                <ItemTrilhaCard
+                                  key={i}
+                                  item={item}
+                                  phone={lead.telefone || leadPhones[lead.id] || ""}
+                                  sendKey={`lead-${lead.id}-${i}`}
+                                  sendingKey={sendingKey}
+                                  onSend={enviarMensagem}
+                                />
                               ))}
-                            </select>
-                          )}
-
-                          {/* Expand toggle */}
-                          {trilhaItems.length > 0 && (
-                            <button
-                              onClick={() => setExpandedId(isExpanded ? null : lead.id)}
-                              className="w-7 h-7 rounded-lg flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-surface-2 transition-all"
-                            >
-                              {isExpanded
-                                ? <ChevronUp   className="w-3.5 h-3.5" />
-                                : <ChevronDown className="w-3.5 h-3.5" />}
-                            </button>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Expanded trilha */}
-                      {isExpanded && trilhaItems.length > 0 && (
-                        <div className="border-t border-border px-4 pb-4 pt-3 space-y-2 bg-surface-2">
-                          <div className="text-[10px] font-mono text-text-muted uppercase tracking-widest mb-2">
-                            Trilha · {trilhaItems.length} pontos
+                            </ul>
                           </div>
-
-                          {/* Phone override — shown only when lead has no stored phone */}
-                          {!lead.telefone && (
-                            <div className="flex items-center gap-2 mb-3">
-                              <Phone className="w-3 h-3 text-text-muted flex-shrink-0" />
-                              <input
-                                value={leadPhones[lead.id] ?? ""}
-                                onChange={e => setLeadPhones(prev => ({ ...prev, [lead.id]: e.target.value }))}
-                                placeholder="WhatsApp para envio (5535999999999)"
-                                className="flex-1 bg-surface border border-border rounded-lg px-2.5 py-1.5 text-[11px] text-text-primary placeholder:text-text-muted focus:border-emerald-500/40 outline-none"
-                              />
-                            </div>
-                          )}
-
-                          {trilhaItems.map((item, i) => {
-                            const meta  = getMeta(item.tipo)
-                            const Icon  = meta.icon
-                            const canal = meta.canal
-                            const phone = lead.telefone || leadPhones[lead.id] || ""
-                            return (
-                              <div key={i} className="bg-surface border border-border rounded-lg p-3 space-y-1.5">
-                                <div className="flex items-center justify-between gap-2">
-                                  <div className="flex items-center gap-1.5 flex-wrap min-w-0">
-                                    <DayBadge dia={item.dia} />
-                                    <span className={cn(
-                                      "flex items-center gap-1 text-[8px] font-mono font-semibold px-1.5 py-0.5 rounded-full border",
-                                      meta.badge
-                                    )}>
-                                      <Icon className="w-2 h-2" />
-                                      {item.tipo}
-                                    </span>
-                                    <span className={cn(
-                                      "flex items-center gap-1 text-[8px] font-mono px-1.5 py-0.5 rounded-full border",
-                                      canal === "WhatsApp"
-                                        ? "bg-emerald-500/10 border-emerald-500/25 text-emerald-400"
-                                        : "bg-surface-2 border-border text-text-muted"
-                                    )}>
-                                      {canal === "WhatsApp"
-                                        ? <Smartphone className="w-2 h-2" />
-                                        : <FileText    className="w-2 h-2" />}
-                                      {canal}
-                                    </span>
-                                  </div>
-                                  {item.ehMensagem && (
-                                    <div className="flex items-center gap-1.5 shrink-0">
-                                      <CopyBtn text={item.texto} />
-                                      <EnviarBtn
-                                        text={item.texto}
-                                        phone={phone}
-                                        sendKey={`lead-${lead.id}-${i}`}
-                                        sendingKey={sendingKey}
-                                        onSend={enviarMensagem}
-                                      />
-                                    </div>
-                                  )}
-                                </div>
-                                <div className="text-[11px] font-medium text-text-primary">{item.titulo}</div>
-                                <p className="text-[10px] text-text-secondary leading-relaxed line-clamp-3">
-                                  {item.texto}
-                                </p>
-                              </div>
-                            )
-                          })}
-                        </div>
-                      )}
-                    </div>
+                        )}
+                      </Panel>
+                    </li>
                   )
                 })}
-              </div>
+              </ul>
             )}
           </div>
         </div>
       </div>
 
-      {/* Toast */}
-      {toast && <Toast message={toast.msg} type={toast.type} />}
+      <Toast message={toast ? toast.msg : null} type={toast?.type} />
     </div>
   )
 }

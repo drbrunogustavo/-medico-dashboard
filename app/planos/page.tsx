@@ -1,516 +1,252 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { ArrowLeft, ArrowRight, Check, X, Zap, Star, Crown, Loader2, CalendarDays, AlertTriangle } from "lucide-react"
+import { Check, Minus } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
-
-// ─── Types ─────────────────────────────────────────────────────────────────────
+import { Panel, PxButton, Tag } from "@/components/px"
 
 interface UserPlan {
-  plano:     string
-  status:    string
+  plano: string
+  status: string
   hasStripe: boolean
 }
 
 interface PlanDef {
-  id:           string
-  name:         string
+  id: string
+  name: string
   priceDisplay: string
-  priceSub:     string
-  badge:        string | null
-  icon:         React.ElementType
-  color:        string
-  border:       string
-  limits:       string
-  support:      string
-  priceKey:     string
+  priceSub: string
+  nota?: string
+  limits: string
+  support: string
+  priceKey: string
+  nivel: "starter" | "pro" | "elite"
 }
 
-// ─── Features ──────────────────────────────────────────────────────────────────
-
 const FEATURES = [
-  { text: "Gerador de Roteiros e Legendas",   starter: true,  pro: true,  elite: true  },
-  { text: "Banco de Pautas e Ganchos",         starter: true,  pro: true,  elite: true  },
-  { text: "Calendário Editorial",              starter: true,  pro: true,  elite: true  },
-  { text: "CRM de Leads",                      starter: true,  pro: true,  elite: true  },
-  { text: "Radar de Tendências (IA)",          starter: false, pro: true,  elite: true  },
-  { text: "Copiloto de Consulta",              starter: false, pro: true,  elite: true  },
-  { text: "Pesquisa NPS",                      starter: false, pro: true,  elite: true  },
-  { text: "Precificação Inteligente",          starter: false, pro: true,  elite: true  },
-  { text: "Indicadores da Clínica",            starter: false, pro: true,  elite: true  },
-  { text: "Diretor Criativo (Imagens IA)",     starter: false, pro: false, elite: true  },
-  { text: "Metas e Planejamento",              starter: false, pro: false, elite: true  },
-  { text: "Calculadoras Clínicas",             starter: false, pro: false, elite: true  },
-  { text: "Painel Executivo",                  starter: false, pro: false, elite: true  },
-  { text: "Consultor Estratégico IA",          starter: false, pro: false, elite: true  },
-  { text: "Diagnóstico 360° da Clínica",       starter: false, pro: false, elite: true  },
-  { text: "Expansão de Clínicas",              starter: false, pro: false, elite: true  },
-  { text: "Predição de Crescimento",           starter: false, pro: false, elite: true  },
-  { text: "Agente Executivo (WhatsApp)",        starter: false, pro: false, elite: true  },
+  { text: "Gerador de Roteiros e Legendas", starter: true, pro: true, elite: true },
+  { text: "Banco de Pautas e Ganchos", starter: true, pro: true, elite: true },
+  { text: "Calendário Editorial", starter: true, pro: true, elite: true },
+  { text: "CRM de Leads", starter: true, pro: true, elite: true },
+  { text: "Radar de Tendências (IA)", starter: false, pro: true, elite: true },
+  { text: "Copiloto de Consulta", starter: false, pro: true, elite: true },
+  { text: "Pesquisa NPS", starter: false, pro: true, elite: true },
+  { text: "Precificação Inteligente", starter: false, pro: true, elite: true },
+  { text: "Indicadores da Clínica", starter: false, pro: true, elite: true },
+  { text: "Diretor Criativo (Imagens IA)", starter: false, pro: false, elite: true },
+  { text: "Metas e Planejamento", starter: false, pro: false, elite: true },
+  { text: "Calculadoras Clínicas", starter: false, pro: false, elite: true },
+  { text: "Painel Executivo", starter: false, pro: false, elite: true },
+  { text: "Consultor Estratégico IA", starter: false, pro: false, elite: true },
+  { text: "Diagnóstico 360° da Clínica", starter: false, pro: false, elite: true },
+  { text: "Expansão de Clínicas", starter: false, pro: false, elite: true },
+  { text: "Predição de Crescimento", starter: false, pro: false, elite: true },
+  { text: "Agente Executivo (WhatsApp)", starter: false, pro: false, elite: true },
 ]
 
 const PLANS: PlanDef[] = [
-  {
-    id: "starter",      name: "Starter",
-    priceDisplay: "R$ 97",   priceSub: "/mês",
-    badge: null,
-    icon: Zap,   color: "#6b7280", border: "rgba(107,114,128,0.25)",
-    limits:  "30 gerações/mês",
-    support: "Suporte por email",
-    priceKey: "starter",
-  },
-  {
-    id: "pro",          name: "Pro",
-    priceDisplay: "R$ 197",  priceSub: "/mês",
-    badge: null,
-    icon: Star,  color: "#b8976a", border: "rgba(184,151,106,0.25)",
-    limits:  "200 gerações/mês",
-    support: "Suporte por WhatsApp",
-    priceKey: "pro",
-  },
-  {
-    id: "elite",        name: "Elite",
-    priceDisplay: "R$ 397",  priceSub: "/mês",
-    badge: "MAIS POPULAR",
-    icon: Crown, color: "#d4af37", border: "rgba(212,175,55,0.30)",
-    limits:  "Gerações ilimitadas",
-    support: "WhatsApp prioritário + onboarding 1:1",
-    priceKey: "elite_monthly",
-  },
-  {
-    id: "elite_annual", name: "Elite Anual",
-    priceDisplay: "R$ 2.997", priceSub: "/ano",
-    badge: "ECONOMIZE 37%",
-    icon: CalendarDays, color: "#a78bfa", border: "rgba(167,139,250,0.25)",
-    limits:  "Gerações ilimitadas · 12 meses",
-    support: "WhatsApp prioritário + onboarding 1:1",
-    priceKey: "elite_annual",
-  },
+  { id: "starter", name: "Starter", priceDisplay: "R$ 97", priceSub: "/mês", limits: "30 gerações por mês", support: "Suporte por e-mail", priceKey: "starter", nivel: "starter" },
+  { id: "pro", name: "Pro", priceDisplay: "R$ 197", priceSub: "/mês", limits: "200 gerações por mês", support: "Suporte por WhatsApp", priceKey: "pro", nivel: "pro" },
+  { id: "elite", name: "Elite", priceDisplay: "R$ 397", priceSub: "/mês", limits: "Gerações ilimitadas", support: "WhatsApp prioritário e onboarding 1:1", priceKey: "elite_monthly", nivel: "elite" },
+  // 2.997 / 12 = 249,75 por mês; o mensal por 12 meses soma 4.764
+  { id: "elite_annual", name: "Elite Anual", priceDisplay: "R$ 2.997", priceSub: "/ano", nota: "Equivale a R$ 249,75 por mês, contra R$ 4.764 em 12 meses no Elite mensal.", limits: "Gerações ilimitadas por 12 meses", support: "WhatsApp prioritário e onboarding 1:1", priceKey: "elite_annual", nivel: "elite" },
 ]
 
-// ─── Helpers ───────────────────────────────────────────────────────────────────
-
-function isPlanActive(plan: PlanDef, userPlan: UserPlan | null) {
-  if (!userPlan) return false
-  if (plan.id === "elite_annual") {
-    return userPlan.plano === "elite" && userPlan.hasStripe
-  }
-  return userPlan.plano === plan.id && userPlan.status === "ativo"
+function isPlanActive(plan: PlanDef, up: UserPlan | null) {
+  if (!up) return false
+  // A API não informa se a assinatura Elite é mensal ou anual, então só o card mensal marca "plano atual".
+  if (plan.id === "elite_annual") return false
+  return up.plano === plan.id && up.status === "ativo"
 }
 
-// ─── Plan CTA ──────────────────────────────────────────────────────────────────
-// authed: true  = logged in
-// authed: false = not logged in
-// authed: null  = still checking auth
+const urlStripe = (u: unknown): u is string => typeof u === "string" && /^https:\/\//i.test(u)
 
-function PlanCTA({
-  plan, userPlan, authed, loading, onCheckout, onPortal,
-}: {
-  plan:      PlanDef
-  userPlan:  UserPlan | null
-  authed:    boolean | null
-  loading:   string | null
+function PlanCTA({ plan, userPlan, authed, loading, onCheckout, onPortal }: {
+  plan: PlanDef
+  userPlan: UserPlan | null
+  authed: boolean | null
+  loading: string | null
   onCheckout: (key: string) => void
-  onPortal:  () => void
+  onPortal: () => void
 }) {
-  const isCurrent = isPlanActive(plan, userPlan)
-  const isLoading = loading === plan.priceKey || (isCurrent && loading === "portal")
+  const atual = isPlanActive(plan, userPlan)
+  const eliteComStripe = plan.nivel === "elite" && userPlan?.plano === "elite" && userPlan.status === "ativo" && userPlan.hasStripe
 
-  // Still checking auth — show spinner
-  if (authed === null) {
-    return (
-      <div className="flex justify-center py-3">
-        <Loader2 className="w-4 h-4 animate-spin" style={{ color: plan.color }} />
-      </div>
-    )
+  if (authed === null) return <PxButton fullWidth loading disabled>Carregando</PxButton>
+
+  if ((atual && userPlan?.hasStripe) || eliteComStripe) {
+    return <PxButton fullWidth variant="secondary" loading={loading === "portal"} disabled={!!loading} onClick={onPortal}>Gerenciar assinatura</PxButton>
   }
-
-  // Subscribed via Stripe — show portal button
-  if (isCurrent && userPlan?.hasStripe) {
-    return (
-      <button onClick={onPortal} disabled={!!loading}
-        className="block w-full text-center py-3.5 rounded-xl text-[13px] font-bold disabled:opacity-50 transition-all hover:opacity-90"
-        style={{ background: `${plan.color}18`, color: plan.color, border: `1px solid ${plan.color}35` }}>
-        {isLoading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Gerenciar Assinatura"}
-      </button>
-    )
-  }
-
-  // Active plan without Stripe (trial/manual)
-  if (isCurrent) {
-    return (
-      <div className="block w-full text-center py-3.5 rounded-xl text-[13px] font-semibold"
-        style={{ background: `${plan.color}10`, color: plan.color, border: `1px solid ${plan.color}25` }}>
-        Plano Atual
-      </div>
-    )
-  }
-
-  // Not logged in — redirect to signup
-  if (!authed) {
-    return (
-      <Link href="/cadastro"
-        className="block text-center py-3.5 rounded-xl text-[13px] font-bold transition-all hover:opacity-90"
-        style={{ background: plan.color, color: "#fff", border: "none" }}>
-        Começar 7 dias grátis
-      </Link>
-    )
-  }
-
-  // Logged in — call Stripe checkout
-  return (
-    <button
-      onClick={() => onCheckout(plan.priceKey)}
-      disabled={!!loading}
-      className="block w-full text-center py-3.5 rounded-xl text-[13px] font-bold disabled:opacity-50 transition-all hover:opacity-90 active:scale-[0.98]"
-      style={{ background: plan.color, color: "#fff", border: "none" }}>
-      {isLoading
-        ? <Loader2 className="w-4 h-4 animate-spin mx-auto" />
-        : "Começar 7 dias grátis"
-      }
-    </button>
-  )
+  if (atual) return <p className="rounded-px-ctl bg-px-ink/[0.06] py-3 text-center text-[13.5px] font-semibold text-px-ink">Plano atual</p>
+  if (!authed) return <PxButton fullWidth href="/cadastro">Começar 7 dias grátis</PxButton>
+  return <PxButton fullWidth loading={loading === plan.priceKey} disabled={!!loading} onClick={() => onCheckout(plan.priceKey)}>Começar 7 dias grátis</PxButton>
 }
-
-// ─── Page ──────────────────────────────────────────────────────────────────────
 
 export default function PlanosPage() {
-  const router = useRouter()
-
-  // Auth state — independent of plan data
   const { user, loading: authLoading } = useAuth()
-
-  const [userPlan,    setUserPlan]    = useState<UserPlan | null>(null)
+  const [userPlan, setUserPlan] = useState<UserPlan | null>(null)
   const [planLoading, setPlanLoading] = useState(false)
-  const [loading,     setLoading]     = useState<string | null>(null)
+  const [loading, setLoading] = useState<string | null>(null)
   const [stripeError, setStripeError] = useState<string | null>(null)
 
-  const searchParams = typeof window !== "undefined"
-    ? new URLSearchParams(window.location.search)
-    : null
-
-  const isSuccess  = searchParams?.get("pagamento") === "sucesso"
-  const sessionId  = searchParams?.get("session_id") ?? null
-
-  const [activating, setActivating] = useState(false)
-  const [activated,  setActivated]  = useState(false)
+  const [sucesso, setSucesso] = useState(false)
+  const [sessionId, setSessionId] = useState<string | null>(null)
+  const [activated, setActivated] = useState(false)
   const [activateErr, setActivateErr] = useState<string | null>(null)
+  const iniciou = useRef(false)
+  const vivo = useRef(true)
 
-  // Derive authentication state from useAuth
-  // null = still determining, true/false = resolved
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search)
+    setSucesso(p.get("pagamento") === "sucesso")
+    setSessionId(p.get("session_id"))
+    return () => { vivo.current = false }
+  }, [])
+
   const authed: boolean | null = authLoading ? null : !!user
 
-  // Only fetch plan details if authenticated
   useEffect(() => {
     if (!user) return
     setPlanLoading(true)
     fetch("/api/planos")
-      .then(r => r.ok ? r.json() : null)
+      .then(r => (r.ok ? r.json() : null))
       .then(d => { if (d) setUserPlan(d) })
       .catch(e => console.error("[planos] erro ao carregar plano:", e))
       .finally(() => setPlanLoading(false))
   }, [user])
 
-  // After Stripe redirect: call confirm-session to activate instantly, then go to dashboard
-  useEffect(() => {
-    if (!isSuccess || !user || !sessionId) return
-    if (activating || activated) return
-
-    setActivating(true)
-    fetch("/api/stripe/confirm-session", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ session_id: sessionId }),
-    })
-      .then(r => r.json())
-      .then((data: { ok?: boolean; activated?: boolean; error?: string }) => {
-        if (data.ok) {
-          setActivated(true)
-          window.location.href = "/dashboard"
-        } else {
-          setActivateErr(data.error ?? "Aguardando confirmação do pagamento...")
-          setActivating(false)
-        }
-      })
-      .catch(e => {
-        console.error("[planos] erro ao confirmar sessão Stripe:", e)
-        setActivateErr("Erro de conexão. Tente novamente.")
-        setActivating(false)
-      })
-  }, [isSuccess, user, sessionId, activating, activated])
-
-  async function handleCheckout(priceKey: string) {
-    console.log("[planos] handleCheckout chamado, priceKey:", priceKey)
-    setStripeError(null)
-    setLoading(priceKey)
+  // Depois do retorno do Stripe: confirma a sessão. O pagamento pode demorar a constar, então tenta até 6 vezes, a cada 3 s.
+  const confirmar = useCallback(async (n: number): Promise<void> => {
+    if (!vivo.current) return
+    setActivateErr(null)
     try {
-      const res  = await fetch("/api/stripe/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plano: priceKey }),
-      })
-      const data = await res.json()
-      console.log("[planos] resposta checkout:", res.status, data)
-      if (data.url) {
-        console.log("[planos] redirecionando para Stripe:", data.url.substring(0, 60))
-        window.location.href = data.url
+      const r = await fetch("/api/stripe/confirm-session", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ session_id: sessionId }) })
+      const data = (await r.json().catch(() => ({}))) as { ok?: boolean; error?: string }
+      if (r.ok && data.ok) {
+        setActivated(true)
+        window.location.href = "/dashboard"
         return
       }
-      setStripeError(data.error ?? "Erro ao iniciar pagamento. Tente novamente.")
-    } catch (err) {
-      console.error("[planos] erro handleCheckout:", err)
+      if (n < 6) { setTimeout(() => { void confirmar(n + 1) }, 3000); return }
+      setActivateErr(data.error ?? "O pagamento ainda não foi confirmado.")
+    } catch (e) {
+      console.error("[planos] erro ao confirmar sessão Stripe:", e)
+      if (n < 6) { setTimeout(() => { void confirmar(n + 1) }, 3000); return }
+      setActivateErr("Erro de conexão ao confirmar o pagamento.")
+    }
+  }, [sessionId])
+
+  useEffect(() => {
+    if (!sucesso || !user || !sessionId || iniciou.current) return
+    iniciou.current = true
+    void confirmar(1)
+  }, [sucesso, user, sessionId, confirmar])
+
+  async function irParaStripe(url: string, corpo: unknown, chave: string, msgPadrao: string) {
+    setStripeError(null); setLoading(chave)
+    try {
+      const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: corpo ? JSON.stringify(corpo) : undefined })
+      const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string }
+      if (urlStripe(data.url)) { window.location.href = data.url; return }
+      setStripeError(data.error ?? msgPadrao)
+    } catch (e) {
+      console.error("[planos] erro de conexão com o Stripe:", e)
       setStripeError("Erro de conexão. Verifique sua internet e tente novamente.")
     } finally {
       setLoading(null)
     }
   }
+  const handleCheckout = (priceKey: string) => irParaStripe("/api/stripe/checkout", { plano: priceKey }, priceKey, "Erro ao iniciar o pagamento. Tente novamente.")
+  const handlePortal = () => irParaStripe("/api/stripe/portal", null, "portal", "Erro ao abrir o portal da assinatura.")
 
-  async function handlePortal() {
-    setStripeError(null)
-    setLoading("portal")
-    try {
-      const res  = await fetch("/api/stripe/portal", { method: "POST" })
-      const data = await res.json()
-      if (data.url) {
-        window.location.href = data.url
-        return
-      }
-      setStripeError(data.error ?? "Erro ao abrir portal.")
-    } catch {
-      setStripeError("Erro de conexão.")
-    } finally {
-      setLoading(null)
-    }
-  }
-
-  // Show spinner on CTA while plan details are loading (but auth is known)
-  const ctaAuthed: boolean | null = authed === null ? null
-    : authed && planLoading ? null
-    : authed
+  const ctaAuthed: boolean | null = authed === null ? null : authed && planLoading ? null : authed
+  const home = user ? "/dashboard" : "/"
 
   return (
-    <div className="fixed inset-0 z-[200] overflow-y-auto" style={{ background: "#F5F0E8" }}>
-      <div className="fixed inset-0 pointer-events-none" style={{
-        background: `
-          radial-gradient(ellipse at 20% 50%, rgba(184,151,106,0.07) 0%, transparent 55%),
-          radial-gradient(ellipse at 80% 20%, rgba(200,163,85,0.04) 0%, transparent 50%)
-        `,
-      }} />
+    <div className="px relative min-h-screen">
+      <div className="px-stage" aria-hidden="true" />
+      <header className="relative z-10 flex h-16 items-center justify-between px-6 md:px-12">
+        <Link href={home} className="text-[15px] font-semibold tracking-[0.3em] text-px-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-px-ink/40">PRAXIS</Link>
+        <PxButton size="sm" href={user ? "/dashboard" : "/login"}>{user ? "Ir para o app" : "Entrar"}</PxButton>
+      </header>
 
-      {/* Nav */}
-      <nav className="sticky top-0 z-10 flex items-center justify-between px-6 md:px-12"
-        style={{
-          height: 64, background: "rgba(245,240,232,0.92)",
-          borderBottom: "1px solid rgba(13,27,42,0.08)",
-          backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
-        }}>
-        <Link href={user ? "/dashboard" : "/"} className="flex items-center gap-3">
-          <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
-            <circle cx="16" cy="16" r="14" stroke="#b8976a" strokeWidth="1.5"
-              strokeLinecap="round" strokeDasharray="70 18" strokeDashoffset="12" opacity="0.7" />
-            <path d="M10 22V10h5.5a4 4 0 0 1 0 8H10" stroke="#0D1B2A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            <line x1="18" y1="14" x2="23" y2="22" stroke="#b8976a" strokeWidth="2" strokeLinecap="round" opacity="0.9" />
-          </svg>
-          <span style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: 15, fontWeight: 600, letterSpacing: "4px", color: "#0D1B2A" }}>PRAXIS</span>
-        </Link>
-        <div className="flex items-center gap-3">
-          {user ? (
-            <button onClick={() => router.push("/dashboard")}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-[12px] font-semibold"
-              style={{ background: "#b8976a", color: "#0D1B2A" }}>
-              Ir para o App <ArrowRight className="w-3 h-3" />
-            </button>
-          ) : (
-            <Link href="/login"
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-[12px] font-semibold"
-              style={{ background: "#b8976a", color: "#0D1B2A" }}>
-              Entrar <ArrowRight className="w-3 h-3" />
-            </Link>
-          )}
-        </div>
-      </nav>
-
-      <div className="relative max-w-6xl mx-auto px-4 md:px-8 pt-10 pb-20 space-y-12">
-        <Link href={user ? "/dashboard" : "/"}
-          className="inline-flex items-center gap-1.5 text-[11px]"
-          style={{ color: "#6a5a4a" }}
-          onMouseEnter={e => (e.currentTarget.style.color = "#0D1B2A")}
-          onMouseLeave={e => (e.currentTarget.style.color = "#6a5a4a")}>
-          <ArrowLeft className="w-3 h-3" /> Voltar
-        </Link>
-
-        {/* Success screen — shown after Stripe redirect, hides plan grid */}
-        {isSuccess && (
-          <div className="flex flex-col items-center justify-center py-16 space-y-6 text-center">
-            <div style={{
-              width: 64, height: 64, borderRadius: "50%",
-              background: "rgba(184,151,106,0.12)", border: "1.5px solid rgba(184,151,106,0.35)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}>
-              {activated ? (
-                <Check style={{ width: 28, height: 28, color: "#b8976a" }} />
-              ) : (
-                <Loader2 style={{ width: 28, height: 28, color: "#b8976a" }} className="animate-spin" />
-              )}
-            </div>
-            <div>
-              <p style={{ fontSize: 20, fontWeight: 700, color: "#0D1B2A", fontFamily: "var(--font-playfair), Georgia, serif" }}>
-                {activated ? "Conta ativada!" : "Ativando sua conta..."}
-              </p>
-              <p style={{ fontSize: 13, color: "#6a5a4a", marginTop: 6 }}>
-                {activated
-                  ? "Redirecionando para o dashboard..."
-                  : activateErr ?? "Verificando pagamento com o Stripe. Aguarde um instante."}
-              </p>
-            </div>
+      <main className="relative z-10 mx-auto max-w-6xl space-y-8 px-4 pb-16 pt-6 md:px-8">
+        {sucesso ? (
+          <Panel className="mx-auto max-w-md space-y-4 py-12 text-center">
+            <h1 className="text-[22px] font-semibold text-px-ink">{activated ? "Conta ativada" : "Ativando sua conta"}</h1>
+            <p role={activateErr ? "alert" : "status"} className={`text-[14px] ${activateErr ? "text-px-danger" : "text-px-muted"}`}>
+              {activated ? "Redirecionando para o painel." : activateErr ?? "Confirmando o pagamento com o Stripe. Pode levar alguns segundos."}
+            </p>
             {activateErr && !activated && (
-              <button
-                onClick={() => { window.location.href = "/dashboard" }}
-                className="px-6 py-3 rounded-xl text-[13px] font-bold transition-all hover:opacity-90"
-                style={{ background: "#b8976a", color: "#fff" }}>
-                Ir para o dashboard →
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* Plans content — hidden after successful payment */}
-        {!isSuccess && stripeError && (
-          <div className="rounded-xl p-4 flex items-start gap-3"
-            style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)" }}>
-            <AlertTriangle style={{ width: 16, height: 16, color: "#f87171", flexShrink: 0, marginTop: 1 }} />
-            <div>
-              <p style={{ fontSize: 13, color: "#f87171", fontWeight: 600 }}>Não foi possível abrir o checkout</p>
-              <p style={{ fontSize: 12, color: "#f87171", opacity: 0.8, marginTop: 2 }}>{stripeError}</p>
-            </div>
-          </div>
-        )}
-
-        {!isSuccess && <>
-        {/* Header */}
-        <div className="text-center max-w-xl mx-auto">
-          <div style={{ fontSize: 10, fontFamily: "monospace", color: "#b8976a", letterSpacing: "3px", textTransform: "uppercase", marginBottom: 16 }}>
-            PLANOS E PREÇOS
-          </div>
-          <h1 style={{
-            fontFamily: "var(--font-playfair), Georgia, serif",
-            fontSize: "clamp(24px, 4vw, 40px)", fontWeight: 600, color: "#0D1B2A", marginBottom: 16,
-          }}>
-            Invista na sua presença digital.
-          </h1>
-          <p style={{ fontSize: 14, color: "#6a5a4a", lineHeight: 1.8 }}>
-            7 dias grátis em qualquer plano. Cancele quando quiser.
-          </p>
-          <p style={{ fontSize: 11, color: "var(--text-secondary)", marginTop: 8 }}>
-            Veja os planos disponíveis e gerencie sua assinatura.
-          </p>
-        </div>
-
-        {/* Plans grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-5">
-          {PLANS.map(plan => {
-            const Icon      = plan.icon
-            const isCurrent = isPlanActive(plan, userPlan)
-
-            return (
-              <div key={plan.id} className="relative flex flex-col rounded-2xl"
-                style={{
-                  background: "#FFFFFF",
-                  border: `1px solid ${isCurrent ? plan.color + "66" : plan.border}`,
-                }}>
-                {(plan.badge || isCurrent) && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
-                    <span style={{
-                      display: "block", fontSize: 9, fontFamily: "monospace", fontWeight: 700,
-                      padding: "3px 14px", borderRadius: 999, letterSpacing: "2px",
-                      background: plan.color, color: "#fff", whiteSpace: "nowrap",
-                    }}>
-                      {isCurrent ? "PLANO ATUAL" : plan.badge}
-                    </span>
-                  </div>
-                )}
-
-                <div className="p-6 flex flex-col flex-1">
-                  <div className="flex items-center gap-3 mb-5">
-                    <div style={{
-                      width: 40, height: 40, borderRadius: 10, flexShrink: 0,
-                      background: `${plan.color}18`, border: `1px solid ${plan.color}35`,
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                    }}>
-                      <Icon style={{ width: 18, height: 18, color: plan.color }} />
-                    </div>
-                    <div style={{ fontSize: 17, fontWeight: 700, color: "#0D1B2A" }}>{plan.name}</div>
-                  </div>
-
-                  <div className="mb-5">
-                    <div className="flex items-baseline gap-1">
-                      <span style={{ fontSize: 36, fontWeight: 800, lineHeight: 1, color: plan.color }}>
-                        {plan.priceDisplay}
-                      </span>
-                      <span style={{ fontSize: 12, color: "#8a7a6a" }}>{plan.priceSub}</span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2 mb-4">
-                    {[plan.limits, plan.support].map((item, i) => (
-                      <div key={i} className="flex items-center gap-2">
-                        <div style={{ width: 5, height: 5, borderRadius: "50%", background: plan.color, flexShrink: 0 }} />
-                        <span style={{ fontSize: 12, color: "#aaa" }}>{item}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div style={{ height: 1, background: "rgba(13,27,42,0.07)", marginBottom: 16 }} />
-
-                  <div className="flex-1 space-y-1.5 mb-6">
-                    {FEATURES.map((f, i) => {
-                      const included = plan.id === "starter" ? f.starter
-                        : plan.id === "pro" ? f.pro : f.elite
-                      return (
-                        <div key={i} className="flex items-center gap-2">
-                          {included
-                            ? <Check style={{ width: 12, height: 12, color: plan.color, flexShrink: 0 }} />
-                            : <X style={{ width: 12, height: 12, color: "rgba(13,27,42,0.20)", flexShrink: 0 }} />}
-                          <span style={{ fontSize: 11, lineHeight: 1.4, color: included ? "#4A3728" : "rgba(13,27,42,0.30)" }}>
-                            {f.text}
-                          </span>
-                        </div>
-                      )
-                    })}
-                  </div>
-
-                  <PlanCTA
-                    plan={plan}
-                    userPlan={userPlan}
-                    authed={ctaAuthed}
-                    loading={loading}
-                    onCheckout={handleCheckout}
-                    onPortal={handlePortal}
-                  />
-                </div>
+              <div className="flex flex-wrap justify-center gap-2">
+                <PxButton onClick={() => { void confirmar(1) }}>Tentar de novo</PxButton>
+                <PxButton variant="secondary" href="/dashboard">Ir para o painel</PxButton>
               </div>
-            )
-          })}
-        </div>
+            )}
+          </Panel>
+        ) : (
+          <>
+            <div className="mx-auto max-w-xl space-y-2 text-center">
+              <h1 className="text-[28px] font-semibold text-px-ink md:text-[34px]">Planos e preços</h1>
+              <p className="text-[14.5px] text-px-muted">7 dias grátis em qualquer plano. Cancele quando quiser.</p>
+            </div>
 
-        <p className="text-center" style={{ fontSize: 12, color: "#6a5a4a" }}>
-          Acesso imediato após confirmação. 7 dias grátis em qualquer plano. Processado com segurança pelo Stripe.
-        </p>
-        </>}
-      </div>
+            {stripeError && (
+              <div role="alert" className="mx-auto max-w-2xl rounded-px-card bg-px-danger-soft px-4 py-3">
+                <p className="text-[14px] font-semibold text-px-danger">Não foi possível continuar</p>
+                <p className="text-[13px] text-px-danger">{stripeError}</p>
+              </div>
+            )}
 
-      <footer className="relative px-6 py-6" style={{ borderTop: "1px solid rgba(13,27,42,0.08)" }}>
-        <div className="max-w-6xl mx-auto flex items-center justify-between flex-wrap gap-4">
-          <p style={{ fontSize: 11, fontFamily: "monospace", color: "#8a7a6a", letterSpacing: "1px" }}>
-            © PRAXIS {new Date().getFullYear()} — Marketing Médico de Alto Padrão
-          </p>
-          <Link href={user ? "/dashboard" : "/"} style={{ fontSize: 12, color: "#6a5a4a" }}
-            onMouseEnter={e => (e.currentTarget.style.color = "#b8976a")}
-            onMouseLeave={e => (e.currentTarget.style.color = "#6a5a4a")}>
-            ← Voltar
-          </Link>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              {PLANS.map(plan => {
+                const atual = isPlanActive(plan, userPlan)
+                return (
+                  <Panel key={plan.id} as="article" aria-label={`Plano ${plan.name}`} className={`flex flex-col ${atual ? "ring-2 ring-px-ink" : ""}`}>
+                    <div className="flex items-center justify-between gap-2">
+                      <h2 className="text-[17px] font-semibold text-px-ink">{plan.name}</h2>
+                      {atual && <Tag tone="ink">Plano atual</Tag>}
+                    </div>
+                    <p className="mt-3 flex items-baseline gap-1">
+                      <span className="text-[34px] font-semibold leading-none text-px-ink">{plan.priceDisplay}</span>
+                      <span className="text-[13px] text-px-muted">{plan.priceSub}</span>
+                    </p>
+                    {plan.nota && <p className="mt-2 text-[12.5px] text-px-muted">{plan.nota}</p>}
+                    <ul className="mt-4 space-y-1 text-[13px] text-px-ink">
+                      <li>{plan.limits}</li>
+                      <li>{plan.support}</li>
+                    </ul>
+                    <ul className="my-4 flex-1 space-y-1.5 border-t border-px-ink/10 pt-4">
+                      {FEATURES.map(f => {
+                        const incl = f[plan.nivel]
+                        return (
+                          <li key={f.text} className={`flex items-start gap-2 text-[12.5px] leading-snug ${incl ? "text-px-ink" : "text-px-muted line-through"}`}>
+                            {incl ? <Check aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 shrink-0" /> : <Minus aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 shrink-0" />}
+                            <span>{f.text}<span className="sr-only">{incl ? ": incluído" : ": não incluído"}</span></span>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                    <PlanCTA plan={plan} userPlan={userPlan} authed={ctaAuthed} loading={loading} onCheckout={handleCheckout} onPortal={handlePortal} />
+                  </Panel>
+                )
+              })}
+            </div>
+
+            <p className="text-center text-[12.5px] text-px-muted">Acesso imediato após a confirmação. Pagamento processado pelo Stripe.</p>
+          </>
+        )}
+      </main>
+
+      <footer className="relative z-10 px-6 py-6">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 text-[12.5px] text-px-muted">
+          <p>© Praxis {new Date().getFullYear()}</p>
+          <nav aria-label="Rodapé" className="flex gap-4">
+            <Link href="/termos" className="underline underline-offset-2">Termos</Link>
+            <Link href="/privacidade" className="underline underline-offset-2">Privacidade</Link>
+            <Link href={home} className="underline underline-offset-2">Voltar</Link>
+          </nav>
         </div>
       </footer>
     </div>

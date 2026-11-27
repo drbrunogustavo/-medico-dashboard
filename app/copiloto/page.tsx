@@ -838,8 +838,7 @@ function CopilotoContent() {
       {focusMode ? (
         /* ── Mini-header em modo foco ────────────────────────────────────── */
         <header
-          className="flex items-center gap-3 px-4 md:px-8 border-b border-border sticky top-0 z-30 backdrop-blur-sm"
-          style={{ height: 60, background: "var(--topbar-bg)" }}
+          className="px-glass rounded-px-panel sticky top-3 z-30 mx-4 mt-4 flex items-center gap-3 px-5 py-3 md:mx-10"
         >
           <div className="flex items-center gap-2.5 flex-1 min-w-0">
             <span
@@ -1946,8 +1945,7 @@ export default function CopilotoPage() {
   return (
     <Suspense fallback={
       <div className="animate-fade-in">
-        <div className="flex items-center gap-3 px-8 border-b border-border sticky top-0 z-30 h-[60px]"
-          style={{ background: "var(--topbar-bg)" }}>
+        <div className="px-glass rounded-px-panel mx-4 mt-4 flex h-[72px] items-center px-6 md:mx-10">
           <div className="h-4 w-48 rounded bg-surface-2 shimmer" />
         </div>
         <div className="p-4 md:p-8 space-y-3">

@@ -2,14 +2,11 @@
 
 import { useState, useMemo, useEffect, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
-import { TopBar } from "@/components/TopBar"
 import { EmagrecimentoTab } from "@/components/EmagrecimentoTab"
 import { ProtocolosTab } from "@/components/ProtocolosTab"
+import { Search, ChevronDown, ChevronRight, Copy, Check, AlertTriangle, Info, ClipboardList, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils"
-import {
-  Pill, Search, ChevronDown, ChevronRight, Copy, Check,
-  AlertTriangle, Info, Shield, Zap, Star, ClipboardList, Sparkles, User, Loader2,
-} from "lucide-react"
+import { Panel, PxButton, Tag, Segmented, PxInput, PageHeader } from "@/components/px"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -72,7 +69,7 @@ const DIAGNOSTICOS: Diagnostico[] = [
           { semana: 17, dose: "1,7 mg/semana" },
           { semana: 21, dose: "2,4 mg/semana", nota: "Dose máxima para obesidade" },
         ],
-        mecanismo: "Agonista do receptor GLP-1 de ação prolongada — reduz apetite, retarda esvaziamento gástrico e melhora sensibilidade insulínica.",
+        mecanismo: "Agonista do receptor GLP-1 de ação prolongada: reduz apetite, retarda esvaziamento gástrico e melhora sensibilidade insulínica.",
         indicacoes: ["IMC ≥ 30 kg/m²", "IMC ≥ 27 kg/m² com comorbidade (HAS, DM2, dislipidemia)", "DM2 com controle inadequado"],
         contraindicacoes: [
           "Carcinoma medular de tireoide pessoal ou familiar",
@@ -81,13 +78,13 @@ const DIAGNOSTICOS: Diagnostico[] = [
           "Gravidez e amamentação",
         ],
         efeitosAdversos: [
-          "Náusea (muito comum — transitória nas primeiras semanas)",
+          "Náusea (muito comum: transitória nas primeiras semanas)",
           "Vômitos, diarreia, constipação",
           "Dor abdominal, dispepsia",
-          "Pancreatite aguda (raro — suspender se suspeita)",
+          "Pancreatite aguda (raro: suspender se suspeita)",
         ],
         interacoes: [
-          "Insulina e secretagogos: risco de hipoglicemia — reduzir dose de insulina ao iniciar",
+          "Insulina e secretagogos: risco de hipoglicemia, reduzir dose de insulina ao iniciar",
           "Anticoagulantes orais (varfarina): monitorar RNI",
           "Medicamentos orais: retardo no esvaziamento gástrico pode alterar absorção",
         ],
@@ -99,8 +96,8 @@ const DIAGNOSTICOS: Diagnostico[] = [
         ],
         notas: [
           "Aplicar uma vez por semana, mesmo dia, a qualquer hora, com ou sem alimento.",
-          "Locais de aplicação: abdome, coxa ou braço — rodiziar pontos.",
-          "Titulação lenta reduz significativamente náusea — não pular etapas.",
+          "Locais de aplicação: abdome, coxa ou braço, rodiziar pontos.",
+          "Titulação lenta reduz significativamente náusea: não pular etapas.",
         ],
       },
       {
@@ -118,8 +115,8 @@ const DIAGNOSTICOS: Diagnostico[] = [
           { semana: 17, dose: "12,5 mg/semana" },
           { semana: 21, dose: "15,0 mg/semana", nota: "Dose máxima" },
         ],
-        mecanismo: "Duplo agonista GIP/GLP-1 — maior eficácia de perda de peso vs. semaglutida mono-agonista.",
-        indicacoes: ["IMC ≥ 30 kg/m²", "IMC ≥ 27 kg/m² + comorbidade", "DM2 — primeira linha após metformina"],
+        mecanismo: "Duplo agonista GIP/GLP-1: maior eficácia de perda de peso vs. semaglutida mono-agonista.",
+        indicacoes: ["IMC ≥ 30 kg/m²", "IMC ≥ 27 kg/m² + comorbidade", "DM2: primeira linha após metformina"],
         contraindicacoes: [
           "NEM tipo 2 ou carcinoma medular de tireoide (pessoal/familiar)",
           "Hipersensibilidade à tirzepatida",
@@ -129,7 +126,7 @@ const DIAGNOSTICOS: Diagnostico[] = [
           "Náusea, vômito, diarreia (mais frequentes nos primeiros meses)",
           "Redução do apetite intensa",
           "Pancreatite (raro)",
-          "Colelitíase — risco aumentado com perda de peso rápida",
+          "Colelitíase: risco aumentado com perda de peso rápida",
         ],
         interacoes: [
           "Insulina/secretagogos: risco de hipoglicemia",
@@ -157,13 +154,13 @@ const DIAGNOSTICOS: Diagnostico[] = [
           { semana: 4, dose: "2,4 mg/dia" },
           { semana: 5, dose: "3,0 mg/dia", nota: "Dose terapêutica alvo" },
         ],
-        mecanismo: "Agonista GLP-1 de ação intermediária — administração diária.",
+        mecanismo: "Agonista GLP-1 de ação intermediária: administração diária.",
         indicacoes: ["IMC ≥ 30", "IMC ≥ 27 + comorbidade", "Quando semaglutida/tirzepatida indisponíveis ou não toleradas"],
         contraindicacoes: ["Mesmas da semaglutida", "NEM 2, carcinoma medular tireoide"],
         efeitosAdversos: ["Náusea, vômito (mais pronunciados por ser diário)", "Diarreia, constipação", "Pancreatite (raro)"],
         interacoes: ["Insulina e secretagogos: hipoglicemia"],
         monitoramento: ["Peso, PA, FC", "Glicemia, HbA1c", "Função renal"],
-        notas: ["Administrar uma vez ao dia, mesma hora, independente de refeições.", "Menos conveniente que semaglutida semanal — menor adesão."],
+        notas: ["Administrar uma vez ao dia, mesma hora, independente de refeições.", "Menos conveniente que semaglutida semanal: menor adesão."],
       },
       {
         id: "orlistat",
@@ -172,7 +169,7 @@ const DIAGNOSTICOS: Diagnostico[] = [
         linha: "segunda",
         via: "VO",
         doseInicial: "120 mg 3x/dia com refeições que contenham gordura",
-        mecanismo: "Inibidor de lipase pancreática e gástrica — reduz absorção de ~30% da gordura ingerida.",
+        mecanismo: "Inibidor de lipase pancreática e gástrica: reduz absorção de ~30% da gordura ingerida.",
         indicacoes: ["IMC ≥ 30", "IMC ≥ 27 + comorbidade", "Alternativa quando GLP-1 contraindicado ou intolerável"],
         contraindicacoes: [
           "Síndrome de má absorção crônica",
@@ -184,10 +181,10 @@ const DIAGNOSTICOS: Diagnostico[] = [
           "Esteatorreia, manchas oleosas nas fezes",
           "Urgência e incontinência fecal",
           "Flatulência com descarga oleosa",
-          "Deficiências de vitaminas lipossolúveis (A, D, E, K) — suplementar",
+          "Deficiências de vitaminas lipossolúveis (A, D, E, K): suplementar",
         ],
         interacoes: [
-          "Ciclosporina: reduz absorção — separar por 2h",
+          "Ciclosporina: reduz absorção, separar por 2h",
           "Levotiroxina: separar por 4h",
           "Anticoagulantes orais (varfarina): monitorar RNI",
           "Antiepiléticos: redução de absorção",
@@ -207,7 +204,7 @@ const DIAGNOSTICOS: Diagnostico[] = [
         via: "VO",
         doseInicial: "10 mg/dia pela manhã",
         doseManutencao: "10–15 mg/dia (aumentar para 15mg após 4 sem se resposta inadequada)",
-        mecanismo: "Inibidor da recaptação de serotonina, noradrenalina e dopamina — reduz apetite e aumenta saciedade.",
+        mecanismo: "Inibidor da recaptação de serotonina, noradrenalina e dopamina: reduz apetite e aumenta saciedade.",
         indicacoes: ["IMC ≥ 30", "IMC ≥ 27 + comorbidade", "Sem contraindicações cardiovasculares"],
         contraindicacoes: [
           "Doença cardiovascular estabelecida (IAM, AVC, IC)",
@@ -224,19 +221,19 @@ const DIAGNOSTICOS: Diagnostico[] = [
           "Sudorese",
         ],
         interacoes: [
-          "IMAO: síndrome serotoninérgica fatal — contraindicação absoluta",
+          "IMAO: síndrome serotoninérgica fatal, contraindicação absoluta",
           "Triptanos, ISRS, IRSN: risco de síndrome serotoninérgica",
           "Ergotamínicos: vasoconstrição",
         ],
         monitoramento: [
-          "PA e FC em toda consulta — suspender se PA > 145/90 ou FC > 100",
+          "PA e FC em toda consulta: suspender se PA > 145/90 ou FC > 100",
           "Peso mensal",
           "Sintomas cardiovasculares",
         ],
         notas: [
-          "Receita especial (tarja preta) — uso controlado no Brasil.",
+          "Receita especial (tarja preta): uso controlado no Brasil.",
           "Não usar por mais de 2 anos contínuos.",
-          "Associar obrigatoriamente a MEV — não é monoterapia.",
+          "Associar obrigatoriamente a MEV: não é monoterapia.",
         ],
       },
       {
@@ -252,7 +249,7 @@ const DIAGNOSTICOS: Diagnostico[] = [
           { semana: 3, dose: "2 cp manhã + 1 cp noite" },
           { semana: 4, dose: "2 cp manhã + 2 cp noite", nota: "Dose máxima: 4 cp/dia" },
         ],
-        mecanismo: "Bupropiona: inibidor de recaptação de DA/NA + ativação POMC. Naltrexona: antagonista opioide — potencializa saciedade hipotalâmica.",
+        mecanismo: "Bupropiona: inibidor de recaptação de DA/NA + ativação POMC. Naltrexona: antagonista opioide, potencializa saciedade hipotalâmica.",
         indicacoes: ["IMC ≥ 30", "IMC ≥ 27 + comorbidade", "Especialmente indicado em compulsão alimentar"],
         contraindicacoes: [
           "Epilepsia ou histórico de convulsões",
@@ -263,22 +260,22 @@ const DIAGNOSTICOS: Diagnostico[] = [
           "Gravidez",
         ],
         efeitosAdversos: [
-          "Náusea (muito comum — melhor administrar com alimentos)",
+          "Náusea (muito comum: melhor administrar com alimentos)",
           "Cefaleia, insônia, boca seca",
           "Constipação, tontura",
           "Aumento de PA (monitorar)",
         ],
         interacoes: [
           "IMAO: risco de crise hipertensiva",
-          "Opioides: antagonismo — reduz efeito analgésico",
+          "Opioides: antagonismo, reduz efeito analgésico",
           "Tamoxifeno: bupropiona inibe CYP2D6",
-          "Carbamazepina, rifampicina: indutores de CYP2B6 — reduzem efeito",
+          "Carbamazepina, rifampicina: indutores de CYP2B6, reduzem efeito",
         ],
         monitoramento: ["PA, FC a cada consulta", "Peso mensal", "Humor (risco de alterações em depressão)"],
         notas: [
           "Não mastigar nem partir os comprimidos.",
           "Tomar com alimentos para reduzir náusea.",
-          "Avaliar resposta em 12 semanas — suspender se < 5% de perda de peso.",
+          "Avaliar resposta em 12 semanas: suspender se < 5% de perda de peso.",
         ],
       },
     ],
@@ -303,7 +300,7 @@ const DIAGNOSTICOS: Diagnostico[] = [
           { semana: 4,  dose: "1000 mg manhã + 500 mg jantar" },
           { semana: 8,  dose: "1000 mg manhã + 1000 mg jantar", nota: "Dose máxima eficaz" },
         ],
-        mecanismo: "Ativação de AMPK → reduz produção hepática de glicose, melhora sensibilidade periférica à insulina.",
+        mecanismo: "Ativação de AMPK: reduz produção hepática de glicose, melhora sensibilidade periférica à insulina.",
         indicacoes: ["DM2 recém-diagnosticado (exceto contraindicações)", "Pré-diabetes (reduz progressão em 31%)", "Resistência insulínica + SOP"],
         contraindicacoes: [
           "TFG < 30 mL/min/1,73m² (suspender)",
@@ -313,17 +310,17 @@ const DIAGNOSTICOS: Diagnostico[] = [
           "Contraste iodado: suspender no dia do exame e 48h depois se TFG < 60",
         ],
         efeitosAdversos: [
-          "Náusea, diarreia, dor abdominal (dose-dependente — reduzir com titulação lenta)",
-          "Deficiência de vitamina B12 (uso prolongado — dosar anualmente)",
+          "Náusea, diarreia, dor abdominal (dose-dependente: reduzir com titulação lenta)",
+          "Deficiência de vitamina B12 (uso prolongado: dosar anualmente)",
           "Acidose láctica (muito raro, principalmente em hipóxia/insuficiência renal)",
         ],
         interacoes: [
-          "Contraste iodado: risco de acidose láctica — suspender antes",
+          "Contraste iodado: risco de acidose láctica, suspender antes",
           "Álcool: potencializa acidose láctica",
           "Cimetidina: aumenta nível sérico de metformina",
         ],
         monitoramento: ["HbA1c a cada 3 meses (meta < 7%)", "TFG e creatinina anualmente", "Vitamina B12 anualmente"],
-        notas: ["Preferir formulação XR (liberação prolongada) — melhor tolerabilidade GI.", "Tomar com ou imediatamente após as refeições."],
+        notas: ["Preferir formulação XR (liberação prolongada): melhor tolerabilidade GI.", "Tomar com ou imediatamente após as refeições."],
       },
       {
         id: "dapagliflozina",
@@ -331,11 +328,11 @@ const DIAGNOSTICOS: Diagnostico[] = [
         nomesComerciais: ["Forxiga®", "Farxiga®"],
         linha: "primeira",
         via: "VO",
-        doseInicial: "10 mg/dia (dose única — não há titulação)",
-        mecanismo: "Inibidor de SGLT2 — impede reabsorção renal de glicose → glicosúria e perda calórica (~300 kcal/dia).",
+        doseInicial: "10 mg/dia (dose única: não há titulação)",
+        mecanismo: "Inibidor de SGLT2: impede reabsorção renal de glicose, glicosúria e perda calórica (~300 kcal/dia).",
         indicacoes: [
           "DM2 + DCV estabelecida (reduz eventos CV e mortalidade)",
-          "DM2 + DRC (nefroproteção — reduz progressão)",
+          "DM2 + DRC (nefroproteção: reduz progressão)",
           "IC com fração de ejeção reduzida (com ou sem DM2)",
         ],
         contraindicacoes: [
@@ -347,7 +344,7 @@ const DIAGNOSTICOS: Diagnostico[] = [
         efeitosAdversos: [
           "Infecções genitais (candidíase vulvovaginal e balanite)",
           "ITU (menos comum que infecções genitais)",
-          "Cetoacidose euglicêmica (rara — risco em jejum prolongado, cirurgia)",
+          "Cetoacidose euglicêmica (rara: risco em jejum prolongado, cirurgia)",
           "Amputações de membros inferiores (canagliflozina > dapagliflozina)",
           "Hipotensão postural (especialmente com diuréticos)",
         ],
@@ -369,7 +366,7 @@ const DIAGNOSTICOS: Diagnostico[] = [
         linha: "primeira",
         via: "VO",
         doseInicial: "10 mg/dia (pode aumentar para 25 mg/dia se necessário)",
-        mecanismo: "Inibidor SGLT2 — perfil cardiovascular com maior evidência em redução de mortalidade (EMPA-REG OUTCOME).",
+        mecanismo: "Inibidor SGLT2: perfil cardiovascular com maior evidência em redução de mortalidade (EMPA-REG OUTCOME).",
         indicacoes: ["DM2 + DCV estabelecida", "DM2 + DRC", "IC (HFrEF e HFpEF)"],
         contraindicacoes: ["TFG < 20 mL/min/1,73m² (IC) / < 30 (DM2)", "Gravidez", "Cetoacidose"],
         efeitosAdversos: ["Infecções genitais", "ITU", "Cetoacidose euglicêmica", "Hipotensão"],
@@ -385,13 +382,13 @@ const DIAGNOSTICOS: Diagnostico[] = [
         via: "VO",
         doseInicial: "1–2 mg/dia com o café da manhã",
         doseManutencao: "2–8 mg/dia (máx 8 mg/dia)",
-        mecanismo: "Secretagogo — fecha canais de K+ nas células beta → despolarização → secreção de insulina.",
+        mecanismo: "Secretagogo: fecha canais de K+ nas células beta, despolarização, secreção de insulina.",
         indicacoes: ["DM2 sem risco cardiovascular aumentado", "Associação com metformina quando HbA1c > 9%"],
         contraindicacoes: ["DM1 ou LADA", "Insuficiência hepática ou renal grave", "Gravidez", "Hipoglicemia frequente"],
-        efeitosAdversos: ["Hipoglicemia (principal risco — especialmente em idosos, jejum, exercício)", "Ganho de peso (1–2 kg)", "Náusea, diarreia"],
+        efeitosAdversos: ["Hipoglicemia (principal risco: especialmente em idosos, jejum, exercício)", "Ganho de peso (1–2 kg)", "Náusea, diarreia"],
         interacoes: ["AINEs, fluconazol, sulfonamidas: potencializam hipoglicemia", "Rifampicina, corticoides: reduzem efeito"],
         monitoramento: ["HbA1c trimestralmente", "Glicemia capilar (hipoglicemia)", "Peso"],
-        notas: ["Evitar em idosos frágeis — risco elevado de hipoglicemia grave.", "Tomar com primeira refeição do dia."],
+        notas: ["Evitar em idosos frágeis: risco elevado de hipoglicemia grave.", "Tomar com primeira refeição do dia."],
       },
       {
         id: "sitagliptina",
@@ -399,15 +396,15 @@ const DIAGNOSTICOS: Diagnostico[] = [
         nomesComerciais: ["Januvia®", "Sitagliptina genérico"],
         linha: "segunda",
         via: "VO",
-        doseInicial: "100 mg/dia (dose única — sem titulação)",
+        doseInicial: "100 mg/dia (dose única: sem titulação)",
         doseManutencao: "50 mg/dia se TFG 30–50; 25 mg/dia se TFG < 30",
-        mecanismo: "Inibe DPP-4 → prolonga ação de GLP-1 e GIP endógenos → aumento de insulina glicose-dependente.",
+        mecanismo: "Inibe DPP-4: prolonga ação de GLP-1 e GIP endógenos, aumento de insulina glicose-dependente.",
         indicacoes: ["DM2 como segunda linha após metformina", "Idosos (baixo risco de hipoglicemia)", "TFG ≥ 30 (com ajuste de dose)"],
         contraindicacoes: ["DM1", "Cetoacidose", "Hipersensibilidade ao produto"],
         efeitosAdversos: ["Nasofaringite, infecções do trato respiratório superior", "Artralgia (raro, mas incapacitante)", "Pancreatite (raro)"],
         interacoes: ["Digoxina: leve aumento nos níveis", "Poucas interações relevantes"],
         monitoramento: ["HbA1c trimestralmente", "Função renal anualmente"],
-        notas: ["Neutro em peso — vantagem em pacientes que não toleram ganho de peso.", "Seguro em IC — não piora eventos."],
+        notas: ["Neutro em peso: vantagem em pacientes que não toleram ganho de peso.", "Seguro em IC: não piora eventos."],
       },
     ],
   },
@@ -424,8 +421,8 @@ const DIAGNOSTICOS: Diagnostico[] = [
         nomesComerciais: ["Puran T4®", "Euthyrox®", "Synthroid® (EUA)", "Levotiroxina genérico"],
         linha: "primeira",
         via: "VO",
-        doseInicial: "1,6 mcg/kg/dia (adultos saudáveis) · Iniciar com 25–50 mcg/dia em idosos ou cardiopatas",
-        mecanismo: "Reposição do hormônio tireoidiano T4 — convertido perifericamente em T3 ativo.",
+        doseInicial: "1,6 mcg/kg/dia (adultos saudáveis), Iniciar com 25–50 mcg/dia em idosos ou cardiopatas",
+        mecanismo: "Reposição do hormônio tireoidiano T4: convertido perifericamente em T3 ativo.",
         indicacoes: [
           "Hipotireoidismo primário confirmado (TSH > 10 ou TSH > 4 com sintomas)",
           "Pós-tireoidectomia ou radioiodoterapia",
@@ -444,15 +441,15 @@ const DIAGNOSTICOS: Diagnostico[] = [
           "Osteoporose em uso prolongado com TSH suprimido",
         ],
         interacoes: [
-          "Cálcio e ferro: reduzem absorção — separar por 4h",
-          "Café e fibras: reduzem absorção — tomar 30–60 min antes",
+          "Cálcio e ferro: reduzem absorção, separar por 4h",
+          "Café e fibras: reduzem absorção, tomar 30–60 min antes",
           "Antiácidos (alumínio, magnésio): reduzem absorção",
           "Colestiramina, sucralfato: separar por 4h",
-          "Fenitoína, rifampicina, carbamazepina: aumentam metabolismo — pode precisar dose maior",
+          "Fenitoína, rifampicina, carbamazepina: aumentam metabolismo, pode precisar dose maior",
         ],
         monitoramento: [
           "TSH após 6–8 semanas de cada ajuste de dose",
-          "Meta TSH: 0,5–2,5 mUI/L (adultos jovens) · 1,0–4,0 mUI/L (idosos)",
+          "Meta TSH: 0,5–2,5 mUI/L (adultos jovens), 1,0–4,0 mUI/L (idosos)",
           "Meta TSH na gestação: < 2,5 mUI/L no 1º tri; < 3,0 mUI/L no 2º–3º tri",
           "Densitometria óssea se TSH suprimido por > 1 ano",
         ],
@@ -470,16 +467,16 @@ const DIAGNOSTICOS: Diagnostico[] = [
         linha: "segunda",
         via: "VO",
         doseInicial: "Reduzir LT4 em ~20 mcg, substituir por T3 5–10 mcg/dia (dividir em 2 doses)",
-        mecanismo: "Combinação de T4 (depósito) + T3 (ativo) — beneficia pacientes com sintomas persistentes apesar de TSH normal.",
+        mecanismo: "Combinação de T4 (depósito) + T3 (ativo): beneficia pacientes com sintomas persistentes apesar de TSH normal.",
         indicacoes: [
           "Hipotireoidismo com sintomas residuais apesar de TSH normalizado em monoterapia com LT4",
-          "Polimorfismo no gene da deiodinase (redução da conversão T4→T3)",
+          "Polimorfismo no gene da deiodinase (redução da conversão T4 para T3)",
         ],
         contraindicacoes: ["Cardiopatia isquêmica", "Arritmias", "Idosos frágeis"],
         efeitosAdversos: ["Palpitações, taquicardia por pico de T3", "Insônia se dose vespertina tardia"],
         interacoes: ["Mesmas da levotiroxina"],
         monitoramento: ["TSH + T3 livre após 6 semanas", "Sintomas cardiovasculares"],
-        notas: ["T3 tem meia-vida de 1 dia — fracionar em 2x/dia para evitar picos.", "Evidência limitada — individualizar conforme sintomas e T3L basal."],
+        notas: ["T3 tem meia-vida de 1 dia: fracionar em 2x/dia para evitar picos.", "Evidência limitada: individualizar conforme sintomas e T3L basal."],
       },
     ],
   },
@@ -492,7 +489,7 @@ const DIAGNOSTICOS: Diagnostico[] = [
     medicamentos: [
       {
         id: "levotiroxina_sub",
-        nome: "Levotiroxina (LT4) — Subclínico",
+        nome: "Levotiroxina (LT4): Subclínico",
         nomesComerciais: ["Puran T4®", "Euthyrox®"],
         linha: "primeira",
         via: "VO",
@@ -504,12 +501,12 @@ const DIAGNOSTICOS: Diagnostico[] = [
           "TSH 4–10 + gravidez ou planejamento reprodutivo",
           "TSH 4–10 + Anti-TPO positivo (maior risco de progressão)",
         ],
-        contraindicacoes: ["TSH 4–10 assintomático em > 65 anos — observar antes de tratar", "Hipersensibilidade"],
+        contraindicacoes: ["TSH 4–10 assintomático em > 65 anos: observar antes de tratar", "Hipersensibilidade"],
         efeitosAdversos: ["Palpitações se superdosagem", "Osteoporose se TSH suprimido"],
         interacoes: ["Cálcio, ferro: separar por 4h"],
         monitoramento: ["TSH após 6–8 semanas", "Meta TSH: 1,0–2,5 mUI/L", "Repetir TSH se decidir não tratar: a cada 6–12 meses"],
         notas: [
-          "Em > 65 anos: TSH até 6–7 pode ser fisiológico — evitar tratar se assintomático.",
+          "Em > 65 anos: TSH até 6–7 pode ser fisiológico, evitar tratar se assintomático.",
           "Decidir tratar vs. observar: avaliar sintomas, Anti-TPO, tendência de TSH e contexto reprodutivo.",
           "Titular lentamente: aumentar 12,5 mcg a cada 6–8 semanas até normalizar TSH.",
         ],
@@ -531,7 +528,7 @@ const DIAGNOSTICOS: Diagnostico[] = [
         via: "Tópica",
         doseInicial: "50 mg/dia (2,5g de gel) nos ombros ou abdome",
         doseManutencao: "25–100 mg/dia conforme testosterona total e sintomas",
-        mecanismo: "Reposição transdérmica de testosterona — níveis mais estáveis que injetável, sem picos.",
+        mecanismo: "Reposição transdérmica de testosterona: níveis mais estáveis que injetável, sem picos.",
         indicacoes: [
           "Hipogonadismo masculino confirmado (T < 300 ng/dL em 2 medições matinais)",
           "Sintomas: fadiga, disfunção erétil, sarcopenia, depressão, libido reduzida",
@@ -541,11 +538,11 @@ const DIAGNOSTICOS: Diagnostico[] = [
           "Câncer de próstata ou mama",
           "Policitemia não tratada (Ht > 52%)",
           "Apneia do sono grave não tratada",
-          "Desejo de fertilidade (suprime espermatogênese — usar clomifeno/HCG)",
+          "Desejo de fertilidade (suprime espermatogênese: usar clomifeno/HCG)",
           "ICC descompensada",
         ],
         efeitosAdversos: [
-          "Eritrocitose (hematócrito elevado — dose-dependente)",
+          "Eritrocitose (hematócrito elevado: dose-dependente)",
           "Acne, seborréia",
           "Transferência cutânea para parceira/crianças",
           "Ginecomastia (aromatização para estradiol)",
@@ -562,7 +559,7 @@ const DIAGNOSTICOS: Diagnostico[] = [
         notas: [
           "Não aplicar em genitais.",
           "Lavar as mãos após aplicação; cobrir o local antes de contato com outros.",
-          "Meta T total: 400–700 ng/dL — não almejar máximo da referência.",
+          "Meta T total: 400–700 ng/dL, não almejar máximo da referência.",
         ],
       },
       {
@@ -579,7 +576,7 @@ const DIAGNOSTICOS: Diagnostico[] = [
         efeitosAdversos: ["Picos e vales de T (humor instável entre aplicações)", "Eritrocitose", "Dor no local de aplicação"],
         interacoes: ["Anticoagulantes: monitorar"],
         monitoramento: ["T total: dosar no vale (antes da próxima aplicação)", "Hemograma, PSA"],
-        notas: ["Aplicar em glúteo — rodiziar lados.", "Para níveis mais estáveis: preferir aplicações semanais de dose menor."],
+        notas: ["Aplicar em glúteo: rodiziar lados.", "Para níveis mais estáveis: preferir aplicações semanais de dose menor."],
       },
       {
         id: "testo_undecanoato",
@@ -587,14 +584,14 @@ const DIAGNOSTICOS: Diagnostico[] = [
         nomesComerciais: ["Nebido®"],
         linha: "primeira",
         via: "IM",
-        doseInicial: "1000 mg IM — 2ª dose após 6 semanas, depois a cada 12 semanas",
-        mecanismo: "Éster de liberação prolongada — 10–14 semanas de duração. Máxima comodidade (4 injeções/ano).",
-        indicacoes: ["Hipogonadismo masculino — preferência por menor frequência de injeções"],
+        doseInicial: "1000 mg IM: 2ª dose após 6 semanas, depois a cada 12 semanas",
+        mecanismo: "Éster de liberação prolongada: 10–14 semanas de duração. Máxima comodidade (4 injeções/ano).",
+        indicacoes: ["Hipogonadismo masculino: preferência por menor frequência de injeções"],
         contraindicacoes: ["Mesmas da testosterona"],
-        efeitosAdversos: ["Embolia (injeção rápida) — administrar lentamente em 2 min", "Eritrocitose", "Acne"],
+        efeitosAdversos: ["Embolia (injeção rápida): administrar lentamente em 2 min", "Eritrocitose", "Acne"],
         interacoes: ["Anticoagulantes"],
         monitoramento: ["T total: dosar na metade do intervalo (semana 6 do ciclo de 12)", "Hemograma, PSA anual"],
-        notas: ["Injeção MUITO lenta (≥ 2 min) — risco de microembolia pulmonar se rápida.", "Permanecer em observação 30 min após a injeção."],
+        notas: ["Injeção MUITO lenta (≥ 2 min): risco de microembolia pulmonar se rápida.", "Permanecer em observação 30 min após a injeção."],
       },
       {
         id: "clomifeno",
@@ -603,18 +600,18 @@ const DIAGNOSTICOS: Diagnostico[] = [
         linha: "adjuvante",
         via: "VO",
         doseInicial: "25 mg/dia em dias alternados (ou 50 mg 3x/semana)",
-        doseManutencao: "25–50 mg/dia — ajustar por LH, FSH e T",
-        mecanismo: "Modulador seletivo de receptor estrogênico (SERM) — bloqueia feedback negativo de E2 no hipotálamo → aumenta GnRH → LH/FSH → produção endógena de T.",
+        doseManutencao: "25–50 mg/dia: ajustar por LH, FSH e T",
+        mecanismo: "Modulador seletivo de receptor estrogênico (SERM): bloqueia feedback negativo de E2 no hipotálamo, aumenta GnRH, LH/FSH, produção endógena de T.",
         indicacoes: [
           "Hipogonadismo hipogonadotrófico leve-moderado",
           "Desejo de preservar fertilidade (não suprime espermatogênese)",
           "Resistência à TRT convencional ou preferência por oral",
         ],
         contraindicacoes: ["Doenças hepáticas", "Tumores testiculares", "Obstrução biliar"],
-        efeitosAdversos: ["Alterações visuais (scotomas — raro)", "Ginecomastia", "Humor lábil"],
+        efeitosAdversos: ["Alterações visuais (scotomas: raro)", "Ginecomastia", "Humor lábil"],
         interacoes: ["Poucas interações relevantes"],
         monitoramento: ["LH, FSH, T total após 4–6 semanas", "E2 (pode elevar)", "Hemograma"],
-        notas: ["Uso off-label no Brasil — não aprovado para TRT masculina.", "Alternativa em homens jovens que desejam filhos.", "Eficácia menor que TRT convencional em hipogonadismo moderado-grave."],
+        notas: ["Uso off-label no Brasil: não aprovado para TRT masculina.", "Alternativa em homens jovens que desejam filhos.", "Eficácia menor que TRT convencional em hipogonadismo moderado-grave."],
       },
     ],
   },
@@ -633,10 +630,10 @@ const DIAGNOSTICOS: Diagnostico[] = [
         via: "Transdérmica",
         doseInicial: "1,5 g/dia (1 dose = 1,5 mg de estradiol) em braços ou abdome",
         doseManutencao: "1,5–3,0 g/dia (0,5–1 medida/dia)",
-        mecanismo: "Reposição de estradiol via pele — evita metabolismo de primeira passagem hepático (menor risco trombótico vs. oral).",
+        mecanismo: "Reposição de estradiol via pele: evita metabolismo de primeira passagem hepático (menor risco trombótico vs. oral).",
         indicacoes: ["Sintomas climatéricos (fogachos, insônia, secura vaginal, humor)", "Prevenção de osteoporose pós-menopáusica", "Síndrome genitourinária da menopausa"],
         contraindicacoes: [
-          "Câncer de mama (atual ou história) — contraindicação absoluta",
+          "Câncer de mama (atual ou história): contraindicação absoluta",
           "Câncer de endométrio dependente de estrogênio",
           "TEP ou TVP em uso de estrogênio",
           "AVC ou IAM recente",
@@ -655,7 +652,7 @@ const DIAGNOSTICOS: Diagnostico[] = [
         notas: [
           "Sempre associar progestagênio em mulheres com útero intacto para proteção endometrial.",
           "Via transdérmica: menor risco tromboembólico vs. estradiol oral.",
-          "Iniciar com dose mínima eficaz — individualizar conforme sintomas e tolerância.",
+          "Iniciar com dose mínima eficaz: individualizar conforme sintomas e tolerância.",
         ],
       },
       {
@@ -666,13 +663,13 @@ const DIAGNOSTICOS: Diagnostico[] = [
         via: "Transdérmica",
         doseInicial: "25–50 mcg/24h (patch semanal ou bissemanal)",
         doseManutencao: "25–100 mcg/24h conforme sintomas",
-        mecanismo: "Liberação contínua de estradiol transdérmico — compliance superior ao gel.",
+        mecanismo: "Liberação contínua de estradiol transdérmico: compliance superior ao gel.",
         indicacoes: ["Mesmas do estradiol gel", "Preferência por aplicação menos frequente"],
         contraindicacoes: ["Mesmas do estradiol gel"],
         efeitosAdversos: ["Irritação cutânea no local de aplicação", "Mesmos do gel"],
         interacoes: ["Mesmas do gel"],
         monitoramento: ["Mamografia, ultrassom, PA"],
-        notas: ["Aplicar em quadril, nádegas ou abdome — evitar seios.", "Trocar 2x/semana (bissemanal) ou 1x/semana (semanal) conforme produto.", "Rodiziar locais de aplicação."],
+        notas: ["Aplicar em quadril, nádegas ou abdome: evitar seios.", "Trocar 2x/semana (bissemanal) ou 1x/semana (semanal) conforme produto.", "Rodiziar locais de aplicação."],
       },
       {
         id: "progesterona_micro",
@@ -681,8 +678,8 @@ const DIAGNOSTICOS: Diagnostico[] = [
         linha: "primeira",
         via: "VO",
         doseInicial: "200 mg/dia por 12–14 dias/mês (cíclico) ou 100 mg/dia contínuo",
-        mecanismo: "Progesterona natural bioidentical — protege o endométrio da hiperplasia induzida pelo estrogênio.",
-        indicacoes: ["Mulheres com útero intacto em TRH — obrigatória a proteção endometrial"],
+        mecanismo: "Progesterona natural bioidentical: protege o endométrio da hiperplasia induzida pelo estrogênio.",
+        indicacoes: ["Mulheres com útero intacto em TRH: obrigatória a proteção endometrial"],
         contraindicacoes: ["Sangramento vaginal inexplicado", "Doença hepática grave", "Trombose ativa"],
         efeitosAdversos: ["Sonolência (vantagem: tomar à noite)", "Dizziness", "Mastalgia"],
         interacoes: ["Rifampicina, carbamazepina: reduzem efeito"],
@@ -696,13 +693,13 @@ const DIAGNOSTICOS: Diagnostico[] = [
         linha: "segunda",
         via: "VO",
         doseInicial: "2,5 mg/dia contínuo",
-        mecanismo: "Esteroide sintético com atividade estrogênica, progestogênica e androgênica combinadas — efeito endometrial neutro (não precisa de progestagênio separado).",
+        mecanismo: "Esteroide sintético com atividade estrogênica, progestogênica e androgênica combinadas: efeito endometrial neutro (não precisa de progestagênio separado).",
         indicacoes: ["Menopausa estabelecida (> 1 ano de amenorreia) com fogachos e libido reduzida", "Quando paciente prefere não usar progestagênio separado"],
-        contraindicacoes: ["Menopausa recente (< 1 ano) — risco de sangramento", "Mesmas do estradiol para DCV e CA mama", "AVC — contraindicação absoluta (LIFT trial)"],
+        contraindicacoes: ["Menopausa recente (< 1 ano): risco de sangramento", "Mesmas do estradiol para DCV e CA mama", "AVC: contraindicação absoluta (LIFT trial)"],
         efeitosAdversos: ["Sangramento vaginal irregular", "Cefaleia", "Ginecomastia"],
         interacoes: ["Anticoagulantes", "Rifampicina"],
         monitoramento: ["PA, USG se sangramento", "Mamografia anual"],
-        notas: ["Não usar em menopausa recente — esperar > 1 ano após última menstruação.", "Melhora libido por componente androgênico.", "Não usar junto com TRH estrogênica — redundância."],
+        notas: ["Não usar em menopausa recente: esperar > 1 ano após última menstruação.", "Melhora libido por componente androgênico.", "Não usar junto com TRH estrogênica: redundância."],
       },
     ],
   },
@@ -721,7 +718,7 @@ const DIAGNOSTICOS: Diagnostico[] = [
         via: "VO",
         doseInicial: "< 20 ng/mL: 50.000 UI/semana × 8–12 semanas (reposição). 20–30 ng/mL: 2.000–4.000 UI/dia.",
         doseManutencao: "1.000–5.000 UI/dia conforme nível alvo",
-        mecanismo: "Precursor da vitamina D — convertido no fígado (25-OH) e rim (1,25-OH = calcitriol ativo).",
+        mecanismo: "Precursor da vitamina D: convertido no fígado (25-OH) e rim (1,25-OH = calcitriol ativo).",
         indicacoes: [
           "25-OH-VitD < 20 ng/mL (deficiência)",
           "25-OH-VitD 20–30 ng/mL com sintomas ou fatores de risco",
@@ -734,7 +731,7 @@ const DIAGNOSTICOS: Diagnostico[] = [
           "Nefrolitíase cálcica (relativa)",
         ],
         efeitosAdversos: [
-          "Toxicidade rara — apenas com > 150 ng/mL ou suplementação crônica excessiva",
+          "Toxicidade rara: apenas com > 150 ng/mL ou suplementação crônica excessiva",
           "Hipercalcemia (fraqueza, poliúria, polidipsia, nefrolitíase)",
           "Hipercalciúria",
         ],
@@ -749,9 +746,9 @@ const DIAGNOSTICOS: Diagnostico[] = [
           "PTH antes do início e após normalização",
         ],
         notas: [
-          "Tomar com refeição gordurosa — vitamina D é lipossolúvel, absorção aumenta 50%.",
+          "Tomar com refeição gordurosa: vitamina D é lipossolúvel, absorção aumenta 50%.",
           "Nível alvo laboratorial: > 30 ng/mL. Funcional: 50–80 ng/mL.",
-          "Magnésio é cofator para conversão de VitD — tratar hipomagnesemia concomitante.",
+          "Magnésio é cofator para conversão de VitD: tratar hipomagnesemia concomitante.",
           "Associar com vitamina K2 (MK-7, 100–200 mcg/dia) em doses altas para proteção cardiovascular e óssea.",
         ],
       },
@@ -772,7 +769,7 @@ const DIAGNOSTICOS: Diagnostico[] = [
         via: "VO",
         doseInicial: "30–60 mg de ferro elementar/dia (1 dose ou dividido em 2)",
         doseManutencao: "30 mg/dia (manutenção após normalização de ferritina)",
-        mecanismo: "Ferro quelado com glicina — maior biodisponibilidade e menor irritação GI que sulfato ferroso.",
+        mecanismo: "Ferro quelado com glicina: maior biodisponibilidade e menor irritação GI que sulfato ferroso.",
         indicacoes: ["Ferritina < 30 ng/mL", "Ferritina < 50 ng/mL com sintomas (queda de cabelo, fadiga, FOG)"],
         contraindicacoes: ["Sobrecarga de ferro (hemocromatose)", "Anemia de doença crônica sem depleção real"],
         efeitosAdversos: [
@@ -782,8 +779,8 @@ const DIAGNOSTICOS: Diagnostico[] = [
         ],
         interacoes: [
           "Levotiroxina: separar por 4h",
-          "Cálcio, antiácidos, chá, café: reduzem absorção — separar por 2h",
-          "Ciprofloxacino, tetraciclina: quelação — separar por 2h",
+          "Cálcio, antiácidos, chá, café: reduzem absorção, separar por 2h",
+          "Ciprofloxacino, tetraciclina: quelação, separar por 2h",
         ],
         monitoramento: [
           "Ferritina após 3 meses de reposição",
@@ -792,7 +789,7 @@ const DIAGNOSTICOS: Diagnostico[] = [
         ],
         notas: [
           "Tomar em jejum (30 min antes das refeições) com vitamina C para melhorar absorção.",
-          "Bisglicinato pode ser tomado com alimentos se intolerância — menor perda de absorção que sulfato.",
+          "Bisglicinato pode ser tomado com alimentos se intolerância: menor perda de absorção que sulfato.",
           "Manter reposição por 3–6 meses após normalização para repor estoques (ferritina > 50).",
         ],
       },
@@ -803,13 +800,13 @@ const DIAGNOSTICOS: Diagnostico[] = [
         linha: "primeira",
         via: "VO",
         doseInicial: "60 mg de ferro elementar 2–3x/dia em dias alternados (melhor absorção e menor EAs)",
-        mecanismo: "Sal inorgânico ferroso — baixo custo, mas maior irritação GI.",
+        mecanismo: "Sal inorgânico ferroso: baixo custo, mas maior irritação GI.",
         indicacoes: ["Anemia ferropriva", "Deficiência de ferro com intolerância ao bisglicinato não confirmada"],
         contraindicacoes: ["Sobrecarga de ferro"],
         efeitosAdversos: ["Constipação (muito comum)", "Dor epigástrica, náusea", "Escurecimento das fezes"],
         interacoes: ["Mesmas do bisglicinato"],
         monitoramento: ["Hemograma, ferritina após 3 meses"],
-        notas: ["Dias alternados têm eficácia igual com menos EAs (upregula hepcidina — bloqueia absorção nas 24h seguintes).", "Considerar bisglicinato se intolerância GI."],
+        notas: ["Dias alternados têm eficácia igual com menos EAs (upregula hepcidina: bloqueia absorção nas 24h seguintes).", "Considerar bisglicinato se intolerância GI."],
       },
       {
         id: "carboximaltose",
@@ -819,7 +816,7 @@ const DIAGNOSTICOS: Diagnostico[] = [
         via: "EV",
         doseInicial: "500–1000 mg EV em dose única (máx 1000 mg/sessão)",
         doseManutencao: "Calcular dose total por Ganzoni: Peso × (Hb alvo − Hb atual) × 2,4 + 500",
-        mecanismo: "Complexo de ferro EV de alta estabilidade — permite administração de grandes doses em única infusão.",
+        mecanismo: "Complexo de ferro EV de alta estabilidade: permite administração de grandes doses em única infusão.",
         indicacoes: [
           "Intolerância ao ferro oral",
           "Má absorção (doença celíaca, EII, gastrectomia)",
@@ -834,7 +831,7 @@ const DIAGNOSTICOS: Diagnostico[] = [
           "Hipersensibilidade conhecida",
         ],
         efeitosAdversos: [
-          "Reação de hipersensibilidade (raro — observar 30 min após infusão)",
+          "Reação de hipersensibilidade (raro: observar 30 min após infusão)",
           "Hipofosfatemia (mais comum que com outras formulações EV)",
           "Rubor facial, cefaleia durante infusão",
           "Escurecimento da pele no local de extravasamento",
@@ -843,10 +840,10 @@ const DIAGNOSTICOS: Diagnostico[] = [
         monitoramento: [
           "Ferritina, sat transferrina 4–8 semanas após última infusão",
           "Hemograma (Hb deve normalizar em 4–8 semanas)",
-          "Fósforo sérico (hipofosfatemia pode ser intensa — suplementar se necessário)",
+          "Fósforo sérico (hipofosfatemia pode ser intensa: suplementar se necessário)",
         ],
         notas: [
-          "Vantagem: 1 infusão de até 1000 mg — reduz visitas ao serviço vs. sacarato.",
+          "Vantagem: 1 infusão de até 1000 mg, reduz visitas ao serviço vs. sacarato.",
           "Infundir em 15 min (para 500 mg) ou 30 min (para 1000 mg) em SF 0,9%.",
           "Observar o paciente por 30 min após a infusão.",
           "Usar calculadora de Ganzoni para dose exata (disponível nas Calculadoras do sistema).",
@@ -859,13 +856,13 @@ const DIAGNOSTICOS: Diagnostico[] = [
         linha: "segunda",
         via: "EV",
         doseInicial: "100–200 mg EV por sessão (máx 200 mg/infusão), 2–3x/semana",
-        mecanismo: "Complexo de ferro EV — menor dose por sessão, maior número de infusões.",
+        mecanismo: "Complexo de ferro EV: menor dose por sessão, maior número de infusões.",
         indicacoes: ["Deficiência de ferro quando ferro oral não tolerado", "DRC em hemodiálise (na linha de diálise)"],
         contraindicacoes: ["Mesmas da carboximaltose"],
         efeitosAdversos: ["Hipotensão (infusão rápida)", "Febre, artralgia", "Reações alérgicas"],
         interacoes: ["Não misturar com outros medicamentos"],
         monitoramento: ["Ferritina, hemograma após série completa"],
-        notas: ["Calcular número de sessões: dose total (Ganzoni) ÷ 200 mg/sessão.", "Preferir carboximaltose quando disponível — menos sessões, maior conveniência."],
+        notas: ["Calcular número de sessões: dose total (Ganzoni) ÷ 200 mg/sessão.", "Preferir carboximaltose quando disponível: menos sessões, maior conveniência."],
       },
     ],
   },
@@ -873,7 +870,7 @@ const DIAGNOSTICOS: Diagnostico[] = [
   // ── GINECOLOGIA ──────────────────────────────────────────────────────────────
   {
     id: "sop",
-    nome: "SOP — Síndrome do Ovário Policístico",
+    nome: "SOP: Síndrome do Ovário Policístico",
     categoria: "Ginecologia",
     medicamentos: [
       {
@@ -889,13 +886,13 @@ const DIAGNOSTICOS: Diagnostico[] = [
           { semana: 4, dose: "850 mg 2x/dia" },
           { semana: 8, dose: "1.000 mg 2x/dia", nota: "Dose-alvo para SOP" },
         ],
-        mecanismo: "Sensibilizador de insulina — reduz hiperinsulinemia, melhora ovulação e androgenismo na SOP com resistência insulínica.",
+        mecanismo: "Sensibilizador de insulina: reduz hiperinsulinemia, melhora ovulação e androgenismo na SOP com resistência insulínica.",
         indicacoes: ["SOP com resistência insulínica (HOMA-IR >2,5)", "SOP em obesas ou com pré-diabetes", "Indução de ovulação (associada ao citrato de clomifeno)"],
-        contraindicacoes: ["TFGe <30 mL/min", "Uso de contraste iodado (suspender 48h)", "Gestação (categoria B — controverso, mas usado)", "Alcoolismo"],
-        efeitosAdversos: ["Náusea, diarreia (transitórios — melhoram com titulação lenta)", "Deficiência de B12 (uso crônico — dosar anualmente)", "Gosto metálico"],
+        contraindicacoes: ["TFGe <30 mL/min", "Uso de contraste iodado (suspender 48h)", "Gestação (categoria B: controverso, mas usado)", "Alcoolismo"],
+        efeitosAdversos: ["Náusea, diarreia (transitórios: melhoram com titulação lenta)", "Deficiência de B12 (uso crônico: dosar anualmente)", "Gosto metálico"],
         interacoes: ["Álcool: risco de acidose lática (raro)", "Contraste iodado: suspender 48h antes/depois"],
         monitoramento: ["Função renal antes e a cada 6–12 meses", "B12 anualmente", "Glicemia e insulina de jejum (HOMA-IR)"],
-        notas: ["Não é contraceptivo — orientar anticoncepção se necessário.", "Tomar com alimento para reduzir efeitos GI."],
+        notas: ["Não é contraceptivo: orientar anticoncepção se necessário.", "Tomar com alimento para reduzir efeitos GI."],
       },
       {
         id: "mioinositol",
@@ -904,7 +901,7 @@ const DIAGNOSTICOS: Diagnostico[] = [
         linha: "primeira",
         via: "VO",
         doseInicial: "2.000 mg 2x/dia (total 4g/dia)",
-        mecanismo: "Segundo mensageiro da insulina — melhora sensibilidade insulínica e restaura função ovariana na SOP.",
+        mecanismo: "Segundo mensageiro da insulina: melhora sensibilidade insulínica e restaura função ovariana na SOP.",
         indicacoes: ["SOP com ou sem resistência insulínica", "Melhora da regularidade menstrual e ovulação", "Redução de andrógenos"],
         contraindicacoes: ["Alergia ao produto"],
         efeitosAdversos: ["Náusea leve (geralmente transitória)", "Diarreia ocasional"],
@@ -920,13 +917,13 @@ const DIAGNOSTICOS: Diagnostico[] = [
         via: "VO",
         doseInicial: "25–50 mg/dia",
         doseManutencao: "100–200 mg/dia",
-        mecanismo: "Anti-androgênico — bloqueia receptor de androgênio, reduz hirsutismo e acne na SOP.",
+        mecanismo: "Anti-androgênico: bloqueia receptor de androgênio, reduz hirsutismo e acne na SOP.",
         indicacoes: ["SOP com hirsutismo e/ou acne", "SOP sem desejo de engravidar (necessita anticoncepção associada)"],
         contraindicacoes: ["Gravidez ou plano de gestação", "IRC grave (K+ >5,5)", "Hiperpotassemia"],
         efeitosAdversos: ["Hipercalemia", "Irregularidade menstrual (necessita ACO associado)", "Poliúria"],
         interacoes: ["IECA/BRA + espironolactona: risco alto de hipercalemia", "AINEs: reduzem efeito diurético"],
         monitoramento: ["K+ sérico 1 mês após início e a cada 6 meses", "PA"],
-        notas: ["Sempre associar anticoncepção — teratogênica.", "Efeito no hirsutismo visível após 6 meses."],
+        notas: ["Sempre associar anticoncepção: teratogênica.", "Efeito no hirsutismo visível após 6 meses."],
       },
     ],
   },
@@ -945,10 +942,10 @@ const DIAGNOSTICOS: Diagnostico[] = [
         via: "VO",
         doseInicial: "5 mg 1–2x/dia",
         doseManutencao: "10–40 mg/dia (1–2 tomadas)",
-        mecanismo: "Inibidor da ECA — reduz angiotensina II e aldosterona. Efeito nefroprotetor em DM e microalbuminúria.",
+        mecanismo: "Inibidor da ECA: reduz angiotensina II e aldosterona. Efeito nefroprotetor em DM e microalbuminúria.",
         indicacoes: ["HAS", "DM + HAS (1ª escolha)", "IC com FE reduzida", "Pós-IAM com disfunção ventricular", "Nefropatia diabética"],
-        contraindicacoes: ["Gravidez (2º e 3º trimestres) — teratogênico", "Angioedema prévio por IECA", "Estenose bilateral de artéria renal", "TFGe <30 (relativa)"],
-        efeitosAdversos: ["Tosse seca (15–20% — principal causa de troca)", "Hipercalemia", "Hipotensão 1ª dose", "Angioedema (raro, grave)"],
+        contraindicacoes: ["Gravidez (2º e 3º trimestres): teratogênico", "Angioedema prévio por IECA", "Estenose bilateral de artéria renal", "TFGe <30 (relativa)"],
+        efeitosAdversos: ["Tosse seca (15–20%: principal causa de troca)", "Hipercalemia", "Hipotensão 1ª dose", "Angioedema (raro, grave)"],
         interacoes: ["AINEs: reduzem anti-hipertensivo + risco renal", "K+ / espironolactona: hipercalemia", "Lítio: aumenta nível sérico de lítio"],
         monitoramento: ["Creatinina e K+ em 1–2 semanas após início", "PA a cada consulta"],
         notas: ["Tosse seca: trocar por BRA (mesma classe funcional, sem tosse).", "Aumentar dose gradualmente a cada 2–4 semanas."],
@@ -961,13 +958,13 @@ const DIAGNOSTICOS: Diagnostico[] = [
         via: "VO",
         doseInicial: "50 mg 1x/dia",
         doseManutencao: "50–100 mg/dia",
-        mecanismo: "Bloqueador do receptor de angiotensina II (AT1) — mesmo benefício que IECA sem tosse.",
+        mecanismo: "Bloqueador do receptor de angiotensina II (AT1): mesmo benefício que IECA sem tosse.",
         indicacoes: ["HAS (especialmente se tosse por IECA)", "DM + HAS", "IC com FE reduzida intolerante a IECA", "Nefropatia diabética"],
         contraindicacoes: ["Gravidez", "Angioedema por BRA prévio", "Estenose bilateral de artéria renal"],
         efeitosAdversos: ["Hipercalemia (menos que IECA)", "Tontura", "Angioedema (mais raro que com IECA)"],
         interacoes: ["AINEs", "K+/espironolactona: hipercalemia"],
         monitoramento: ["Creatinina e K+ 1–2 semanas após início", "PA"],
-        notas: ["Nunca combinar IECA + BRA — risco de hipercalemia e LRA sem benefício adicional."],
+        notas: ["Nunca combinar IECA + BRA: risco de hipercalemia e LRA sem benefício adicional."],
       },
       {
         id: "anlodipino",
@@ -977,13 +974,13 @@ const DIAGNOSTICOS: Diagnostico[] = [
         via: "VO",
         doseInicial: "5 mg 1x/dia",
         doseManutencao: "5–10 mg/dia",
-        mecanismo: "Bloqueador de canais de cálcio di-hidropiridínico de longa ação — vasodilatação periférica.",
+        mecanismo: "Bloqueador de canais de cálcio di-hidropiridínico de longa ação: vasodilatação periférica.",
         indicacoes: ["HAS (especialmente em idosos e negros)", "HAS + angina estável", "HAS + DRC (sem microalbuminúria)"],
-        contraindicacoes: ["IC com FE reduzida (diltiazem/verapamil — não anlodipino)", "Hipotensão"],
+        contraindicacoes: ["IC com FE reduzida (diltiazem/verapamil: não anlodipino)", "Hipotensão"],
         efeitosAdversos: ["Edema de tornozelo (dose-dependente)", "Rubor facial", "Cefaleia"],
         interacoes: ["Sinvastatina/atorvastatina: aumenta risco de miopatia com sinvastatina >20 mg"],
         monitoramento: ["PA", "Edema de MMII"],
-        diferencial: "Di-hidropiridínico (anlodipino): só efeito vascular. Não-di-hidropiridínico (diltiazem, verapamil): também reduz FC — usar com cuidado em IC.",
+        diferencial: "Di-hidropiridínico (anlodipino): só efeito vascular. Não-di-hidropiridínico (diltiazem, verapamil): também reduz FC, usar com cuidado em IC.",
       },
     ],
   },
@@ -1007,16 +1004,16 @@ const DIAGNOSTICOS: Diagnostico[] = [
           { semana: 8, dose: "20 mg/semana", nota: "Dose alvo" },
           { semana: 12, dose: "25 mg/semana", nota: "Se necessário" },
         ],
-        mecanismo: "DMARD convencional — inibe dihidrofolato redutase → redução da proliferação de células imunes sinoviais.",
-        indicacoes: ["AR — 1ª linha DMARD universal", "Espondilite anquilosante (periférica)", "Artrite psoriásica", "Lúpus (manifestações articulares)"],
+        mecanismo: "DMARD convencional: inibe dihidrofolato redutase, redução da proliferação de células imunes sinoviais.",
+        indicacoes: ["AR: 1ª linha DMARD universal", "Espondilite anquilosante (periférica)", "Artrite psoriásica", "Lúpus (manifestações articulares)"],
         contraindicacoes: ["Gravidez e amamentação (categoria X)", "TFGe <30", "Hepatopatia grave", "Alcoolismo ativo", "Imunodepressão grave"],
-        efeitosAdversos: ["Náusea, mucosite (ácido fólico previne)", "Hepatotoxicidade (dose e tempo dependente)", "Mielossupressão", "Pneumonite (rara — grave)", "Teratogenicidade"],
+        efeitosAdversos: ["Náusea, mucosite (ácido fólico previne)", "Hepatotoxicidade (dose e tempo dependente)", "Mielossupressão", "Pneumonite (rara: grave)", "Teratogenicidade"],
         interacoes: ["AINEs: reduzem excreção de MTX (toxicidade)", "Trimetoprima-SMX: antagonismo do folato", "Álcool: hepatotoxicidade sinérgica"],
         monitoramento: ["Hemograma, TGO, TGP, creatinina a cada 4–8 semanas (primeiros 6 meses)", "Após estabilização: a cada 3 meses", "Raio-X tórax anual"],
         notas: [
-          "Sempre prescrever ácido fólico 5 mg/semana (no dia seguinte ao MTX) — reduz efeitos GI e mucosite.",
+          "Sempre prescrever ácido fólico 5 mg/semana (no dia seguinte ao MTX): reduz efeitos GI e mucosite.",
           "MTX SC tem maior biodisponibilidade e menos efeitos GI que oral.",
-          "Contracepcão obrigatória — ambos os sexos — até 3 meses após suspensão.",
+          "Contracepcão obrigatória: ambos os sexos, até 3 meses após suspensão.",
         ],
       },
       {
@@ -1026,13 +1023,13 @@ const DIAGNOSTICOS: Diagnostico[] = [
         linha: "segunda",
         via: "VO",
         doseInicial: "20 mg/dia (sem dose de ataque recomendada)",
-        mecanismo: "DMARD convencional — inibe síntese de pirimidinas → supressão de linfócitos T ativados.",
-        indicacoes: ["AR — alternativa ao MTX ou em combinação", "Intolerância ao MTX"],
+        mecanismo: "DMARD convencional: inibe síntese de pirimidinas, supressão de linfócitos T ativados.",
+        indicacoes: ["AR: alternativa ao MTX ou em combinação", "Intolerância ao MTX"],
         contraindicacoes: ["Gravidez e amamentação (altamente teratogênico)", "Hepatopatia grave", "Imunodepressão grave"],
         efeitosAdversos: ["Hepatotoxicidade", "Alopecia (dose-dependente)", "Diarreia", "HAS", "Mielossupressão"],
-        interacoes: ["Varfarina: aumenta INR — monitorar", "MTX: hepatotoxicidade sinérgica"],
+        interacoes: ["Varfarina: aumenta INR, monitorar", "MTX: hepatotoxicidade sinérgica"],
         monitoramento: ["TGO/TGP e hemograma a cada 4–8 semanas", "PA"],
-        notas: ["Meia-vida muito longa (1–3 semanas) — em caso de toxicidade ou gravidez não planejada: protocolo de washout com colestiramina 8g 3x/dia por 11 dias."],
+        notas: ["Meia-vida muito longa (1–3 semanas): em caso de toxicidade ou gravidez não planejada: protocolo de washout com colestiramina 8g 3x/dia por 11 dias."],
       },
     ],
   },
@@ -1056,8 +1053,8 @@ const DIAGNOSTICOS: Diagnostico[] = [
           { semana: 4, dose: "100 mg/dia", nota: "Se resposta parcial" },
           { semana: 8, dose: "150–200 mg/dia", nota: "Dose máxima" },
         ],
-        mecanismo: "ISRS — inibe recaptação de serotonina na fenda sináptica. Efeito terapêutico completo em 4–6 semanas.",
-        indicacoes: ["Depressão maior", "TAG — transtorno de ansiedade generalizada", "TOC", "TEPT", "Fobia social", "Síndrome do pânico"],
+        mecanismo: "ISRS: inibe recaptação de serotonina na fenda sináptica. Efeito terapêutico completo em 4–6 semanas.",
+        indicacoes: ["Depressão maior", "TAG: transtorno de ansiedade generalizada", "TOC", "TEPT", "Fobia social", "Síndrome do pânico"],
         contraindicacoes: ["Uso concomitante com IMAO (intervalo de 14 dias)", "Síndrome serotoninérgica prévia"],
         efeitosAdversos: ["Náusea (primeiras semanas)", "Disfunção sexual (anorgasmia, diminuição libido)", "Insônia ou sonolência", "Cefaleia", "Síndrome de discontinuação se retirada abrupta"],
         interacoes: ["IMAO: síndrome serotoninérgica grave (fatal)", "Tramadol: risco de síndrome serotoninérgica", "Varfarina: aumenta INR"],
@@ -1081,13 +1078,13 @@ const DIAGNOSTICOS: Diagnostico[] = [
           { semana: 4, dose: "150 mg/dia", nota: "Dose-alvo" },
           { semana: 8, dose: "225 mg/dia", nota: "Dose máxima" },
         ],
-        mecanismo: "IRSN — inibe recaptação de serotonina E norepinefrina. Ativo em dor neuropática além de depressão/ansiedade.",
-        indicacoes: ["Depressão maior (especialmente com dor crônica ou fadiga)", "TAG", "Fobia social", "Fibromialgia", "Dor neuropática", "Menopausa — fogachos"],
+        mecanismo: "IRSN: inibe recaptação de serotonina E norepinefrina. Ativo em dor neuropática além de depressão/ansiedade.",
+        indicacoes: ["Depressão maior (especialmente com dor crônica ou fadiga)", "TAG", "Fobia social", "Fibromialgia", "Dor neuropática", "Menopausa: fogachos"],
         contraindicacoes: ["IMAO (intervalo 14 dias)", "HAS não controlada"],
         efeitosAdversos: ["HAS dose-dependente (>150 mg)", "Disfunção sexual", "Sudorese", "Boca seca", "Constipação"],
         interacoes: ["IMAO: síndrome serotoninérgica", "Antihipertensivos: monitorar PA"],
         monitoramento: ["PA a cada consulta (especialmente doses >150 mg)", "FC"],
-        notas: ["Forma XR: tomar 1x/dia com refeição. Cápsula pode ser aberta e misturada com alimento.", "Retirada gradual obrigatória — síndrome de discontinuação intensa."],
+        notas: ["Forma XR: tomar 1x/dia com refeição. Cápsula pode ser aberta e misturada com alimento.", "Retirada gradual obrigatória: síndrome de discontinuação intensa."],
       },
     ],
   },
@@ -1105,10 +1102,10 @@ const DIAGNOSTICOS: Diagnostico[] = [
         linha: "primeira",
         via: "VO",
         doseInicial: "100 mg (macrocristal) 2x/dia por 5 dias",
-        mecanismo: "Antibacteriano urinário — atinge altas concentrações na urina, inibe síntese de DNA bacteriano.",
+        mecanismo: "Antibacteriano urinário: atinge altas concentrações na urina, inibe síntese de DNA bacteriano.",
         indicacoes: ["Cistite aguda não complicada (mulheres)", "Profilaxia de ITU recorrente (50 mg 1x/dia à noite)"],
         contraindicacoes: ["TFGe <45 mL/min (não atinge concentração terapêutica na urina)", "Gravidez no 3º trimestre (hemólise neonatal)", "Neuropatia periférica"],
-        efeitosAdversos: ["Náusea, vômitos (tomar com alimento)", "Pneumonite (uso crônico — raro)", "Neuropatia periférica (uso prolongado)"],
+        efeitosAdversos: ["Náusea, vômitos (tomar com alimento)", "Pneumonite (uso crônico: raro)", "Neuropatia periférica (uso prolongado)"],
         interacoes: ["Probenecida: aumenta toxicidade"],
         monitoramento: ["Urocultura de controle se não houver melhora em 48h"],
         notas: ["Boa atividade contra E. coli (principal agente). Baixa resistência comunitária.", "Não eficaz para pielonefrite (não penetra tecido renal)."],
@@ -1120,13 +1117,13 @@ const DIAGNOSTICOS: Diagnostico[] = [
         linha: "primeira",
         via: "VO",
         doseInicial: "3 g dose única (sache oral)",
-        mecanismo: "Inibe síntese da parede celular bacteriana por via diferente dos β-lactâmicos — eficaz contra cepas resistentes.",
+        mecanismo: "Inibe síntese da parede celular bacteriana por via diferente dos β-lactâmicos: eficaz contra cepas resistentes.",
         indicacoes: ["Cistite aguda não complicada", "Alternativa na suspeita de ESBL", "Gestação (categoria B)"],
         contraindicacoes: ["TFGe <10 mL/min"],
         efeitosAdversos: ["Diarreia leve", "Náusea"],
         interacoes: ["Metoclopramida: reduz absorção"],
         monitoramento: ["Sintomas em 48–72h"],
-        notas: ["Dose única — adesão máxima.", "Alta atividade contra E. coli ESBL.", "Boa opção em gestantes e idosos."],
+        notas: ["Dose única: adesão máxima.", "Alta atividade contra E. coli ESBL.", "Boa opção em gestantes e idosos."],
       },
     ],
   },
@@ -1144,7 +1141,7 @@ const DIAGNOSTICOS: Diagnostico[] = [
         linha: "primeira",
         via: "Tópica",
         doseInicial: "0,025% à noite (adaptar a 0,05% ou 0,1% conforme tolerância)",
-        mecanismo: "Retinoide tópico — normaliza queratinização folicular, comedolítico e anti-inflamatório.",
+        mecanismo: "Retinoide tópico: normaliza queratinização folicular, comedolítico e anti-inflamatório.",
         indicacoes: ["Acne comedogênica e papulopustulosa", "Manutenção após isotretinoína"],
         contraindicacoes: ["Gestação (categoria C/X)", "Pele com eczema ativo"],
         efeitosAdversos: ["Irritação, eritema, descamação (primeiras 4–8 semanas)", "Fotossensibilidade"],
@@ -1161,16 +1158,16 @@ const DIAGNOSTICOS: Diagnostico[] = [
         doseInicial: "0,5 mg/kg/dia por 4 semanas",
         titulacao: [
           { semana: 1, dose: "0,5 mg/kg/dia", nota: "Fase de indução" },
-          { semana: 5, dose: "1,0 mg/kg/dia", nota: "Dose plena — manter até dose cumulativa" },
+          { semana: 5, dose: "1,0 mg/kg/dia", nota: "Dose plena: manter até dose cumulativa" },
         ],
         doseManutencao: "Dose cumulativa alvo: 120–150 mg/kg total",
-        mecanismo: "Retinoide oral — reduz produção sebácea em 70–90%, normaliza queratinização, anti-inflamatório.",
+        mecanismo: "Retinoide oral: reduz produção sebácea em 70–90%, normaliza queratinização, anti-inflamatório.",
         indicacoes: ["Acne grave nodular/cística", "Acne moderada refratária a antibióticos + retinoide tópico", "Acne com cicatrizes"],
-        contraindicacoes: ["Gestação (CATEGORIA X — teratogênica)", "Hiperlipidemia grave", "Hepatopatia", "Uso de vitamina A em altas doses"],
+        contraindicacoes: ["Gestação (CATEGORIA X: teratogênica)", "Hiperlipidemia grave", "Hepatopatia", "Uso de vitamina A em altas doses"],
         efeitosAdversos: ["Queilite (≥90%)", "Xerodermia e xeroftalmia", "Mialgia e artralgia", "Elevação de triglicerídeos", "Depressão (monitorar)"],
         interacoes: ["Tetraciclinas: contraindicado (pseudotumor cerebri)", "Vitamina A suplementar: evitar"],
         monitoramento: ["TGP, TGO e triglicerídeos: mensalmente", "Teste de gravidez: antes, mensalmente e 5 semanas após", "iPledge/PNAFE: cadastro obrigatório"],
-        notas: ["Programa PNAFE no Brasil: cadastro obrigatório médico e paciente.", "Anticoncepção dupla obrigatória em mulheres em idade fértil — iniciar 1 mês antes."],
+        notas: ["Programa PNAFE no Brasil: cadastro obrigatório médico e paciente.", "Anticoncepção dupla obrigatória em mulheres em idade fértil: iniciar 1 mês antes."],
       },
       {
         id: "doxiciclinaAcne",
@@ -1179,13 +1176,13 @@ const DIAGNOSTICOS: Diagnostico[] = [
         linha: "primeira",
         via: "VO",
         doseInicial: "100 mg 1–2x/dia por 12–16 semanas (máx 6 meses)",
-        mecanismo: "Tetraciclina — efeito anti-inflamatório e antibacteriano contra P. acnes.",
+        mecanismo: "Tetraciclina: efeito anti-inflamatório e antibacteriano contra P. acnes.",
         indicacoes: ["Acne inflamatória moderada a grave", "Combinação com retinoide tópico"],
         contraindicacoes: ["Gestação (categoria D)", "Crianças <8 anos (manchas dentárias)", "Exposição solar intensa"],
         efeitosAdversos: ["Fotossensibilidade (usar protetor solar)", "Náusea (tomar com alimento)", "Esofagite (tomar com bastante água)"],
         interacoes: ["Antiácidos, leite: reduzem absorção (tomar 2h separados)", "Varfarina: aumenta anticoagulação"],
-        monitoramento: ["Reavaliação em 8 semanas", "Não usar como monoterapia — associar tópico"],
-        notas: ["Usar o menor tempo necessário. Resistência crescente a macrolídeos — preferir doxiciclina.", "Não usar na profilaxia de longo prazo."],
+        monitoramento: ["Reavaliação em 8 semanas", "Não usar como monoterapia: associar tópico"],
+        notas: ["Usar o menor tempo necessário. Resistência crescente a macrolídeos: preferir doxiciclina.", "Não usar na profilaxia de longo prazo."],
       },
     ],
   },
@@ -1200,8 +1197,8 @@ const DIAGNOSTICOS: Diagnostico[] = [
         nomesComerciais: ["Elocom®", "Elofar®"],
         linha: "primeira",
         via: "Tópica",
-        doseInicial: "Creme 0,1% — aplicar 1x/dia nas lesões (14 dias); manutenção intermitente",
-        mecanismo: "Corticoide tópico de potência média-alta — anti-inflamatório local.",
+        doseInicial: "Creme 0,1%: aplicar 1x/dia nas lesões (14 dias); manutenção intermitente",
+        mecanismo: "Corticoide tópico de potência média-alta: anti-inflamatório local.",
         indicacoes: ["DA moderada em corpo (não face)", "Placas inflamatórias pruriginosas"],
         contraindicacoes: ["Face e dobras por períodos prolongados (atrofia)", "Infecção cutânea ativa"],
         efeitosAdversos: ["Atrofia cutânea (uso prolongado)", "Estrias", "Rosácea periorificial (face)"],
@@ -1215,14 +1212,14 @@ const DIAGNOSTICOS: Diagnostico[] = [
         nomesComerciais: ["Protopic® 0,03% e 0,1%"],
         linha: "segunda",
         via: "Tópica",
-        doseInicial: "0,03% 2x/dia (crianças ≥2a) · 0,1% 2x/dia (adultos) por 6 semanas",
-        mecanismo: "Inibidor de calcineurina tópico — reduz ativação de linfócitos T sem atrofia cutânea.",
+        doseInicial: "0,03% 2x/dia (crianças ≥2a), 0,1% 2x/dia (adultos) por 6 semanas",
+        mecanismo: "Inibidor de calcineurina tópico: reduz ativação de linfócitos T sem atrofia cutânea.",
         indicacoes: ["DA refratária a corticoides", "DA em face, pálpebras e dobras (sem risco de atrofia)"],
         contraindicacoes: ["Infecção herpética ativa", "<2 anos"],
         efeitosAdversos: ["Ardência e prurido transitorios nas primeiras semanas", "Intolerância ao calor (transitória)"],
         interacoes: [],
         monitoramento: ["Suspender se infecção cutânea bacteriana/viral"],
-        notas: ["Alternativa segura para face e dobras — sem atrofia. Alerta FDA sobre risco teórico de linfoma (não confirmado em estudos)."],
+        notas: ["Alternativa segura para face e dobras: sem atrofia. Alerta FDA sobre risco teórico de linfoma (não confirmado em estudos)."],
       },
       {
         id: "dupilumabe",
@@ -1230,14 +1227,14 @@ const DIAGNOSTICOS: Diagnostico[] = [
         nomesComerciais: ["Dupixent®"],
         linha: "terceira",
         via: "SC",
-        doseInicial: "600 mg SC (dose de ataque: 2x 300 mg) → 300 mg SC a cada 2 semanas",
-        mecanismo: "Anticorpo monoclonal anti-IL-4Rα — bloqueia IL-4 e IL-13 (citocinas Th2 centrais na DA).",
+        doseInicial: "600 mg SC (dose de ataque: 2x 300 mg), 300 mg SC a cada 2 semanas",
+        mecanismo: "Anticorpo monoclonal anti-IL-4Rα: bloqueia IL-4 e IL-13 (citocinas Th2 centrais na DA).",
         indicacoes: ["DA moderada a grave refratária a tratamento tópico otimizado", "A partir dos 6 meses de idade"],
         contraindicacoes: ["Infecção grave não controlada"],
         efeitosAdversos: ["Reação no local da injeção", "Conjuntivite (5–10%)", "Herpes zóster (raro)"],
         interacoes: [],
         monitoramento: ["EASI ou IGA a cada 16 semanas para avaliar resposta"],
-        notas: ["Resultado esperado em 16 semanas. Se EASI -75% → manter. Aprovado ANVISA para DA moderada-grave.", "Autoaplicação possível com caneta — ensinar o paciente."],
+        notas: ["Resultado esperado em 16 semanas. Se EASI -75%: manter. Aprovado ANVISA para DA moderada-grave.", "Autoaplicação possível com caneta: ensinar o paciente."],
         diferencial: "Biológico de primeira escolha para DA grave. Alternativas: tralokinumabe, abrocitinibe, upadacitinibe.",
       },
     ],
@@ -1254,13 +1251,13 @@ const DIAGNOSTICOS: Diagnostico[] = [
         linha: "primeira",
         via: "Tópica",
         doseInicial: "Gel/creme 0,75% 2x/dia ou 1% 1x/dia por 12 semanas",
-        mecanismo: "Anti-inflamatório e antibacteriano tópico — reduz eritema e pápulas da rosácea.",
+        mecanismo: "Anti-inflamatório e antibacteriano tópico: reduz eritema e pápulas da rosácea.",
         indicacoes: ["Rosácea papulopustulosa (subtipo 2)", "Manutenção após antibiótico oral"],
         contraindicacoes: ["Hipersensibilidade ao metronidazol"],
         efeitosAdversos: ["Ressecamento, leve ardência"],
         interacoes: [],
         monitoramento: ["Reavaliação em 8–12 semanas"],
-        notas: ["Não tem efeito sobre eritema vascular (subtipo 1) — para eritema usar brimonidina ou ivermectina."],
+        notas: ["Não tem efeito sobre eritema vascular (subtipo 1): para eritema usar brimonidina ou ivermectina."],
       },
       {
         id: "ivermectinaRosa",
@@ -1269,12 +1266,12 @@ const DIAGNOSTICOS: Diagnostico[] = [
         linha: "primeira",
         via: "Tópica",
         doseInicial: "Creme 1% 1x/dia por 12 semanas (manutenção com menor frequência)",
-        mecanismo: "Anti-inflamatório e anti-Demodex — age no ácaro folicular implicado na rosácea.",
+        mecanismo: "Anti-inflamatório e anti-Demodex: age no ácaro folicular implicado na rosácea.",
         indicacoes: ["Rosácea papulopustulosa moderada a grave", "Refratária ao metronidazol"],
         contraindicacoes: ["Gestação (dados limitados)"],
         efeitosAdversos: ["Ardência transitória inicial"],
         interacoes: [],
-        monitoramento: ["Resposta superior ao metronidazol em estudos head-to-head — considerar 1ª linha"],
+        monitoramento: ["Resposta superior ao metronidazol em estudos head-to-head: considerar 1ª linha"],
         notas: ["Manutenção: 2x/semana após remissão. Evidência superior ao metronidazol para rosácea grave."],
       },
       {
@@ -1284,7 +1281,7 @@ const DIAGNOSTICOS: Diagnostico[] = [
         linha: "segunda",
         via: "VO",
         doseInicial: "40 mg liberação modificada 1x/dia em jejum, por 12–16 semanas",
-        mecanismo: "Efeito anti-inflamatório (não antibacteriano nessa dose) — reduz MMP e citocinas pró-inflamatórias.",
+        mecanismo: "Efeito anti-inflamatório (não antibacteriano nessa dose): reduz MMP e citocinas pró-inflamatórias.",
         indicacoes: ["Rosácea moderada a grave", "Eritema e pápulas persistentes"],
         contraindicacoes: ["Gestação", "Crianças <8 anos"],
         efeitosAdversos: ["Náusea", "Fotossensibilidade"],
@@ -1308,13 +1305,13 @@ const DIAGNOSTICOS: Diagnostico[] = [
         linha: "primeira",
         via: "VO",
         doseInicial: "70 mg 1x/semana (ou 10 mg/dia)",
-        mecanismo: "Bisfosfonato — inibe osteoclastos, reduz reabsorção óssea.",
+        mecanismo: "Bisfosfonato: inibe osteoclastos, reduz reabsorção óssea.",
         indicacoes: ["Osteoporose (T-score ≤-2,5)", "Osteopenia com FRAX >10% para fratura maior", "Prevenção de fraturas em idosos"],
         contraindicacoes: ["TFGe <35 mL/min", "Esofagite ou dificuldade de deglutição", "Hipocalcemia"],
-        efeitosAdversos: ["Esofagite, úlcera esofágica (instruir sobre postura)", "ONM (osteonecrose de mandíbula) — raro", "FAA (fratura atípica de fêmur) — uso >5 anos"],
-        interacoes: ["Cálcio, antiácidos, leite: absorção zero se ingeridos junto — tomar 30–60 min antes"],
+        efeitosAdversos: ["Esofagite, úlcera esofágica (instruir sobre postura)", "ONM (osteonecrose de mandíbula): raro", "FAA (fratura atípica de fêmur): uso >5 anos"],
+        interacoes: ["Cálcio, antiácidos, leite: absorção zero se ingeridos junto, tomar 30–60 min antes"],
         monitoramento: ["Densitometria após 2 anos de tratamento", "TFGe e cálcio basal antes de iniciar", "Holiday após 5 anos se não há fratura prévia (drug holiday)"],
-        notas: ["Orientação CRÍTICA: tomar em jejum, com copo cheio de água, ficar em pé 30 min após.", "NÃO deitar após tomar — risco de esofagite grave."],
+        notas: ["Orientação CRÍTICA: tomar em jejum, com copo cheio de água, ficar em pé 30 min após.", "NÃO deitar após tomar: risco de esofagite grave."],
       },
       {
         id: "calcio_vitD",
@@ -1325,9 +1322,9 @@ const DIAGNOSTICOS: Diagnostico[] = [
         doseInicial: "Cálcio 1000–1200 mg/dia (dividido em 2 tomadas) + VitD3 800–2000 UI/dia",
         mecanismo: "Suporte mineral essencial para mineralização óssea e ação dos bisfosfonatos.",
         indicacoes: ["Adjuvante de qualquer tratamento para osteoporose", "Idosos institucionalizados (deficiência de VitD quase universal)"],
-        contraindicacoes: ["Hipercalcemia", "Nefrolitíase por cálcio (carbonato — preferir citrato)"],
+        contraindicacoes: ["Hipercalcemia", "Nefrolitíase por cálcio (carbonato: preferir citrato)"],
         efeitosAdversos: ["Constipação (carbonato de cálcio)", "Cálculo renal em predispostos"],
-        interacoes: ["Ferro: absorção reduzida — separar 2h"],
+        interacoes: ["Ferro: absorção reduzida, separar 2h"],
         monitoramento: ["Vitamina D 25-OH basal e após 3 meses de suplementação", "Calcemia antes e durante"],
         notas: ["Citrato de cálcio: preferível em idosos com acloridria ou que tomam IBP. Carbonato exige acidez gástrica para absorção."],
       },
@@ -1349,14 +1346,14 @@ const DIAGNOSTICOS: Diagnostico[] = [
           { semana: 1, dose: "5 mg/dia", nota: "Início" },
           { semana: 5, dose: "10 mg/dia", nota: "Manter conforme tolerância" },
         ],
-        doseManutencao: "10 mg/dia (23 mg/dia disponível — benefício marginal, mais efeitos adversos)",
-        mecanismo: "Inibidor da acetilcolinesterase — aumenta acetilcolina sináptica, melhora cognição.",
+        doseManutencao: "10 mg/dia (23 mg/dia disponível: benefício marginal, mais efeitos adversos)",
+        mecanismo: "Inibidor da acetilcolinesterase: aumenta acetilcolina sináptica, melhora cognição.",
         indicacoes: ["Doença de Alzheimer leve a grave", "Demência de Parkinson"],
         contraindicacoes: ["Bradicardia ou bloqueio AV (cautela)"],
         efeitosAdversos: ["Náusea, vômito, diarreia (especialmente na titulação)", "Bradicardia, síncope", "Pesadelos vividos (tomar de manhã se ocorrer)"],
-        interacoes: ["Anticolinérgicos: antagonismo (oxibutinina, antihistamínicos — evitar)"],
+        interacoes: ["Anticolinérgicos: antagonismo (oxibutinina, antihistamínicos, evitar)"],
         monitoramento: ["ECG basal se suspeita de arritmia", "MEEM ou MoCA a cada 6 meses"],
-        notas: ["Não modifica progressão — apenas sintomático. Reavaliação anual da indicação.", "Efeito esperado: estabilização ou leve melhora por 6–12 meses."],
+        notas: ["Não modifica progressão: apenas sintomático. Reavaliação anual da indicação.", "Efeito esperado: estabilização ou leve melhora por 6–12 meses."],
       },
       {
         id: "memantina",
@@ -1372,13 +1369,13 @@ const DIAGNOSTICOS: Diagnostico[] = [
           { semana: 4, dose: "20 mg/dia (dose alvo)" },
         ],
         doseManutencao: "20 mg/dia",
-        mecanismo: "Antagonista NMDA não competitivo — reduz excitotoxicidade por glutamato.",
+        mecanismo: "Antagonista NMDA não competitivo: reduz excitotoxicidade por glutamato.",
         indicacoes: ["Alzheimer moderado a grave", "Combinação com donepezila em fases moderadas"],
         contraindicacoes: ["TFGe <30 mL/min (reduzir dose)"],
         efeitosAdversos: ["Tontura, cefaleia", "Confusão (menos comum que colinérgicos)"],
-        interacoes: ["Amantadina, cimetidina: acumulação de memantina — cautela"],
+        interacoes: ["Amantadina, cimetidina: acumulação de memantina, cautela"],
         monitoramento: ["Função renal antes e a cada 6 meses", "Avaliar cognição e funcionalidade"],
-        notas: ["Pode ser combinado com donepezila em Alzheimer moderado-grave — sinergia de mecanismos."],
+        notas: ["Pode ser combinado com donepezila em Alzheimer moderado-grave: sinergia de mecanismos."],
       },
     ],
   },
@@ -1395,14 +1392,14 @@ const DIAGNOSTICOS: Diagnostico[] = [
         nomesComerciais: ["Creapure®", "qualquer marca de creatina pura"],
         linha: "primeira",
         via: "VO",
-        doseInicial: "3–5 g/dia (manutenção) — sem fase de carga necessária",
-        mecanismo: "Repõe estoques de fosfocreatina — melhora performance em exercícios de alta intensidade e curta duração.",
+        doseInicial: "3–5 g/dia (manutenção): sem fase de carga necessária",
+        mecanismo: "Repõe estoques de fosfocreatina: melhora performance em exercícios de alta intensidade e curta duração.",
         indicacoes: ["Aumento de força e massa muscular", "Melhora de performance em sprints e treinamento de força", "Sarcopenia no idoso (evidência crescente)", "Lesão cerebral e neuroproteção (uso emergente)"],
         contraindicacoes: ["Doença renal estabelecida (monitorar com cautela)", "Desidratação grave"],
         efeitosAdversos: ["Ganho de peso (água intracelular)", "Distensão GI se dose alta de uma vez"],
         interacoes: ["Cafeína em altas doses: pode reduzir efeito (evidência mista)"],
-        monitoramento: ["Creatinina pode elevar levemente (artefato — não significa dano renal)", "Hidratação adequada"],
-        notas: ["Suplemento mais estudado e eficaz — evidência nível A para força e hipertrofia.", "Não precisa fase de carga (saturação ocorre em 3–4 semanas com 3 g/dia)."],
+        monitoramento: ["Creatinina pode elevar levemente (artefato: não significa dano renal)", "Hidratação adequada"],
+        notas: ["Suplemento mais estudado e eficaz: evidência nível A para força e hipertrofia.", "Não precisa fase de carga (saturação ocorre em 3–4 semanas com 3 g/dia)."],
       },
       {
         id: "cafeina",
@@ -1411,13 +1408,13 @@ const DIAGNOSTICOS: Diagnostico[] = [
         linha: "primeira",
         via: "VO",
         doseInicial: "3–6 mg/kg, 45–60 min antes do exercício",
-        mecanismo: "Antagonismo de adenosina — reduz percepção de esforço, aumenta mobilização de ácidos graxos.",
+        mecanismo: "Antagonismo de adenosina: reduz percepção de esforço, aumenta mobilização de ácidos graxos.",
         indicacoes: ["Melhora de performance aeróbica e anaeróbica", "Redução da fadiga central", "Foco e cognição"],
         contraindicacoes: ["Arritmia não controlada", "Gestação (limitar a 200 mg/dia)", "Ansiedade grave"],
         efeitosAdversos: ["Taquicardia, ansiedade", "Insônia (não usar após 14h)", "Dependência e abstinência"],
         interacoes: ["Beta-bloqueadores: podem atenuar efeitos cardiovasculares"],
-        monitoramento: ["Tolerância individual — titular dose"],
-        notas: ["Dose ótima: 3 mg/kg. Acima de 9 mg/kg: sem benefício adicional + toxicidade.", "Habitual na cafeína: efeito ergogênico menor — abstinência 7 dias antes de competição restaura resposta."],
+        monitoramento: ["Tolerância individual: titular dose"],
+        notas: ["Dose ótima: 3 mg/kg. Acima de 9 mg/kg: sem benefício adicional + toxicidade.", "Habitual na cafeína: efeito ergogênico menor, abstinência 7 dias antes de competição restaura resposta."],
       },
       {
         id: "betaAlanina",
@@ -1426,13 +1423,13 @@ const DIAGNOSTICOS: Diagnostico[] = [
         linha: "segunda",
         via: "VO",
         doseInicial: "3,2–6,4 g/dia divididos ao longo do dia (reduz parestesia)",
-        mecanismo: "Precursor de carnosina intramuscular — tampona H+ durante exercício de alta intensidade.",
+        mecanismo: "Precursor de carnosina intramuscular: tampona H+ durante exercício de alta intensidade.",
         indicacoes: ["Exercícios de 1–10 minutos de alta intensidade (natação, ciclismo, corrida de média distância)", "Melhora de performance anaeróbica"],
         contraindicacoes: [],
-        efeitosAdversos: ["Parestesia (formigamento) — dose-dependente, inócua, reduz com doses fracionadas"],
+        efeitosAdversos: ["Parestesia (formigamento): dose-dependente, inócua, reduz com doses fracionadas"],
         interacoes: [],
         monitoramento: ["4–6 semanas para saturação de carnosina muscular"],
-        notas: ["Sem efeito imediato — saturação progressiva. Melhor para exercícios de 60–240 segundos.", "Parestesia é inócua mas incômoda — fracionar dose ou usar SR (sustained release)."],
+        notas: ["Sem efeito imediato: saturação progressiva. Melhor para exercícios de 60–240 segundos.", "Parestesia é inócua mas incômoda: fracionar dose ou usar SR (sustained release)."],
       },
     ],
   },
@@ -1450,7 +1447,7 @@ const DIAGNOSTICOS: Diagnostico[] = [
         linha: "primeira",
         via: "Tópica",
         doseInicial: "1 gota 0,5% 12/12h",
-        mecanismo: "Betabloqueador tópico — reduz produção de humor aquoso (-20–25% PIO)",
+        mecanismo: "Betabloqueador tópico: reduz produção de humor aquoso (-20–25% PIO)",
         indicacoes: ["Glaucoma de ângulo aberto", "Hipertensão ocular"],
         contraindicacoes: ["Asma/DPOC grave", "BAV 2º e 3º grau", "ICC descompensada"],
         efeitosAdversos: ["Bradicardia sistêmica (absorção nasolacrimal)", "Broncoespasmo", "Olho seco"],
@@ -1465,13 +1462,13 @@ const DIAGNOSTICOS: Diagnostico[] = [
         linha: "primeira",
         via: "Tópica",
         doseInicial: "1 gota 0,005% à noite",
-        mecanismo: "Análogo de prostaglandina F2α — aumenta drenagem uveoescleral (-25–35% PIO)",
+        mecanismo: "Análogo de prostaglandina F2α: aumenta drenagem uveoescleral (-25–35% PIO)",
         indicacoes: ["Glaucoma de ângulo aberto", "Hipertensão ocular"],
         contraindicacoes: ["Uveíte ativa", "Edema macular cistoide"],
         efeitosAdversos: ["Hiperemia conjuntival", "Hiperpigmentação de íris e cílios", "Crescimento de cílios"],
         interacoes: [],
         monitoramento: ["Tonometria a cada 3 meses inicialmente", "Avaliação de campo visual anual"],
-        notas: ["1ª linha preferida por eficácia superior e dose única noturna.", "Hiperpigmentação de íris é irreversível — informar paciente."],
+        notas: ["1ª linha preferida por eficácia superior e dose única noturna.", "Hiperpigmentação de íris é irreversível: informar paciente."],
       },
     ],
   },
@@ -1487,13 +1484,13 @@ const DIAGNOSTICOS: Diagnostico[] = [
         linha: "primeira",
         via: "Tópica",
         doseInicial: "1–2 gotas 0,3% 4–6x/dia por 5–7 dias",
-        mecanismo: "Fluoroquinolona — inibe DNA girase e topoisomerase IV bacteriana",
+        mecanismo: "Fluoroquinolona: inibe DNA girase e topoisomerase IV bacteriana",
         indicacoes: ["Conjuntivite bacteriana aguda", "Ceratite bacteriana superficial"],
         contraindicacoes: ["Hipersensibilidade a quinolonas"],
         efeitosAdversos: ["Ardência transitória", "Precipitado branco corneano (uso excessivo)"],
         interacoes: [],
-        monitoramento: ["Melhora esperada em 48–72h — reavaliar se não houver"],
-        notas: ["Conjuntivite viral: autolimitada, lubrificantes — antibiótico não indicado.", "Neonatal/gonocócica: encaminhar urgência oftalmológica."],
+        monitoramento: ["Melhora esperada em 48–72h: reavaliar se não houver"],
+        notas: ["Conjuntivite viral: autolimitada, lubrificantes, antibiótico não indicado.", "Neonatal/gonocócica: encaminhar urgência oftalmológica."],
       },
       {
         id: "tobramicina-ocular",
@@ -1502,7 +1499,7 @@ const DIAGNOSTICOS: Diagnostico[] = [
         linha: "primeira",
         via: "Tópica",
         doseInicial: "1–2 gotas 0,3% 4x/dia",
-        mecanismo: "Aminoglicosídeo — inibe síntese proteica bacteriana (30S ribossômico)",
+        mecanismo: "Aminoglicosídeo: inibe síntese proteica bacteriana (30S ribossômico)",
         indicacoes: ["Conjuntivite bacteriana", "Blefaroconjuntivite"],
         contraindicacoes: [],
         efeitosAdversos: ["Queimação local", "Hipersensibilidade ocular"],
@@ -1525,14 +1522,14 @@ const DIAGNOSTICOS: Diagnostico[] = [
         nomesComerciais: ["Budecort Nasal", "Rhinocort"],
         linha: "primeira",
         via: "Tópica",
-        doseInicial: "256 µg/dia (2 jatos cada narina, 1x/dia) — adultos",
-        mecanismo: "Glicocorticoide tópico — reduz inflamação da mucosa nasal sem absorção sistêmica significativa",
+        doseInicial: "256 µg/dia (2 jatos cada narina, 1x/dia): adultos",
+        mecanismo: "Glicocorticoide tópico: reduz inflamação da mucosa nasal sem absorção sistêmica significativa",
         indicacoes: ["Rinite alérgica persistente moderada/grave", "Rinite não alérgica eosinofílica (NARES)", "Adjuvante na rinossinusite crônica"],
         contraindicacoes: ["Epistaxe recorrente ativa (relativa)"],
         efeitosAdversos: ["Epistaxe leve", "Ressecamento nasal", "Cefaleia"],
         interacoes: [],
-        monitoramento: ["Efeito máximo em 2–4 semanas — orientar uso regular", "Técnica de aplicação: inclinar cabeça levemente, apontar spray para lateral"],
-        notas: ["Corticoide nasal é 1ª linha para rinite persistente — superior ao anti-histamínico isolado (metanálise ARIA).", "Sem supressão do eixo HPA nas doses recomendadas."],
+        monitoramento: ["Efeito máximo em 2–4 semanas: orientar uso regular", "Técnica de aplicação: inclinar cabeça levemente, apontar spray para lateral"],
+        notas: ["Corticoide nasal é 1ª linha para rinite persistente: superior ao anti-histamínico isolado (metanálise ARIA).", "Sem supressão do eixo HPA nas doses recomendadas."],
       },
       {
         id: "loratadina-rinite",
@@ -1541,13 +1538,13 @@ const DIAGNOSTICOS: Diagnostico[] = [
         linha: "primeira",
         via: "VO",
         doseInicial: "10 mg/dia (adultos), 5 mg/dia (<30 kg)",
-        mecanismo: "Anti-histamínico H1 de 2ª geração — antagonista seletivo periférico sem sedação",
+        mecanismo: "Anti-histamínico H1 de 2ª geração: antagonista seletivo periférico sem sedação",
         indicacoes: ["Rinite alérgica", "Urticária", "Conjuntivite alérgica"],
         contraindicacoes: [],
         efeitosAdversos: ["Cefaleia leve", "Raramente sedação"],
-        interacoes: ["Cetoconazol, eritromicina (aumentam nível de loratadina — sem relevância clínica significativa)"],
+        interacoes: ["Cetoconazol, eritromicina (aumentam nível de loratadina: sem relevância clínica significativa)"],
         monitoramento: [],
-        notas: ["Não sedativo — preferível à difenidramina em uso diário.", "Associar a corticoide nasal para controle sintomático superior."],
+        notas: ["Não sedativo: preferível à difenidramina em uso diário.", "Associar a corticoide nasal para controle sintomático superior."],
       },
     ],
   },
@@ -1563,7 +1560,7 @@ const DIAGNOSTICOS: Diagnostico[] = [
         linha: "primeira",
         via: "VO",
         doseInicial: "40–45 mg/kg/dia divididos 12/12h por 5–7 dias (adultos: 500 mg 8/8h)",
-        mecanismo: "Aminopenicilina — inibe síntese de parede celular bacteriana",
+        mecanismo: "Aminopenicilina: inibe síntese de parede celular bacteriana",
         indicacoes: ["OMA (S. pneumoniae, H. influenzae, M. catarrhalis)", "Crianças <2 anos ou sintomas moderados/graves"],
         contraindicacoes: ["Alergia a penicilinas"],
         efeitosAdversos: ["Diarreia", "Rash cutâneo", "Anafilaxia (raro)"],
@@ -1578,7 +1575,7 @@ const DIAGNOSTICOS: Diagnostico[] = [
         linha: "segunda",
         via: "VO",
         doseInicial: "875/125 mg 12/12h por 7–10 dias (adultos)",
-        mecanismo: "Aminopenicilina + inibidor de beta-lactamase — cobertura ampliada incluindo H. influenzae produtores de beta-lactamase",
+        mecanismo: "Aminopenicilina + inibidor de beta-lactamase: cobertura ampliada incluindo H. influenzae produtores de beta-lactamase",
         indicacoes: ["OMA refratária à amoxicilina", "OMA recorrente", "OMA com otorreia"],
         contraindicacoes: ["Alergia a penicilinas", "Insuficiência hepática grave"],
         efeitosAdversos: ["Diarreia (mais que amoxicilina)", "Colestase hepática (raro, associada ao clavulanato)"],
@@ -1602,11 +1599,11 @@ const DIAGNOSTICOS: Diagnostico[] = [
         linha: "primeira",
         via: "VO",
         doseInicial: "0,4 mg/dia após café da manhã",
-        mecanismo: "Alfabloqueador seletivo α1A (próstata/bexiga) — relaxamento do músculo liso da próstata e colo vesical",
+        mecanismo: "Alfabloqueador seletivo α1A (próstata/bexiga): relaxamento do músculo liso da próstata e colo vesical",
         indicacoes: ["HPB com sintomas moderados a graves (IPSS ≥8)", "Obstrução funcional do colo vesical"],
         contraindicacoes: ["Hipotensão ortostática grave", "Insuficiência hepática grave"],
         efeitosAdversos: ["Hipotensão ortostática (raro com α1A seletivo)", "Ejaculação retrógrada", "Tontura"],
-        interacoes: ["Inibidores PDE5 (tadalafila) — cuidado com hipotensão", "CYP3A4/2D6 inibidores"],
+        interacoes: ["Inibidores PDE5 (tadalafila): cuidado com hipotensão", "CYP3A4/2D6 inibidores"],
         monitoramento: ["PA nas primeiras semanas", "IPSS após 4–8 semanas"],
         notas: ["Iniciar à noite nas primeiras semanas para reduzir risco de hipotensão.", "Efeito na ejaculação: informar o paciente previamente."],
       },
@@ -1617,13 +1614,13 @@ const DIAGNOSTICOS: Diagnostico[] = [
         linha: "primeira",
         via: "VO",
         doseInicial: "0,5 mg/dia",
-        mecanismo: "Inibidor da 5-alfaredutase tipos 1 e 2 — reduz DHT intraprostática → regressão do volume prostático",
+        mecanismo: "Inibidor da 5-alfaredutase tipos 1 e 2: reduz DHT intraprostática, regressão do volume prostático",
         indicacoes: ["HPB com próstata >40 mL", "Prevenção da progressão (retenção urinária, cirurgia)"],
-        contraindicacoes: ["Mulheres em idade fértil (teratogênico — categoria X)", "Hipersensibilidade"],
+        contraindicacoes: ["Mulheres em idade fértil (teratogênico: categoria X)", "Hipersensibilidade"],
         efeitosAdversos: ["Disfunção erétil (5–10%)", "Diminuição da libido", "Ginecomastia", "Redução do PSA (~50% após 6–12 meses)"],
-        interacoes: ["CYP3A4 inibidores (itraconazol, ritonavir) — aumentam nível"],
+        interacoes: ["CYP3A4 inibidores (itraconazol, ritonavir): aumentam nível"],
         monitoramento: ["PSA após 6 meses: duplicar valor para comparação com baseline", "Volume prostático por USG após 6 meses"],
-        notas: ["Efeito máximo no volume prostático após 6–12 meses de uso contínuo.", "PSA reduz 50% — corrigir interpretação: PSA real × 2."],
+        notas: ["Efeito máximo no volume prostático após 6–12 meses de uso contínuo.", "PSA reduz 50%: corrigir interpretação: PSA real × 2."],
       },
     ],
   },
@@ -1640,9 +1637,9 @@ const DIAGNOSTICOS: Diagnostico[] = [
         via: "VO",
         doseInicial: "50 mg conforme demanda (30–60 min antes)",
         doseManutencao: "Ajustar para 25 mg (efeitos adversos) ou 100 mg (resposta insuficiente)",
-        mecanismo: "Inibidor PDE5 — aumenta cGMP intracavernoso → vasodilatação e ereção",
+        mecanismo: "Inibidor PDE5: aumenta cGMP intracavernoso, vasodilatação e ereção",
         indicacoes: ["Disfunção erétil orgânica", "Psicogênica", "Mista"],
-        contraindicacoes: ["Uso de nitratos (qualquer forma) — hipotensão fatal", "Alfa-bloqueadores em dose alta", "Doença cardiovascular instável"],
+        contraindicacoes: ["Uso de nitratos (qualquer forma): hipotensão fatal", "Alfa-bloqueadores em dose alta", "Doença cardiovascular instável"],
         efeitosAdversos: ["Cefaleia", "Rubor facial", "Dispepsia", "Congestão nasal", "Distúrbios visuais (azul-verde)"],
         interacoes: ["Nitratos (CI absoluta)", "Alfa-bloqueadores (CI ou intervalo 4h)", "Antifúngicos azólicos (aumentam nível)"],
         monitoramento: ["Sem necessidade laboratorial rotineira", "Avaliar causa base e resposta clínica"],
@@ -1655,14 +1652,14 @@ const DIAGNOSTICOS: Diagnostico[] = [
         linha: "primeira",
         via: "VO",
         doseInicial: "5 mg/dia (uso contínuo) OU 10–20 mg conforme demanda",
-        mecanismo: "Inibidor PDE5 — meia-vida ~17h (vs 4h sildenafila) — permite 'janela' de 36h",
+        mecanismo: "Inibidor PDE5: meia-vida ~17h (vs 4h sildenafila), permite 'janela' de 36h",
         indicacoes: ["Disfunção erétil", "HPB + DE (tadalafila 5 mg trata ambos)"],
         contraindicacoes: ["Nitratos (CI absoluta)", "Hipotensão grave"],
         efeitosAdversos: ["Cefaleia", "Lombalgia (mialgias musculares)", "Rubor", "Dispepsia"],
         interacoes: ["Nitratos (CI absoluta)", "Alfa-bloqueadores (respeitar intervalo 4h em doses altas)", "CYP3A4 inibidores"],
         monitoramento: [],
         diferencial: "Tadalafila 5 mg/dia: uso contínuo indicado para pacientes que preferem espontaneidade e para HPB + DE simultâneos.",
-        notas: ["Tadalafila 5 mg/dia + tansulosina: monitorar hipotensão — iniciar com intervalo temporal.", "Dose on-demand: tomar sem relação com alimentos."],
+        notas: ["Tadalafila 5 mg/dia + tansulosina: monitorar hipotensão, iniciar com intervalo temporal.", "Dose on-demand: tomar sem relação com alimentos."],
       },
     ],
   },
@@ -1670,11 +1667,11 @@ const DIAGNOSTICOS: Diagnostico[] = [
 
 // ─── Config maps ──────────────────────────────────────────────────────────────
 
-const LINHA_CONFIG: Record<Linha, { label: string; color: string; bg: string; border: string }> = {
-  primeira:  { label: "1ª linha",   color: "text-green-700",  bg: "bg-green-50",  border: "border-green-200"  },
-  segunda:   { label: "2ª linha",   color: "text-amber-700",  bg: "bg-amber-50",  border: "border-amber-200"  },
-  terceira:  { label: "3ª linha",   color: "text-orange-700", bg: "bg-orange-50", border: "border-orange-200" },
-  adjuvante: { label: "Adjuvante",  color: "text-purple-700", bg: "bg-purple-50", border: "border-purple-200" },
+const LINHA_CONFIG: Record<Linha, { label: string; tone: "ink" | "neutral" | "accent" }> = {
+  primeira:  { label: "1ª linha",  tone: "ink"     },
+  segunda:   { label: "2ª linha",  tone: "neutral" },
+  terceira:  { label: "3ª linha",  tone: "neutral" },
+  adjuvante: { label: "Adjuvante", tone: "accent"  },
 }
 
 const VIA_LABELS: Record<Via, string> = {
@@ -1682,44 +1679,32 @@ const VIA_LABELS: Record<Via, string> = {
   Vaginal: "Vaginal", Transdérmica: "Transdérmica", Tópica: "Tópica", EV: "Endovenoso",
 }
 
-
 // ─── Components ───────────────────────────────────────────────────────────────
 
 function LinhaBadge({ linha }: { linha: Linha }) {
   const c = LINHA_CONFIG[linha]
-  return (
-    <span className={cn("text-badge font-mono font-semibold px-2 py-0.5 rounded-full border flex items-center gap-1", c.color, c.bg, c.border)}>
-      {linha === "primeira" && <Star className="w-2.5 h-2.5" />}
-      {c.label}
-    </span>
-  )
+  return <Tag tone={c.tone}>{c.label}</Tag>
 }
 
 function InfoRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div>
-      <div className="text-[10px] font-mono uppercase tracking-wider mb-1.5" style={{ color: "var(--text-muted)" }}>
-        {label}
-      </div>
+    <section>
+      <h4 className="mb-1.5 text-[12px] font-semibold text-px-muted">{label}</h4>
       {children}
-    </div>
+    </section>
   )
 }
 
-function BulletList({ items, color = "var(--text-secondary)", icon = "▸", iconColor }: {
-  items: string[]; color?: string; icon?: string; iconColor?: string
-}) {
+function BulletList({ items, danger = false }: { items: string[]; danger?: boolean }) {
   return (
-    <div className="space-y-1.5">
+    <ul className="space-y-1.5">
       {items.map((item, i) => (
-        <div key={i} className="flex items-start gap-2">
-          <span className="text-[9px] font-mono mt-0.5 flex-shrink-0" style={{ color: iconColor ?? "var(--accent)" }}>
-            {icon}
-          </span>
-          <span className="text-[11px] leading-relaxed" style={{ color }}>{item}</span>
-        </div>
+        <li key={i} className="flex items-start gap-2">
+          <span aria-hidden className={cn("mt-[7px] h-1 w-1 flex-shrink-0 rounded-full", danger ? "bg-px-danger" : "bg-px-ink/50")} />
+          <span className={cn("text-[12.5px] leading-relaxed", danger ? "text-px-danger" : "text-px-ink/80")}>{item}</span>
+        </li>
       ))}
-    </div>
+    </ul>
   )
 }
 
@@ -1729,165 +1714,108 @@ function MedCard({
   med: Medicamento; copied: string | null; onCopy: (id: string, text: string) => void
 }) {
   const [open, setOpen] = useState(false)
-  const linhaCfg = LINHA_CONFIG[med.linha]
+  const isCopied = copied === `med-${med.id}`
+  const Chevron = open ? ChevronDown : ChevronRight
 
   const copyText = [
     `${med.nome} (${med.nomesComerciais.join(", ")})`,
-    `Via: ${VIA_LABELS[med.via]} · ${LINHA_CONFIG[med.linha].label}`,
+    `Via: ${VIA_LABELS[med.via]}; ${LINHA_CONFIG[med.linha].label}`,
     `Dose inicial: ${med.doseInicial}`,
-    med.titulacao ? `\nTitulação:\n${med.titulacao.map(t => `  ${t.semana ? `Sem. ${t.semana}` : `Dia ${t.dia}`}: ${t.dose}${t.nota ? ` — ${t.nota}` : ""}`).join("\n")}` : "",
-    `\nContraindicações:\n${med.contraindicacoes.map(c => `  • ${c}`).join("\n")}`,
-    `\nEfeitos adversos:\n${med.efeitosAdversos.map(e => `  • ${e}`).join("\n")}`,
-    `\nMonitoramento:\n${med.monitoramento.map(m => `  • ${m}`).join("\n")}`,
-    med.notas ? `\nNotas:\n${med.notas.map(n => `  • ${n}`).join("\n")}` : "",
+    med.titulacao ? `\nTitulação:\n${med.titulacao.map(t => `  ${t.semana ? `Sem. ${t.semana}` : `Dia ${t.dia}`}: ${t.dose}${t.nota ? ` (${t.nota})` : ""}`).join("\n")}` : "",
+    `\nContraindicações:\n${med.contraindicacoes.map(c => `  - ${c}`).join("\n")}`,
+    `\nEfeitos adversos:\n${med.efeitosAdversos.map(e => `  - ${e}`).join("\n")}`,
+    `\nMonitoramento:\n${med.monitoramento.map(m => `  - ${m}`).join("\n")}`,
+    med.notas ? `\nNotas:\n${med.notas.map(n => `  - ${n}`).join("\n")}` : "",
   ].filter(Boolean).join("\n")
 
   return (
-    <div className="rounded-xl border overflow-hidden" style={{ borderColor: "var(--border)" }}>
+    <Panel as="article" tone="strong" className="p-0 shadow-none">
       <button
+        type="button"
+        aria-expanded={open}
         onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between px-4 py-3 transition-colors hover:bg-white/[0.02]"
-        style={{ background: "var(--card)" }}
+        className="flex w-full items-center justify-between gap-3 rounded-px-panel px-4 py-3 text-left transition-colors hover:bg-px-ink/[0.03]"
       >
-        <div className="flex items-center gap-3 flex-wrap">
-          <Pill className="w-3.5 h-3.5 flex-shrink-0" style={{ color: linhaCfg.color.replace("text-", "#").replace("-400", "") ?? "var(--accent)" }} />
-          <div className="text-left">
-            <span className="text-[13px] font-bold" style={{ color: "var(--text-primary)" }}>{med.nome}</span>
-            <span className="ml-2 text-[11px]" style={{ color: "var(--text-muted)" }}>
-              {med.nomesComerciais[0]}
-            </span>
-          </div>
-          <LinhaBadge linha={med.linha} />
-          <span className="text-[9px] font-mono px-1.5 py-0.5 rounded"
-            style={{ background: "var(--surface)", color: "var(--text-muted)" }}>
-            {VIA_LABELS[med.via]}
+        <span className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5">
+          <span>
+            <span className="text-[14px] font-semibold text-px-ink">{med.nome}</span>
+            <span className="ml-2 text-[12.5px] text-px-muted">{med.nomesComerciais[0]}</span>
           </span>
-        </div>
-        {open
-          ? <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "var(--text-muted)" }} />
-          : <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "var(--text-muted)" }} />}
+          <LinhaBadge linha={med.linha} />
+          <Tag>{VIA_LABELS[med.via]}</Tag>
+        </span>
+        <Chevron aria-hidden className="h-4 w-4 flex-shrink-0 text-px-muted" />
       </button>
 
       {open && (
-        <div className="px-4 pb-4 space-y-4 border-t" style={{ borderColor: "var(--border)", background: "var(--background)" }}>
-          <div className="pt-4 space-y-4">
+        <div className="space-y-5 border-t border-px-line px-4 pb-4 pt-4">
+          {(med.mecanismo || med.diferencial) && (
+            <div className="space-y-1.5 rounded-px-ctl bg-px-ink/[0.05] p-3.5">
+              {med.mecanismo && (
+                <p className="text-[12.5px] leading-relaxed text-px-ink/80">
+                  <span className="font-semibold text-px-ink">Mecanismo: </span>{med.mecanismo}
+                </p>
+              )}
+              {med.diferencial && (
+                <p className="text-[12.5px] leading-relaxed text-px-ink/80">
+                  <span className="font-semibold text-px-ink">Diferencial: </span>{med.diferencial}
+                </p>
+              )}
+            </div>
+          )}
 
-            {/* Mecanismo + Diferencial */}
-            {(med.mecanismo || med.diferencial) && (
-              <div className="rounded-lg p-3" style={{ background: "rgba(0,192,127,0.05)", border: "1px solid rgba(0,192,127,0.15)" }}>
-                {med.mecanismo && (
-                  <p className="text-[11px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-                    <span className="font-semibold" style={{ color: "var(--accent)" }}>Mecanismo: </span>
-                    {med.mecanismo}
-                  </p>
-                )}
-                {med.diferencial && (
-                  <p className="text-[11px] leading-relaxed mt-1" style={{ color: "var(--text-secondary)" }}>
-                    <span className="font-semibold" style={{ color: "#3b7fff" }}>Diferencial: </span>
-                    {med.diferencial}
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* Dose + Titulação */}
-            <InfoRow label="Posologia">
-              <div className="space-y-2">
-                <div className="text-[12px] font-semibold" style={{ color: "var(--text-primary)" }}>
-                  Início: {med.doseInicial}
+          <InfoRow label="Posologia">
+            <div className="space-y-2.5">
+              <div className="text-[13.5px] font-semibold text-px-ink">Início: {med.doseInicial}</div>
+              {med.titulacao && (
+                <div className="overflow-hidden rounded-px-ctl bg-px-ink/[0.05]">
+                  <div className="px-3.5 pb-1 pt-2.5 text-[12px] font-semibold text-px-muted">Esquema de titulação</div>
+                  <ul className="divide-y divide-px-ink/10">
+                    {med.titulacao.map((t, i) => (
+                      <li key={i} className="flex items-center justify-between gap-3 px-3.5 py-2">
+                        <span className="font-mono text-[12px] text-px-muted">{t.semana ? `Semana ${t.semana}` : `Dia ${t.dia}`}</span>
+                        <span className="text-right">
+                          <span className="text-[13px] font-semibold text-px-ink">{t.dose}</span>
+                          {t.nota && <span className="block text-[12px] text-px-accent">{t.nota}</span>}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-                {med.titulacao && (
-                  <div className="rounded-lg overflow-hidden" style={{ border: "1px solid var(--border)" }}>
-                    <div className="px-3 py-1.5" style={{ background: "var(--surface)" }}>
-                      <span className="text-[9px] font-mono uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
-                        Esquema de titulação
-                      </span>
-                    </div>
-                    <div className="divide-y" style={{ borderColor: "var(--border)" }}>
-                      {med.titulacao.map((t, i) => (
-                        <div key={i} className="flex items-center justify-between px-3 py-2">
-                          <span className="text-[10px] font-mono" style={{ color: "var(--text-muted)" }}>
-                            {t.semana ? `Semana ${t.semana}` : `Dia ${t.dia}`}
-                          </span>
-                          <div className="text-right">
-                            <span className="text-[12px] font-semibold" style={{ color: "var(--text-primary)" }}>
-                              {t.dose}
-                            </span>
-                            {t.nota && (
-                              <div className="text-[9px]" style={{ color: "var(--accent)" }}>{t.nota}</div>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {med.doseManutencao && (
-                  <div className="text-[11px]" style={{ color: "var(--text-muted)" }}>
-                    Manutenção: {med.doseManutencao}
-                  </div>
-                )}
+              )}
+              {med.doseManutencao && <div className="text-[12.5px] text-px-ink/75">Manutenção: {med.doseManutencao}</div>}
+            </div>
+          </InfoRow>
+
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <InfoRow label="Indicações"><BulletList items={med.indicacoes} /></InfoRow>
+            <InfoRow label="Contraindicações">
+              <div className="rounded-px-ctl bg-px-danger-soft p-3">
+                <BulletList items={med.contraindicacoes} danger />
               </div>
             </InfoRow>
+            <InfoRow label="Efeitos adversos"><BulletList items={med.efeitosAdversos} /></InfoRow>
+            <InfoRow label="Interações medicamentosas"><BulletList items={med.interacoes} /></InfoRow>
+          </div>
 
-            {/* 4-col grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <InfoRow label="Indicações">
-                <BulletList items={med.indicacoes} iconColor="#00c07f" />
-              </InfoRow>
-              <InfoRow label="Contraindicações">
-                <div className="space-y-1.5">
-                  {med.contraindicacoes.map((c, i) => (
-                    <div key={i} className="flex items-start gap-2">
-                      <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5 text-red-400" />
-                      <span className="text-[11px] leading-relaxed text-red-300">{c}</span>
-                    </div>
-                  ))}
-                </div>
-              </InfoRow>
-              <InfoRow label="Efeitos Adversos">
-                <BulletList items={med.efeitosAdversos} iconColor="#f59e0b" />
-              </InfoRow>
-              <InfoRow label="Interações Medicamentosas">
-                <BulletList items={med.interacoes} iconColor="#f97316" />
-              </InfoRow>
-            </div>
+          <InfoRow label="Monitoramento">
+            <div className="rounded-px-ctl bg-px-ink/[0.05] p-3.5"><BulletList items={med.monitoramento} /></div>
+          </InfoRow>
 
-            {/* Monitoramento */}
-            <InfoRow label="Monitoramento">
-              <div className="rounded-lg p-3" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-                <BulletList items={med.monitoramento} iconColor="#3b7fff" />
-              </div>
+          {med.notas && (
+            <InfoRow label="Notas clínicas">
+              <div className="rounded-px-ctl bg-px-ink/[0.05] p-3.5"><BulletList items={med.notas} /></div>
             </InfoRow>
+          )}
 
-            {/* Notas */}
-            {med.notas && (
-              <InfoRow label="Notas Clínicas">
-                <div className="rounded-lg p-3" style={{ background: "rgba(59,127,255,0.06)", border: "1px solid rgba(59,127,255,0.2)" }}>
-                  <BulletList items={med.notas} iconColor="#3b7fff" />
-                </div>
-              </InfoRow>
-            )}
-
-            {/* Actions */}
-            <div className="flex justify-end">
-              <button
-                onClick={() => onCopy(`med-${med.id}`, copyText)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all"
-                style={{
-                  background: copied === `med-${med.id}` ? "var(--accent-dim)" : "var(--surface)",
-                  border: `1px solid ${copied === `med-${med.id}` ? "var(--accent-border)" : "var(--border)"}`,
-                  color: copied === `med-${med.id}` ? "var(--accent)" : "var(--text-muted)",
-                }}
-              >
-                {copied === `med-${med.id}` ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                {copied === `med-${med.id}` ? "Copiado!" : "Copiar prescrição"}
-              </button>
-            </div>
+          <div className="flex justify-end">
+            <PxButton variant="secondary" leftIcon={isCopied ? Check : Copy} onClick={() => onCopy(`med-${med.id}`, copyText)}>
+              {isCopied ? "Copiado" : "Copiar prescrição"}
+            </PxButton>
           </div>
         </div>
       )}
-    </div>
+    </Panel>
   )
 }
 
@@ -1922,6 +1850,8 @@ function calcIMC(peso: number | null | undefined, altura: number | null | undefi
   return Math.round(peso / ((altura / 100) ** 2) * 10) / 10
 }
 
+type FiltroLinha = "todas" | Linha
+
 function PrescricaoContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -1937,12 +1867,14 @@ function PrescricaoContent() {
   }
 
   const [search,   setSearch]   = useState("")
+  const [linha,    setLinha]    = useState<FiltroLinha>("todas")
   const [openDiag, setOpenDiag] = useState<Record<string, boolean>>({})
   const [copied, setCopied] = useState<string | null>(null)
 
   const [paciente,        setPaciente]        = useState<PacienteBanner | null>(null)
   const [sugestoes,       setSugestoes]       = useState<Record<string, SugestaoResult>>({})
   const [loadingSugestao, setLoadingSugestao] = useState<Record<string, boolean>>({})
+  const [erroSugestao,    setErroSugestao]    = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     if (!pacienteId) return
@@ -1955,16 +1887,25 @@ function PrescricaoContent() {
   async function gerarSugestao(diag: Diagnostico) {
     if (!pacienteId) return
     setLoadingSugestao(prev => ({ ...prev, [diag.id]: true }))
+    setErroSugestao(prev => ({ ...prev, [diag.id]: false }))
     try {
       const res = await fetch("/api/prescricao/sugestao", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pacienteId, diagnosticoId: diag.id, diagnosticoNome: diag.nome }),
       })
-      const data = await res.json() as SugestaoResult
-      setSugestoes(prev => ({ ...prev, [diag.id]: data }))
+      const data = await res.json().catch(() => null)
+      if (!res.ok || !data || typeof data.justificativa !== "string") throw new Error("resposta inválida")
+      const sug: SugestaoResult = {
+        justificativa: data.justificativa,
+        medicamentos1aLinha: Array.isArray(data.medicamentos1aLinha) ? data.medicamentos1aLinha : [],
+        examesRecomendados: Array.isArray(data.examesRecomendados) ? data.examesRecomendados : [],
+        alertas: Array.isArray(data.alertas) ? data.alertas : [],
+        retornoPrevisto: typeof data.retornoPrevisto === "string" ? data.retornoPrevisto : "",
+      }
+      setSugestoes(prev => ({ ...prev, [diag.id]: sug }))
     } catch {
-      /* silently fail */
+      setErroSugestao(prev => ({ ...prev, [diag.id]: true }))
     } finally {
       setLoadingSugestao(prev => ({ ...prev, [diag.id]: false }))
     }
@@ -1974,10 +1915,10 @@ function PrescricaoContent() {
     navigator.clipboard.writeText(text).then(() => {
       setCopied(id)
       setTimeout(() => setCopied(null), 2000)
-    })
+    }).catch(() => {})
   }
 
-  const filtered = useMemo(() => {
+  const porBusca = useMemo(() => {
     const q = search.toLowerCase().trim()
     if (!q) return [...DIAGNOSTICOS].sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"))
     return [...DIAGNOSTICOS]
@@ -1994,269 +1935,217 @@ function PrescricaoContent() {
       .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"))
   }, [search])
 
+  const contagem = useMemo(() => {
+    const c: Record<FiltroLinha, number> = { todas: 0, primeira: 0, segunda: 0, terceira: 0, adjuvante: 0 }
+    porBusca.forEach(d => d.medicamentos.forEach(m => { c.todas++; c[m.linha]++ }))
+    return c
+  }, [porBusca])
+
+  const filtered = useMemo(() => {
+    if (linha === "todas") return porBusca
+    return porBusca
+      .map(d => ({ ...d, medicamentos: d.medicamentos.filter(m => m.linha === linha) }))
+      .filter(d => d.medicamentos.length > 0)
+  }, [porBusca, linha])
+
   const totalMeds = DIAGNOSTICOS.reduce((s, d) => s + d.medicamentos.length, 0)
+  const idade = calcIdade(paciente?.data_nascimento)
+  const imc = calcIMC(paciente?.peso, paciente?.altura)
 
   return (
     <div className="animate-fade-in">
-      <TopBar
-        title="Prescrição Assistida"
-        subtitle="PROTOCOLOS CLÍNICOS · DOSES E TITULAÇÃO · CONTRAINDICAÇÕES E INTERAÇÕES"
-        actions={
-          tab === "medicamentos" ? (
-            <span className="text-[10px] font-mono px-3 py-1.5 rounded-lg border"
-              style={{ background: "var(--surface)", borderColor: "var(--border)", color: "var(--text-muted)" }}>
-              {totalMeds} medicamentos · {DIAGNOSTICOS.length} diagnósticos
-            </span>
-          ) : undefined
-        }
+      <PageHeader
+        title="Prescrição assistida"
+        caption={tab === "medicamentos"
+          ? `${totalMeds} medicamentos em ${DIAGNOSTICOS.length} diagnósticos, com doses, titulação, contraindicações e interações`
+          : "Protocolos clínicos, doses e titulação"}
       />
 
-      {/* Tab bar */}
-      <div className="flex border-b border-border px-4 md:px-8">
-        {(["medicamentos", "emagrecimento", "protocolos"] as const).map(t => (
-          <button
-            key={t}
-            onClick={() => switchTab(t)}
-            className={cn(
-              "px-4 py-3 text-[12px] font-medium border-b-2 -mb-px transition-colors flex items-center gap-1.5",
-              tab === t
-                ? "border-accent text-accent"
-                : "border-transparent text-text-muted hover:text-text-secondary"
-            )}
-          >
-            {t === "medicamentos"  ? <><Pill className="w-3.5 h-3.5" />Prescrição Rápida</>
-           : t === "emagrecimento" ? "Emagrecimento Inteligente"
-           :                         <><ClipboardList className="w-3.5 h-3.5" />Conduta Clínica</>}
-          </button>
-        ))}
-      </div>
+      <div className="space-y-4 px-4 pb-10 md:px-10">
+        <Segmented
+          label="Seção da prescrição"
+          value={tab}
+          onChange={switchTab}
+          options={[
+            { value: "medicamentos",  label: "Prescrição rápida" },
+            { value: "emagrecimento", label: "Emagrecimento inteligente" },
+            { value: "protocolos",    label: "Conduta clínica" },
+          ]}
+        />
 
-      {/* Patient banner */}
-      {pacienteId && paciente && (
-        <div className="mx-4 md:mx-8 mt-4 flex items-center gap-3 rounded-xl px-4 py-3"
-          style={{ background: "rgba(59,127,255,0.07)", border: "1px solid rgba(59,127,255,0.25)" }}>
-          <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-[11px] font-bold text-blue-400"
-            style={{ background: "rgba(59,127,255,0.15)" }}>
-            <User className="w-4 h-4" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-[13px] font-semibold text-blue-300 truncate">{paciente.nome}</div>
-            <div className="text-[10px] font-mono text-blue-400/70 flex flex-wrap gap-x-3 mt-0.5">
-              {calcIdade(paciente.data_nascimento) && <span>{calcIdade(paciente.data_nascimento)} anos</span>}
-              {paciente.sexo && <span>{paciente.sexo === "M" ? "Masc." : paciente.sexo === "F" ? "Fem." : "Outro"}</span>}
+        {pacienteId && paciente && (
+          <Panel className="flex flex-wrap items-center gap-x-4 gap-y-1 py-3.5">
+            <span className="text-[14px] font-semibold text-px-ink">{paciente.nome}</span>
+            <span className="flex flex-wrap gap-x-3 text-[12.5px] text-px-muted">
+              {idade !== null && <span>{idade} anos</span>}
+              {paciente.sexo && <span>{paciente.sexo === "M" ? "Masculino" : paciente.sexo === "F" ? "Feminino" : "Outro"}</span>}
               {paciente.peso && <span>{paciente.peso} kg</span>}
               {paciente.altura && <span>{paciente.altura} cm</span>}
-              {calcIMC(paciente.peso, paciente.altura) && <span>IMC {calcIMC(paciente.peso, paciente.altura)} kg/m²</span>}
-            </div>
-          </div>
-          <span className="text-badge font-mono px-2 py-0.5 rounded-full text-blue-400 bg-blue-500/10 border border-blue-500/20 flex-shrink-0">
-            PERSONALIZADO
-          </span>
-        </div>
-      )}
+              {imc !== null && <span>IMC {imc} kg/m²</span>}
+            </span>
+            <span className="text-[12.5px] text-px-muted sm:ml-auto">A sugestão personalizada usa estes dados</span>
+          </Panel>
+        )}
+      </div>
 
       {tab === "emagrecimento" ? (
         <EmagrecimentoTab />
       ) : tab === "protocolos" ? (
         <ProtocolosTab />
       ) : (
-      <div className="p-4 md:p-8 space-y-5">
-
-        {/* Search */}
+      <div className="space-y-4 px-4 pb-10 md:px-10">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--text-muted)" }} />
-          <input
+          <Search aria-hidden className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-px-muted" />
+          <PxInput
+            type="search"
+            aria-label="Buscar diagnóstico ou medicamento"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Buscar diagnóstico ou medicamento…"
-            className="w-full pl-9 pr-4 py-2.5 rounded-xl text-[13px] outline-none"
-            style={{ background: "var(--card)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
-            onFocus={e => (e.currentTarget.style.borderColor = "var(--accent)")}
-            onBlur={e => (e.currentTarget.style.borderColor = "var(--border)")}
+            placeholder="Buscar diagnóstico ou medicamento"
+            className="pl-10"
           />
         </div>
 
-        {/* Legend */}
-        <div className="flex flex-wrap gap-3 text-[10px]">
-          {(Object.entries(LINHA_CONFIG) as [Linha, typeof LINHA_CONFIG[Linha]][]).map(([k, v]) => (
-            <div key={k} className={cn("flex items-center gap-1.5 px-2.5 py-1 rounded-full border", v.color, v.bg, v.border)}>
-              {k === "primeira" && <Star className="w-2.5 h-2.5" />}
-              {v.label}
-            </div>
-          ))}
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-blue-700 bg-blue-50 border-blue-200">
-            <Info className="w-2.5 h-2.5" />Monitoramento obrigatório
-          </div>
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-red-700 bg-red-50 border-red-200">
-            <Shield className="w-2.5 h-2.5" />Contraindicação listada
-          </div>
-        </div>
+        <Segmented
+          label="Linha de tratamento"
+          value={linha}
+          onChange={setLinha}
+          options={[
+            { value: "todas",     label: `Todas (${contagem.todas})` },
+            { value: "primeira",  label: `1ª linha (${contagem.primeira})` },
+            { value: "segunda",   label: `2ª linha (${contagem.segunda})` },
+            { value: "terceira",  label: `3ª linha (${contagem.terceira})` },
+            { value: "adjuvante", label: `Adjuvante (${contagem.adjuvante})` },
+          ]}
+        />
 
-        {/* Accordion by diagnosis */}
-        {filtered.map(diag => (
-          <div key={diag.id} className="rounded-2xl overflow-hidden"
-            style={{ border: "1px solid var(--border)" }}>
-            <button
-              onClick={() => setOpenDiag(prev => ({ ...prev, [diag.id]: !prev[diag.id] }))}
-              className="w-full flex items-center justify-between px-5 py-4 transition-colors hover:bg-white/[0.02]"
-              style={{ background: "var(--card)" }}
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ background: "var(--accent-dim)", border: "1px solid var(--accent-border)" }}>
-                  <Pill className="w-4 h-4" style={{ color: "var(--accent)" }} />
-                </div>
-                <div className="text-left">
-                  <div className="text-[14px] font-bold" style={{ color: "var(--text-primary)" }}>{diag.nome}</div>
-                  <div className="text-[10px] font-mono mt-0.5" style={{ color: "var(--text-muted)" }}>
-                    {diag.categoria.toUpperCase()} · {diag.medicamentos.length} MEDICAMENTO{diag.medicamentos.length !== 1 ? "S" : ""}
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                {diag.medicamentos.filter(m => m.linha === "primeira").length > 0 && (
-                  <span className="text-badge font-mono px-2 py-0.5 rounded-full text-green-700 bg-green-50 border border-green-200">
-                    <Star className="w-2.5 h-2.5 inline mr-0.5" />
-                    {diag.medicamentos.filter(m => m.linha === "primeira").length} 1ª linha
+        {filtered.map(diag => {
+          const n1 = diag.medicamentos.filter(m => m.linha === "primeira").length
+          const aberto = !!openDiag[diag.id]
+          const Chevron = aberto ? ChevronDown : ChevronRight
+          return (
+            <Panel as="article" key={diag.id} className="p-0">
+              <button
+                type="button"
+                aria-expanded={aberto}
+                onClick={() => setOpenDiag(prev => ({ ...prev, [diag.id]: !prev[diag.id] }))}
+                className="flex w-full items-center justify-between gap-3 rounded-px-panel px-5 py-4 text-left transition-colors hover:bg-px-ink/[0.03]"
+              >
+                <span className="min-w-0">
+                  <span className="block text-[15px] font-semibold text-px-ink">{diag.nome}</span>
+                  <span className="mt-0.5 block text-[12.5px] text-px-muted">
+                    {diag.categoria}, {diag.medicamentos.length} {diag.medicamentos.length === 1 ? "medicamento" : "medicamentos"}
                   </span>
-                )}
-                {openDiag[diag.id]
-                  ? <ChevronDown className="w-4 h-4 flex-shrink-0" style={{ color: "var(--text-muted)" }} />
-                  : <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: "var(--text-muted)" }} />}
-              </div>
-            </button>
+                </span>
+                <span className="flex flex-shrink-0 items-center gap-2.5">
+                  {n1 > 0 && <Tag tone="ink">{n1} de 1ª linha</Tag>}
+                  <Chevron aria-hidden className="h-4 w-4 text-px-muted" />
+                </span>
+              </button>
 
-            {openDiag[diag.id] && (
-              <div className="p-4 space-y-3" style={{ background: "var(--background)", borderTop: "1px solid var(--border)" }}>
-                {diag.medicamentos.map(med => (
-                  <MedCard key={med.id} med={med} copied={copied} onCopy={copy} />
-                ))}
+              {aberto && (
+                <div className="space-y-3 border-t border-px-line p-4">
+                  {diag.medicamentos.map(med => (
+                    <MedCard key={med.id} med={med} copied={copied} onCopy={copy} />
+                  ))}
 
-                {/* Sugestão Personalizada ✨ */}
-                {pacienteId && (
-                  <div className="pt-1 space-y-3">
-                    {!sugestoes[diag.id] && (
-                      <button
-                        onClick={() => gerarSugestao(diag)}
-                        disabled={loadingSugestao[diag.id]}
-                        className={cn(
-                          "flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-lg border transition-all",
-                          loadingSugestao[diag.id]
-                            ? "opacity-60 cursor-not-allowed border-border text-text-muted"
-                            : "bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20"
-                        )}
-                      >
-                        {loadingSugestao[diag.id]
-                          ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          : <Sparkles className="w-3.5 h-3.5" />}
-                        {loadingSugestao[diag.id] ? "Gerando sugestão…" : "Sugestão Personalizada"}
-                      </button>
-                    )}
+                  {pacienteId && (
+                    <div className="space-y-3 pt-1">
+                      {!sugestoes[diag.id] && (
+                        <PxButton variant="secondary" size="sm" leftIcon={Sparkles}
+                          loading={loadingSugestao[diag.id]} disabled={loadingSugestao[diag.id]}
+                          onClick={() => gerarSugestao(diag)}>
+                          {loadingSugestao[diag.id] ? "Gerando sugestão" : "Sugestão personalizada"}
+                        </PxButton>
+                      )}
 
-                    {sugestoes[diag.id] && (
-                      <div className="rounded-xl p-4 space-y-3"
-                        style={{ background: "rgba(0,192,127,0.05)", border: "1px solid rgba(0,192,127,0.25)" }}>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Sparkles className="w-3.5 h-3.5" style={{ color: "var(--accent)" }} />
-                            <span className="text-[11px] font-semibold" style={{ color: "var(--accent)" }}>
-                              Sugestão Personalizada — {paciente?.nome}
-                            </span>
-                          </div>
-                          <button
-                            onClick={() => setSugestoes(prev => { const n = { ...prev }; delete n[diag.id]; return n })}
-                            className="text-[9px] font-mono text-text-muted hover:text-text-secondary transition-colors"
-                          >
-                            fechar
-                          </button>
+                      {erroSugestao[diag.id] && (
+                        <div role="alert" className="flex items-start gap-2 rounded-px-ctl bg-px-danger-soft p-3">
+                          <AlertTriangle aria-hidden className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-px-danger" />
+                          <span className="text-[12.5px] text-px-danger">Não foi possível gerar a sugestão. Tente de novo.</span>
                         </div>
+                      )}
 
-                        <p className="text-[11px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-                          {sugestoes[diag.id].justificativa}
-                        </p>
+                      {sugestoes[diag.id] && (
+                        <div className="space-y-3.5 rounded-px-card bg-px-ink/[0.06] p-4">
+                          <div className="flex items-center justify-between gap-3">
+                            <h4 className="text-[13px] font-semibold text-px-ink">Sugestão personalizada{paciente ? `: ${paciente.nome}` : ""}</h4>
+                            <PxButton variant="quiet" size="sm"
+                              onClick={() => setSugestoes(prev => { const n = { ...prev }; delete n[diag.id]; return n })}>
+                              Fechar
+                            </PxButton>
+                          </div>
 
-                        {sugestoes[diag.id].medicamentos1aLinha.length > 0 && (
-                          <div>
-                            <div className="text-[9px] font-mono font-semibold mb-1.5 uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
-                              Medicamentos 1ª Linha
-                            </div>
-                            <div className="space-y-1.5">
-                              {sugestoes[diag.id].medicamentos1aLinha.map((m, i) => (
-                                <div key={i} className="flex items-start gap-2 text-[11px]">
-                                  <span className="text-accent font-semibold min-w-0 flex-shrink-0">•</span>
-                                  <span style={{ color: "var(--text-primary)" }}>
-                                    <strong>{m.nome}</strong> — {m.dose}
-                                    {m.ajuste && <span className="text-amber-400"> ({m.ajuste})</span>}
-                                  </span>
+                          <p className="text-[12.5px] leading-relaxed text-px-ink/85">{sugestoes[diag.id].justificativa}</p>
+
+                          {sugestoes[diag.id].medicamentos1aLinha.length > 0 && (
+                            <InfoRow label="Medicamentos de 1ª linha">
+                              <ul className="space-y-1.5">
+                                {sugestoes[diag.id].medicamentos1aLinha.map((m, i) => (
+                                  <li key={i} className="text-[12.5px] text-px-ink">
+                                    <strong>{m.nome}</strong>: {m.dose}
+                                    {m.ajuste && <span className="text-px-ink/75"> ({m.ajuste})</span>}
+                                  </li>
+                                ))}
+                              </ul>
+                            </InfoRow>
+                          )}
+
+                          {sugestoes[diag.id].examesRecomendados.length > 0 && (
+                            <InfoRow label="Exames recomendados">
+                              <div className="flex flex-wrap gap-1.5">
+                                {sugestoes[diag.id].examesRecomendados.map((e, i) => <Tag key={i}>{e}</Tag>)}
+                              </div>
+                            </InfoRow>
+                          )}
+
+                          {sugestoes[diag.id].alertas.length > 0 && (
+                            <div className="space-y-1.5 rounded-px-ctl bg-px-warn-soft p-3">
+                              {sugestoes[diag.id].alertas.map((a, i) => (
+                                <div key={i} className="flex items-start gap-2 text-[12.5px] text-px-warn">
+                                  <AlertTriangle aria-hidden className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
+                                  <span>{a}</span>
                                 </div>
                               ))}
                             </div>
-                          </div>
-                        )}
+                          )}
 
-                        {sugestoes[diag.id].examesRecomendados.length > 0 && (
-                          <div>
-                            <div className="text-[9px] font-mono font-semibold mb-1 uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
-                              Exames Recomendados
+                          {sugestoes[diag.id].retornoPrevisto && (
+                            <div className="flex items-center gap-1.5 text-[12.5px] text-px-ink/80">
+                              <Info aria-hidden className="h-3.5 w-3.5" />
+                              <span>Retorno previsto: <strong className="text-px-ink">{sugestoes[diag.id].retornoPrevisto}</strong></span>
                             </div>
-                            <div className="flex flex-wrap gap-1.5">
-                              {sugestoes[diag.id].examesRecomendados.map((e, i) => (
-                                <span key={i} className="text-[10px] px-2 py-0.5 rounded-full border text-blue-400 bg-blue-500/10 border-blue-500/20">
-                                  {e}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
+                          )}
 
-                        {sugestoes[diag.id].alertas.length > 0 && (
-                          <div className="flex flex-wrap gap-1.5">
-                            {sugestoes[diag.id].alertas.map((a, i) => (
-                              <div key={i} className="flex items-start gap-1 text-[10px] text-amber-400">
-                                <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5" />
-                                <span>{a}</span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-
-                        <div className="flex items-center gap-1.5 text-[10px]" style={{ color: "var(--text-muted)" }}>
-                          <Info className="w-3 h-3" />
-                          <span>Retorno previsto: <strong style={{ color: "var(--text-secondary)" }}>{sugestoes[diag.id].retornoPrevisto}</strong></span>
+                          <PxButton variant="quiet" size="sm" leftIcon={Sparkles}
+                            loading={loadingSugestao[diag.id]} disabled={loadingSugestao[diag.id]}
+                            onClick={() => gerarSugestao(diag)}>
+                            Gerar de novo
+                          </PxButton>
                         </div>
+                      )}
+                    </div>
+                  )}
 
-                        <button
-                          onClick={() => gerarSugestao(diag)}
-                          disabled={loadingSugestao[diag.id]}
-                          className="flex items-center gap-1 text-[9px] font-mono text-text-muted hover:text-accent transition-colors"
-                        >
-                          {loadingSugestao[diag.id] ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : <Sparkles className="w-2.5 h-2.5" />}
-                          Regerar
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
+                  <PxButton variant="quiet" size="sm" leftIcon={ClipboardList} onClick={() => router.replace("/prescricao?tab=protocolos")}>
+                    Ver conduta clínica completa
+                  </PxButton>
+                </div>
+              )}
+            </Panel>
+          )
+        })}
 
-                <button
-                  onClick={() => router.replace("/prescricao?tab=protocolos")}
-                  className="flex items-center gap-1.5 text-[10px] font-mono text-text-muted hover:text-accent transition-colors pt-1"
-                >
-                  <ClipboardList className="w-3 h-3" />
-                  Ver conduta clínica completa →
-                </button>
-              </div>
-            )}
-          </div>
-        ))}
-
-        {search.trim() !== "" && filtered.length === 0 && (
-          <div className="text-center py-20">
-            <Pill className="w-12 h-12 mx-auto mb-4" style={{ color: "var(--text-muted)" }} />
-            <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
-              Nenhum resultado para &quot;{search}&quot;
+        {filtered.length === 0 && (
+          <Panel className="py-12 text-center">
+            <p className="text-[13.5px] text-px-ink">
+              {search.trim() ? `Nenhum resultado para "${search}"` : "Nenhum medicamento nesta linha de tratamento"}
+              {search.trim() && linha !== "todas" ? ` na ${LINHA_CONFIG[linha].label === "Adjuvante" ? "linha adjuvante" : LINHA_CONFIG[linha].label}` : ""}.
             </p>
-          </div>
+            <div className="mt-3 flex justify-center">
+              <PxButton variant="secondary" size="sm" onClick={() => { setSearch(""); setLinha("todas") }}>Limpar filtros</PxButton>
+            </div>
+          </Panel>
         )}
       </div>
       )}

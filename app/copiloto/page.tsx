@@ -1017,10 +1017,10 @@ function CopilotoContent() {
       )}
 
       {/* Two-panel layout */}
-      <div className="flex flex-col md:grid md:grid-cols-[2fr_3fr] min-h-[calc(100vh-60px)]">
+      <div className="flex flex-col gap-4 px-4 pb-10 pt-4 md:grid md:grid-cols-[2fr_3fr] md:items-start md:px-10">
 
         {/* ── LEFT: Briefing ────────────────────────────────────────────────── */}
-        <div className="border-b md:border-b-0 md:border-r border-border p-5 md:p-8 md:overflow-y-auto md:sticky md:top-[60px] md:max-h-[calc(100vh-60px)]">
+        <div className="px-glass rounded-px-panel p-5 md:p-6">
           <div className="pb-24 md:pb-0 space-y-5">
 
             <div>
@@ -1318,7 +1318,7 @@ function CopilotoContent() {
         </div>
 
         {/* ── RIGHT: Output ─────────────────────────────────────────────────── */}
-        <div className={cn("p-5 md:p-8 md:overflow-y-auto", phase === "done" && "pb-28 md:pb-8")}>
+        <div className="px-glass rounded-px-panel p-5 md:p-6">
           {phase === "idle" && !result && <RightPanelEmpty />}
           {phase === "loading" && <Skeleton />}
 

@@ -3,7 +3,7 @@
 import * as React from "react"
 import { useRouter } from "next/navigation"
 import { ChevronLeft } from "lucide-react"
-import { BellMenu } from "@/components/TopBar"
+import { BellMenu } from "@/components/BellMenu"
 
 interface PageHeaderProps {
   title: string

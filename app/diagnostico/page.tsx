@@ -1,13 +1,9 @@
 "use client"
 
-import { useState } from "react"
-import { RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer } from "recharts"
-import { Activity, ChevronRight, Check, Loader2, Zap, Target, Calendar, ExternalLink, ArrowLeft } from "lucide-react"
-import { cn } from "@/lib/utils"
-import Link from "next/link"
-import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
+import { useEffect, useRef, useState } from "react"
+import { Panel, PxButton, Segmented, Tag, PageHeader } from "@/components/px"
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// ─── Tipos ────────────────────────────────────────────────────────────────────
 
 interface Pergunta { id: string; texto: string }
 interface Dimensao  { id: string; titulo: string; perguntas: Pergunta[] }
@@ -22,9 +18,11 @@ interface PlanoResult {
     mes3: { semana: string; acao: string }[]
   }
   quick_wins: string[]
+  _scores?:     Record<string, number>
+  _scoreGeral?: number
 }
 
-// ─── Questions ────────────────────────────────────────────────────────────────
+// ─── Perguntas ───────────────────────────────────────────────────────────────
 
 const DIMENSOES: Dimensao[] = [
   {
@@ -87,40 +85,39 @@ const DIMENSOES: Dimensao[] = [
 ]
 
 const SCORE_LABELS: Record<number, string> = { 1: "Não", 2: "Raramente", 3: "Às vezes", 4: "Frequentemente", 5: "Sim, sempre" }
-const CLASSIF_COLOR: Record<string, string> = {
-  "Clínica Iniciante": "text-red-400",
-  "Em Crescimento":    "text-amber-400",
-  "Estruturada":       "text-blue-400",
-  "Premium":           "text-purple-400",
-  "Referência":        "text-accent",
-}
-const CLASSIF_SCORE: Record<string, string> = {
-  "Clínica Iniciante": "0-30",
-  "Em Crescimento":    "31-55",
-  "Estruturada":       "56-75",
-  "Premium":           "76-89",
-  "Referência":        "90-100",
+
+const LOAD_PHRASES = [
+  "Analisando dimensões da clínica",
+  "Calculando pontuações",
+  "Identificando prioridades",
+  "Gerando plano de 90 dias",
+  "Finalizando diagnóstico",
+]
+
+const ESCALA = [1, 2, 3, 4, 5].map(v => ({ value: String(v), label: String(v) }))
+
+function Barra({ pct, label }: { pct: number; label: string }) {
+  return (
+    <div role="progressbar" aria-label={label} aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct} className="h-2 w-full overflow-hidden rounded-full bg-px-ink/10">
+      <div className="h-full rounded-full bg-px-ink transition-all" style={{ width: `${pct}%` }} />
+    </div>
+  )
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// ─── Página ───────────────────────────────────────────────────────────────────
 
 export default function DiagnosticoPage() {
-  const [step,         setStep]         = useState(0) // 0=intro, 1-5=dimensão, 6=loading, 7=result
-  const [respostas,    setRespostas]    = useState<Record<string, number>>({})
-  const [result,       setResult]       = useState<PlanoResult | null>(null)
-  const [error,        setError]        = useState("")
-  const [loadPhrase,   setLoadPhrase]   = useState(0)
+  const [step,       setStep]       = useState(0) // 0 intro, 1 a 5 dimensões, 6 carregando, 7 resultado
+  const [respostas,  setRespostas]  = useState<Record<string, number>>({})
+  const [result,     setResult]     = useState<PlanoResult | null>(null)
+  const [error,      setError]      = useState("")
+  const [loadPhrase, setLoadPhrase] = useState(0)
+  const timer = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  const LOAD_PHRASES = [
-    "Analisando dimensões da clínica...",
-    "Calculando pontuações...",
-    "Identificando prioridades...",
-    "Gerando plano de 90 dias...",
-    "Finalizando diagnóstico...",
-  ]
+  const parar = () => { if (timer.current) { clearInterval(timer.current); timer.current = null } }
+  useEffect(() => parar, [])
 
-  const dimIdx      = step - 1
-  const dimAtual    = step >= 1 && step <= 5 ? DIMENSOES[dimIdx] : null
+  const dimAtual    = step >= 1 && step <= 5 ? DIMENSOES[step - 1] : null
   const totalPergs  = DIMENSOES.reduce((s, d) => s + d.perguntas.length, 0)
   const respondidas = Object.keys(respostas).length
 
@@ -131,345 +128,194 @@ export default function DiagnosticoPage() {
     return Math.round((vals.reduce((s, v) => s + v, 0) / (vals.length * 5)) * 100)
   }
 
-  function canAdvance() {
-    if (!dimAtual) return false
-    return dimAtual.perguntas.every(p => respostas[p.id] !== undefined)
-  }
+  const canAdvance = !!dimAtual && dimAtual.perguntas.every(p => respostas[p.id] !== undefined)
 
   async function finalizar() {
     const scores = Object.fromEntries(DIMENSOES.map(d => [d.titulo, scoreFor(d.id)]))
     const score_geral = Math.round(Object.values(scores).reduce((s, v) => s + v, 0) / DIMENSOES.length)
-    setStep(6)
+    setError(""); setLoadPhrase(0); setStep(6)
 
-    const interval = setInterval(() => setLoadPhrase(i => (i + 1) % LOAD_PHRASES.length), 1800)
+    parar()
+    timer.current = setInterval(() => setLoadPhrase(i => (i + 1) % LOAD_PHRASES.length), 1800)
     try {
       const res = await fetch("/api/diagnostico", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ respostas, scores, score_geral }),
       })
-      const data = await res.json()
-      clearInterval(interval)
-      if (!res.ok || data.error) { setError(data.error ?? "Erro"); setStep(5); return }
-      setResult({ ...data, _scores: scores, _scoreGeral: score_geral } as PlanoResult & { _scores: Record<string, number>; _scoreGeral: number })
+      const data = await res.json().catch(() => ({}))
+      parar()
+      if (!res.ok || data.error) { setError(data.error ?? "Não foi possível gerar o diagnóstico. Tente novamente."); setStep(5); return }
+      setResult({ ...data, _scores: scores, _scoreGeral: score_geral })
       setStep(7)
     } catch (e) {
       console.error("[diagnostico] erro ao gerar diagnóstico:", e)
-      clearInterval(interval)
-      setError("Erro de conexão.")
+      parar()
+      setError("Erro de conexão. Suas respostas foram mantidas, tente novamente.")
       setStep(5)
     }
   }
 
-  // Radar data
   const radarData = DIMENSOES.map(d => ({ dimensao: d.titulo, score: scoreFor(d.id) }))
-  const scoreGeral = result
-    ? Math.round(radarData.reduce((s, r) => s + r.score, 0) / radarData.length)
-    : 0
+  const scoreGeral = Math.round(radarData.reduce((s, r) => s + r.score, 0) / radarData.length)
 
-  // ── Intro ──
+  // ── Introdução ──
   if (step === 0) {
     return (
       <div className="animate-fade-in">
-        <div className="p-4 md:p-8 max-w-2xl">
-          <Link href="/dashboard" className="inline-flex items-center gap-1.5 text-[11px] font-mono text-text-muted hover:text-text-primary transition-colors mb-5">
-            <ArrowLeft className="w-3.5 h-3.5" /> Dashboard
-          </Link>
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-9 h-9 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center">
-              <Activity className="w-5 h-5 text-accent" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-text-primary">Diagnóstico 360°</h1>
-              <p className="text-sm text-text-muted font-mono">PRAXIS IA · ANÁLISE COMPLETA</p>
-              <p className="text-[12px] text-text-secondary mt-1.5">Responda um questionário rápido e receba um diagnóstico completo da sua clínica com plano de ação.</p>
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-accent/20 bg-accent/5 p-6 mb-6">
-            <h2 className="text-lg font-semibold text-text-primary mb-2">Descubra onde sua clínica está</h2>
-            <p className="text-sm text-text-secondary leading-relaxed mb-4">
-              Responda {totalPergs} perguntas em 5 dimensões e receba um diagnóstico completo com seu score, classificação e um plano de ação de 90 dias gerado por IA.
+        <PageHeader title="Diagnóstico 360" caption="Análise completa da clínica com plano de ação" back />
+        <div className="max-w-2xl space-y-4 px-4 pb-10 md:px-10">
+          <Panel className="space-y-4">
+            <h2 className="text-[18px] font-semibold text-px-ink">Descubra onde sua clínica está</h2>
+            <p className="text-[13.5px] leading-relaxed text-px-ink/80">
+              Responda {totalPergs} perguntas em 5 dimensões. No final você recebe seu score, a classificação da clínica e um plano de ação de 90 dias gerado por IA.
             </p>
-            <div className="grid grid-cols-5 sm:grid-cols-5 gap-1.5 sm:gap-2">
+            <ol className="grid grid-cols-5 gap-2">
               {DIMENSOES.map((d, i) => (
-                <div key={d.id} className="text-center">
-                  <div className="w-8 h-8 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center mx-auto mb-1">
-                    <span className="text-xs font-mono font-bold text-accent">{i + 1}</span>
-                  </div>
-                  <p className="text-[10px] text-text-muted">{d.titulo}</p>
-                </div>
+                <li key={d.id} className="text-center">
+                  <span aria-hidden="true" className="mx-auto mb-1 flex h-8 w-8 items-center justify-center rounded-full bg-px-ink text-[12.5px] font-semibold text-white">{i + 1}</span>
+                  <span className="text-[12px] text-px-muted">{d.titulo}</span>
+                </li>
               ))}
-            </div>
-          </div>
-
-          <button
-            onClick={() => setStep(1)}
-            className="flex items-center gap-2 bg-accent text-[--background] font-semibold text-sm px-6 py-3 rounded-xl hover:bg-accent/90 transition-colors"
-          >
-            Iniciar Diagnóstico
-            <ChevronRight className="w-4 h-4" />
-          </button>
+            </ol>
+          </Panel>
+          <PxButton onClick={() => setStep(1)}>Iniciar diagnóstico</PxButton>
         </div>
       </div>
     )
   }
 
-  // ── Loading ──
+  // ── Carregando ──
   if (step === 6) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[70vh] gap-6">
-        <div className="w-16 h-16 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center">
-          <Activity className="w-8 h-8 text-accent animate-pulse" />
+      <div className="animate-fade-in">
+        <PageHeader title="Diagnóstico 360" />
+        <div className="px-4 py-20 text-center md:px-10">
+          <h2 className="text-[18px] font-semibold text-px-ink">Analisando sua clínica</h2>
+          <p role="status" className="mt-1.5 text-[13.5px] text-px-muted">{LOAD_PHRASES[loadPhrase]}</p>
         </div>
-        <div className="text-center">
-          <h2 className="text-lg font-semibold text-text-primary">Analisando sua clínica...</h2>
-          <p className="text-sm text-text-muted font-mono mt-1">{LOAD_PHRASES[loadPhrase]}</p>
-        </div>
-        <Loader2 className="w-5 h-5 text-accent animate-spin" />
       </div>
     )
   }
 
-  // ── Results ──
+  // ── Resultado ──
   if (step === 7 && result) {
-    const r = result as PlanoResult & { _scores?: Record<string, number>; _scoreGeral?: number }
-    const sg = r._scoreGeral ?? scoreGeral
-
+    const sg = result._scoreGeral ?? scoreGeral
     return (
       <div className="animate-fade-in">
-        <div className="flex items-center justify-between p-8 pb-0">
-          <div>
-            <h1 className="text-2xl font-bold text-text-primary">Diagnóstico 360°</h1>
-            <p className={cn("text-sm font-semibold mt-1", CLASSIF_COLOR[result.classificacao] ?? "text-text-primary")}>
-              {result.classificacao} · Score {sg}/100
-            </p>
-          </div>
-          <button
-            onClick={() => { setStep(0); setRespostas({}); setResult(null) }}
-            className="text-xs font-mono border border-[--border] px-3 py-1.5 rounded-lg text-text-muted hover:text-text-secondary hover:border-accent/30 transition-colors"
-          >
-            Refazer
-          </button>
-        </div>
+        <PageHeader
+          title="Diagnóstico 360"
+          caption={`${result.classificacao}, score ${sg} de 100`}
+          actions={<PxButton variant="secondary" size="sm" onClick={() => { setStep(0); setRespostas({}); setResult(null); setError("") }}>Refazer</PxButton>}
+        />
 
-        <div className="p-4 md:p-8 space-y-6 max-w-3xl">
-          {/* Radar + score */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="rounded-xl border border-[--border] bg-[--surface] p-5">
-              <h3 className="text-xs font-mono text-text-muted uppercase tracking-widest mb-3">Radar de Maturidade</h3>
-              <ResponsiveContainer width="100%" height={220}>
-                <RadarChart data={radarData}>
-                  <PolarGrid stroke="#1c1d2a" />
-                  <PolarAngleAxis dataKey="dimensao" tick={{ fill: "#7c85a0", fontSize: 11 }} />
-                  <Radar dataKey="score" stroke="#00c07f" fill="#00c07f" fillOpacity={0.15} strokeWidth={2} />
-                </RadarChart>
-              </ResponsiveContainer>
-            </div>
-
-            <div className="space-y-2">
+        <div className="max-w-3xl space-y-4 px-4 pb-10 md:px-10">
+          <Panel as="section">
+            <h2 className="mb-3 text-[15px] font-semibold text-px-ink">Pontuação por dimensão</h2>
+            <ul className="space-y-3">
               {DIMENSOES.map(d => {
-                const s = r._scores?.[d.titulo] ?? scoreFor(d.id)
-                const color = s >= 75 ? "bg-accent" : s >= 50 ? "bg-blue-400" : s >= 30 ? "bg-amber-400" : "bg-red-400"
+                const s = result._scores?.[d.titulo] ?? scoreFor(d.id)
                 return (
-                  <div key={d.id} className="rounded-lg border border-[--border] bg-[--surface] p-3">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-xs font-semibold text-text-primary">{d.titulo}</span>
-                      <span className="text-xs font-mono font-semibold text-text-secondary">{s}/100</span>
+                  <li key={d.id}>
+                    <div className="mb-1.5 flex items-baseline justify-between text-[13px] text-px-ink">
+                      <span>{d.titulo}</span>
+                      <span className="font-semibold tabular-nums">{s} de 100</span>
                     </div>
-                    <div className="h-1.5 bg-[--border] rounded-full overflow-hidden">
-                      <div className={cn("h-full rounded-full transition-all", color)} style={{ width: `${s}%` }} />
-                    </div>
-                  </div>
+                    <Barra pct={s} label={`Pontuação em ${d.titulo}`} />
+                  </li>
                 )
               })}
-            </div>
-          </div>
+            </ul>
+          </Panel>
 
-          {/* Resumo */}
-          <div className="rounded-xl border border-[--border] bg-[--surface] p-5">
-            <p className="text-sm text-text-secondary leading-relaxed">{result.resumo_diagnostico}</p>
-          </div>
+          <Panel>
+            <p className="text-[13.5px] leading-relaxed text-px-ink/80">{result.resumo_diagnostico}</p>
+          </Panel>
 
-          {/* Quick wins */}
           {result.quick_wins?.length > 0 && (
-            <div className="rounded-xl border border-accent/20 bg-accent/5 p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <Zap className="w-4 h-4 text-accent" />
-                <h3 className="text-xs font-mono text-accent uppercase tracking-widest">Quick Wins — Esta Semana</h3>
-              </div>
-              <ul className="space-y-2">
-                {result.quick_wins.map((q, i) => (
-                  <li key={i} className="flex gap-2 text-sm text-text-secondary">
-                    <Check className="w-3.5 h-3.5 text-accent flex-shrink-0 mt-0.5" />
-                    {q}
-                  </li>
-                ))}
+            <Panel tone="dark" as="section">
+              <h2 className="mb-3 text-[15px] font-semibold text-white">Para fazer esta semana</h2>
+              <ul className="list-disc space-y-2 pl-5 text-[13.5px] leading-relaxed text-white/85">
+                {result.quick_wins.map((q, i) => <li key={i}>{q}</li>)}
               </ul>
-            </div>
+            </Panel>
           )}
 
-          {/* Top 3 prioridades */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <Target className="w-4 h-4 text-text-muted" />
-              <h3 className="text-xs font-mono text-text-muted uppercase tracking-widest">Top 3 Prioridades</h3>
-            </div>
+          <section aria-labelledby="dg-prio" className="space-y-3">
+            <h2 id="dg-prio" className="text-[15px] font-semibold text-px-ink">Três prioridades</h2>
             {result.top3_prioridades.map(p => (
-              <div key={p.prioridade} className="rounded-xl border border-[--border] bg-[--surface] p-4 flex gap-3">
-                <div className="w-7 h-7 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center text-xs font-mono font-bold text-accent flex-shrink-0">
-                  {p.prioridade}
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-semibold text-text-primary">{p.titulo}</p>
-                    <span className={cn(
-                      "text-badge font-mono px-1.5 py-0.5 rounded-full border",
-                      p.impacto === "Alto"
-                        ? "bg-red-500/10 border-red-500/30 text-red-400"
-                        : "bg-amber-500/10 border-amber-500/30 text-amber-400"
-                    )}>
-                      {p.impacto}
-                    </span>
+              <Panel key={p.prioridade} as="article" className="flex gap-3 p-4">
+                <span aria-hidden="true" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-px-ink text-[12.5px] font-semibold text-white">{p.prioridade}</span>
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="text-[14px] font-semibold text-px-ink">{p.titulo}</h3>
+                    <Tag tone={p.impacto === "Alto" ? "danger" : "warn"}>Impacto {p.impacto.toLowerCase()}</Tag>
                   </div>
-                  <p className="text-xs text-text-secondary mt-1">{p.descricao}</p>
+                  <p className="mt-1 text-[13px] leading-relaxed text-px-ink/80">{p.descricao}</p>
                 </div>
-              </div>
+              </Panel>
             ))}
-          </div>
+          </section>
 
-          {/* Plano 90 dias */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-text-muted" />
-              <h3 className="text-xs font-mono text-text-muted uppercase tracking-widest">Plano de Ação — 90 Dias</h3>
-            </div>
-            {(["mes1","mes2","mes3"] as const).map((m, i) => (
-              <div key={m} className="rounded-xl border border-[--border] bg-[--surface] p-4">
-                <p className="text-xs font-mono text-text-muted uppercase mb-3">Mês {i + 1}</p>
-                <div className="space-y-2">
-                  {(result.plano_90_dias[m] ?? []).map((a, j) => (
-                    <div key={j} className="flex gap-3">
-                      <span className="text-[10px] font-mono text-accent flex-shrink-0 mt-0.5">{a.semana}</span>
-                      <p className="text-sm text-text-secondary">{a.acao}</p>
-                    </div>
+          <section aria-labelledby="dg-plano" className="space-y-3">
+            <h2 id="dg-plano" className="text-[15px] font-semibold text-px-ink">Plano de ação de 90 dias</h2>
+            {(["mes1", "mes2", "mes3"] as const).map((m, i) => (
+              <Panel key={m} as="article" className="p-4">
+                <h3 className="mb-3 text-[13.5px] font-semibold text-px-ink">Mês {i + 1}</h3>
+                <ul className="space-y-2">
+                  {(result.plano_90_dias?.[m] ?? []).map((a, j) => (
+                    <li key={j} className="flex gap-3">
+                      <span className="w-20 shrink-0 text-[12.5px] font-medium text-px-accent">{a.semana}</span>
+                      <p className="text-[13px] leading-relaxed text-px-ink/80">{a.acao}</p>
+                    </li>
                   ))}
-                </div>
-              </div>
+                </ul>
+              </Panel>
             ))}
-          </div>
+          </section>
 
-          {/* CTA Consultor */}
-          <Link
-            href="/consultor"
-            className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 text-sm font-semibold hover:bg-purple-500/15 transition-colors"
-          >
-            <ExternalLink className="w-4 h-4" />
-            Ver análise completa no Consultor Estratégico
-          </Link>
+          <PxButton href="/consultor" fullWidth variant="secondary">Aprofundar a análise com o Consultor Estratégico</PxButton>
         </div>
       </div>
     )
   }
 
-  // ── Question Step ──
+  // ── Perguntas ──
   if (!dimAtual) return null
-  const progresso = ((step - 1) / DIMENSOES.length) * 100
+  const progresso = Math.round((respondidas / totalPergs) * 100)
 
   return (
     <div className="animate-fade-in">
-      <MobileOnlyHeader title="Diagnóstico 360°" />
-      <div className="p-4 md:p-8 pb-0">
-        <Link href="/dashboard" className="inline-flex items-center gap-1.5 text-[11px] font-mono text-text-muted hover:text-text-primary transition-colors mb-3">
-          <ArrowLeft className="w-3.5 h-3.5" /> Dashboard
-        </Link>
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-8 h-8 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center">
-            <Activity className="w-4 h-4 text-accent" />
-          </div>
-          <div className="flex-1">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-mono text-text-muted">Dimensão {step}/5 — {dimAtual.titulo}</span>
-              <span className="text-xs font-mono text-text-muted">{respondidas}/{totalPergs}</span>
-            </div>
-            <div className="h-1 bg-[--border] rounded-full overflow-hidden">
-              <div className="h-full bg-accent rounded-full transition-all" style={{ width: `${progresso}%` }} />
-            </div>
-          </div>
-        </div>
-        <h2 className="text-xl font-bold text-text-primary">{dimAtual.titulo}</h2>
-      </div>
+      <PageHeader title={dimAtual.titulo} caption={`Dimensão ${step} de 5`} back />
 
-      <div className="p-4 md:p-8 space-y-4 max-w-2xl">
-        {error && <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">{error}</p>}
+      <div className="max-w-2xl space-y-4 px-4 pb-10 md:px-10">
+        <div className="flex items-center gap-3">
+          <Barra pct={progresso} label="Perguntas respondidas" />
+          <span className="shrink-0 text-[12.5px] text-px-muted">{respondidas} de {totalPergs}</span>
+        </div>
+
+        {error && <p role="alert" className="rounded-px-card bg-px-danger-soft px-4 py-2.5 text-[13px] text-px-danger">{error}</p>}
 
         {dimAtual.perguntas.map(p => (
-          <div key={p.id} className="rounded-xl border border-[--border] bg-[--surface] p-4">
-            <p className="text-sm font-medium text-text-primary mb-3">{p.texto}</p>
-            <div className="flex gap-2">
-              {[1,2,3,4,5].map(v => (
-                <button
-                  key={v}
-                  onClick={() => setRespostas(prev => ({ ...prev, [p.id]: v }))}
-                  className={cn(
-                    "flex-1 py-2 rounded-lg border text-xs font-mono transition-all",
-                    respostas[p.id] === v
-                      ? "bg-accent/10 border-accent/40 text-accent font-semibold"
-                      : "border-[--border] text-text-muted hover:border-[--border-hover] hover:text-text-secondary"
-                  )}
-                >
-                  {v}
-                </button>
-              ))}
-            </div>
-            <div className="flex justify-between mt-1">
-              <span className="text-[9px] text-text-muted font-mono">Não</span>
-              <span className="text-[9px] text-text-muted font-mono">Sempre</span>
-            </div>
-            {respostas[p.id] !== undefined && (
-              <p className="text-[10px] text-accent font-mono mt-1">{SCORE_LABELS[respostas[p.id]]}</p>
-            )}
-          </div>
+          <Panel key={p.id} as="div" className="space-y-2.5 p-4">
+            <p className="text-[14px] font-medium text-px-ink">{p.texto}</p>
+            <Segmented
+              label={p.texto}
+              value={respostas[p.id] !== undefined ? String(respostas[p.id]) : ""}
+              onChange={v => setRespostas(prev => ({ ...prev, [p.id]: Number(v) }))}
+              options={ESCALA}
+            />
+            <p className="text-[12px] text-px-muted">
+              {respostas[p.id] !== undefined ? SCORE_LABELS[respostas[p.id]] : "1 = Não, 5 = Sim, sempre"}
+            </p>
+          </Panel>
         ))}
 
-        <div className="flex gap-3 pt-2">
-          {step > 1 && (
-            <button
-              onClick={() => setStep(s => s - 1 as typeof step)}
-              className="flex-1 py-3 rounded-xl border border-[--border] text-text-muted text-sm font-semibold hover:text-text-secondary transition-colors"
-            >
-              Voltar
-            </button>
-          )}
-          {step < 5 ? (
-            <button
-              onClick={() => setStep(s => s + 1 as typeof step)}
-              disabled={!canAdvance()}
-              className={cn(
-                "flex-1 py-3 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2",
-                canAdvance()
-                  ? "bg-accent text-[--background] hover:bg-accent/90"
-                  : "bg-[--surface] border border-[--border] text-text-muted cursor-not-allowed"
-              )}
-            >
-              Próxima dimensão
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          ) : (
-            <button
-              onClick={finalizar}
-              disabled={!canAdvance()}
-              className={cn(
-                "flex-1 py-3 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2",
-                canAdvance()
-                  ? "bg-accent text-[--background] hover:bg-accent/90"
-                  : "bg-[--surface] border border-[--border] text-text-muted cursor-not-allowed"
-              )}
-            >
-              <Activity className="w-4 h-4" />
-              Gerar Diagnóstico
-            </button>
-          )}
+        <div className="flex gap-3 pt-1">
+          {step > 1 && <PxButton variant="secondary" fullWidth onClick={() => setStep(s => s - 1)}>Voltar</PxButton>}
+          {step < 5
+            ? <PxButton fullWidth disabled={!canAdvance} onClick={() => setStep(s => s + 1)}>Próxima dimensão</PxButton>
+            : <PxButton fullWidth disabled={!canAdvance} onClick={finalizar}>Gerar diagnóstico</PxButton>}
         </div>
       </div>
     </div>

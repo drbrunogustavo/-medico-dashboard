@@ -1,35 +1,10 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import { Activity, TrendingUp, Users, Stethoscope, Sparkles, Loader2, BarChart2 } from "lucide-react"
-import dynamic from "next/dynamic"
-
-const NpsChart = dynamic(
-  () => import("@/components/charts/DashboardCharts").then(m => m.NpsChart),
-  { ssr: false, loading: () => <div className="h-[140px] bg-border/30 rounded-xl animate-pulse" /> }
-)
-const FunnelChart = dynamic(
-  () => import("@/components/charts/DashboardCharts").then(m => m.FunnelChart),
-  { ssr: false, loading: () => <div className="h-[160px] bg-border/30 rounded-xl animate-pulse" /> }
-)
-const RevenueProjectionChart = dynamic(
-  () => import("@/components/charts/IndicadoresCharts").then(m => m.RevenueProjectionChart),
-  { ssr: false, loading: () => <div className="h-full bg-border/30 rounded-xl animate-pulse" /> }
-)
-const OrigemPieChart = dynamic(
-  () => import("@/components/charts/IndicadoresCharts").then(m => m.OrigemPieChart),
-  { ssr: false, loading: () => <div className="w-full sm:w-[180px] h-[180px] bg-border/30 rounded-xl animate-pulse" /> }
-)
-const LeadsFunnelChart = dynamic(
-  () => import("@/components/charts/IndicadoresCharts").then(m => m.LeadsFunnelChart),
-  { ssr: false, loading: () => <div className="h-[160px] bg-border/30 rounded-xl animate-pulse" /> }
-)
-import { cn } from "@/lib/utils"
 import Link from "next/link"
-import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
-import { EmptyState } from "@/components/EmptyState"
+import { Panel, PxButton, Segmented, PxInput, PageHeader, PillBars, LineSeries, BarList } from "@/components/px"
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// ─── Tipos ────────────────────────────────────────────────────────────────────
 
 interface ExecData {
   faturamento_mes:   number
@@ -44,95 +19,114 @@ interface ExecData {
 }
 
 interface IndManuais {
-  taxa_comparecimento?:          number
-  taxa_fechamento_protocolos?:   number
-  taxa_faltas?:                  number
-  conversao_recepcao?:           number
-  adesao_tratamento?:            number
-  permanencia_media_meses?:      number
-  recompra_protocolos?:          number
-  engajamento_medio?:            number
-  custo_marketing?:              number
+  taxa_comparecimento?:        number
+  taxa_fechamento_protocolos?: number
+  taxa_faltas?:                number
+  conversao_recepcao?:         number
+  adesao_tratamento?:          number
+  permanencia_media_meses?:    number
+  recompra_protocolos?:        number
+  engajamento_medio?:          number
+  custo_marketing?:            number
 }
 
-// ─── Constants ───────────────────────────────────────────────────────────────
+type Aba = "financeiro" | "marketing" | "comercial" | "clinico"
 
-const TABS = [
-  { id: "financeiro",  label: "Financeiro",  icon: TrendingUp },
-  { id: "marketing",   label: "Marketing",   icon: Sparkles   },
-  { id: "comercial",   label: "Comercial",   icon: Users      },
-  { id: "clinico",     label: "Clínico",     icon: Stethoscope},
-]
-
-const ORIGEM_COLORS  = ["#ec4899","#00c07f","#3b7fff","#22c55e","#7c85a0"]
+const ABAS = [
+  { value: "financeiro", label: "Financeiro" },
+  { value: "marketing",  label: "Marketing"  },
+  { value: "comercial",  label: "Comercial"  },
+  { value: "clinico",    label: "Clínico"    },
+] as const
 
 function fmt(v: number) {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })
 }
 
-// ─── Editable Field ──────────────────────────────────────────────────────────
+// ─── Campo editável ──────────────────────────────────────────────────────────
 
-function EditField({
-  label, value, onChange, suffix = "", min = 0, max = 100,
-}: {
-  label: string; value: number | undefined; onChange: (v: number) => void
+function EditField({ id, label, value, onChange, suffix = "", min = 0, max = 100 }: {
+  id: string; label: string; value: number | undefined; onChange: (v: number) => void
   suffix?: string; min?: number; max?: number
 }) {
-  const [editing, setEditing] = useState(false)
-  const [local,   setLocal]   = useState(value ?? 0)
-  const ref = useRef<HTMLInputElement>(null)
+  const [texto, setTexto] = useState(value === undefined ? "" : String(value))
+  const ultimo = useRef(value)
+  useEffect(() => {
+    if (value !== ultimo.current) { ultimo.current = value; setTexto(value === undefined ? "" : String(value)) }
+  }, [value])
 
-  useEffect(() => { if (editing) ref.current?.focus() }, [editing])
+  function alterar(raw: string) {
+    setTexto(raw)
+    if (raw.trim() === "") return
+    const n = Number(raw)
+    if (!Number.isFinite(n)) return
+    const limitado = Math.min(max, Math.max(min, n))
+    ultimo.current = limitado
+    if (limitado !== n) setTexto(String(limitado))
+    onChange(limitado)
+  }
 
   return (
-    <div className="rounded-xl border border-[--border] bg-[--surface] p-4 flex items-center justify-between gap-3">
-      <span className="text-sm text-text-secondary">{label}</span>
-      {editing ? (
-        <div className="flex items-center gap-1.5">
-          <input
-            ref={ref}
-            type="number"
-            min={min} max={max}
-            value={local}
-            onChange={e => setLocal(Number(e.target.value))}
-            className="w-20 text-right bg-transparent border border-accent/40 rounded-md px-2 py-1 text-sm font-mono text-accent focus:outline-none"
-            onBlur={() => { setEditing(false); onChange(local) }}
-            onKeyDown={e => { if (e.key === "Enter") { setEditing(false); onChange(local) } }}
-          />
-          <span className="text-xs text-text-muted font-mono">{suffix}</span>
-        </div>
-      ) : (
-        <button
-          onClick={() => { setLocal(value ?? 0); setEditing(true) }}
-          className="text-sm font-semibold font-mono text-text-primary hover:text-accent transition-colors"
-        >
-          {value !== undefined ? `${value}${suffix}` : <span className="text-text-muted text-xs">Clique p/ editar</span>}
-        </button>
-      )}
+    <div className="flex items-center justify-between gap-3 rounded-px-card bg-white/60 px-4 py-3">
+      <label htmlFor={id} className="text-[13.5px] text-px-ink">{label}</label>
+      <div className="flex items-center gap-1.5">
+        <PxInput id={id} type="number" inputMode="decimal" min={min} max={max} value={texto} onChange={e => alterar(e.target.value)} placeholder="Informar" className="h-9 w-24 text-right" />
+        {suffix && <span className="text-[12.5px] text-px-muted">{suffix}</span>}
+      </div>
     </div>
   )
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+function Numero({ label, value, apoio }: { label: string; value: string; apoio?: string }) {
+  return (
+    <Panel as="div" className="p-4">
+      <p className="text-[12.5px] text-px-muted">{label}</p>
+      <p className="mt-1 text-[24px] font-medium leading-none tracking-[-0.02em] text-px-ink">{value}</p>
+      {apoio && <p className="mt-1.5 text-[12px] text-px-muted">{apoio}</p>}
+    </Panel>
+  )
+}
+
+function Secao({ titulo, children, nota }: { titulo: string; children: React.ReactNode; nota?: string }) {
+  return (
+    <Panel as="section">
+      <h2 className="mb-4 text-[15px] font-semibold text-px-ink">{titulo}</h2>
+      {children}
+      {nota && <p className="mt-3 text-[12.5px] text-px-muted">{nota}</p>}
+    </Panel>
+  )
+}
+
+function LinkIA({ href, texto }: { href: string; texto: string }) {
+  return <Link href={href} className="inline-block text-[13.5px] font-semibold text-px-accent underline underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-px-ink/40">{texto}</Link>
+}
+
+// ─── Página ───────────────────────────────────────────────────────────────────
 
 export default function IndicadoresPage() {
-  const [tab,       setTab]       = useState("financeiro")
+  const [tab,       setTab]       = useState<Aba>("financeiro")
   const [exec,      setExec]      = useState<Partial<ExecData>>({})
   const [ind,       setInd]       = useState<IndManuais>({})
   const [loading,   setLoading]   = useState(true)
-  const saveTimer                 = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [loadError, setLoadError] = useState(false)
+  const [saveErro,  setSaveErro]  = useState(false)
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  useEffect(() => {
-    Promise.all([
-      fetch("/api/executivo").then(r => r.json()).catch(e => { console.error("[indicadores] executivo falhou:", e); return {} }),
-      fetch("/api/indicadores").then(r => r.json()).catch(e => { console.error("[indicadores] indicadores falhou:", e); return {} }),
-    ]).then(([e, i]) => {
-      setExec(e ?? {})
-      setInd(i ?? {})
-    }).finally(() => setLoading(false))
+  const carregar = useCallback(async () => {
+    setLoading(true); setLoadError(false)
+    try {
+      const [re, ri] = await Promise.all([fetch("/api/executivo"), fetch("/api/indicadores")])
+      if (!re.ok || !ri.ok) throw new Error(`HTTP ${re.status}/${ri.status}`)
+      const [e, i] = await Promise.all([re.json(), ri.json()])
+      setExec(e ?? {}); setInd(i ?? {})
+    } catch (err) {
+      console.error("[indicadores] erro ao carregar:", err)
+      setLoadError(true)
+    } finally { setLoading(false) }
   }, [])
 
-  const [saveErro, setSaveErro] = useState(false)
+  useEffect(() => { carregar() }, [carregar])
+  useEffect(() => () => { if (saveTimer.current) clearTimeout(saveTimer.current) }, [])
 
   const updateInd = useCallback((key: keyof IndManuais, val: number) => {
     setInd(prev => {
@@ -151,268 +145,151 @@ export default function IndicadoresPage() {
     })
   }, [])
 
-  // Derived
-  const ticket_medio  = exec.consultas_mes && exec.faturamento_mes
-    ? Math.round(exec.faturamento_mes / exec.consultas_mes) : 0
-  const custo_lead    = ind.custo_marketing && exec.leads_total
-    ? Math.round(ind.custo_marketing / exec.leads_total) : 0
-  const conv_lead     = exec.leads_total && exec.consultas_mes
-    ? Math.round((exec.consultas_mes / exec.leads_total) * 100) : 0
+  // Derivados
+  const consultas = exec.consultas_mes ?? 0
+  const leads     = exec.leads_total ?? 0
+  const ticket_medio = consultas && exec.faturamento_mes ? Math.round(exec.faturamento_mes / consultas) : 0
+  const custo_lead   = ind.custo_marketing && leads ? Math.round(ind.custo_marketing / leads) : 0
+  const custo_consulta = ind.custo_marketing && consultas ? Math.round(ind.custo_marketing / consultas) : 0
+  const conv_lead    = leads && consultas ? Math.round((consultas / leads) * 100) : 0
 
-  // Projections: simple linear from last 6m
+  // Projeção linear simples a partir dos dois últimos meses
   const fat6 = exec.faturamento_6m ?? []
-  const proj3: { mes: string; valor: number }[] = []
+  const proj3: { rotulo: string; valor: number }[] = []
   if (fat6.length >= 2) {
     const last  = fat6[fat6.length - 1]?.valor ?? 0
-    const prev  = fat6[fat6.length - 2]?.valor ?? 0
-    const delta = last - prev
+    const delta = last - (fat6[fat6.length - 2]?.valor ?? 0)
     for (let i = 1; i <= 3; i++) {
-      const d = new Date()
-      d.setMonth(d.getMonth() + i)
-      proj3.push({
-        mes:   d.toLocaleDateString("pt-BR", { month: "short", year: "2-digit" }),
-        valor: Math.max(0, last + delta * i),
-      })
+      const d = new Date(); d.setMonth(d.getMonth() + i)
+      proj3.push({ rotulo: `${d.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "")} (proj.)`, valor: Math.max(0, last + delta * i) })
     }
   }
+  const barrasFat = [...fat6.map(p => ({ rotulo: p.mes, valor: p.valor })), ...proj3]
 
-  const chartData = [...(fat6), ...proj3.map(p => ({ ...p, projecao: p.valor }))]
+  const semDados = !(exec.faturamento_mes ?? 0) && !consultas && !leads
+  const iaNota = "Edite os valores abaixo e eles são salvos automaticamente."
 
+  let corpo: React.ReactNode
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[70vh]">
-        <Loader2 className="w-6 h-6 text-purple-400 animate-spin" />
-      </div>
+    corpo = <p role="status" className="py-20 text-center text-[13px] text-px-muted">Carregando indicadores</p>
+  } else if (loadError) {
+    corpo = (
+      <Panel className="py-10 text-center">
+        <p role="alert" className="mb-3 text-[14px] font-semibold text-px-ink">Não foi possível carregar os indicadores</p>
+        <PxButton variant="secondary" onClick={carregar}>Tentar de novo</PxButton>
+      </Panel>
     )
-  }
+  } else if (semDados) {
+    corpo = (
+      <Panel className="mx-auto max-w-md py-10 text-center">
+        <h2 className="text-[16px] font-semibold text-px-ink">Seus indicadores aparecem aqui</h2>
+        <p className="mb-5 mt-1.5 text-[13.5px] text-px-muted">
+          Documente consultas no Copiloto, adicione leads no CRM e registre lançamentos financeiros. Os números são calculados a partir desses registros.
+        </p>
+        <PxButton href="/copiloto">Iniciar primeira consulta</PxButton>
+      </Panel>
+    )
+  } else {
+    corpo = (
+      <>
+        <Segmented label="Área dos indicadores" value={tab} onChange={setTab} options={ABAS.map(a => ({ value: a.value, label: a.label }))} />
 
-  const semDados =
-    (exec.faturamento_mes ?? 0) === 0 &&
-    (exec.consultas_mes   ?? 0) === 0 &&
-    (exec.leads_total     ?? 0) === 0
+        {saveErro && <p role="alert" className="rounded-px-card bg-px-danger-soft px-4 py-2.5 text-[13px] text-px-danger">Não foi possível salvar a última alteração. Verifique sua conexão e edite o valor de novo.</p>}
 
-  if (semDados) {
-    return (
-      <div className="flex items-center justify-center min-h-[70vh]">
-        <EmptyState
-          icon={BarChart2}
-          title="Seus indicadores aparecem aqui"
-          subtitle="Use o Copiloto para documentar consultas, adicione leads no CRM e registre lançamentos financeiros — os dados são calculados automaticamente."
-          action={{ label: "Iniciar primeira consulta", href: "/copiloto" }}
-        />
-      </div>
+        {tab === "financeiro" && (
+          <>
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+              <Numero label="Faturamento do mês" value={fmt(exec.faturamento_mes ?? 0)} />
+              <Numero label="Ticket médio" value={fmt(ticket_medio)} apoio="faturamento ÷ consultas" />
+              <Numero label="Consultas no mês" value={String(consultas)} />
+              <Numero label="Custo por lead" value={custo_lead ? fmt(custo_lead) : "Informe o custo"} apoio="marketing ÷ leads no CRM" />
+            </div>
+            <Secao titulo="Faturamento e projeção dos próximos 3 meses" nota="A projeção repete a variação entre os dois últimos meses. É uma tendência simples, não uma previsão.">
+              {barrasFat.length > 0
+                ? <PillBars data={barrasFat} label="Faturamento mensal com projeção de três meses" />
+                : <p className="text-[13px] text-px-muted">Ainda não há meses de faturamento registrados.</p>}
+            </Secao>
+            <Panel className="space-y-2">
+              <p className="text-[12.5px] text-px-muted">{iaNota}</p>
+              <EditField id="ind-custo-fin" label="Custo mensal de marketing (R$)" value={ind.custo_marketing} onChange={v => updateInd("custo_marketing", v)} min={0} max={99999} />
+            </Panel>
+            <LinkIA href="/consultor" texto="Pedir análise financeira ao Consultor" />
+          </>
+        )}
+
+        {tab === "marketing" && (
+          <>
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+              <Numero label="Leads no CRM" value={String(leads)} />
+              <Numero label="Leads esta semana" value={String(exec.leads_semana ?? 0)} />
+              <Numero label="Conversão em consulta" value={`${conv_lead}%`} apoio="consultas do mês ÷ leads no CRM" />
+              <Numero label="Custo por consulta" value={custo_consulta ? fmt(custo_consulta) : "Informe o custo"} apoio="marketing ÷ consultas do mês" />
+            </div>
+            <Secao titulo="Leads por origem">
+              {(exec.leads_origem ?? []).length > 0
+                ? <BarList data={(exec.leads_origem ?? []).map(o => ({ rotulo: o.origem, valor: o.count }))} />
+                : <p className="text-[13px] text-px-muted">Nenhum lead com origem registrada.</p>}
+            </Secao>
+            <Panel className="space-y-2">
+              <p className="text-[12.5px] text-px-muted">{iaNota}</p>
+              <EditField id="ind-eng" label="Engajamento médio (%)" value={ind.engajamento_medio} onChange={v => updateInd("engajamento_medio", v)} suffix="%" />
+              <EditField id="ind-custo-mkt" label="Custo mensal de marketing (R$)" value={ind.custo_marketing} onChange={v => updateInd("custo_marketing", v)} min={0} max={99999} />
+            </Panel>
+            <LinkIA href="/consultor" texto="Pedir análise de marketing ao Consultor" />
+          </>
+        )}
+
+        {tab === "comercial" && (
+          <>
+            <Panel className="space-y-2">
+              <p className="text-[12.5px] text-px-muted">{iaNota}</p>
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                <EditField id="ind-comp"  label="Taxa de comparecimento (%)"           value={ind.taxa_comparecimento}        onChange={v => updateInd("taxa_comparecimento", v)}        suffix="%" />
+                <EditField id="ind-fech"  label="Fechamento de protocolos (%)"         value={ind.taxa_fechamento_protocolos} onChange={v => updateInd("taxa_fechamento_protocolos", v)} suffix="%" />
+                <EditField id="ind-falt"  label="Taxa de faltas (%)"                   value={ind.taxa_faltas}                onChange={v => updateInd("taxa_faltas", v)}                suffix="%" />
+                <EditField id="ind-recep" label="Conversão da recepção (%)"            value={ind.conversao_recepcao}         onChange={v => updateInd("conversao_recepcao", v)}         suffix="%" />
+              </div>
+            </Panel>
+            <Secao titulo="Leads por estágio do funil">
+              {(exec.leads_por_estagio ?? []).length > 0
+                ? <BarList data={(exec.leads_por_estagio ?? []).map(e => ({ rotulo: e.estagio, valor: e.count }))} />
+                : <p className="text-[13px] text-px-muted">Nenhum lead no funil.</p>}
+            </Secao>
+            <LinkIA href="/consultor" texto="Pedir análise comercial ao Consultor" />
+          </>
+        )}
+
+        {tab === "clinico" && (
+          <>
+            <Panel className="space-y-2">
+              <p className="text-[12.5px] text-px-muted">{iaNota}</p>
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                <EditField id="ind-ret"  label="Taxa de retorno (%)"        value={ind.taxa_comparecimento}     onChange={v => updateInd("taxa_comparecimento", v)} suffix="%" />
+                <EditField id="ind-ades" label="Adesão ao tratamento (1 a 10)" value={ind.adesao_tratamento}    onChange={v => updateInd("adesao_tratamento", v)} max={10} />
+                <EditField id="ind-perm" label="Permanência média (meses)"  value={ind.permanencia_media_meses} onChange={v => updateInd("permanencia_media_meses", v)} suffix="meses" max={120} />
+                <EditField id="ind-rec"  label="Recompra de protocolos (%)" value={ind.recompra_protocolos}    onChange={v => updateInd("recompra_protocolos", v)} suffix="%" />
+              </div>
+            </Panel>
+            <div className="grid grid-cols-2 gap-3">
+              <Numero label="Leads no CRM" value={String(leads)} />
+              <Numero label="NPS" value={exec.nps_score !== null && exec.nps_score !== undefined ? String(exec.nps_score) : "Sem respostas"} />
+            </div>
+            {(exec.nps_6m ?? []).some(p => p.nps !== null) && (
+              <Secao titulo="NPS ao longo do tempo">
+                <LineSeries data={(exec.nps_6m ?? []).map(p => ({ rotulo: p.mes, valor: p.nps }))} label="NPS dos últimos meses" />
+              </Secao>
+            )}
+            <LinkIA href="/consultor" texto="Pedir análise clínica ao Consultor" />
+          </>
+        )}
+      </>
     )
   }
 
   return (
     <div className="animate-fade-in">
-      {saveErro && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl text-[13px] bg-red-500/10 border border-red-500/30 text-red-400">
-          Erro ao salvar. Verifique sua conexão.
-        </div>
-      )}
-      <MobileOnlyHeader title="Indicadores da Clínica" />
-      <div className="flex flex-wrap items-center justify-between gap-3 p-4 md:p-8 pb-0">
-        <div>
-          <h1 className="text-2xl font-bold text-text-primary tracking-tight">Indicadores da Clínica</h1>
-          <p className="text-sm text-text-muted mt-1 font-mono">KPIs · PERFORMANCE · DECISÕES</p>
-        </div>
-        <div className="w-9 h-9 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
-          <Activity className="w-5 h-5 text-purple-400" />
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="px-4 md:px-8 pt-6">
-        <div className="flex gap-1 bg-[--surface] border border-[--border] rounded-xl p-1 overflow-x-auto scrollbar-none">
-          {TABS.map(t => {
-            const Icon = t.icon
-            return (
-              <button
-                key={t.id}
-                onClick={() => setTab(t.id)}
-                className={cn(
-                  "px-4 py-2 rounded-lg text-xs font-mono uppercase tracking-wide transition-all flex items-center gap-1.5",
-                  tab === t.id
-                    ? "bg-purple-500/10 border border-purple-500/20 text-purple-400 font-semibold"
-                    : "text-text-muted hover:text-text-secondary"
-                )}
-              >
-                <Icon className="w-3.5 h-3.5" />
-                {t.label}
-              </button>
-            )
-          })}
-        </div>
-      </div>
-
-      <div className="p-4 md:p-8 space-y-6 max-w-4xl">
-
-        {/* ── FINANCEIRO ── */}
-        {tab === "financeiro" && (
-          <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              {[
-                { label: "Faturamento do Mês",  value: fmt(exec.faturamento_mes ?? 0) },
-                { label: "Ticket Médio",         value: fmt(ticket_medio) },
-                { label: "Consultas no Mês",     value: String(exec.consultas_mes ?? 0) },
-                { label: "Custo por Lead",       value: fmt(custo_lead) },
-              ].map(k => (
-                <div key={k.label} className="rounded-xl border border-[--border] bg-[--surface] p-4">
-                  <p className="text-[10px] font-mono text-text-muted uppercase">{k.label}</p>
-                  <p className="text-xl font-bold text-text-primary mt-1">{k.value}</p>
-                </div>
-              ))}
-            </div>
-
-            <div className="rounded-xl border border-[--border] bg-[--surface] p-5">
-              <h3 className="text-xs font-mono text-text-muted uppercase tracking-widest mb-4">Faturamento + Projeção 3 meses</h3>
-              <div className="h-[160px] md:h-[200px]">
-                <RevenueProjectionChart data={chartData} />
-              </div>
-              <p className="text-[10px] text-text-muted font-mono mt-2">Barras claras = projeção baseada na tendência</p>
-            </div>
-
-            <div className="space-y-2">
-              <EditField label="Custo mensal de marketing (R$)" value={ind.custo_marketing} onChange={v => updateInd("custo_marketing", v)} suffix="" min={0} max={99999} />
-            </div>
-
-            <Link href="/consultor" className="flex items-center gap-2 text-xs font-semibold text-purple-400 hover:text-purple-300 transition-colors">
-              <Sparkles className="w-3.5 h-3.5" />
-              Gerar análise financeira com IA →
-            </Link>
-          </>
-        )}
-
-        {/* ── MARKETING ── */}
-        {tab === "marketing" && (
-          <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              {[
-                { label: "Leads no Mês",            value: String(exec.leads_total ?? 0) },
-                { label: "Leads esta Semana",        value: String(exec.leads_semana ?? 0) },
-                { label: "Taxa Conversão Lead",      value: `${conv_lead}%` },
-                { label: "Custo por Consulta (est.)",value: fmt(ticket_medio > 0 && custo_lead > 0 ? custo_lead : 0) },
-              ].map(k => (
-                <div key={k.label} className="rounded-xl border border-[--border] bg-[--surface] p-4">
-                  <p className="text-[10px] font-mono text-text-muted uppercase">{k.label}</p>
-                  <p className="text-xl font-bold text-text-primary mt-1">{k.value}</p>
-                </div>
-              ))}
-            </div>
-
-            <div className="rounded-xl border border-[--border] bg-[--surface] p-5">
-              <h3 className="text-xs font-mono text-text-muted uppercase tracking-widest mb-4">Leads por Origem</h3>
-              <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
-                <div className="w-full sm:w-[180px] h-[180px] flex-shrink-0">
-                  <OrigemPieChart data={exec.leads_origem ?? []} />
-                </div>
-                <div className="space-y-2 flex-1 w-full sm:w-auto">
-                  {(exec.leads_origem ?? []).map((o, i) => (
-                    <div key={o.origem} className="flex items-center gap-2">
-                      <div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: ORIGEM_COLORS[i % ORIGEM_COLORS.length] }} />
-                      <span className="text-sm text-text-secondary flex-1">{o.origem}</span>
-                      <span className="text-sm font-mono font-semibold text-text-primary">{o.count}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <EditField label="Engajamento médio (%)"    value={ind.engajamento_medio}  onChange={v => updateInd("engajamento_medio",  v)} suffix="%" />
-              <EditField label="Custo mensal de marketing (R$)" value={ind.custo_marketing} onChange={v => updateInd("custo_marketing", v)} suffix="" min={0} max={99999} />
-            </div>
-
-            <Link href="/consultor" className="flex items-center gap-2 text-xs font-semibold text-purple-400 hover:text-purple-300 transition-colors">
-              <Sparkles className="w-3.5 h-3.5" />
-              Gerar análise de marketing com IA →
-            </Link>
-          </>
-        )}
-
-        {/* ── COMERCIAL ── */}
-        {tab === "comercial" && (
-          <>
-            <p className="text-xs text-text-muted font-mono">Clique nos valores para editar — salvamento automático.</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
-              {[
-                { label: "Taxa de comparecimento (%)",        key: "taxa_comparecimento"        as const, suffix: "%" },
-                { label: "Taxa de fechamento de protocolos (%)", key: "taxa_fechamento_protocolos" as const, suffix: "%" },
-                { label: "Taxa de faltas (%)",                key: "taxa_faltas"                as const, suffix: "%" },
-                { label: "Conversão da recepção (%)",         key: "conversao_recepcao"         as const, suffix: "%" },
-              ].map(f => (
-                <EditField
-                  key={f.key}
-                  label={f.label}
-                  value={ind[f.key]}
-                  onChange={v => updateInd(f.key, v)}
-                  suffix={f.suffix}
-                />
-              ))}
-            </div>
-
-            <div className="rounded-xl border border-[--border] bg-[--surface] p-5">
-              <h3 className="text-xs font-mono text-text-muted uppercase tracking-widest mb-4">Leads por Estágio do Funil</h3>
-              <LeadsFunnelChart data={exec.leads_por_estagio ?? []} />
-            </div>
-
-            <Link href="/consultor" className="flex items-center gap-2 text-xs font-semibold text-purple-400 hover:text-purple-300 transition-colors">
-              <Sparkles className="w-3.5 h-3.5" />
-              Gerar análise comercial com IA →
-            </Link>
-          </>
-        )}
-
-        {/* ── CLÍNICO ── */}
-        {tab === "clinico" && (
-          <>
-            <p className="text-xs text-text-muted font-mono">Clique nos valores para editar — salvamento automático.</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {[
-                { label: "Taxa de retorno (%)",                key: "taxa_comparecimento"     as const, suffix: "%" },
-                { label: "Adesão ao tratamento (1-10)",        key: "adesao_tratamento"       as const, suffix: "", max: 10 },
-                { label: "Permanência média (meses)",          key: "permanencia_media_meses" as const, suffix: " meses", max: 120 },
-                { label: "Recompra de protocolos (%)",         key: "recompra_protocolos"     as const, suffix: "%" },
-              ].map(f => (
-                <EditField
-                  key={f.key}
-                  label={f.label}
-                  value={ind[f.key]}
-                  onChange={v => updateInd(f.key, v)}
-                  suffix={f.suffix}
-                  max={f.max ?? 100}
-                />
-              ))}
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="rounded-xl border border-[--border] bg-[--surface] p-4">
-                <p className="text-[10px] font-mono text-text-muted uppercase">Pacientes Ativos no CRM</p>
-                <p className="text-2xl font-bold text-text-primary mt-1">{exec.leads_total ?? 0}</p>
-              </div>
-              <div className="rounded-xl border border-[--border] bg-[--surface] p-4">
-                <p className="text-[10px] font-mono text-text-muted uppercase">Score NPS</p>
-                <p className="text-2xl font-bold text-text-primary mt-1">
-                  {exec.nps_score !== null && exec.nps_score !== undefined ? exec.nps_score : "—"}
-                </p>
-              </div>
-            </div>
-
-            {(exec.nps_6m ?? []).some(p => p.nps !== null) && (
-              <div className="rounded-xl border border-[--border] bg-[--surface] p-5">
-                <h3 className="text-xs font-mono text-text-muted uppercase tracking-widest mb-4">NPS ao longo do tempo</h3>
-                <NpsChart data={exec.nps_6m ?? []} />
-              </div>
-            )}
-
-            <Link href="/consultor" className="flex items-center gap-2 text-xs font-semibold text-purple-400 hover:text-purple-300 transition-colors">
-              <Sparkles className="w-3.5 h-3.5" />
-              Gerar análise clínica com IA →
-            </Link>
-          </>
-        )}
-      </div>
+      <PageHeader title="Indicadores da Clínica" caption="Números do mês para decidir o que ajustar" />
+      <div className="max-w-4xl space-y-4 px-4 pb-10 md:px-10">{corpo}</div>
     </div>
   )
 }

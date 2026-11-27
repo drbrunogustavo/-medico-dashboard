@@ -3,23 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import {
-  ArrowRight, Check, Loader2, AlertCircle,
-  Users, DollarSign, Sparkles, BarChart3, Bot,
-  GraduationCap, Target, Zap, PartyPopper,
-} from "lucide-react"
-
-// ─── Tokens ───────────────────────────────────────────────────────────────────
-
-const BG      = "#F5F0E8"
-const GOLD    = "#b8976a"
-const DARK    = "#0D1B2A"
-const TEXT2   = "#6a5a4a"
-const CARD_BG = "#FFFFFF"
-const BORDER  = "#e8ddd0"
-const MUTED   = "#8a7a6a"
-
-// ─── Constantes ───────────────────────────────────────────────────────────────
+import { Panel, PxButton, PxInput, PxSelect, PxCheckbox, Field } from "@/components/px"
 
 const ESPECIALIDADES = [
   "Cardiologia", "Cirurgia Geral", "Cirurgia Plástica", "Clínica Geral",
@@ -31,396 +15,204 @@ const ESPECIALIDADES = [
 ]
 
 const PROBLEMAS = [
-  { id: "pacientes",   emoji: "📱", label: "Preciso de mais pacientes" },
-  { id: "faturamento", emoji: "💰", label: "Quero aumentar meu faturamento" },
-  { id: "burocracia",  emoji: "📋", label: "Perco tempo com burocracia" },
-  { id: "financeiro",  emoji: "📊", label: "Não tenho controle financeiro" },
-  { id: "crescer",     emoji: "🚀", label: "Quero escalar e crescer" },
+  { id: "pacientes", label: "Preciso de mais pacientes" },
+  { id: "faturamento", label: "Quero aumentar meu faturamento" },
+  { id: "burocracia", label: "Perco tempo com burocracia" },
+  { id: "financeiro", label: "Não tenho controle financeiro" },
+  { id: "crescer", label: "Quero escalar e crescer" },
 ]
 
-type ModItem = { icon: React.ElementType; color: string; title: string; desc: string; href: string }
+type ModItem = { title: string; desc: string; href: string }
 
 const MODULE_MAP: Record<string, ModItem[]> = {
   pacientes: [
-    { icon: Users,  color: "#3b82f6", title: "CRM de Leads",      desc: "Funil visual + nurturing automático D+1 a D+30",   href: "/crm"           },
-    { icon: Zap,    color: "#10b981", title: "Nurturing WhatsApp", desc: "Lead respondido em minutos — sem você precisar",   href: "/crm"           },
+    { title: "CRM de Leads", desc: "Funil visual e mensagens de acompanhamento dos leads", href: "/crm" },
+    { title: "Nurturing por WhatsApp", desc: "Sequência de mensagens para leads que ainda não agendaram", href: "/crm" },
   ],
   faturamento: [
-    { icon: BarChart3,  color: "#8b5cf6", title: "Painel Executivo",        desc: "Indicadores e faturamento em tempo real",       href: "/executivo"     },
-    { icon: DollarSign, color: "#f59e0b", title: "Precificação Inteligente", desc: "Descubra o valor ideal da sua consulta",        href: "/posicionamento" },
+    { title: "Painel Executivo", desc: "Indicadores e faturamento da clínica", href: "/executivo" },
+    { title: "Precificação", desc: "Referência para definir o valor da consulta", href: "/posicionamento" },
   ],
   burocracia: [
-    { icon: Sparkles,      color: GOLD,      title: "Copiloto de Consulta", desc: "Prontuário SOAP em 30 segundos por IA",       href: "/copiloto"  },
-    { icon: GraduationCap, color: "#ec4899", title: "SOPs da Clínica",      desc: "Processos operacionais documentados e prontos", href: "/academy"   },
+    { title: "Copiloto de Consulta", desc: "Gera o prontuário a partir da consulta, para você revisar", href: "/copiloto" },
+    { title: "SOPs da Clínica", desc: "Processos operacionais documentados", href: "/academy" },
   ],
   financeiro: [
-    { icon: DollarSign, color: "#16a34a", title: "Financeiro",   desc: "Controle de caixa, receitas e despesas",          href: "/financeiro"  },
-    { icon: BarChart3,  color: "#8b5cf6", title: "Indicadores",  desc: "KPIs clínicos e financeiros em tempo real",       href: "/indicadores" },
+    { title: "Financeiro", desc: "Controle de caixa, receitas e despesas", href: "/financeiro" },
+    { title: "Indicadores", desc: "Indicadores clínicos e financeiros", href: "/indicadores" },
   ],
   crescer: [
-    { icon: Bot,    color: "#f59e0b", title: "Consultor Estratégico IA", desc: "Análise e recomendações com dados reais",   href: "/posicionamento" },
-    { icon: Target, color: "#3b82f6", title: "Diagnóstico 360°",         desc: "Avaliação completa da sua clínica",         href: "/posicionamento" },
+    { title: "Consultor Estratégico", desc: "Análise e recomendações a partir dos dados da clínica", href: "/posicionamento" },
+    { title: "Diagnóstico da clínica", desc: "Avaliação completa do negócio", href: "/posicionamento" },
   ],
 }
 
-// ─── ProgressBar ──────────────────────────────────────────────────────────────
-
-function ProgressBar({ step }: { step: number }) {
-  const LABELS = ["Início", "Perfil", "Prioridade", "Tour", "Pronto"]
-  return (
-    <div className="w-full mb-10">
-      <div className="flex items-center justify-between mb-3">
-        {LABELS.map((label, i) => {
-          const n      = i + 1
-          const done   = n < step
-          const active = n === step
-          return (
-            <div key={i} className="flex flex-col items-center gap-1 flex-1">
-              <div
-                className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold transition-all border"
-                style={{
-                  background:  done ? GOLD : active ? `${GOLD}22` : CARD_BG,
-                  borderColor: done || active ? GOLD : BORDER,
-                  color:       done ? "#fff" : active ? GOLD : TEXT2,
-                }}>
-                {done ? <Check className="w-3.5 h-3.5" /> : n}
-              </div>
-              <span className="text-[9px] font-mono tracking-wider" style={{ color: active ? GOLD : TEXT2 }}>
-                {label.toUpperCase()}
-              </span>
-            </div>
-          )
-        })}
-      </div>
-      <div className="relative h-1.5 rounded-full" style={{ background: BORDER }}>
-        <div
-          className="absolute left-0 top-0 h-full rounded-full transition-all duration-500"
-          style={{ width: `${((step - 1) / 4) * 100}%`, background: GOLD }}
-        />
-      </div>
-    </div>
-  )
-}
-
-// ─── Page ─────────────────────────────────────────────────────────────────────
+const ETAPAS = ["Início", "Perfil", "Prioridade", "Módulos", "Final"]
+const erroBox = "rounded-px-card bg-px-danger-soft px-3 py-2 text-[13px] text-px-danger"
 
 export default function OnboardingPage() {
   const router = useRouter()
+  const [step, setStep] = useState(1)
+  const [saving, setSaving] = useState(false)
+  const [erroMsg, setErroMsg] = useState("")
+  const [nome, setNome] = useState("")
+  const [espec, setEspec] = useState("Clínica Geral")
+  const [cidade, setCidade] = useState("")
+  const [problema, setProblema] = useState("")
+  const [vozConsent, setVozConsent] = useState(false)
 
-  const [step,          setStep]          = useState(1)
-  const [saving,        setSaving]        = useState(false)
-  const [erroMsg,       setErroMsg]       = useState("")
-  const [nome,          setNome]          = useState("")
-  const [espec,         setEspec]         = useState("Clínica Geral")
-  const [cidade,        setCidade]        = useState("")
-  const [problema,      setProblema]      = useState("")
-  const [vozConsent,    setVozConsent]    = useState(false)
-
-  const inputStyle: React.CSSProperties = {
-    background: CARD_BG, border: `1px solid ${BORDER}`, color: DARK,
-    borderRadius: "0.5rem", padding: "0.75rem 1rem", fontSize: "0.8125rem", width: "100%", outline: "none",
+  async function patch(extra?: Record<string, unknown>) {
+    const r = await fetch("/api/perfil", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ nome: nome.trim(), especialidade: espec, cidade: cidade.trim(), ...extra }) })
+    return r.ok
   }
 
-  const save = async (extra?: Record<string, unknown>) => {
-    await fetch("/api/perfil", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ nome, especialidade: espec, cidade, ...extra }),
-    }).catch(() => null)
-  }
-
-  const next = async (extra?: Record<string, unknown>) => {
-    setSaving(true)
-    await save(extra)
-    setSaving(false)
-    setStep(s => s + 1)
-  }
-
-  // Persiste onboarding_completo sem redirecionar — reutilizado pelos atalhos de módulo da Etapa 4
-  const persistOnboarding = async () => {
-    await save({ onboarding_completo: true, voz_gravacao_autorizada: vozConsent })
-    await fetch("/api/perfil/onboarding", { method: "POST" }).catch(() => null)
-  }
-
-  const finish = async () => {
-    setSaving(true)
-    setErroMsg("")
+  // Salva e só avança se a gravação deu certo; antes, falhas eram ignoradas e a pessoa seguia sem perfil salvo
+  async function avancar(extra?: Record<string, unknown>) {
+    setSaving(true); setErroMsg("")
     try {
-      const r1 = await fetch("/api/perfil", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nome, especialidade: espec, cidade, onboarding_completo: true, voz_gravacao_autorizada: vozConsent }),
-      })
-      const r2 = await fetch("/api/perfil/onboarding", { method: "POST" })
-      if (!r1.ok || !r2.ok) throw new Error("Falha ao salvar")
-      const meData = await fetch("/api/me").then(r => r.json()).catch(() => null) as { plano?: string } | null
-      router.push(meData?.plano && meData.plano !== "trial" ? "/dashboard" : "/planos")
-    } catch {
-      setErroMsg("Erro ao salvar configurações. Tente novamente.")
-    } finally {
+      if (!(await patch(extra))) throw new Error("falha")
+      setStep(s => s + 1)
+    } catch (e) {
+      console.error("[onboarding] erro ao salvar etapa:", e)
+      setErroMsg("Não foi possível salvar. Tente novamente.")
+    } finally { setSaving(false) }
+  }
+
+  // Grava o perfil e marca o onboarding como concluído. Devolve true se ambas as gravações deram certo.
+  async function concluir() {
+    const r1 = await patch({ onboarding_completo: true, voz_gravacao_autorizada: vozConsent })
+    const r2 = await fetch("/api/perfil/onboarding", { method: "POST" })
+    return r1 && r2.ok
+  }
+
+  async function ir(href: string) {
+    setSaving(true); setErroMsg("")
+    try {
+      if (!(await concluir())) throw new Error("falha")
+      router.push(href)
+    } catch (e) {
+      console.error("[onboarding] erro ao concluir:", e)
+      setErroMsg("Não foi possível salvar suas configurações. Tente novamente.")
       setSaving(false)
     }
   }
 
-  const modules = MODULE_MAP[problema] ?? []
+  async function finalizar() {
+    setSaving(true); setErroMsg("")
+    try {
+      if (!(await concluir())) throw new Error("falha")
+      const me = await fetch("/api/me").then(r => (r.ok ? r.json() : null)).catch(() => null) as { plano?: string } | null
+      router.push(me?.plano && me.plano !== "trial" ? "/dashboard" : "/planos")
+    } catch (e) {
+      console.error("[onboarding] erro ao finalizar:", e)
+      setErroMsg("Erro ao salvar configurações. Tente novamente.")
+      setSaving(false)
+    }
+  }
+
+  const modulos = MODULE_MAP[problema] ?? []
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-start justify-center overflow-y-auto" style={{ background: BG }}>
-      <div className="w-full max-w-2xl mx-auto px-4 py-8">
+    <div className="px relative min-h-screen px-4 py-10">
+      <div className="px-stage" aria-hidden="true" />
+      <main className="relative mx-auto w-full max-w-xl space-y-6">
+        <h1 className="text-center text-[22px] font-semibold tracking-[0.2em] text-px-ink">PRAXIS</h1>
 
-        {/* Logo */}
-        <div className="flex justify-center mb-8">
-          <div className="flex items-center gap-3">
-            <svg width="26" height="26" viewBox="0 0 32 32" fill="none">
-              <circle cx="16" cy="16" r="14" stroke={GOLD} strokeWidth="1.5" strokeDasharray="70 18" strokeDashoffset="12" opacity="0.7" />
-              <path d="M10 22V10h5.5a4 4 0 0 1 0 8H10" stroke={DARK} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              <line x1="18" y1="14" x2="23" y2="22" stroke={GOLD} strokeWidth="2" strokeLinecap="round" opacity="0.9" />
-            </svg>
-            <span style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: 15, fontWeight: 600, letterSpacing: "4px", color: DARK }}>PRAXIS</span>
-          </div>
-        </div>
+        <ol className="flex items-center justify-between gap-1" aria-label="Etapas do onboarding">
+          {ETAPAS.map((l, i) => {
+            const n = i + 1
+            return (
+              <li key={l} aria-current={n === step ? "step" : undefined} className="flex flex-1 flex-col items-center gap-1">
+                <span className={`flex h-7 w-7 items-center justify-center rounded-full border text-[12px] font-semibold ${n < step ? "border-px-ink bg-px-ink text-white" : n === step ? "border-px-ink text-px-ink" : "border-px-ink/20 text-px-muted"}`}>{n < step ? "✓" : n}</span>
+                <span className={`text-[11px] ${n === step ? "font-medium text-px-ink" : "text-px-muted"}`}>{l}</span>
+              </li>
+            )
+          })}
+        </ol>
 
-        <ProgressBar step={step} />
+        {erroMsg && <p role="alert" className={erroBox}>{erroMsg}</p>}
 
-        {/* ── ETAPA 1 — Boas-vindas rápida ── */}
         {step === 1 && (
-          <div className="text-center animate-fade-in space-y-8">
-            <div className="space-y-4">
-              <div className="w-20 h-20 mx-auto rounded-2xl flex items-center justify-center" style={{ background: `${GOLD}18`, border: `1px solid ${GOLD}40` }}>
-                <Sparkles className="w-10 h-10" style={{ color: GOLD }} />
-              </div>
-              <h1 className="text-[32px] sm:text-[38px] font-semibold leading-tight" style={{ color: DARK, fontFamily: "var(--font-playfair), Georgia, serif" }}>
-                Bem-vindo ao PRAXIS!
-              </h1>
-              <p className="text-[15px] leading-relaxed max-w-sm mx-auto" style={{ color: TEXT2 }}>
-                Vamos configurar tudo em <strong style={{ color: DARK }}>2 minutos</strong>.
-              </p>
-            </div>
-
-            <div className="max-w-sm mx-auto space-y-2.5 text-left">
-              {[
-                { label: "Preencher perfil",        tempo: "30 segundos" },
-                { label: "Escolher sua prioridade",  tempo: "10 segundos" },
-                { label: "Explorar a plataforma",    tempo: "1 minuto"    },
-              ].map(({ label, tempo }, i) => (
-                <div key={i} className="flex items-center justify-between rounded-xl px-4 py-3" style={{ background: CARD_BG, border: `1px solid ${BORDER}` }}>
-                  <div className="flex items-center gap-3">
-                    <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: `${GOLD}18`, border: `1px solid ${GOLD}40` }}>
-                      <Check className="w-3 h-3" style={{ color: GOLD }} />
-                    </div>
-                    <span className="text-[13px] font-medium" style={{ color: DARK }}>{label}</span>
-                  </div>
-                  <span className="text-[10px] font-mono" style={{ color: MUTED }}>{tempo}</span>
-                </div>
-              ))}
-            </div>
-
-            <button
-              onClick={() => setStep(2)}
-              className="inline-flex items-center gap-2 px-8 py-4 rounded-xl text-[14px] font-bold transition-all hover:opacity-90"
-              style={{ background: GOLD, color: "#fff", boxShadow: `0 4px 20px ${GOLD}44` }}>
-              Começar <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
+          <Panel as="section" className="space-y-5 text-center">
+            <h2 className="text-[26px] font-semibold text-px-ink">Bem-vindo ao PRAXIS</h2>
+            <p className="mx-auto max-w-sm text-[14px] leading-relaxed text-px-muted">Vamos configurar o básico: seu perfil, sua prioridade na clínica e por onde começar.</p>
+            <div><PxButton onClick={() => setStep(2)}>Começar</PxButton></div>
+          </Panel>
         )}
 
-        {/* ── ETAPA 2 — Perfil essencial ── */}
         {step === 2 && (
-          <div className="animate-fade-in space-y-6">
-            <div className="text-center mb-6">
-              <h2 className="text-[26px] font-semibold" style={{ color: DARK, fontFamily: "var(--font-playfair), Georgia, serif" }}>
-                Perfil Profissional
-              </h2>
-              <p className="text-[13px] mt-2" style={{ color: TEXT2 }}>Só o essencial para personalizar a plataforma.</p>
+          <Panel as="section" className="space-y-5">
+            <div>
+              <h2 className="text-[22px] font-semibold text-px-ink">Perfil profissional</h2>
+              <p className="text-[13px] text-px-muted">Só o essencial para personalizar a plataforma.</p>
             </div>
-
-            <div className="rounded-2xl p-6 space-y-5" style={{ background: CARD_BG, border: `1px solid ${BORDER}` }}>
-              <div className="space-y-1.5">
-                <label className="block text-[11px] font-mono tracking-widest uppercase" style={{ color: TEXT2 }}>Nome completo</label>
-                <input
-                  value={nome}
-                  onChange={e => setNome(e.target.value)}
-                  placeholder="Dr. João Silva"
-                  style={inputStyle}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="block text-[11px] font-mono tracking-widest uppercase" style={{ color: TEXT2 }}>Especialidade principal</label>
-                <select value={espec} onChange={e => setEspec(e.target.value)} style={inputStyle}>
-                  {ESPECIALIDADES.map(e => <option key={e} value={e}>{e}</option>)}
-                </select>
-              </div>
-              <div className="space-y-1.5">
-                <label className="block text-[11px] font-mono tracking-widest uppercase" style={{ color: TEXT2 }}>Cidade</label>
-                <input
-                  value={cidade}
-                  onChange={e => setCidade(e.target.value)}
-                  placeholder="São Paulo"
-                  style={inputStyle}
-                />
-              </div>
+            <Field label="Nome completo" htmlFor="o-nome"><PxInput id="o-nome" value={nome} onChange={e => setNome(e.target.value)} placeholder="Dr. João Silva" autoComplete="name" /></Field>
+            <Field label="Especialidade principal" htmlFor="o-esp"><PxSelect id="o-esp" value={espec} onChange={e => setEspec(e.target.value)}>{ESPECIALIDADES.map(e => <option key={e} value={e}>{e}</option>)}</PxSelect></Field>
+            <Field label="Cidade" htmlFor="o-cidade"><PxInput id="o-cidade" value={cidade} onChange={e => setCidade(e.target.value)} placeholder="São Paulo" /></Field>
+            <div className="flex justify-between">
+              <PxButton variant="quiet" onClick={() => setStep(1)}>Voltar</PxButton>
+              <PxButton loading={saving} onClick={() => avancar()}>Próximo</PxButton>
             </div>
-
-            <div className="flex justify-end">
-              <button
-                onClick={() => next()}
-                disabled={saving}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-[13px] font-bold transition-all hover:opacity-90 disabled:opacity-40"
-                style={{ background: GOLD, color: "#fff" }}>
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Próximo <ArrowRight className="w-4 h-4" /></>}
-              </button>
-            </div>
-          </div>
+          </Panel>
         )}
 
-        {/* ── ETAPA 3 — Qual seu maior problema? ── */}
         {step === 3 && (
-          <div className="animate-fade-in space-y-6">
-            <div className="text-center mb-6">
-              <h2 className="text-[24px] font-semibold leading-snug" style={{ color: DARK, fontFamily: "var(--font-playfair), Georgia, serif" }}>
-                O que mais te preocupa<br />na clínica agora?
-              </h2>
-              <p className="text-[13px] mt-3" style={{ color: TEXT2 }}>Vamos mostrar o módulo mais relevante primeiro.</p>
+          <Panel as="section" className="space-y-5">
+            <div>
+              <h2 className="text-[22px] font-semibold text-px-ink">O que mais pesa na clínica agora?</h2>
+              <p className="text-[13px] text-px-muted">Mostramos primeiro os módulos ligados a isso.</p>
             </div>
-
-            <div className="space-y-2">
-              {PROBLEMAS.map(({ id, emoji, label }) => (
-                <button
-                  key={id}
-                  onClick={() => setProblema(id)}
-                  className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-left transition-all"
-                  style={{
-                    background:  problema === id ? `${GOLD}12` : CARD_BG,
-                    border:      `2px solid ${problema === id ? GOLD : BORDER}`,
-                  }}>
-                  <span style={{ fontSize: 24 }}>{emoji}</span>
-                  <span style={{ fontSize: 15, fontWeight: problema === id ? 700 : 500, color: problema === id ? DARK : TEXT2, flex: 1 }}>
-                    {label}
-                  </span>
-                  {problema === id && <Check className="w-5 h-5 flex-shrink-0" style={{ color: GOLD }} />}
-                </button>
+            <div role="group" aria-label="Prioridade" className="space-y-2">
+              {PROBLEMAS.map(p => (
+                <button key={p.id} type="button" aria-pressed={problema === p.id} onClick={() => setProblema(p.id)}
+                  className={`w-full rounded-px-card border px-4 py-3 text-left text-[14px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-px-ink/40 ${problema === p.id ? "border-px-ink bg-px-ink font-medium text-white" : "border-px-ink/15 bg-white text-px-ink hover:border-px-ink/40"}`}>{p.label}</button>
               ))}
             </div>
-
-            <div className="flex items-center justify-between">
-              <button onClick={() => setStep(2)} className="text-[12px]" style={{ color: TEXT2 }}>← Voltar</button>
-              <button
-                onClick={() => next({ problema })}
-                disabled={saving || !problema}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-[13px] font-bold transition-all hover:opacity-90 disabled:opacity-40"
-                style={{ background: GOLD, color: "#fff" }}>
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Ver minha recomendação <ArrowRight className="w-4 h-4" /></>}
-              </button>
+            <div className="flex justify-between">
+              <PxButton variant="quiet" onClick={() => setStep(2)}>Voltar</PxButton>
+              <PxButton loading={saving} disabled={!problema} onClick={() => avancar({ problema })}>Ver recomendação</PxButton>
             </div>
-          </div>
+          </Panel>
         )}
 
-        {/* ── ETAPA 4 — Tour rápido personalizado ── */}
         {step === 4 && (
-          <div className="animate-fade-in space-y-6">
-            <div className="text-center mb-8">
-              <div className="mb-3 flex justify-center"><Target style={{ width: 36, height: 36, color: GOLD }} /></div>
-              <h2 className="text-[26px] font-semibold" style={{ color: DARK, fontFamily: "var(--font-playfair), Georgia, serif" }}>
-                Comece por aqui
-              </h2>
-              <p className="text-[13px] mt-2" style={{ color: TEXT2 }}>
-                Esses módulos vão gerar o maior impacto para você.
-              </p>
+          <Panel as="section" className="space-y-5">
+            <div>
+              <h2 className="text-[22px] font-semibold text-px-ink">Comece por aqui</h2>
+              <p className="text-[13px] text-px-muted">Módulos ligados à prioridade que você escolheu. Abrir um deles conclui o onboarding.</p>
             </div>
-
-            <div className="space-y-3">
-              {modules.map(({ icon: Icon, color, title, desc, href }, i) => (
-                <a key={i} href={href}
-                  onClick={async (e) => { e.preventDefault(); await persistOnboarding(); router.push(href) }}
-                  className="flex items-center gap-4 rounded-2xl p-5 transition-all hover:-translate-y-0.5"
-                  style={{ background: CARD_BG, border: `1.5px solid ${color}35`, textDecoration: "none", display: "flex" }}>
-                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: `${color}12`, border: `1px solid ${color}30` }}>
-                    <Icon className="w-5 h-5" style={{ color }} />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: DARK }}>{title}</div>
-                    <div style={{ fontSize: 12, color: TEXT2, marginTop: 2 }}>{desc}</div>
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 600, color, flexShrink: 0 }}>
-                    Comece aqui <ArrowRight className="w-3.5 h-3.5" />
-                  </div>
-                </a>
+            <ul className="space-y-2">
+              {modulos.map(m => (
+                <li key={m.title}>
+                  <button type="button" disabled={saving} onClick={() => ir(m.href)} className="w-full rounded-px-card border border-px-ink/15 bg-white px-4 py-3 text-left transition-colors hover:border-px-ink/40 disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-px-ink/40">
+                    <span className="block text-[14px] font-semibold text-px-ink">{m.title}</span>
+                    <span className="block text-[13px] text-px-muted">{m.desc}</span>
+                  </button>
+                </li>
               ))}
+            </ul>
+            <div className="flex justify-between">
+              <PxButton variant="quiet" onClick={() => setStep(3)}>Mudar prioridade</PxButton>
+              <PxButton variant="secondary" onClick={() => setStep(5)}>Continuar</PxButton>
             </div>
-
-            <div className="flex flex-col gap-3 pt-2">
-              <button
-                onClick={() => setStep(5)}
-                className="w-full py-4 rounded-xl text-[14px] font-bold transition-all hover:opacity-90"
-                style={{ background: `${GOLD}12`, color: GOLD, border: `1px solid ${GOLD}35` }}>
-                Ver todos os módulos →
-              </button>
-              <button onClick={() => setStep(3)} className="text-[12px] text-center" style={{ color: MUTED }}>
-                ← Mudar minha prioridade
-              </button>
-            </div>
-          </div>
+          </Panel>
         )}
 
-        {/* ── ETAPA 5 — Pronto! ── */}
         {step === 5 && (
-          <div className="text-center animate-fade-in space-y-8">
-            <div className="space-y-4">
-              <div className="w-20 h-20 mx-auto rounded-full flex items-center justify-center"
-                style={{ background: `${GOLD}18`, border: `2px solid ${GOLD}40` }}>
-                <PartyPopper style={{ width: 36, height: 36, color: GOLD }} />
-              </div>
-              <h2 className="text-[30px] font-semibold" style={{ color: DARK, fontFamily: "var(--font-playfair), Georgia, serif" }}>
-                Sua plataforma está configurada!
-              </h2>
-              <p className="text-[14px] max-w-sm mx-auto leading-relaxed" style={{ color: TEXT2 }}>
-                Escolha seu plano e comece com <strong style={{ color: DARK }}>7 dias grátis</strong> — cancele quando quiser.
-              </p>
+          <Panel as="section" className="space-y-5">
+            <div className="text-center">
+              <h2 className="text-[24px] font-semibold text-px-ink">Configuração concluída</h2>
+              <p className="mx-auto mt-1 max-w-sm text-[14px] text-px-muted">Escolha seu plano para começar a usar a plataforma.</p>
             </div>
-
-            <button
-              type="button"
-              onClick={() => setVozConsent(v => !v)}
-              className="w-full flex items-start gap-3 rounded-xl px-4 py-3 text-left transition-all"
-              style={{ background: vozConsent ? `${GOLD}10` : CARD_BG, border: `1.5px solid ${vozConsent ? GOLD : BORDER}` }}>
-              <div
-                className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0 mt-0.5 transition-all"
-                style={{ background: vozConsent ? GOLD : "transparent", border: `2px solid ${vozConsent ? GOLD : BORDER}` }}>
-                {vozConsent && <Check className="w-3 h-3" style={{ color: "#fff" }} />}
-              </div>
-              <div>
-                <p className="text-[13px] font-medium" style={{ color: DARK }}>Autorizar gravação de voz (LGPD)</p>
-                <p className="text-[11px] mt-0.5" style={{ color: MUTED }}>
-                  Permite transcrição de áudio no Copiloto. Você pode revogar a qualquer momento nas configurações.
-                </p>
-              </div>
-            </button>
-
-            {erroMsg && (
-              <div className="flex items-center gap-3 rounded-xl px-4 py-3 text-left" style={{ background: "#fef2f2", border: "1px solid #fecaca" }}>
-                <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
-                <p className="text-[12px] text-red-600">{erroMsg}</p>
-              </div>
-            )}
-
-            <div className="space-y-3">
-              <button
-                onClick={finish}
-                disabled={saving}
-                className="w-full py-4 rounded-xl text-[15px] font-bold transition-all hover:opacity-90 disabled:opacity-50"
-                style={{ background: GOLD, color: "#fff", boxShadow: `0 4px 20px ${GOLD}44` }}>
-                {saving
-                  ? <span className="flex items-center justify-center gap-2"><Loader2 className="w-4 h-4 animate-spin" />Aguarde...</span>
-                  : "Escolher meu plano →"}
-              </button>
-              <Link href="/tour" className="block text-center text-[12px] underline underline-offset-4" style={{ color: MUTED }}>
-                Explorar o tour primeiro →
-              </Link>
+            <div className="space-y-1">
+              <PxCheckbox label="Autorizar gravação de voz (LGPD)" checked={vozConsent} onChange={e => setVozConsent(e.target.checked)} />
+              <p className="pl-[26px] text-[12.5px] text-px-muted">Permite a transcrição de áudio no Copiloto. Se você não marcar, a autorização será pedida quando usar o recurso.</p>
             </div>
-          </div>
+            <PxButton fullWidth loading={saving} onClick={finalizar}>Escolher meu plano</PxButton>
+            <p className="text-center text-[13px]"><Link href="/tour" className="text-px-muted underline underline-offset-2">Explorar o tour primeiro</Link></p>
+          </Panel>
         )}
-
-      </div>
+      </main>
     </div>
   )
 }

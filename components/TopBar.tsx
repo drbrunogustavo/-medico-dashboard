@@ -38,7 +38,7 @@ const TIPO_COLOR: Record<string, string> = {
 
 // ─── Bell Dropdown ────────────────────────────────────────────────────────────
 
-function BellMenu() {
+export function BellMenu() {
   const [open,      setOpen]      = useState(false)
   const [items,     setItems]     = useState<Notificacao[]>([])
   const [naoLidas,  setNaoLidas]  = useState(0)

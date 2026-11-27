@@ -1,34 +1,12 @@
 "use client"
 
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { ErrorState } from "@/components/ErrorState"
-import { TopBar } from "@/components/TopBar"
-import {
-  ArrowRight, Activity, BarChart,
-  Lightbulb, Users, TrendingUp,
-  Megaphone, BarChart3, Sparkles, GraduationCap,
-  FileText, Stethoscope, Check, Star, AlertTriangle,
-  BookOpen, Trophy, Loader2, CalendarDays, Clock, MessageCircle,
-  DollarSign, Camera,
-} from "lucide-react"
-import { cn } from "@/lib/utils"
 import { useAppContext } from "@/components/AppProvider"
-import dynamic from "next/dynamic"
-
-const RevenueChart = dynamic(() => import("@/components/charts/DashboardCharts").then(m => m.RevenueChart), {
-  ssr: false,
-  loading: () => <div className="h-[180px] bg-border/30 rounded-xl animate-pulse" />,
-})
-const NpsChart = dynamic(() => import("@/components/charts/DashboardCharts").then(m => m.NpsChart), {
-  ssr: false,
-  loading: () => <div className="h-[140px] bg-border/30 rounded-xl animate-pulse" />,
-})
-const FunnelChart = dynamic(() => import("@/components/charts/DashboardCharts").then(m => m.FunnelChart), {
-  ssr: false,
-  loading: () => <div className="h-[120px] bg-border/30 rounded-xl animate-pulse" />,
-})
+import { Panel, Tag, PageHeader, ColumnChart, LineSeries, BarList } from "@/components/px"
+import { cn } from "@/lib/utils"
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -40,103 +18,12 @@ function greeting() {
 }
 
 function fmtDate() {
-  return new Date().toLocaleDateString("pt-BR", {
-    weekday: "long", day: "2-digit", month: "long",
-  })
+  return new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" })
 }
 
 function fmtBRL(v: number) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v)
 }
-
-function useCounter(target: number, duration = 800) {
-  const [value, setValue] = useState(0)
-  const raf = useRef<number>()
-  useEffect(() => {
-    const start = performance.now()
-    const tick  = (now: number) => {
-      const t    = Math.min((now - start) / duration, 1)
-      const ease = 1 - Math.pow(1 - t, 3)
-      setValue(Math.round(ease * target))
-      if (t < 1) raf.current = requestAnimationFrame(tick)
-    }
-    raf.current = requestAnimationFrame(tick)
-    return () => { if (raf.current) cancelAnimationFrame(raf.current) }
-  }, [target, duration])
-  return value
-}
-
-// ─── Data ─────────────────────────────────────────────────────────────────────
-
-const ALA_SECTIONS = [
-  {
-    id: "social", icon: Megaphone, title: "PRAXIS Social",
-    desc: "Atraia mais pacientes com conteúdo estratégico",
-    color: "text-accent", bg: "bg-accent-dim", border: "border-accent-border",
-    indicatorColor: "#00c07f",
-    links: [
-      { label: "Posicionamento", href: "/posicionamento" },
-      { label: "Reels",          href: "/reels"          },
-      { label: "Calendário",     href: "/calendario"     },
-      { label: "Radar IA",       href: "/radar"          },
-    ],
-  },
-  {
-    id: "consultorio", icon: Stethoscope, title: "PRAXIS Consultório",
-    desc: "Converta leads em pacientes fiéis",
-    color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/25",
-    indicatorColor: "#60a5fa",
-    links: [
-      { label: "CRM",      href: "/crm"      },
-      { label: "Copiloto", href: "/copiloto" },
-      { label: "Agenda",   href: "/agenda"   },
-      { label: "Scripts",  href: "/scripts"  },
-    ],
-  },
-  {
-    id: "executivo", icon: BarChart3, title: "PRAXIS Executivo",
-    desc: "Gerencie e escale sua clínica",
-    color: "text-purple-400", bg: "bg-purple-500/10", border: "border-purple-500/25",
-    indicatorColor: "#c084fc",
-    links: [
-      { label: "Financeiro",   href: "/financeiro"   },
-      { label: "Precificação", href: "/precificacao" },
-      { label: "Indicadores",  href: "/indicadores"  },
-      { label: "Consultor",    href: "/consultor"    },
-    ],
-  },
-  {
-    id: "ia", icon: Sparkles, title: "PRAXIS IA",
-    desc: "Inteligência estratégica para crescer mais rápido",
-    color: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/25",
-    indicatorColor: "#fbbf24",
-    links: [
-      { label: "Posicionamento", href: "/posicionamento"    },
-      { label: "Dir. Criativo",  href: "/diretor-criativo"  },
-      { label: "Agente",         href: "/agente-executivo"  },
-      { label: "Nutrição",       href: "/nutricao-pacientes"},
-    ],
-  },
-  {
-    id: "academy", icon: GraduationCap, title: "PRAXIS Academy",
-    desc: "Aprenda a construir uma clínica de sucesso",
-    color: "text-pink-400", bg: "bg-pink-500/10", border: "border-pink-500/25",
-    indicatorColor: "#f472b6",
-    links: [
-      { label: "Academy", href: "/academy" },
-    ],
-  },
-]
-
-const ACOES_DIA = [
-  { dica: "Conteúdo de estilo de vida e motivação performa bem hoje. Aproveite o domingo.", acao: { label: "Gerar Roteiro", href: "/roteiros" } },
-  { dica: "Segunda: planeje toda a semana com o Agente Executivo para não perder engajamento.", acao: { label: "Abrir Agente", href: "/agente" } },
-  { dica: "Terça tem excelente alcance para conteúdo científico e educativo na sua especialidade.", acao: { label: "Explorar Radar", href: "/radar" } },
-  { dica: "Quarta é ótima para posts de perguntas e enquetes — maximiza interação.", acao: { label: "Mapa de Objeções", href: "/objecoes" } },
-  { dica: "Quinta é ideal para carrosséis aprofundados — maior tempo de leitura e salvamentos.", acao: { label: "Diretor Criativo", href: "/imagens" } },
-  { dica: "Depoimentos de pacientes transformam sextas em dias de alta conversão.", acao: { label: "Criar Roteiro", href: "/roteiros" } },
-  { dica: "Sábado é ótimo para bastidores da clínica — humaniza sua marca médica.", acao: { label: "Ver Referências", href: "/referencias" } },
-]
 
 interface ExecMetrics {
   leads_total:       number
@@ -151,188 +38,121 @@ interface ExecMetrics {
 }
 
 interface AcademyProgresso { aula_id: string; status: string }
+interface Pauta { id: number | string; titulo: string; categoria: string; estagio?: string }
+interface SugestaoIA { titulo: string; descricao: string; href: string; categoria: string }
 
-// ─── IA Alert ────────────────────────────────────────────────────────────────
+const CATEGORIA_LABEL: Record<string, string> = { social: "Conteúdo", clinica: "Clínica", ia: "Estratégia" }
 
-function AlertaIA({ metrics, loading }: { metrics: ExecMetrics | null; loading: boolean }) {
-  if (loading) return null
+function Skeleton({ className }: { className?: string }) {
+  return <div className={cn("animate-pulse rounded-px-ctl bg-px-ink/10", className)} />
+}
 
-  const alertas: { msg: string; href: string; label: string }[] = []
-
-  if (metrics) {
-    if (metrics.leads_total > 0 && metrics.consultas_mes === 0)
-      alertas.push({ msg: "Você tem leads no CRM sem consultas este mês.", href: "/crm", label: "Ver CRM" })
-    if (metrics.nps_score !== null && metrics.nps_score < 7)
-      alertas.push({ msg: `NPS em ${metrics.nps_score} — abaixo do ideal. Considere uma campanha de reengajamento.`, href: "/nps", label: "Ver NPS" })
-  }
-  const diasSemConteudo = 3
-  if (diasSemConteudo >= 3)
-    alertas.push({ msg: `${diasSemConteudo} dias sem publicar conteúdo. Sua presença digital pode estar caindo.`, href: "/calendario", label: "Calendário" })
-
-  if (alertas.length === 0) return null
-
+function BlockTitle({ children, aside }: { children: React.ReactNode; aside?: React.ReactNode }) {
   return (
-    <div className="rounded-xl border px-5 py-4 space-y-3"
-      style={{ background: "rgba(245,158,11,0.06)", borderColor: "rgba(245,158,11,0.22)" }}>
-      <div className="flex items-center gap-2 mb-1">
-        <Sparkles className="w-3.5 h-3.5" style={{ color: "#f59e0b" }} />
-        <span className="text-[11px] font-mono font-semibold tracking-widest uppercase" style={{ color: "#f59e0b" }}>
-          Alerta PRAXIS IA
-        </span>
-      </div>
-      {alertas.map((a, i) => (
-        <div key={i} className="flex items-start gap-3">
-          <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: "#f59e0b" }} />
-          <div className="flex-1 min-w-0">
-            <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>{a.msg}</p>
-          </div>
-          <Link href={a.href}
-            className="text-[11px] font-semibold flex-shrink-0 hover:underline"
-            style={{ color: "#f59e0b" }}>
-            {a.label} →
-          </Link>
-        </div>
-      ))}
+    <div className="mb-4 flex items-baseline justify-between gap-3">
+      <h2 className="text-[15px] font-semibold text-px-ink">{children}</h2>
+      {aside}
     </div>
   )
 }
 
-// ─── Academy progress mini card ───────────────────────────────────────────────
+// ─── Blocos ───────────────────────────────────────────────────────────────────
 
-function AcademyMiniCard() {
-  const [progresso, setProgresso] = useState<AcademyProgresso[]>([])
-
-  useEffect(() => {
-    fetch("/api/academy/progresso")
-      .then(r => r.ok ? r.json() : [])
-      .then((d: unknown) => { if (Array.isArray(d)) setProgresso(d as AcademyProgresso[]) })
-      .catch(e => console.error("[dashboard] erro ao carregar progresso da Academy:", e))
-  }, [])
-
-  const concluidas = progresso.filter(p => p.status === "concluida").length
-  const total = 38
-  const pct = Math.round((concluidas / total) * 100)
-
+function Atalho({ href, valor, rotulo, loading }: { href: string; valor: string; rotulo: string; loading: boolean }) {
   return (
-    <Link href="/academy"
-      className="flex items-center gap-4 px-5 py-4 rounded-xl border transition-all hover:-translate-y-0.5"
-      style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
-      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-        style={{ background: "rgba(244,114,182,0.1)", border: "1px solid rgba(244,114,182,0.25)" }}>
-        <GraduationCap className="w-5 h-5" style={{ color: "#f472b6" }} />
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between mb-1.5">
-          <p className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>PRAXIS Academy</p>
-          <span className="text-[11px] font-mono" style={{ color: "var(--text-muted)" }}>
-            {concluidas}/{total} aulas
-          </span>
-        </div>
-        <div className="w-full h-1.5 rounded-full" style={{ background: "var(--border)" }}>
-          <div className="h-full rounded-full transition-all duration-700"
-            style={{ width: `${pct}%`, background: "#f472b6" }} />
-        </div>
-        <p className="text-[10px] mt-1 font-mono" style={{ color: "var(--text-muted)" }}>
-          {pct}% concluído
-          {concluidas > 0 && <span className="ml-2 text-pink-400">· Continue de onde parou →</span>}
-        </p>
-      </div>
-      {concluidas >= 10 && (
-        <Trophy className="w-4 h-4 flex-shrink-0" style={{ color: "#f59e0b" }} />
+    <Link href={href} className="block rounded-px-card bg-white/70 p-4 transition-colors hover:bg-white">
+      {loading ? (
+        <>
+          <Skeleton className="h-8 w-16" />
+          <Skeleton className="mt-2 h-4 w-24" />
+        </>
+      ) : (
+        <>
+          <div className="text-[30px] font-semibold leading-none tabular-nums text-px-ink">{valor}</div>
+          <div className="mt-2 text-[13px] text-px-muted">{rotulo}</div>
+        </>
       )}
     </Link>
   )
 }
 
-interface Pauta { id: number | string; titulo: string; categoria: string; estagio?: string }
-
-interface SugestaoIA { titulo: string; descricao: string; href: string; categoria: string }
-
-// ─── Sugestões IA card ────────────────────────────────────────────────────────
-
-const CATEGORIA_STYLE: Record<string, { color: string; bg: string; border: string; dot: string }> = {
-  social:  { color: "#00c07f", bg: "rgba(0,192,127,0.07)",    border: "rgba(0,192,127,0.22)",  dot: "#00c07f" },
-  clinica: { color: "#60a5fa", bg: "rgba(96,165,250,0.07)",   border: "rgba(96,165,250,0.22)", dot: "#60a5fa" },
-  ia:      { color: "#f59e0b", bg: "rgba(245,158,11,0.07)",   border: "rgba(245,158,11,0.22)", dot: "#f59e0b" },
+function Alertas({ metrics, loading }: { metrics: ExecMetrics | null; loading: boolean }) {
+  if (loading || !metrics) return null
+  const itens: { msg: string; href: string; label: string }[] = []
+  if (metrics.leads_total > 0 && metrics.consultas_mes === 0)
+    itens.push({ msg: "Há leads no CRM e nenhuma consulta registrada neste mês.", href: "/crm", label: "Abrir CRM" })
+  if (metrics.nps_score !== null && metrics.nps_score < 7)
+    itens.push({ msg: `O NPS está em ${metrics.nps_score}, abaixo do ideal.`, href: "/nps", label: "Ver NPS" })
+  if (itens.length === 0) return null
+  return (
+    <Panel tone="light" aria-label="Pontos de atenção">
+      <BlockTitle>Pontos de atenção</BlockTitle>
+      <ul className="space-y-3">
+        {itens.map((a, i) => (
+          <li key={i} className="flex flex-wrap items-center justify-between gap-3">
+            <span className="text-[14px] text-px-ink">{a.msg}</span>
+            <Link href={a.href} className="text-[13px] font-semibold text-px-accent underline-offset-4 hover:underline">{a.label}</Link>
+          </li>
+        ))}
+      </ul>
+    </Panel>
+  )
 }
 
-function SugestoesIA({ sugestoes, loading }: { sugestoes: SugestaoIA[]; loading: boolean }) {
+function Sugestoes({ sugestoes, loading }: { sugestoes: SugestaoIA[]; loading: boolean }) {
   if (!loading && sugestoes.length === 0) return null
-
   return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-3">
-        <Sparkles className="w-3 h-3 text-accent" />
-        <span className="text-[9px] font-mono text-text-muted tracking-[3px] uppercase">Sugestões PRAXIS IA</span>
-        <div className="h-px flex-1 bg-border" />
-        {loading && <Loader2 className="w-3 h-3 text-text-muted animate-spin" />}
-      </div>
-
+    <Panel tone="light" aria-label="Sugestões">
+      <BlockTitle>O que fazer a seguir</BlockTitle>
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {[0, 1].map(i => (
-            <div key={i} className="h-[72px] rounded-xl border border-border bg-surface animate-pulse" />
-          ))}
-        </div>
+        <div className="space-y-3"><Skeleton className="h-14" /><Skeleton className="h-14" /></div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {sugestoes.map((s, i) => {
-            const st = CATEGORIA_STYLE[s.categoria] ?? CATEGORIA_STYLE.ia
-            return (
-              <Link key={i} href={s.href}
-                className="flex items-center gap-4 px-4 py-3.5 rounded-xl border transition-all hover:-translate-y-0.5 group"
-                style={{ background: st.bg, borderColor: st.border }}>
-                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: st.dot }} />
-                <div className="flex-1 min-w-0">
-                  <p className="text-[12px] font-semibold leading-snug mb-0.5 truncate" style={{ color: st.color }}>
-                    {s.titulo}
-                  </p>
-                  <p className="text-[11px] text-text-secondary leading-relaxed line-clamp-2">{s.descricao}</p>
+        <ul className="divide-y divide-px-line">
+          {sugestoes.map((s, i) => (
+            <li key={i}>
+              <Link href={s.href} className="flex items-start justify-between gap-4 py-3 hover:opacity-80">
+                <div className="min-w-0">
+                  <p className="text-[14px] font-semibold text-px-ink">{s.titulo}</p>
+                  <p className="mt-0.5 line-clamp-2 text-[13px] text-px-muted">{s.descricao}</p>
                 </div>
-                <ArrowRight className="w-3.5 h-3.5 flex-shrink-0 transition-transform group-hover:translate-x-0.5"
-                  style={{ color: st.color }} />
+                <Tag tone="neutral">{CATEGORIA_LABEL[s.categoria] ?? "Estratégia"}</Tag>
               </Link>
-            )
-          })}
-        </div>
+            </li>
+          ))}
+        </ul>
       )}
-    </div>
+    </Panel>
   )
 }
 
-// ─── Metric card ─────────────────────────────────────────────────────────────
-
-function MetricCard({ label, value, sub, topColor = "#00c07f", loading = false }: {
-  label: string; value: string | number; sub: string; topColor?: string; loading?: boolean
-}) {
-  const numericTarget = typeof value === "number" ? value : 0
-  const animated      = useCounter(numericTarget)
-  const display       = typeof value === "number" ? animated : value
-
+function AcademyBloco() {
+  const [progresso, setProgresso] = useState<AcademyProgresso[]>([])
+  useEffect(() => {
+    fetch("/api/academy/progresso")
+      .then(r => (r.ok ? r.json() : []))
+      .then((d: unknown) => { if (Array.isArray(d)) setProgresso(d as AcademyProgresso[]) })
+      .catch(e => console.error("[dashboard] erro ao carregar progresso da Academy:", e))
+  }, [])
+  const concluidas = progresso.filter(p => p.status === "concluida").length
+  const total = 38
+  const pct = Math.round((concluidas / total) * 100)
   return (
-    <div
-      className="bg-surface border border-border rounded-xl p-4 md:p-5 transition-all hover:-translate-y-0.5 hover:border-border-hover overflow-hidden relative"
-      style={{ borderTop: `3px solid ${topColor}` }}
-    >
-      {loading ? (
-        <div className="space-y-2">
-          <div className="h-10 w-20 bg-border/40 rounded animate-pulse" />
-          <div className="h-3 w-20 bg-border/30 rounded animate-pulse" />
-        </div>
-      ) : (
-        <>
-          <div className="text-[36px] md:text-[40px] font-bold leading-none mb-1.5 tabular-nums" style={{ color: topColor }}>
-            {display}
-          </div>
-          <div className="text-[11px] font-semibold text-text-primary mb-0.5">{label}</div>
-          <div className="text-[10px] text-text-muted">{sub}</div>
-        </>
-      )}
-    </div>
+    <Panel tone="light" aria-label="Academy">
+      <BlockTitle aside={<Link href="/academy" className="text-[13px] font-semibold text-px-accent underline-offset-4 hover:underline">{concluidas > 0 ? "Continuar" : "Começar"}</Link>}>
+        Academy
+      </BlockTitle>
+      <div className="flex items-baseline justify-between text-[13px]">
+        <span className="text-px-muted">{concluidas} de {total} aulas concluídas</span>
+        <span className="font-semibold tabular-nums text-px-ink">{pct}%</span>
+      </div>
+      <div className="mt-2 h-2 rounded-full bg-px-ink/10" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label="Progresso na Academy">
+        <div className="h-2 rounded-full bg-px-ink" style={{ width: `${pct}%` }} />
+      </div>
+    </Panel>
   )
 }
 
-// ─── Page ────────────────────────────────────────────────────────────────────
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
   const [pautasCount,    setPautasCount]    = useState<number>(0)
@@ -364,8 +184,6 @@ export default function DashboardPage() {
       router.replace("/onboarding")
     }
   }, [perfil, perfilLoading, router])
-
-  const dica = ACOES_DIA[new Date().getDay()]
 
   const fetchExecMetrics = useCallback(() => {
     setExecLoading(true)
@@ -463,9 +281,6 @@ export default function DashboardPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [execLoading, perfilLoading])
 
-  const npsDisplay = execMetrics?.nps_score !== null && execMetrics?.nps_score !== undefined
-    ? execMetrics.nps_score
-    : "—"
 
   const topOrigem = (execMetrics?.leads_origem ?? [])
     .filter(o => o.count > 0)
@@ -481,470 +296,127 @@ export default function DashboardPage() {
     ? (fat6m[fat6m.length - 1].valor - fat6m[fat6m.length - 2].valor) / fat6m[fat6m.length - 2].valor * 100
     : null
 
-  const activityFeed = [
-    ...(recentPautas.map(p => ({
-      icon: FileText, color: "text-accent",
-      text: `Pauta adicionada: ${p.titulo}`,
-      sub: p.categoria,
-    }))),
-    ...(lastAccess ? [{
-      icon: Activity, color: "text-text-muted",
-      text: "Última sessão registrada",
-      sub: lastAccess,
-    }] : []),
-    {
-      icon: Check, color: "text-blue-400",
-      text: "PRAXIS ativado e funcionando",
-      sub: "Todos os módulos online",
-    },
-  ].slice(0, 5)
+  const nome = perfil?.nome ? perfil.nome.replace(/^Dr\.?\s*/i, "Dr. ") : "Doutor"
+  const novos = execMetrics?.leads_semana ?? 0
 
   return (
-    <div className="animate-fade-in">
-      <TopBar title="Command Center" subtitle="PRAXIS · DASHBOARD PRINCIPAL" />
+    <div className="px px-ambient min-h-screen animate-fade-in">
+      <PageHeader title={`${greet}, ${nome}`} caption={dateStr} />
 
-      <div className="p-4 md:p-8 space-y-6">
+      <div className="space-y-4 px-5 pb-10 pt-4 md:px-10">
 
-        {/* ── Resumo narrativo ─────────────────────────────────────────────── */}
-        <div className="bg-surface border border-border rounded-xl px-6 py-5">
-          <p className="text-[11px] font-mono text-text-muted tracking-widest uppercase mb-2">{dateStr}</p>
-          {(execLoading || perfilLoading) ? (
-            <div className="space-y-2 py-1">
-              <div className="h-6 w-52 rounded bg-border/40 animate-pulse" />
-              <div className="h-4 w-3/4 rounded bg-border/30 animate-pulse mt-3" />
-              <div className="h-4 w-2/3 rounded bg-border/30 animate-pulse" />
-              <div className="h-4 w-1/2 rounded bg-border/30 animate-pulse" />
-            </div>
-          ) : (
-            <>
-              <h2
-                className="text-[22px] md:text-[26px] font-semibold text-text-primary mb-4 leading-tight"
-                style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}
-              >
-                {greet}, {perfil?.nome ? perfil.nome.replace(/^Dr\.?\s*/i, "Dr. ") : "Doutor"}.
-              </h2>
-              <div className="space-y-2">
-                <p className="text-[14px] text-text-secondary leading-relaxed">
-                  {execMetrics && execMetrics.leads_semana > 0 ? (
-                    <>↑ <span className="text-text-primary font-medium">{execMetrics.leads_semana} novo{execMetrics.leads_semana !== 1 ? "s leads entraram" : " lead entrou"}</span> no CRM esta semana.</>
-                  ) : (
-                    <span className="text-text-muted">Nenhum lead novo esta semana ainda.</span>
-                  )}
-                </p>
-                {execMetrics && execMetrics.faturamento_mes > 0 && (
-                  <p className="text-[14px] text-text-secondary leading-relaxed">
-                    <DollarSign className="inline-block align-[-0.15em] w-4 h-4 mr-1 text-accent" /> Você faturou <span className="text-text-primary font-medium">{fmtBRL(execMetrics.faturamento_mes)}</span> em consultas este mês.
-                  </p>
-                )}
-                {topOrigem && (
-                  <p className="text-[14px] text-text-secondary leading-relaxed">
-                    <Camera className="inline-block align-[-0.15em] w-4 h-4 mr-1 text-accent" /> <span className="text-text-primary font-medium">{topOrigem.origem}</span> trouxe{" "}
-                    <span className="text-text-primary font-medium">{topOrigem.count} lead{topOrigem.count !== 1 ? "s" : ""}</span> no total.
-                  </p>
-                )}
-                {semRetornoCount !== null && semRetornoCount > 0 && (
-                  <p className="text-[14px] text-text-secondary leading-relaxed">
-                    <AlertTriangle className="inline-block align-[-0.15em] w-4 h-4 mr-1 text-amber-400" />{" "}
-                    <Link href="/pacientes" className="text-text-primary font-medium hover:text-amber-400 transition-colors">
-                      {semRetornoCount} paciente{semRetornoCount !== 1 ? "s" : ""}
-                    </Link>{" "}
-                    {semRetornoCount !== 1 ? "estão" : "está"} sem retorno há mais de 6 meses.
-                  </p>
-                )}
-              </div>
-            </>
-          )}
-        </div>
+        {semAcesso && (
+          <Panel tone="strong" role="alert" className="border border-px-danger/30">
+            <p className="text-[14px] font-medium text-px-danger">Você não tem permissão para acessar esse módulo.</p>
+          </Panel>
+        )}
+        {pagamentoSucesso && (
+          <Panel tone="strong" role="status" className="border border-px-ok/30">
+            <p className="text-[14px] font-semibold text-px-ok">Assinatura ativada.</p>
+            <p className="mt-0.5 text-[13px] text-px-muted">Seus 7 dias grátis começaram. Todos os módulos estão liberados.</p>
+          </Panel>
+        )}
 
-        {/* ── Minha rotina de hoje ─────────────────────────────────────────── */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-3">
-            <span className="text-[11px] font-mono text-text-muted tracking-wider uppercase">Minha rotina de hoje</span>
-            <div className="h-px flex-1 bg-border" />
-            {rotinaLoading && <Loader2 className="w-3 h-3 text-text-muted animate-spin" />}
-          </div>
-          {rotinaLoading ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {[0, 1, 2, 3].map(i => (
-                <div key={i} className="h-[76px] rounded-xl border border-border bg-surface animate-pulse" />
+        {/* Hoje */}
+        <section aria-label="Hoje" className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <Atalho href="/agenda" loading={rotinaLoading} valor={String(consultasHoje ?? "—")} rotulo={consultasHoje === 1 ? "consulta hoje" : "consultas hoje"} />
+          <Atalho href="/crm" loading={rotinaLoading} valor={String(leadsNaoLidos ?? "—")} rotulo={leadsNaoLidos === 1 ? "lead sem leitura" : "leads sem leitura"} />
+          <Atalho href="/pacientes" loading={rotinaLoading} valor={String(semRetornoCount ?? "—")} rotulo="pacientes sem retorno há 6 meses" />
+          <Atalho href="/financeiro" loading={rotinaLoading} valor={receitaHoje !== null ? fmtBRL(receitaHoje) : "—"} rotulo="receita de hoje" />
+        </section>
+
+        {execError ? (
+          <ErrorState compact message="Falha ao carregar as métricas. Verifique a conexão e tente de novo." onRetry={fetchExecMetrics} />
+        ) : isNewUser ? (
+          <Panel tone="light" aria-label="Primeiros passos">
+            <BlockTitle>Primeiros passos</BlockTitle>
+            <p className="mb-4 max-w-xl text-[14px] text-px-muted">Os números aparecem aqui assim que houver pacientes, leads ou consultas registrados.</p>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {[
+                { href: "/pacientes", t: "Cadastrar o primeiro paciente", s: "Comece pelo prontuário" },
+                { href: "/crm", t: "Adicionar um lead no CRM", s: "Registre quem chegou até você" },
+                { href: "/copiloto", t: "Testar o Copiloto", s: "Prontuário SOAP a partir da conversa" },
+              ].map(i => (
+                <Link key={i.href} href={i.href} className="rounded-px-card bg-white/70 p-4 transition-colors hover:bg-white">
+                  <p className="text-[14px] font-semibold text-px-ink">{i.t}</p>
+                  <p className="mt-1 text-[13px] text-px-muted">{i.s}</p>
+                </Link>
               ))}
             </div>
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <button
-                onClick={() => router.push("/agenda")}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl border border-border hover:border-border-hover bg-surface transition-all hover:-translate-y-0.5 text-left w-full"
-              >
-                <CalendarDays className="w-5 h-5 text-blue-400 flex-shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-[22px] font-bold leading-none text-text-primary tabular-nums">
-                    {consultasHoje ?? "—"}
-                  </p>
-                  <p className="text-[10px] text-text-muted mt-0.5">
-                    {consultasHoje === 1 ? "consulta hoje" : "consultas hoje"}
-                  </p>
-                </div>
-              </button>
-              <button
-                onClick={() => router.push("/pacientes")}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl border border-border hover:border-border-hover bg-surface transition-all hover:-translate-y-0.5 text-left w-full"
-              >
-                <Clock className="w-5 h-5 text-amber-400 flex-shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-[22px] font-bold leading-none text-text-primary tabular-nums">
-                    {semRetornoCount ?? "—"}
-                  </p>
-                  <p className="text-[10px] text-text-muted mt-0.5">sem retorno</p>
-                </div>
-              </button>
-              <button
-                onClick={() => router.push("/crm")}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl border border-border hover:border-border-hover bg-surface transition-all hover:-translate-y-0.5 text-left w-full"
-              >
-                <MessageCircle className="w-5 h-5 text-accent flex-shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-[22px] font-bold leading-none text-text-primary tabular-nums">
-                    {leadsNaoLidos ?? "—"}
-                  </p>
-                  <p className="text-[10px] text-text-muted mt-0.5">
-                    {leadsNaoLidos === 1 ? "lead não lido" : "leads não lidos"}
-                  </p>
-                </div>
-              </button>
-              <button
-                onClick={() => router.push("/financeiro")}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl border border-border hover:border-border-hover bg-surface transition-all hover:-translate-y-0.5 text-left w-full"
-              >
-                <TrendingUp className="w-5 h-5 text-success flex-shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-[16px] font-bold leading-none text-text-primary tabular-nums">
-                    {receitaHoje !== null ? fmtBRL(receitaHoje) : "—"}
-                  </p>
-                  <p className="text-[10px] text-text-muted mt-0.5">receita hoje</p>
-                </div>
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* ── KPIs em destaque ─────────────────────────────────────────────── */}
-        {execError ? (
-          <ErrorState
-            compact
-            message="Falha ao carregar métricas. Verifique sua conexão e tente novamente."
-            onRetry={fetchExecMetrics}
-          />
-        ) : isNewUser ? (
-          <div className="rounded-xl border border-border bg-surface p-6 space-y-5">
-            <div className="text-center">
-              <h3 className="text-[16px] font-semibold text-text-primary">Comece a usar o PRAXIS</h3>
-              <p className="text-[13px] text-text-muted mt-1.5">
-                Seus dados aparecerão aqui assim que você registrar pacientes, leads ou consultas.
-              </p>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <Link href="/pacientes"
-                className="flex flex-col items-center gap-3 p-4 rounded-xl border border-border hover:border-border-hover bg-card transition-all hover:-translate-y-0.5">
-                <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/25 flex items-center justify-center">
-                  <Users className="w-5 h-5 text-blue-400" />
-                </div>
-                <div className="text-center">
-                  <p className="text-[13px] font-semibold text-text-primary">Cadastrar primeiro paciente</p>
-                  <p className="text-[11px] text-text-muted mt-0.5">Comece pelo prontuário</p>
-                </div>
-              </Link>
-              <Link href="/crm"
-                className="flex flex-col items-center gap-3 p-4 rounded-xl border border-border hover:border-border-hover bg-card transition-all hover:-translate-y-0.5">
-                <div className="w-10 h-10 rounded-xl bg-accent-dim border border-accent-border flex items-center justify-center">
-                  <TrendingUp className="w-5 h-5 text-accent" />
-                </div>
-                <div className="text-center">
-                  <p className="text-[13px] font-semibold text-text-primary">Adicionar lead no CRM</p>
-                  <p className="text-[11px] text-text-muted mt-0.5">Capture e converta pacientes</p>
-                </div>
-              </Link>
-              <Link href="/copiloto"
-                className="flex flex-col items-center gap-3 p-4 rounded-xl border border-border hover:border-border-hover bg-card transition-all hover:-translate-y-0.5">
-                <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/25 flex items-center justify-center">
-                  <Sparkles className="w-5 h-5 text-purple-400" />
-                </div>
-                <div className="text-center">
-                  <p className="text-[13px] font-semibold text-text-primary">Experimentar o Copiloto</p>
-                  <p className="text-[11px] text-text-muted mt-0.5">Prontuário SOAP em 30s com IA</p>
-                </div>
-              </Link>
-            </div>
-          </div>
+          </Panel>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
-            <MetricCard
-              label="Leads no CRM"     value={execMetrics?.leads_total ?? 0}
-              sub="total captados"     topColor="#00c07f" loading={execLoading}
-            />
-            <MetricCard
-              label="Consultas/mês"    value={execMetrics?.consultas_mes ?? 0}
-              sub="mês atual"          topColor="#3b7fff" loading={execLoading}
-            />
-            <MetricCard
-              label="NPS Score"        value={npsDisplay}
-              sub="satisfação"         topColor="#c084fc" loading={execLoading}
-            />
-            <MetricCard
-              label="Banco de Pautas"  value={pautasCount}
-              sub="ideias salvas"      topColor="#f59e0b"
-            />
-            <MetricCard
-              label="Posts publicados" value={postsCount}
-              sub="conteúdos no ar"    topColor="#f472b6"
-            />
-          </div>
-        )}
-
-        {/* ── Indicadores ─────────────────────────────────────────────────── */}
-        {!isNewUser && (
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <span className="text-[11px] font-mono text-text-muted tracking-wider uppercase">Indicadores</span>
-              <div className="h-px flex-1 bg-border" />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-              {/* Receita 6 meses */}
-              <div className="bg-surface border border-border rounded-xl p-5">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-[10px] font-mono text-text-muted uppercase tracking-widest">
-                    Receita 6 meses
-                  </span>
-                  {varPct !== null && (
-                    <span className={cn("text-[11px] font-semibold", varPct >= 0 ? "text-success" : "text-danger")}>
-                      {varPct >= 0 ? "↑" : "↓"} {Math.abs(varPct).toFixed(1)}% vs mês anterior
-                    </span>
-                  )}
-                </div>
+          <>
+            {/* Resumo do mês */}
+            <section aria-label="Resumo" className="grid gap-4 lg:grid-cols-3">
+              <Panel tone="dark" className="lg:col-span-1">
+                <p className="text-[13px] text-white/80">Faturamento do mês</p>
                 {execLoading ? (
-                  <div className="h-[180px] bg-border/30 rounded-xl animate-pulse" />
+                  <Skeleton className="mt-3 h-10 w-40 bg-white/20" />
                 ) : (
-                  <RevenueChart data={fat6m} />
+                  <p className="mt-2 text-[34px] font-semibold leading-none tabular-nums text-white">{fmtBRL(execMetrics?.faturamento_mes ?? 0)}</p>
                 )}
-              </div>
-
-              {/* NPS ao longo do tempo */}
-              <div className="bg-surface border border-border rounded-xl p-5">
-                <div className="mb-4">
-                  <span className="text-[10px] font-mono text-text-muted uppercase tracking-widest">
-                    NPS ao longo do tempo
-                  </span>
-                </div>
-                {execLoading ? (
-                  <div className="h-[140px] bg-border/30 rounded-xl animate-pulse" />
-                ) : (
-                  <NpsChart data={execMetrics?.nps_6m ?? []} />
+                {varPct !== null && !execLoading && (
+                  <p className="mt-3 text-[13px] text-white/80">{varPct >= 0 ? "Alta" : "Queda"} de {Math.abs(varPct).toFixed(1).replace(".", ",")}% sobre o mês anterior</p>
                 )}
-              </div>
+                <dl className="mt-6 grid grid-cols-2 gap-4 border-t border-white/15 pt-4 text-[13px]">
+                  <div><dt className="text-white/70">Consultas no mês</dt><dd className="mt-1 text-[20px] font-semibold tabular-nums text-white">{execLoading ? "—" : execMetrics?.consultas_mes ?? 0}</dd></div>
+                  <div><dt className="text-white/70">Leads na semana</dt><dd className="mt-1 text-[20px] font-semibold tabular-nums text-white">{execLoading ? "—" : novos}</dd></div>
+                </dl>
+              </Panel>
 
-            </div>
+              <Panel tone="light" className="lg:col-span-2">
+                <BlockTitle aside={<Link href="/financeiro" className="text-[13px] font-semibold text-px-accent underline-offset-4 hover:underline">Financeiro</Link>}>Receita nos últimos 6 meses</BlockTitle>
+                {execLoading ? <Skeleton className="h-[190px]" /> : fat6m.length > 0 ? (
+                  <ColumnChart label="Receita mensal dos últimos seis meses" data={fat6m.map(d => ({ rotulo: d.mes, valor: d.valor }))} />
+                ) : <p className="text-[14px] text-px-muted">Ainda não há receita registrada no período.</p>}
+              </Panel>
+            </section>
 
-            {/* Funil CRM */}
-            <div className="bg-surface border border-border rounded-xl p-5">
-              <div className="mb-4">
-                <span className="text-[10px] font-mono text-text-muted uppercase tracking-widest">
-                  Funil CRM — estágios
-                </span>
-              </div>
-              {execLoading ? (
-                <div className="h-[120px] bg-border/30 rounded-xl animate-pulse" />
-              ) : (
-                <FunnelChart data={execMetrics?.leads_por_estagio ?? []} />
-              )}
-            </div>
+            <section aria-label="Pacientes e leads" className="grid gap-4 lg:grid-cols-3">
+              <Panel tone="light">
+                <BlockTitle aside={<span className="text-[13px] tabular-nums text-px-muted">{execLoading || execMetrics?.nps_score == null ? "" : `atual ${execMetrics.nps_score}`}</span>}>Satisfação (NPS)</BlockTitle>
+                {execLoading ? <Skeleton className="h-[170px]" /> : (execMetrics?.nps_6m ?? []).some(d => d.nps !== null) ? (
+                  <LineSeries label="NPS dos últimos seis meses" data={(execMetrics?.nps_6m ?? []).map(d => ({ rotulo: d.mes, valor: d.nps }))} />
+                ) : <p className="text-[14px] text-px-muted">Sem respostas de NPS no período.</p>}
+              </Panel>
 
-          </div>
+              <Panel tone="light">
+                <BlockTitle aside={<Link href="/crm" className="text-[13px] font-semibold text-px-accent underline-offset-4 hover:underline">CRM</Link>}>Leads por estágio</BlockTitle>
+                {execLoading ? <Skeleton className="h-[170px]" /> : (execMetrics?.leads_por_estagio ?? []).length > 0 ? (
+                  <BarList data={(execMetrics?.leads_por_estagio ?? []).map(d => ({ rotulo: d.estagio, valor: d.count }))} />
+                ) : <p className="text-[14px] text-px-muted">Nenhum lead no funil.</p>}
+              </Panel>
+
+              <Panel tone="light">
+                <BlockTitle>De onde vêm os leads</BlockTitle>
+                {execLoading ? <Skeleton className="h-[170px]" /> : topOrigem ? (
+                  <BarList data={(execMetrics?.leads_origem ?? []).filter(o => o.count > 0).sort((a, b) => b.count - a.count).slice(0, 5).map(o => ({ rotulo: o.origem, valor: o.count }))} />
+                ) : <p className="text-[14px] text-px-muted">Sem origem registrada nos leads.</p>}
+              </Panel>
+            </section>
+
+            <Alertas metrics={execMetrics} loading={execLoading} />
+          </>
         )}
 
-        {/* ── Sugestões PRAXIS IA ─────────────────────────────────────────── */}
-        <SugestoesIA sugestoes={sugestoesIA} loading={sugestoesLoad} />
+        <Sugestoes sugestoes={sugestoesIA} loading={sugestoesLoad} />
 
-        {/* ── Banner depoimento ───────────────────────────────────────────── */}
-        <div className="flex items-start justify-between gap-4 px-5 py-4 rounded-xl border"
-          style={{ background: "rgba(184,151,106,0.06)", borderColor: "rgba(184,151,106,0.2)" }}>
-          <div className="flex items-start gap-3">
-            <Star className="w-5 h-5 flex-shrink-0 text-accent" />
-            <div>
-              <p className="text-[13px] font-semibold text-text-primary">Gostou do PRAXIS?</p>
-              <p className="text-[11px] text-text-muted mt-0.5">
-                Deixe seu depoimento e ajude outros médicos a conhecer a plataforma.
-              </p>
-            </div>
-          </div>
-          <a href="/depoimento"
-            className="flex-shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-lg transition-all hover:opacity-80"
-            style={{ background: "rgba(184,151,106,0.14)", color: "#b8976a", border: "1px solid rgba(184,151,106,0.3)", whiteSpace: "nowrap" }}>
-            Compartilhar →
-          </a>
-        </div>
-
-        {/* ── Sem acesso banner ───────────────────────────────────────────── */}
-        {semAcesso && (
-          <div className="flex items-center gap-3 px-5 py-4 rounded-xl border"
-            style={{ background: "rgba(239,68,68,0.06)", borderColor: "rgba(239,68,68,0.22)" }}>
-            <AlertTriangle className="w-4 h-4 flex-shrink-0" style={{ color: "#ef4444" }} />
-            <p className="text-[13px] font-medium" style={{ color: "#ef4444" }}>
-              Você não tem permissão para acessar este módulo.
-            </p>
-          </div>
-        )}
-
-        {/* ── Pagamento sucesso banner ────────────────────────────────────── */}
-        {pagamentoSucesso && (
-          <div className="flex items-center gap-3 px-5 py-4 rounded-xl border"
-            style={{ background: "rgba(0,192,127,0.06)", borderColor: "rgba(0,192,127,0.25)" }}>
-            <Star className="w-4 h-4 text-accent flex-shrink-0" />
-            <div>
-              <p className="text-[13px] font-semibold text-accent">Assinatura ativada com sucesso!</p>
-              <p className="text-[11px] text-text-muted">Seus 7 dias grátis começaram. Explore todos os módulos.</p>
-            </div>
-          </div>
-        )}
-
-        {/* ── Status bar ──────────────────────────────────────────────────── */}
-        <div className="flex items-center justify-between px-5 py-3 bg-surface border border-border rounded-xl">
-          <div className="flex items-center gap-3">
-            {perfil?.especialidade && (
-              <span className="text-[10px] font-mono text-text-muted uppercase tracking-widest">{perfil.especialidade}</span>
+        <div className="grid gap-4 md:grid-cols-2">
+          <Panel tone="light" aria-label="Conteúdo">
+            <BlockTitle aside={<Link href="/pautas" className="text-[13px] font-semibold text-px-accent underline-offset-4 hover:underline">Banco de pautas</Link>}>Conteúdo</BlockTitle>
+            <p className="text-[14px] text-px-ink"><span className="font-semibold tabular-nums">{pautasCount}</span> {pautasCount === 1 ? "pauta salva" : "pautas salvas"}, <span className="font-semibold tabular-nums">{postsCount}</span> {postsCount === 1 ? "publicada" : "publicadas"}.</p>
+            {recentPautas.length > 0 && (
+              <ul className="mt-3 divide-y divide-px-line text-[13px]">
+                {recentPautas.map(p => (
+                  <li key={p.id} className="flex items-baseline justify-between gap-3 py-2"><span className="truncate text-px-ink">{p.titulo}</span><span className="shrink-0 text-px-muted">{p.categoria}</span></li>
+                ))}
+              </ul>
             )}
-            {perfil?.especialidade && <span className="text-border text-[11px]">·</span>}
-            <span className="text-[12px] text-text-secondary">
-              <span className="text-text-primary font-medium">{pautasCount}</span>{" "}
-              pauta{pautasCount !== 1 ? "s" : ""} salvas
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-accent animate-blink" />
-            <span className="text-[10px] font-mono text-accent tracking-widest">PRAXIS ONLINE</span>
-          </div>
+          </Panel>
+          <AcademyBloco />
         </div>
 
-        {/* ── Alerta IA ───────────────────────────────────────────────────── */}
-        <AlertaIA metrics={execMetrics} loading={execLoading} />
-
-        {/* ── SEÇÃO 2: Ação recomendada ───────────────────────────────────── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-surface border border-border rounded-xl overflow-hidden">
-            <div className="flex items-center gap-2 px-5 py-3.5 border-b border-border">
-              <Lightbulb className="w-3.5 h-3.5 text-[#d4af37]" />
-              <span className="text-[12px] font-semibold text-text-primary">Ação Recomendada Hoje</span>
-              <span className="ml-auto text-[10px] font-mono text-text-muted uppercase tracking-wider">
-                {["DOM","SEG","TER","QUA","QUI","SEX","SÁB"][new Date().getDay()]}
-              </span>
-            </div>
-            <div className="p-5 flex flex-col gap-4">
-              <p className="text-[13px] text-text-secondary leading-relaxed">{dica.dica}</p>
-              <Link href={dica.acao.href}
-                className="flex items-center justify-center gap-2 py-2.5 rounded-lg bg-accent-dim border border-accent-border text-accent text-[12px] font-semibold hover:bg-accent/15 transition-all min-h-[44px]">
-                {dica.acao.label} <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-          </div>
-
-          {/* ── SEÇÃO 4: Atividade recente ─────────────────────────────────── */}
-          <div className="bg-surface border border-border rounded-xl overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-3.5 border-b border-border">
-              <div className="flex items-center gap-2">
-                <Activity className="w-3.5 h-3.5 text-text-muted" />
-                <span className="text-[12px] font-semibold text-text-primary">Atividade Recente</span>
-              </div>
-              <Link href="/pautas" className="text-[10px] font-mono text-text-muted hover:text-accent transition-colors">
-                Ver pautas →
-              </Link>
-            </div>
-            <div className="divide-y divide-border">
-              {activityFeed.length > 0 ? (
-                activityFeed.map((item, i) => {
-                  const Icon = item.icon
-                  return (
-                    <div key={i} className="flex items-start gap-3 px-5 py-3">
-                      <Icon className={cn("w-3.5 h-3.5 flex-shrink-0 mt-0.5", item.color)} />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[11px] text-text-secondary truncate">{item.text}</p>
-                        <p className="text-[10px] text-text-muted truncate">{item.sub}</p>
-                      </div>
-                    </div>
-                  )
-                })
-              ) : (
-                <div className="flex flex-col items-center justify-center py-8 gap-2">
-                  <Activity className="w-6 h-6 text-text-muted/30" />
-                  <p className="text-[11px] text-text-muted">Nenhuma atividade ainda.</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* ── SEÇÃO 3: 5 Alas ────────────────────────────────────────────── */}
-        <div>
-          <div className="flex items-center gap-3 mb-4">
-            <span className="text-[9px] font-mono text-text-muted tracking-[3px] uppercase">Módulos da Plataforma</span>
-            <div className="h-px flex-1 bg-border" />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3">
-            {ALA_SECTIONS.map(ala => {
-              const AlaIcon = ala.icon
-              return (
-                <div key={ala.id}
-                  className={cn(
-                    "bg-surface border rounded-xl p-4 transition-all hover:-translate-y-0.5 group",
-                    ala.border,
-                  )}>
-                  <div className="flex items-center gap-2.5 mb-3">
-                    <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center border flex-shrink-0", ala.bg, ala.border)}>
-                      <AlaIcon className={cn("w-4 h-4", ala.color)} />
-                    </div>
-                    <h3 className={cn("text-[11px] font-bold truncate", ala.color)}>{ala.title}</h3>
-                  </div>
-                  <p className="text-[10px] text-text-muted leading-relaxed mb-3">{ala.desc}</p>
-                  <div className="flex flex-wrap gap-1.5 mb-3">
-                    {ala.links.map(link => (
-                      <Link key={link.href} href={link.href}
-                        className={cn(
-                          "text-badge font-mono px-2 py-0.5 rounded-full border transition-colors hover:opacity-80",
-                          ala.bg, ala.border, ala.color,
-                        )}>
-                        {link.label}
-                      </Link>
-                    ))}
-                  </div>
-                  <div className="flex justify-end">
-                    <Link href={ala.links[0].href}>
-                      <ArrowRight className={cn("w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5", ala.color)} />
-                    </Link>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-
-        {/* ── Academy progress ────────────────────────────────────────────── */}
-        <AcademyMiniCard />
-
-        {/* ── Última sessão ───────────────────────────────────────────────── */}
-        {lastAccess && (
-          <div className="flex items-center gap-3 px-4 py-3 bg-surface border border-border rounded-lg">
-            <Activity className="w-3.5 h-3.5 text-text-muted flex-shrink-0" />
-            <p className="text-[11px] text-text-muted">
-              Última sessão: <span className="text-text-secondary">{lastAccess}</span>
-            </p>
-            <div className="ml-auto flex items-center gap-1.5">
-              <BarChart className="w-3 h-3 text-text-muted" />
-              <Link href="/concorrentes" className="text-[10px] text-text-muted hover:text-accent transition-colors font-mono">
-                Análise de Concorrentes →
-              </Link>
-            </div>
-          </div>
-        )}
-
+        {lastAccess && <p className="px-1 text-[12px] text-px-muted">Último acesso: {lastAccess}</p>}
       </div>
     </div>
   )

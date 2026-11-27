@@ -321,9 +321,14 @@ export async function POST(req: NextRequest) {
 
         if (!customerId || amountPaid <= 0) break
 
-        // Affiliate commission — isolated try/catch, never blocks the webhook response
+        // Comissão de afiliado (20% recorrente, teto de 12 meses desde a 1ª fatura paga).
+        // try/catch isolado: nunca bloqueia a resposta do webhook.
         try {
-          // Resolve Supabase user from stripe_customer_id
+          const invoiceId = invoice.id as string
+          const faturaEmMs = (invoice.status_transitions?.paid_at ?? invoice.created) * 1000
+          const faturaEm   = new Date(faturaEmMs)
+
+          // Resolve o usuário do Supabase a partir do stripe_customer_id
           const { data: planoRow } = await supabase
             .from("user_planos")
             .select("user_id")
@@ -334,20 +339,52 @@ export async function POST(req: NextRequest) {
 
           const userId = planoRow.user_id
 
-          // Find pending referral for this user
+          // Indicação deste usuário: 'pendente' até a 1ª fatura, 'aplicada' depois
           const { data: indicacao } = await supabase
             .from("afiliados_indicacoes")
-            .select("id, afiliado_id")
-            .eq("indicacoes_user_id", userId)
-            .eq("status", "pendente")
+            .select("id, afiliado_id, status")
+            .eq("indicado_user_id", userId)
+            .in("status", ["pendente", "aplicada"])
             .maybeSingle()
 
-          if (!indicacao) break // user was not referred, or already processed
+          if (!indicacao) break // usuário não foi indicado
 
-          // Load affiliate
+          // Reenvio do Stripe: esta fatura já tem linha no ledger?
+          const { data: existente } = await supabase
+            .from("afiliados_comissoes")
+            .select("id, status, valor_comissao")
+            .eq("stripe_invoice_id", invoiceId)
+            .maybeSingle()
+
+          if (existente?.status === "aplicada") {
+            console.log(`[stripe/webhook] Fatura ${invoiceId} já teve comissão aplicada — ignorando reenvio`)
+            break
+          }
+
+          // Teto de 12 meses contado a partir da 1ª fatura com comissão registrada
+          if (!existente) {
+            const { data: primeira } = await supabase
+              .from("afiliados_comissoes")
+              .select("fatura_em")
+              .eq("indicacao_id", indicacao.id)
+              .order("fatura_em", { ascending: true })
+              .limit(1)
+              .maybeSingle()
+
+            if (primeira) {
+              const limite = new Date(primeira.fatura_em as string)
+              limite.setUTCMonth(limite.getUTCMonth() + 12)
+              if (faturaEm >= limite) {
+                console.log(`[stripe/webhook] Indicação ${indicacao.id} passou do teto de 12 meses — fatura ${invoiceId} sem comissão`)
+                break
+              }
+            }
+          }
+
+          // Carrega o afiliado
           const { data: afiliado } = await supabase
             .from("afiliados")
-            .select("id, status, stripe_customer_id, comissao_percentual, total_indicados, total_comissao_acumulada")
+            .select("id, status, stripe_customer_id, comissao_percentual, total_indicados")
             .eq("id", indicacao.afiliado_id)
             .maybeSingle()
 
@@ -356,50 +393,111 @@ export async function POST(req: NextRequest) {
             break
           }
 
+          const percentual    = (afiliado.comissao_percentual as number) ?? 20
+          const comissaoCents = Math.round(amountPaid * (percentual / 100))
+          const comissaoReais = parseFloat((comissaoCents / 100).toFixed(2))
+          const valorFatura   = parseFloat((amountPaid / 100).toFixed(2))
+
+          // Registra a fatura no ledger antes de mexer no Stripe. O índice único em
+          // stripe_invoice_id impede que dois eventos simultâneos creditem duas vezes.
+          let comissaoId = existente?.id as string | undefined
+          if (!comissaoId) {
+            const semCredito = afiliado.status !== "ativo" || !afiliado.stripe_customer_id
+            const { data: nova, error: insErr } = await supabase
+              .from("afiliados_comissoes")
+              .insert({
+                indicacao_id:      indicacao.id,
+                afiliado_id:       afiliado.id,
+                stripe_invoice_id: invoiceId,
+                fatura_em:         faturaEm.toISOString(),
+                valor_fatura:      valorFatura,
+                percentual,
+                valor_comissao:    comissaoReais,
+                status:            "pendente",
+                motivo:            semCredito ? "afiliado inativo ou sem stripe_customer_id" : null,
+              })
+              .select("id")
+              .single()
+
+            if (insErr) {
+              if (insErr.code === "23505") break // outro evento da mesma fatura venceu a corrida
+              throw insErr
+            }
+            comissaoId = nova.id as string
+          }
+
           if (afiliado.status !== "ativo" || !afiliado.stripe_customer_id) {
-            console.warn(`[stripe/webhook] Afiliado ${afiliado.id} inativo ou sem stripe_customer_id — indicação ${indicacao.id} aguarda processamento manual`)
+            console.warn(`[stripe/webhook] Afiliado ${afiliado.id} inativo ou sem stripe_customer_id — comissão da fatura ${invoiceId} aguarda processamento manual`)
             break
           }
 
-          // Calculate and credit commission
-          const percentual     = (afiliado.comissao_percentual as number) ?? 20
-          const comissaoCents  = Math.round(amountPaid * (percentual / 100))
-          const comissaoReais  = parseFloat((comissaoCents / 100).toFixed(2))
-
-          console.log(`[stripe/webhook] Creditando comissão — afiliado ${afiliado.id}, indicação ${indicacao.id}, R$${comissaoReais.toFixed(2)} (${percentual}% de R$${(amountPaid / 100).toFixed(2)})`)
+          console.log(`[stripe/webhook] Creditando comissão — afiliado ${afiliado.id}, fatura ${invoiceId}, R$${comissaoReais.toFixed(2)} (${percentual}% de R$${valorFatura.toFixed(2)})`)
           const balanceTx = await stripe.customers.createBalanceTransaction(
             afiliado.stripe_customer_id as string,
             {
-              amount:      -comissaoCents, // negative = credit in Stripe
+              amount:      -comissaoCents, // negativo = crédito no Stripe
               currency:    "brl",
-              description: `Comissão de indicação #${indicacao.id}`,
-            }
+              description: `Comissão de indicação #${indicacao.id} (fatura ${invoiceId})`,
+            },
+            { idempotencyKey: `comissao-${invoiceId}` }
           )
 
           const agora = new Date().toISOString()
 
           await supabase
+            .from("afiliados_comissoes")
+            .update({
+              status:                        "aplicada",
+              stripe_balance_transaction_id: balanceTx.id,
+              aplicado_em:                   agora,
+            })
+            .eq("id", comissaoId)
+
+          // Totais recalculados a partir do ledger, sem somar em cima de valor lido antes
+          const { data: daIndicacao } = await supabase
+            .from("afiliados_comissoes")
+            .select("valor_comissao")
+            .eq("indicacao_id", indicacao.id)
+            .eq("status", "aplicada")
+          const totalIndicacao = parseFloat(
+            (daIndicacao ?? []).reduce((s, r) => s + Number(r.valor_comissao), 0).toFixed(2)
+          )
+
+          const primeiraConversao = indicacao.status === "pendente"
+          await supabase
             .from("afiliados_indicacoes")
             .update({
-              status:                         "aplicada",
-              valor_comissao:                 comissaoReais,
-              stripe_balance_transaction_id:  balanceTx.id,
-              aplicado_em:                    agora,
+              status:         "aplicada",
+              valor_comissao: totalIndicacao,
+              ...(primeiraConversao
+                ? { stripe_balance_transaction_id: balanceTx.id, aplicado_em: agora }
+                : {}),
             })
             .eq("id", indicacao.id)
+
+          const { data: doAfiliado } = await supabase
+            .from("afiliados_comissoes")
+            .select("valor_comissao")
+            .eq("afiliado_id", afiliado.id)
+            .eq("status", "aplicada")
+          const totalAfiliado = parseFloat(
+            (doAfiliado ?? []).reduce((s, r) => s + Number(r.valor_comissao), 0).toFixed(2)
+          )
 
           await supabase
             .from("afiliados")
             .update({
-              total_indicados:          ((afiliado.total_indicados  as number) ?? 0) + 1,
-              total_comissao_acumulada: parseFloat((((afiliado.total_comissao_acumulada as number) ?? 0) + comissaoReais).toFixed(2)),
+              total_comissao_acumulada: totalAfiliado,
+              ...(primeiraConversao
+                ? { total_indicados: ((afiliado.total_indicados as number) ?? 0) + 1 }
+                : {}),
             })
             .eq("id", afiliado.id)
 
-          console.log(`[stripe/webhook] Comissão aplicada — afiliado ${afiliado.id}, indicação ${indicacao.id}, R$${comissaoReais.toFixed(2)} (${percentual}% de R$${(amountPaid / 100).toFixed(2)})`)
+          console.log(`[stripe/webhook] Comissão aplicada — afiliado ${afiliado.id}, fatura ${invoiceId}, R$${comissaoReais.toFixed(2)} (${percentual}% de R$${valorFatura.toFixed(2)})`)
         } catch (comissaoErr) {
           console.error("[stripe/webhook] Erro ao processar comissão de afiliado:", comissaoErr)
-          // intentionally swallowed — webhook must always return 200
+          // engolido de propósito: o webhook sempre responde 200
         }
         break
       }

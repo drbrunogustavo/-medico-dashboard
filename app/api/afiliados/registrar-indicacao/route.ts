@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
     const { data: existing, error: existErr } = await supabase
       .from("afiliados_indicacoes")
       .select("id")
-      .eq("indicacoes_user_id", auth.userId)
+      .eq("indicado_user_id", auth.userId)
       .maybeSingle()
 
     if (existErr) {
@@ -90,10 +90,10 @@ export async function POST(req: NextRequest) {
     const { error: insertErr } = await supabase
       .from("afiliados_indicacoes")
       .insert({
-        afiliado_id:        afiliado.id,
-        indicacoes_user_id: auth.userId,
-        indicado_email:     email,
-        status:             "pendente",
+        afiliado_id:      afiliado.id,
+        indicado_user_id: auth.userId,
+        indicado_email:   email,
+        status:           "pendente",
         origem,
       })
 

@@ -10,10 +10,10 @@ export const metadata = {
 function Section({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
   return (
     <section>
-      <h2 style={{ fontSize: 17, fontWeight: 700, color: "#0D1B2A", marginBottom: 12 }}>
+      <h2 style={{ fontSize: 17, fontWeight: 700, color: "var(--px-ink)", marginBottom: 12 }}>
         {n}. {title}
       </h2>
-      <div style={{ fontSize: 14, lineHeight: 1.8, color: "#4A3728" }}>
+      <div style={{ fontSize: 14, lineHeight: 1.8, color: "var(--px-ink)" }}>
         {children}
       </div>
     </section>
@@ -22,25 +22,23 @@ function Section({ n, title, children }: { n: number; title: string; children: R
 
 export default function TermosPage() {
   return (
-    <div style={{ minHeight: "100vh", background: "#F5F0E8", color: "#0D1B2A" }}>
+    <div className="px relative" style={{ minHeight: "100vh", color: "var(--px-ink)" }}>
+      <div className="px-stage" aria-hidden="true" />
       {/* Nav */}
-      <nav style={{
+      <nav className="px-glass" style={{
         position: "sticky", top: 0, zIndex: 10,
-        background: "rgba(245,240,232,0.92)",
-        borderBottom: "1px solid rgba(13,27,42,0.08)",
-        backdropFilter: "blur(16px)",
         padding: "0 24px", height: 60,
         display: "flex", alignItems: "center",
       }}>
         <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
           <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
-            <circle cx="16" cy="16" r="14" stroke="#b8976a" strokeWidth="1.5"
+            <circle cx="16" cy="16" r="14" stroke="var(--px-ink)" strokeWidth="1.5"
               strokeDasharray="70 18" strokeDashoffset="12" opacity="0.7" />
-            <path d="M10 22V10h5.5a4 4 0 0 1 0 8H10" stroke="#0D1B2A" strokeWidth="2"
+            <path d="M10 22V10h5.5a4 4 0 0 1 0 8H10" stroke="var(--px-ink)" strokeWidth="2"
               strokeLinecap="round" strokeLinejoin="round" />
-            <line x1="18" y1="14" x2="23" y2="22" stroke="#b8976a" strokeWidth="2" strokeLinecap="round" />
+            <line x1="18" y1="14" x2="23" y2="22" stroke="var(--px-ink)" strokeWidth="2" strokeLinecap="round" />
           </svg>
-          <span style={{ fontFamily: "var(--font-playfair,Georgia,serif)", fontSize: 14, fontWeight: 600, letterSpacing: "4px", color: "#0D1B2A" }}>
+          <span style={{ fontFamily: "var(--font-playfair,Georgia,serif)", fontSize: 14, fontWeight: 600, letterSpacing: "4px", color: "var(--px-ink)" }}>
             PRAXIS
           </span>
         </Link>
@@ -50,7 +48,7 @@ export default function TermosPage() {
       <div style={{ maxWidth: 720, margin: "0 auto", padding: "48px 24px 80px" }}>
         <Link href="/" style={{
           display: "inline-flex", alignItems: "center", gap: 6,
-          fontSize: 12, color: "#8a7a6a", textDecoration: "none",
+          fontSize: 12, color: "var(--px-muted)", textDecoration: "none",
           marginBottom: 32,
         }}>
           <ArrowLeft style={{ width: 13, height: 13 }} /> Voltar
@@ -58,29 +56,29 @@ export default function TermosPage() {
 
         {/* Header */}
         <div style={{ marginBottom: 48 }}>
-          <p style={{ fontSize: 11, fontFamily: "monospace", color: "#b8976a", letterSpacing: "3px", textTransform: "uppercase", marginBottom: 12 }}>
+          <p style={{ fontSize: 11, fontFamily: "monospace", color: "var(--px-accent)", letterSpacing: "3px", textTransform: "uppercase", marginBottom: 12 }}>
             PRAXIS PLATAFORMA
           </p>
           <h1 style={{
             fontFamily: "var(--font-playfair,Georgia,serif)",
             fontSize: "clamp(26px, 4vw, 38px)", fontWeight: 700,
-            color: "#0D1B2A", marginBottom: 16, lineHeight: 1.2,
+            color: "var(--px-ink)", marginBottom: 16, lineHeight: 1.2,
           }}>
             Termos de Uso
           </h1>
-          <p style={{ fontSize: 13, color: "#8a7a6a" }}>
+          <p style={{ fontSize: 13, color: "var(--px-muted)" }}>
             Versão 1.0 · Última atualização: junho de 2026
           </p>
         </div>
 
-        <div style={{ height: 1, background: "rgba(13,27,42,0.10)", marginBottom: 48 }} />
+        <div style={{ height: 1, background: "var(--px-line)", marginBottom: 48 }} />
 
         <div style={{ display: "flex", flexDirection: "column", gap: 36 }}>
 
           <Section n={1} title="Aceitação dos Termos">
             <p>
               Ao acessar ou utilizar a plataforma PRAXIS, você declara ter lido, compreendido e concordado com estes Termos de Uso, bem como com a nossa{" "}
-              <Link href="/privacidade" style={{ color: "#b8976a" }}>Política de Privacidade</Link>.
+              <Link href="/privacidade" style={{ color: "var(--px-accent)" }}>Política de Privacidade</Link>.
               Caso não concorde com qualquer disposição deste instrumento, não utilize a plataforma.
             </p>
             <p style={{ marginTop: 10 }}>
@@ -103,16 +101,16 @@ export default function TermosPage() {
 
           <Section n={3} title="Responsabilidade Profissional e Conformidade CFM">
             <p>
-              <strong style={{ color: "#0D1B2A" }}>A PRAXIS é uma ferramenta de apoio e não substitui o julgamento clínico profissional.</strong>{" "}
+              <strong style={{ color: "var(--px-ink)" }}>A PRAXIS é uma ferramenta de apoio e não substitui o julgamento clínico profissional.</strong>{" "}
               Todo conteúdo gerado por IA deve ser revisado e aprovado pelo médico antes de sua publicação ou utilização.
             </p>
             <p style={{ marginTop: 10 }}>
               O usuário é integral e exclusivamente responsável pela conformidade de todo conteúdo publicado com as normas do Conselho Federal de Medicina (CFM), especialmente:
             </p>
             <ul style={{ paddingLeft: 20, marginTop: 10, display: "flex", flexDirection: "column", gap: 6 }}>
-              <li><strong style={{ color: "#0D1B2A" }}>Resolução CFM nº 1.974/2011</strong> — Regulamentação da publicidade médica</li>
-              <li><strong style={{ color: "#0D1B2A" }}>Código de Ética Médica (Res. CFM nº 2.217/2018)</strong> — Capítulo XIV: Publicidade médica</li>
-              <li><strong style={{ color: "#0D1B2A" }}>Resolução CFM nº 2.336/2023</strong> — Marketing médico em redes sociais</li>
+              <li><strong style={{ color: "var(--px-ink)" }}>Resolução CFM nº 1.974/2011</strong> — Regulamentação da publicidade médica</li>
+              <li><strong style={{ color: "var(--px-ink)" }}>Código de Ética Médica (Res. CFM nº 2.217/2018)</strong> — Capítulo XIV: Publicidade médica</li>
+              <li><strong style={{ color: "var(--px-ink)" }}>Resolução CFM nº 2.336/2023</strong> — Marketing médico em redes sociais</li>
             </ul>
             <p style={{ marginTop: 10 }}>
               É expressamente vedado ao usuário utilizar a plataforma para criar conteúdo que faça promessas de cura, apresente resultados garantidos, use depoimentos de pacientes sem autorização expressa, ou viole qualquer norma de ética médica vigente. A PRAXIS não se responsabiliza por infrações éticas cometidas pelo usuário.
@@ -164,14 +162,14 @@ export default function TermosPage() {
           <Section n={8} title="Privacidade e LGPD">
             <p>
               O tratamento de dados pessoais segue as disposições da Lei Geral de Proteção de Dados (Lei nº 13.709/2018 — LGPD). Para informações detalhadas sobre coleta, uso, armazenamento e seus direitos como titular, consulte nossa{" "}
-              <Link href="/privacidade" style={{ color: "#b8976a" }}>Política de Privacidade</Link>.
+              <Link href="/privacidade" style={{ color: "var(--px-accent)" }}>Política de Privacidade</Link>.
             </p>
           </Section>
 
           <Section n={9} title="Suspensão e Encerramento">
             <p>
               A PRAXIS pode suspender ou encerrar sua conta sem aviso prévio em caso de violação destes Termos, inadimplência ou uso fraudulento. Você pode solicitar o encerramento da conta e a exclusão de seus dados a qualquer momento em{" "}
-              <Link href="/deletar-dados" style={{ color: "#b8976a" }}>praxisplataforma.com.br/deletar-dados</Link>.
+              <Link href="/deletar-dados" style={{ color: "var(--px-accent)" }}>praxisplataforma.com.br/deletar-dados</Link>.
             </p>
             <p style={{ marginTop: 10 }}>
               Após o encerramento, os dados são retidos por 90 dias para fins de recuperação, após o que são anonimizados ou excluídos permanentemente.
@@ -187,7 +185,7 @@ export default function TermosPage() {
             </p>
             <p style={{ marginTop: 10 }}>
               Dúvidas:{" "}
-              <a href="mailto:contato@praxisplataforma.com.br" style={{ color: "#b8976a" }}>
+              <a href="mailto:contato@praxisplataforma.com.br" style={{ color: "var(--px-accent)" }}>
                 contato@praxisplataforma.com.br
               </a>
             </p>
@@ -195,13 +193,13 @@ export default function TermosPage() {
 
         </div>
 
-        <div style={{ height: 1, background: "rgba(13,27,42,0.10)", margin: "48px 0 32px" }} />
+        <div style={{ height: 1, background: "var(--px-line)", margin: "48px 0 32px" }} />
 
-        <p style={{ fontSize: 11, fontFamily: "monospace", color: "#8a7a6a", letterSpacing: "1px" }}>
+        <p style={{ fontSize: 11, fontFamily: "monospace", color: "var(--px-muted)", letterSpacing: "1px" }}>
           © PRAXIS {new Date().getFullYear()} · Marketing Médico de Alto Padrão ·{" "}
-          <Link href="/privacidade" style={{ color: "#8a7a6a" }}>Política de Privacidade</Link>
+          <Link href="/privacidade" style={{ color: "var(--px-muted)" }}>Política de Privacidade</Link>
           {" · "}
-          <Link href="/deletar-dados" style={{ color: "#8a7a6a" }}>Exclusão de Dados</Link>
+          <Link href="/deletar-dados" style={{ color: "var(--px-muted)" }}>Exclusão de Dados</Link>
         </p>
       </div>
     </div>

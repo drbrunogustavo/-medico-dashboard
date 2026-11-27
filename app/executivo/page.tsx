@@ -1,27 +1,11 @@
 "use client"
 
-import { useEffect, useState, useCallback, useMemo, useRef } from "react"
+import { useEffect, useState, useCallback, useMemo, useRef, useId } from "react"
 import { useAppContext } from "@/components/AppProvider"
-import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
-import {
-  BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip,
-  ResponsiveContainer, Cell,
-} from "recharts"
-import {
-  BarChart3, Users, Star, Calendar, TrendingUp,
-  Loader2, Megaphone, ShoppingBag, Cog, Award,
-  ArrowDown, ChevronRight, UserPlus, AlertCircle, Zap,
-  Edit3, Check, RefreshCw, MessageSquare, ThumbsUp,
-  DollarSign, Clock, Repeat, Activity, Eye, Camera,
-  Sparkles, X, Mic, MicOff, ShieldCheck, Heart,
-} from "lucide-react"
-import { cn } from "@/lib/utils"
-import Link from "next/link"
-import { SkeletonCard } from "@/components/LoadingPulse"
-import { ErrorState }   from "@/components/ErrorState"
-import { Button }       from "@/components/ui/Button"
+import { Mic, MicOff } from "lucide-react"
+import { Panel, PxButton, Segmented, Field, PxInput, PxSelect, PxModal, PillBars, LineSeries, PageHeader } from "@/components/px"
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// ─── Tipos ────────────────────────────────────────────────────────────────────
 
 type AbaId = "marketing" | "comercial" | "operacao" | "autoridade"
 
@@ -37,50 +21,25 @@ interface ExecData {
   leads_origem:       { origem: string; count: number }[]
 }
 
-interface TopPost {
-  tema:       string
-  formato:    string
-  curtidas:   number
-  comentarios: number
-}
+interface TopPost { tema: string; formato: string; curtidas: number; comentarios: number }
 
 interface MarketingManual {
-  seguidores:      number
-  ganho_semanal:   number
-  alcance_semanal: number
-  alcance_ant:     number
-  posts_mes:       number
-  reels_mes:       number
-  stories_mes:     number
-  ultimo_post:     string
-  horario_melhor:  string
-  top3:            TopPost[]
+  seguidores: number; ganho_semanal: number; alcance_semanal: number; alcance_ant: number
+  posts_mes: number; reels_mes: number; stories_mes: number
+  ultimo_post: string; horario_melhor: string; top3: TopPost[]
 }
+interface OperacaoManual { ocupacao_pct: number; faltas_pct: number; ticket_medio: number; retorno_pct: number }
+interface AutoridadeManual { google_rating: number; google_link: string; depoimentos_semana: number; indicacoes_ativas: number }
 
-interface OperacaoManual {
-  ocupacao_pct:  number
-  faltas_pct:    number
-  ticket_medio:  number
-  retorno_pct:   number
-}
+type Sinal = { tipo: "ok" | "warn" | "info"; texto: string }
 
-interface AutoridadeManual {
-  google_rating:      number
-  google_link:        string
-  depoimentos_semana: number
-  indicacoes_ativas:  number
-}
+// ─── Auxiliares ───────────────────────────────────────────────────────────────
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function fmt(v: number) {
-  return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })
-}
+const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })
 
 function getNow() {
-  return new Date().toLocaleDateString("pt-BR", {
-    weekday: "long", day: "numeric", month: "long", year: "numeric",
-  })
+  const s = new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })
+  return s.charAt(0).toUpperCase() + s.slice(1)
 }
 
 function getLocalStorage<T>(key: string, fallback: T): T {
@@ -91,105 +50,105 @@ function getLocalStorage<T>(key: string, fallback: T): T {
   } catch { return fallback }
 }
 
+/** Retorna false se o navegador recusar (modo privado, cota cheia). */
+function setLocalStorage(key: string, value: unknown): boolean {
+  try { localStorage.setItem(key, JSON.stringify(value)); return true } catch { return false }
+}
+
 const MKTG_DEFAULT: MarketingManual = {
   seguidores: 0, ganho_semanal: 0, alcance_semanal: 0, alcance_ant: 0,
-  posts_mes: 0, reels_mes: 0, stories_mes: 0,
-  ultimo_post: "", horario_melhor: "19h",
-  top3: [],
+  posts_mes: 0, reels_mes: 0, stories_mes: 0, ultimo_post: "", horario_melhor: "19h", top3: [],
 }
+const OPS_DEFAULT: OperacaoManual = { ocupacao_pct: 0, faltas_pct: 0, ticket_medio: 0, retorno_pct: 0 }
+const AUT_DEFAULT: AutoridadeManual = { google_rating: 0, google_link: "", depoimentos_semana: 0, indicacoes_ativas: 0 }
 
-const OPS_DEFAULT: OperacaoManual = {
-  ocupacao_pct: 0, faltas_pct: 0, ticket_medio: 0, retorno_pct: 0,
-}
+const ABAS: { value: AbaId; label: string }[] = [
+  { value: "marketing",  label: "Marketing" },
+  { value: "comercial",  label: "Comercial" },
+  { value: "operacao",   label: "Operação" },
+  { value: "autoridade", label: "Autoridade" },
+]
 
-const AUT_DEFAULT: AutoridadeManual = {
-  google_rating: 0, google_link: "", depoimentos_semana: 0, indicacoes_ativas: 0,
-}
+const titulo = "text-[15px] font-semibold text-px-ink"
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+// ─── Componentes ──────────────────────────────────────────────────────────────
 
-function StatCard({
-  label, value, sub, icon: Icon, color = "text-accent",
-}: { label: string; value: string; sub: string; icon: React.ElementType; color?: string }) {
+function Kpi({ label, value, sub, negativo = false }: { label: string; value: string; sub: string; negativo?: boolean }) {
   return (
-    <div className="rounded-xl border border-border bg-surface p-4 flex flex-col gap-2">
-      <div className="flex items-start justify-between">
-        <span className="text-[10px] font-mono text-text-muted uppercase tracking-widest leading-tight">{label}</span>
-        <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-accent-dim flex-shrink-0">
-          <Icon className={cn("w-3.5 h-3.5", color)} />
-        </div>
+    <Panel as="div" className="p-4">
+      <p className="text-[12.5px] text-px-muted">{label}</p>
+      <p className={`mt-1 text-[24px] font-medium leading-none tracking-[-0.02em] ${negativo ? "text-px-danger" : "text-px-ink"}`}>{value}</p>
+      <p className="mt-1.5 text-[12px] text-px-muted">{sub}</p>
+    </Panel>
+  )
+}
+
+function Sinais({ itens }: { itens: Sinal[] }) {
+  return (
+    <ul className="space-y-2 text-[13.5px] leading-relaxed text-px-ink/85">
+      {itens.map((s, i) => (
+        <li key={i}>{s.tipo === "warn" && <span className="font-semibold text-px-ink">Atenção: </span>}{s.texto}</li>
+      ))}
+    </ul>
+  )
+}
+
+function Num({ label, value, onChange, prefix, suffix }: {
+  label: string; value: number; onChange: (v: number) => void; prefix?: string; suffix?: string
+}) {
+  const id = useId()
+  return (
+    <Field label={label} htmlFor={id}>
+      <div className="relative">
+        {prefix && <span aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[13px] text-px-muted">{prefix}</span>}
+        <PxInput id={id} type="number" min={0} inputMode="decimal" value={value || ""} placeholder="0"
+          className={prefix ? "pl-9" : suffix ? "pr-10" : ""}
+          onChange={e => onChange(Math.max(0, Number(e.target.value) || 0))} />
+        {suffix && <span aria-hidden="true" className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[13px] text-px-muted">{suffix}</span>}
       </div>
-      <p className="text-2xl font-bold text-text-primary leading-none">{value}</p>
-      <p className="text-[11px] text-text-muted">{sub}</p>
-    </div>
+    </Field>
   )
 }
 
-function InsightBullet({ text, type = "info" }: { text: string; type?: "info" | "warn" | "ok" }) {
-  const colors = {
-    info: "text-blue-700 bg-blue-50 border-blue-200",
-    warn: "text-amber-700 bg-amber-50 border-amber-200",
-    ok:   "text-green-700 bg-green-50 border-green-200",
-  }
-  const icons = { info: Zap, warn: AlertCircle, ok: Check }
-  const Ic = icons[type]
-  return (
-    <div className={cn("flex items-start gap-2.5 rounded-lg px-3 py-2.5 border text-[12px] leading-relaxed", colors[type])}>
-      <Ic className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
-      <span>{text}</span>
-    </div>
-  )
-}
-
-function EditableField({
-  label, value, prefix = "", suffix = "",
-  onChange,
-}: {
-  label: string; value: number; prefix?: string; suffix?: string
-  onChange: (v: number) => void
+function Cabecalho({ titulo: t, editing, onEdit, onCancel, onSave, aviso }: {
+  titulo: string; editing: boolean; onEdit: () => void; onCancel: () => void; onSave: () => void; aviso?: string
 }) {
   return (
-    <div className="space-y-1">
-      <label className="text-[10px] font-mono text-text-muted uppercase tracking-wider">{label}</label>
-      <div className="relative flex items-center">
-        {prefix && <span className="absolute left-3 text-[12px] text-text-muted font-mono">{prefix}</span>}
-        <input
-          type="number"
-          value={value || ""}
-          onChange={e => onChange(Number(e.target.value) || 0)}
-          placeholder="0"
-          className={cn(
-            "w-full bg-background border border-border rounded-lg py-2 text-[13px] text-text-primary font-mono focus:outline-none focus:border-accent/50 transition-colors",
-            prefix ? "pl-7 pr-3" : suffix ? "pl-3 pr-8" : "px-3",
-          )}
-        />
-        {suffix && <span className="absolute right-3 text-[12px] text-text-muted font-mono">{suffix}</span>}
+    <div>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className={titulo}>{t}</h2>
+        {editing ? (
+          <div className="flex gap-2">
+            <PxButton variant="secondary" size="sm" onClick={onCancel}>Cancelar</PxButton>
+            <PxButton size="sm" onClick={onSave}>Salvar</PxButton>
+          </div>
+        ) : (
+          <PxButton variant="secondary" size="sm" onClick={onEdit}>Editar dados</PxButton>
+        )}
       </div>
+      {aviso && <p role="alert" className="mt-2 rounded-px-card bg-px-warn-soft px-3 py-2 text-[12.5px] text-px-ink">{aviso}</p>}
     </div>
   )
 }
 
-// ─── ABA MARKETING ───────────────────────────────────────────────────────────
+// ─── Aba Marketing ────────────────────────────────────────────────────────────
 
-function AbaMarketing({ mktg, onSave }: {
-  mktg: MarketingManual
-  onSave: (m: MarketingManual) => void
-}) {
+function AbaMarketing({ mktg, onSave }: { mktg: MarketingManual; onSave: (m: MarketingManual) => boolean }) {
   const [editing, setEditing] = useState(false)
   const [draft,   setDraft]   = useState<MarketingManual>(mktg)
+  const [aviso,   setAviso]   = useState("")
 
-  // days since last post
   const diasSemPost = (() => {
     if (!mktg.ultimo_post) return null
-    const diff = Date.now() - new Date(mktg.ultimo_post).getTime()
-    return Math.floor(diff / 86400000)
+    return Math.max(0, Math.floor((Date.now() - new Date(mktg.ultimo_post).getTime()) / 86400000))
   })()
+  const alcanceDiff = mktg.alcance_ant > 0 ? Math.round((mktg.alcance_semanal - mktg.alcance_ant) / mktg.alcance_ant * 100) : null
 
-  const alcanceDiff = mktg.alcance_ant > 0
-    ? Math.round((mktg.alcance_semanal - mktg.alcance_ant) / mktg.alcance_ant * 100)
-    : null
-
-  function save() { onSave(draft); setEditing(false) }
+  function save() {
+    const ok = onSave(draft)
+    setAviso(ok ? "" : "O navegador não permitiu salvar estes dados. Eles valem só até você recarregar a página.")
+    setEditing(false)
+  }
 
   function updateTop3(i: number, field: keyof TopPost, val: string | number) {
     const arr = [...(draft.top3 ?? [])]
@@ -198,171 +157,90 @@ function AbaMarketing({ mktg, onSave }: {
     setDraft(d => ({ ...d, top3: arr }))
   }
 
+  const sinais: Sinal[] = []
+  if (mktg.posts_mes > 0) {
+    if (diasSemPost !== null && diasSemPost >= 3) sinais.push({ tipo: "warn", texto: `Seu último post foi há ${diasSemPost} dias.` })
+    if (diasSemPost !== null && diasSemPost < 2) sinais.push({ tipo: "ok", texto: "Você publicou hoje ou ontem." })
+    if (alcanceDiff !== null && alcanceDiff <= -15) sinais.push({ tipo: "warn", texto: `O alcance caiu ${Math.abs(alcanceDiff)}% em relação à semana anterior.` })
+    if (alcanceDiff !== null && alcanceDiff >= 10) sinais.push({ tipo: "ok", texto: `O alcance cresceu ${alcanceDiff}% em relação à semana anterior.` })
+    sinais.push({ tipo: "info", texto: `${mktg.posts_mes} publicação${mktg.posts_mes !== 1 ? "ões" : ""} no mês, sendo ${mktg.reels_mes} Reel${mktg.reels_mes !== 1 ? "s" : ""} e ${mktg.stories_mes} Stor${mktg.stories_mes !== 1 ? "ies" : "y"}.` })
+    if (mktg.alcance_semanal > 0 && mktg.seguidores > 0)
+      sinais.push({ tipo: "info", texto: `O alcance semanal equivale a ${Math.round(mktg.alcance_semanal / mktg.seguidores * 100)}% dos seguidores.` })
+    if (mktg.horario_melhor) sinais.push({ tipo: "info", texto: `Melhor horário para publicar, segundo seus dados: ${mktg.horario_melhor}.` })
+  }
+
   return (
-    <div className="space-y-6">
-      {/* Header + edit button */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-[11px] font-mono font-semibold text-text-muted uppercase tracking-wider">Marketing Digital</h2>
-        {editing ? (
-          <div className="flex gap-2">
-            <Button variant="secondary" size="sm" onClick={() => setEditing(false)}>Cancelar</Button>
-            <Button variant="primary" size="sm" onClick={save} leftIcon={Check}>Salvar</Button>
-          </div>
-        ) : (
-          <Button variant="secondary" size="sm" onClick={() => { setDraft({ ...mktg }); setEditing(true) }} leftIcon={Edit3}>Editar dados</Button>
-        )}
-      </div>
+    <div className="space-y-4">
+      <Cabecalho titulo="Marketing digital" editing={editing} aviso={aviso}
+        onEdit={() => { setDraft({ ...mktg }); setEditing(true) }} onCancel={() => setEditing(false)} onSave={save} />
 
       {editing ? (
-        <div className="rounded-xl border border-border bg-surface p-5 space-y-5">
-          <p className="text-[11px] text-text-muted">Insira seus dados do Instagram. Dados salvos localmente no navegador.</p>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            <EditableField label="Seguidores totais"       value={draft.seguidores}      onChange={v => setDraft(d => ({...d, seguidores: v}))} />
-            <EditableField label="Ganho esta semana"       value={draft.ganho_semanal}   onChange={v => setDraft(d => ({...d, ganho_semanal: v}))} />
-            <EditableField label="Alcance semanal"         value={draft.alcance_semanal} onChange={v => setDraft(d => ({...d, alcance_semanal: v}))} />
-            <EditableField label="Alcance semana anterior" value={draft.alcance_ant}     onChange={v => setDraft(d => ({...d, alcance_ant: v}))} />
-            <EditableField label="Posts no mês"            value={draft.posts_mes}       onChange={v => setDraft(d => ({...d, posts_mes: v}))} />
-            <EditableField label="Reels no mês"            value={draft.reels_mes}       onChange={v => setDraft(d => ({...d, reels_mes: v}))} />
-            <EditableField label="Stories no mês"          value={draft.stories_mes}     onChange={v => setDraft(d => ({...d, stories_mes: v}))} />
+        <Panel className="space-y-5">
+          <p className="text-[12.5px] text-px-muted">Informe os dados do seu Instagram. Eles ficam salvos só neste navegador.</p>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+            <Num label="Seguidores totais"       value={draft.seguidores}      onChange={v => setDraft(d => ({ ...d, seguidores: v }))} />
+            <Num label="Ganho esta semana"       value={draft.ganho_semanal}   onChange={v => setDraft(d => ({ ...d, ganho_semanal: v }))} />
+            <Num label="Alcance semanal"         value={draft.alcance_semanal} onChange={v => setDraft(d => ({ ...d, alcance_semanal: v }))} />
+            <Num label="Alcance semana anterior" value={draft.alcance_ant}     onChange={v => setDraft(d => ({ ...d, alcance_ant: v }))} />
+            <Num label="Posts no mês"            value={draft.posts_mes}       onChange={v => setDraft(d => ({ ...d, posts_mes: v }))} />
+            <Num label="Reels no mês"            value={draft.reels_mes}       onChange={v => setDraft(d => ({ ...d, reels_mes: v }))} />
+            <Num label="Stories no mês"          value={draft.stories_mes}     onChange={v => setDraft(d => ({ ...d, stories_mes: v }))} />
           </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="text-[10px] font-mono text-text-muted uppercase tracking-wider">Data último post</label>
-              <input type="date" value={draft.ultimo_post}
-                onChange={e => setDraft(d => ({...d, ultimo_post: e.target.value}))}
-                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-[13px] text-text-primary focus:outline-none focus:border-accent/50 transition-colors"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[10px] font-mono text-text-muted uppercase tracking-wider">Melhor horário para publicar</label>
-              <input type="text" value={draft.horario_melhor} placeholder="ex: 19h"
-                onChange={e => setDraft(d => ({...d, horario_melhor: e.target.value}))}
-                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-[13px] text-text-primary focus:outline-none focus:border-accent/50 transition-colors"
-              />
-            </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Field label="Data do último post" htmlFor="mk-ult"><PxInput id="mk-ult" type="date" value={draft.ultimo_post} onChange={e => setDraft(d => ({ ...d, ultimo_post: e.target.value }))} /></Field>
+            <Field label="Melhor horário para publicar" htmlFor="mk-hor"><PxInput id="mk-hor" value={draft.horario_melhor} placeholder="19h" onChange={e => setDraft(d => ({ ...d, horario_melhor: e.target.value }))} /></Field>
           </div>
-
-          {/* Top 3 Posts */}
-          <div>
-            <p className="text-[10px] font-mono text-text-muted uppercase tracking-wider mb-3">Top 3 Posts do Mês</p>
-            <div className="space-y-3">
-              {[0, 1, 2].map(i => (
-                <div key={i} className="rounded-lg border border-border bg-background p-3 space-y-2">
-                  <p className="text-[10px] font-mono text-text-muted">Post #{i + 1}</p>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    <div className="col-span-2">
-                      <input placeholder="Tema do post"
-                        value={draft.top3?.[i]?.tema ?? ""}
-                        onChange={e => updateTop3(i, "tema", e.target.value)}
-                        className="w-full bg-surface border border-border rounded-lg px-2.5 py-1.5 text-[12px] text-text-primary focus:outline-none focus:border-accent/50"
-                      />
-                    </div>
-                    <select value={draft.top3?.[i]?.formato ?? "Reel"}
-                      onChange={e => updateTop3(i, "formato", e.target.value)}
-                      className="bg-surface border border-border rounded-lg px-2 py-1.5 text-[12px] text-text-primary focus:outline-none">
-                      {["Reel","Carrossel","Stories","Foto"].map(f => <option key={f}>{f}</option>)}
-                    </select>
-                    <div className="flex gap-1">
-                      <input type="number" placeholder="Curtidas"
-                        value={draft.top3?.[i]?.curtidas ?? ""}
-                        onChange={e => updateTop3(i, "curtidas", Number(e.target.value))}
-                        className="w-full bg-surface border border-border rounded-lg px-2 py-1.5 text-[12px] text-text-primary focus:outline-none"
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+          <div className="space-y-3">
+            <h3 className="text-[13px] font-semibold text-px-ink">Três melhores posts do mês</h3>
+            {[0, 1, 2].map(i => (
+              <div key={i} className="grid grid-cols-1 gap-2 rounded-px-card bg-px-ink/[0.04] p-3 sm:grid-cols-[1fr_140px_120px]">
+                <PxInput aria-label={`Tema do post ${i + 1}`} placeholder={`Tema do post ${i + 1}`} value={draft.top3?.[i]?.tema ?? ""} onChange={e => updateTop3(i, "tema", e.target.value)} />
+                <PxSelect aria-label={`Formato do post ${i + 1}`} value={draft.top3?.[i]?.formato ?? "Reel"} onChange={e => updateTop3(i, "formato", e.target.value)}>
+                  {["Reel", "Carrossel", "Stories", "Foto"].map(f => <option key={f}>{f}</option>)}
+                </PxSelect>
+                <PxInput aria-label={`Curtidas do post ${i + 1}`} type="number" min={0} placeholder="Curtidas" value={draft.top3?.[i]?.curtidas || ""} onChange={e => updateTop3(i, "curtidas", Math.max(0, Number(e.target.value) || 0))} />
+              </div>
+            ))}
           </div>
-        </div>
+        </Panel>
       ) : (
         <>
-          {/* KPI Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-            <StatCard label="Seguidores" value={mktg.seguidores.toLocaleString("pt-BR")}
-              sub={`+${mktg.ganho_semanal} esta semana`} icon={Users} color="text-pink-600" />
-            <StatCard label="Alcance Semanal" value={mktg.alcance_semanal.toLocaleString("pt-BR")}
-              sub={alcanceDiff !== null ? `${alcanceDiff >= 0 ? "+" : ""}${alcanceDiff}% vs semana anterior` : "pessoas únicas alcançadas"} icon={Eye}
-              color={alcanceDiff !== null && alcanceDiff < -10 ? "text-red-600" : "text-blue-600"} />
-            <StatCard label="Posts no Mês" value={String(mktg.posts_mes)}
-              sub={`${mktg.reels_mes} reels · ${mktg.stories_mes} stories`} icon={Camera} color="text-purple-600" />
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <Kpi label="Seguidores" value={mktg.seguidores.toLocaleString("pt-BR")} sub={`+${mktg.ganho_semanal} esta semana`} />
+            <Kpi label="Alcance semanal" value={mktg.alcance_semanal.toLocaleString("pt-BR")} negativo={alcanceDiff !== null && alcanceDiff < -10}
+              sub={alcanceDiff !== null ? `${alcanceDiff >= 0 ? "+" : ""}${alcanceDiff}% sobre a semana anterior` : "pessoas únicas alcançadas"} />
+            <Kpi label="Posts no mês" value={String(mktg.posts_mes)} sub={`${mktg.reels_mes} Reels e ${mktg.stories_mes} Stories`} />
           </div>
 
-          {/* Diagnóstico IA */}
-          <div className="rounded-xl border border-border bg-surface p-5">
-            <h3 className="text-[11px] font-mono text-text-muted uppercase tracking-widest mb-4">Diagnóstico IA</h3>
-            <div className="space-y-2.5">
-              {mktg.posts_mes === 0 ? (
-                <InsightBullet text="Configure seus dados de marketing clicando em 'Editar dados' acima" type="info" />
-              ) : (
-                <>
-                  {diasSemPost !== null && diasSemPost >= 3 && (
-                    <InsightBullet text={`Não publicou há ${diasSemPost} dias — cada dia sem post reduz seu alcance orgânico em ~8%`} type="warn" />
-                  )}
-                  {diasSemPost !== null && diasSemPost < 2 && (
-                    <InsightBullet text="Publicou hoje ou ontem — ótima consistência! Continue para manter o alcance crescendo" type="ok" />
-                  )}
-                  {alcanceDiff !== null && alcanceDiff < -15 && (
-                    <InsightBullet text={`Alcance caiu ${Math.abs(alcanceDiff)}% em relação à semana anterior — publicar Reels hoje pode reverter a queda`} type="warn" />
-                  )}
-                  {alcanceDiff !== null && alcanceDiff >= 10 && (
-                    <InsightBullet text={`Alcance cresceu ${alcanceDiff}% vs semana anterior — mantenha o ritmo de publicações`} type="ok" />
-                  )}
-                  {mktg.horario_melhor && (
-                    <InsightBullet text={`Melhor horário para publicar: ${mktg.horario_melhor} — posts neste horário recebem até 2x mais engajamento`} type="info" />
-                  )}
-                  {mktg.posts_mes > 0 && mktg.posts_mes < 8 && (
-                    <InsightBullet text={`Você publicou ${mktg.posts_mes} conteúdos este mês — abaixo de 12 posts/mês o algoritmo reduz seu alcance`} type="warn" />
-                  )}
-                  {mktg.reels_mes > 0 && mktg.reels_mes >= mktg.posts_mes * 0.4 && (
-                    <InsightBullet text={`${mktg.reels_mes} Reels este mês — excelente! Reels têm 5x mais alcance que posts estáticos`} type="ok" />
-                  )}
-                  {mktg.alcance_semanal > 0 && mktg.seguidores > 0 && (
-                    <InsightBullet
-                      text={`Taxa de alcance: ${Math.round(mktg.alcance_semanal / mktg.seguidores * 100)}% dos seguidores — média saudável é 20%+`}
-                      type={mktg.alcance_semanal / mktg.seguidores >= 0.2 ? "ok" : "info"} />
-                  )}
-                </>
-              )}
-            </div>
-          </div>
+          <Panel as="section" className="space-y-3">
+            <h3 className={titulo}>O que os seus números mostram</h3>
+            {mktg.posts_mes === 0
+              ? <p className="text-[13.5px] text-px-ink/80">Preencha seus dados em Editar dados para ver a leitura do mês.</p>
+              : <Sinais itens={sinais} />}
+          </Panel>
 
-          {/* Top 3 Posts */}
           {(mktg.top3 ?? []).some(p => p.tema) && (
-            <div className="rounded-xl border border-border bg-surface p-5">
-              <h3 className="text-[11px] font-mono text-text-muted uppercase tracking-widest mb-4">Top 3 Posts do Mês</h3>
-              <div className="space-y-2.5">
+            <Panel as="section" className="space-y-3">
+              <h3 className={titulo}>Três melhores posts do mês</h3>
+              <ol className="space-y-2">
                 {(mktg.top3 ?? []).filter(p => p.tema).map((p, i) => (
-                  <div key={i} className="flex items-center gap-3 rounded-lg bg-background border border-border px-3 py-2.5">
-                    <span className="text-[11px] font-mono font-bold text-accent w-5 flex-shrink-0">#{i + 1}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[12px] font-medium text-text-primary truncate">{p.tema}</p>
-                      <p className="text-[10px] text-text-muted font-mono">{p.formato}</p>
+                  <li key={i} className="flex items-center gap-3 rounded-px-card bg-px-ink/[0.04] px-3 py-2.5">
+                    <span className="w-5 flex-shrink-0 text-[13px] font-semibold text-px-ink">{i + 1}</span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[13.5px] font-medium text-px-ink">{p.tema}</p>
+                      <p className="text-[12.5px] text-px-muted">{p.formato}</p>
                     </div>
-                    {p.curtidas > 0 && (
-                      <span className="text-[11px] font-mono text-text-secondary flex-shrink-0"><Heart className="inline-block align-[-0.15em] w-3 h-3 mr-1 fill-rose-500 text-rose-500" /> {p.curtidas.toLocaleString("pt-BR")}</span>
-                    )}
-                  </div>
+                    {p.curtidas > 0 && <span className="flex-shrink-0 text-[13px] text-px-ink/80">{p.curtidas.toLocaleString("pt-BR")} curtidas</span>}
+                  </li>
                 ))}
-              </div>
-            </div>
+              </ol>
+            </Panel>
           )}
 
-          {/* Ações rápidas */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-            {[
-              { label: "Criar Reel",          href: "/reels",      color: "text-red-600 bg-red-50 border-red-200" },
-              { label: "Planejar Calendário", href: "/calendario", color: "text-blue-600 bg-blue-50 border-blue-200" },
-              { label: "Ver Radar de Tendências", href: "/radar",  color: "text-accent bg-accent-dim border-accent-border" },
-            ].map(a => (
-              <Link key={a.href} href={a.href}
-                className={cn("rounded-xl border px-4 py-3 text-[12px] font-semibold flex items-center gap-2 hover:opacity-80 transition-opacity", a.color)}>
-                <ChevronRight className="w-3.5 h-3.5" />
-                {a.label}
-              </Link>
-            ))}
+          <div className="flex flex-wrap gap-2">
+            <PxButton variant="secondary" href="/reels">Criar Reel</PxButton>
+            <PxButton variant="secondary" href="/calendario">Planejar calendário</PxButton>
+            <PxButton variant="secondary" href="/radar">Ver Radar de Tendências</PxButton>
           </div>
         </>
       )}
@@ -370,231 +248,230 @@ function AbaMarketing({ mktg, onSave }: {
   )
 }
 
-// ─── ABA COMERCIAL ───────────────────────────────────────────────────────────
+// ─── Aba Comercial ────────────────────────────────────────────────────────────
 
 function AbaComercial({ exec }: { exec: Partial<ExecData> }) {
-  const estagioPaciente  = exec.leads_por_estagio?.find(e => e.estagio === "Paciente")?.count ?? 0
-  const leads            = exec.leads_total ?? 0
-  const agendamentos     = exec.consultas_mes ?? 0
-  const consultas        = Math.round(agendamentos * 0.85)
-  const pacientesAtivos  = estagioPaciente
+  const porEstagio = exec.leads_por_estagio ?? []
+  const n = (e: string) => porEstagio.find(x => x.estagio === e)?.count ?? 0
+  const leads     = exec.leads_total ?? 0
+  const consultas = exec.consultas_mes ?? 0
+  const pacientes = n("Paciente")
 
   const etapas = [
-    { label: "Leads",              n: leads,           cor: "#b8976a" },
-    { label: "Agendamentos",       n: agendamentos,    cor: "#c9a86c" },
-    { label: "Consultas",          n: consultas,       cor: "#d9bc8e" },
-    { label: "Pacientes Ativos",   n: pacientesAtivos, cor: "#e8d0b0" },
-  ].filter(e => e.n >= 0)
-
+    { label: "Leads no CRM",     n: leads,     nota: "acumulado" },
+    { label: "Consultas no mês", n: consultas, nota: "agenda do mês" },
+    { label: "Pacientes",        n: pacientes, nota: "acumulado no CRM" },
+  ]
   const maxN = Math.max(...etapas.map(e => e.n), 1)
+  const convTotal = leads > 0 ? Math.round(pacientes / leads * 100) : 0
+  const aguardando = n("Novo Lead") + n("Contato Feito") + n("Qualificado")
 
-  function pctConv(a: number, b: number) {
-    if (!a) return "—"
-    return `${Math.round(b / a * 100)}%`
-  }
-
-  const leadsParados = (exec.leads_por_estagio ?? [])
-    .filter(e => e.estagio !== "Paciente" && e.estagio !== "Consulta Agendada")
-    .reduce((s, e) => s + e.count, 0)
-
-  const convTotal = leads > 0 ? Math.round(pacientesAtivos / leads * 100) : 0
+  const sinais: Sinal[] = [{ tipo: "info", texto: `Conversão de leads em pacientes: ${convTotal}% (${pacientes} de ${leads}).` }]
+  if (aguardando > 0) sinais.push({ tipo: "warn", texto: `${aguardando} lead${aguardando !== 1 ? "s" : ""} no CRM ainda não chegaram à consulta agendada.` })
+  if (consultas > 0) sinais.push({ tipo: "info", texto: `${consultas} consulta${consultas !== 1 ? "s" : ""} registrada${consultas !== 1 ? "s" : ""} neste mês.` })
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-[11px] font-mono font-semibold text-text-muted uppercase tracking-wider">Funil Comercial</h2>
+    <div className="space-y-4">
+      <h2 className={titulo}>Funil comercial</h2>
 
-      {/* Funil visual */}
-      <div className="rounded-xl border border-border bg-surface p-6">
-        <h3 className="text-[11px] font-mono text-text-muted uppercase tracking-widest mb-5">Jornada Lead → Paciente</h3>
-        <div className="space-y-2">
-          {etapas.map((e, i) => (
-            <div key={e.label}>
-              <div className="flex items-center gap-3 mb-1.5">
-                <div className="w-28 text-[11px] text-text-secondary font-medium flex-shrink-0">{e.label}</div>
-                <div className="flex-1 relative h-8 rounded-lg overflow-hidden bg-background border border-border">
-                  <div
-                    className="h-full rounded-lg transition-all duration-700"
-                    style={{ width: `${Math.max((e.n / maxN) * 100, e.n > 0 ? 8 : 0)}%`, background: e.cor }}
-                  />
-                  <span className="absolute inset-0 flex items-center px-3 text-[12px] font-mono font-bold text-text-primary">{e.n}</span>
-                </div>
+      <Panel as="section" className="space-y-4">
+        <h3 className="text-[13px] font-semibold text-px-ink">De lead a paciente</h3>
+        <ul className="space-y-3">
+          {etapas.map(e => (
+            <li key={e.label}>
+              <div className="mb-1 flex items-baseline justify-between gap-3">
+                <span className="text-[13.5px] text-px-ink">{e.label} <span className="text-px-muted">({e.nota})</span></span>
+                <span className="text-[14px] font-semibold text-px-ink">{e.n}</span>
               </div>
-              {i < etapas.length - 1 && (
-                <div className="flex items-center gap-1 ml-28 pl-3 mb-1">
-                  <ArrowDown className="w-3 h-3 text-text-muted flex-shrink-0" />
-                  <span className="text-[10px] font-mono text-text-muted">
-                    {pctConv(e.n, etapas[i + 1].n)} de conversão
-                  </span>
-                </div>
-              )}
-            </div>
+              <div aria-hidden="true" className="h-2 rounded-full bg-px-ink/[0.06]">
+                <div className="h-full rounded-full bg-px-ink" style={{ width: `${Math.max((e.n / maxN) * 100, e.n > 0 ? 3 : 0)}%` }} />
+              </div>
+            </li>
           ))}
-        </div>
+        </ul>
+        <p className="border-t border-px-ink/10 pt-3 text-[12.5px] text-px-muted">
+          Leads e pacientes são totais do CRM; consultas são só do mês. Por isso as barras não representam uma conversão etapa a etapa.
+        </p>
+      </Panel>
 
-        <div className="mt-5 pt-4 border-t border-border flex items-center justify-between">
-          <span className="text-[11px] text-text-muted">Taxa de conversão total (leads → pacientes ativos)</span>
-          <span className="text-lg font-bold text-text-primary font-mono">{convTotal}%</span>
-        </div>
-      </div>
-
-      {/* Leads por estágio */}
-      {(exec.leads_por_estagio ?? []).length > 0 && (
-        <div className="rounded-xl border border-border bg-surface p-5">
-          <h3 className="text-[11px] font-mono text-text-muted uppercase tracking-widest mb-4">Distribuição do CRM</h3>
-          <div className="space-y-2.5">
-            {(exec.leads_por_estagio ?? []).map((e, i) => {
-              const colors = ["#b8976a","#3b7fff","#a855f7","#f59e0b","#ec4899"]
-              return (
-                <div key={e.estagio} className="flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: colors[i % colors.length] }} />
-                  <span className="text-[12px] text-text-secondary flex-1 truncate">{e.estagio}</span>
-                  <span className="text-[12px] font-mono font-semibold text-text-primary">{e.count}</span>
-                </div>
-              )
-            })}
-          </div>
-        </div>
+      {porEstagio.length > 0 && (
+        <Panel as="section" className="space-y-3">
+          <h3 className={titulo}>Distribuição do CRM</h3>
+          <ul className="divide-y divide-px-ink/10">
+            {porEstagio.map(e => (
+              <li key={e.estagio} className="flex items-center justify-between py-2 text-[13.5px]">
+                <span className="text-px-ink/80">{e.estagio}</span>
+                <span className="font-semibold text-px-ink">{e.count}</span>
+              </li>
+            ))}
+          </ul>
+        </Panel>
       )}
 
-      {/* Insights */}
-      <div className="rounded-xl border border-border bg-surface p-5">
-        <h3 className="text-[11px] font-mono text-text-muted uppercase tracking-widest mb-3">Insights Comerciais</h3>
-        <div className="space-y-2.5">
-          <InsightBullet
-            text={`Conversão de leads: ${convTotal}% — a média de clínicas de alta performance é 15-20%`}
-            type={convTotal >= 15 ? "ok" : convTotal >= 8 ? "info" : "warn"}
-          />
-          {leadsParados > 0 && (
-            <InsightBullet
-              text={`${leadsParados} leads no CRM aguardam follow-up — atuar agora pode gerar ${Math.round(leadsParados * 0.15)} novas consultas`}
-              type="warn"
-            />
-          )}
-          {agendamentos > 0 && (
-            <InsightBullet
-              text={`${agendamentos} agendamentos este mês — boa cadência de aquisição`}
-              type="info"
-            />
-          )}
-        </div>
-      </div>
+      <Panel as="section" className="space-y-3">
+        <h3 className={titulo}>O que os seus números mostram</h3>
+        <Sinais itens={sinais} />
+      </Panel>
 
-      {/* Ações */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <Link href="/crm" className="rounded-xl border border-blue-200 bg-blue-50 text-blue-700 px-4 py-3 text-[12px] font-semibold flex items-center gap-2 hover:opacity-80 transition-opacity">
-          <Users className="w-3.5 h-3.5" /> Abrir CRM
-        </Link>
-        <Link href="/nutricao-leads" className="rounded-xl border border-border bg-surface text-text-secondary px-4 py-3 text-[12px] font-semibold flex items-center gap-2 hover:text-text-primary transition-colors">
-          <MessageSquare className="w-3.5 h-3.5" /> Nutrir Leads
-        </Link>
+      <div className="flex flex-wrap gap-2">
+        <PxButton variant="secondary" href="/crm">Abrir CRM</PxButton>
+        <PxButton variant="secondary" href="/nutricao-leads">Nutrir leads</PxButton>
       </div>
     </div>
   )
 }
 
-// ─── ABA OPERAÇÃO ────────────────────────────────────────────────────────────
+// ─── Aba Operação ─────────────────────────────────────────────────────────────
 
-function AbaOperacao({ ops, onSave, exec }: {
-  ops: OperacaoManual
-  onSave: (o: OperacaoManual) => void
-  exec: Partial<ExecData>
-}) {
+function AbaOperacao({ ops, onSave, exec }: { ops: OperacaoManual; onSave: (o: OperacaoManual) => boolean; exec: Partial<ExecData> }) {
   const [editing, setEditing] = useState(false)
   const [draft,   setDraft]   = useState<OperacaoManual>(ops)
+  const [aviso,   setAviso]   = useState("")
 
-  function save() { onSave(draft); setEditing(false) }
+  function save() {
+    const ok = onSave(draft)
+    setAviso(ok ? "" : "O navegador não permitiu salvar estes dados. Eles valem só até você recarregar a página.")
+    setEditing(false)
+  }
 
   const ticketMedio = ops.ticket_medio > 0
     ? fmt(ops.ticket_medio)
     : (exec.faturamento_mes ?? 0) > 0 && (exec.consultas_mes ?? 0) > 0
       ? fmt(Math.round((exec.faturamento_mes ?? 0) / (exec.consultas_mes ?? 1)))
-      : "—"
+      : "Sem dados"
+
+  const sinais: Sinal[] = []
+  if (ops.faltas_pct > 0) sinais.push({ tipo: ops.faltas_pct > 15 ? "warn" : "ok", texto: `Taxa de faltas em ${ops.faltas_pct}%.${ops.faltas_pct > 15 ? " Uma régua de confirmação pode ajudar." : ""}` })
+  if (ops.ocupacao_pct > 0 && ops.ocupacao_pct < 70) sinais.push({ tipo: "info", texto: `Agenda com ${ops.ocupacao_pct}% de ocupação, ainda com espaço para novos pacientes.` })
+  if (ops.ocupacao_pct >= 90) sinais.push({ tipo: "warn", texto: `Agenda com ${ops.ocupacao_pct}% de ocupação. Vale considerar mais horários ou lista de espera.` })
+  if (ops.retorno_pct > 0) sinais.push({ tipo: "info", texto: `${ops.retorno_pct}% dos pacientes retornaram.` })
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-[11px] font-mono font-semibold text-text-muted uppercase tracking-wider">Operação da Clínica</h2>
-        {editing ? (
-          <div className="flex gap-2">
-            <Button variant="secondary" size="sm" onClick={() => setEditing(false)}>Cancelar</Button>
-            <Button variant="primary" size="sm" onClick={save} leftIcon={Check}>Salvar</Button>
-          </div>
-        ) : (
-          <Button variant="secondary" size="sm" onClick={() => { setDraft(ops); setEditing(true) }} leftIcon={Edit3}>Editar dados</Button>
-        )}
-      </div>
+    <div className="space-y-4">
+      <Cabecalho titulo="Operação da clínica" editing={editing} aviso={aviso}
+        onEdit={() => { setDraft(ops); setEditing(true) }} onCancel={() => setEditing(false)} onSave={save} />
 
       {editing ? (
-        <div className="rounded-xl border border-border bg-surface p-5">
-          <p className="text-[11px] text-text-muted mb-4">Insira os indicadores operacionais do mês atual</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <EditableField label="Ocupação da agenda %" value={draft.ocupacao_pct}  onChange={v => setDraft(d => ({...d, ocupacao_pct: Math.min(v, 100)}))} suffix="%" />
-            <EditableField label="Taxa de faltas %"     value={draft.faltas_pct}    onChange={v => setDraft(d => ({...d, faltas_pct: Math.min(v, 100)}))} suffix="%" />
-            <EditableField label="Ticket médio (R$)"    value={draft.ticket_medio}  onChange={v => setDraft(d => ({...d, ticket_medio: v}))} prefix="R$" />
-            <EditableField label="Taxa de retorno %"    value={draft.retorno_pct}   onChange={v => setDraft(d => ({...d, retorno_pct: Math.min(v, 100)}))} suffix="%" />
+        <Panel className="space-y-4">
+          <p className="text-[12.5px] text-px-muted">Informe os indicadores operacionais do mês atual. Eles ficam salvos só neste navegador.</p>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Num label="Ocupação da agenda" value={draft.ocupacao_pct} suffix="%" onChange={v => setDraft(d => ({ ...d, ocupacao_pct: Math.min(v, 100) }))} />
+            <Num label="Taxa de faltas"     value={draft.faltas_pct}   suffix="%" onChange={v => setDraft(d => ({ ...d, faltas_pct: Math.min(v, 100) }))} />
+            <Num label="Ticket médio"       value={draft.ticket_medio} prefix="R$" onChange={v => setDraft(d => ({ ...d, ticket_medio: v }))} />
+            <Num label="Taxa de retorno"    value={draft.retorno_pct}  suffix="%" onChange={v => setDraft(d => ({ ...d, retorno_pct: Math.min(v, 100) }))} />
           </div>
-        </div>
+        </Panel>
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-            <StatCard label="Ocupação Agenda" value={`${ops.ocupacao_pct}%`}
-              sub="capacidade utilizada" icon={Calendar} color="text-accent" />
-            <StatCard label="Taxa de Faltas" value={`${ops.faltas_pct}%`}
-              sub="ausências no período" icon={Clock}
-              color={ops.faltas_pct > 15 ? "text-red-600" : "text-green-600"} />
-            <StatCard label="Ticket Médio" value={ticketMedio}
-              sub="receita por consulta" icon={DollarSign} color="text-purple-600" />
-            <StatCard label="Taxa de Retorno" value={`${ops.retorno_pct}%`}
-              sub="pacientes que voltaram" icon={Repeat} color="text-blue-600" />
+          <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+            <Kpi label="Ocupação da agenda" value={`${ops.ocupacao_pct}%`} sub="capacidade utilizada" />
+            <Kpi label="Taxa de faltas" value={`${ops.faltas_pct}%`} negativo={ops.faltas_pct > 15} sub="ausências no período" />
+            <Kpi label="Ticket médio" value={ticketMedio} sub={ops.ticket_medio > 0 ? "informado por você" : "receita por consulta no mês"} />
+            <Kpi label="Taxa de retorno" value={`${ops.retorno_pct}%`} sub="pacientes que voltaram" />
           </div>
 
-          <div className="rounded-xl border border-border bg-surface p-5">
-            <h3 className="text-[11px] font-mono text-text-muted uppercase tracking-widest mb-4">Consultas do Mês</h3>
-            <div className="flex items-end gap-6">
-              <div>
-                <p className="text-3xl font-bold text-text-primary">{exec.consultas_mes ?? 0}</p>
-                <p className="text-[11px] text-text-muted mt-1">consultas registradas</p>
+          <Panel as="section" className="space-y-3">
+            <h3 className={titulo}>Consultas do mês</h3>
+            <p className="text-[28px] font-medium leading-none text-px-ink">{exec.consultas_mes ?? 0}</p>
+            <p className="text-[12.5px] text-px-muted">consultas registradas</p>
+            {ops.ocupacao_pct > 0 && (
+              <div role="progressbar" aria-label="Ocupação da agenda" aria-valuenow={ops.ocupacao_pct} aria-valuemin={0} aria-valuemax={100} className="h-2 rounded-full bg-px-ink/[0.06]">
+                <div className="h-full rounded-full bg-px-ink" style={{ width: `${ops.ocupacao_pct}%` }} />
               </div>
-              {ops.ocupacao_pct > 0 && (
-                <div className="flex-1">
-                  <div className="flex justify-between text-[11px] text-text-muted mb-1.5">
-                    <span>Ocupação</span>
-                    <span className="font-mono font-semibold text-text-primary">{ops.ocupacao_pct}%</span>
-                  </div>
-                  <div className="h-2 bg-background border border-border rounded-full overflow-hidden">
-                    <div className="h-full rounded-full bg-accent transition-all duration-700"
-                      style={{ width: `${ops.ocupacao_pct}%` }} />
-                  </div>
+            )}
+          </Panel>
+
+          <Panel as="section" className="space-y-3">
+            <h3 className={titulo}>O que os seus números mostram</h3>
+            {sinais.length === 0
+              ? <p className="text-[13.5px] text-px-ink/80">Preencha seus dados em Editar dados para ver a leitura do mês.</p>
+              : <Sinais itens={sinais} />}
+          </Panel>
+        </>
+      )}
+    </div>
+  )
+}
+
+// ─── Aba Autoridade ───────────────────────────────────────────────────────────
+
+function AbaAutoridade({ exec, aut, onSave }: { exec: Partial<ExecData>; aut: AutoridadeManual; onSave: (a: AutoridadeManual) => boolean }) {
+  const [editing, setEditing] = useState(false)
+  const [draft,   setDraft]   = useState<AutoridadeManual>(aut)
+  const [aviso,   setAviso]   = useState("")
+
+  function save() {
+    const ok = onSave(draft)
+    setAviso(ok ? "" : "O navegador não permitiu salvar estes dados. Eles valem só até você recarregar a página.")
+    setEditing(false)
+  }
+
+  const npsScore = exec.nps_score ?? null
+  const faixa = npsScore === null ? "Aguardando respostas"
+    : npsScore >= 70 ? "Zona de excelência"
+    : npsScore >= 30 ? "Zona de qualidade"
+    : "Abaixo da média"
+  const serie = (exec.nps_6m ?? []).map(m => ({ rotulo: m.mes, valor: m.nps }))
+
+  const sinais: Sinal[] = []
+  if (aut.depoimentos_semana > 0) sinais.push({ tipo: "ok", texto: `${aut.depoimentos_semana} depoimento${aut.depoimentos_semana !== 1 ? "s" : ""} novo${aut.depoimentos_semana !== 1 ? "s" : ""} esta semana. Vale compartilhar no Instagram, com autorização do paciente.` })
+  if (aut.indicacoes_ativas > 0) sinais.push({ tipo: "ok", texto: `${aut.indicacoes_ativas} indicaç${aut.indicacoes_ativas !== 1 ? "ões" : "ão"} ativa${aut.indicacoes_ativas !== 1 ? "s" : ""} no programa.` })
+  if (npsScore !== null && npsScore < 30) sinais.push({ tipo: "warn", texto: "NPS abaixo de 30. Vale ler as respostas dos detratores e entrar em contato." })
+
+  return (
+    <div className="space-y-4">
+      <Cabecalho titulo="Autoridade e reputação" editing={editing} aviso={aviso}
+        onEdit={() => { setDraft(aut); setEditing(true) }} onCancel={() => setEditing(false)} onSave={save} />
+
+      {editing ? (
+        <Panel className="space-y-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Num label="Avaliação no Google (0 a 5)" value={draft.google_rating} suffix="/5" onChange={v => setDraft(d => ({ ...d, google_rating: Math.min(v, 5) }))} />
+            <Num label="Depoimentos esta semana" value={draft.depoimentos_semana} onChange={v => setDraft(d => ({ ...d, depoimentos_semana: v }))} />
+            <Num label="Indicações ativas" value={draft.indicacoes_ativas} onChange={v => setDraft(d => ({ ...d, indicacoes_ativas: v }))} />
+            <Field label="Link do Google Meu Negócio" htmlFor="au-link" className="sm:col-span-2">
+              <PxInput id="au-link" value={draft.google_link} placeholder="https://g.page/..." onChange={e => setDraft(d => ({ ...d, google_link: e.target.value }))} />
+            </Field>
+          </div>
+        </Panel>
+      ) : (
+        <>
+          <Panel as="section" className="space-y-4">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <h3 className="text-[13px] text-px-muted">Score NPS</h3>
+                <p className={`mt-1 text-[44px] font-medium leading-none tracking-[-0.03em] ${npsScore !== null && npsScore < 30 ? "text-px-danger" : "text-px-ink"}`}>{npsScore !== null ? npsScore : "Sem dados"}</p>
+                <p className="mt-1.5 text-[12.5px] text-px-muted">{faixa}</p>
+              </div>
+              {aut.google_rating > 0 && (
+                <div className="text-right">
+                  <p className="text-[13px] text-px-muted">Google</p>
+                  <p className="text-[24px] font-medium text-px-ink">{aut.google_rating}/5</p>
+                  {aut.google_link && /^https?:\/\//i.test(aut.google_link) && (
+                    <a href={aut.google_link} target="_blank" rel="noopener noreferrer" className="text-[13px] font-semibold text-px-accent underline underline-offset-2">Ver perfil</a>
+                  )}
                 </div>
               )}
             </div>
+            {serie.some(s => s.valor !== null) && <LineSeries data={serie} label="Evolução do NPS nos últimos 6 meses" min={-100} max={100} />}
+          </Panel>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Kpi label="Depoimentos na semana" value={String(aut.depoimentos_semana)} sub="coletados esta semana" />
+            <Kpi label="Indicações ativas" value={String(aut.indicacoes_ativas)} sub="programa de indicação" />
           </div>
 
-          <div className="rounded-xl border border-border bg-surface p-5">
-            <h3 className="text-[11px] font-mono text-text-muted uppercase tracking-widest mb-3">Insights Operacionais</h3>
-            <div className="space-y-2.5">
-              {ops.faltas_pct > 15 && (
-                <InsightBullet text={`Taxa de faltas em ${ops.faltas_pct}% — acima de 15% indica necessidade de régua de confirmação`} type="warn" />
-              )}
-              {ops.faltas_pct > 0 && ops.faltas_pct <= 15 && (
-                <InsightBullet text={`Taxa de faltas em ${ops.faltas_pct}% — dentro do padrão saudável (≤15%)`} type="ok" />
-              )}
-              {ops.ocupacao_pct > 0 && ops.ocupacao_pct < 70 && (
-                <InsightBullet text={`Agenda com ${ops.ocupacao_pct}% de ocupação — há espaço para captar mais pacientes`} type="info" />
-              )}
-              {ops.ocupacao_pct >= 90 && (
-                <InsightBullet text={`Agenda com ${ops.ocupacao_pct}% de ocupação — considere expandir horários ou criar lista de espera`} type="warn" />
-              )}
-              {ops.retorno_pct >= 40 && (
-                <InsightBullet text={`Retorno de ${ops.retorno_pct}% — excelente fidelização de pacientes`} type="ok" />
-              )}
-              {ops.retorno_pct > 0 && ops.retorno_pct < 30 && (
-                <InsightBullet text={`Retorno em ${ops.retorno_pct}% — estratégias de follow-up podem aumentar esse número`} type="info" />
-              )}
-              {ops.ocupacao_pct === 0 && ops.faltas_pct === 0 && (
-                <InsightBullet text="Configure os dados operacionais clicando em 'Editar dados' acima" type="info" />
-              )}
-            </div>
+          <Panel as="section" className="space-y-3">
+            <h3 className={titulo}>Novidades da semana</h3>
+            {sinais.length === 0
+              ? <p className="text-[13.5px] text-px-ink/80">Preencha seus dados em Editar dados para ver as novidades.</p>
+              : <Sinais itens={sinais} />}
+          </Panel>
+
+          <div className="flex flex-wrap gap-2">
+            <PxButton variant="secondary" href="/nps">Enviar pesquisa NPS</PxButton>
+            <PxButton variant="secondary" href="/nps">Gerar depoimento com IA</PxButton>
+            <PxButton variant="secondary" href="/indicacoes">Ver indicações</PxButton>
           </div>
         </>
       )}
@@ -602,156 +479,7 @@ function AbaOperacao({ ops, onSave, exec }: {
   )
 }
 
-// ─── ABA AUTORIDADE ──────────────────────────────────────────────────────────
-
-function AbaAutoridade({ exec, aut, onSave }: {
-  exec: Partial<ExecData>
-  aut: AutoridadeManual
-  onSave: (a: AutoridadeManual) => void
-}) {
-  const [editing, setEditing] = useState(false)
-  const [draft,   setDraft]   = useState<AutoridadeManual>(aut)
-  const [linkDraft, setLinkDraft] = useState(aut.google_link)
-
-  function save() { onSave({ ...draft, google_link: linkDraft }); setEditing(false) }
-
-  const npsScore = exec.nps_score ?? null
-  const npsColor = npsScore === null ? "text-text-muted"
-    : npsScore >= 70 ? "text-green-600"
-    : npsScore >= 30 ? "text-amber-600"
-    : "text-red-600"
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-[11px] font-mono font-semibold text-text-muted uppercase tracking-wider">Autoridade e Reputação</h2>
-        {editing ? (
-          <div className="flex gap-2">
-            <Button variant="secondary" size="sm" onClick={() => setEditing(false)}>Cancelar</Button>
-            <Button variant="primary" size="sm" onClick={save} leftIcon={Check}>Salvar</Button>
-          </div>
-        ) : (
-          <Button variant="secondary" size="sm" onClick={() => { setDraft(aut); setLinkDraft(aut.google_link); setEditing(true) }} leftIcon={Edit3}>Editar dados</Button>
-        )}
-      </div>
-
-      {editing ? (
-        <div className="rounded-xl border border-border bg-surface p-5">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <EditableField label="Avaliação Google (0-5)" value={draft.google_rating} onChange={v => setDraft(d => ({...d, google_rating: Math.min(v, 5)}))} suffix="/5" />
-            <EditableField label="Depoimentos esta semana" value={draft.depoimentos_semana} onChange={v => setDraft(d => ({...d, depoimentos_semana: v}))} />
-            <EditableField label="Indicações ativas" value={draft.indicacoes_ativas} onChange={v => setDraft(d => ({...d, indicacoes_ativas: v}))} />
-            <div className="col-span-2 space-y-1">
-              <label className="text-[10px] font-mono text-text-muted uppercase tracking-wider">Link Google Meu Negócio</label>
-              <input
-                value={linkDraft}
-                onChange={e => setLinkDraft(e.target.value)}
-                placeholder="https://g.page/..."
-                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-[13px] text-text-primary focus:outline-none focus:border-accent/50 transition-colors"
-              />
-            </div>
-          </div>
-        </div>
-      ) : (
-        <>
-          {/* NPS destaque */}
-          <div className="rounded-xl border border-border bg-surface p-6">
-            <div className="flex items-start justify-between">
-              <div>
-                <h3 className="text-[11px] font-mono text-text-muted uppercase tracking-widest mb-3">Score NPS</h3>
-                <p className={cn("text-5xl font-bold font-mono", npsColor)}>
-                  {npsScore !== null ? npsScore : "—"}
-                </p>
-                <p className="text-[11px] text-text-muted mt-1">
-                  {npsScore === null ? "Aguardando respostas"
-                    : npsScore >= 70 ? "Excelente — zona de excelência"
-                    : npsScore >= 30 ? "Bom — zona de qualidade"
-                    : "Atenção — abaixo da média"}
-                </p>
-              </div>
-              <div className="text-right space-y-2">
-                {aut.google_rating > 0 && (
-                  <div>
-                    <p className="text-[10px] font-mono text-text-muted uppercase">Google</p>
-                    <p className="text-xl font-bold text-amber-600"><Star className="inline-block align-[-0.15em] w-5 h-5 mr-1 fill-current" /> {aut.google_rating}/5</p>
-                    {aut.google_link && (
-                      <a href={aut.google_link} target="_blank" rel="noopener noreferrer"
-                        className="text-[10px] text-accent hover:underline">Ver perfil →</a>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* NPS evolution chart */}
-            {(exec.nps_6m ?? []).some(m => m.nps !== null) && (
-              <div className="mt-4">
-                <ResponsiveContainer width="100%" height={90}>
-                  <LineChart data={exec.nps_6m ?? []}>
-                    <XAxis dataKey="mes" tick={{ fill: "var(--text-muted)", fontSize: 10, fontFamily: "monospace" }} axisLine={false} tickLine={false} />
-                    <YAxis domain={[-100, 100]} hide />
-                    <Tooltip
-                      contentStyle={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }}
-                      formatter={(v) => [v !== null && v !== undefined ? v : "—", "NPS"]}
-                    />
-                    <Line type="monotone" dataKey="nps" stroke="#b8976a" strokeWidth={2} dot={{ fill: "#b8976a", r: 3 }} connectNulls />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-          </div>
-
-          {/* KPIs autoridade */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-            <StatCard label="Depoimentos (semana)" value={String(aut.depoimentos_semana)}
-              sub="coletados esta semana" icon={ThumbsUp} color="text-green-600" />
-            <StatCard label="Indicações Ativas" value={String(aut.indicacoes_ativas)}
-              sub="programa member get member" icon={UserPlus} color="text-blue-600" />
-            <StatCard label="Respostas NPS" value={String((exec.nps_6m ?? []).filter(m => m.nps !== null).length * 5)}
-              sub="estimativa últimos 6 meses" icon={Star} color="text-amber-600" />
-            <StatCard label="Score NPS" value={npsScore !== null ? String(npsScore) : "—"}
-              sub="Net Promoter Score" icon={Activity} color={npsScore !== null && npsScore >= 70 ? "text-green-600" : "text-amber-600"} />
-          </div>
-
-          {/* Insights */}
-          <div className="rounded-xl border border-border bg-surface p-5">
-            <h3 className="text-[11px] font-mono text-text-muted uppercase tracking-widest mb-3">Novidades da Semana</h3>
-            <div className="space-y-2.5">
-              {aut.depoimentos_semana > 0 && (
-                <InsightBullet text={`Você recebeu ${aut.depoimentos_semana} novos depoimentos esta semana — compartilhe no Instagram`} type="ok" />
-              )}
-              {aut.indicacoes_ativas > 0 && (
-                <InsightBullet text={`${aut.indicacoes_ativas} indicações ativas no programa — pacientes satisfeitos indicam em média 3 novos`} type="ok" />
-              )}
-              {npsScore !== null && npsScore < 30 && (
-                <InsightBullet text="NPS abaixo de 30 — analise as respostas negativas e entre em contato com os detratores" type="warn" />
-              )}
-              {aut.depoimentos_semana === 0 && aut.indicacoes_ativas === 0 && (
-                <InsightBullet text="Configure seus dados de autoridade clicando em 'Editar dados' acima" type="info" />
-              )}
-            </div>
-          </div>
-
-          {/* Botões de ação */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <Button variant="accent-ghost" size="md" href="/nps" leftIcon={Star} className="py-3 justify-start">Enviar pesquisa NPS</Button>
-            <Button variant="secondary" size="md" href="/nps" leftIcon={ThumbsUp} className="py-3 justify-start bg-surface text-text-secondary">Gerar depoimento com IA</Button>
-            <Button variant="secondary" size="md" href="/indicacoes" leftIcon={UserPlus} className="py-3 justify-start bg-surface text-text-secondary">Ver indicações</Button>
-          </div>
-        </>
-      )}
-    </div>
-  )
-}
-
-// ─── Main Page ────────────────────────────────────────────────────────────────
-
-const ABAS: { id: AbaId; label: string; icon: React.ElementType }[] = [
-  { id: "marketing",  label: "Marketing",  icon: Megaphone  },
-  { id: "comercial",  label: "Comercial",  icon: ShoppingBag},
-  { id: "operacao",   label: "Operação",   icon: Cog        },
-  { id: "autoridade", label: "Autoridade", icon: Award      },
-]
+// ─── Página ───────────────────────────────────────────────────────────────────
 
 export default function ExecutivoPage() {
   const appCtx    = useAppContext()
@@ -764,6 +492,7 @@ export default function ExecutivoPage() {
   const [aut,     setAut]     = useState<AutoridadeManual>(AUT_DEFAULT)
 
   const [analiseMes,     setAnaliseMes]     = useState<string | null>(null)
+  const [erroAnalise,    setErroAnalise]    = useState("")
   const [loadingAnalise, setLoadingAnalise] = useState(false)
 
   const [pergunta,         setPergunta]         = useState("")
@@ -772,8 +501,11 @@ export default function ExecutivoPage() {
   const [isRecording,      setIsRecording]      = useState(false)
   const [isTranscribing,   setIsTranscribing]   = useState(false)
   const [hasMediaRecorder, setHasMediaRecorder] = useState(false)
+  const [erroVoz,          setErroVoz]          = useState("")
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const streamRef        = useRef<MediaStream | null>(null)
   const audioChunksRef   = useRef<Blob[]>([])
+  const montado          = useRef(true)
 
   const carregarDados = useCallback(() => {
     setLoading(true)
@@ -784,7 +516,7 @@ export default function ExecutivoPage() {
         return r.json() as Promise<ExecData>
       })
       .then(d => setExec(d))
-      .catch(() => setErro("Falha ao carregar dados executivos. Tente novamente."))
+      .catch(e => { console.error("[executivo] erro ao carregar:", e); setErro("Falha ao carregar dados executivos. Tente novamente.") })
       .finally(() => setLoading(false))
   }, [])
 
@@ -796,80 +528,65 @@ export default function ExecutivoPage() {
   }, [carregarDados])
 
   useEffect(() => {
-    setHasMediaRecorder(
-      typeof MediaRecorder !== "undefined" && !!navigator?.mediaDevices?.getUserMedia
-    )
+    setHasMediaRecorder(typeof MediaRecorder !== "undefined" && !!navigator?.mediaDevices?.getUserMedia)
   }, [])
 
+  useEffect(() => { setVoiceConsent(appCtx?.perfil?.voz_gravacao_autorizada ?? false) }, [appCtx?.perfil])
+
+  // Ao sair da página, solta o microfone e descarta a gravação em andamento
   useEffect(() => {
-    setVoiceConsent(appCtx?.perfil?.voz_gravacao_autorizada ?? false)
-  }, [appCtx?.perfil])
+    montado.current = true
+    return () => {
+      montado.current = false
+      const rec = mediaRecorderRef.current
+      if (rec) rec.onstop = null
+      if (rec && rec.state !== "inactive") rec.stop()
+      streamRef.current?.getTracks().forEach(t => t.stop())
+    }
+  }, [])
 
-  // ─── Sinais do mês — calculados no client, sem IA, sem especulação ──────────
+  // Sinais do mês: calculados aqui, sem IA
   const sinais = useMemo(() => {
-    const items: { tipo: "ok" | "warn" | "info"; texto: string }[] = []
-
-    // 1. Ticket médio estimado
+    const items: Sinal[] = []
     const fat = exec.faturamento_mes ?? 0
     const con = exec.consultas_mes   ?? 0
-    if (fat > 0 && con > 0) {
-      items.push({
-        tipo:  "info",
-        texto: `Ticket estimado: ${fmt(Math.round(fat / con))}/consulta — ${fmt(fat)} de receita em ${con} consulta${con !== 1 ? "s" : ""}`,
-      })
-    }
+    if (fat > 0 && con > 0)
+      items.push({ tipo: "info", texto: `Ticket estimado: ${fmt(Math.round(fat / con))} por consulta, com ${fmt(fat)} de receita em ${con} consulta${con !== 1 ? "s" : ""}.` })
 
-    // 2. Leads parados no funil (Contato Feito + Qualificado)
     const parados = (exec.leads_por_estagio ?? [])
       .filter(e => e.estagio === "Contato Feito" || e.estagio === "Qualificado")
       .reduce((s, e) => s + e.count, 0)
-    if (parados > 0) {
-      items.push({
-        tipo:  "warn",
-        texto: `${parados} lead${parados !== 1 ? "s" : ""} parado${parados !== 1 ? "s" : ""} no funil — "Contato Feito" ou "Qualificado" sem avançar`,
-      })
-    } else if ((exec.leads_total ?? 0) > 0) {
-      items.push({ tipo: "ok", texto: "Nenhum lead parado no funil — cadência de follow-up em dia" })
-    }
-
-    // 3. Principal origem de leads
     const totalLeads = exec.leads_total ?? 0
-    const topOrigem  = [...(exec.leads_origem ?? [])]
-      .filter(o => o.count > 0)
-      .sort((a, b) => b.count - a.count)[0]
-    if (topOrigem && totalLeads > 0) {
-      const pct = Math.round(topOrigem.count / totalLeads * 100)
-      items.push({
-        tipo:  "info",
-        texto: `${topOrigem.origem} é sua principal origem de leads — ${topOrigem.count} de ${totalLeads} (${pct}%)`,
-      })
-    }
+    if (parados > 0)
+      items.push({ tipo: "warn", texto: `${parados} lead${parados !== 1 ? "s" : ""} parado${parados !== 1 ? "s" : ""} no funil, em Contato Feito ou Qualificado, sem avançar.` })
+    else if (totalLeads > 0)
+      items.push({ tipo: "ok", texto: "Nenhum lead parado no funil." })
 
-    // 4. Taxa de conversão lead→paciente
+    const topOrigem = [...(exec.leads_origem ?? [])].filter(o => o.count > 0).sort((a, b) => b.count - a.count)[0]
+    if (topOrigem && totalLeads > 0)
+      items.push({ tipo: "info", texto: `${topOrigem.origem} é a principal origem de leads: ${topOrigem.count} de ${totalLeads} (${Math.round(topOrigem.count / totalLeads * 100)}%).` })
+
     const pacientes = (exec.leads_por_estagio ?? []).find(e => e.estagio === "Paciente")?.count ?? 0
-    if (totalLeads > 0) {
-      const conv = Math.round(pacientes / totalLeads * 100)
-      items.push({
-        tipo:  conv >= 15 ? "ok" : conv >= 8 ? "info" : "warn",
-        texto: `Conversão lead→paciente: ${conv}% — ${pacientes} de ${totalLeads} lead${totalLeads !== 1 ? "s" : ""} convertido${pacientes !== 1 ? "s" : ""}`,
-      })
-    }
-
+    if (totalLeads > 0)
+      items.push({ tipo: "info", texto: `Conversão de lead em paciente: ${Math.round(pacientes / totalLeads * 100)}%, ${pacientes} de ${totalLeads} lead${totalLeads !== 1 ? "s" : ""}.` })
     return items
   }, [exec])
 
   const gerarAnalise = async () => {
-    setLoadingAnalise(true)
+    setLoadingAnalise(true); setErroAnalise("")
     try {
       const res  = await fetch("/api/executivo/analise-mes", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({ pergunta: pergunta.trim() || undefined }),
       })
-      const data = await res.json() as { analise?: string }
-      setAnaliseMes(data.analise ?? "")
-    } catch (e) { console.error("[executivo] gerarAnalise:", e) }
-    finally { setLoadingAnalise(false) }
+      const data = await res.json().catch(() => ({})) as { analise?: string; error?: string }
+      if (!res.ok || data.error || !data.analise) throw new Error(data.error ?? `Erro ${res.status}`)
+      setAnaliseMes(data.analise)
+    } catch (e) {
+      console.error("[executivo] gerarAnalise:", e)
+      setErroAnalise("Não foi possível gerar a análise agora. Tente novamente.")
+    } finally { setLoadingAnalise(false) }
   }
 
   async function aceitarConsentimento() {
@@ -880,7 +597,7 @@ export default function ExecutivoPage() {
     }).catch(() => null)
     if (!res || !res.ok) {
       setShowConsentModal(false)
-      setErro("Erro ao registrar consentimento. Tente novamente.")
+      setErroVoz("Não foi possível registrar o consentimento. Tente novamente.")
       return
     }
     appCtx?.refetchPerfil()
@@ -890,6 +607,7 @@ export default function ExecutivoPage() {
   }
 
   function handleMicClick() {
+    setErroVoz("")
     if (isRecording) { pararGravacao(); return }
     if (!voiceConsent) { setShowConsentModal(true); return }
     iniciarGravacao()
@@ -898,13 +616,11 @@ export default function ExecutivoPage() {
   async function iniciarGravacao() {
     try {
       const stream   = await navigator.mediaDevices.getUserMedia({ audio: true })
+      streamRef.current = stream
       const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
         ? "audio/webm;codecs=opus"
-        : MediaRecorder.isTypeSupported("audio/webm")
-          ? "audio/webm"
-          : MediaRecorder.isTypeSupported("audio/mp4")
-            ? "audio/mp4"
-            : ""
+        : MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm"
+        : MediaRecorder.isTypeSupported("audio/mp4") ? "audio/mp4" : ""
       const rec = new MediaRecorder(stream, mimeType ? { mimeType } : undefined)
       audioChunksRef.current = []
       rec.ondataavailable = e => { if (e.data.size > 0) audioChunksRef.current.push(e.data) }
@@ -916,7 +632,10 @@ export default function ExecutivoPage() {
       rec.start()
       mediaRecorderRef.current = rec
       setIsRecording(true)
-    } catch (e) { console.error("[executivo] microfone:", e) }
+    } catch (e) {
+      console.error("[executivo] microfone:", e)
+      setErroVoz("Não foi possível acessar o microfone. Verifique a permissão do navegador.")
+    }
   }
 
   function pararGravacao() {
@@ -935,44 +654,22 @@ export default function ExecutivoPage() {
       const data = await res.json() as { text?: string; error?: string }
       if (!res.ok || data.error) throw new Error(data.error ?? "Erro na transcrição")
       const texto = data.text?.trim() ?? ""
-      if (texto) setPergunta(prev => prev ? prev + " " + texto : texto)
-    } catch (e) { console.error("[executivo] transcrição:", e) }
-    finally { setIsTranscribing(false) }
+      if (texto && montado.current) setPergunta(prev => prev ? prev + " " + texto : texto)
+    } catch (e) {
+      console.error("[executivo] transcrição:", e)
+      if (montado.current) setErroVoz("Não foi possível transcrever o áudio. Tente novamente ou digite a pergunta.")
+    } finally { if (montado.current) setIsTranscribing(false) }
   }
 
-  const saveMktg = useCallback((m: MarketingManual) => {
-    setMktg(m)
-    localStorage.setItem("exec_mktg", JSON.stringify(m))
-  }, [])
-
-  const saveOps = useCallback((o: OperacaoManual) => {
-    setOps(o)
-    localStorage.setItem("exec_ops", JSON.stringify(o))
-  }, [])
-
-  const saveAut = useCallback((a: AutoridadeManual) => {
-    setAut(a)
-    localStorage.setItem("exec_aut", JSON.stringify(a))
-  }, [])
+  const saveMktg = useCallback((m: MarketingManual) => { setMktg(m); return setLocalStorage("exec_mktg", m) }, [])
+  const saveOps  = useCallback((o: OperacaoManual)  => { setOps(o);  return setLocalStorage("exec_ops",  o) }, [])
+  const saveAut  = useCallback((a: AutoridadeManual) => { setAut(a); return setLocalStorage("exec_aut",  a) }, [])
 
   if (loading) {
     return (
       <div className="animate-fade-in">
-        <MobileOnlyHeader title="Painel Executivo" />
-        <div className="px-4 md:px-8 pt-4 md:pt-8 pb-5">
-          <div className="h-8 w-48 bg-white/[0.06] rounded-lg animate-pulse mb-1" />
-          <div className="h-3 w-32 bg-white/[0.04] rounded animate-pulse" />
-        </div>
-        <div className="px-4 md:px-8 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
-          <SkeletonCard />
-          <SkeletonCard />
-          <SkeletonCard />
-          <SkeletonCard />
-        </div>
-        <div className="px-4 md:px-8 grid grid-cols-1 xl:grid-cols-2 gap-4">
-          <SkeletonCard className="min-h-[200px]" />
-          <SkeletonCard className="min-h-[200px]" />
-        </div>
+        <PageHeader title="Painel Executivo" />
+        <p role="status" className="px-4 py-24 text-center text-[13.5px] text-px-muted md:px-10">Carregando os dados da clínica</p>
       </div>
     )
   }
@@ -980,226 +677,99 @@ export default function ExecutivoPage() {
   if (erro) {
     return (
       <div className="animate-fade-in">
-        <MobileOnlyHeader title="Painel Executivo" />
-        <ErrorState message={erro} onRetry={carregarDados} className="min-h-[70vh]" />
+        <PageHeader title="Painel Executivo" />
+        <div className="px-4 py-24 text-center md:px-10">
+          <p role="alert" className="mb-3 text-[14px] font-semibold text-px-ink">{erro}</p>
+          <PxButton variant="secondary" onClick={carregarDados}>Tentar de novo</PxButton>
+        </div>
       </div>
     )
   }
 
+  const receita6m = (exec.faturamento_6m ?? []).map(m => ({ rotulo: m.mes, valor: m.valor }))
+
   return (
     <div className="animate-fade-in">
-      <MobileOnlyHeader title="Painel Executivo" />
-      {/* Header */}
-      <div className="px-4 md:px-8 pt-4 md:pt-8 pb-5">
-        <div className="flex items-start justify-between gap-3 flex-wrap">
-          <div>
-            <h1 className="text-2xl font-bold text-text-primary tracking-tight">Centro de Comando</h1>
-            <p className="text-[11px] text-text-muted mt-1 font-mono capitalize">{getNow()}</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={gerarAnalise}
-              disabled={loadingAnalise}
-              className="flex items-center gap-1.5 text-[12px] px-3 py-1.5 rounded-lg border border-border text-text-secondary hover:border-accent-border hover:text-accent transition-colors disabled:opacity-50"
-            >
-              {loadingAnalise ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 text-accent" />}
-              Analisar mês
-            </button>
-            <Link href="/diagnostico"
-              className="text-[12px] px-3 py-1.5 rounded-lg border border-border text-text-muted hover:text-text-primary transition-colors flex items-center gap-1.5">
-              <Activity className="w-3.5 h-3.5" /> Diagnóstico 360°
-            </Link>
-          </div>
-        </div>
+      <PageHeader title="Painel Executivo" caption={getNow()} actions={<PxButton variant="secondary" size="sm" href="/diagnostico">Diagnóstico 360</PxButton>} />
 
-        {/* Pergunta / contexto para análise */}
-        <div className="mt-3 flex items-center gap-2">
-          <div className="flex-1 flex items-center gap-2 bg-card border border-border rounded-xl px-3 py-2 focus-within:border-accent/40 transition-colors">
-            <input
-              type="text"
-              value={pergunta}
-              onChange={e => setPergunta(e.target.value)}
+      <div className="max-w-6xl space-y-4 px-4 pb-10 md:px-10">
+
+        {/* Análise do mês */}
+        <Panel as="section" className="space-y-3">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <PxInput aria-label="Contexto ou pergunta para a análise do mês" value={pergunta} onChange={e => setPergunta(e.target.value)}
               onKeyDown={e => { if (e.key === "Enter" && !loadingAnalise) gerarAnalise() }}
-              placeholder="Adicione contexto ou pergunta para a análise (opcional)..."
-              className="flex-1 bg-transparent text-[12px] text-text-primary placeholder:text-text-muted outline-none"
-            />
-            {isTranscribing && (
-              <span className="text-[10px] text-blue-400 flex items-center gap-1 flex-shrink-0">
-                <Loader2 className="w-3 h-3 animate-spin" /> transcrevendo...
-              </span>
-            )}
-            {hasMediaRecorder && (
-              <button
-                onClick={handleMicClick}
-                disabled={isTranscribing}
-                title={isRecording ? "Parar gravação" : "Gravar pergunta por voz"}
-                className={cn(
-                  "flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg border transition-all flex-shrink-0",
-                  isRecording
-                    ? "bg-red-500/15 border-red-500/40 text-red-400 animate-pulse"
-                    : "border-border text-text-muted hover:border-blue-500/30 hover:text-blue-400 disabled:opacity-40"
-                )}
-              >
-                {isRecording
-                  ? <><MicOff className="w-3 h-3" /> Parar</>
-                  : <><Mic className="w-3 h-3" /> Gravar</>}
-              </button>
-            )}
+              placeholder="Contexto ou pergunta para a análise (opcional)" className="flex-1" />
+            <div className="flex gap-2">
+              {hasMediaRecorder && (
+                <PxButton variant="secondary" leftIcon={isRecording ? MicOff : Mic} onClick={handleMicClick} disabled={isTranscribing}>
+                  {isRecording ? "Parar gravação" : "Gravar por voz"}
+                </PxButton>
+              )}
+              <PxButton onClick={gerarAnalise} loading={loadingAnalise}>{loadingAnalise ? "Analisando" : "Analisar mês"}</PxButton>
+            </div>
           </div>
-        </div>
+          {isRecording && <p role="status" className="text-[12.5px] text-px-ink">Gravando. Clique em Parar gravação quando terminar.</p>}
+          {isTranscribing && <p role="status" className="text-[12.5px] text-px-muted">Transcrevendo o áudio</p>}
+          {erroVoz && <p role="alert" className="text-[13px] text-px-danger">{erroVoz}</p>}
+          {erroAnalise && <p role="alert" className="text-[13px] text-px-danger">{erroAnalise}</p>}
+        </Panel>
 
         {analiseMes !== null && (
-          <div className="mt-4 bg-card border border-accent-border rounded-lg p-5 animate-fade-in">
+          <Panel as="section" className="space-y-3">
             <div className="flex items-start justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-accent" />
-                <span className="text-[11px] font-mono text-accent tracking-widest uppercase">Análise do mês</span>
-              </div>
-              <button onClick={() => setAnaliseMes(null)} className="text-text-muted hover:text-text-secondary transition-colors flex-shrink-0">
-                <X className="w-4 h-4" />
-              </button>
+              <h2 className={titulo}>Análise do mês</h2>
+              <PxButton variant="quiet" size="sm" onClick={() => setAnaliseMes(null)}>Fechar</PxButton>
             </div>
-            <p className="mt-3 text-[13px] text-text-primary leading-relaxed whitespace-pre-line">{analiseMes}</p>
-          </div>
+            <p className="whitespace-pre-line text-[13.5px] leading-relaxed text-px-ink/85">{analiseMes}</p>
+          </Panel>
         )}
 
-        {/* KPIs rápidos */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 mt-5">
-          <StatCard label="Leads no CRM"    value={String(exec.leads_total ?? 0)} sub={`+${exec.leads_semana ?? 0} esta semana`}  icon={Users}    color="text-blue-600" />
-          <StatCard label="Consultas/Mês"   value={String(exec.consultas_mes ?? 0)} sub="agenda registrada"                       icon={Calendar} color="text-accent" />
-          <StatCard label="Score NPS"       value={exec.nps_score !== null && exec.nps_score !== undefined ? String(exec.nps_score) : "—"} sub="satisfação" icon={Star}  color="text-amber-600" />
-          <StatCard label="Seguidores"      value={mktg.seguidores.toLocaleString("pt-BR")} sub={`+${mktg.ganho_semanal}/semana`} icon={TrendingUp} color="text-pink-600" />
+        {/* Números principais */}
+        <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+          <Kpi label="Leads no CRM"   value={String(exec.leads_total ?? 0)}   sub={`+${exec.leads_semana ?? 0} esta semana`} />
+          <Kpi label="Consultas no mês" value={String(exec.consultas_mes ?? 0)} sub="agenda registrada" />
+          <Kpi label="Score NPS"      value={exec.nps_score !== null && exec.nps_score !== undefined ? String(exec.nps_score) : "Sem dados"} sub="satisfação dos pacientes" />
+          <Kpi label="Seguidores"     value={mktg.seguidores.toLocaleString("pt-BR")} sub={`+${mktg.ganho_semanal} por semana, dado informado`} />
         </div>
-      </div>
 
-      {/* ── Sinais do mês (calculados, sem IA) + tendência de receita ──────── */}
-      <div className="px-4 md:px-8 pb-4 space-y-4">
-
-        {/* Sinais do mês */}
         {sinais.length > 0 && (
-          <div className="rounded-xl border border-border bg-surface p-4">
-            <p className="text-[10px] font-mono text-text-muted uppercase tracking-widest mb-3">Sinais do mês</p>
-            <div className="space-y-2">
-              {sinais.map((s, i) => (
-                <InsightBullet key={i} text={s.texto} type={s.tipo} />
-              ))}
-            </div>
-          </div>
+          <Panel as="section" className="space-y-3">
+            <h2 className={titulo}>Sinais do mês</h2>
+            <Sinais itens={sinais} />
+          </Panel>
         )}
 
-        {/* Tendência de receita — faturamento_6m */}
-        {(exec.faturamento_6m ?? []).some(m => m.valor > 0) && (
-          <div className="rounded-xl border border-border bg-surface p-4">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-[10px] font-mono text-text-muted uppercase tracking-widest">Receita — últimos 6 meses</p>
-              <p className="text-[11px] font-mono font-semibold text-text-primary">
-                {fmt(exec.faturamento_mes ?? 0)}
-                <span className="text-text-muted font-normal"> este mês</span>
-              </p>
+        {receita6m.some(m => m.valor > 0) && (
+          <Panel as="section" className="space-y-3">
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <h2 className={titulo}>Receita nos últimos 6 meses</h2>
+              <p className="text-[13px] text-px-muted"><span className="font-semibold text-px-ink">{fmt(exec.faturamento_mes ?? 0)}</span> neste mês</p>
             </div>
-            <ResponsiveContainer width="100%" height={88}>
-              <BarChart data={exec.faturamento_6m ?? []} barSize={18}>
-                <XAxis
-                  dataKey="mes"
-                  tick={{ fill: "var(--text-muted)", fontSize: 9, fontFamily: "monospace" }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis hide domain={[0, "auto"]} />
-                <Tooltip
-                  contentStyle={{
-                    background: "var(--surface)",
-                    border: "1px solid var(--border)",
-                    borderRadius: 8,
-                    fontSize: 11,
-                  }}
-                  formatter={(v) => [typeof v === "number" ? fmt(v) : "—", "Receita"]}
-                />
-                <Bar dataKey="valor" radius={[4, 4, 0, 0]}>
-                  {(exec.faturamento_6m ?? []).map((entry, i, arr) => (
-                    <Cell
-                      key={i}
-                      fill={i === arr.length - 1 ? "var(--accent)" : "var(--border-hover)"}
-                    />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+            <PillBars data={receita6m} label="Receita mensal nos últimos 6 meses" format={fmt} />
+          </Panel>
         )}
-      </div>
 
-      {/* Tab pills */}
-      <div className="px-4 md:px-8 pb-2">
-        <div className="flex items-center gap-1 md:gap-2 border-b border-border pb-0 overflow-x-auto scrollbar-none">
-          {ABAS.map(a => {
-            const active = aba === a.id
-            return (
-              <button
-                key={a.id}
-                onClick={() => setAba(a.id)}
-                className={cn(
-                  "flex items-center gap-2 px-4 py-2.5 text-[12px] font-semibold border-b-2 transition-all -mb-px",
-                  active
-                    ? "border-accent text-accent"
-                    : "border-transparent text-text-muted hover:text-text-secondary hover:border-border"
-                )}
-              >
-                <a.icon className="w-3.5 h-3.5" />
-                {a.label}
-              </button>
-            )
-          })}
-        </div>
-      </div>
+        <Segmented label="Área" value={aba} onChange={setAba} options={ABAS} />
 
-      {/* Tab content */}
-      <div className="p-4 md:p-8 pt-4 md:pt-6">
         {aba === "marketing"  && <AbaMarketing mktg={mktg} onSave={saveMktg} />}
         {aba === "comercial"  && <AbaComercial exec={exec} />}
         {aba === "operacao"   && <AbaOperacao ops={ops} onSave={saveOps} exec={exec} />}
         {aba === "autoridade" && <AbaAutoridade exec={exec} aut={aut} onSave={saveAut} />}
       </div>
 
-      {/* Voice consent modal */}
-      {showConsentModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-surface border border-border rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center flex-shrink-0">
-                <ShieldCheck className="w-5 h-5 text-blue-400" />
-              </div>
-              <div>
-                <h3 className="text-[14px] font-semibold text-text-primary">Autorizar gravação de voz</h3>
-                <p className="text-[11px] text-text-muted">Consentimento LGPD — leia antes de prosseguir</p>
-              </div>
-            </div>
-            <p className="text-[12px] text-text-secondary leading-relaxed">
-              Sua fala será enviada ao serviço{" "}
-              <strong className="text-text-primary">Groq Whisper</strong> para transcrição automática.
-              O áudio <strong className="text-text-primary">não é armazenado</strong> — somente o texto
-              transcrito é utilizado como contexto da análise.
-            </p>
-            <p className="text-[11px] text-text-muted leading-relaxed">
-              Você pode revogar este consentimento a qualquer momento nas Configurações do perfil.
-            </p>
-            <div className="flex gap-2 pt-1">
-              <button
-                onClick={() => setShowConsentModal(false)}
-                className="flex-1 text-[12px] py-2 rounded-xl border border-border text-text-muted hover:border-border-hover transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={aceitarConsentimento}
-                className="flex-1 text-[12px] py-2 rounded-xl bg-blue-500 text-white font-semibold hover:bg-blue-600 transition-colors"
-              >
-                Autorizar e gravar
-              </button>
-            </div>
+      <PxModal open={showConsentModal} onClose={() => setShowConsentModal(false)} title="Autorizar gravação de voz">
+        <div className="space-y-4">
+          <p className="text-[13px] leading-relaxed text-px-ink/85">
+            Sua fala será enviada ao serviço <strong>Groq Whisper</strong> para transcrição automática. O áudio <strong>não é armazenado</strong>; somente o texto transcrito é usado como contexto da análise.
+          </p>
+          <p className="text-[12.5px] leading-relaxed text-px-muted">Consentimento LGPD. Você pode revogá-lo a qualquer momento nas Configurações do perfil.</p>
+          <div className="flex gap-2 pt-1">
+            <PxButton variant="secondary" fullWidth onClick={() => setShowConsentModal(false)}>Cancelar</PxButton>
+            <PxButton fullWidth onClick={aceitarConsentimento}>Autorizar e gravar</PxButton>
           </div>
         </div>
-      )}
+      </PxModal>
     </div>
   )
 }

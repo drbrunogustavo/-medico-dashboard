@@ -22,8 +22,7 @@ export async function POST(req: NextRequest) {
       .single()
 
     if (!ind) {
-      // Token not found — create a lead entry regardless (soft landing)
-      return NextResponse.json({ ok: true })
+      return NextResponse.json({ error: "Link de indicação inválido" }, { status: 404 })
     }
 
     // Update with the indicado's confirmed contact info
@@ -45,7 +44,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true })
   } catch (e) {
-    console.error("[indicacoes/indicar]", e)
-    return NextResponse.json({ error: errMsg(e) }, { status: 500 })
+    console.error("[indicacoes/indicar]", errMsg(e))
+    return NextResponse.json({ error: "Erro ao registrar indicação" }, { status: 500 })
   }
 }

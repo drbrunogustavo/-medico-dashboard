@@ -3,182 +3,132 @@
 import { useState, useEffect } from "react"
 import { useParams } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { Loader2, CheckCircle, Heart } from "lucide-react"
-import { PraxisLogo } from "@/components/PraxisLogo"
+import { Panel, PxButton } from "@/components/px"
+
+const NOTAS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
 export default function NPSSurveyPage() {
   const { token } = useParams() as { token: string }
 
-  const [step,      setStep]      = useState<"loading" | "survey" | "done" | "error" | "already">("loading")
-  const [nome,      setNome]      = useState("")
-  const [nota,      setNota]      = useState<number | null>(null)
+  const [step, setStep] = useState<"loading" | "survey" | "done" | "error" | "already">("loading")
+  const [nome, setNome] = useState("")
+  const [nota, setNota] = useState<number | null>(null)
   const [comentario, setComentario] = useState("")
-  const [saving,    setSaving]    = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [erro, setErro] = useState("")
 
   useEffect(() => {
-    fetch(`/api/nps/public?token=${token}`)
-      .then(r => r.json())
-      .then(data => {
-        if (data.error) { setStep("error"); return }
+    let vivo = true
+    fetch(`/api/nps/public?token=${encodeURIComponent(token)}`)
+      .then(async r => ({ ok: r.ok, data: await r.json().catch(() => null) }))
+      .then(({ ok, data }) => {
+        if (!vivo) return
+        if (!ok || !data || data.error) { setStep("error"); return }
         if (data.status === "respondido") { setStep("already"); return }
-        setNome(data.paciente_nome ?? "")
+        setNome(typeof data.paciente_nome === "string" ? data.paciente_nome : "")
         setStep("survey")
       })
-      .catch(() => setStep("error"))
+      .catch(() => { if (vivo) setStep("error") })
+    return () => { vivo = false }
   }, [token])
 
   async function submit() {
-    if (nota === null) return
-    setSaving(true)
+    if (nota === null || saving) return
+    setErro(""); setSaving(true)
     try {
       const r = await fetch("/api/nps/public", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, nota, comentario }),
+        body: JSON.stringify({ token, nota, comentario: comentario.trim() }),
       })
       if (r.ok) setStep("done")
-      else { const d = await r.json(); if (d.error === "Já respondida") setStep("already"); else setStep("error") }
-    } catch { setStep("error") }
-    finally { setSaving(false) }
+      else if (r.status === 409) setStep("already")
+      else if (r.status === 404) setStep("error")
+      else setErro("Não foi possível enviar sua avaliação agora. Tente de novo em instantes.")
+    } catch {
+      setErro("Não foi possível enviar sua avaliação. Confira a conexão e tente de novo.")
+    } finally {
+      setSaving(false)
+    }
   }
 
-  const COLORS: Record<number, string> = {
-    0: "border-red-500/40 bg-red-500/10 text-red-400 hover:bg-red-500/20",
-    1: "border-red-500/40 bg-red-500/10 text-red-400 hover:bg-red-500/20",
-    2: "border-red-400/40 bg-red-400/10 text-red-300 hover:bg-red-400/20",
-    3: "border-red-400/40 bg-red-400/10 text-red-300 hover:bg-red-400/20",
-    4: "border-orange-500/40 bg-orange-500/10 text-orange-400 hover:bg-orange-500/20",
-    5: "border-orange-500/40 bg-orange-500/10 text-orange-400 hover:bg-orange-500/20",
-    6: "border-orange-400/40 bg-orange-400/10 text-orange-300 hover:bg-orange-400/20",
-    7: "border-amber-500/40 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20",
-    8: "border-amber-400/40 bg-amber-400/10 text-amber-400 hover:bg-amber-400/20",
-    9: "border-emerald-500/40 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20",
-    10:"border-emerald-400/40 bg-emerald-400/10 text-emerald-300 hover:bg-emerald-400/20",
-  }
+  const primeiroNome = nome.trim().split(" ")[0]
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
-      <div className="w-full max-w-md">
-        <div className="flex justify-center mb-8">
-          <PraxisLogo />
-        </div>
+    <div className="px relative flex min-h-screen flex-col items-center justify-center gap-4 px-4 py-10">
+      <div className="px-stage" aria-hidden="true" />
+      <main className="relative w-full max-w-[460px] space-y-4">
+        <p className="text-center text-[22px] font-semibold tracking-[0.2em] text-px-ink">PRAXIS</p>
 
-        {step === "loading" && (
-          <div className="flex justify-center py-10">
-            <Loader2 className="w-8 h-8 animate-spin text-accent" />
-          </div>
-        )}
+        {step === "loading" && <p role="status" className="py-10 text-center text-[14px] text-px-muted">Carregando a pesquisa.</p>}
 
         {step === "survey" && (
-          <div className="bg-surface border border-border rounded-2xl p-6 space-y-6">
-            <div className="text-center">
-              <h1 className="text-[20px] font-bold text-text-primary">Como foi sua consulta?</h1>
-              <p className="text-[13px] text-text-secondary mt-1">
-                {nome ? `Olá, ${nome.split(" ")[0]}!` : "Olá!"} Sua opinião é muito importante para nós.
-              </p>
+          <Panel as="section" className="space-y-6 !p-7">
+            <div className="space-y-1">
+              <h1 className="text-[22px] font-semibold text-px-ink">Como foi sua consulta?</h1>
+              <p className="text-[14px] text-px-muted">{primeiroNome ? `Olá, ${primeiroNome}. ` : ""}Sua opinião ajuda a melhorar o atendimento.</p>
             </div>
 
-            <div>
-              <p className="text-[12px] text-text-muted text-center mb-3">
-                De 0 a 10, qual a probabilidade de indicar nossa clínica a alguém?
-              </p>
-              <div className="grid grid-cols-6 gap-2 mb-2">
-                {[0,1,2,3,4,5].map(n => (
+            <div role="group" aria-labelledby="nps-pergunta" className="space-y-2">
+              <p id="nps-pergunta" className="text-[14px] text-px-ink">De 0 a 10, qual a chance de você indicar a clínica a alguém?</p>
+              <div className="grid grid-cols-6 gap-2 sm:grid-cols-11">
+                {NOTAS.map(n => (
                   <button
                     key={n}
+                    type="button"
+                    aria-pressed={nota === n}
                     onClick={() => setNota(n)}
                     className={cn(
-                      "h-12 rounded-xl border text-[16px] font-bold transition-all",
-                      nota === n ? COLORS[n] + " scale-110 ring-2 ring-current/30" : "border-border text-text-muted hover:border-border-hover"
+                      "h-11 rounded-px-ctl border text-[15px] font-semibold tabular-nums transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-px-ink/40",
+                      nota === n ? "border-px-ink bg-px-ink text-white" : "border-px-line bg-white text-px-ink hover:bg-white/80"
                     )}
                   >
                     {n}
                   </button>
                 ))}
               </div>
-              <div className="grid grid-cols-5 gap-2">
-                {[6,7,8,9,10].map(n => (
-                  <button
-                    key={n}
-                    onClick={() => setNota(n)}
-                    className={cn(
-                      "h-12 rounded-xl border text-[16px] font-bold transition-all",
-                      nota === n ? COLORS[n] + " scale-110 ring-2 ring-current/30" : "border-border text-text-muted hover:border-border-hover"
-                    )}
-                  >
-                    {n}
-                  </button>
-                ))}
-              </div>
-              <div className="flex justify-between text-[10px] font-mono text-text-muted mt-1">
-                <span>Definitivamente não</span>
-                <span>Definitivamente sim</span>
+              <div className="flex justify-between text-[12.5px] text-px-muted">
+                <span>0, nenhuma chance</span>
+                <span>10, certamente</span>
               </div>
             </div>
 
-            <div>
-              <label className="block text-[12px] text-text-muted mb-1.5">
-                Comentário (opcional)
-              </label>
+            <div className="space-y-1.5">
+              <label htmlFor="nps-coment" className="block text-[13px] font-medium text-px-ink">Comentário (opcional)</label>
               <textarea
+                id="nps-coment"
                 value={comentario}
                 onChange={e => setComentario(e.target.value)}
-                placeholder="O que achou da consulta? Sugestões de melhoria?"
+                maxLength={1000}
                 rows={3}
-                className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-[13px] text-text-primary placeholder-text-muted focus:outline-none focus:border-accent/50 transition-colors resize-none"
+                placeholder="O que achou da consulta? Alguma sugestão?"
+                className="w-full resize-none rounded-px-ctl border border-px-line bg-white px-3.5 py-2.5 text-[13.5px] text-px-ink placeholder:text-px-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-px-ink/40"
               />
             </div>
 
-            <button
-              onClick={submit}
-              disabled={nota === null || saving}
-              className="w-full py-3 rounded-xl bg-accent text-background text-[14px] font-bold disabled:opacity-50 transition-all hover:bg-accent/90 flex items-center justify-center gap-2"
-            >
-              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-              {saving ? "Enviando..." : "Confirmar avaliação"}
-            </button>
-          </div>
+            {erro && <p role="alert" className="rounded-px-card bg-px-danger-soft px-3 py-2 text-[13px] text-px-danger">{erro}</p>}
+            <PxButton fullWidth loading={saving} disabled={nota === null} onClick={submit}>
+              {saving ? "Enviando" : "Enviar avaliação"}
+            </PxButton>
+          </Panel>
         )}
 
         {step === "done" && (
-          <div className="bg-surface border border-border rounded-2xl p-8 text-center space-y-4">
-            <div className="flex justify-center">
-              <div className="w-16 h-16 rounded-full bg-accent-dim border border-accent-border flex items-center justify-center">
-                <CheckCircle className="w-8 h-8 text-accent" />
-              </div>
-            </div>
-            <h1 className="text-[20px] font-bold text-text-primary">Muito obrigado!</h1>
-            <p className="text-[13px] text-text-secondary">
-              Sua avaliação foi registrada com sucesso. Ela nos ajuda a melhorar continuamente o atendimento.
-            </p>
-            {nota !== null && nota >= 9 && (
-              <div className="mt-4 p-4 bg-accent-dim border border-accent-border rounded-xl text-center">
-                <Heart className="w-5 h-5 text-accent mx-auto mb-1" />
-                <p className="text-[13px] text-accent font-medium">
-                  Fico muito feliz com sua satisfação! Que tal indicar nossa clínica para um amigo?
-                </p>
-              </div>
-            )}
-          </div>
+          <Panel as="section" className="space-y-2 !p-7 text-center">
+            <h1 className="text-[22px] font-semibold text-px-ink">Obrigado pela avaliação</h1>
+            <p role="status" className="text-[14px] leading-relaxed text-px-muted">Sua resposta foi registrada.</p>
+          </Panel>
         )}
 
         {(step === "error" || step === "already") && (
-          <div className="bg-surface border border-border rounded-2xl p-8 text-center space-y-3">
-            <h1 className="text-[20px] font-bold text-text-primary">
-              {step === "already" ? "Pesquisa já respondida" : "Ops, algo deu errado"}
-            </h1>
-            <p className="text-[13px] text-text-secondary">
-              {step === "already"
-                ? "Esta pesquisa já foi respondida anteriormente."
-                : "Não foi possível carregar a pesquisa. O link pode ter expirado."}
+          <Panel as="section" className="space-y-2 !p-7 text-center">
+            <h1 className="text-[20px] font-semibold text-px-ink">{step === "already" ? "Pesquisa já respondida" : "Não foi possível abrir a pesquisa"}</h1>
+            <p className="text-[14px] leading-relaxed text-px-muted">
+              {step === "already" ? "Esta pesquisa já foi respondida. Obrigado." : "O link pode ter expirado ou estar incorreto. Tente abrir de novo pelo link recebido."}
             </p>
-          </div>
+          </Panel>
         )}
-
-        <p className="text-center text-[11px] text-text-muted mt-6">
-          Desenvolvido com PRAXIS
-        </p>
-      </div>
+      </main>
     </div>
   )
 }

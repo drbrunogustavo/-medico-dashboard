@@ -2,110 +2,97 @@
 
 import { useState } from "react"
 import { useParams } from "next/navigation"
-import { cn } from "@/lib/utils"
-import { Loader2, CheckCircle, Heart, UserPlus, Gift } from "lucide-react"
-import { PraxisLogo } from "@/components/PraxisLogo"
-
-const inputCls = "w-full bg-surface border border-border rounded-xl px-4 py-3 text-[14px] text-text-primary placeholder-text-muted focus:outline-none focus:border-accent/50 transition-colors"
+import { Panel, PxButton, Field, PxInput } from "@/components/px"
 
 function fmtPhone(v: string) {
   const d = v.replace(/\D/g, "").slice(0, 11)
-  if (d.length <= 2) return d; if (d.length <= 7) return `(${d.slice(0,2)}) ${d.slice(2)}`
-  if (d.length <= 10) return `(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6)}`
-  return `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`
+  if (d.length <= 2) return d
+  if (d.length <= 7) return `(${d.slice(0, 2)}) ${d.slice(2)}`
+  if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`
+  return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`
 }
 
 export default function IndicarPage() {
   const { token } = useParams() as { token: string }
-  const [step,   setStep]   = useState<"form" | "saving" | "done" | "error">("form")
-  const [nome,   setNome]   = useState("")
-  const [tel,    setTel]    = useState("")
-  const [error,  setError]  = useState("")
+  const [step, setStep] = useState<"form" | "done" | "invalid">("form")
+  const [nome, setNome] = useState("")
+  const [tel, setTel] = useState("")
+  const [saving, setSaving] = useState(false)
+  const [erro, setErro] = useState("")
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
-    if (!nome.trim() || !tel.trim()) return
-    setStep("saving")
+    if (saving) return
+    if (nome.trim().length < 2) { setErro("Informe seu nome completo."); return }
+    if (tel.replace(/\D/g, "").length < 10) { setErro("Informe um WhatsApp com DDD."); return }
+    setErro(""); setSaving(true)
     try {
-      // We need a public endpoint to register the referral
-      // For now, we'll use the indicacoes public route
       const r = await fetch("/api/indicacoes/indicar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token_indicacao: token, indicado_nome: nome.trim(), indicado_telefone: tel }),
       })
       if (r.ok) setStep("done")
-      else { const d = await r.json(); setError(d.error ?? "Erro ao registrar indicação"); setStep("error") }
-    } catch { setError("Erro de conexão"); setStep("error") }
+      else if (r.status === 404) setStep("invalid")
+      else setErro("Não foi possível enviar seus dados agora. Tente de novo em instantes.")
+    } catch {
+      setErro("Não foi possível enviar seus dados. Confira a conexão e tente de novo.")
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
-      <div className="w-full max-w-md">
-        <div className="flex justify-center mb-8">
-          <PraxisLogo />
-        </div>
+    <div className="px relative flex min-h-screen flex-col items-center justify-center gap-4 px-4 py-10">
+      <div className="px-stage" aria-hidden="true" />
+      <main className="relative w-full max-w-[440px] space-y-4">
+        <p className="text-center text-[22px] font-semibold tracking-[0.2em] text-px-ink">PRAXIS</p>
 
-        {step === "form" || step === "saving" ? (
-          <div className="bg-surface border border-border rounded-2xl overflow-hidden">
-            {/* Program info */}
-            <div className="p-6 bg-accent-dim border-b border-accent-border/30">
-              <div className="flex items-center gap-2 mb-2">
-                <Heart className="w-5 h-5 text-accent" />
-                <span className="text-[11px] font-mono text-accent uppercase tracking-widest">Programa Member Get Member</span>
-              </div>
-              <h1 className="text-[20px] font-bold text-text-primary mb-2">Indique um amigo</h1>
-              <p className="text-[13px] text-text-secondary leading-relaxed">
-                Você foi indicado por um paciente. Preencha seus dados e nossa equipe entrará em contato para agendar sua consulta.
+        {step === "form" && (
+          <Panel as="section" className="space-y-5 !p-7">
+            <div className="space-y-2">
+              <p className="text-[13px] text-px-muted">Programa Member Get Member</p>
+              <h1 className="text-[22px] font-semibold text-px-ink">Você foi indicado por um paciente</h1>
+              <p className="text-[14px] leading-relaxed text-px-muted">
+                Preencha seus dados e a equipe entra em contato pelo WhatsApp para agendar sua consulta.
               </p>
             </div>
 
-            {/* Benefit callout */}
-            <div className="px-6 py-4 bg-amber-500/5 border-b border-amber-500/15">
-              <p className="text-[12px] text-amber-300 leading-relaxed">
-                <Gift className="inline-block align-[-0.15em] w-3.5 h-3.5 mr-1" /> Quem indicou você receberá a próxima consulta como cortesia após você realizar a sua!
-              </p>
-            </div>
-
-            <form onSubmit={submit} className="p-6 space-y-4">
-              <div>
-                <label className="block text-[11px] font-mono text-text-muted mb-1.5 uppercase tracking-wider">Seu nome completo</label>
-                <input value={nome} onChange={e => setNome(e.target.value)} required placeholder="Digite seu nome" className={inputCls} />
-              </div>
-              <div>
-                <label className="block text-[11px] font-mono text-text-muted mb-1.5 uppercase tracking-wider">Seu WhatsApp</label>
-                <input value={tel} onChange={e => setTel(fmtPhone(e.target.value))} required placeholder="(11) 99999-9999" className={inputCls} />
-              </div>
-              <button
-                type="submit"
-                disabled={step === "saving" || !nome.trim() || !tel.trim()}
-                className="w-full py-3.5 rounded-xl bg-accent text-background text-[14px] font-bold disabled:opacity-50 flex items-center justify-center gap-2 hover:bg-accent/90 transition-all"
-              >
-                {step === "saving" ? <><Loader2 className="w-4 h-4 animate-spin" /> Enviando...</> : <><UserPlus className="w-4 h-4" /> Quero ser paciente</>}
-              </button>
-            </form>
-          </div>
-        ) : step === "done" ? (
-          <div className="bg-surface border border-border rounded-2xl p-8 text-center space-y-4">
-            <div className="flex justify-center">
-              <div className="w-16 h-16 rounded-full bg-accent-dim border border-accent-border flex items-center justify-center">
-                <CheckCircle className="w-8 h-8 text-accent" />
-              </div>
-            </div>
-            <h1 className="text-[20px] font-bold text-text-primary">Obrigado pelo interesse!</h1>
-            <p className="text-[13px] text-text-secondary">
-              Recebemos seus dados. Nossa equipe entrará em contato via WhatsApp em breve para agendar sua consulta.
+            <p className="rounded-px-card bg-px-accent-soft px-3 py-2.5 text-[13.5px] leading-relaxed text-px-accent">
+              Quem indicou você recebe a próxima consulta como cortesia depois que você realizar a sua.
             </p>
-          </div>
-        ) : (
-          <div className="bg-surface border border-red-500/20 rounded-2xl p-8 text-center space-y-3">
-            <h1 className="text-[18px] font-bold text-text-primary">Ops, algo deu errado</h1>
-            <p className="text-[13px] text-text-secondary">{error || "Link inválido ou expirado."}</p>
-          </div>
+
+            <form onSubmit={submit} className="space-y-4" noValidate>
+              <Field label="Seu nome completo" htmlFor="ind-nome">
+                <PxInput id="ind-nome" autoComplete="name" value={nome} onChange={e => setNome(e.target.value)} placeholder="Digite seu nome" />
+              </Field>
+              <Field label="Seu WhatsApp" htmlFor="ind-tel">
+                <PxInput id="ind-tel" type="tel" inputMode="tel" autoComplete="tel" value={tel} onChange={e => setTel(fmtPhone(e.target.value))} placeholder="(11) 99999-9999" />
+              </Field>
+              {erro && <p role="alert" className="rounded-px-card bg-px-danger-soft px-3 py-2 text-[13px] text-px-danger">{erro}</p>}
+              <PxButton type="submit" fullWidth loading={saving}>{saving ? "Enviando" : "Quero ser paciente"}</PxButton>
+            </form>
+          </Panel>
         )}
 
-        <p className="text-center text-[11px] text-text-muted mt-6">PRAXIS</p>
-      </div>
+        {step === "done" && (
+          <Panel as="section" className="space-y-2 !p-7 text-center">
+            <h1 className="text-[22px] font-semibold text-px-ink">Recebemos seus dados</h1>
+            <p role="status" className="text-[14px] leading-relaxed text-px-muted">
+              A equipe vai chamar você pelo WhatsApp para agendar a consulta.
+            </p>
+          </Panel>
+        )}
+
+        {step === "invalid" && (
+          <Panel as="section" className="space-y-2 !p-7 text-center">
+            <h1 className="text-[20px] font-semibold text-px-ink">Link de indicação inválido</h1>
+            <p role="alert" className="text-[14px] leading-relaxed text-px-muted">
+              Este link não foi encontrado ou expirou. Peça um novo link a quem indicou você.
+            </p>
+          </Panel>
+        )}
+      </main>
     </div>
   )
 }

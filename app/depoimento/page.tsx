@@ -1,11 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
 import { useAppContext } from "@/components/AppProvider"
-import Link from "next/link"
-import { ArrowLeft, Check, Loader2, Star } from "lucide-react"
-import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
+import { Panel, PxButton, Field, PxInput, PxSelect, PageHeader } from "@/components/px"
 
 const ESPECIALIDADES = [
   "Cardiologia", "Cirurgia Geral", "Cirurgia Plástica", "Clínica Geral",
@@ -17,121 +14,95 @@ const ESPECIALIDADES = [
 ]
 
 const ESTADOS_BR = [
-  "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA",
-  "MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN",
-  "RS","RO","RR","SC","SP","SE","TO",
+  "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA",
+  "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN",
+  "RS", "RO", "RR", "SC", "SP", "SE", "TO",
 ]
 
-interface Perfil {
-  nome?: string
-  especialidade?: string
-  cidade?: string
-  estado?: string
-  instagram?: string
-  crm?: string
-}
+const MIN = 30
+const MAX = 1200
 
 export default function DepoimentoPage() {
-  const router = useRouter()
   const appCtx = useAppContext()
 
-  const [saving,    setSaving]    = useState(false)
-  const [enviado,   setEnviado]   = useState(false)
-  const [erro,      setErro]      = useState("")
-  const [jaEnviou,  setJaEnviou]  = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [enviado, setEnviado] = useState(false)
+  const [erro, setErro] = useState("")
+  const [jaEnviou, setJaEnviou] = useState(false)
 
   const [form, setForm] = useState({
-    nome:               "",
-    crm:                "",
-    especialidade:      "",
-    cidade:             "",
-    estado:             "SP",
-    depoimento:         "",
-    resultado_destaque: "",
-    instagram:          "",
-    exibir_landing:     false,
+    nome: "", crm: "", especialidade: "", cidade: "", estado: "SP",
+    depoimento: "", resultado_destaque: "", instagram: "", exibir_landing: false,
   })
 
-  // Pre-fill form from context when perfil loads
+  // Preenche com os dados do perfil quando ele carrega
   useEffect(() => {
     const p = appCtx?.perfil
     if (!p) return
     setForm(f => ({
       ...f,
-      nome:          p.nome          ?? f.nome,
+      nome: p.nome ?? f.nome,
       especialidade: p.especialidade ?? f.especialidade,
-      cidade:        p.cidade        ?? f.cidade,
-      estado:        p.estado        ?? f.estado,
-      instagram:     p.instagram     ?? f.instagram,
-      crm:           p.crm           ?? f.crm,
+      cidade: p.cidade ?? f.cidade,
+      estado: p.estado ?? f.estado,
+      instagram: p.instagram ?? f.instagram,
+      crm: p.crm ?? f.crm,
     }))
   }, [appCtx?.perfil])
 
   useEffect(() => {
     fetch("/api/depoimentos-praxis")
-      .then(r => r.json())
-      .then((list: unknown[]) => { if (list.length > 0) setJaEnviou(true) })
-      .catch(e => { console.error("[depoimento] erro ao verificar depoimento anterior:", e); return null })
+      .then(r => (r.ok ? r.json() : []))
+      .then((list: unknown) => { if (Array.isArray(list) && list.length > 0) setJaEnviou(true) })
+      .catch(() => {})
   }, [])
 
   const set = (k: keyof typeof form) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
       setForm(f => ({ ...f, [k]: e.target.value }))
 
-  const submit = async () => {
+  const tamanho = form.depoimento.trim().length
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (saving) return
     if (!form.nome.trim() || !form.especialidade || !form.depoimento.trim()) {
       setErro("Preencha nome, especialidade e depoimento.")
       return
     }
-    if (form.depoimento.trim().length < 30) {
-      setErro("Depoimento muito curto — escreva pelo menos 30 caracteres.")
+    if (tamanho < MIN) {
+      setErro(`O depoimento precisa ter pelo menos ${MIN} caracteres. Faltam ${MIN - tamanho}.`)
       return
     }
-    setSaving(true)
-    setErro("")
+    setSaving(true); setErro("")
     try {
       const res = await fetch("/api/depoimentos-praxis", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       })
-      if (!res.ok) { const d = await res.json() as { error?: string }; throw new Error(d.error ?? "Erro") }
+      if (!res.ok) throw new Error("falha")
       setEnviado(true)
-    } catch (e) {
-      setErro(e instanceof Error ? e.message : "Erro ao enviar")
+    } catch {
+      setErro("Não foi possível enviar o depoimento agora. O texto foi mantido, tente de novo.")
     } finally {
       setSaving(false)
     }
   }
 
-  const inputCls = "w-full px-3 py-2.5 rounded-lg text-[13px] outline-none transition-all"
-  const inputStyle = {
-    background: "var(--card)",
-    border: "1px solid var(--border)",
-    color: "var(--text-primary)",
-  }
-
   if (enviado) {
     return (
       <div className="animate-fade-in">
-        <div className="max-w-xl mx-auto px-4 py-16 text-center">
-          <div className="w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-6"
-            style={{ background: "var(--accent-dim)", border: "1px solid var(--accent-border)" }}>
-            <Check className="w-8 h-8 text-accent" />
-          </div>
-          <h1 className="text-[24px] font-semibold text-text-primary mb-3"
-            style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}>
-            Depoimento enviado!
-          </h1>
-          <p className="text-[14px] text-text-secondary leading-relaxed mb-8">
-            Seu depoimento foi recebido e será analisado pela equipe PRAXIS.
-            Após aprovação, poderá aparecer na página inicial da plataforma.
-          </p>
-          <button onClick={() => router.push("/dashboard")}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-[13px] font-bold transition-all hover:opacity-90"
-            style={{ background: "var(--accent)", color: "#080808" }}>
-            Voltar ao dashboard
-          </button>
+        <PageHeader title="Depoimento" caption="Compartilhe sua experiência" />
+        <div className="px-4 pb-10 pt-4 md:px-10">
+          <Panel as="section" className="mx-auto max-w-xl space-y-3 !p-7 text-center">
+            <h2 className="text-[20px] font-semibold text-px-ink">Depoimento enviado</h2>
+            <p role="status" className="text-[14px] leading-relaxed text-px-muted">
+              A equipe do PRAXIS vai analisar o texto antes de qualquer publicação.
+              {form.exibir_landing ? " Como você autorizou, ele poderá aparecer na página inicial depois de aprovado." : " Você não autorizou a exibição pública, então ele não será publicado."}
+            </p>
+            <div className="pt-2"><PxButton href="/dashboard">Voltar ao início</PxButton></div>
+          </Panel>
         </div>
       </div>
     )
@@ -139,141 +110,81 @@ export default function DepoimentoPage() {
 
   return (
     <div className="animate-fade-in">
-      <MobileOnlyHeader title="Deixar depoimento" />
-      <div className="px-4 py-6 border-b" style={{ borderColor: "var(--border)" }}>
-        <div className="max-w-xl mx-auto flex items-center gap-3">
-          <Link href="/dashboard" className="text-text-muted hover:text-text-primary transition-colors">
-            <ArrowLeft className="w-4 h-4" />
-          </Link>
-          <div>
-            <h1 className="text-[18px] font-semibold text-text-primary">Deixar depoimento</h1>
-            <p className="text-[12px] text-text-secondary">Compartilhe sua experiência com a plataforma.</p>
-          </div>
-        </div>
-      </div>
+      <PageHeader title="Depoimento" caption="Compartilhe sua experiência com a plataforma" back />
 
-      <div className="max-w-xl mx-auto px-4 py-8 space-y-6">
-
+      <div className="mx-auto max-w-xl space-y-4 px-4 pb-10 pt-4 md:px-10">
         {jaEnviou && (
-          <div className="flex items-start gap-3 rounded-xl px-4 py-3"
-            style={{ background: "var(--accent-dim)", border: "1px solid var(--accent-border)" }}>
-            <Star className="w-4 h-4 text-accent flex-shrink-0 mt-0.5" />
-            <p className="text-[12px] text-accent">
-              Você já enviou um depoimento. Você pode enviar outro para atualizar sua experiência.
-            </p>
-          </div>
+          <p role="note" className="rounded-px-card bg-px-accent-soft px-3 py-2.5 text-[13.5px] text-px-accent">
+            Você já enviou um depoimento antes. Pode enviar outro para atualizar sua experiência.
+          </p>
         )}
 
-        <div className="rounded-2xl p-6 space-y-5"
-          style={{ background: "var(--card)", border: "1px solid var(--border)" }}>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5 col-span-2">
-              <label className="text-[11px] font-mono tracking-widest uppercase text-text-muted">
-                Nome completo *
-              </label>
-              <input value={form.nome} onChange={set("nome")} placeholder="Dr. João Silva" className={inputCls} style={inputStyle} />
+        <form onSubmit={submit} noValidate>
+          <Panel as="section" className="space-y-4 !p-6">
+            <Field label="Nome completo" htmlFor="dp-nome">
+              <PxInput id="dp-nome" value={form.nome} onChange={set("nome")} placeholder="Dr. João Silva" />
+            </Field>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field label="CRM (opcional)" htmlFor="dp-crm">
+                <PxInput id="dp-crm" value={form.crm} onChange={set("crm")} placeholder="CRM/SP 123456" />
+              </Field>
+              <Field label="Instagram (opcional)" htmlFor="dp-ig">
+                <PxInput id="dp-ig" value={form.instagram} onChange={set("instagram")} placeholder="@drjoao" />
+              </Field>
             </div>
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-mono tracking-widest uppercase text-text-muted">CRM (opcional)</label>
-              <input value={form.crm} onChange={set("crm")} placeholder="CRM/SP 123456" className={inputCls} style={inputStyle} />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-mono tracking-widest uppercase text-text-muted">Instagram (opcional)</label>
-              <input value={form.instagram} onChange={set("instagram")} placeholder="@drjoao" className={inputCls} style={inputStyle} />
-            </div>
-            <div className="space-y-1.5 col-span-2">
-              <label className="text-[11px] font-mono tracking-widest uppercase text-text-muted">
-                Especialidade *
-              </label>
-              <select value={form.especialidade} onChange={set("especialidade")} className={inputCls} style={inputStyle}>
+            <Field label="Especialidade" htmlFor="dp-esp">
+              <PxSelect id="dp-esp" value={form.especialidade} onChange={set("especialidade")}>
                 <option value="">Selecione</option>
-                {ESPECIALIDADES.map(e => <option key={e} value={e}>{e}</option>)}
-              </select>
+                {ESPECIALIDADES.map(x => <option key={x} value={x}>{x}</option>)}
+              </PxSelect>
+            </Field>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field label="Cidade" htmlFor="dp-cid">
+                <PxInput id="dp-cid" value={form.cidade} onChange={set("cidade")} placeholder="São Paulo" />
+              </Field>
+              <Field label="Estado" htmlFor="dp-uf">
+                <PxSelect id="dp-uf" value={form.estado} onChange={set("estado")}>
+                  {ESTADOS_BR.map(uf => <option key={uf} value={uf}>{uf}</option>)}
+                </PxSelect>
+              </Field>
             </div>
+
             <div className="space-y-1.5">
-              <label className="text-[11px] font-mono tracking-widest uppercase text-text-muted">Cidade</label>
-              <input value={form.cidade} onChange={set("cidade")} placeholder="São Paulo" className={inputCls} style={inputStyle} />
+              <label htmlFor="dp-texto" className="block text-[13px] font-medium text-px-ink">Depoimento</label>
+              <textarea
+                id="dp-texto"
+                value={form.depoimento}
+                onChange={set("depoimento")}
+                maxLength={MAX}
+                rows={5}
+                placeholder="O que mudou no seu dia a dia, qual módulo mais usou, o que percebeu na prática."
+                className="w-full resize-y rounded-px-ctl border border-px-line bg-white px-3.5 py-2.5 text-[13.5px] text-px-ink placeholder:text-px-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-px-ink/40"
+              />
+              <p className="text-right text-[12.5px] tabular-nums text-px-muted">{tamanho} de {MAX} caracteres (mínimo {MIN})</p>
             </div>
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-mono tracking-widest uppercase text-text-muted">Estado</label>
-              <select value={form.estado} onChange={set("estado")} className={inputCls} style={inputStyle}>
-                {ESTADOS_BR.map(uf => <option key={uf} value={uf}>{uf}</option>)}
-              </select>
-            </div>
-          </div>
 
-          <div className="space-y-1.5">
-            <label className="text-[11px] font-mono tracking-widest uppercase text-text-muted">
-              Depoimento * <span className="normal-case font-sans tracking-normal">(mín. 30 caracteres)</span>
-            </label>
-            <textarea
-              value={form.depoimento}
-              onChange={set("depoimento")}
-              rows={5}
-              placeholder="Compartilhe sua experiência com o PRAXIS — o que mudou no seu dia a dia, qual módulo mais usou, que resultado percebeu..."
-              className={inputCls}
-              style={{ ...inputStyle, resize: "vertical" }}
-            />
-            <p className="text-[11px] text-text-muted text-right">{form.depoimento.length} caracteres</p>
-          </div>
+            <Field label="Resultado em destaque (opcional)" htmlFor="dp-res" hint="Informe só o que você mediu de fato.">
+              <PxInput id="dp-res" value={form.resultado_destaque} onChange={set("resultado_destaque")} placeholder="Ex: tempo economizado por dia" />
+            </Field>
 
-          <div className="space-y-1.5">
-            <label className="text-[11px] font-mono tracking-widest uppercase text-text-muted">
-              Resultado em destaque (opcional)
-            </label>
-            <input
-              value={form.resultado_destaque}
-              onChange={set("resultado_destaque")}
-              placeholder="Ex: +8 consultas/mês, economizei 2h/dia, saí dos convênios em 3 meses"
-              className={inputCls}
-              style={inputStyle}
-            />
-          </div>
-
-          <label className="flex items-start gap-3 cursor-pointer p-4 rounded-xl transition-colors"
-            style={{ background: form.exibir_landing ? "var(--accent-dim)" : "var(--surface)", border: `1px solid ${form.exibir_landing ? "var(--accent-border)" : "var(--border)"}` }}>
-            <input
-              type="checkbox"
-              checked={form.exibir_landing}
-              onChange={e => setForm(f => ({ ...f, exibir_landing: e.target.checked }))}
-              className="mt-0.5 w-4 h-4 cursor-pointer flex-shrink-0"
-              style={{ accentColor: "var(--accent)" }}
-            />
-            <div>
-              <span className="text-[13px] font-semibold text-text-primary block">
-                Autorizo exibir na landing page do PRAXIS
+            <label className={`flex cursor-pointer items-start gap-3 rounded-px-card border p-4 ${form.exibir_landing ? "border-px-ink bg-white" : "border-px-line bg-white/50"}`}>
+              <input type="checkbox" checked={form.exibir_landing} onChange={e => setForm(f => ({ ...f, exibir_landing: e.target.checked }))} className="mt-0.5 h-4 w-4 flex-shrink-0 accent-px-ink" />
+              <span>
+                <span className="block text-[13.5px] font-semibold text-px-ink">Autorizo exibir na página inicial do PRAXIS</span>
+                <span className="block text-[13px] text-px-muted">Nome, especialidade e depoimento poderão aparecer publicamente depois de aprovados pela equipe. Sem a autorização, nada é publicado.</span>
               </span>
-              <span className="text-[11px] text-text-muted">
-                Seu nome, especialidade e depoimento poderão aparecer publicamente no site após aprovação.
-              </span>
+            </label>
+
+            {erro && <p role="alert" className="rounded-px-card bg-px-danger-soft px-3 py-2 text-[13px] text-px-danger">{erro}</p>}
+
+            <div className="flex items-center justify-between gap-3 pt-1">
+              <PxButton href="/dashboard" variant="quiet">Cancelar</PxButton>
+              <PxButton type="submit" loading={saving}>{saving ? "Enviando" : "Enviar depoimento"}</PxButton>
             </div>
-          </label>
-        </div>
+          </Panel>
+        </form>
 
-        {erro && (
-          <div className="flex items-center gap-2 rounded-xl px-4 py-3"
-            style={{ background: "rgba(220,38,38,0.08)", border: "1px solid rgba(220,38,38,0.2)" }}>
-            <p className="text-[12px] text-red-400">{erro}</p>
-          </div>
-        )}
-
-        <div className="flex items-center justify-between">
-          <Link href="/dashboard" className="text-[12px] text-text-muted underline underline-offset-4">
-            Cancelar
-          </Link>
-          <button
-            onClick={submit}
-            disabled={saving}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-[13px] font-bold transition-all hover:opacity-90 disabled:opacity-50"
-            style={{ background: "var(--accent)", color: "#080808" }}>
-            {saving ? <><Loader2 className="w-4 h-4 animate-spin" />Enviando...</> : "Enviar depoimento"}
-          </button>
-        </div>
-
-        <p className="text-center text-[11px] text-text-muted">
-          Depoimentos passam por moderação antes de serem publicados. Sem aprovação automática.
-        </p>
+        <p className="text-center text-[12.5px] text-px-muted">Todo depoimento passa por moderação antes de ser publicado.</p>
       </div>
     </div>
   )

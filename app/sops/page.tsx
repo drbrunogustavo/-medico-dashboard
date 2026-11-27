@@ -1,11 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { ClipboardList, Sparkles, Copy, Check, X, Clock, Users, Wrench, AlertTriangle, BarChart2, Loader2, FolderOpen } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { MobileOnlyHeader } from "@/components/MobileOnlyHeader"
+import { Sparkles, Copy, Check } from "lucide-react"
+import { Panel, PxButton, Tag, Segmented, PxCheckbox, PxModal, PageHeader } from "@/components/px"
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+// ─── Tipos ───────────────────────────────────────────────────────────────────
 
 interface SopPasso {
   numero:      number
@@ -37,7 +36,7 @@ interface SopBiblioteca {
   passos:     string[]
 }
 
-// ─── Static Library ──────────────────────────────────────────────────────────
+// ─── Biblioteca estática ──────────────────────────────────────────────────────
 
 const BIBLIOTECA_SOPS: SopBiblioteca[] = [
   {
@@ -47,7 +46,7 @@ const BIBLIOTECA_SOPS: SopBiblioteca[] = [
       "Chegar 30 min antes do primeiro paciente",
       "Ligar equipamentos e sistemas (computador, prontuário eletrônico, impressora)",
       "Verificar agenda do dia e confirmar os próximos 3 atendimentos",
-      "Organizar sala de espera — verificar limpeza, temperatura e materiais informativos",
+      "Organizar sala de espera: verificar limpeza, temperatura e materiais informativos",
       "Checar estoque de materiais básicos (luvas, álcool, fichas)",
       "Verificar caixa de entrada (e-mails, WhatsApp, mensagens urgentes)",
       "Briefar o médico sobre a agenda do dia antes do primeiro paciente",
@@ -72,7 +71,7 @@ const BIBLIOTECA_SOPS: SopBiblioteca[] = [
     desc: "Protocolo estruturado para maximizar a qualidade e eficiência das consultas iniciais.",
     passos: [
       "Receber o paciente com apresentação pessoal e criar rapport nos primeiros 2 min",
-      "Colher anamnese completa usando escuta ativa — deixar o paciente falar sem interromper",
+      "Colher anamnese completa usando escuta ativa: deixar o paciente falar sem interromper",
       "Revisar histórico médico, medicamentos em uso, alergias e antecedentes familiares",
       "Realizar exame físico direcionado à queixa principal",
       "Estabelecer hipótese diagnóstica e comunicar ao paciente de forma clara e acessível",
@@ -159,16 +158,13 @@ const EQUIPE_OPTS     = ["Médico(a)", "Recepcionista", "Enfermeiro(a)", "Secret
 const DETALHE_OPTS    = ["Resumido", "Padrão", "Detalhado"]
 const FERRAMENTA_OPTS = ["Prontuário eletrônico", "WhatsApp", "Google Agenda", "Sistema de agendamento", "Excel/Planilha", "E-mail", "PRAXIS"]
 
-const CATEGORIA_CORES: Record<string, string> = {
-  Recepção:       "text-amber-400",
-  Clínico:        "text-accent",
-  Financeiro:     "text-purple-400",
-  Marketing:      "text-pink-400",
-  "Pós-atendimento": "text-blue-400",
-  Qualidade:      "text-emerald-400",
+const areaCls = "w-full resize-none rounded-px-ctl border border-px-line bg-white/70 px-3.5 py-2.5 text-[14px] text-px-ink placeholder:text-px-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-px-ink/40"
+
+function Rotulo({ children }: { children: React.ReactNode }) {
+  return <h3 className="text-[13px] font-semibold text-px-ink">{children}</h3>
 }
 
-// ─── SOP Modal ───────────────────────────────────────────────────────────────
+// ─── Modal de SOP da biblioteca ──────────────────────────────────────────────
 
 function SopModal({ sop, onClose }: { sop: SopBiblioteca; onClose: () => void }) {
   const [copied, setCopied] = useState(false)
@@ -181,51 +177,30 @@ function SopModal({ sop, onClose }: { sop: SopBiblioteca; onClose: () => void })
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-lg bg-[--card] border border-[--border] rounded-2xl shadow-2xl overflow-hidden">
-        <div className="flex items-start justify-between p-5 border-b border-[--border]">
-          <div>
-            <span className={cn("text-[10px] font-mono uppercase tracking-widest", CATEGORIA_CORES[sop.categoria] ?? "text-text-muted")}>
-              {sop.categoria}
-            </span>
-            <h3 className="text-base font-semibold text-text-primary mt-0.5">{sop.titulo}</h3>
-            <p className="text-xs text-text-muted mt-1">{sop.desc}</p>
-          </div>
-          <button onClick={onClose} className="text-text-muted hover:text-text-secondary ml-4 flex-shrink-0">
-            <X className="w-5 h-5" />
-          </button>
+    <PxModal open onClose={onClose} title={sop.titulo} className="max-w-lg">
+      <div className="space-y-4">
+        <div>
+          <Tag tone="neutral">{sop.categoria}</Tag>
+          <p className="mt-2 text-[13px] text-px-muted">{sop.desc}</p>
         </div>
-        <div className="p-5 max-h-[60vh] overflow-y-auto">
-          <ol className="space-y-3">
-            {sop.passos.map((p, i) => (
-              <li key={i} className="flex gap-3">
-                <span className="w-6 h-6 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center text-[10px] font-mono font-bold text-accent flex-shrink-0 mt-0.5">
-                  {i + 1}
-                </span>
-                <p className="text-sm text-text-secondary leading-relaxed">{p}</p>
-              </li>
-            ))}
-          </ol>
-        </div>
-        <div className="flex items-center justify-end gap-2 p-4 border-t border-[--border]">
-          <button
-            onClick={copy}
-            className="flex items-center gap-1.5 text-xs font-mono px-3 py-2 rounded-lg border border-[--border] text-text-muted hover:text-accent hover:border-accent/30 transition-colors"
-          >
-            {copied ? <Check className="w-3.5 h-3.5 text-accent" /> : <Copy className="w-3.5 h-3.5" />}
-            {copied ? "Copiado!" : "Copiar SOP"}
-          </button>
-          <button onClick={onClose} className="text-xs font-mono px-3 py-2 rounded-lg bg-accent/10 border border-accent/20 text-accent hover:bg-accent/15 transition-colors">
-            Fechar
-          </button>
+        <ol className="max-h-[50vh] space-y-3 overflow-y-auto">
+          {sop.passos.map((p, i) => (
+            <li key={i} className="flex gap-3">
+              <span className="w-5 flex-shrink-0 text-[13px] font-semibold tabular-nums text-px-accent">{i + 1}</span>
+              <span className="text-[14px] leading-relaxed text-px-ink">{p}</span>
+            </li>
+          ))}
+        </ol>
+        <div className="flex justify-end gap-2 border-t border-px-line pt-3">
+          <PxButton variant="secondary" leftIcon={copied ? Check : Copy} onClick={copy}>{copied ? "Copiado" : "Copiar SOP"}</PxButton>
+          <PxButton onClick={onClose}>Fechar</PxButton>
         </div>
       </div>
-    </div>
+    </PxModal>
   )
 }
 
-// ─── Generated SOP View ──────────────────────────────────────────────────────
+// ─── SOP gerado ──────────────────────────────────────────────────────────────
 
 function SopGeradoView({ sop, onNovo }: { sop: SopResult; onNovo: () => void }) {
   const [copied, setCopied] = useState(false)
@@ -238,10 +213,10 @@ function SopGeradoView({ sop, onNovo }: { sop: SopResult; onNovo: () => void }) 
     `Tempo estimado: ${sop.tempo_estimado}`,
     "",
     "PASSOS:",
-    ...sop.passos.map(p => `${p.numero}. ${p.titulo}\n   ${p.descricao}${p.observacao ? `\n   ⚠ ${p.observacao}` : ""}`),
+    ...sop.passos.map(p => `${p.numero}. ${p.titulo}\n   ${p.descricao}${p.observacao ? `\n   Atenção: ${p.observacao}` : ""}`),
     "",
     "PONTOS DE ATENÇÃO:",
-    ...sop.pontos_atencao.map(p => `• ${p}`),
+    ...sop.pontos_atencao.map(p => `- ${p}`),
   ].join("\n")
 
   function copy() {
@@ -250,142 +225,100 @@ function SopGeradoView({ sop, onNovo }: { sop: SopResult; onNovo: () => void }) 
     setTimeout(() => setCopied(false), 2000)
   }
 
+  const resumo = [
+    { label: "Responsável",    value: sop.responsavel_principal },
+    { label: "Frequência",     value: sop.frequencia },
+    { label: "Tempo estimado", value: sop.tempo_estimado },
+    { label: "Revisão",        value: sop.revisao },
+  ]
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="rounded-xl border border-accent/20 bg-accent/5 p-5">
-        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+    <div className="space-y-4">
+      <Panel tone="dark">
+        <div className="flex flex-col justify-between gap-3 text-white sm:flex-row sm:items-start">
           <div>
-            <h2 className="text-xl font-bold text-text-primary">{sop.titulo}</h2>
-            <p className="text-sm text-text-secondary mt-1">{sop.objetivo}</p>
+            <h2 className="text-[20px] font-semibold">{sop.titulo}</h2>
+            <p className="mt-1 text-[14px] text-white/85">{sop.objetivo}</p>
           </div>
-          <button
-            onClick={onNovo}
-            className="text-xs font-mono border border-[--border] px-3 py-1.5 rounded-lg text-text-muted hover:text-text-secondary hover:border-accent/30 transition-colors sm:flex-shrink-0 self-start"
-          >
-            Novo SOP
-          </button>
+          <PxButton variant="inverse" onClick={onNovo}>Novo SOP</PxButton>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
-          {[
-            { icon: Users,  label: "Responsável",       value: sop.responsavel_principal },
-            { icon: Clock,  label: "Frequência",         value: sop.frequencia },
-            { icon: Clock,  label: "Tempo estimado",     value: sop.tempo_estimado },
-            { icon: BarChart2, label: "Revisão",         value: sop.revisao },
-          ].map(k => (
-            <div key={k.label} className="bg-[--surface] rounded-lg border border-[--border] p-3">
-              <p className="text-[10px] font-mono text-text-muted uppercase">{k.label}</p>
-              <p className="text-xs text-text-secondary mt-1">{k.value}</p>
+        <dl className="mt-4 grid grid-cols-2 gap-4 text-white sm:grid-cols-4">
+          {resumo.map(k => (
+            <div key={k.label}>
+              <dt className="text-[12px] text-white/80">{k.label}</dt>
+              <dd className="mt-0.5 text-[13px]">{k.value}</dd>
             </div>
           ))}
-        </div>
-      </div>
+        </dl>
+      </Panel>
 
-      {/* Passos */}
-      <div className="space-y-3">
+      <section className="space-y-3" aria-labelledby="sop-passos">
         <div className="flex items-center justify-between">
-          <h3 className="text-xs font-mono text-text-muted uppercase tracking-widest">Passos do Procedimento</h3>
-          <button
-            onClick={copy}
-            className="flex items-center gap-1.5 text-[10px] font-mono px-2.5 py-1.5 rounded-lg border border-[--border] text-text-muted hover:text-accent hover:border-accent/30 transition-colors"
-          >
-            {copied ? <Check className="w-3 h-3 text-accent" /> : <Copy className="w-3 h-3" />}
-            {copied ? "Copiado!" : "Copiar tudo"}
-          </button>
+          <h2 id="sop-passos" className="text-[15px] font-semibold text-px-ink">Passos do procedimento</h2>
+          <PxButton size="sm" variant="secondary" leftIcon={copied ? Check : Copy} onClick={copy}>{copied ? "Copiado" : "Copiar tudo"}</PxButton>
         </div>
-        <div className="space-y-2">
+        <ol className="space-y-3">
           {sop.passos.map(p => (
-            <div key={p.numero} className="rounded-xl border border-[--border] bg-[--surface] p-4">
-              <div className="flex gap-3">
-                <div className="w-7 h-7 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center text-xs font-mono font-bold text-accent flex-shrink-0">
-                  {p.numero}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="text-sm font-semibold text-text-primary">{p.titulo}</p>
-                    <div className="flex gap-2 flex-shrink-0">
-                      {p.responsavel && (
-                        <span className="text-badge font-mono px-2 py-0.5 rounded-full border border-[--border] text-text-muted">
-                          {p.responsavel}
-                        </span>
-                      )}
-                      {p.tempo && (
-                        <span className="text-badge font-mono px-2 py-0.5 rounded-full border border-[--border] text-text-muted">
-                          {p.tempo}
-                        </span>
-                      )}
+            <li key={p.numero}>
+              <Panel tone="light" className="flex gap-3">
+                <span className="w-6 flex-shrink-0 text-[15px] font-semibold tabular-nums text-px-accent">{p.numero}</span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <p className="text-[14px] font-semibold text-px-ink">{p.titulo}</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {p.responsavel && <Tag tone="neutral">{p.responsavel}</Tag>}
+                      {p.tempo && <Tag tone="neutral">{p.tempo}</Tag>}
                     </div>
                   </div>
-                  <p className="text-sm text-text-secondary mt-1 leading-relaxed">{p.descricao}</p>
+                  <p className="mt-1 text-[14px] leading-relaxed text-px-ink">{p.descricao}</p>
                   {p.observacao && (
-                    <div className="flex items-start gap-1.5 mt-2 text-xs text-amber-400">
-                      <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
-                      {p.observacao}
-                    </div>
+                    <p className="mt-2 rounded-px-card bg-px-warn-soft px-3 py-2 text-[13px] text-px-warn">
+                      <span className="font-semibold">Atenção: </span>{p.observacao}
+                    </p>
                   )}
                 </div>
-              </div>
-            </div>
+              </Panel>
+            </li>
           ))}
-        </div>
-      </div>
+        </ol>
+      </section>
 
-      {/* Materiais */}
       {sop.materiais_necessarios.length > 0 && (
-        <div className="space-y-2">
-          <h3 className="text-xs font-mono text-text-muted uppercase tracking-widest">Materiais Necessários</h3>
-          <div className="flex flex-wrap gap-2">
-            {sop.materiais_necessarios.map((m, i) => (
-              <span key={i} className="text-xs px-3 py-1 rounded-full border border-[--border] text-text-secondary bg-[--surface]">{m}</span>
-            ))}
-          </div>
-        </div>
+        <section className="space-y-2" aria-labelledby="sop-mat">
+          <h2 id="sop-mat" className="text-[15px] font-semibold text-px-ink">Materiais necessários</h2>
+          <ul className="flex flex-wrap gap-2">
+            {sop.materiais_necessarios.map((m, i) => <li key={i}><Tag tone="neutral">{m}</Tag></li>)}
+          </ul>
+        </section>
       )}
 
-      {/* Pontos de Atenção */}
       {sop.pontos_atencao.length > 0 && (
-        <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 space-y-2">
-          <h3 className="text-xs font-mono text-amber-400 uppercase tracking-widest flex items-center gap-2">
-            <AlertTriangle className="w-3.5 h-3.5" /> Pontos de Atenção
-          </h3>
-          <ul className="space-y-1">
-            {sop.pontos_atencao.map((p, i) => (
-              <li key={i} className="text-sm text-text-secondary flex gap-2">
-                <span className="text-amber-400 flex-shrink-0">•</span>
-                {p}
-              </li>
-            ))}
+        <Panel tone="light" className="space-y-2">
+          <h2 className="text-[15px] font-semibold text-px-ink">Pontos de atenção</h2>
+          <ul className="list-disc space-y-1 pl-5">
+            {sop.pontos_atencao.map((p, i) => <li key={i} className="text-[14px] text-px-ink">{p}</li>)}
           </ul>
-        </div>
+        </Panel>
       )}
 
-      {/* Indicadores */}
       {sop.indicadores.length > 0 && (
-        <div className="space-y-2">
-          <h3 className="text-xs font-mono text-text-muted uppercase tracking-widest flex items-center gap-2">
-            <BarChart2 className="w-3.5 h-3.5" /> Indicadores de Qualidade
-          </h3>
-          <ul className="space-y-1">
-            {sop.indicadores.map((ind, i) => (
-              <li key={i} className="text-sm text-text-secondary flex gap-2">
-                <Check className="w-4 h-4 flex-shrink-0 text-emerald-400" />
-                {ind}
-              </li>
-            ))}
+        <Panel tone="light" className="space-y-2">
+          <h2 className="text-[15px] font-semibold text-px-ink">Indicadores de qualidade</h2>
+          <ul className="list-disc space-y-1 pl-5">
+            {sop.indicadores.map((ind, i) => <li key={i} className="text-[14px] text-px-ink">{ind}</li>)}
           </ul>
-        </div>
+        </Panel>
       )}
     </div>
   )
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// ─── Página ──────────────────────────────────────────────────────────────────
 
 export default function SopsPage() {
-  const [tab, setTab]               = useState<"biblioteca" | "gerar">("biblioteca")
-  const [sopModal, setSopModal]     = useState<SopBiblioteca | null>(null)
+  const [tab, setTab]           = useState<"biblioteca" | "gerar">("biblioteca")
+  const [sopModal, setSopModal] = useState<SopBiblioteca | null>(null)
 
-  // Generator state
   const [processo,      setProcesso]      = useState("")
   const [equipe,        setEquipe]        = useState<string[]>(["Médico(a)"])
   const [nivelDetalhe,  setNivelDetalhe]  = useState("Padrão")
@@ -394,12 +327,8 @@ export default function SopsPage() {
   const [result,        setResult]        = useState<SopResult | null>(null)
   const [error,         setError]         = useState("")
 
-  function toggleEquipe(e: string) {
-    setEquipe(prev => prev.includes(e) ? prev.filter(x => x !== e) : [...prev, e])
-  }
-  function toggleFerramenta(f: string) {
-    setFerramentas(prev => prev.includes(f) ? prev.filter(x => x !== f) : [...prev, f])
-  }
+  const toggle = (set: React.Dispatch<React.SetStateAction<string[]>>, v: string) =>
+    set(prev => prev.includes(v) ? prev.filter(x => x !== v) : [...prev, v])
 
   async function gerarSop() {
     if (!processo.trim()) return
@@ -427,181 +356,91 @@ export default function SopsPage() {
 
   return (
     <div className="animate-fade-in">
-      <MobileOnlyHeader title="Gerador de SOPs" />
+      <PageHeader title="SOPs" caption="Procedimentos operacionais padrão da clínica" />
       {sopModal && <SopModal sop={sopModal} onClose={() => setSopModal(null)} />}
 
-      <div className="p-4 md:p-8 pb-0">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-            <ClipboardList className="w-5 h-5 text-emerald-400" />
+      <div className="space-y-4 px-4 pb-10 md:px-10">
+        <Segmented
+          label="Seção"
+          value={tab}
+          onChange={setTab}
+          options={[{ value: "biblioteca", label: "Biblioteca" }, { value: "gerar", label: "Gerar com IA" }]}
+        />
+
+        {tab === "biblioteca" && (
+          <div className="space-y-6">
+            {categorias.map(cat => (
+              <section key={cat} aria-labelledby={`sop-cat-${cat}`} className="space-y-3">
+                <h2 id={`sop-cat-${cat}`} className="text-[15px] font-semibold text-px-ink">{cat}</h2>
+                <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {BIBLIOTECA_SOPS.filter(s => s.categoria === cat).map(sop => (
+                    <li key={sop.id}>
+                      <button type="button" onClick={() => setSopModal(sop)} className="block h-full w-full text-left">
+                        <Panel tone="light" className="h-full">
+                          <span className="flex items-start justify-between gap-2">
+                            <span className="text-[14px] font-semibold text-px-ink">{sop.titulo}</span>
+                            <Tag tone="neutral">{sop.passos.length} passos</Tag>
+                          </span>
+                          <span className="mt-1.5 block text-[13px] leading-relaxed text-px-muted">{sop.desc}</span>
+                        </Panel>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ))}
           </div>
-          <div>
-            <h1 className="text-2xl font-bold text-text-primary tracking-tight">Gerador de SOPs</h1>
-            <p className="text-sm text-text-muted font-mono">CONSULTÓRIO · PROCESSOS OPERACIONAIS</p>
-            <p className="text-[12px] text-text-secondary mt-1.5">Crie procedimentos operacionais padrão para padronizar o atendimento da sua clínica.</p>
-          </div>
-        </div>
+        )}
 
-        {/* Tabs */}
-        <div className="flex gap-1 bg-[--surface] border border-[--border] rounded-xl p-1 w-fit">
-          {(["biblioteca", "gerar"] as const).map(t => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={cn(
-                "px-4 py-2 rounded-lg text-xs font-mono uppercase tracking-wide transition-all inline-flex items-center gap-2",
-                tab === t
-                  ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-semibold"
-                  : "text-text-muted hover:text-text-secondary"
-              )}
-            >
-              {t === "biblioteca" ? <><FolderOpen className="w-3.5 h-3.5" /> Biblioteca</> : <><Sparkles className="w-3.5 h-3.5" /> Gerar SOP</>}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* ── Tab: Biblioteca ── */}
-      {tab === "biblioteca" && (
-        <div className="p-4 md:p-8 space-y-8">
-          {categorias.map(cat => (
-            <div key={cat} className="space-y-3">
-              <div className="flex items-center gap-2 pb-1">
-                <h3 className={cn("text-xs font-mono uppercase tracking-widest font-semibold", CATEGORIA_CORES[cat] ?? "text-text-muted")}>{cat}</h3>
-                <div className="flex-1 h-px bg-[--border]" />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {BIBLIOTECA_SOPS.filter(s => s.categoria === cat).map(sop => (
-                  <button
-                    key={sop.id}
-                    onClick={() => setSopModal(sop)}
-                    className="text-left rounded-xl border border-[--border] bg-[--surface] p-4 hover:border-[--border-hover] transition-all group"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="text-sm font-semibold text-text-primary group-hover:text-accent transition-colors">{sop.titulo}</p>
-                      <span className="text-[10px] font-mono text-text-muted border border-[--border] px-2 py-0.5 rounded-full flex-shrink-0">
-                        {sop.passos.length} passos
-                      </span>
-                    </div>
-                    <p className="text-xs text-text-muted mt-1.5 leading-relaxed">{sop.desc}</p>
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* ── Tab: Gerar SOP ── */}
-      {tab === "gerar" && (
-        <div className="p-4 md:p-8 space-y-6 max-w-2xl">
-          {result ? (
+        {tab === "gerar" && (
+          result ? (
             <SopGeradoView sop={result} onNovo={() => { setResult(null); setProcesso("") }} />
           ) : (
-            <>
-              {/* Processo */}
-              <div className="space-y-1">
-                <label className="text-[11px] font-mono text-text-muted uppercase tracking-wide">Processo a documentar *</label>
+            <Panel tone="light" className="max-w-2xl space-y-5">
+              <div className="space-y-1.5">
+                <label htmlFor="sop-proc" className="text-[13px] font-medium text-px-ink">Processo a documentar (obrigatório)</label>
                 <textarea
+                  id="sop-proc"
                   value={processo}
                   onChange={e => setProcesso(e.target.value)}
-                  placeholder="Descreva o processo que você quer padronizar. Ex: triagem de novos pacientes via WhatsApp, agendamento de cirurgias, orientação nutricional pós-consulta..."
                   rows={3}
-                  className="w-full bg-[--surface] border border-[--border] rounded-lg px-3 py-2.5 text-sm text-text-primary focus:outline-none focus:border-emerald-500/50 transition-colors placeholder:text-text-muted resize-none"
+                  placeholder="Descreva o processo que você quer padronizar. Ex: triagem de novos pacientes via WhatsApp, agendamento de cirurgias, orientação nutricional pós-consulta"
+                  className={areaCls}
                 />
               </div>
 
-              {/* Equipe */}
-              <div className="space-y-2">
-                <label className="text-[11px] font-mono text-text-muted uppercase tracking-wide">Equipe envolvida</label>
-                <div className="flex flex-wrap gap-2">
+              <fieldset className="space-y-2">
+                <legend className="mb-1 text-[13px] font-medium text-px-ink">Equipe envolvida</legend>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-3">
                   {EQUIPE_OPTS.map(e => (
-                    <button
-                      key={e}
-                      onClick={() => toggleEquipe(e)}
-                      className={cn(
-                        "text-[11px] font-mono px-3 py-1.5 rounded-full border transition-all flex items-center gap-1",
-                        equipe.includes(e)
-                          ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400 font-semibold"
-                          : "border-[--border] text-text-muted hover:text-text-secondary"
-                      )}
-                    >
-                      {equipe.includes(e) && <Check className="w-2.5 h-2.5" />}
-                      {e}
-                    </button>
+                    <PxCheckbox key={e} label={e} checked={equipe.includes(e)} onChange={() => toggle(setEquipe, e)} />
                   ))}
                 </div>
+              </fieldset>
+
+              <div className="space-y-2">
+                <p className="text-[13px] font-medium text-px-ink">Nível de detalhe</p>
+                <Segmented label="Nível de detalhe" value={nivelDetalhe} onChange={setNivelDetalhe} options={DETALHE_OPTS.map(d => ({ value: d, label: d }))} />
               </div>
 
-              {/* Nível de detalhe */}
-              <div className="space-y-2">
-                <label className="text-[11px] font-mono text-text-muted uppercase tracking-wide">Nível de detalhe</label>
-                <div className="flex gap-2">
-                  {DETALHE_OPTS.map(d => (
-                    <button
-                      key={d}
-                      onClick={() => setNivelDetalhe(d)}
-                      className={cn(
-                        "flex-1 text-xs font-mono py-2 rounded-xl border transition-all",
-                        nivelDetalhe === d
-                          ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400 font-semibold"
-                          : "border-[--border] text-text-muted hover:text-text-secondary"
-                      )}
-                    >
-                      {d}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Ferramentas */}
-              <div className="space-y-2">
-                <label className="text-[11px] font-mono text-text-muted uppercase tracking-wide flex items-center gap-1.5">
-                  <Wrench className="w-3 h-3" /> Ferramentas / Sistemas utilizados
-                </label>
-                <div className="flex flex-wrap gap-2">
+              <fieldset className="space-y-2">
+                <legend className="mb-1 text-[13px] font-medium text-px-ink">Ferramentas e sistemas utilizados</legend>
+                <div className="grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-2">
                   {FERRAMENTA_OPTS.map(f => (
-                    <button
-                      key={f}
-                      onClick={() => toggleFerramenta(f)}
-                      className={cn(
-                        "text-[11px] font-mono px-3 py-1.5 rounded-full border transition-all flex items-center gap-1",
-                        ferramentas.includes(f)
-                          ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400 font-semibold"
-                          : "border-[--border] text-text-muted hover:text-text-secondary"
-                      )}
-                    >
-                      {ferramentas.includes(f) && <Check className="w-2.5 h-2.5" />}
-                      {f}
-                    </button>
+                    <PxCheckbox key={f} label={f} checked={ferramentas.includes(f)} onChange={() => toggle(setFerramentas, f)} />
                   ))}
                 </div>
-              </div>
+              </fieldset>
 
-              {/* Error */}
-              {error && (
-                <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">{error}</p>
-              )}
+              {error && <p role="alert" className="rounded-px-card bg-px-danger-soft px-4 py-3 text-[13px] text-px-danger">{error}</p>}
 
-              {/* CTA */}
-              <button
-                onClick={gerarSop}
-                disabled={loading || !processo.trim()}
-                className={cn(
-                  "w-full py-3.5 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2",
-                  !loading && processo.trim()
-                    ? "bg-emerald-500 text-white hover:bg-emerald-400"
-                    : "bg-[--surface] border border-[--border] text-text-muted cursor-not-allowed"
-                )}
-              >
-                {loading
-                  ? <><Loader2 className="w-4 h-4 animate-spin" /> Gerando SOP...</>
-                  : <><Sparkles className="w-4 h-4" /> Gerar SOP com IA</>}
-              </button>
-            </>
-          )}
-        </div>
-      )}
+              <PxButton fullWidth leftIcon={Sparkles} loading={loading} disabled={loading || !processo.trim()} onClick={gerarSop}>
+                {loading ? "Gerando SOP" : "Gerar SOP com IA"}
+              </PxButton>
+            </Panel>
+          )
+        )}
+      </div>
     </div>
   )
 }

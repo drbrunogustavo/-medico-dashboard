@@ -2,15 +2,13 @@
 
 import { useEffect, useState, useCallback, useRef, useMemo } from "react"
 import { useRouter } from "next/navigation"
-import { TopBar } from "@/components/TopBar"
-import { StatCard } from "@/components/StatCard"
-import { EmptyState } from "@/components/EmptyState"
+import { Panel, PxButton, Segmented, Tag, Field, PxInput, PxModal, PageHeader } from "@/components/px"
 import { cn } from "@/lib/utils"
 import { calcIdadeAnos, bucketConsulta } from "@/lib/pacientes-helpers"
 import {
-  Users, Search, Plus, X, Loader2, Bot, Calendar,
+  Search, Plus, X, Loader2, Bot, Calendar,
   FileText, Phone, Mail, User, ChevronRight, Check,
-  AlertCircle, ClipboardList, RefreshCw, Trash2, Database, Sparkles,
+  AlertCircle, ClipboardList, RefreshCw, Trash2, Sparkles,
 } from "lucide-react"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -49,23 +47,6 @@ function calcIdade(nasc: string): string {
   if (isNaN(nascDate.getTime())) return ""
   const anos = Math.floor((Date.now() - nascDate.getTime()) / (365.25 * 24 * 3600 * 1000))
   return `${anos} anos`
-}
-
-// Deterministic color from name string
-const AVATAR_COLORS = [
-  ["bg-blue-500/20  text-blue-400",    "#60a5fa"],
-  ["bg-purple-500/20 text-purple-400", "#c084fc"],
-  ["bg-emerald-500/20 text-emerald-400","#34d399"],
-  ["bg-amber-500/20  text-amber-400",  "#fbbf24"],
-  ["bg-pink-500/20   text-pink-400",   "#f472b6"],
-  ["bg-cyan-500/20   text-cyan-400",   "#22d3ee"],
-  ["bg-orange-500/20 text-orange-400", "#fb923c"],
-]
-
-function avatarColor(nome: string): string {
-  let h = 0
-  for (let i = 0; i < nome.length; i++) h = (h * 31 + nome.charCodeAt(i)) >>> 0
-  return AVATAR_COLORS[h % AVATAR_COLORS.length][0]
 }
 
 function initials(nome: string): string {
@@ -343,502 +324,290 @@ export default function PacientesPage() {
   }
 
   const pacDetail = drawerDetail ?? drawerPac
+  const temFiltro = Boolean(query || filtroIdade || filtroConsulta)
+  const textarea = "w-full rounded-px-ctl border border-px-line bg-white px-3.5 py-3 text-[13.5px] text-px-ink placeholder:text-px-muted resize-none"
+
+  const buscaDesktop = (
+    <div className="relative hidden md:block">
+      <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-px-muted" aria-hidden="true" />
+      <PxInput
+        value={query}
+        onChange={e => handleSearch(e.target.value)}
+        placeholder="Buscar paciente"
+        aria-label="Buscar paciente pelo nome"
+        className="w-64 pl-10 pr-10"
+      />
+      {searching ? (
+        <Loader2 className="absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-px-muted" aria-hidden="true" />
+      ) : query ? (
+        <button type="button" onClick={() => handleSearch("")} aria-label="Limpar busca" className="absolute right-2.5 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-px-muted hover:bg-px-ink/10">
+          <X className="h-4 w-4" aria-hidden="true" />
+        </button>
+      ) : null}
+    </div>
+  )
 
   return (
-    <div className="animate-fade-in">
-      <TopBar
-        title="Gestão de Pacientes"
-        subtitle="ALA CLÍNICA · MEDX"
+    <div className="px px-ambient min-h-screen animate-fade-in">
+      <PageHeader
+        title="Pacientes"
+        caption="MedX e banco local"
         actions={
-          <div className="flex items-center gap-2">
-            {/* Live search */}
-            <div className="relative hidden md:block">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted pointer-events-none" />
-              {searching
-                ? <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted animate-spin" />
-                : query && <button
-                    onClick={() => handleSearch("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary transition-colors"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-              }
-              <input
-                value={query}
-                onChange={e => handleSearch(e.target.value)}
-                placeholder="Buscar paciente..."
-                className="w-56 bg-surface border border-border rounded-lg pl-9 pr-8 py-1.5 text-[12px] text-text-primary placeholder:text-text-muted focus:border-blue-500/40 outline-none transition-colors"
-              />
-            </div>
-
-            <button
-              onClick={() => { setSemanticMode(m => !m); setSemanticResults([]); setSemanticExplanation("") }}
-              className={cn(
-                "flex items-center gap-1.5 text-[11px] font-semibold rounded-lg px-3 py-1.5 border transition-all",
-                semanticMode
-                  ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-                  : "border-border text-text-muted hover:border-border-hover hover:text-text-secondary"
-              )}
-              title="Busca semântica com IA"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">IA</span>
-            </button>
-
-            <button
-              onClick={fetchLista}
-              disabled={loading}
-              className="flex items-center gap-1.5 text-[11px] border border-border text-text-secondary rounded-lg px-3 py-1.5 hover:border-border-hover transition-colors"
-            >
-              <RefreshCw className={cn("w-3.5 h-3.5", loading && "animate-spin")} />
-            </button>
-
-            <button
-              onClick={() => { setNovoOpen(true); setNovoError(""); setNovoOk(false) }}
-              className="flex items-center gap-1.5 text-[11px] bg-blue-500 text-white font-semibold rounded-lg px-3 py-1.5 hover:bg-blue-600 transition-colors"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              Novo Paciente
-            </button>
-          </div>
+          <>
+            {buscaDesktop}
+            <PxButton
+                variant={semanticMode ? "primary" : "secondary"}
+                leftIcon={Sparkles}
+                onClick={() => { setSemanticMode(m => !m); setSemanticResults([]); setSemanticExplanation("") }}
+              >
+                Busca com IA
+              </PxButton>
+            <PxButton variant="secondary" leftIcon={RefreshCw} loading={loading} onClick={fetchLista} aria-label="Atualizar lista">Atualizar</PxButton>
+            <PxButton leftIcon={Plus} onClick={() => { setNovoOpen(true); setNovoError(""); setNovoOk(false) }}>Novo paciente</PxButton>
+          </>
         }
       />
 
-      <div className="p-4 md:p-8 space-y-5">
+      <div className="space-y-4 px-4 pb-10 pt-4 md:px-10">
 
-        {/* KPI cards */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          <StatCard
-            label="Total de Pacientes"
-            value={loading ? "…" : lista.length}
-            sub="cadastrados no MedX"
-            icon={Users}
-            accent="blue"
-          />
-          <StatCard
-            label="Resultados"
-            value={loading || searching ? "…" : exibidos.length}
-            sub={(query || filtroIdade || filtroConsulta) ? "filtrado" : "todos"}
-            icon={Search}
-            accent="blue"
-          />
-          <StatCard
-            label="Fonte"
-            value={lista[0]?._fonte === "local" ? "Local" : "MedX"}
-            sub={lista[0]?._fonte === "local" ? "banco local Supabase" : "integração em tempo real"}
-            icon={lista[0]?._fonte === "local" ? Database : ClipboardList}
-            accent="amber"
-          />
-        </div>
-
-        {/* Semantic search panel */}
-        {semanticMode && (
-          <div className="rounded-2xl p-4 space-y-3"
-            style={{ background: "rgba(0,192,127,0.05)", border: "1px solid rgba(0,192,127,0.25)" }}>
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 flex-shrink-0" style={{ color: "var(--accent)" }} />
-              <span className="text-[12px] font-semibold" style={{ color: "var(--accent)" }}>
-                Busca Semântica com IA
-              </span>
+        {/* Quantos pacientes, e quantos estão na tela */}
+        <Panel tone="dark" aria-label="Resumo">
+          <dl className="grid grid-cols-2 gap-4 md:grid-cols-3">
+            <div>
+              <dt className="text-[13px] text-white">Cadastrados</dt>
+              <dd className="mt-1 text-[34px] font-medium leading-none tracking-[-0.02em] tabular-nums text-white">{loading ? "…" : lista.length}</dd>
             </div>
-            <div className="flex gap-2">
-              <input
+            <div>
+              <dt className="text-[13px] text-white">{temFiltro ? "Na busca ou filtro" : "Na lista"}</dt>
+              <dd className="mt-1 text-[34px] font-medium leading-none tracking-[-0.02em] tabular-nums text-white">{loading || searching ? "…" : exibidos.length}</dd>
+            </div>
+            <div className="col-span-2 md:col-span-1">
+              <dt className="text-[13px] text-white">Origem dos dados</dt>
+              <dd className="mt-2 text-[15px] font-semibold text-white">{lista[0]?._fonte === "local" ? "Banco local" : "MedX, em tempo real"}</dd>
+            </div>
+          </dl>
+        </Panel>
+
+        {/* Busca semântica */}
+        {semanticMode && (
+          <Panel tone="light" aria-label="Busca com IA">
+            <h2 className="mb-3 text-[15px] font-semibold text-px-ink">Busca com IA</h2>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <PxInput
                 value={semanticQuery}
                 onChange={e => setSemanticQuery(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && runSemanticSearch()}
-                placeholder='ex: "pacientes com HbA1c acima de 7", "inativos há mais de 6 meses"…'
-                className="flex-1 rounded-xl px-4 py-2.5 text-[13px] outline-none"
-                style={{
-                  background: "var(--card)",
-                  border: "1px solid rgba(0,192,127,0.3)",
-                  color: "var(--text-primary)",
-                }}
+                placeholder="Ex.: pacientes com HbA1c acima de 7, inativos há mais de 6 meses"
+                aria-label="Descreva os pacientes que procura"
+                className="flex-1"
               />
-              <button
-                onClick={runSemanticSearch}
-                disabled={semanticLoading || !semanticQuery.trim()}
-                className={cn(
-                  "flex items-center gap-1.5 text-[12px] font-semibold px-4 py-2.5 rounded-xl transition-all",
-                  semanticLoading || !semanticQuery.trim()
-                    ? "opacity-50 cursor-not-allowed bg-emerald-500/10 border border-emerald-500/20 text-emerald-400"
-                    : "bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/30"
-                )}
-              >
-                {semanticLoading
-                  ? <Loader2 className="w-4 h-4 animate-spin" />
-                  : <Search className="w-4 h-4" />}
-                {semanticLoading ? "Buscando…" : "Buscar"}
-              </button>
+              <PxButton leftIcon={Search} loading={semanticLoading} disabled={!semanticQuery.trim()} onClick={runSemanticSearch}>
+                {semanticLoading ? "Buscando" : "Buscar"}
+              </PxButton>
             </div>
-            {semanticExplanation && (
-              <p className="text-[11px] font-mono" style={{ color: "var(--text-muted)" }}>
-                {semanticExplanation}
-              </p>
-            )}
+            {semanticExplanation && <p className="mt-3 text-[13px] text-px-muted">{semanticExplanation}</p>}
             {!semanticLoading && semanticResults.length === 0 && semanticExplanation && (
-              <p className="text-[12px] text-center py-4" style={{ color: "var(--text-muted)" }}>
-                Nenhum paciente encontrado para esta busca.
-              </p>
+              <p className="mt-2 text-[13px] text-px-ink">Nenhum paciente encontrado para esta busca.</p>
             )}
-          </div>
+          </Panel>
         )}
 
-        {/* Mobile search */}
+        {/* Busca no celular */}
         <div className="relative md:hidden">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted pointer-events-none" />
-          {searching
-            ? <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted animate-spin" />
-            : query && <button
-                onClick={() => handleSearch("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-          }
-          <input
-            value={query}
-            onChange={e => handleSearch(e.target.value)}
-            placeholder="Buscar paciente pelo nome..."
-            className="w-full bg-surface border border-border rounded-xl pl-9 pr-8 py-2.5 text-[12px] text-text-primary placeholder:text-text-muted focus:border-blue-500/40 outline-none transition-colors"
-          />
+          <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-px-muted" aria-hidden="true" />
+          <PxInput value={query} onChange={e => handleSearch(e.target.value)} placeholder="Buscar paciente pelo nome" aria-label="Buscar paciente pelo nome" className="bg-white/90 pl-10 pr-10" />
+          {query ? (
+            <button type="button" onClick={() => handleSearch("")} aria-label="Limpar busca" className="absolute right-2.5 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-px-muted hover:bg-px-ink/10">
+              <X className="h-4 w-4" aria-hidden="true" />
+            </button>
+          ) : null}
         </div>
 
-        {/* Advanced filters */}
+        {/* Filtros */}
         {!semanticMode && (
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-[10px] font-mono text-text-muted uppercase tracking-widest whitespace-nowrap">Idade</span>
-              {(["0-18", "19-40", "41-60", "60+"] as const).map(v => (
-                <button
-                  key={v}
-                  onClick={() => setFiltroIdade(filtroIdade === v ? "" : v)}
-                  className={cn(
-                    "text-[10px] px-2.5 py-0.5 rounded-full border transition-all",
-                    filtroIdade === v
-                      ? "bg-accent-dim border-accent-border text-accent font-medium"
-                      : "border-border text-text-muted hover:text-text-secondary hover:border-border-hover"
-                  )}
-                >
-                  {v === "60+" ? "60+ anos" : `${v} anos`}
-                </button>
-              ))}
+          <Panel tone="light" aria-label="Filtros" className="space-y-3">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+              <span className="w-32 text-[13px] font-medium text-px-ink">Idade</span>
+              <Segmented
+                label="Filtrar por idade"
+                value={filtroIdade}
+                onChange={setFiltroIdade}
+                options={[
+                  { value: "", label: "Todas" },
+                  { value: "0-18", label: "0 a 18" },
+                  { value: "19-40", label: "19 a 40" },
+                  { value: "41-60", label: "41 a 60" },
+                  { value: "60+", label: "Mais de 60" },
+                ]}
+              />
             </div>
-            <div className="w-px h-4 bg-border hidden sm:block" />
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-[10px] font-mono text-text-muted uppercase tracking-widest whitespace-nowrap">Última consulta</span>
-              {([
-                { v: "0-30",   label: "≤ 30 dias" },
-                { v: "31-90",  label: "31–90 dias" },
-                { v: "91-180", label: "91–180 dias" },
-                { v: "180+",   label: "> 180 dias" },
-                { v: "nunca",  label: "Nunca" },
-              ]).map(({ v, label }) => (
-                <button
-                  key={v}
-                  onClick={() => setFiltroConsulta(filtroConsulta === v ? "" : v)}
-                  disabled={historicoLoading}
-                  className={cn(
-                    "text-[10px] px-2.5 py-0.5 rounded-full border transition-all",
-                    filtroConsulta === v
-                      ? "bg-accent-dim border-accent-border text-accent font-medium"
-                      : "border-border text-text-muted hover:text-text-secondary hover:border-border-hover",
-                    historicoLoading && "opacity-40 cursor-wait"
-                  )}
-                >
-                  {label}
-                </button>
-              ))}
-              {historicoLoading && <Loader2 className="w-3 h-3 text-text-muted animate-spin" />}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+              <span className="w-32 text-[13px] font-medium text-px-ink">Última consulta</span>
+              <Segmented
+                label="Filtrar por tempo desde a última consulta"
+                value={filtroConsulta}
+                onChange={v => { if (!historicoLoading) setFiltroConsulta(v) }}
+                options={[
+                  { value: "", label: "Todas" },
+                  { value: "0-30", label: "Até 30 dias" },
+                  { value: "31-90", label: "31 a 90 dias" },
+                  { value: "91-180", label: "91 a 180 dias" },
+                  { value: "180+", label: "Mais de 180 dias" },
+                  { value: "nunca", label: "Nunca" },
+                ]}
+              />
+              {historicoLoading && <Loader2 className="h-4 w-4 animate-spin text-px-muted" aria-label="Carregando histórico" />}
             </div>
-            {(filtroIdade || filtroConsulta) && (
-              <button
-                onClick={() => { setFiltroIdade(""); setFiltroConsulta("") }}
-                className="flex items-center gap-1 text-[10px] text-text-muted hover:text-text-primary border border-border hover:border-border-hover rounded-full px-2 py-0.5 transition-colors ml-auto sm:ml-0"
-              >
-                <X className="w-3 h-3" />
-                Limpar
-                <span className="ml-1 text-badge font-mono bg-accent-dim border border-accent-border text-accent px-1 rounded-full leading-tight">
-                  {[filtroIdade, filtroConsulta].filter(Boolean).length}
-                </span>
-              </button>
-            )}
-          </div>
+          </Panel>
         )}
 
         {error && (
-          <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl px-4 py-3 text-[12px]">
-            <AlertCircle className="w-4 h-4 flex-shrink-0" />
-            {error}
-          </div>
+          <Panel tone="strong" role="alert" className="flex items-center gap-2 border border-px-danger/30">
+            <AlertCircle className="h-4 w-4 shrink-0 text-px-danger" aria-hidden="true" />
+            <span className="text-[14px] font-medium text-px-danger">{error}</span>
+          </Panel>
         )}
 
-        {/* Patient list */}
+        {/* Lista */}
         {loading ? (
           <div className="space-y-2">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="h-[72px] rounded-xl bg-surface border border-border shimmer" />
-            ))}
+            {Array.from({ length: 8 }).map((_, i) => <div key={i} className="h-[68px] rounded-px-card bg-white/50 shimmer" />)}
           </div>
         ) : exibidos.length === 0 ? (
-          <EmptyState
-            icon={Users}
-            title={query || filtroIdade || filtroConsulta ? "Nenhum paciente encontrado" : "Nenhum paciente cadastrado"}
-            subtitle={
-              query
+          <Panel tone="light" className="py-10 text-center">
+            <p className="text-[16px] font-semibold text-px-ink">{temFiltro ? "Nenhum paciente encontrado" : "Nenhum paciente cadastrado"}</p>
+            <p className="mx-auto mt-1 max-w-sm text-[14px] text-px-muted">
+              {query
                 ? `Não encontramos resultados para "${query}". Tente um nome diferente.`
                 : (filtroIdade || filtroConsulta)
                   ? "Nenhum paciente corresponde aos filtros selecionados."
-                  : "Os pacientes cadastrados no MedX aparecerão aqui."
-            }
-            action={
-              (query || filtroIdade || filtroConsulta)
-                ? { label: "Limpar filtros", onClick: () => { handleSearch(""); setFiltroIdade(""); setFiltroConsulta("") } }
-                : undefined
-            }
-          />
+                  : "Os pacientes cadastrados no MedX aparecerão aqui."}
+            </p>
+            {temFiltro && (
+              <div className="mt-4 flex justify-center">
+                <PxButton variant="secondary" onClick={() => { handleSearch(""); setFiltroIdade(""); setFiltroConsulta("") }}>Limpar filtros</PxButton>
+              </div>
+            )}
+          </Panel>
         ) : (
-          <div className="bg-surface border border-border rounded-xl overflow-hidden">
-            {/* Header row */}
-            <div className="hidden md:grid grid-cols-[1fr_160px_200px_140px_40px] gap-4 px-5 py-2.5 border-b border-border">
-              {["Paciente", "Telefone", "E-mail", "Última Consulta", ""].map(h => (
-                <span key={h} className="text-[10px] font-mono text-text-muted uppercase tracking-widest">{h}</span>
-              ))}
+          <Panel tone="light" className="overflow-hidden p-0">
+            <div className="hidden grid-cols-[1fr_170px_220px_140px_96px] gap-4 border-b border-px-line px-5 py-3 text-[12.5px] font-medium text-px-muted md:grid">
+              <span>Paciente</span><span>Telefone</span><span>E-mail</span><span>Última consulta</span><span />
             </div>
-
-            <div className="divide-y divide-border">
+            <ul className="divide-y divide-px-line">
               {exibidos.map((pac, i) => {
                 const nome   = getPacNome(pac)
                 const tel    = getPacTelefone(pac)
                 const email  = getPacEmail(pac)
                 const ultima = getPacUltConsulta(pac)
                 const nasc   = getPacNasc(pac)
-                const ini    = initials(nome)
-                const aColor = avatarColor(nome)
-
+                const id     = getPacId(pac)
+                const local  = pac._fonte === "local"
+                const abrir  = () => (local ? router.push(`/pacientes/${id}`) : handleMedXClick(pac))
+                const ocupado = linkingId === (id || nome)
                 return (
-                  <button
-                    key={i}
-                    onClick={() => pac._fonte === "local" ? router.push(`/pacientes/${getPacId(pac)}`) : handleMedXClick(pac)}
-                    className="w-full text-left px-5 py-3.5 hover:bg-blue-500/[0.03] hover:border-l-2 hover:border-l-blue-500/40 transition-all group flex items-center gap-4 md:grid md:grid-cols-[1fr_160px_200px_140px_40px]"
-                  >
-                    {/* Avatar + Nome */}
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className={cn(
-                        "w-9 h-9 rounded-xl flex items-center justify-center text-[11px] font-bold flex-shrink-0",
-                        aColor
-                      )}>
-                        {ini}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[13px] font-medium text-text-primary truncate">{nome}</span>
-                          {pac._fonte === "local" ? (
-                            <span className="text-[8px] font-mono font-semibold px-1.5 py-0.5 rounded-full border bg-amber-50 border-amber-200 text-amber-700 flex-shrink-0">LOCAL</span>
-                          ) : (
-                            <span className="text-[8px] font-mono font-semibold px-1.5 py-0.5 rounded-full border bg-blue-50 border-blue-200 text-blue-700 flex-shrink-0">MEDX</span>
-                          )}
-                        </div>
-                        {nasc && (
-                          <div className="text-[10px] text-text-muted mt-0.5">{calcIdade(nasc)}</div>
-                        )}
-                        {semanticMode && pac._matchContext ? (
-                          <div className="text-[9px] font-mono mt-0.5 px-1.5 py-0.5 rounded-full inline-block"
-                            style={{ background: "rgba(0,192,127,0.12)", color: "var(--accent)", border: "1px solid rgba(0,192,127,0.3)" }}>
-                            {String(pac._matchContext)}
-                          </div>
-                        ) : null}
-                        {/* Mobile: show tel/email below name */}
-                        <div className="md:hidden flex gap-3 mt-0.5">
-                          {tel  && <span className="text-[10px] text-text-muted">{tel}</span>}
-                          {email && <span className="text-[10px] text-text-muted truncate">{email}</span>}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Telefone */}
-                    <div className="hidden md:flex items-center gap-1.5 min-w-0">
-                      {tel ? (
-                        <>
-                          <Phone className="w-3 h-3 text-text-muted flex-shrink-0" />
-                          <span className="text-[12px] text-text-secondary truncate">{tel}</span>
-                        </>
-                      ) : (
-                        <span className="text-[11px] text-text-muted">—</span>
-                      )}
-                    </div>
-
-                    {/* E-mail */}
-                    <div className="hidden md:flex items-center gap-1.5 min-w-0">
-                      {email ? (
-                        <>
-                          <Mail className="w-3 h-3 text-text-muted flex-shrink-0" />
-                          <span className="text-[12px] text-text-secondary truncate">{email}</span>
-                        </>
-                      ) : (
-                        <span className="text-[11px] text-text-muted">—</span>
-                      )}
-                    </div>
-
-                    {/* Última consulta */}
-                    <div className="hidden md:block">
-                      {ultima ? (
-                        <span className="text-[11px] font-mono text-text-muted">{fmtDate(ultima)}</span>
-                      ) : (
-                        <span className="text-[11px] text-text-muted">—</span>
-                      )}
-                    </div>
-
-                    {/* Arrow / Delete */}
-                    <div className="flex items-center justify-end gap-1">
-                      {pac._fonte === "local" && (
+                  <li key={i} className="group flex items-center gap-2 pr-3 hover:bg-white/60 md:grid md:grid-cols-[1fr_170px_220px_140px_96px] md:gap-4 md:pr-5">
+                    <button type="button" onClick={abrir} className="flex min-w-0 flex-1 items-center gap-3 px-5 py-3.5 text-left md:contents">
+                      <span className="flex min-w-0 items-center gap-3 md:px-5 md:py-0.5">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-px-ink/10 text-[12.5px] font-semibold text-px-ink" aria-hidden="true">{initials(nome)}</span>
+                        <span className="min-w-0">
+                          <span className="flex items-center gap-2">
+                            <span className="truncate text-[14px] font-semibold text-px-ink">{nome}</span>
+                            <Tag tone={local ? "accent" : "neutral"}>{local ? "Local" : "MedX"}</Tag>
+                          </span>
+                          {nasc && <span className="mt-0.5 block text-[12.5px] text-px-muted">{calcIdade(nasc)}</span>}
+                          {semanticMode && pac._matchContext ? <span className="mt-1 block text-[12.5px] text-px-accent">{String(pac._matchContext)}</span> : null}
+                          <span className="mt-0.5 flex gap-3 text-[12.5px] text-px-muted md:hidden">
+                            {tel && <span>{tel}</span>}
+                            {email && <span className="truncate">{email}</span>}
+                          </span>
+                        </span>
+                      </span>
+                      <span className="hidden min-w-0 items-center gap-1.5 md:flex">
+                        {tel ? <><Phone className="h-3.5 w-3.5 shrink-0 text-px-muted" aria-hidden="true" /><span className="truncate text-[13px] text-px-ink">{tel}</span></> : <span className="text-[13px] text-px-muted">Sem telefone</span>}
+                      </span>
+                      <span className="hidden min-w-0 items-center gap-1.5 md:flex">
+                        {email ? <><Mail className="h-3.5 w-3.5 shrink-0 text-px-muted" aria-hidden="true" /><span className="truncate text-[13px] text-px-ink">{email}</span></> : <span className="text-[13px] text-px-muted">Sem e-mail</span>}
+                      </span>
+                      <span className="hidden text-[13px] tabular-nums text-px-ink md:block">{ultima ? fmtDate(ultima) : <span className="text-px-muted">Nunca</span>}</span>
+                    </button>
+                    <div className="flex items-center justify-end gap-1 md:justify-end">
+                      {local && (
                         <button
+                          type="button"
                           onClick={e => deletePaciente(pac, e)}
-                          disabled={deletingId === getPacId(pac)}
-                          className="w-7 h-7 flex items-center justify-center rounded-lg text-text-muted hover:text-red-400 hover:bg-red-500/10 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100"
+                          disabled={deletingId === id}
+                          aria-label={`Excluir ${nome}`}
+                          className="flex h-9 w-9 items-center justify-center rounded-full text-px-muted hover:bg-px-danger-soft hover:text-px-danger"
                         >
-                          {deletingId === getPacId(pac)
-                            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            : <Trash2 className="w-3.5 h-3.5" />
-                          }
+                          {deletingId === id ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Trash2 className="h-4 w-4" aria-hidden="true" />}
                         </button>
                       )}
-                      {linkingId === (getPacId(pac) || getPacNome(pac))
-                        ? <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />
-                        : <ChevronRight className="w-4 h-4 text-text-muted group-hover:text-blue-400 group-hover:translate-x-0.5 transition-all" />
-                      }
+                      {ocupado ? <Loader2 className="h-4 w-4 animate-spin text-px-ink" aria-hidden="true" /> : <ChevronRight className="h-4 w-4 text-px-muted" aria-hidden="true" />}
                     </div>
-                  </button>
+                  </li>
                 )
               })}
+            </ul>
+            <div className="border-t border-px-line px-5 py-3 text-[13px] text-px-muted">
+              {exibidos.length} paciente{exibidos.length !== 1 ? "s" : ""}
+              {query && `, busca "${query}"`}
+              {filtroIdade && `, idade ${filtroIdade}`}
+              {filtroConsulta && `, consulta ${filtroConsulta}`}
             </div>
-
-            {/* Footer count */}
-            <div className="px-5 py-2.5 border-t border-border">
-              <span className="text-[10px] font-mono text-text-muted">
-                {exibidos.length} paciente{exibidos.length !== 1 ? "s" : ""}
-                {query && ` · busca: "${query}"`}
-                {filtroIdade && ` · idade: ${filtroIdade} anos`}
-                {filtroConsulta && ` · consulta: ${filtroConsulta}`}
-              </span>
-            </div>
-          </div>
+          </Panel>
         )}
       </div>
 
-      {/* ── DRAWER ─────────────────────────────────────────────────────────────── */}
-
-      {/* Backdrop */}
-      {drawerOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px]"
-          onClick={closeDrawer}
-        />
-      )}
-
-      {/* Side panel */}
-      <div className={cn(
-        "fixed top-0 right-0 bottom-0 z-50 w-full max-w-md bg-surface border-l border-border shadow-2xl flex flex-col transition-transform duration-300",
-        drawerOpen ? "translate-x-0" : "translate-x-full"
-      )}>
+      {/* Ficha lateral */}
+      {drawerOpen && <div className="fixed inset-0 z-[55] bg-black/30" onClick={closeDrawer} aria-hidden="true" />}
+      <aside
+        aria-label="Ficha do paciente"
+        aria-hidden={!drawerOpen}
+        className={cn(
+          "px-glass-strong fixed bottom-0 right-0 top-0 z-[60] flex w-full max-w-md flex-col shadow-[0_10px_30px_rgba(20,20,20,0.18)] transition-transform duration-300",
+          drawerOpen ? "translate-x-0" : "pointer-events-none translate-x-full"
+        )}
+      >
         {pacDetail && (
           <>
-            {/* Drawer header */}
-            <div className="flex-shrink-0 px-6 py-4 border-b border-border">
+            <div className="shrink-0 border-b border-px-line px-6 py-5">
               <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className={cn(
-                    "w-11 h-11 rounded-xl flex items-center justify-center text-[13px] font-bold flex-shrink-0",
-                    avatarColor(getPacNome(pacDetail))
-                  )}>
-                    {initials(getPacNome(pacDetail))}
-                  </div>
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-px-ink text-[14px] font-semibold text-white" aria-hidden="true">{initials(getPacNome(pacDetail))}</span>
                   <div className="min-w-0">
-                    <h2
-                      className="text-[17px] font-semibold text-text-primary truncate"
-                      style={{ fontFamily: "var(--font-playfair)" }}
-                    >
-                      {getPacNome(pacDetail)}
-                    </h2>
-                    {getPacId(pacDetail) && (
-                      <div className="text-[10px] font-mono text-text-muted mt-0.5">
-                        #{getPacId(pacDetail)}
-                      </div>
-                    )}
+                    <h2 className="truncate text-[20px] font-medium tracking-[-0.01em] text-px-ink">{getPacNome(pacDetail)}</h2>
+                    {getPacId(pacDetail) && <p className="text-[12.5px] text-px-muted">Código {getPacId(pacDetail)}</p>}
                   </div>
                 </div>
-                <button
-                  onClick={closeDrawer}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-surface-2 transition-all flex-shrink-0"
-                >
-                  <X className="w-4 h-4" />
+                <button type="button" onClick={closeDrawer} aria-label="Fechar ficha" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-px-ink/[0.08] text-px-ink hover:bg-px-ink/15">
+                  <X className="h-4 w-4" aria-hidden="true" />
                 </button>
               </div>
-
-              {/* Quick action buttons */}
-              <div className="flex gap-2 mt-4">
-                <button
-                  onClick={() => router.push(`/copiloto?pacienteId=${getPacId(pacDetail)}`)}
-                  className="flex-1 flex items-center justify-center gap-1.5 bg-blue-500/12 border border-blue-500/30 text-blue-400 text-[11px] font-semibold rounded-lg py-2 hover:bg-blue-500/20 transition-all"
-                >
-                  <Bot className="w-3.5 h-3.5" />
-                  Copiloto
-                </button>
-                <button
-                  onClick={() => router.push("/agenda")}
-                  className="flex-1 flex items-center justify-center gap-1.5 border border-border text-text-secondary text-[11px] font-semibold rounded-lg py-2 hover:border-border-hover transition-all"
-                >
-                  <Calendar className="w-3.5 h-3.5" />
-                  Ver Agenda
-                </button>
+              <div className="mt-4 flex gap-2">
+                <PxButton size="sm" fullWidth leftIcon={Bot} onClick={() => router.push(`/copiloto?pacienteId=${getPacId(pacDetail)}`)}>Copiloto</PxButton>
+                <PxButton size="sm" fullWidth variant="secondary" leftIcon={Calendar} onClick={() => router.push("/agenda")}>Ver agenda</PxButton>
               </div>
             </div>
 
-            {/* Drawer body — scrollable */}
             <div className="flex-1 overflow-y-auto">
               {drawerLoading ? (
-                <div className="p-6 space-y-3">
-                  {[1,2,3,4].map(i => (
-                    <div key={i} className="h-10 rounded-lg bg-surface-2 shimmer" />
-                  ))}
-                </div>
+                <div className="space-y-3 p-6">{[1, 2, 3, 4].map(i => <div key={i} className="h-10 rounded-px-ctl bg-px-ink/[0.06] shimmer" />)}</div>
               ) : (
-                <div className="p-6 space-y-6">
-
-                  {/* Dados pessoais */}
-                  <section>
-                    <SectionTitle icon={User}>Dados Pessoais</SectionTitle>
-                    <div className="space-y-2 mt-3">
+                <div className="space-y-7 p-6">
+                  <section aria-labelledby="pac-dados">
+                    <SectionTitle id="pac-dados" icon={User}>Dados pessoais</SectionTitle>
+                    <div className="mt-3 space-y-2.5">
                       {getPacNasc(pacDetail) && (
                         <DetailRow label="Nascimento">
                           {fmtDate(getPacNasc(pacDetail))}
-                          {calcIdade(getPacNasc(pacDetail)) && (
-                            <span className="ml-2 text-[10px] text-text-muted">
-                              ({calcIdade(getPacNasc(pacDetail))})
-                            </span>
-                          )}
+                          {calcIdade(getPacNasc(pacDetail)) && <span className="ml-2 text-px-muted">({calcIdade(getPacNasc(pacDetail))})</span>}
                         </DetailRow>
                       )}
-                      {getPacTelefone(pacDetail) && (
-                        <DetailRow label="Telefone" icon={Phone}>
-                          {getPacTelefone(pacDetail)}
-                        </DetailRow>
-                      )}
-                      {getPacEmail(pacDetail) && (
-                        <DetailRow label="E-mail" icon={Mail}>
-                          {getPacEmail(pacDetail)}
-                        </DetailRow>
-                      )}
-                      {getPacUltConsulta(pacDetail) && (
-                        <DetailRow label="Última Consulta">
-                          {fmtDate(getPacUltConsulta(pacDetail))}
-                        </DetailRow>
-                      )}
-                      {getPacObs(pacDetail) && (
-                        <DetailRow label="Observações">
-                          {getPacObs(pacDetail)}
-                        </DetailRow>
-                      )}
-                      {/* Extra fields from MedX not explicitly handled */}
+                      {getPacTelefone(pacDetail) && <DetailRow label="Telefone" icon={Phone}>{getPacTelefone(pacDetail)}</DetailRow>}
+                      {getPacEmail(pacDetail) && <DetailRow label="E-mail" icon={Mail}>{getPacEmail(pacDetail)}</DetailRow>}
+                      {getPacUltConsulta(pacDetail) && <DetailRow label="Última consulta">{fmtDate(getPacUltConsulta(pacDetail))}</DetailRow>}
+                      {getPacObs(pacDetail) && <DetailRow label="Observações">{getPacObs(pacDetail)}</DetailRow>}
                       {Object.entries(pacDetail)
                         .filter(([k]) => ![
                           "Id","id","IdContato","idContato",
@@ -851,207 +620,85 @@ export default function PacientesPage() {
                         ].includes(k))
                         .filter(([, v]) => v != null && v !== "" && typeof v !== "object")
                         .slice(0, 8)
-                        .map(([k, v]) => (
-                          <DetailRow key={k} label={k.replace(/([A-Z])/g, " $1").trim()}>
-                            {String(v)}
-                          </DetailRow>
-                        ))
-                      }
+                        .map(([k, v]) => <DetailRow key={k} label={k.replace(/([A-Z])/g, " $1").trim()}>{String(v)}</DetailRow>)}
                     </div>
                   </section>
 
-                  {/* Adicionar ao prontuário */}
-                  <section>
-                    <SectionTitle icon={FileText}>Adicionar ao Prontuário</SectionTitle>
-                    <div className="mt-3 space-y-2">
+                  <section aria-labelledby="pac-pront">
+                    <SectionTitle id="pac-pront" icon={FileText}>Adicionar ao prontuário</SectionTitle>
+                    <div className="mt-3 space-y-2.5">
                       <textarea
                         value={prontuarioText}
                         onChange={e => setProntuarioText(e.target.value)}
                         rows={4}
-                        placeholder="Digite a anotação clínica, evolução ou observação..."
-                        className="w-full bg-surface-2 border border-border rounded-xl px-3 py-2.5 text-[12px] text-text-primary placeholder:text-text-muted focus:border-blue-500/40 outline-none resize-none transition-colors"
+                        aria-label="Anotação para o prontuário"
+                        placeholder="Anotação clínica, evolução ou observação"
+                        className={textarea}
                       />
-                      {prontuarioError && (
-                        <div className="text-[11px] text-red-400 bg-red-500/10 border border-red-500/30 rounded-lg px-3 py-2">
-                          {prontuarioError}
-                        </div>
-                      )}
-                      <button
-                        onClick={salvarProntuario}
-                        disabled={prontuarioSaving || !prontuarioText.trim()}
-                        className={cn(
-                          "w-full flex items-center justify-center gap-2 text-[12px] font-semibold rounded-xl py-2.5 transition-all",
-                          prontuarioOk
-                            ? "bg-emerald-500/10 border border-emerald-500/30 text-emerald-400"
-                            : "bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-40"
-                        )}
-                      >
-                        {prontuarioSaving ? (
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        ) : prontuarioOk ? (
-                          <><Check className="w-3.5 h-3.5" /> Prontuário salvo!</>
-                        ) : (
-                          <><ClipboardList className="w-3.5 h-3.5" /> Salvar no Prontuário</>
-                        )}
-                      </button>
+                      {prontuarioError && <p role="alert" className="text-[13px] text-px-danger">{prontuarioError}</p>}
+                      <PxButton fullWidth leftIcon={prontuarioOk ? Check : ClipboardList} loading={prontuarioSaving} disabled={!prontuarioText.trim() && !prontuarioOk} onClick={salvarProntuario}>
+                        {prontuarioOk ? "Prontuário salvo" : "Salvar no prontuário"}
+                      </PxButton>
                     </div>
                   </section>
-
                 </div>
               )}
             </div>
           </>
         )}
-      </div>
+      </aside>
 
-      {/* ── NOVO PACIENTE MODAL ─────────────────────────────────────────────────── */}
-
-      {novoOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-          onClick={() => setNovoOpen(false)}
-        >
-          <div
-            className="bg-surface border border-border rounded-2xl w-full max-w-md shadow-2xl overflow-hidden"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-              <span
-                className="text-[15px] font-semibold text-text-primary"
-                style={{ fontFamily: "var(--font-playfair)" }}
-              >
-                Novo Paciente
-              </span>
-              <button
-                onClick={() => setNovoOpen(false)}
-                className="w-7 h-7 flex items-center justify-center rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-2 transition-all"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="px-6 py-5 space-y-3">
-
-              <div>
-                <label className="label-mono">Nome *</label>
-                <input
-                  value={novoForm.Nome}
-                  onChange={e => setNovoForm(f => ({ ...f, Nome: e.target.value }))}
-                  placeholder="Nome completo do paciente"
-                  className="input-base"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="label-mono">Telefone</label>
-                  <input
-                    value={novoForm.Telefone}
-                    onChange={e => setNovoForm(f => ({ ...f, Telefone: e.target.value }))}
-                    placeholder="(00) 00000-0000"
-                    className="input-base"
-                  />
-                </div>
-                <div>
-                  <label className="label-mono">Data de Nascimento</label>
-                  <input
-                    type="date"
-                    value={novoForm.DataNascimento}
-                    onChange={e => setNovoForm(f => ({ ...f, DataNascimento: e.target.value }))}
-                    className="input-base"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="label-mono">E-mail</label>
-                <input
-                  type="email"
-                  value={novoForm.Email}
-                  onChange={e => setNovoForm(f => ({ ...f, Email: e.target.value }))}
-                  placeholder="email@exemplo.com"
-                  className="input-base"
-                />
-              </div>
-
-              <div>
-                <label className="label-mono">Observações</label>
-                <textarea
-                  rows={3}
-                  value={novoForm.Observacao}
-                  onChange={e => setNovoForm(f => ({ ...f, Observacao: e.target.value }))}
-                  placeholder="Informações adicionais..."
-                  className="input-base resize-none"
-                />
-              </div>
-
-              {novoError && (
-                <div className="text-[11px] text-red-400 bg-red-500/10 border border-red-500/30 rounded-lg px-3 py-2">
-                  {novoError}
-                </div>
-              )}
-            </div>
-
-            <div className="px-6 pb-5 flex gap-2">
-              <button
-                onClick={() => setNovoOpen(false)}
-                className="px-4 py-2.5 rounded-xl text-[12px] text-text-muted border border-border hover:border-border-hover transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={salvarNovo}
-                disabled={novoSaving || novoOk || !novoForm.Nome.trim()}
-                className={cn(
-                  "flex-1 flex items-center justify-center gap-2 text-[12px] font-semibold rounded-xl py-2.5 transition-all",
-                  novoOk
-                    ? "bg-emerald-500/10 border border-emerald-500/30 text-emerald-400"
-                    : "bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-40"
-                )}
-              >
-                {novoSaving ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : novoOk ? (
-                  <><Check className="w-3.5 h-3.5" /> Paciente cadastrado!</>
-                ) : (
-                  <><Plus className="w-3.5 h-3.5" /> Cadastrar Paciente</>
-                )}
-              </button>
-            </div>
+      <PxModal open={novoOpen} onClose={() => setNovoOpen(false)} title="Novo paciente">
+        <div className="space-y-3">
+          <Field label="Nome *" htmlFor="np-nome">
+            <PxInput id="np-nome" value={novoForm.Nome} onChange={e => setNovoForm(f => ({ ...f, Nome: e.target.value }))} placeholder="Nome completo do paciente" />
+          </Field>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Field label="Telefone" htmlFor="np-tel">
+              <PxInput id="np-tel" value={novoForm.Telefone} onChange={e => setNovoForm(f => ({ ...f, Telefone: e.target.value }))} placeholder="(00) 00000-0000" />
+            </Field>
+            <Field label="Data de nascimento" htmlFor="np-nasc">
+              <PxInput id="np-nasc" type="date" value={novoForm.DataNascimento} onChange={e => setNovoForm(f => ({ ...f, DataNascimento: e.target.value }))} />
+            </Field>
+          </div>
+          <Field label="E-mail" htmlFor="np-email">
+            <PxInput id="np-email" type="email" value={novoForm.Email} onChange={e => setNovoForm(f => ({ ...f, Email: e.target.value }))} placeholder="email@exemplo.com" />
+          </Field>
+          <Field label="Observações" htmlFor="np-obs">
+            <textarea id="np-obs" rows={3} value={novoForm.Observacao} onChange={e => setNovoForm(f => ({ ...f, Observacao: e.target.value }))} placeholder="Informações adicionais" className={textarea} />
+          </Field>
+          {novoError && <p role="alert" className="text-[13px] text-px-danger">{novoError}</p>}
+          <div className="flex gap-2 pt-1">
+            <PxButton variant="secondary" onClick={() => setNovoOpen(false)}>Cancelar</PxButton>
+            <PxButton fullWidth leftIcon={novoOk ? Check : Plus} loading={novoSaving} disabled={novoOk || !novoForm.Nome.trim()} onClick={salvarNovo}>
+              {novoOk ? "Paciente cadastrado" : "Cadastrar paciente"}
+            </PxButton>
           </div>
         </div>
-      )}
+      </PxModal>
     </div>
   )
 }
 
-// ── Small helpers ─────────────────────────────────────────────────────────────
+// ── Pequenos componentes ──────────────────────────────────────────────────────
 
-function SectionTitle({ icon: Icon, children }: { icon: React.ElementType; children: React.ReactNode }) {
+function SectionTitle({ id, icon: Icon, children }: { id?: string; icon: React.ElementType; children: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-2">
-      <Icon className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />
-      <span className="text-[10px] font-mono text-text-muted uppercase tracking-widest">{children}</span>
-    </div>
+    <h3 id={id} className="flex items-center gap-2 text-[14px] font-semibold text-px-ink">
+      <Icon className="h-4 w-4 shrink-0 text-px-accent" aria-hidden="true" />
+      {children}
+    </h3>
   )
 }
 
-function DetailRow({
-  label,
-  icon: Icon,
-  children,
-}: {
-  label: string
-  icon?: React.ElementType
-  children: React.ReactNode
-}) {
+function DetailRow({ label, icon: Icon, children }: { label: string; icon?: React.ElementType; children: React.ReactNode }) {
   return (
-    <div className="flex items-start gap-3 text-[12px]">
-      <div className="flex items-center gap-1 text-text-muted w-28 flex-shrink-0 pt-0.5">
-        {Icon && <Icon className="w-3 h-3 flex-shrink-0" />}
+    <div className="flex items-start gap-3 text-[13.5px]">
+      <div className="flex w-32 shrink-0 items-center gap-1.5 pt-px text-px-muted">
+        {Icon && <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />}
         <span className="truncate">{label}</span>
       </div>
-      <span className="text-text-secondary flex-1 min-w-0">{children}</span>
+      <span className="min-w-0 flex-1 text-px-ink">{children}</span>
     </div>
   )
 }

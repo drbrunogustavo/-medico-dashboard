@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
+import { erroInterno } from "@/lib/api-erro"
 
 export async function GET() {
   const auth = await checkAuth()
@@ -12,7 +13,7 @@ export async function GET() {
     .select("*")
     .eq("user_id", auth.userId)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return erroInterno("[academy/progresso]", error)
   return NextResponse.json(data ?? [])
 }
 
@@ -41,6 +42,6 @@ export async function POST(req: NextRequest) {
     .select()
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return erroInterno("[academy/progresso]", error)
   return NextResponse.json(data, { status: 201 })
 }

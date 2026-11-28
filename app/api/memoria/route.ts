@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
+import { erroInterno } from "@/lib/api-erro"
 
 function err(e: unknown) { return e instanceof Error ? e.message : String(e) }
 
@@ -19,7 +20,7 @@ export async function GET(req: NextRequest) {
         .select("id, paciente_nome, tipo_consulta, resultado, created_at")
         .order("created_at", { ascending: false })
         .limit(20)
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      if (error) return erroInterno("[memoria]", error)
       return NextResponse.json(data ?? [])
     }
 
@@ -32,10 +33,10 @@ export async function GET(req: NextRequest) {
     if (tipo !== "all") q.eq("tipo", tipo)
 
     const { data, error } = await q
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) return erroInterno("[memoria]", error)
     return NextResponse.json(data ?? [])
   } catch (e) {
-    return NextResponse.json({ error: err(e) }, { status: 500 })
+    return erroInterno("[memoria]", e)
   }
 }
 
@@ -65,10 +66,10 @@ export async function POST(req: NextRequest) {
       .select()
       .single()
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) return erroInterno("[memoria]", error)
     return NextResponse.json(data)
   } catch (e) {
-    return NextResponse.json({ error: err(e) }, { status: 500 })
+    return erroInterno("[memoria]", e)
   }
 }
 
@@ -92,10 +93,10 @@ export async function PATCH(req: NextRequest) {
       .select()
       .single()
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) return erroInterno("[memoria]", error)
     return NextResponse.json(data)
   } catch (e) {
-    return NextResponse.json({ error: err(e) }, { status: 500 })
+    return erroInterno("[memoria]", e)
   }
 }
 
@@ -115,9 +116,9 @@ export async function DELETE(req: NextRequest) {
       .eq("id", id)
       .eq("user_id", auth.userId)
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) return erroInterno("[memoria]", error)
     return NextResponse.json({ ok: true })
   } catch (e) {
-    return NextResponse.json({ error: err(e) }, { status: 500 })
+    return erroInterno("[memoria]", e)
   }
 }

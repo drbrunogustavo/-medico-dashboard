@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
 import * as Sentry from "@sentry/nextjs"
+import { erroInterno } from "@/lib/api-erro"
 
 function errMsg(e: unknown): string {
   if (e instanceof Error) return e.message
@@ -26,11 +27,11 @@ export async function GET(req: NextRequest) {
     if (estagio) query = query.eq("estagio", estagio)
 
     const { data, error } = await query
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) return erroInterno("[crm]", error)
     return NextResponse.json(data ?? [])
   } catch (e) {
     Sentry.captureException(e, { tags: { route: "/api/crm" } })
-    return NextResponse.json({ error: errMsg(e) }, { status: 500 })
+    return erroInterno("[crm]", e)
   }
 }
 
@@ -47,7 +48,7 @@ export async function POST(req: NextRequest) {
       .select()
       .single()
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) return erroInterno("[crm]", error)
 
     // Trigger nurturing non-blocking after lead creation
     if (data?.id) {
@@ -66,6 +67,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(data)
   } catch (e) {
     Sentry.captureException(e, { tags: { route: "/api/crm" } })
-    return NextResponse.json({ error: errMsg(e) }, { status: 500 })
+    return erroInterno("[crm]", e)
   }
 }

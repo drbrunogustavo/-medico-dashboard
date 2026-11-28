@@ -3,6 +3,7 @@ import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
 import { AI_MODEL } from "@/lib/ai-config"
 import { getAnthropicClient, captureAnthropicError } from "@/lib/anthropic"
+import { erroInterno } from "@/lib/api-erro"
 
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -118,6 +119,6 @@ Retorne JSON neste formato:
   } catch (e) {
     captureAnthropicError(e, "/api/mercado")
     console.error("[api/mercado]", e)
-    return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 500 })
+    return erroInterno("[mercado]", e)
   }
 }

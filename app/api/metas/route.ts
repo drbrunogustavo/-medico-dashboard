@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
+import { erroInterno } from "@/lib/api-erro"
 
 function errMsg(e: unknown) { return e instanceof Error ? e.message : String(e) }
 
@@ -24,10 +25,10 @@ export async function GET(req: NextRequest) {
       .eq("mes_ano", mesAno)
       .maybeSingle()
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) return erroInterno("[metas]", error)
     return NextResponse.json(data ?? { mes_ano: mesAno })
   } catch (e) {
-    return NextResponse.json({ error: errMsg(e) }, { status: 500 })
+    return erroInterno("[metas]", e)
   }
 }
 
@@ -46,9 +47,9 @@ export async function POST(req: NextRequest) {
       .select()
       .single()
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) return erroInterno("[metas]", error)
     return NextResponse.json(data)
   } catch (e) {
-    return NextResponse.json({ error: errMsg(e) }, { status: 500 })
+    return erroInterno("[metas]", e)
   }
 }

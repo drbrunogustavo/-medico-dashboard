@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
 import { sendZapiForUser } from "@/lib/zapi"
+import { erroInterno } from "@/lib/api-erro"
 
 function errMsg(e: unknown) { return e instanceof Error ? e.message : String(e) }
 
@@ -47,7 +48,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ enviados })
   } catch (e) {
-    return NextResponse.json({ error: errMsg(e) }, { status: 500 })
+    return erroInterno("[regua/processar]", e)
   }
 }
 
@@ -79,6 +80,6 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true })
   } catch (e) {
-    return NextResponse.json({ error: errMsg(e) }, { status: 500 })
+    return erroInterno("[regua/processar]", e)
   }
 }

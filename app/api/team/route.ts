@@ -3,6 +3,7 @@ import { Resend } from "resend"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
 import { APP_URL, FROM_EMAIL } from "@/lib/email-boas-vindas"
+import { erroInterno } from "@/lib/api-erro"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -41,7 +42,7 @@ export async function GET() {
     .eq("owner_id", auth.userId)
     .order("created_at", { ascending: true })
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return erroInterno("[team]", error)
   return NextResponse.json(data ?? [])
 }
 
@@ -97,7 +98,7 @@ export async function POST(req: NextRequest) {
     .single()
 
   if (insertError) {
-    return NextResponse.json({ error: insertError.message }, { status: 500 })
+    return erroInterno("[team]", insertError)
   }
 
   // Permissões padrão
@@ -175,7 +176,7 @@ export async function PATCH(req: NextRequest) {
     .select()
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return erroInterno("[team]", error)
   if (!data)  return NextResponse.json({ error: "Permissões não encontradas." }, { status: 404 })
   return NextResponse.json(data)
 }
@@ -198,6 +199,6 @@ export async function DELETE(req: NextRequest) {
     .eq("id",       memberId)
     .eq("owner_id", auth.userId)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return erroInterno("[team]", error)
   return new NextResponse(null, { status: 204 })
 }

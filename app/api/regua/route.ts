@@ -3,6 +3,7 @@ import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
 import { AI_MODEL } from "@/lib/ai-config"
 import { getAnthropicClient, captureAnthropicError } from "@/lib/anthropic"
+import { erroInterno } from "@/lib/api-erro"
 
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -36,7 +37,7 @@ export async function GET(_req: NextRequest) {
     return NextResponse.json(data ?? [])
   } catch (e) {
     captureAnthropicError(e, "/api/regua")
-    return NextResponse.json({ error: errMsg(e) }, { status: 500 })
+    return erroInterno("[regua]", e)
   }
 }
 
@@ -135,7 +136,7 @@ Retorne APENAS JSON com exatamente estas chaves:
   } catch (e) {
     captureAnthropicError(e, "/api/regua")
     console.error("[regua/post]", e)
-    return NextResponse.json({ error: errMsg(e) }, { status: 500 })
+    return erroInterno("[regua]", e)
   }
 }
 
@@ -158,7 +159,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ ok: true })
   } catch (e) {
     captureAnthropicError(e, "/api/regua")
-    return NextResponse.json({ error: errMsg(e) }, { status: 500 })
+    return erroInterno("[regua]", e)
   }
 }
 
@@ -181,6 +182,6 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ ok: true })
   } catch (e) {
     captureAnthropicError(e, "/api/regua")
-    return NextResponse.json({ error: errMsg(e) }, { status: 500 })
+    return erroInterno("[regua]", e)
   }
 }

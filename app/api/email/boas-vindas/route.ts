@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { Resend } from "resend"
 import { buildBoasVindasHtml, FROM_EMAIL, REPLY_TO } from "@/lib/email-boas-vindas"
+import { erroInterno } from "@/lib/api-erro"
 
 const getResend = () => new Resend(process.env.RESEND_API_KEY)
 
@@ -27,7 +28,7 @@ export async function POST(req: NextRequest) {
 
   if (error) {
     console.error("[email/boas-vindas] Resend error:", error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return erroInterno("[email/boas-vindas]", error)
   }
 
   return NextResponse.json({ ok: true, id: data?.id }, { status: 201 })

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { checkAuth } from '@/lib/auth-check'
 import { AI_MODEL } from "@/lib/ai-config"
 import { captureAnthropicError } from "@/lib/anthropic"
+import { erroInterno } from "@/lib/api-erro"
 
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -73,6 +74,6 @@ Retorne apenas o JSON puro.`,
   } catch (e) {
     captureAnthropicError(e, "/api/agente/planejar")
     console.error('[agente/planejar]', e)
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    return erroInterno("[agente/planejar]", e)
   }
 }

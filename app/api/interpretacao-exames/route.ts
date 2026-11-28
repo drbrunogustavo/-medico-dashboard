@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { checkAuth } from '@/lib/auth-check'
 import { AI_MODEL } from "@/lib/ai-config"
 import { captureAnthropicError } from "@/lib/anthropic"
+import { erroInterno } from "@/lib/api-erro"
 
 export async function POST(request: NextRequest) {
   const auth = await checkAuth()
@@ -44,6 +45,6 @@ Escreva uma explicação para o paciente sobre o que significa esse resultado, s
     return NextResponse.json({ texto })
   } catch (e) {
     captureAnthropicError(e, "/api/interpretacao-exames")
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    return erroInterno("[interpretacao-exames]", e)
   }
 }

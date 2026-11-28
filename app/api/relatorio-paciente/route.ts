@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { checkAuth } from '@/lib/auth-check'
 import { AI_MODEL } from "@/lib/ai-config"
 import { captureAnthropicError } from "@/lib/anthropic"
+import { erroInterno } from "@/lib/api-erro"
 
 export const maxDuration = 60
 
@@ -62,6 +63,6 @@ Escreva o relatório para o paciente conforme as instruções.`,
     return NextResponse.json({ texto })
   } catch (e) {
     captureAnthropicError(e, "/api/relatorio-paciente")
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    return erroInterno("[relatorio-paciente]", e)
   }
 }

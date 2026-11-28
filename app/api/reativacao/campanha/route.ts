@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { AI_MODEL } from "@/lib/ai-config"
 import { getAnthropicClient, captureAnthropicError } from "@/lib/anthropic"
+import { erroInterno } from "@/lib/api-erro"
 
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -68,6 +69,6 @@ Retorne JSON:
   } catch (e) {
     captureAnthropicError(e, "/api/reativacao/campanha")
     console.error("[api/reativacao/campanha]", e)
-    return NextResponse.json({ error: errMsg(e) }, { status: 500 })
+    return erroInterno("[reativacao/campanha]", e)
   }
 }

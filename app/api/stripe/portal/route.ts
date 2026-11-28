@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
+import { erroInterno } from "@/lib/api-erro"
 
 function errMsg(e: unknown) { return e instanceof Error ? e.message : String(e) }
 
@@ -39,6 +40,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ url: session.url })
   } catch (e) {
     console.error("[api/stripe/portal]", e)
-    return NextResponse.json({ error: errMsg(e) }, { status: 500 })
+    return erroInterno("[stripe/portal]", e)
   }
 }

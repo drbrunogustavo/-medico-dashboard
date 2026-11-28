@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { AI_MODEL } from "@/lib/ai-config"
 import { getAnthropicClient, captureAnthropicError } from "@/lib/anthropic"
+import { erroInterno } from "@/lib/api-erro"
 
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -104,6 +105,6 @@ export async function POST(req: NextRequest) {
   } catch (e) {
     captureAnthropicError(e, "/api/radar")
     console.error("[api/radar]", e)
-    return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 500 })
+    return erroInterno("[radar]", e)
   }
 }

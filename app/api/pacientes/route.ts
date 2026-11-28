@@ -8,6 +8,7 @@ import {
   inserirContato,
   inserirProntuario,
 } from "@/lib/medx"
+import { erroInterno } from "@/lib/api-erro"
 
 const medxConfigured = () =>
   !!(process.env.MEDX_URL && process.env.MEDX_INTEGRATION_TOKEN)
@@ -109,7 +110,7 @@ export async function GET(req: NextRequest) {
     }
   } catch (e) {
     console.error("[api/pacientes GET]", e)
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    return erroInterno("[pacientes]", e)
   }
 }
 
@@ -218,7 +219,7 @@ export async function POST(req: NextRequest) {
     }
   } catch (e) {
     console.error("[api/pacientes POST]", e)
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    return erroInterno("[pacientes]", e)
   }
 }
 
@@ -241,6 +242,6 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ ok: true })
   } catch (e) {
     console.error("[api/pacientes DELETE]", e)
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    return erroInterno("[pacientes]", e)
   }
 }

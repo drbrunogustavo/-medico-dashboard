@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
+import { erroInterno } from "@/lib/api-erro"
 
 type PlanoKey = "starter" | "pro" | "elite_monthly" | "elite_annual"
 
@@ -83,6 +84,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ url: session.url })
   } catch (e) {
     console.error("[stripe/checkout] erro ao criar sessão:", e)
-    return NextResponse.json({ error: errMsg(e) }, { status: 500 })
+    return erroInterno("[stripe/checkout]", e)
   }
 }

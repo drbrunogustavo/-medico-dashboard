@@ -4,6 +4,7 @@ import { createSupabaseServerClient } from "@/lib/supabase-server"
 import { AI_MODEL } from "@/lib/ai-config"
 import { getAnthropicClient, captureAnthropicError } from "@/lib/anthropic"
 import { logAiUsage } from "@/lib/log-ai-usage"
+import { erroInterno } from "@/lib/api-erro"
 
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -87,6 +88,6 @@ Retorne JSON:
   } catch (e) {
     captureAnthropicError(e, "/api/carrossel")
     console.error("[api/carrossel]", e)
-    return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 500 })
+    return erroInterno("[carrossel]", e)
   }
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { AI_MODEL } from "@/lib/ai-config"
 import { getAnthropicClient, captureAnthropicError } from "@/lib/anthropic"
+import { erroInterno } from "@/lib/api-erro"
 
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -72,6 +73,6 @@ O breakdown deve ter os 12 meses. Seja realista, com crescimento gradual.`,
   } catch (e) {
     captureAnthropicError(e, "/api/metas/plano")
     console.error("[api/metas/plano]", e)
-    return NextResponse.json({ error: errMsg(e) }, { status: 500 })
+    return erroInterno("[metas/plano]", e)
   }
 }

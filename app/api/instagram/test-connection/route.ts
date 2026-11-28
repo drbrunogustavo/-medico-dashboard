@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
+import { erroInterno } from "@/lib/api-erro"
 
 /**
  * Test-connection endpoint for Meta App Review.
@@ -130,6 +131,6 @@ export async function GET() {
     })
   } catch (e) {
     console.error("[instagram/test-connection]", e)
-    return NextResponse.json({ error: errMsg(e) }, { status: 500 })
+    return erroInterno("[instagram/test-connection]", e)
   }
 }

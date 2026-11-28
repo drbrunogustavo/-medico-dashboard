@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { AI_MODEL } from "@/lib/ai-config"
 import { getAnthropicClient, captureAnthropicError } from "@/lib/anthropic"
+import { erroInterno } from "@/lib/api-erro"
 
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -83,6 +84,6 @@ Gere entre 5-12 passos dependendo do nível de detalhe solicitado.`,
   } catch (e) {
     captureAnthropicError(e, "/api/sops/gerar")
     console.error("[api/sops/gerar]", e)
-    return NextResponse.json({ error: errMsg(e) }, { status: 500 })
+    return erroInterno("[sops/gerar]", e)
   }
 }

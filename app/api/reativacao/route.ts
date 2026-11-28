@@ -3,6 +3,7 @@ import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
 import { AI_MODEL } from "@/lib/ai-config"
 import { getAnthropicClient, captureAnthropicError } from "@/lib/anthropic"
+import { erroInterno } from "@/lib/api-erro"
 
 export const maxDuration = 60
 
@@ -20,11 +21,11 @@ export async function GET() {
       .eq("user_id", auth.userId)
       .order("ultimo_contato", { ascending: true })
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) return erroInterno("[reativacao]", error)
     return NextResponse.json(data ?? [])
   } catch (e) {
     captureAnthropicError(e, "/api/reativacao")
-    return NextResponse.json({ error: errMsg(e) }, { status: 500 })
+    return erroInterno("[reativacao]", e)
   }
 }
 
@@ -74,10 +75,10 @@ Não use emojis excessivos. Retorne apenas o texto da mensagem.`,
       .select()
       .single()
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) return erroInterno("[reativacao]", error)
     return NextResponse.json(data)
   } catch (e) {
     captureAnthropicError(e, "/api/reativacao")
-    return NextResponse.json({ error: errMsg(e) }, { status: 500 })
+    return erroInterno("[reativacao]", e)
   }
 }

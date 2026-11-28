@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
+import { erroInterno } from "@/lib/api-erro"
 
 const CATEGORIAS_VALIDAS = ["protocolo", "caso_clinico", "experiencia", "duvida", "resultado", "geral"]
 
@@ -17,7 +18,7 @@ export async function GET() {
     .order("created_at", { ascending: false })
     .limit(50)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return erroInterno("[comunidade/posts]", error)
 
   // Fetch which posts the current user liked
   const { data: meusLikes } = await supabase
@@ -72,7 +73,7 @@ export async function POST(req: NextRequest) {
     .select()
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return erroInterno("[comunidade/posts]", error)
 
   return NextResponse.json({ post: { ...data, meu_like: false } })
 }

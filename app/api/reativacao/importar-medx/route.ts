@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServiceClient } from "@/lib/supabase-service"
 import { getMedxClientForUser } from "@/lib/medx"
+import { erroInterno } from "@/lib/api-erro"
 
 // ⚠️  Status=11 usado como proxy de "consulta realizada".
 //    Correlação: todos os registros com Atendido_as preenchido tinham Status=11.
@@ -109,7 +110,7 @@ export async function POST() {
 
     if (error) {
       console.error("[importar-medx] upsert:", error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return erroInterno("[reativacao/importar-medx]", error)
     }
 
     return NextResponse.json({
@@ -119,6 +120,6 @@ export async function POST() {
     })
   } catch (e) {
     console.error("[importar-medx]", e)
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    return erroInterno("[reativacao/importar-medx]", e)
   }
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { checkAuth } from '@/lib/auth-check'
 import { AI_MODEL } from "@/lib/ai-config"
 import { captureAnthropicError } from "@/lib/anthropic"
+import { erroInterno } from "@/lib/api-erro"
 
 export const maxDuration = 60
 
@@ -63,6 +64,6 @@ Retorne apenas o JSON puro.`,
   } catch (e) {
     captureAnthropicError(e, "/api/raio-x")
     console.error('[raio-x]', e)
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    return erroInterno("[raio-x]", e)
   }
 }

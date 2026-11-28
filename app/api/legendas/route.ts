@@ -3,6 +3,7 @@ import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
 import { AI_MODEL } from "@/lib/ai-config"
 import { captureAnthropicError } from "@/lib/anthropic"
+import { erroInterno } from "@/lib/api-erro"
 
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -78,6 +79,6 @@ export async function POST(request: NextRequest) {
   } catch (e) {
     captureAnthropicError(e, "/api/legendas")
     console.error(e)
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    return erroInterno("[legendas]", e)
   }
 }

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
+import { erroInterno } from "@/lib/api-erro"
 
 function errMsg(e: unknown) { return e instanceof Error ? e.message : String(e) }
 
@@ -28,6 +29,6 @@ export async function GET() {
     return NextResponse.json({ posts: data.data ?? [] })
   } catch (e) {
     console.error("[instagram/posts]", e)
-    return NextResponse.json({ error: errMsg(e) }, { status: 500 })
+    return erroInterno("[instagram/posts]", e)
   }
 }

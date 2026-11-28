@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
+import { erroInterno } from "@/lib/api-erro"
 
 export async function GET() {
   const auth = await checkAuth()
@@ -12,7 +13,7 @@ export async function GET() {
     .select("tipo, config, ativo")
     .eq("user_id", auth.userId)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return erroInterno("[integracoes]", error)
   return NextResponse.json(data ?? [])
 }
 
@@ -33,6 +34,6 @@ export async function POST(req: NextRequest) {
     .select("tipo, config, ativo")
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return erroInterno("[integracoes]", error)
   return NextResponse.json(data)
 }

@@ -3,6 +3,7 @@ import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
 import { checkAiRateLimit } from "@/lib/rate-limit"
 import { logAiUsage } from "@/lib/log-ai-usage"
+import { erroInterno } from "@/lib/api-erro"
 
 const OPENAI_SIZE: Record<string, string> = {
   "9:16": "1024x1536",
@@ -160,6 +161,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Modelo inválido" }, { status: 400 })
   } catch (e) {
     console.error("[gerar-imagem]", e)
-    return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 500 })
+    return erroInterno("[gerar-imagem]", e)
   }
 }

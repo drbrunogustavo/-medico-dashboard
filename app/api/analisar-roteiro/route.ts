@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { checkAuth } from '@/lib/auth-check'
 import { AI_MODEL } from "@/lib/ai-config"
 import { captureAnthropicError } from "@/lib/anthropic"
+import { erroInterno } from "@/lib/api-erro"
 
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -72,6 +73,6 @@ Regras:
   } catch (e) {
     captureAnthropicError(e, "/api/analisar-roteiro")
     console.error('[analisar-roteiro]', e)
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    return erroInterno("[analisar-roteiro]", e)
   }
 }

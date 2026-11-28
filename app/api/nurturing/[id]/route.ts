@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
+import { erroInterno } from "@/lib/api-erro"
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const auth = await checkAuth()
@@ -15,6 +16,6 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     .eq("user_id", auth.userId)
     .select()
     .single()
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return erroInterno("[nurturing/[id]]", error)
   return NextResponse.json(data)
 }

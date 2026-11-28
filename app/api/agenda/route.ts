@@ -4,6 +4,7 @@ import {
   getAgenda, getAgendaByUsuario, getDisponibilidade,
   getUsuariosAgenda, inserirAgendamento, atualizarAgendamento,
 } from "@/lib/medx"
+import { erroInterno } from "@/lib/api-erro"
 
 // ── MedX → camelCase normalization ────────────────────────────────────────────
 // O MedX devolve campos PascalCase/underscore (Inicio, Descricao, Status numérico,
@@ -98,7 +99,7 @@ export async function GET(req: NextRequest) {
     }
   } catch (e) {
     console.error("[api/agenda]", e)
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    return erroInterno("[agenda]", e)
   }
 }
 
@@ -110,7 +111,7 @@ export async function POST(req: NextRequest) {
     const data = await inserirAgendamento(body)
     return NextResponse.json(data)
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    return erroInterno("[agenda]", e)
   }
 }
 
@@ -122,6 +123,6 @@ export async function PUT(req: NextRequest) {
     const data = await atualizarAgendamento(body)
     return NextResponse.json(data)
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    return erroInterno("[agenda]", e)
   }
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { Resend } from "resend"
 import { createSupabaseServiceClient } from "@/lib/supabase-service"
+import { erroInterno } from "@/lib/api-erro"
 
 const getResend = () => new Resend(process.env.RESEND_API_KEY)
 const APP_URL    = process.env.NEXT_PUBLIC_APP_URL    ?? "https://praxisplataforma.com.br"
@@ -139,6 +140,6 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ ok: true, enviados })
   } catch (e) {
-    return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 500 })
+    return erroInterno("[email/trial-acabando]", e)
   }
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
+import { erroInterno } from "@/lib/api-erro"
 
 export const maxDuration = 60
 
@@ -23,7 +24,7 @@ export async function GET(req: NextRequest) {
     .eq("ano", ano)
     .order("dia", { ascending: true })
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return erroInterno("[calendario-posts]", error)
   return NextResponse.json(data ?? [])
 }
 
@@ -52,7 +53,7 @@ export async function POST(req: NextRequest) {
     .eq("mes", mes)
     .eq("ano", ano)
 
-  if (delError) return NextResponse.json({ error: delError.message }, { status: 500 })
+  if (delError) return erroInterno("[calendario-posts]", delError)
 
   const rows = posts.map(p => ({ ...p, user_id: auth.userId, mes, ano }))
   const { data, error: insError } = await supabase
@@ -60,7 +61,7 @@ export async function POST(req: NextRequest) {
     .insert(rows)
     .select("id")
 
-  if (insError) return NextResponse.json({ error: insError.message }, { status: 500 })
+  if (insError) return erroInterno("[calendario-posts]", insError)
   return NextResponse.json({ count: data?.length ?? 0 })
 }
 
@@ -87,6 +88,6 @@ export async function PATCH(req: NextRequest) {
     .eq("id", id)
     .eq("user_id", auth.userId)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return erroInterno("[calendario-posts]", error)
   return NextResponse.json({ ok: true })
 }

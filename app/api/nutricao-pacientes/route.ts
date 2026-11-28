@@ -3,6 +3,7 @@ import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
 import { AI_MODEL } from "@/lib/ai-config"
 import { getAnthropicClient, captureAnthropicError } from "@/lib/anthropic"
+import { erroInterno } from "@/lib/api-erro"
 
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -52,7 +53,7 @@ export async function POST(req: NextRequest) {
         .eq("user_id", auth.userId)
         .select()
         .single()
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      if (error) return erroInterno("[nutricao-pacientes]", error)
       return NextResponse.json(data)
     }
 
@@ -71,7 +72,7 @@ export async function POST(req: NextRequest) {
         })
         .select()
         .single()
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      if (error) return erroInterno("[nutricao-pacientes]", error)
       return NextResponse.json(data)
     }
 
@@ -144,7 +145,7 @@ Retorne APENAS o JSON array, sem markdown.`,
   } catch (e) {
     captureAnthropicError(e, "/api/nutricao-pacientes")
     console.error("[api/nutricao-pacientes]", e)
-    return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 500 })
+    return erroInterno("[nutricao-pacientes]", e)
   }
 }
 
@@ -159,10 +160,10 @@ export async function GET(req: NextRequest) {
       .select("*")
       .eq("user_id", auth.userId)
       .order("criado_em", { ascending: false })
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) return erroInterno("[nutricao-pacientes]", error)
     return NextResponse.json(data ?? [])
   } catch (e) {
     captureAnthropicError(e, "/api/nutricao-pacientes")
-    return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 500 })
+    return erroInterno("[nutricao-pacientes]", e)
   }
 }

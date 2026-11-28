@@ -5,6 +5,7 @@ import { AI_MODEL } from "@/lib/ai-config"
 import { getAnthropicClient, captureAnthropicError } from "@/lib/anthropic"
 import { checkAiRateLimit } from "@/lib/rate-limit"
 import { logAiUsage } from "@/lib/log-ai-usage"
+import { erroInterno } from "@/lib/api-erro"
 
 export const maxDuration = 60
 
@@ -129,6 +130,6 @@ export async function POST(req: NextRequest) {
   } catch (e) {
     captureAnthropicError(e, "/api/consultor")
     console.error("[api/consultor]", e)
-    return NextResponse.json({ error: errMsg(e) }, { status: 500 })
+    return erroInterno("[consultor]", e)
   }
 }

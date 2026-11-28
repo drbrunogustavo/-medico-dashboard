@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
+import { erroInterno } from "@/lib/api-erro"
 
 export async function GET() {
   const auth = await checkAuth()
@@ -12,7 +13,7 @@ export async function GET() {
     .eq("user_id", auth.userId)
     .eq("tipo", "imagem")
     .order("criado_em", { ascending: false })
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return erroInterno("[marca-assets]", error)
   return NextResponse.json(data ?? [])
 }
 
@@ -33,6 +34,6 @@ export async function POST(req: NextRequest) {
     })
     .select("id, arquivo_url, nome_arquivo, tamanho_bytes, criado_em")
     .single()
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return erroInterno("[marca-assets]", error)
   return NextResponse.json(data)
 }

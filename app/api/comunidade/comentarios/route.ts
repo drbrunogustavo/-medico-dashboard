@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
+import { erroInterno } from "@/lib/api-erro"
 
 export async function GET(req: NextRequest) {
   const auth = await checkAuth()
@@ -17,7 +18,7 @@ export async function GET(req: NextRequest) {
     .order("created_at", { ascending: true })
     .limit(50)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return erroInterno("[comunidade/comentarios]", error)
   return NextResponse.json({ comentarios: data ?? [] })
 }
 
@@ -46,6 +47,6 @@ export async function POST(req: NextRequest) {
     .select()
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return erroInterno("[comunidade/comentarios]", error)
   return NextResponse.json({ comentario: data })
 }

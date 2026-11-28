@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
+import { erroInterno } from "@/lib/api-erro"
 
 export async function POST(req: NextRequest) {
   const auth = await checkAuth()
@@ -47,6 +48,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, zaapId: data.zaapId })
   } catch (e) {
     console.error("[api/zapi/send]", e)
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    return erroInterno("[zapi/send]", e)
   }
 }

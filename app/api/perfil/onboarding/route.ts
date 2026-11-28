@@ -23,7 +23,8 @@ export async function POST() {
 
   if (error) {
     console.error("[perfil/onboarding] Erro ao marcar onboarding_completo:", error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error("[perfil/onboarding]", error)
+    return NextResponse.json({ error: "Não foi possível concluir o onboarding." }, { status: 500 })
   }
 
   return NextResponse.json({ ok: true })

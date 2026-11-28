@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
+import { erroInterno } from "@/lib/api-erro"
 
 export async function POST(req: NextRequest) {
   const body = await req.json() as { nome: string; email: string; especialidade?: string }
@@ -13,7 +14,7 @@ export async function POST(req: NextRequest) {
     .insert({ nome: body.nome, email: body.email, especialidade: body.especialidade ?? "" })
 
   if (error && error.code !== "23505") {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return erroInterno("[academy/interesse]", error)
   }
   return NextResponse.json({ ok: true }, { status: 201 })
 }

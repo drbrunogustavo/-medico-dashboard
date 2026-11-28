@@ -4,6 +4,7 @@ import { getAnthropicClient, captureAnthropicError } from "@/lib/anthropic"
 import { createSupabaseServiceClient } from "@/lib/supabase-service"
 import { AI_MODEL } from "@/lib/ai-config"
 import { logAiUsage } from "@/lib/log-ai-usage"
+import { erroInterno } from "@/lib/api-erro"
 
 export const maxDuration = 120
 
@@ -276,6 +277,6 @@ export async function POST(request: NextRequest) {
   } catch (e) {
     captureAnthropicError(e, "/api/estudos")
     console.error("[estudos] erro ao processar:", e)
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    return erroInterno("[estudos]", e)
   }
 }

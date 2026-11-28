@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
+import { erroInterno } from "@/lib/api-erro"
 
 function errMsg(e: unknown) { return e instanceof Error ? e.message : String(e) }
 
@@ -24,6 +25,6 @@ export async function GET(req: NextRequest) {
     if (error) throw new Error(error.message)
     return NextResponse.json(data ?? [])
   } catch (e) {
-    return NextResponse.json({ error: errMsg(e) }, { status: 500 })
+    return erroInterno("[nurturing]", e)
   }
 }

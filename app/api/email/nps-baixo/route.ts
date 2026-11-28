@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { Resend } from "resend"
+import { erroInterno } from "@/lib/api-erro"
 
 const getResend = () => new Resend(process.env.RESEND_API_KEY)
 const APP_URL    = process.env.NEXT_PUBLIC_APP_URL    ?? "https://praxisplataforma.com.br"
@@ -121,7 +122,7 @@ export async function POST(req: NextRequest) {
 
   if (error) {
     console.error("[email/nps-baixo]", error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return erroInterno("[email/nps-baixo]", error)
   }
 
   return NextResponse.json({ ok: true })

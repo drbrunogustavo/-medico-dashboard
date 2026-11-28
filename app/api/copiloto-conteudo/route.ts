@@ -4,6 +4,7 @@ import { createSupabaseServerClient } from "@/lib/supabase-server"
 import { AI_MODEL } from "@/lib/ai-config"
 import { getAnthropicClient, captureAnthropicError } from "@/lib/anthropic"
 import { logAiUsage } from "@/lib/log-ai-usage"
+import { erroInterno } from "@/lib/api-erro"
 
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -118,6 +119,6 @@ Gere um pacote completo de conteúdo para Instagram. Retorne JSON:
   } catch (e) {
     captureAnthropicError(e, "/api/copiloto-conteudo")
     console.error("[api/copiloto-conteudo]", e)
-    return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 500 })
+    return erroInterno("[copiloto-conteudo]", e)
   }
 }

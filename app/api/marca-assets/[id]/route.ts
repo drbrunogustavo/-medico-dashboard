@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
+import { erroInterno } from "@/lib/api-erro"
 
 export async function DELETE(
   _req: NextRequest,
@@ -38,6 +39,6 @@ export async function DELETE(
     .eq("id", params.id)
     .eq("user_id", auth.userId)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return erroInterno("[marca-assets/[id]]", error)
   return NextResponse.json({ ok: true })
 }

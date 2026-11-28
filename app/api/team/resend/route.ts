@@ -3,6 +3,7 @@ import { Resend } from "resend"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
 import { APP_URL, FROM_EMAIL } from "@/lib/email-boas-vindas"
+import { erroInterno } from "@/lib/api-erro"
 
 export async function POST(req: NextRequest) {
   const auth = await checkAuth()
@@ -22,7 +23,7 @@ export async function POST(req: NextRequest) {
     .eq("owner_id", auth.userId)
     .maybeSingle()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return erroInterno("[team/resend]", error)
   if (!member) return NextResponse.json({ error: "Membro não encontrado." }, { status: 404 })
   if (member.status !== "pendente") {
     return NextResponse.json({ error: "Membro já aceitou o convite." }, { status: 409 })

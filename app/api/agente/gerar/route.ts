@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { checkAuth } from '@/lib/auth-check'
 import { AI_MODEL } from "@/lib/ai-config"
 import { captureAnthropicError } from "@/lib/anthropic"
+import { erroInterno } from "@/lib/api-erro"
 
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -110,6 +111,6 @@ Retorne um JSON array com ${dias.length} objeto(s). Apenas o JSON array puro, se
   } catch (e) {
     captureAnthropicError(e, "/api/agente/gerar")
     console.error('[agente/gerar]', e)
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    return erroInterno("[agente/gerar]", e)
   }
 }

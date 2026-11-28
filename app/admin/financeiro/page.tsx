@@ -1,18 +1,18 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Loader2, RefreshCw, AlertTriangle, Info } from "lucide-react"
-import { TopBar } from "@/components/TopBar"
-import { cn } from "@/lib/utils"
+import { useCallback, useEffect, useState } from "react"
+import Link from "next/link"
+import { RefreshCw } from "lucide-react"
+import { Panel, PxButton, PageHeader } from "@/components/px"
 
 interface Resumo {
-  mrr:               number
-  arr:               number
-  total_registros:   number
-  cobrados:          number
-  em_trial:          number
-  past_due:          number
-  cancelados:        number
+  mrr:                number
+  arr:                number
+  total_registros:    number
+  cobrados:           number
+  em_trial:           number
+  past_due:           number
+  cancelados:         number
   renovando_em_breve: number
 }
 
@@ -32,187 +32,112 @@ function brl(v: number) {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
 }
 
-function StatCard({
-  label, value, sub, accent, warn,
-}: {
-  label: string
-  value: string
-  sub?: string
-  accent?: boolean
-  warn?: boolean
-}) {
+function Numero({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
-    <div className={cn(
-      "bg-card border rounded-xl px-5 py-4",
-      accent ? "border-accent/30 bg-accent-dim/40" : warn ? "border-amber-500/25 bg-amber-500/5" : "border-border"
-    )}>
-      <div className="text-[10px] font-mono text-text-muted uppercase tracking-wider mb-1">{label}</div>
-      <div className={cn(
-        "text-[18px] md:text-[22px] font-semibold",
-        accent ? "text-accent" : warn ? "text-amber-400" : "text-text-primary"
-      )}>
-        {value}
-      </div>
-      {sub && <div className="text-[10px] text-text-muted mt-0.5">{sub}</div>}
-    </div>
+    <Panel className="space-y-0.5">
+      <div className="text-[12.5px] text-px-muted">{label}</div>
+      <div className="text-[24px] font-semibold leading-tight text-px-ink">{value}</div>
+      {hint && <div className="text-[12px] text-px-muted">{hint}</div>}
+    </Panel>
   )
 }
 
 export default function FinanceiroAdminPage() {
   const [data,    setData]    = useState<Data | null>(null)
   const [loading, setLoading] = useState(true)
-  const [err,     setErr]     = useState<string | null>(null)
+  const [erro,    setErro]    = useState("")
 
-  async function fetchData() {
-    setLoading(true)
-    setErr(null)
+  const carregar = useCallback(async () => {
+    setLoading(true); setErro("")
     try {
       const r = await fetch("/api/admin/financeiro")
-      const d = await r.json() as Data & { error?: string }
-      if (d.error) throw new Error(d.error)
+      if (r.status === 403) { setErro("Esta área é restrita ao administrador."); setData(null); return }
+      const d = await r.json().catch(() => null) as Data | null
+      if (!r.ok || !d?.resumo || !Array.isArray(d.breakdown)) throw new Error("HTTP " + r.status)
       setData(d)
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Erro ao carregar dados")
-    } finally {
-      setLoading(false)
-    }
-  }
+      console.error("[admin/financeiro] erro ao carregar:", e)
+      setErro("Não foi possível carregar os números."); setData(null)
+    } finally { setLoading(false) }
+  }, [])
 
-  useEffect(() => { fetchData() }, [])
+  useEffect(() => { carregar() }, [carregar])
 
   const r = data?.resumo
 
   return (
     <div className="animate-fade-in">
-      <TopBar
+      <PageHeader
         title="Financeiro"
-        subtitle="ADMIN · PRAXIS INTERNAL"
-        tagline="Acompanhe receita recorrente estimada e assinaturas em risco."
-        actions={
-          <button
-            onClick={fetchData}
-            className="flex items-center gap-1.5 px-3 py-1.5 border border-border rounded-lg text-[12px] text-text-muted hover:text-text-primary hover:border-border-hover transition-all"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-            Atualizar
-          </button>
-        }
+        caption="Receita recorrente estimada e assinaturas que pedem atenção"
+        actions={<PxButton variant="secondary" size="sm" leftIcon={RefreshCw} onClick={carregar} loading={loading}>Atualizar</PxButton>}
       />
 
-      <div className="p-6 md:p-8 space-y-6">
+      <div className="space-y-4 px-4 pb-10 md:px-10">
+        <Panel className="text-[13px] leading-relaxed text-px-muted">
+          É uma estimativa. Cada assinatura entra pelo preço de tabela do plano, e conta como cobrada quem tem um preço do Stripe vinculado.
+          O valor realmente cobrado, com cupons, descontos e créditos de afiliado, não é consultado. Os preços de tabela estão fixos no código e
+          precisam ser atualizados lá quando os planos mudarem. Quem ainda está em trial ou foi liberado manualmente não entra na receita.
+        </Panel>
 
-        {/* Disclaimer */}
-        <div className="flex items-start gap-2.5 text-[11px] text-text-muted bg-card border border-border rounded-lg px-4 py-3">
-          <Info className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-text-muted" />
-          <span>
-            MRR calculado apenas sobre assinaturas cobradas (com <code className="font-mono">stripe_price_id</code>).
-            Trials gratuitos não entram na receita. Preços hardcoded — atualizar em{" "}
-            <code className="font-mono">app/api/admin/financeiro/route.ts</code> se mudarem.
-          </span>
-        </div>
+        {erro && <p role="alert" className="rounded-px-card bg-px-danger-soft px-3 py-2 text-[13px] text-px-danger">{erro}</p>}
 
-        {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-5 h-5 animate-spin text-text-muted" />
-          </div>
-        ) : err ? (
-          <div className="text-center py-20 text-red-400 text-[13px]">{err}</div>
-        ) : r && data && (
-          <>
-            {/* Alerta past_due */}
-            {r.past_due > 0 && (
-              <div className="flex items-start gap-2 bg-amber-500/10 border border-amber-500/25 rounded-lg px-4 py-3 text-[12px] text-amber-400">
-                <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-                {r.past_due} assinatura{r.past_due > 1 ? "s" : ""} com pagamento vencido (past_due) — verifique na tela de Assinantes.
+        {loading && !erro ? <p role="status" className="py-16 text-center text-[13px] text-px-muted">Carregando números</p>
+          : r && data && (
+            <>
+              {r.past_due > 0 && (
+                <p role="status" className="rounded-px-card bg-px-warn-soft px-3 py-2 text-[13px] text-px-warn">
+                  {r.past_due} assinatura{r.past_due > 1 ? "s" : ""} com pagamento vencido.{" "}
+                  <Link href="/admin/assinantes" className="font-medium underline underline-offset-2">Ver em Assinantes</Link>
+                </p>
+              )}
+
+              <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                <Numero label="Receita mensal estimada" value={brl(r.mrr)} hint="Assinaturas cobradas" />
+                <Numero label="Receita anual projetada" value={brl(r.arr)} hint="Receita mensal vezes 12" />
+                <Numero label="Assinaturas cobradas" value={String(r.cobrados)} hint={`De ${r.total_registros} registros`} />
+                <Numero label="Em trial ou manual" value={String(r.em_trial)} hint="Fora da receita" />
               </div>
-            )}
 
-            {/* Cards principais */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <StatCard
-                label="MRR Estimado"
-                value={brl(r.mrr)}
-                sub="assinaturas cobradas"
-                accent
-              />
-              <StatCard
-                label="ARR Projetado"
-                value={brl(r.arr)}
-                sub="MRR × 12 meses"
-              />
-              <StatCard
-                label="Cobrados"
-                value={String(r.cobrados)}
-                sub={`de ${r.total_registros} registros`}
-              />
-              <StatCard
-                label="Em Trial"
-                value={String(r.em_trial)}
-                sub="não contados no MRR"
-              />
-            </div>
-
-            {/* Breakdown por plano */}
-            <div className="bg-card border border-border rounded-xl overflow-hidden">
-              <div className="px-5 py-3 border-b border-border">
-                <span className="text-[10px] font-mono text-text-muted uppercase tracking-wider">
-                  Receita por plano — apenas cobrados
-                </span>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-[12px] min-w-[420px]">
-                  <thead>
-                    <tr className="border-b border-border/60">
-                      {["Plano", "Assinantes", "Preço unit.", "Subtotal MRR"].map(h => (
-                        <th
-                          key={h}
-                          className={cn(
-                            "px-5 py-2.5 text-[10px] font-mono text-text-muted uppercase tracking-wider",
-                            h === "Plano" ? "text-left" : "text-right"
-                          )}
-                        >
-                          {h}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.breakdown.map((b, i) => (
-                      <tr
-                        key={b.plano}
-                        className={cn(
-                          "border-b border-border/40 hover:bg-background/40 transition-colors",
-                          i === data.breakdown.length - 1 && "border-b-0"
-                        )}
-                      >
-                        <td className="px-5 py-3 font-medium text-text-primary">{b.plano}</td>
-                        <td className="px-5 py-3 text-right text-text-secondary">{b.count}</td>
-                        <td className="px-5 py-3 text-right font-mono text-text-muted">{brl(b.preco_unit)}</td>
-                        <td className="px-5 py-3 text-right font-mono text-accent font-semibold">{brl(b.subtotal)}</td>
+              <Panel className="overflow-hidden p-0">
+                <h2 className="border-b border-px-line px-5 py-3 text-[14px] font-semibold text-px-ink">Receita por plano</h2>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[420px] text-left text-[13px]">
+                    <thead>
+                      <tr className="border-b border-px-line text-[12px] text-px-muted">
+                        <th scope="col" className="px-5 py-2.5 font-medium">Plano</th>
+                        <th scope="col" className="px-5 py-2.5 text-right font-medium">Assinantes</th>
+                        <th scope="col" className="px-5 py-2.5 text-right font-medium">Preço por mês</th>
+                        <th scope="col" className="px-5 py-2.5 text-right font-medium">Subtotal</th>
                       </tr>
-                    ))}
-                    <tr className="border-t border-border bg-background/40">
-                      <td colSpan={3} className="px-5 py-3 text-[10px] font-mono text-text-muted uppercase tracking-wider">
-                        Total MRR
-                      </td>
-                      <td className="px-5 py-3 text-right font-mono text-accent font-bold text-[15px]">
-                        {brl(r.mrr)}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
+                    </thead>
+                    <tbody>
+                      {data.breakdown.length === 0 ? (
+                        <tr><td colSpan={4} className="px-5 py-8 text-center text-px-muted">Nenhuma assinatura cobrada ainda.</td></tr>
+                      ) : data.breakdown.map(b => (
+                        <tr key={b.plano} className="border-b border-px-line/60">
+                          <td className="px-5 py-3 font-medium text-px-ink">{b.plano}</td>
+                          <td className="px-5 py-3 text-right tabular-nums text-px-ink">{b.count}</td>
+                          <td className="px-5 py-3 text-right tabular-nums text-px-muted">{brl(b.preco_unit)}</td>
+                          <td className="px-5 py-3 text-right tabular-nums font-medium text-px-ink">{brl(b.subtotal)}</td>
+                        </tr>
+                      ))}
+                      <tr>
+                        <th scope="row" colSpan={3} className="px-5 py-3 text-left font-medium text-px-ink">Total</th>
+                        <td className="px-5 py-3 text-right text-[15px] font-semibold tabular-nums text-px-ink">{brl(r.mrr)}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </Panel>
 
-            {/* Status e alertas */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <StatCard label="Cobrados ativos" value={String(r.cobrados)}  />
-              <StatCard label="Em trial"         value={String(r.em_trial)} sub="não cobrados" />
-              <StatCard label="Vencidos"         value={String(r.past_due)}   warn={r.past_due > 0} />
-              <StatCard label="Renovando em 30d" value={String(r.renovando_em_breve)} />
-            </div>
-          </>
-        )}
+              <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                <Numero label="Pagamento vencido" value={String(r.past_due)} />
+                <Numero label="Cancelados" value={String(r.cancelados)} />
+                <Numero label="Renovam em até 30 dias" value={String(r.renovando_em_breve)} hint="Assinaturas cobradas" />
+              </div>
+            </>
+          )}
       </div>
     </div>
   )

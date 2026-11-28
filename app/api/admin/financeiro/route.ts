@@ -33,7 +33,10 @@ export async function GET() {
     .from("user_planos")
     .select("plano, status, stripe_price_id, assinatura_termina_em")
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    console.error("[admin/financeiro] erro ao ler user_planos:", error)
+    return NextResponse.json({ error: "Não foi possível carregar os números." }, { status: 500 })
+  }
 
   const rows = data ?? []
 

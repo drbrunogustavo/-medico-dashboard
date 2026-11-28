@@ -89,7 +89,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Link href="/planos" className={cn(linkCls, "justify-between")}><span>Plano</span><span className="text-[11.5px] font-semibold text-px-muted">{PLANO_LABEL[plano]}</span></Link>
             <Link href="/perfil" className={linkCls}>Perfil</Link>
             <Link href="/configuracoes" className={linkCls}>Configurações</Link>
-            <Link href="/configuracoes/membros" className={linkCls}>Equipe</Link>
+            <Link href="/configuracoes?aba=membros" className={linkCls}>Equipe</Link>
             {isAdmin ? <Link href="/admin/depoimentos" className={linkCls}>Administração</Link> : null}
             <button type="button" onClick={() => { setContaAberta(false); document.dispatchEvent(new CustomEvent("praxis:cmd-open")) }} className={cn(linkCls, "w-full justify-between text-left")}><span>Acesso rápido</span><span className="text-[11.5px] text-px-muted">Ctrl K</span></button>
             <Link href="/depoimento" className={linkCls}>Deixar depoimento</Link>

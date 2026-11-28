@@ -497,6 +497,11 @@ function TabPlano() {
 
 export default function ConfiguracoesPage() {
   const [aba, setAba] = useState<Aba>("integracoes")
+  useEffect(() => {
+    const pedida = new URLSearchParams(window.location.search).get("aba")
+    const valida = ABAS.find(a => a.value === pedida)
+    if (valida) setAba(valida.value)
+  }, [])
   return (
     <div className="animate-fade-in">
       <PageHeader title="Configurações" caption="Integrações, segurança, equipe e plano" />

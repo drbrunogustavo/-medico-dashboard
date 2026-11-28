@@ -14,7 +14,7 @@ export async function GET() {
   if (!auth.authenticated) return auth.response
 
   try {
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
     const { data, error } = await supabase
       .from("pacientes_reativacao")
       .select("*")
@@ -58,7 +58,7 @@ Não use emojis excessivos. Retorne apenas o texto da mensagem.`,
       })
       const texto = (resp.content.find(b => b.type === "text") as { text: string } | undefined)?.text ?? ""
 
-      const supabase = createSupabaseServerClient()
+      const supabase = await createSupabaseServerClient()
       await supabase.from("pacientes_reativacao")
         .update({ mensagem_gerada: texto })
         .eq("id", body.id)
@@ -68,7 +68,7 @@ Não use emojis excessivos. Retorne apenas o texto da mensagem.`,
     }
 
     // Action: upsert paciente
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
     const { data, error } = await supabase
       .from("pacientes_reativacao")
       .upsert({ ...body, user_id: auth.userId })

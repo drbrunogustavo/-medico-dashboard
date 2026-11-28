@@ -27,7 +27,7 @@ export async function POST(request: Request) {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
 
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { data: planoData } = await supabase.from("user_planos").select("plano").eq("user_id", auth.userId).maybeSingle()
   const { allowed } = await checkAiRateLimit(auth.userId, planoData?.plano ?? "trial", supabase)
   if (!allowed) {

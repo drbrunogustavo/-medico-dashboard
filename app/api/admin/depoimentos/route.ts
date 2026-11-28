@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
   if (!isAdmin(auth.userId)) return NextResponse.json({ error: "Forbidden" }, { status: 403 })
 
   const filtro = new URL(req.url).searchParams.get("aprovado") // "true" | "false" | "all"
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   let query = supabase
     .from("depoimentos_publicos")
     .select("id, nome, crm, especialidade, cidade, estado, depoimento, resultado_destaque, instagram, aprovado, exibir_landing, created_at")
@@ -36,7 +36,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "id e aprovado (verdadeiro ou falso) são obrigatórios." }, { status: 400 })
   }
   const { id, aprovado } = body
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { error } = await supabase
     .from("depoimentos_publicos")
     .update({ aprovado })
@@ -57,7 +57,7 @@ export async function DELETE(req: NextRequest) {
   const id = new URL(req.url).searchParams.get("id")
   if (!id) return NextResponse.json({ error: "id obrigatório" }, { status: 400 })
 
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { error } = await supabase.from("depoimentos_publicos").delete().eq("id", id)
 
   if (error) {

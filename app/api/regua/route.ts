@@ -27,7 +27,7 @@ export async function GET(_req: NextRequest) {
   if (!auth.authenticated) return auth.response
 
   try {
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
     const { data, error } = await supabase
       .from("regua_relacionamento")
       .select("*")
@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
 
     const resp = await ai.messages.create({
       model:      AI_MODEL,
@@ -149,7 +149,7 @@ export async function PATCH(req: NextRequest) {
   if (!id) return NextResponse.json({ error: "id obrigatório" }, { status: 400 })
 
   try {
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
     const { error } = await supabase
       .from("regua_relacionamento")
       .update(updates)
@@ -172,7 +172,7 @@ export async function DELETE(req: NextRequest) {
   if (!nome) return NextResponse.json({ error: "paciente_nome obrigatório" }, { status: 400 })
 
   try {
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
     const { error } = await supabase
       .from("regua_relacionamento")
       .delete()

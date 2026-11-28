@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Fetch user profile for context
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
     const { data: perfil } = await supabase
       .from("perfis")
       .select("nome, especialidade, cidade, estado, nicho, publico_alvo, tom_voz, marca_slogan, marca_tom_voz")

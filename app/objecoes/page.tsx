@@ -110,7 +110,7 @@ export default function ObecoesPage() {
   const [loadingPautas,   setLoadingPautas]   = useState(false)
   const [pautaSearch,     setPautaSearch]     = useState("")
 
-  const toastRef = useRef<ReturnType<typeof setTimeout>>()
+  const toastRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   const showToast = (msg: string, type: ToastType = "success") => {
     setToastType(type)

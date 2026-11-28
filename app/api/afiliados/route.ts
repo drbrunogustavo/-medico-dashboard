@@ -10,7 +10,7 @@ export async function GET(_req: NextRequest) {
   if (!auth.authenticated) return auth.response
 
   try {
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
     const [afiliadoResult, indicacoesResult] = await Promise.all([
       supabase
         .from("afiliados")

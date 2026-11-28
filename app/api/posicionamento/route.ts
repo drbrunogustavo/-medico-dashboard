@@ -114,7 +114,7 @@ Retorne JSON com EXATAMENTE esta estrutura:
 
     // Optionally save to user profile
     try {
-      const supabase = createSupabaseServerClient()
+      const supabase = await createSupabaseServerClient()
       await supabase
         .from("perfis")
         .update({

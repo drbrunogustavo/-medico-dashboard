@@ -52,12 +52,12 @@ function normalizar(lista: unknown): Alerta[] {
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
 
-  const { id } = params
+  const { id } = await params
   const supabase = createSupabaseServiceClient()
   const client   = getAnthropicClient()
 

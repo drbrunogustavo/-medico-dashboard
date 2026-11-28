@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
   if (!auth.authenticated) return auth.response
 
   const tipo = req.nextUrl.searchParams.get("tipo") ?? "all"
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
 
   try {
     if (tipo === "historico") {
@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "tipo, titulo e conteudo obrigatórios" }, { status: 400 })
     }
 
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
     const { data, error } = await supabase
       .from("memoria_clinica")
       .insert({ user_id: auth.userId, tipo, titulo, conteudo, tags, favorito })
@@ -84,7 +84,7 @@ export async function PATCH(req: NextRequest) {
 
     if (!id) return NextResponse.json({ error: "id obrigatório" }, { status: 400 })
 
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
     const { data, error } = await supabase
       .from("memoria_clinica")
       .update(fields)
@@ -109,7 +109,7 @@ export async function DELETE(req: NextRequest) {
   if (!id) return NextResponse.json({ error: "id obrigatório" }, { status: 400 })
 
   try {
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
     const { error } = await supabase
       .from("memoria_clinica")
       .delete()

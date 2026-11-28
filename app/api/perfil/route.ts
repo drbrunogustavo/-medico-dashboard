@@ -7,7 +7,7 @@ export async function GET() {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
 
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from("perfis")
     .select("*")
@@ -67,7 +67,7 @@ export async function PATCH(req: NextRequest) {
   }
   if (Object.keys(dados).length === 0) return NextResponse.json({ error: "Nenhum campo para atualizar." }, { status: 400 })
 
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from("perfis")
     .upsert({ ...dados, user_id: auth.userId }, { onConflict: "user_id" })

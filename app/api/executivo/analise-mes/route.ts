@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     pergunta = body.pergunta?.trim() || undefined
   } catch { /* body opcional */ }
 
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const now = new Date().toISOString()
   const som = startOfMonth(0)
   const som1 = startOfMonth(1)

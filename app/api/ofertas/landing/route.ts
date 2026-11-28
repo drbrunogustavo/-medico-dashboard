@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
   try {
     const { tema, publico, objetivo, tom, landingPage } = await req.json()
 
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
     const { data: perfil } = await supabase
       .from("perfis")
       .select("cidade")

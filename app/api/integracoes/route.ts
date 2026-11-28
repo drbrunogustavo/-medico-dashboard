@@ -17,7 +17,7 @@ export async function GET() {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
 
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from("integracoes_usuario")
     .select("tipo, config, ativo")
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
     config[campo] = v.trim()
   }
 
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { data: existente } = await supabase
     .from("integracoes_usuario")
     .select("config")

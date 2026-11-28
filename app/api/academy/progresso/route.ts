@@ -7,7 +7,7 @@ export async function GET() {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
 
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from("academy_progresso")
     .select("*")
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "aula_id e trilha_id são obrigatórios" }, { status: 400 })
   }
 
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from("academy_progresso")
     .upsert(

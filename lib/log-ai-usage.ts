@@ -8,7 +8,7 @@ export function logAiUsage(params: {
 }): void {
   ;(async () => {
     try {
-      const supabase = createSupabaseServerClient()
+      const supabase = await createSupabaseServerClient()
       await supabase.from("ai_usage_log").insert({
         user_id:       params.userId,
         rota:          params.rota,

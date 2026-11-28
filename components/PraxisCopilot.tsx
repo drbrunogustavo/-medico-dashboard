@@ -47,7 +47,7 @@ export function PraxisCopilot() {
   const inputRef   = useRef<HTMLInputElement>(null)
   const dialogRef  = useRef<HTMLDivElement>(null)
   const botaoRef   = useRef<HTMLButtonElement>(null)
-  const navTimer   = useRef<ReturnType<typeof setTimeout>>()
+  const navTimer   = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const pedidoRef  = useRef(0)
   const tituloId = useId()
 

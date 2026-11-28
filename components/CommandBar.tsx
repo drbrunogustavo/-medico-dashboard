@@ -60,7 +60,7 @@ export function CommandBar() {
   const inputRef    = useRef<HTMLInputElement>(null)
   const dialogRef   = useRef<HTMLDivElement>(null)
   const retornoRef  = useRef<HTMLElement | null>(null)
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>()
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const listId = useId()
 
   useEffect(() => {

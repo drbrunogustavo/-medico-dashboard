@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
   if (!auth.authenticated) return auth.response
 
   try {
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
     const { data: planoData } = await supabase
       .from("user_planos")
       .select("stripe_customer_id")

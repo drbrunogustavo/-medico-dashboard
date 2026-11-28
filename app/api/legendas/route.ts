@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
   let brandCtx = ""
   let especialidade = "Clínico-Geral, Endocrinologia e Nutrologia"
   try {
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
     const { data: perfil } = await supabase
       .from("perfis")
       .select("especialidade, publico_alvo, marca_slogan, marca_tom_voz")

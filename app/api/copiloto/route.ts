@@ -28,7 +28,7 @@ function buildSystemPrompt(especialidade: string): string {
 
 async function getMemoriaContext(userId: string, protocoloId?: string): Promise<string> {
   try {
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
     const parts: string[] = []
 
     if (protocoloId) {
@@ -65,7 +65,7 @@ export async function GET(_req: NextRequest) {
   if (!auth.authenticated) return auth.response
 
   try {
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
     const { data, error } = await supabase
       .from("copiloto_historico")
       .select("id, paciente_nome, tipo_consulta, relato, resultado, created_at")
@@ -98,7 +98,7 @@ export async function DELETE(req: NextRequest) {
   if (!id) return NextResponse.json({ error: "id obrigatório" }, { status: 400 })
 
   try {
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
     const { error } = await supabase
       .from("copiloto_historico")
       .delete()
@@ -159,7 +159,7 @@ export async function POST(req: NextRequest) {
 
     const nome = body.nomePaciente ?? "paciente"
     const tipo = body.tipoConsulta ?? "Consulta"
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
     const [memoriaCtx, { data: perfilEspec }, { data: planoData }] = await Promise.all([
       getMemoriaContext(auth.userId, body.protocoloId),
       supabase.from("perfis").select("especialidade").eq("user_id", auth.userId).maybeSingle(),
@@ -222,7 +222,7 @@ Retorne um JSON com exatamente estas 7 chaves:
 
     // Save to history — non-blocking, never fails the response
     try {
-      const supabase = createSupabaseServerClient()
+      const supabase = await createSupabaseServerClient()
       await supabase.from("copiloto_historico").insert({
         user_id:         auth.userId,
         paciente_id:     body.pacienteId   ?? null,
@@ -245,7 +245,7 @@ Retorne um JSON com exatamente estas 7 chaves:
     ) {
       ;(async () => {
         try {
-          const sbFF = createSupabaseServerClient()
+          const sbFF = await createSupabaseServerClient()
           // Gerar de novo para o mesmo paciente não duplica as mensagens: se já há pesquisa agendada, não agenda outra.
           const { data: jaAgendado } = await sbFF
             .from("nps_pesquisas").select("id")

@@ -17,7 +17,7 @@ export async function POST() {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
 
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
 
   // Prefer user-stored credentials; fall back to env vars
   const { data } = await supabase

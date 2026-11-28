@@ -6,12 +6,12 @@ import { escapeLike } from "@/lib/like"
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
 
-  const { id } = params
+  const { id } = await params
   const supabase = createSupabaseServiceClient()
 
   try {
@@ -70,7 +70,7 @@ function texto(v: unknown, max: number): string | null {
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const originErr = originGuard(req)
   if (originErr) return originErr
@@ -78,7 +78,7 @@ export async function PATCH(
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
 
-  const { id } = params
+  const { id } = await params
   const body = await req.json().catch(() => null) as Record<string, unknown> | null
   if (!body || typeof body !== "object") return NextResponse.json({ error: "Corpo inválido" }, { status: 400 })
 

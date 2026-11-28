@@ -21,7 +21,7 @@ export async function GET() {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
 
-  const supabase              = createSupabaseServerClient()
+  const supabase              = await createSupabaseServerClient()
   const agora                 = Date.now()
   const som                   = startOfMonth()
   const now                   = new Date().toISOString()

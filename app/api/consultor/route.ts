@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
   const ai = getAnthropicClient()
 
   try {
-    const sbRate = createSupabaseServerClient()
+    const sbRate = await createSupabaseServerClient()
     const { data: planoData } = await sbRate.from("user_planos").select("plano").eq("user_id", auth.userId).maybeSingle()
     const { allowed } = await checkAiRateLimit(auth.userId, planoData?.plano ?? "trial", sbRate)
     if (!allowed) {
@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
     // Inject protocolos + historico recente from memoria
     let memoriaExtra = ""
     try {
-      const supabase = createSupabaseServerClient()
+      const supabase = await createSupabaseServerClient()
       const [{ data: protocolos }, { data: historico }] = await withTimeout(
         Promise.all([
           supabase.from("memoria_clinica").select("titulo,conteudo").eq("user_id", auth.userId).eq("tipo", "protocolo").eq("favorito", true).limit(3),
@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
     // Save to history async (non-blocking)
     stream.finalMessage().then(async final => {
       try {
-        const supabase = createSupabaseServerClient()
+        const supabase = await createSupabaseServerClient()
         const lastUser = body.messages[body.messages.length - 1]
         const answer   = (final.content.find(b => b.type === "text") as { text: string } | undefined)?.text ?? ""
         await supabase.from("consultor_historico").insert([

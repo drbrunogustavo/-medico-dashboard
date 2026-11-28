@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
   const estagio = req.nextUrl.searchParams.get("estagio") ?? undefined
 
   try {
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
     let query = supabase
       .from("crm_leads")
       .select("*")
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json()
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
     const { data, error } = await supabase
       .from("crm_leads")
       .insert({ ...body, user_id: auth.userId })

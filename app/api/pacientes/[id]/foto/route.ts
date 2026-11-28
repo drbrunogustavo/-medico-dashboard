@@ -20,7 +20,7 @@ function assinaturaConfere(bytes: Uint8Array, mime: string): boolean {
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
@@ -30,7 +30,7 @@ export async function GET(
   const { data: pac } = await supabase
     .from("pacientes_local")
     .select("foto_url")
-    .eq("id", params.id)
+    .eq("id", (await params).id)
     .eq("user_id", auth.userId)
     .maybeSingle()
 
@@ -47,7 +47,7 @@ export async function GET(
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const originErr = originGuard(req)
   if (originErr) return originErr
@@ -55,7 +55,7 @@ export async function POST(
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
 
-  const { id } = params
+  const { id } = await params
   const form   = await req.formData().catch(() => null)
   const file   = form?.get("file") as File | null
   if (!file || typeof file === "string") return NextResponse.json({ error: "file obrigatório" }, { status: 400 })

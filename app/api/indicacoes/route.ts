@@ -10,7 +10,7 @@ export async function GET(_req: NextRequest) {
   if (!auth.authenticated) return auth.response
 
   try {
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
     const { data, error } = await supabase
       .from("indicacoes")
       .select("*")
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
     const { data, error } = await supabase
       .from("indicacoes")
       .insert({ user_id: auth.userId, indicador_nome, indicador_telefone, indicado_nome, indicado_telefone })

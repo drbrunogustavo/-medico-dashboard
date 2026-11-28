@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
   const inicio = new Date(ano, mes - 1, 1).toISOString()
   const fim    = new Date(ano, mes, 0, 23, 59, 59).toISOString()
 
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
 
   // Aggregate data in parallel
   const [leadRes, npsRes, pautasRes, financeiroRes] = await Promise.all([

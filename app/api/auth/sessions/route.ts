@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
 
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { data: { session } } = await supabase.auth.getSession()
 
   if (!session) return NextResponse.json([])

@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
   const mesAno = req.nextUrl.searchParams.get("mes_ano") ?? mesAtual()
 
   try {
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
     const { data, error } = await supabase
       .from("metas_mensais")
       .select("*")
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
   try {
     const body     = await req.json()
     const mesAno   = body.mes_ano ?? mesAtual()
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
 
     const { data, error } = await supabase
       .from("metas_mensais")

@@ -10,7 +10,7 @@ export async function GET() {
   if (!auth.authenticated) return auth.response
 
   try {
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
     const { data, error } = await supabase
       .from("consultor_historico")
       .select("*")
@@ -30,7 +30,7 @@ export async function DELETE() {
   if (!auth.authenticated) return auth.response
 
   try {
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
     const { error } = await supabase
       .from("consultor_historico")
       .delete()

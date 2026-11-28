@@ -31,7 +31,7 @@ export default function PolemicasPage() {
   const [loading, setLoading] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
   const [salvos, setSalvos] = useState<Tipo[]>([])
-  const [salvando, setSalvando] = useState<Tipo | null>(null)
+  const [salvando, setSalvando] = useState<Tipo[]>([])
   const [erroSalvar, setErroSalvar] = useState<{ tipo: Tipo; msg: string } | null>(null)
   const [showPautas, setShowPautas] = useState(false)
 
@@ -56,8 +56,8 @@ export default function PolemicasPage() {
   }
 
   async function salvar(ab: Abordagem) {
-    if (salvando || salvos.includes(ab.tipo)) return
-    setSalvando(ab.tipo); setErroSalvar(null)
+    if (salvando.includes(ab.tipo) || salvos.includes(ab.tipo)) return
+    setSalvando(prev => [...prev, ab.tipo]); setErroSalvar(null)
     try {
       const res = await fetch("/api/pautas", {
         method: "POST",
@@ -76,7 +76,7 @@ export default function PolemicasPage() {
     } catch (e) {
       console.error("[polemicas] erro ao salvar abordagem:", e)
       setErroSalvar({ tipo: ab.tipo, msg: "Não foi possível salvar. Tente novamente." })
-    } finally { setSalvando(null) }
+    } finally { setSalvando(prev => prev.filter(x => x !== ab.tipo)) }
   }
 
   return (
@@ -168,7 +168,7 @@ export default function PolemicasPage() {
                           fullWidth
                           variant={salvo ? "secondary" : "primary"}
                           leftIcon={salvo ? Check : Plus}
-                          loading={salvando === ab.tipo}
+                          loading={salvando.includes(ab.tipo)}
                           disabled={salvo}
                           onClick={() => salvar(ab)}
                         >

@@ -1,6 +1,7 @@
 "use client"
 import { useState, useEffect } from "react"
-import { Download, X, Smartphone } from "lucide-react"
+import { PxButton } from "@/components/px/Button"
+import { Download, X } from "lucide-react"
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>
@@ -14,7 +15,7 @@ export function InstallPWA() {
 
   useEffect(() => {
     if (typeof window === "undefined") return
-    if (localStorage.getItem("pwa-dismissed")) return
+    try { if (localStorage.getItem("pwa-dismissed")) return } catch { /* armazenamento bloqueado: segue sem lembrar */ }
 
     const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent)
     const isStandalone = window.matchMedia("(display-mode: standalone)").matches
@@ -35,7 +36,7 @@ export function InstallPWA() {
   }, [])
 
   function dismiss() {
-    localStorage.setItem("pwa-dismissed", "1")
+    try { localStorage.setItem("pwa-dismissed", "1") } catch { /* ignora */ }
     setDismissed(true)
     setPrompt(null)
     setShowIOS(false)
@@ -51,59 +52,26 @@ export function InstallPWA() {
 
   if (dismissed || (!prompt && !showIOS)) return null
 
-  const S: React.CSSProperties = {
-    position: "fixed",
-    bottom: 24,
-    left: "50%",
-    transform: "translateX(-50%)",
-    zIndex: 9999,
-    background: "#0D1B2A",
-    border: "1px solid rgba(184,151,106,0.3)",
-    borderRadius: 14,
-    padding: "14px 18px",
-    display: "flex",
-    alignItems: "flex-start",
-    gap: 12,
-    boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
-    maxWidth: 360,
-    width: "calc(100vw - 32px)",
-  }
-
   return (
-    <div style={S}>
-      <div style={{ width: 36, height: 36, borderRadius: 8, background: "rgba(184,151,106,0.12)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-        <Smartphone size={18} color="#b8976a" />
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: "#F5F0E8", lineHeight: 1.3 }}>
-          Instalar PRAXIS
-        </p>
-        {showIOS ? (
-          <p style={{ margin: "4px 0 10px", fontSize: 11, color: "#b8976a", lineHeight: 1.5 }}>
-            Toque em <strong style={{ color: "#F5F0E8" }}>Compartilhar</strong> →{" "}
-            <strong style={{ color: "#F5F0E8" }}>Adicionar à Tela de Início</strong> para instalar o app.
-          </p>
-        ) : (
-          <>
-            <p style={{ margin: "4px 0 10px", fontSize: 11, color: "#9a8a7a", lineHeight: 1.5 }}>
-              Acesse a plataforma direto pelo celular, sem abrir o browser.
+    <div className="px fixed inset-x-0 bottom-28 z-[70] flex justify-center px-4 print:hidden">
+      <div role="region" aria-label="Instalar o aplicativo" className="px-glass-strong flex w-full max-w-sm items-start gap-3 rounded-px-card p-4 shadow-[0_10px_30px_rgba(20,20,20,0.18)]">
+        <div className="min-w-0 flex-1">
+          <p className="text-[14px] font-semibold text-px-ink">Instalar o PRAXIS</p>
+          {showIOS ? (
+            <p className="mt-1 text-[13px] leading-relaxed text-px-muted">
+              No Safari, toque em <strong className="text-px-ink">Compartilhar</strong> e depois em <strong className="text-px-ink">Adicionar à Tela de Início</strong>.
             </p>
-            <button
-              onClick={install}
-              style={{ display: "flex", alignItems: "center", gap: 6, background: "#b8976a", color: "#0D1B2A", border: "none", borderRadius: 7, padding: "7px 14px", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
-            >
-              <Download size={13} />
-              Instalar agora
-            </button>
-          </>
-        )}
+          ) : (
+            <>
+              <p className="mb-3 mt-1 text-[13px] leading-relaxed text-px-muted">Abra a plataforma direto do celular, sem passar pelo navegador.</p>
+              <PxButton size="sm" leftIcon={Download} onClick={install}>Instalar agora</PxButton>
+            </>
+          )}
+        </div>
+        <button type="button" onClick={dismiss} aria-label="Dispensar" className="shrink-0 rounded p-1 text-px-ink hover:bg-px-ink/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-px-ink/40">
+          <X className="h-4 w-4" aria-hidden />
+        </button>
       </div>
-      <button
-        onClick={dismiss}
-        style={{ background: "none", border: "none", color: "#6a5a4a", cursor: "pointer", padding: 2, flexShrink: 0 }}
-      >
-        <X size={16} />
-      </button>
     </div>
   )
 }

@@ -105,7 +105,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="px">
       <div className="px-stage" aria-hidden="true" />
-      <main className="px-bridge relative z-10 flex min-h-screen min-w-0 flex-1 flex-col pb-28">
+      <main className="relative z-10 flex min-h-screen min-w-0 flex-1 flex-col pb-28">
         <div className="flex-1">{children}</div>
       </main>
       <PillNav groups={groups} activeId={groupIdForPath(pathname)} currentHref={pathname} trailing={conta} />

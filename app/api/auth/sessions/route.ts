@@ -43,9 +43,3 @@ export async function GET(req: NextRequest) {
     atual:  true,
   }])
 }
-
-export async function DELETE() {
-  // Sem API pública para listar/revogar sessões individuais no Supabase.
-  // Encerrar a própria sessão é feito via supabase.auth.signOut() no cliente.
-  return new NextResponse(null, { status: 204 })
-}

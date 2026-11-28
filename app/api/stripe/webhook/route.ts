@@ -502,6 +502,78 @@ export async function POST(req: NextRequest) {
         break
       }
 
+      case "charge.refunded": {
+        // Reembolso de fatura: reverte a comissão do afiliado na mesma proporção.
+        // try/catch isolado: nunca bloqueia a resposta do webhook.
+        try {
+          const charge = event.data.object as Stripe.Charge
+          const piId = typeof charge.payment_intent === "string" ? charge.payment_intent : charge.payment_intent?.id
+          if (!piId || !charge.amount || charge.amount_refunded <= 0) break
+
+          const pagamentos = await stripe.invoicePayments.list({ payment: { type: "payment_intent", payment_intent: piId }, limit: 1 })
+          const inv = pagamentos.data[0]?.invoice
+          const invoiceId = typeof inv === "string" ? inv : inv?.id
+          if (!invoiceId) break // reembolso de cobrança avulsa, sem fatura
+
+          const { data: com } = await supabase
+            .from("afiliados_comissoes")
+            .select("id, indicacao_id, afiliado_id, status, valor_comissao, valor_estornado")
+            .eq("stripe_invoice_id", invoiceId)
+            .maybeSingle()
+          if (!com || com.status === "estornada") break
+
+          const restanteCents  = Math.round(Number(com.valor_comissao) * 100)
+          const jaEstornCents  = Math.round(Number(com.valor_estornado) * 100)
+          const originalCents  = restanteCents + jaEstornCents
+          const fracao         = Math.min(1, charge.amount_refunded / charge.amount)
+          const alvoCents      = Math.round(originalCents * fracao)
+          const deltaCents     = alvoCents - jaEstornCents
+          if (deltaCents <= 0) break // reenvio do mesmo evento
+
+          let balanceTxId: string | null = null
+          if (com.status === "aplicada") {
+            const { data: afi } = await supabase.from("afiliados").select("stripe_customer_id").eq("id", com.afiliado_id).maybeSingle()
+            if (afi?.stripe_customer_id) {
+              const tx = await stripe.customers.createBalanceTransaction(
+                afi.stripe_customer_id as string,
+                {
+                  amount:      deltaCents, // positivo = débito: desfaz o crédito da comissão
+                  currency:    "brl",
+                  description: `Estorno de comissão (fatura ${invoiceId} reembolsada)`,
+                },
+                { idempotencyKey: `estorno-${invoiceId}-${charge.amount_refunded}` }
+              )
+              balanceTxId = tx.id
+            }
+          }
+
+          const total = alvoCents >= originalCents
+          await supabase
+            .from("afiliados_comissoes")
+            .update({
+              valor_comissao:  (originalCents - alvoCents) / 100,
+              valor_estornado: alvoCents / 100,
+              status:          total ? "estornada" : com.status,
+              estornado_em:    new Date().toISOString(),
+              ...(balanceTxId ? { stripe_estorno_balance_transaction_id: balanceTxId } : {}),
+            })
+            .eq("id", com.id)
+
+          const somar = async (campo: "indicacao_id" | "afiliado_id", valor: string) => {
+            const { data } = await supabase.from("afiliados_comissoes").select("valor_comissao").eq(campo, valor).eq("status", "aplicada")
+            return parseFloat((data ?? []).reduce((a, r) => a + Number(r.valor_comissao), 0).toFixed(2))
+          }
+          await supabase.from("afiliados_indicacoes").update({ valor_comissao: await somar("indicacao_id", com.indicacao_id as string) }).eq("id", com.indicacao_id)
+          await supabase.from("afiliados").update({ total_comissao_acumulada: await somar("afiliado_id", com.afiliado_id as string) }).eq("id", com.afiliado_id)
+
+          console.log(`[stripe/webhook] Comissão da fatura ${invoiceId} estornada em R$${(deltaCents / 100).toFixed(2)}`)
+        } catch (estornoErr) {
+          console.error("[stripe/webhook] Erro ao estornar comissão:", estornoErr)
+          Sentry.captureException(estornoErr, { tags: { route: "stripe-webhook", evento: "charge.refunded" } })
+        }
+        break
+      }
+
       default:
         break
     }

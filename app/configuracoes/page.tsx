@@ -180,6 +180,20 @@ function TabSeguranca() {
   const [sessoes, setSessoes] = useState<Sessao[]>([])
   const [sessLoading, setSessLoading] = useState(true)
   const [sessErro, setSessErro] = useState(false)
+  const [saindo, setSaindo] = useState(false)
+  const [saidaMsg, setSaidaMsg] = useState<{ ok: boolean; texto: string } | null>(null)
+
+  async function sairOutros() {
+    setSaindo(true); setSaidaMsg(null)
+    try {
+      const { error } = await getSupabaseBrowserClient().auth.signOut({ scope: "others" })
+      if (error) throw error
+      setSaidaMsg({ ok: true, texto: "Os outros dispositivos foram desconectados. Este continua conectado." })
+    } catch (e) {
+      console.error("[configuracoes] erro ao encerrar outras sessões:", e)
+      setSaidaMsg({ ok: false, texto: "Não foi possível desconectar os outros dispositivos. Tente novamente." })
+    } finally { setSaindo(false) }
+  }
 
   useEffect(() => {
     fetch("/api/auth/sessions")
@@ -237,7 +251,9 @@ function TabSeguranca() {
                 <div className="min-w-0"><p className="truncate text-[14px] font-medium text-px-ink">{s.device}</p><p className="text-[12.5px] text-px-muted">Iniciada em {s.time}</p></div>
                 {s.atual && <Tag tone="ink">Este dispositivo</Tag>}
               </li>))}</ul>}
-        <p className="text-[12.5px] text-px-muted">O Supabase não permite listar nem encerrar sessões de outros dispositivos por aqui.</p>
+        <p className="text-[12.5px] text-px-muted">Não é possível listar os outros dispositivos, mas você pode desconectar todos eles de uma vez.</p>
+        <div><PxButton variant="secondary" loading={saindo} onClick={sairOutros}>Desconectar outros dispositivos</PxButton></div>
+        {saidaMsg && <p role={saidaMsg.ok ? "status" : "alert"} className={saidaMsg.ok ? "text-[13px] text-px-ink" : erroBox}>{saidaMsg.texto}</p>}
       </Panel>
 
       <Panel as="section" className="space-y-1">

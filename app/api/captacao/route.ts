@@ -35,12 +35,14 @@ export async function POST(req: NextRequest) {
   pruneRlStore()
   if (isRateLimited(ip))
     return NextResponse.json({ error: "Muitas requisições. Tente novamente em breve." }, { status: 429 })
-  const body = await req.json() as {
-    nome: string; whatsapp: string; email?: string
-    interesse?: string; como_encontrou?: string; mensagem?: string
+  const raw = await req.json().catch(() => null) as Record<string, unknown> | null
+  const txt = (v: unknown, max: number) => (typeof v === "string" ? v.trim().slice(0, max) : "")
+  const body = {
+    nome: txt(raw?.nome, 120), whatsapp: txt(raw?.whatsapp, 30), email: txt(raw?.email, 160),
+    interesse: txt(raw?.interesse, 60), como_encontrou: txt(raw?.como_encontrou, 30), mensagem: txt(raw?.mensagem, 700),
   }
 
-  if (!body.nome?.trim() || !body.whatsapp?.trim()) {
+  if (!body.nome || body.whatsapp.replace(/\D/g, "").length < 10) {
     return NextResponse.json({ error: "nome e whatsapp obrigatórios" }, { status: 400 })
   }
 

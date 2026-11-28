@@ -24,11 +24,15 @@ export async function GET(req: NextRequest) {
     const supabase = createSupabaseServerClient()
     const now = new Date().toISOString()
 
+    // Com ?id=, o usuário logado envia só aquela pesquisa pendente, mesmo antes do horário agendado.
+    const id = userId ? req.nextUrl.searchParams.get("id") : null
+
     let q = supabase
       .from("nps_pesquisas")
       .select("id, paciente_nome, paciente_telefone, token, user_id")
-      .lte("agendado_para", now)
       .eq("status", "pendente")
+    if (id) q = q.eq("id", id)
+    else q = q.lte("agendado_para", now)
     if (userId) q = q.eq("user_id", userId)
 
     const { data, error } = await q

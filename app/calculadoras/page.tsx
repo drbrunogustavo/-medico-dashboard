@@ -2173,7 +2173,6 @@ export default function CalculadorasPage() {
   const [activeTab, setActiveTab] = useState<TabId>("geral")
 
   const total = Object.values(TAB_CALCS).reduce((a, list) => a + list.length, 0)
-  const Calcs = TAB_CALCS[activeTab]
 
   return (
     <div className="animate-fade-in">
@@ -2187,11 +2186,14 @@ export default function CalculadorasPage() {
           options={TABS.map(t => ({ value: t.id, label: `${t.label} (${TAB_CALCS[t.id].length})` }))}
         />
 
-        <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2">
-          {Calcs.map((Calc, i) => (
-            <Calc key={`${activeTab}-${i}`} copied={copied} onCopy={copy} />
-          ))}
-        </div>
+        {/* Todas as abas ficam montadas e as inativas só se escondem, para os valores digitados não se perderem. */}
+        {TABS.map(t => (
+          <div key={t.id} hidden={t.id !== activeTab} className={t.id === activeTab ? "grid grid-cols-1 items-start gap-4 md:grid-cols-2" : "hidden"}>
+            {TAB_CALCS[t.id].map((Calc, i) => (
+              <Calc key={`${t.id}-${i}`} copied={copied} onCopy={copy} />
+            ))}
+          </div>
+        ))}
       </div>
     </div>
   )

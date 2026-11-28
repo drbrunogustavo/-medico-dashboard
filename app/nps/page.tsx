@@ -244,13 +244,12 @@ export default function NPSPage() {
 
   async function enviarAgora(id: string) {
     setSending(id)
-    const r = await fetch("/api/nps/processar", {
-      method: "GET",
-      headers: {},
-    })
+    const r = await fetch(`/api/nps/processar?id=${encodeURIComponent(id)}`)
     setSending(null)
-    if (r.ok) { showToast("Envio iniciado"); await fetch_() }
-    else showToast("Não foi possível enviar agora", "error")
+    if (!r.ok) { showToast("Não foi possível enviar agora", "error"); return }
+    const d = (await r.json().catch(() => ({}))) as { enviados?: number }
+    if (d.enviados) { showToast("Pesquisa enviada por WhatsApp"); await fetch_() }
+    else showToast("Não foi possível enviar. Confira a integração de WhatsApp.", "error")
   }
 
   // Cálculo do NPS

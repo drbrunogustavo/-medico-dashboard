@@ -2,207 +2,90 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { ArrowLeft, CheckCircle2, Loader2, Trash2, Timer } from "lucide-react"
+import { Panel, PxButton, Field, PxInput } from "@/components/px"
+
+const CONTATO = "contato@praxisplataforma.com.br"
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export default function DeletarDadosPage() {
-  const [nome,    setNome]    = useState("")
-  const [email,   setEmail]   = useState("")
+  const [nome, setNome] = useState("")
+  const [email, setEmail] = useState("")
   const [loading, setLoading] = useState(false)
-  const [done,    setDone]    = useState(false)
-  const [error,   setError]   = useState<string | null>(null)
+  const [done, setDone] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!nome.trim() || !email.trim()) {
-      setError("Preencha nome e e-mail para continuar.")
-      return
+    if (loading) return
+    if (nome.trim().length < 2) { setError("Informe seu nome completo."); return }
+    if (!EMAIL_RE.test(email.trim())) { setError("Informe um e-mail válido."); return }
+    setError(null); setLoading(true)
+    try {
+      const res = await fetch("/api/deletar-dados", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nome: nome.trim(), email: email.trim() }),
+      })
+      if (res.ok) setDone(true)
+      else if (res.status === 429) setError("Muitas solicitações em sequência. Aguarde alguns minutos e tente de novo.")
+      else setError(`Não foi possível registrar a solicitação agora. Tente de novo ou escreva para ${CONTATO}.`)
+    } catch {
+      setError(`Não foi possível enviar. Confira a conexão ou escreva para ${CONTATO}.`)
+    } finally {
+      setLoading(false)
     }
-    setError(null)
-    setLoading(true)
-
-    // Simulates request submission — in production, POST to /api/deletar-dados
-    await new Promise(r => setTimeout(r, 1200))
-    setLoading(false)
-    setDone(true)
-  }
-
-  const inputStyle: React.CSSProperties = {
-    width: "100%", padding: "10px 14px", borderRadius: 10,
-    fontSize: 14, outline: "none", boxSizing: "border-box",
-    background: "var(--surface)",
-    border: "1px solid var(--border)",
-    color: "var(--text-primary)",
-    transition: "border-color 0.15s",
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "#F5F0E8", color: "#0D1B2A", "--background": "#F5F0E8", "--surface": "#EDE8DF", "--text-primary": "#0D1B2A", "--text-secondary": "#4A3728", "--text-muted": "#8a7a6a", "--border": "rgba(13,27,42,0.10)" } as React.CSSProperties}>
-      {/* Nav */}
-      <nav style={{
-        position: "sticky", top: 0, zIndex: 10,
-        background: "rgba(245,240,232,0.92)",
-        borderBottom: "1px solid rgba(13,27,42,0.08)",
-        backdropFilter: "blur(16px)",
-        padding: "0 24px", height: 60,
-        display: "flex", alignItems: "center",
-      }}>
-        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
-          <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
-            <circle cx="16" cy="16" r="14" stroke="#b8976a" strokeWidth="1.5"
-              strokeDasharray="70 18" strokeDashoffset="12" opacity="0.7" />
-            <path d="M10 22V10h5.5a4 4 0 0 1 0 8H10" stroke="#0D1B2A" strokeWidth="2"
-              strokeLinecap="round" strokeLinejoin="round" />
-            <line x1="18" y1="14" x2="23" y2="22" stroke="#b8976a" strokeWidth="2" strokeLinecap="round" />
-          </svg>
-          <span style={{ fontFamily: "var(--font-playfair,Georgia,serif)", fontSize: 14, fontWeight: 600, letterSpacing: "4px", color: "#0D1B2A" }}>
-            PRAXIS
-          </span>
-        </Link>
-      </nav>
-
-      {/* Content */}
-      <div style={{ maxWidth: 560, margin: "0 auto", padding: "48px 24px 80px" }}>
-        <Link href="/privacidade" style={{
-          display: "inline-flex", alignItems: "center", gap: 6,
-          fontSize: 12, color: "var(--text-muted)", textDecoration: "none",
-          marginBottom: 32,
-        }}>
-          <ArrowLeft style={{ width: 13, height: 13 }} /> Política de Privacidade
-        </Link>
-
-        {/* Header */}
-        <div style={{ marginBottom: 40 }}>
-          <p style={{ fontSize: 11, fontFamily: "monospace", color: "#b8976a", letterSpacing: "3px", textTransform: "uppercase", marginBottom: 12 }}>
-            LGPD · ART. 18
-          </p>
-          <h1 style={{
-            fontFamily: "var(--font-playfair,Georgia,serif)",
-            fontSize: "clamp(22px, 4vw, 32px)", fontWeight: 700,
-            color: "var(--text-primary)", marginBottom: 12, lineHeight: 1.2,
-          }}>
-            Solicitar Exclusão de Dados
-          </h1>
-          <p style={{ fontSize: 14, lineHeight: 1.7, color: "var(--text-secondary)" }}>
-            Ao enviar este formulário, iniciaremos o processo de exclusão permanente de todos os seus dados pessoais armazenados na plataforma PRAXIS, em conformidade com a LGPD.
-          </p>
+    <div className="px relative min-h-screen">
+      <div className="px-stage" aria-hidden="true" />
+      <div className="relative mx-auto w-full max-w-[560px] space-y-4 px-4 py-10">
+        <div className="flex items-center justify-between">
+          <Link href="/" className="text-[20px] font-semibold tracking-[0.2em] text-px-ink">PRAXIS</Link>
+          <Link href="/privacidade" className="text-[13px] text-px-muted underline underline-offset-2">Política de Privacidade</Link>
         </div>
 
-        <div style={{ height: 1, background: "var(--border)", marginBottom: 36 }} />
-
-        {done ? (
-          /* ── Success state ── */
-          <div style={{
-            padding: "32px 28px", borderRadius: 16, textAlign: "center",
-            background: "rgba(184,151,106,0.06)", border: "1px solid rgba(184,151,106,0.25)",
-          }}>
-            <CheckCircle2 style={{ width: 40, height: 40, color: "#b8976a", margin: "0 auto 16px" }} />
-            <h2 style={{ fontSize: 18, fontWeight: 700, color: "var(--text-primary)", marginBottom: 10 }}>
-              Solicitação recebida
-            </h2>
-            <p style={{ fontSize: 13, lineHeight: 1.7, color: "var(--text-secondary)", marginBottom: 20 }}>
-              Sua solicitação de exclusão de dados foi registrada. Processaremos e confirmaremos por e-mail em até <strong style={{ color: "var(--text-primary)" }}>30 dias úteis</strong>.
+        <Panel as="section" className="space-y-5 !p-7">
+          <div className="space-y-2">
+            <p className="text-[13px] text-px-muted">LGPD, art. 18</p>
+            <h1 className="text-[26px] font-semibold leading-tight text-px-ink">Solicitar exclusão de dados</h1>
+            <p className="text-[14px] leading-relaxed text-px-muted">
+              Ao enviar este formulário, você pede a exclusão dos dados pessoais associados ao seu cadastro na plataforma PRAXIS.
             </p>
-            <div style={{
-              padding: "14px 18px", borderRadius: 10,
-              background: "var(--surface)", display: "inline-block",
-            }}>
-              <p style={{ margin: 0, fontSize: 12, color: "var(--text-muted)" }}>Dúvidas? Entre em contato:</p>
-              <p style={{ margin: "4px 0 0", fontFamily: "monospace", fontSize: 13, color: "#b8976a" }}>
-                contato@praxisplataforma.com.br
-              </p>
-            </div>
           </div>
-        ) : (
-          /* ── Form ── */
-          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
 
-            {/* Info box */}
-            <div style={{
-              padding: "14px 16px", borderRadius: 10,
-              background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.2)",
-            }}>
-              <p style={{ margin: 0, fontSize: 12, lineHeight: 1.6, color: "#fbbf24" }}>
-                <strong>Atenção:</strong> esta ação é irreversível. Todos os seus dados serão excluídos permanentemente, incluindo conteúdos gerados, leads, histórico e configurações. Sua conta será encerrada.
+          {done ? (
+            <div className="space-y-2 rounded-px-card bg-white p-5">
+              <h2 className="text-[18px] font-semibold text-px-ink">Solicitação enviada</h2>
+              <p role="status" className="text-[14px] leading-relaxed text-px-muted">
+                Recebemos o pedido. A equipe vai responder no e-mail informado para confirmar sua identidade antes de excluir qualquer dado. O prazo de atendimento é de até 30 dias úteis.
               </p>
+              <p className="text-[13px] text-px-muted">Dúvidas: <a className="text-px-accent underline underline-offset-2" href={`mailto:${CONTATO}`}>{CONTATO}</a></p>
             </div>
-
-            {/* Name */}
-            <div>
-              <label htmlFor="nome" style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--text-secondary)", marginBottom: 6 }}>
-                Nome completo
-              </label>
-              <input
-                id="nome"
-                type="text"
-                value={nome}
-                onChange={e => setNome(e.target.value)}
-                placeholder="Dr. João Silva"
-                required
-                style={inputStyle}
-                onFocus={e => (e.currentTarget.style.borderColor = "var(--accent)")}
-                onBlur={e => (e.currentTarget.style.borderColor = "var(--border)")}
-              />
-            </div>
-
-            {/* Email */}
-            <div>
-              <label htmlFor="email" style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--text-secondary)", marginBottom: 6 }}>
-                E-mail cadastrado na plataforma
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="seuemail@exemplo.com.br"
-                required
-                style={inputStyle}
-                onFocus={e => (e.currentTarget.style.borderColor = "var(--accent)")}
-                onBlur={e => (e.currentTarget.style.borderColor = "var(--border)")}
-              />
-            </div>
-
-            {/* Error */}
-            {error && (
-              <p style={{ fontSize: 12, color: "#f87171", margin: 0 }}>{error}</p>
-            )}
-
-            {/* Prazo info */}
-            <div style={{
-              padding: "14px 16px", borderRadius: 10,
-              background: "var(--card)", border: "1px solid var(--border)",
-            }}>
-              <p style={{ margin: 0, fontSize: 12, lineHeight: 1.6, color: "var(--text-muted)" }}>
-                <Timer style={{ width: 14, height: 14, verticalAlign: "-0.15em", marginRight: 5 }} /> Após a solicitação, seus dados serão excluídos em até <strong style={{ color: "var(--text-secondary)" }}>30 dias úteis</strong>. Você receberá uma confirmação no e-mail informado acima quando o processo for concluído.
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+              <p className="rounded-px-card bg-px-warn-soft px-3 py-2.5 text-[13.5px] leading-relaxed text-px-warn">
+                Esta ação é irreversível. Conteúdos gerados, leads, histórico e configurações serão excluídos e a conta será encerrada.
               </p>
-            </div>
-
-            {/* Submit */}
-            <button
-              type="submit"
-              disabled={loading}
-              style={{
-                display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                padding: "12px 20px", borderRadius: 12, border: "none", cursor: loading ? "not-allowed" : "pointer",
-                fontSize: 14, fontWeight: 700, transition: "opacity 0.15s",
-                background: "rgba(239,68,68,0.12)", color: "#f87171",
-                outline: "1px solid rgba(239,68,68,0.3)",
-                opacity: loading ? 0.6 : 1,
-              }}>
-              {loading
-                ? <><Loader2 style={{ width: 16, height: 16 }} className="animate-spin" /> Enviando...</>
-                : <><Trash2 style={{ width: 16, height: 16 }} /> Solicitar Exclusão de Todos os Meus Dados</>
-              }
-            </button>
-
-            <p style={{ fontSize: 11, textAlign: "center", color: "var(--text-muted)", margin: 0 }}>
-              Dúvidas?{" "}
-              <a href="mailto:contato@praxisplataforma.com.br" style={{ color: "#b8976a", textDecoration: "none" }}>
-                contato@praxisplataforma.com.br
-              </a>
-            </p>
-          </form>
-        )}
+              <Field label="Nome completo" htmlFor="dd-nome">
+                <PxInput id="dd-nome" autoComplete="name" value={nome} onChange={e => setNome(e.target.value)} placeholder="Dr. João Silva" />
+              </Field>
+              <Field label="E-mail cadastrado na plataforma" htmlFor="dd-email">
+                <PxInput id="dd-email" type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="seuemail@exemplo.com.br" />
+              </Field>
+              {error && <p role="alert" className="rounded-px-card bg-px-danger-soft px-3 py-2 text-[13px] text-px-danger">{error}</p>}
+              <p className="text-[13px] leading-relaxed text-px-muted">
+                Como o formulário é público, vamos pedir confirmação por e-mail antes de excluir. O prazo é de até 30 dias úteis.
+              </p>
+              <PxButton type="submit" variant="danger" fullWidth loading={loading}>
+                {loading ? "Enviando" : "Solicitar exclusão dos meus dados"}
+              </PxButton>
+              <p className="text-center text-[13px] text-px-muted">
+                Dúvidas? <a className="text-px-accent underline underline-offset-2" href={`mailto:${CONTATO}`}>{CONTATO}</a>
+              </p>
+            </form>
+          )}
+        </Panel>
       </div>
     </div>
   )

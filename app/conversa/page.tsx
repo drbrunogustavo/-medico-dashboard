@@ -6,7 +6,7 @@ import { Panel, PxButton, Tag, Field, PxInput, PageHeader } from "@/components/p
 import {
   Sparkles, ChevronDown, ChevronUp, Copy, Check, ArrowRight,
   FileText, FlaskConical, Pill, BookOpen, MessageCircle,
-  CalendarClock, Instagram, Mail,
+  CalendarClock, AtSign, Mail,
 } from "lucide-react"
 
 interface CasoClinico {
@@ -33,7 +33,7 @@ const SECOES: Secao[] = [
   { key: "protocolo",           label: "Protocolo Clínico",     icon: BookOpen },
   { key: "orientacoes",         label: "Orientações ao Paciente",icon: MessageCircle },
   { key: "retorno_previsto",    label: "Retorno Previsto",      icon: CalendarClock },
-  { key: "conteudo_instagram",  label: "Conteúdo Instagram",    icon: Instagram },
+  { key: "conteudo_instagram",  label: "Conteúdo Instagram",    icon: AtSign },
   { key: "carta_paciente",      label: "Carta ao Paciente",     icon: Mail },
 ]
 

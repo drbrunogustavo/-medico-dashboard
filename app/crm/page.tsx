@@ -12,7 +12,7 @@ import {
 import { useDraggable, useDroppable } from "@dnd-kit/core"
 import { CSS } from "@dnd-kit/utilities"
 import {
-  Plus, X, Loader2, Phone, Instagram, CalendarDays, MessageSquare, MessageCircle,
+  Plus, X, Loader2, Phone, AtSign, CalendarDays, MessageSquare, MessageCircle,
   Edit2, Trash2, GripVertical, ChevronDown, Check,
   ExternalLink, Zap, CheckCircle, Clock, Edit3, Sparkles,
 } from "lucide-react"
@@ -132,7 +132,7 @@ function LeadCardContent({
                 <div className="flex items-center gap-1.5"><Phone className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /><span className="truncate">{lead.telefone}</span></div>
               )}
               {lead.instagram && (
-                <div className="flex items-center gap-1.5"><Instagram className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /><span className="truncate">{lead.instagram.startsWith("@") ? lead.instagram : `@${lead.instagram}`}</span></div>
+                <div className="flex items-center gap-1.5"><AtSign className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /><span className="truncate">{lead.instagram.startsWith("@") ? lead.instagram : `@${lead.instagram}`}</span></div>
               )}
             </div>
 
@@ -390,7 +390,7 @@ function LeadDetailModal({
             )}
             {lead.instagram && (
               <a href={`https://instagram.com/${lead.instagram.replace("@", "")}`} target="_blank" rel="noopener noreferrer" className={cn(linkBtn, "w-full justify-start")}>
-                <Instagram className="h-4 w-4" aria-hidden="true" />
+                <AtSign className="h-4 w-4" aria-hidden="true" />
                 <span className="font-medium">{lead.instagram.startsWith("@") ? lead.instagram : `@${lead.instagram}`}</span>
                 <ExternalLink className="ml-auto h-3.5 w-3.5 text-px-muted" aria-hidden="true" />
               </a>

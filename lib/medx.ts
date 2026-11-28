@@ -1,3 +1,4 @@
+import { lerConfig } from "@/lib/cripto-config"
 import { createSupabaseServiceClient } from "@/lib/supabase-service"
 
 const MEDX_URL   = (process.env.MEDX_URL ?? "https://medx65-v65teste.azurewebsites.net").replace(/\/$/, "")
@@ -187,9 +188,9 @@ export async function getMedxClientForUser(userId: string) {
     .eq("ativo", true)
     .single()
 
-  const cfg   = data?.config as { url?: string; integration_token?: string } | null
-  const url   = (cfg?.url              ?? process.env.MEDX_URL ?? "").replace(/\/$/, "")
-  const token = cfg?.integration_token ?? process.env.MEDX_INTEGRATION_TOKEN ?? ""
+  const cfg   = lerConfig(data?.config) as { url?: string; integration_token?: string }
+  const url   = (cfg.url              ?? process.env.MEDX_URL ?? "").replace(/\/$/, "")
+  const token = cfg.integration_token ?? process.env.MEDX_INTEGRATION_TOKEN ?? ""
 
   if (!url || !token) throw new Error("MedX não configurado para este usuário")
 

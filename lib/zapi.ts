@@ -1,3 +1,4 @@
+import { lerConfig } from "@/lib/cripto-config"
 import { createSupabaseServiceClient } from "@/lib/supabase-service"
 
 type ZapiResult = { ok: boolean; error?: string }
@@ -39,9 +40,9 @@ export async function sendZapiForUser(userId: string, phone: string, message: st
     .eq("ativo", true)
     .single()
 
-  const cfg        = data?.config as { instance_id?: string; token?: string } | null
-  const instanceId = cfg?.instance_id ?? process.env.ZAPI_INSTANCE_ID
-  const token      = cfg?.token       ?? process.env.ZAPI_TOKEN
+  const cfg        = lerConfig(data?.config) as { instance_id?: string; token?: string }
+  const instanceId = cfg.instance_id ?? process.env.ZAPI_INSTANCE_ID
+  const token      = cfg.token       ?? process.env.ZAPI_TOKEN
 
   if (!instanceId || !token) return { ok: false, error: "Z-API não configurada" }
   return callZapiApi(instanceId, token, phone, message)

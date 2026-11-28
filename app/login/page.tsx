@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Panel, PxButton, PxInput, Field } from "@/components/px"
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser"
 
@@ -17,13 +17,14 @@ interface BannerAd {
 
 const linkSeguro = (u: string) => /^https?:\/\//i.test(u)
 
-export default function LoginPage() {
+function LoginForm() {
   const [email, setEmail] = useState("")
   const [senha, setSenha] = useState("")
   const [loading, setLoading] = useState(false)
   const [erro, setErro] = useState("")
   const [banner, setBanner] = useState<BannerAd | null>(null)
   const router = useRouter()
+  const senhaRedefinida = useSearchParams().get("senha") === "redefinida"
 
   useEffect(() => {
     fetch("/api/anuncios-cursos/publico")
@@ -65,10 +66,12 @@ export default function LoginPage() {
             <Field label="Senha" htmlFor="l-senha">
               <PxInput id="l-senha" type="password" autoComplete="current-password" value={senha} onChange={e => setSenha(e.target.value)} />
             </Field>
+            {senhaRedefinida && !erro && <p role="status" className="rounded-px-card bg-px-ink/5 px-3 py-2 text-[13px] text-px-ink">Senha alterada. Entre com a nova senha.</p>}
             {erro && <p role="alert" className="rounded-px-card bg-px-danger-soft px-3 py-2 text-[13px] text-px-danger">{erro}</p>}
             <PxButton type="submit" loading={loading} fullWidth>{loading ? "Entrando" : "Entrar"}</PxButton>
           </form>
           <div className="space-y-2 text-center text-[13px]">
+            <p><Link href="/esqueci-senha" className="text-px-muted underline underline-offset-2">Esqueci a senha</Link></p>
             <p><Link href="/cadastro" className="font-medium text-px-ink underline underline-offset-2">Criar conta gratuita</Link></p>
             <p><Link href="/" className="text-px-muted underline underline-offset-2">Voltar para o início</Link></p>
           </div>
@@ -101,4 +104,8 @@ export default function LoginPage() {
       </main>
     </div>
   )
+}
+
+export default function LoginPage() {
+  return <Suspense fallback={null}><LoginForm /></Suspense>
 }

@@ -1,3 +1,4 @@
+import { lerConfig } from "@/lib/cripto-config"
 import { NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
@@ -27,9 +28,9 @@ export async function POST() {
     .eq("ativo", true)
     .maybeSingle()
 
-  const cfg        = data?.config as { instance_id?: string; token?: string } | null
-  const instanceId = cfg?.instance_id ?? process.env.ZAPI_INSTANCE_ID
-  const token      = cfg?.token       ?? process.env.ZAPI_TOKEN
+  const cfg        = lerConfig(data?.config) as { instance_id?: string; token?: string }
+  const instanceId = cfg.instance_id ?? process.env.ZAPI_INSTANCE_ID
+  const token      = cfg.token       ?? process.env.ZAPI_TOKEN
 
   if (!instanceId || !token) {
     return NextResponse.json({

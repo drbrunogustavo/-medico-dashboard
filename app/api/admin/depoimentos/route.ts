@@ -19,7 +19,10 @@ export async function GET(req: NextRequest) {
   else if (filtro !== "all")   query = query.eq("aprovado", false)
 
   const { data, error } = await query
-  if (error) return NextResponse.json({ error }, { status: 500 })
+  if (error) {
+    console.error("[admin/depoimentos] erro ao listar:", error)
+    return NextResponse.json({ error: "Não foi possível carregar os depoimentos." }, { status: 500 })
+  }
   return NextResponse.json(data ?? [])
 }
 
@@ -28,14 +31,21 @@ export async function PATCH(req: NextRequest) {
   if (!auth.authenticated) return auth.response
   if (!isAdmin(auth.userId)) return NextResponse.json({ error: "Forbidden" }, { status: 403 })
 
-  const { id, aprovado } = await req.json() as { id: string; aprovado: boolean }
+  const body = await req.json().catch(() => null) as { id?: unknown; aprovado?: unknown } | null
+  if (typeof body?.id !== "string" || !body.id || typeof body.aprovado !== "boolean") {
+    return NextResponse.json({ error: "id e aprovado (verdadeiro ou falso) são obrigatórios." }, { status: 400 })
+  }
+  const { id, aprovado } = body
   const supabase = createSupabaseServerClient()
   const { error } = await supabase
     .from("depoimentos_publicos")
     .update({ aprovado })
     .eq("id", id)
 
-  if (error) return NextResponse.json({ error }, { status: 500 })
+  if (error) {
+    console.error("[admin/depoimentos] erro ao atualizar:", error)
+    return NextResponse.json({ error: "Não foi possível salvar." }, { status: 500 })
+  }
   return NextResponse.json({ success: true })
 }
 
@@ -50,6 +60,9 @@ export async function DELETE(req: NextRequest) {
   const supabase = createSupabaseServerClient()
   const { error } = await supabase.from("depoimentos_publicos").delete().eq("id", id)
 
-  if (error) return NextResponse.json({ error }, { status: 500 })
+  if (error) {
+    console.error("[admin/depoimentos] erro ao excluir:", error)
+    return NextResponse.json({ error: "Não foi possível excluir." }, { status: 500 })
+  }
   return NextResponse.json({ success: true })
 }

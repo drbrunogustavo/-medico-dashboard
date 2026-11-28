@@ -1,10 +1,8 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
-import { Check, Trash2, Globe, EyeOff, Loader2, RefreshCw, Instagram, Star } from "lucide-react"
-import { TopBar } from "@/components/TopBar"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/Button"
+import { RefreshCw } from "lucide-react"
+import { Panel, PxButton, PxModal, Segmented, Tag, PageHeader } from "@/components/px"
 
 interface Dep {
   id: string
@@ -23,180 +21,147 @@ interface Dep {
 
 type Filtro = "false" | "true" | "all"
 
-const FILTRO_LABELS: Record<Filtro, string> = {
-  false: "Pendentes",
-  true:  "Aprovados",
-  all:   "Todos",
-}
+const FILTROS: { value: Filtro; label: string }[] = [
+  { value: "false", label: "Pendentes" },
+  { value: "true",  label: "Aprovados" },
+  { value: "all",   label: "Todos" },
+]
 
 export default function AdminDepoimentosPage() {
-  const [deps,    setDeps]    = useState<Dep[]>([])
+  const [deps, setDeps] = useState<Dep[]>([])
   const [loading, setLoading] = useState(true)
-  const [filtro,  setFiltro]  = useState<Filtro>("false")
-  const [acting,  setActing]  = useState<Record<string, string>>({})
+  const [erroCarga, setErroCarga] = useState("")
+  const [filtro, setFiltro] = useState<Filtro>("false")
+  const [ocupado, setOcupado] = useState<string[]>([])
+  const [erroAcao, setErroAcao] = useState<Record<string, string>>({})
+  const [excluindo, setExcluindo] = useState<Dep | null>(null)
+  const [erroModal, setErroModal] = useState("")
 
-  const fetchDeps = useCallback(async (f: Filtro) => {
-    setLoading(true)
+  const carregar = useCallback(async () => {
+    setLoading(true); setErroCarga("")
     try {
-      const r = await fetch(`/api/admin/depoimentos?aprovado=${f}`)
-      const data = await r.json()
-      setDeps(Array.isArray(data) ? data : [])
-    } finally {
-      setLoading(false)
-    }
-  }, [])
+      const r = await fetch("/api/admin/depoimentos?aprovado=" + filtro)
+      if (r.status === 403) { setErroCarga("Esta área é restrita ao administrador."); setDeps([]); return }
+      const data = await r.json().catch(() => null)
+      if (!r.ok || !Array.isArray(data)) throw new Error("HTTP " + r.status)
+      setDeps(data as Dep[])
+    } catch (e) {
+      console.error("[admin/depoimentos] erro ao carregar:", e)
+      setErroCarga("Não foi possível carregar os depoimentos."); setDeps([])
+    } finally { setLoading(false) }
+  }, [filtro])
 
-  useEffect(() => { fetchDeps(filtro) }, [filtro, fetchDeps])
+  useEffect(() => { carregar() }, [carregar])
 
-  async function aprovar(id: string) {
-    setActing(a => ({ ...a, [id]: "aprovando" }))
-    await fetch("/api/admin/depoimentos", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, aprovado: true }),
-    })
-    setDeps(d => d.filter(x => x.id !== id))
-    setActing(a => { const n = { ...a }; delete n[id]; return n })
+  const marcar = (id: string, on: boolean) => setOcupado(o => on ? [...o, id] : o.filter(x => x !== id))
+
+  async function definirAprovacao(dep: Dep, aprovado: boolean) {
+    marcar(dep.id, true); setErroAcao(e => ({ ...e, [dep.id]: "" }))
+    try {
+      const r = await fetch("/api/admin/depoimentos", {
+        method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: dep.id, aprovado }),
+      })
+      const data = await r.json().catch(() => null) as { error?: string } | null
+      if (!r.ok) { setErroAcao(e => ({ ...e, [dep.id]: data?.error ?? "Não foi possível salvar." })); return }
+      // Em "Todos" o cartão continua na lista com a situação nova; nos outros filtros ele sai.
+      setDeps(d => filtro === "all" ? d.map(x => x.id === dep.id ? { ...x, aprovado } : x) : d.filter(x => x.id !== dep.id))
+    } catch (e) {
+      console.error("[admin/depoimentos] aprovação:", e)
+      setErroAcao(er => ({ ...er, [dep.id]: "Erro de conexão. Tente novamente." }))
+    } finally { marcar(dep.id, false) }
   }
 
-  async function revogar(id: string) {
-    await fetch("/api/admin/depoimentos", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, aprovado: false }),
-    })
-    setDeps(d => d.filter(x => x.id !== id))
+  async function confirmarExclusao() {
+    if (!excluindo) return
+    const dep = excluindo
+    marcar(dep.id, true); setErroModal("")
+    try {
+      const r = await fetch("/api/admin/depoimentos?id=" + encodeURIComponent(dep.id), { method: "DELETE" })
+      const data = await r.json().catch(() => null) as { error?: string } | null
+      if (!r.ok) { setErroModal(data?.error ?? "Não foi possível excluir."); return }
+      setDeps(d => d.filter(x => x.id !== dep.id)); setExcluindo(null)
+    } catch (e) {
+      console.error("[admin/depoimentos] exclusão:", e)
+      setErroModal("Erro de conexão. Tente novamente.")
+    } finally { marcar(dep.id, false) }
   }
 
-  async function excluir(id: string) {
-    if (!confirm("Excluir este depoimento permanentemente?")) return
-    setActing(a => ({ ...a, [id]: "excluindo" }))
-    await fetch(`/api/admin/depoimentos?id=${id}`, { method: "DELETE" })
-    setDeps(d => d.filter(x => x.id !== id))
-    setActing(a => { const n = { ...a }; delete n[id]; return n })
-  }
+  const excluindoAgora = !!excluindo && ocupado.includes(excluindo.id)
+  const fecharModal = () => { if (!excluindoAgora) { setExcluindo(null); setErroModal("") } }
 
   return (
     <div className="animate-fade-in">
-      <TopBar
-        title="Moderação de Depoimentos"
-        subtitle="ADMIN · PRAXIS INTERNAL"
-        tagline="Modere depoimentos enviados por assinantes antes de publicá-los na landing page."
-        actions={
-          <Button variant="secondary" size="sm" onClick={() => fetchDeps(filtro)} leftIcon={RefreshCw}>
-            Atualizar
-          </Button>
-        }
+      <PageHeader
+        title="Depoimentos"
+        caption="Aprove o que os assinantes enviaram antes de qualquer publicação"
+        actions={<PxButton variant="secondary" size="sm" leftIcon={RefreshCw} onClick={carregar} loading={loading}>Atualizar</PxButton>}
       />
 
-      <div className="p-6 md:p-8 space-y-6">
-        {/* Filtros */}
-        <div className="flex gap-2">
-          {(["false", "true", "all"] as Filtro[]).map(f => (
-            <button
-              key={f}
-              onClick={() => setFiltro(f)}
-              className={cn(
-                "text-[11px] px-3 py-1.5 rounded-full border transition-all",
-                filtro === f
-                  ? "bg-accent-dim border-accent-border text-accent font-semibold"
-                  : "border-border text-text-muted hover:text-text-secondary"
-              )}
-            >
-              {FILTRO_LABELS[f]}
-            </button>
-          ))}
-        </div>
+      <div className="space-y-4 px-4 pb-10 md:px-10">
+        <Segmented label="Situação dos depoimentos" value={filtro} onChange={setFiltro} options={FILTROS} />
 
-        {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-5 h-5 animate-spin text-text-muted" />
-          </div>
-        ) : deps.length === 0 ? (
-          <div className="text-center py-20 text-[13px] text-text-muted">
-            {filtro === "false" ? "Nenhum depoimento pendente de aprovação." : "Nenhum depoimento encontrado."}
-          </div>
-        ) : (
+        {erroCarga && <p role="alert" className="rounded-px-card bg-px-danger-soft px-3 py-2 text-[13px] text-px-danger">{erroCarga}</p>}
+
+        {loading && !erroCarga ? <p role="status" className="py-16 text-center text-[13px] text-px-muted">Carregando depoimentos</p>
+          : !erroCarga && deps.length === 0 ? <Panel className="py-12 text-center text-[13.5px] text-px-muted">{filtro === "false" ? "Nenhum depoimento pendente de aprovação." : "Nenhum depoimento encontrado."}</Panel>
+          : !erroCarga && (
+            <ul className="space-y-3">
+              {deps.map(dep => {
+                const busy = ocupado.includes(dep.id)
+                return (
+                  <li key={dep.id}>
+                    <Panel as="article" className="space-y-3">
+                      <div className="space-y-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h2 className="text-[14.5px] font-semibold text-px-ink">{dep.nome}</h2>
+                          {dep.crm && <span className="text-[12.5px] text-px-muted">{dep.crm}</span>}
+                          <Tag tone={dep.aprovado ? "ok" : "warn"}>{dep.aprovado ? "Aprovado" : "Pendente"}</Tag>
+                          <Tag tone="neutral">{dep.exibir_landing ? "Autorizou exibir na landing" : "Não autorizou exibir na landing"}</Tag>
+                        </div>
+                        <p className="text-[12.5px] text-px-muted">
+                          {[dep.especialidade, dep.cidade ? dep.cidade + (dep.estado ? "/" + dep.estado : "") : null, dep.instagram, new Date(dep.created_at).toLocaleDateString("pt-BR")].filter(Boolean).join(" · ")}
+                        </p>
+                      </div>
+
+                      <blockquote className="border-l-2 border-px-line pl-3 text-[13.5px] leading-relaxed text-px-ink">{dep.depoimento}</blockquote>
+
+                      {dep.resultado_destaque && (
+                        <p className="text-[13px] text-px-ink"><span className="text-px-muted">Resultado em destaque: </span>{dep.resultado_destaque}</p>
+                      )}
+
+                      {!dep.aprovado && !dep.exibir_landing && (
+                        <p className="text-[12.5px] text-px-muted">Aprovar não publica este depoimento, porque o autor não autorizou a exibição na landing.</p>
+                      )}
+
+                      {erroAcao[dep.id] && <p role="alert" className="rounded-px-card bg-px-danger-soft px-3 py-2 text-[13px] text-px-danger">{erroAcao[dep.id]}</p>}
+
+                      <div className="flex flex-wrap gap-2">
+                        {dep.aprovado
+                          ? <PxButton size="sm" variant="secondary" onClick={() => definirAprovacao(dep, false)} disabled={busy}>Revogar aprovação</PxButton>
+                          : <PxButton size="sm" onClick={() => definirAprovacao(dep, true)} loading={busy}>Aprovar</PxButton>}
+                        <PxButton size="sm" variant="danger" disabled={busy} onClick={() => { setErroModal(""); setExcluindo(dep) }}>Excluir</PxButton>
+                      </div>
+                    </Panel>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+      </div>
+
+      <PxModal open={!!excluindo} onClose={fecharModal} title="Excluir depoimento">
+        {excluindo && (
           <div className="space-y-4">
-            {deps.map(dep => (
-              <div key={dep.id} className="bg-card border border-border rounded-xl p-5 space-y-3">
-
-                {/* Header */}
-                <div className="flex items-start gap-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-[14px] font-semibold text-text-primary">{dep.nome}</span>
-                      {dep.crm && (
-                        <span className="text-[10px] font-mono text-text-muted">{dep.crm}</span>
-                      )}
-                      {dep.aprovado ? (
-                        <span className="text-badge font-mono font-bold px-2 py-0.5 rounded-full border bg-accent-dim border-accent-border text-accent">
-                          APROVADO
-                        </span>
-                      ) : (
-                        <span className="text-badge font-mono font-bold px-2 py-0.5 rounded-full border bg-amber-500/10 border-amber-500/30 text-amber-400">
-                          PENDENTE
-                        </span>
-                      )}
-                      {dep.exibir_landing ? (
-                        <span className="flex items-center gap-1 text-badge font-mono px-2 py-0.5 rounded-full border bg-blue-500/10 border-blue-500/25 text-blue-400">
-                          <Globe className="w-2.5 h-2.5" /> Landing
-                        </span>
-                      ) : (
-                        <span className="flex items-center gap-1 text-badge font-mono px-2 py-0.5 rounded-full border border-border text-text-muted">
-                          <EyeOff className="w-2.5 h-2.5" /> Privado
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 mt-1 text-[11px] text-text-muted flex-wrap">
-                      {dep.especialidade && <span>{dep.especialidade}</span>}
-                      {dep.cidade && (
-                        <span>· {dep.cidade}{dep.estado ? `/${dep.estado}` : ""}</span>
-                      )}
-                      {dep.instagram && (
-                        <span className="flex items-center gap-1">
-                          · <Instagram className="w-2.5 h-2.5" /> {dep.instagram}
-                        </span>
-                      )}
-                      <span className="font-mono">
-                        · {new Date(dep.created_at).toLocaleDateString("pt-BR")}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Texto do depoimento */}
-                <p className="text-[13px] text-text-secondary leading-relaxed border-l-2 border-accent/30 pl-3 italic">
-                  "{dep.depoimento}"
-                </p>
-
-                {dep.resultado_destaque && (
-                  <div className="text-[11px] font-mono text-accent bg-accent-dim border border-accent-border rounded-lg px-3 py-1.5 flex items-center gap-1.5">
-                    <Star className="w-3 h-3 fill-current flex-shrink-0" /> {dep.resultado_destaque}
-                  </div>
-                )}
-
-                {/* Ações */}
-                <div className="flex items-center gap-2 pt-1 flex-wrap">
-                  {!dep.aprovado && (
-                    <Button variant="primary" size="sm" onClick={() => aprovar(dep.id)} loading={acting[dep.id] === "aprovando"} disabled={!!acting[dep.id]} leftIcon={Check}>
-                      Aprovar
-                    </Button>
-                  )}
-                  {dep.aprovado && (
-                    <Button variant="secondary" size="sm" onClick={() => revogar(dep.id)}>
-                      Revogar aprovação
-                    </Button>
-                  )}
-                  <Button variant="destructive" size="sm" onClick={() => excluir(dep.id)} loading={acting[dep.id] === "excluindo"} disabled={!!acting[dep.id]} leftIcon={Trash2}>
-                    Excluir
-                  </Button>
-                </div>
-              </div>
-            ))}
+            <p className="text-[13.5px] leading-relaxed text-px-ink">O depoimento de <span className="font-medium">{excluindo.nome}</span> será excluído de vez. Não há como desfazer.</p>
+            {erroModal && <p role="alert" className="rounded-px-card bg-px-danger-soft px-3 py-2 text-[13px] text-px-danger">{erroModal}</p>}
+            <div className="flex justify-end gap-2">
+              <PxButton variant="quiet" onClick={fecharModal} disabled={excluindoAgora}>Voltar</PxButton>
+              <PxButton variant="danger" onClick={confirmarExclusao} loading={excluindoAgora}>Excluir</PxButton>
+            </div>
           </div>
         )}
-      </div>
+      </PxModal>
     </div>
   )
 }

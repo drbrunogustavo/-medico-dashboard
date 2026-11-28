@@ -1,700 +1,434 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { TopBar } from "@/components/TopBar"
-import { StatCard } from "@/components/StatCard"
-import { Plus, Users, TrendingUp, Eye, Star, ExternalLink, Search, Instagram, Globe, Trash2, Sparkles, X, Loader2, Check, Copy, CheckCircle2, AlertTriangle, Target, Zap } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/Button"
-import { AI_MODEL } from "@/lib/ai-config"
+import { useState, useEffect, useCallback } from "react"
+import { Plus, Search, Sparkles, Pencil, Trash2, ExternalLink } from "lucide-react"
+import { pedirJSON, mensagemErroIA } from "@/lib/ia-json"
+import { Panel, PxButton, PxInput, PxSelect, Segmented, Field, Tag, PxModal, PageHeader, CopyButton } from "@/components/px"
 
-const NICHOS    = ["Todos","Nutrologia","Endocrinologia","Longevidade","Metabolismo","Geral"]
-const RELEVANCIA = ["Todas","Alta","Media","Baixa"]
+const ESPECIALIDADES = ["Nutrologia", "Endocrinologia", "Longevidade", "Metabolismo", "Geral"]
+const FREQUENCIAS = ["Diaria", "3x/semana", "2x/semana", "1x/semana", "Esporadica"]
+const RELEVANCIAS = ["Alta", "Media", "Baixa"]
+const ROTULO: Record<string, string> = { Media: "Média", Diaria: "Diária", Esporadica: "Esporádica", "-": "Não informada" }
+const rotulo = (v: string) => ROTULO[v] ?? v
 
 interface Referencia {
   id: string; nome: string; especialidade: string; instagram: string
   seguidores: string; frequencia: string; temas: string[]
   relevancia: string; nota: string; site?: string; criada_em: string
 }
+interface Form {
+  id?: string; nome: string; instagram: string; seguidores: string; especialidade: string
+  frequencia: string; relevancia: string; site: string; temas: string; nota: string
+}
+interface Leitura {
+  temas_pouco_cobertos: string[]; oportunidades: string[]; diferencial: string; formatos: string[]; ganchos: string[]
+}
+interface Sugestao { nome: string; instagram: string; tema_principal: string; por_que_seguir: string; fonte: string }
 
-interface AnaliseResult {
-  perfil:        { nome:string; handle:string; especialidade:string; posicionamento:string; tom:string; frequencia:string; formatos:string[] }
-  temas:         { principal:string; secundarios:string[]; gaps:string[] }
-  pontos_fortes: string[]
-  pontos_fracos: string[]
-  oportunidades: string[]
-  estrategia:    { diferencial:string; temas_atacar:string[]; formatos_rec:string[]; gancho:string }
-  score:         { conteudo:number; consistencia:number; engajamento:number; nicho:number }
+const FORM_VAZIO: Form = { nome: "", instagram: "", seguidores: "", especialidade: "Endocrinologia", frequencia: "2x/semana", relevancia: "Media", site: "", temas: "", nota: "" }
+const areaCls = "w-full resize-none rounded-px-ctl border border-px-line bg-white px-3.5 py-2.5 text-[13.5px] text-px-ink placeholder:text-px-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-px-ink/40"
+
+/** Lê "150k", "1,2M", "150.000" ou "2 mil". Devolve 0 quando não há número. */
+function lerSeguidores(s: string): number {
+  const m = s.trim().toLowerCase().match(/^([\d.,]+)\s*(k|mil|m|mi)?\b/)
+  if (!m) return 0
+  const [, num, suf] = m
+  if (!suf) return /^\d{1,3}([.,]\d{3})+$/.test(num) ? parseInt(num.replace(/[.,]/g, ""), 10) : Math.round(parseFloat(num.replace(",", ".")) || 0)
+  const n = parseFloat(num.replace(",", ".")) || 0
+  return Math.round(n * (suf === "k" || suf === "mil" ? 1e3 : 1e6))
+}
+function formatarTotal(n: number) {
+  if (n >= 1e6) return (n / 1e6).toFixed(1).replace(".", ",") + " milhões"
+  if (n >= 1e3) return Math.round(n / 1e3) + " mil"
+  return String(n)
 }
 
-const RELEVANCIA_STYLES: Record<string,string> = {
-  "Alta": "bg-red-50 border-red-300 text-red-600",
-  "Media":"bg-amber-50 border-amber-300 text-amber-600",
-  "Baixa":"bg-green-50 border-green-300 text-green-700",
-}
-const FREQ_STYLES: Record<string,string> = {
-  "Diaria":"text-emerald-400","3x/semana":"text-blue-400",
-  "2x/semana":"text-blue-400","1x/semana":"text-amber-400","Esporadica":"text-text-muted",
+const handleValido = (h: string) => /^@[A-Za-z0-9._]{1,30}$/.test(h)
+const paraForm = (r: Referencia): Form => ({
+  id: r.id, nome: r.nome, instagram: r.instagram === "-" ? "" : r.instagram, seguidores: r.seguidores === "-" ? "" : r.seguidores,
+  especialidade: r.especialidade, frequencia: r.frequencia, relevancia: r.relevancia, site: r.site ?? "", temas: (r.temas ?? []).join(", "), nota: r.nota ?? "",
+})
+
+/** Monta o corpo da API e devolve o erro de validação, se houver. */
+function prepararCorpo(f: Form): { erro: string } | { corpo: Record<string, unknown> } {
+  if (!f.nome.trim()) return { erro: "Informe o nome." }
+  let insta = f.instagram.trim().replace(/^https?:\/\/(www\.)?instagram\.com\//i, "").replace(/\/.*$/, "").replace(/^@/, "")
+  insta = insta ? "@" + insta : "-"
+  if (insta !== "-" && !handleValido(insta)) return { erro: "Usuário do Instagram inválido. Use letras, números, ponto ou sublinhado." }
+  const site = f.site.trim().replace(/^https?:\/\//i, "").replace(/\/+$/, "")
+  if (/\s/.test(site)) return { erro: "O site não pode ter espaços." }
+  return {
+    corpo: {
+      nome: f.nome.trim(), instagram: insta, seguidores: f.seguidores.trim() || "-", especialidade: f.especialidade, frequencia: f.frequencia,
+      relevancia: f.relevancia, site, nota: f.nota.trim(), temas: f.temas.split(",").map(t => t.trim()).filter(Boolean),
+    },
+  }
 }
 
-// ── Análise Modal ──────────────────────────────────────────────────────────────
-function ScoreBar({ label, value }: { label:string; value:number }) {
-  const color = value >= 7 ? '#16a34a' : value >= 5 ? 'var(--accent)' : '#dc2626'
+// ── Cadastro e edição ──────────────────────────────────────────────────────────
+function FormularioModal({ inicial, onClose, onSalvo }: { inicial: Form; onClose: () => void; onSalvo: () => void }) {
+  const [f, setF] = useState<Form>(inicial)
+  const [saving, setSaving] = useState(false)
+  const [erro, setErro] = useState<string | null>(null)
+  const set = (k: keyof Form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => setF(p => ({ ...p, [k]: e.target.value }))
+
+  async function salvar() {
+    const prep = prepararCorpo(f)
+    if ("erro" in prep) { setErro(prep.erro); return }
+    setSaving(true); setErro(null)
+    try {
+      const res = await fetch("/api/referencias", {
+        method: f.id ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(f.id ? { id: f.id, ...prep.corpo } : prep.corpo),
+      })
+      if (!res.ok) throw new Error("HTTP " + res.status)
+      onSalvo()
+    } catch (e) {
+      console.error("[referencias] erro ao salvar:", e)
+      setErro("Não foi possível salvar. Tente novamente.")
+    } finally { setSaving(false) }
+  }
+
   return (
-    <div>
-      <div style={{ display:'flex', justifyContent:'space-between', marginBottom:5 }}>
-        <span style={{ fontSize:10, fontWeight:700, color:'var(--text-muted)', letterSpacing:2, textTransform:'uppercase' as const }}>{label}</span>
-        <span style={{ fontSize:12, fontWeight:900, color }}>{value}/10</span>
+    <PxModal open onClose={onClose} title={f.id ? "Editar referência" : "Nova referência"} className="max-w-xl">
+      <div className="space-y-3">
+        <Field label="Nome do médico" htmlFor="rf-nome"><PxInput id="rf-nome" value={f.nome} onChange={set("nome")} maxLength={120} /></Field>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Field label="Instagram" htmlFor="rf-insta"><PxInput id="rf-insta" value={f.instagram} onChange={set("instagram")} placeholder="@usuario" maxLength={60} /></Field>
+          <Field label="Seguidores" htmlFor="rf-seg" hint="Como você viu no perfil, por exemplo 150k."><PxInput id="rf-seg" value={f.seguidores} onChange={set("seguidores")} maxLength={20} /></Field>
+          <Field label="Especialidade" htmlFor="rf-esp"><PxSelect id="rf-esp" value={f.especialidade} onChange={set("especialidade")}>{ESPECIALIDADES.map(n => <option key={n}>{n}</option>)}</PxSelect></Field>
+          <Field label="Frequência de posts" htmlFor="rf-freq">
+            <PxSelect id="rf-freq" value={f.frequencia} onChange={set("frequencia")}>
+              {FREQUENCIAS.map(n => <option key={n} value={n}>{rotulo(n)}</option>)}
+              {!FREQUENCIAS.includes(f.frequencia) && <option value={f.frequencia}>{rotulo(f.frequencia)}</option>}
+            </PxSelect>
+          </Field>
+          <Field label="Relevância" htmlFor="rf-rel"><PxSelect id="rf-rel" value={f.relevancia} onChange={set("relevancia")}>{RELEVANCIAS.map(n => <option key={n} value={n}>{rotulo(n)}</option>)}</PxSelect></Field>
+          <Field label="Site" htmlFor="rf-site"><PxInput id="rf-site" value={f.site} onChange={set("site")} placeholder="opcional" maxLength={200} /></Field>
+        </div>
+        <Field label="Temas frequentes" htmlFor="rf-temas" hint="Separe por vírgula. Quanto mais temas, mais útil a leitura estratégica."><PxInput id="rf-temas" value={f.temas} onChange={set("temas")} placeholder="insulina, tireoide, emagrecimento" /></Field>
+        <Field label="Observações" htmlFor="rf-nota"><textarea id="rf-nota" rows={3} value={f.nota} onChange={set("nota")} maxLength={1000} className={areaCls} /></Field>
+        {erro && <p role="alert" className="rounded-px-card bg-px-danger-soft px-3 py-2 text-[13px] text-px-danger">{erro}</p>}
+        <div className="flex justify-end gap-2 pt-1">
+          <PxButton variant="secondary" onClick={onClose}>Cancelar</PxButton>
+          <PxButton onClick={salvar} loading={saving}>{f.id ? "Salvar alterações" : "Adicionar"}</PxButton>
+        </div>
       </div>
-      <div style={{ height:5, borderRadius:3, background:'var(--border)', overflow:'hidden' }}>
-        <div style={{ height:'100%', width:(value*10)+'%', borderRadius:3, background:color }} />
-      </div>
-    </div>
+    </PxModal>
   )
 }
 
-function ATag({ text, color='var(--accent)' }: { text:string; color?:string }) {
-  return (
-    <span style={{ fontSize:10, fontWeight:700, padding:'3px 10px', borderRadius:99, color, background:'var(--surface-2)', border:`1px solid ${color}`, display:'inline-block', margin:'2px 3px 2px 0' }}>
-      {text}
-    </span>
-  )
-}
-
-function ASection({ title, children }: { title:React.ReactNode; children:React.ReactNode }) {
-  return (
-    <div style={{ background:'var(--surface-2)', border:'1px solid var(--border)', borderRadius:10, padding:'16px 20px', marginBottom:12 }}>
-      <div style={{ fontSize:9, fontWeight:700, color:'var(--text-muted)', letterSpacing:3, textTransform:'uppercase' as const, marginBottom:12 }}>{title}</div>
-      {children}
-    </div>
-  )
-}
-
-function AnaliseModal({ referencia, onClose }: { referencia: Referencia; onClose: () => void }) {
-  const [resultado, setResultado] = useState<AnaliseResult|null>(null)
-  const [loading,   setLoading]   = useState(true)
-  const [erro,      setErro]      = useState('')
-  const [copied,    setCopied]    = useState(false)
+// ── Leitura estratégica (usa só os dados cadastrados) ──────────────────────────
+function LeituraModal({ referencia, onClose }: { referencia: Referencia; onClose: () => void }) {
+  const [leitura, setLeitura] = useState<Leitura | null>(null)
+  const [erro, setErro] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const run = async () => {
-      try {
-        const handle = referencia.instagram.replace('@','')
-        console.log('[AnaliseModal] iniciando análise para:', handle)
-
-        const prompt =
-          'Você é estrategista de conteúdo médico. Analise o perfil @' + handle +
-          ' (especialidade: ' + referencia.especialidade + (referencia.temas?.length ? ', temas conhecidos: ' + referencia.temas.join(', ') : '') + ')' +
-          ' do ponto de vista do médico usuário.\n\n' +
-          'Gere análise estratégica completa. Se não conhecer o perfil, baseie-se em perfis típicos desta especialidade.\n\n' +
-          'Retorne SOMENTE JSON válido, sem nenhum texto antes ou depois:\n' +
-          '{"perfil":{"nome":"nome ou estimado","handle":"@' + handle + '","especialidade":"' + referencia.especialidade + '","posicionamento":"como se posiciona","tom":"tom de voz","frequencia":"frequência estimada","formatos":["Reels","Carrossel"]},' +
-          '"temas":{"principal":"tema dominante","secundarios":["tema2","tema3"],"gaps":["gap1","gap2"]},' +
-          '"pontos_fortes":["forte1","forte2","forte3"],' +
-          '"pontos_fracos":["fraco1","fraco2"],' +
-          '"oportunidades":["oportunidade para o médico 1","oportunidade 2","oportunidade 3"],' +
-          '"estrategia":{"diferencial":"como o médico se diferencia em 2 frases","temas_atacar":["tema1"],"formatos_rec":["formato1"],"gancho":"exemplo de gancho para competir"},' +
-          '"score":{"conteudo":7,"consistencia":6,"engajamento":7,"nicho":7}}'
-
-        console.log('[AnaliseModal] chamando /api/roteiros...')
-        const res = await fetch('/api/roteiros', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            model:      AI_MODEL,
-            max_tokens: 2000,
-            messages:   [{ role: 'user', content: prompt }],
-          }),
-        })
-
-        console.log('[AnaliseModal] status HTTP:', res.status)
-        if (!res.ok) throw new Error(`HTTP ${res.status} — verifique autenticação e ANTHROPIC_API_KEY.`)
-
-        const data = await res.json()
-        console.log('[AnaliseModal] data.type:', data.type, '| content[0].type:', data.content?.[0]?.type)
-
-        if (data.error) throw new Error(`API error: ${JSON.stringify(data.error)}`)
-        if (data.type === 'error') throw new Error(`Anthropic error: ${data.error?.message ?? JSON.stringify(data)}`)
-
-        const text  = data.content?.[0]?.text
-        if (!text) throw new Error(`Resposta sem texto. content: ${JSON.stringify(data.content)}`)
-
-        console.log('[AnaliseModal] texto recebido (primeiros 200 chars):', text.slice(0, 200))
-
-        const clean = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
-        const idx   = clean.indexOf('{')
-        const end   = clean.lastIndexOf('}')
-        if (idx === -1 || end === -1) throw new Error(`JSON não encontrado na resposta: ${clean.slice(0, 100)}`)
-
-        const jsonStr = clean.slice(idx, end + 1)
-        const json    = JSON.parse(jsonStr) as AnaliseResult
-
-        if (!json.perfil) throw new Error(`Campo "perfil" ausente. Chaves: ${Object.keys(json).join(', ')}`)
-
-        console.log('[AnaliseModal] análise concluída com sucesso')
-        setResultado(json)
-      } catch(e) {
-        const msg = e instanceof Error ? e.message : String(e)
-        console.error('[AnaliseModal] ERRO:', e)
-        setErro(msg)
-      }
-      setLoading(false)
-    }
-    run()
+    let ativo = true
+    const prompt =
+      "Você ajuda um médico clínico geral, com foco em endocrinologia e nutrologia, a se posicionar no Instagram.\n" +
+      "Ele cadastrou uma referência: " + referencia.nome + " (" + referencia.instagram + "), especialidade " + referencia.especialidade +
+      (referencia.temas?.length ? ", temas cadastrados: " + referencia.temas.join(", ") : ", sem temas cadastrados") +
+      (referencia.nota ? ". Observação dele: " + referencia.nota : "") + ".\n\n" +
+      "IMPORTANTE: você NÃO tem acesso ao perfil. Não descreva posicionamento, tom de voz, pontos fracos nem métricas dessa pessoa, e não invente nada sobre ela. " +
+      "Use apenas os dados acima para sugerir como o médico usuário pode se diferenciar: temas da especialidade que não aparecem na lista cadastrada, oportunidades, um diferencial e ganchos próprios. " +
+      "Nada de promessa de resultado nem dado inventado.\n\n" +
+      'Retorne SOMENTE JSON: {"temas_pouco_cobertos":["até 4"],"oportunidades":["3"],"diferencial":"2 frases","formatos":["até 3"],"ganchos":["2 exemplos de gancho de abertura"]}'
+    pedirJSON<Partial<Leitura>>("/api/roteiros", prompt, 1200)
+      .then(j => {
+        if (!ativo) return
+        const arr = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string" && !!x.trim()) : [])
+        const r: Leitura = { temas_pouco_cobertos: arr(j.temas_pouco_cobertos), oportunidades: arr(j.oportunidades), diferencial: typeof j.diferencial === "string" ? j.diferencial : "", formatos: arr(j.formatos), ganchos: arr(j.ganchos) }
+        if (!r.oportunidades.length && !r.diferencial) throw new Error("resposta vazia")
+        setLeitura(r)
+      })
+      .catch(e => { if (ativo) { console.error("[referencias] leitura:", e); setErro(mensagemErroIA(e, "A IA devolveu uma resposta inesperada. Tente novamente.")) } })
+      .finally(() => { if (ativo) setLoading(false) })
+    return () => { ativo = false }
   }, [referencia])
 
-  const relatorio = resultado ? [
-    '=== ANÁLISE: ' + referencia.instagram + ' ===',
-    'Posicionamento: ' + resultado.perfil.posicionamento,
-    'Tom: ' + resultado.perfil.tom + ' | Frequência: ' + resultado.perfil.frequencia,
-    '\nTEMAS',
-    'Principal: ' + resultado.temas.principal,
-    'Secundários: ' + resultado.temas.secundarios.join(', '),
-    'Gaps: ' + resultado.temas.gaps.join(', '),
-    '\nFORTES: ' + resultado.pontos_fortes.join(' | '),
-    'FRACOS: ' + resultado.pontos_fracos.join(' | '),
-    '\nOPORTUNIDADES PARA VOCÊ',
-    ...resultado.oportunidades.map(o=>'→ '+o),
-    '\nESTRATÉGIA',
-    'Diferencial: ' + resultado.estrategia.diferencial,
-    'Temas: ' + resultado.estrategia.temas_atacar.join(', '),
-    'Gancho: ' + resultado.estrategia.gancho,
-  ].join('\n') : ''
+  const texto = leitura ? [
+    "Leitura estratégica: " + referencia.nome + " (" + referencia.instagram + ")",
+    "", "Temas pouco cobertos: " + leitura.temas_pouco_cobertos.join(", "),
+    "", "Oportunidades:", ...leitura.oportunidades.map(o => "- " + o),
+    "", "Diferencial: " + leitura.diferencial,
+    "Formatos: " + leitura.formatos.join(", "),
+    "", "Ganchos:", ...leitura.ganchos.map(g => "- " + g),
+  ].join("\n") : ""
 
-  const copy = () => {
-    navigator.clipboard.writeText(relatorio)
-    setCopied(true); setTimeout(()=>setCopied(false),1600)
-  }
+  const Bloco = ({ titulo, itens }: { titulo: string; itens: string[] }) => itens.length === 0 ? null : (
+    <section className="space-y-1.5">
+      <h3 className="text-[13px] font-semibold text-px-ink">{titulo}</h3>
+      <ul className="list-disc space-y-1 pl-5 text-[13.5px] leading-snug text-px-ink">{itens.map((t, i) => <li key={i}>{t}</li>)}</ul>
+    </section>
+  )
 
   return (
-    <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.88)', zIndex:9999, display:'flex', alignItems:'center', justifyContent:'center', padding:20 }}
-      onClick={onClose}>
-      <div style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:16, width:'calc(100% - 32px)', maxWidth:680, maxHeight:'88vh', display:'flex', flexDirection:'column', overflow:'hidden', boxShadow:'0 8px 40px rgba(0,0,0,0.15)' }}
-        onClick={e=>e.stopPropagation()}>
-
-        {/* Header */}
-        <div style={{ padding:'18px 24px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 }}>
-          <div>
-            <div style={{ color:'var(--text-muted)', fontSize:10, fontWeight:700, letterSpacing:3, textTransform:'uppercase' as const, marginBottom:4 }}>Análise Estratégica</div>
-            <div style={{ color:'var(--accent)', fontSize:17, fontWeight:900 }}>{referencia.instagram}</div>
-            <div style={{ color:'var(--text-secondary)', fontSize:11, marginTop:2 }}>{referencia.nome} · {referencia.especialidade}</div>
-          </div>
-          <div style={{ display:'flex', gap:8, alignItems:'center' }}>
-            {resultado && (
-              <button onClick={copy} style={{ padding:'7px 14px', borderRadius:8, border:'1px solid rgba(200,168,76,0.3)', background:copied?'rgba(200,168,76,0.12)':'none', color:copied?'var(--accent)':'var(--text-muted)', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:"'Inter',sans-serif" }}>
-                {copied ? <><Check style={{ width:13, height:13, verticalAlign:'-0.15em', marginRight:5 }} />Copiado</> : <><Copy style={{ width:13, height:13, verticalAlign:'-0.15em', marginRight:5 }} />Exportar</>}
-              </button>
+    <PxModal open onClose={onClose} title={"Leitura estratégica: " + referencia.nome} className="max-w-xl">
+      <div className="space-y-4">
+        <p className="rounded-px-card bg-px-accent-soft px-3 py-2 text-[12.5px] leading-relaxed text-px-accent">
+          Esta leitura usa só os dados que você cadastrou sobre o perfil. A IA não acessa o Instagram, então não avalia o conteúdo real dele.
+        </p>
+        {loading && <p role="status" className="py-10 text-center text-[14px] font-medium text-px-ink">Elaborando a leitura</p>}
+        {erro && <p role="alert" className="rounded-px-card bg-px-danger-soft px-3 py-2 text-[13px] text-px-danger">{erro}</p>}
+        {leitura && (
+          <>
+            {leitura.diferencial && (
+              <section className="space-y-1.5">
+                <h3 className="text-[13px] font-semibold text-px-ink">Como se diferenciar</h3>
+                <p className="text-[14px] leading-relaxed text-px-ink">{leitura.diferencial}</p>
+              </section>
             )}
-            <button onClick={onClose} style={{ background:'none', border:'none', color:'var(--text-muted)', fontSize:22, cursor:'pointer', padding:'4px 8px', lineHeight:1, display:'flex' }}><X style={{ width:20, height:20 }} /></button>
-          </div>
-        </div>
-
-        {/* Body */}
-        <div style={{ overflowY:'auto', flex:1, padding:'20px 24px' }}>
-          {loading && (
-            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:300, gap:16 }}>
-              <div style={{ width:40, height:40, border:'3px solid rgba(200,168,76,0.2)', borderTop:'3px solid #C9A84C', borderRadius:'50%', animation:'spin 0.8s linear infinite' }} />
-              <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-              <div style={{ color:'var(--accent)', fontSize:12, fontWeight:700, letterSpacing:2 }}>ANALISANDO {referencia.instagram.toUpperCase()}...</div>
-            </div>
-          )}
-          {erro && <div style={{ padding:'14px 18px', borderRadius:8, background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.3)', color:'#f87171', fontSize:13 }}>{erro}</div>}
-          {resultado && !loading && (
-            <>
-              {/* Scores */}
-              <ASection title="Score">
-                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
-                  <ScoreBar label="Conteúdo"    value={resultado.score.conteudo} />
-                  <ScoreBar label="Consistência" value={resultado.score.consistencia} />
-                  <ScoreBar label="Engajamento"  value={resultado.score.engajamento} />
-                  <ScoreBar label="Domínio de Nicho" value={resultado.score.nicho} />
-                </div>
-              </ASection>
-
-              {/* Perfil */}
-              <ASection title="Perfil">
-                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:10 }}>
-                  {[
-                    {l:'Posicionamento', v:resultado.perfil.posicionamento},
-                    {l:'Tom de Voz',     v:resultado.perfil.tom},
-                    {l:'Frequência',     v:resultado.perfil.frequencia},
-                  ].map(i=>(
-                    <div key={i.l} style={{ padding:'8px 12px', background:'var(--surface-2)', borderRadius:7, border:'1px solid var(--border)' }}>
-                      <div style={{ fontSize:8, fontWeight:700, color:'var(--text-muted)', letterSpacing:3, textTransform:'uppercase' as const, marginBottom:3 }}>{i.l}</div>
-                      <div style={{ color:'var(--text-primary)', fontSize:11, lineHeight:1.4 }}>{i.v}</div>
-                    </div>
-                  ))}
-                  <div style={{ padding:'8px 12px', background:'var(--surface-2)', borderRadius:7, border:'1px solid var(--border)' }}>
-                    <div style={{ fontSize:8, fontWeight:700, color:'var(--text-muted)', letterSpacing:3, textTransform:'uppercase' as const, marginBottom:5 }}>Formatos</div>
-                    <div>{resultado.perfil.formatos.map(f=><ATag key={f} text={f} color="#b8976a" />)}</div>
-                  </div>
-                </div>
-              </ASection>
-
-              {/* Temas */}
-              <ASection title="Mapa de Temas">
-                <div style={{ padding:'8px 14px', background:'rgba(200,168,76,0.07)', border:'1px solid rgba(200,168,76,0.2)', borderRadius:7, marginBottom:10, color:'var(--text-primary)', fontSize:13, fontWeight:700 }}>
-                  {resultado.temas.principal}
-                </div>
-                <div style={{ marginBottom:8 }}>
-                  <div style={{ fontSize:9, fontWeight:700, color:'var(--text-muted)', letterSpacing:3, textTransform:'uppercase' as const, marginBottom:6 }}>Secundários</div>
-                  {resultado.temas.secundarios.map(t=><ATag key={t} text={t} />)}
-                </div>
-                <div>
-                  <div style={{ fontSize:9, fontWeight:700, color:'#16a34a', letterSpacing:3, textTransform:'uppercase' as const, marginBottom:6 }}>Gaps — Não Aborda</div>
-                  {resultado.temas.gaps.map(t=><ATag key={t} text={t} color="#16a34a" />)}
-                </div>
-              </ASection>
-
-              {/* Fortes / Fracos */}
-              <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(200px, 1fr))', gap:12, marginBottom:12 }}>
-                <ASection title={<><CheckCircle2 style={{ width:11, height:11, verticalAlign:'-0.15em', marginRight:4 }} />Pontos Fortes</>}>
-                  {resultado.pontos_fortes.map((p,i)=>(
-                    <div key={i} style={{ display:'flex', gap:8, marginBottom:6 }}>
-                      <span style={{ color:'#16a34a', flexShrink:0 }}>+</span>
-                      <span style={{ color:'var(--text-secondary)', fontSize:12, lineHeight:1.5 }}>{p}</span>
-                    </div>
-                  ))}
-                </ASection>
-                <ASection title={<><AlertTriangle style={{ width:11, height:11, verticalAlign:'-0.15em', marginRight:4 }} />Pontos Fracos</>}>
-                  {resultado.pontos_fracos.map((p,i)=>(
-                    <div key={i} style={{ display:'flex', gap:8, marginBottom:6 }}>
-                      <span style={{ color:'#dc2626', flexShrink:0 }}>−</span>
-                      <span style={{ color:'var(--text-secondary)', fontSize:12, lineHeight:1.5 }}>{p}</span>
-                    </div>
-                  ))}
-                </ASection>
-              </div>
-
-              {/* Oportunidades */}
-              <ASection title={<><Target style={{ width:11, height:11, verticalAlign:'-0.15em', marginRight:4 }} />Oportunidades para você</>}>
-                {resultado.oportunidades.map((o,i)=>(
-                  <div key={i} style={{ display:'flex', gap:10, padding:'10px 14px', background:'rgba(200,168,76,0.05)', border:'1px solid rgba(200,168,76,0.15)', borderRadius:7, marginBottom:8 }}>
-                    <span style={{ color:'var(--accent)', fontWeight:900, flexShrink:0 }}>→</span>
-                    <span style={{ color:'var(--text-primary)', fontSize:12, lineHeight:1.5 }}>{o}</span>
-                  </div>
-                ))}
-              </ASection>
-
-              {/* Estratégia */}
-              <ASection title={<><Zap style={{ width:11, height:11, verticalAlign:'-0.15em', marginRight:4 }} />Estratégia Recomendada</>}>
-                <div style={{ padding:'12px 16px', background:'rgba(200,168,76,0.08)', border:'1px solid rgba(200,168,76,0.25)', borderRadius:8, marginBottom:12, color:'var(--text-primary)', fontSize:13, lineHeight:1.6, fontStyle:'italic', fontFamily:"Georgia,serif" }}>
-                  "{resultado.estrategia.diferencial}"
-                </div>
-                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10 }}>
-                  <div>
-                    <div style={{ fontSize:9, fontWeight:700, color:'var(--text-muted)', letterSpacing:3, textTransform:'uppercase' as const, marginBottom:6 }}>Temas para Atacar</div>
-                    {resultado.estrategia.temas_atacar.map(t=><ATag key={t} text={t} color="rgba(167,139,250,0.9)" />)}
-                  </div>
-                  <div>
-                    <div style={{ fontSize:9, fontWeight:700, color:'var(--text-muted)', letterSpacing:3, textTransform:'uppercase' as const, marginBottom:6 }}>Formatos Rec.</div>
-                    {resultado.estrategia.formatos_rec.map(f=><ATag key={f} text={f} color="rgba(96,165,250,0.9)" />)}
-                  </div>
-                </div>
-                <div style={{ padding:'10px 14px', background:'var(--surface-2)', border:'1px solid var(--border)', borderRadius:7, color:'var(--text-secondary)', fontSize:12, lineHeight:1.6, fontStyle:'italic' }}>
-                  "{resultado.estrategia.gancho}"
-                </div>
-              </ASection>
-            </>
-          )}
-        </div>
+            <Bloco titulo="Temas pouco cobertos na lista cadastrada" itens={leitura.temas_pouco_cobertos} />
+            <Bloco titulo="Oportunidades" itens={leitura.oportunidades} />
+            <Bloco titulo="Formatos sugeridos" itens={leitura.formatos} />
+            <Bloco titulo="Ganchos de exemplo" itens={leitura.ganchos} />
+            <div className="flex justify-end"><CopyButton text={texto} label="Copiar leitura" /></div>
+          </>
+        )}
       </div>
-    </div>
+    </PxModal>
   )
 }
 
-// ── Página Principal ──────────────────────────────────────────────────────────
+// ── Descoberta de perfis (pesquisa na web, com fonte) ──────────────────────────
+function DescobrirModal({ onClose, onAdicionado }: { onClose: () => void; onAdicionado: () => void }) {
+  const [esp, setEsp] = useState("Endocrinologia")
+  const [loading, setLoading] = useState(false)
+  const [erro, setErro] = useState<string | null>(null)
+  const [perfis, setPerfis] = useState<Sugestao[] | null>(null)
+  const [adicionados, setAdicionados] = useState<string[]>([])
+  const [adicionando, setAdicionando] = useState<string[]>([])
+  const [erroAdd, setErroAdd] = useState<{ h: string; msg: string } | null>(null)
+
+  async function buscar() {
+    if (esp.trim().length < 3 || loading) return
+    setLoading(true); setErro(null); setPerfis(null); setAdicionados([]); setErroAdd(null)
+    try {
+      const res = await fetch("/api/referencias/descobrir", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ especialidade: esp.trim() }) })
+      const data = await res.json().catch(() => ({})) as { perfis?: Sugestao[]; error?: string }
+      if (!res.ok || !Array.isArray(data.perfis)) throw new Error(data.error || "HTTP " + res.status)
+      setPerfis(data.perfis)
+    } catch (e) {
+      console.error("[referencias] descobrir:", e)
+      setErro("Não foi possível buscar perfis agora. Tente novamente.")
+    } finally { setLoading(false) }
+  }
+
+  async function adicionar(p: Sugestao) {
+    if (adicionando.includes(p.instagram) || adicionados.includes(p.instagram)) return
+    setAdicionando(prev => [...prev, p.instagram]); setErroAdd(null)
+    try {
+      const espCadastro = ESPECIALIDADES.find(n => n.toLowerCase() === esp.trim().toLowerCase()) ?? "Geral"
+      const res = await fetch("/api/referencias", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nome: p.nome, instagram: p.instagram, seguidores: "-", especialidade: espCadastro, frequencia: "-", relevancia: "Media", temas: p.tema_principal ? [p.tema_principal] : [], nota: "Sugerido por pesquisa na web. Fonte: " + p.fonte, site: "" }),
+      })
+      if (!res.ok) throw new Error("HTTP " + res.status)
+      setAdicionados(prev => [...prev, p.instagram]); onAdicionado()
+    } catch (e) {
+      console.error("[referencias] adicionar sugestão:", e)
+      setErroAdd({ h: p.instagram, msg: "Não foi possível adicionar. Tente novamente." })
+    } finally { setAdicionando(prev => prev.filter(x => x !== p.instagram)) }
+  }
+
+  return (
+    <PxModal open onClose={onClose} title="Descobrir perfis" className="max-w-xl">
+      <div className="space-y-4">
+        <div className="flex items-end gap-2">
+          <Field label="Especialidade" htmlFor="ds-esp" className="flex-1">
+            <PxInput id="ds-esp" value={esp} onChange={e => setEsp(e.target.value)} onKeyDown={e => { if (e.key === "Enter") buscar() }} maxLength={80} />
+          </Field>
+          <PxButton onClick={buscar} loading={loading} disabled={esp.trim().length < 3} leftIcon={Search}>{loading ? "Buscando" : "Buscar"}</PxButton>
+        </div>
+        <p className="text-[12.5px] text-px-muted">A busca usa a web e só mostra perfis com uma página de origem. Abra a fonte e confirme o perfil antes de adicionar.</p>
+        {loading && <p role="status" className="py-8 text-center text-[14px] font-medium text-px-ink">Pesquisando perfis</p>}
+        {erro && <p role="alert" className="rounded-px-card bg-px-danger-soft px-3 py-2 text-[13px] text-px-danger">{erro}</p>}
+        {perfis && perfis.length === 0 && <p className="py-6 text-center text-[13px] text-px-muted">Nenhum perfil com fonte confiável foi encontrado. Tente outra especialidade.</p>}
+        {perfis && perfis.length > 0 && (
+          <ul className="space-y-3">
+            {perfis.map(p => (
+              <li key={p.instagram} className="space-y-2 rounded-px-card border border-px-line bg-white/60 p-3.5">
+                <div>
+                  <p className="text-[14px] font-semibold text-px-ink">{p.nome}</p>
+                  <p className="text-[12.5px] text-px-muted">{p.instagram}</p>
+                </div>
+                {p.tema_principal && <p className="text-[13px] text-px-ink"><span className="text-px-muted">Tema: </span>{p.tema_principal}</p>}
+                {p.por_que_seguir && <p className="text-[13px] text-px-ink"><span className="text-px-muted">Por que acompanhar: </span>{p.por_que_seguir}</p>}
+                <a href={p.fonte} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[12.5px] text-px-accent underline underline-offset-2">Fonte <ExternalLink className="h-3 w-3" aria-hidden /></a>
+                {erroAdd?.h === p.instagram && <p role="alert" className="rounded-px-card bg-px-danger-soft px-3 py-2 text-[12.5px] text-px-danger">{erroAdd.msg}</p>}
+                <div>
+                  <PxButton size="sm" variant={adicionados.includes(p.instagram) ? "secondary" : "primary"} leftIcon={Plus} loading={adicionando.includes(p.instagram)} disabled={adicionados.includes(p.instagram)} onClick={() => adicionar(p)}>
+                    {adicionados.includes(p.instagram) ? "Adicionado" : "Adicionar às referências"}
+                  </PxButton>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </PxModal>
+  )
+}
+
+// ── Página ─────────────────────────────────────────────────────────────────────
 export default function ReferenciasPage() {
-  const [refs, setRefs]               = useState<Referencia[]>([])
-  const [loading, setLoading]         = useState(true)
-  const [saving, setSaving]           = useState(false)
-  const [search, setSearch]           = useState("")
-  const [filterNicho, setFilterNicho] = useState("Todos")
-  const [filterRel, setFilterRel]     = useState("Todas")
-  const [showForm, setShowForm]       = useState(false)
-  const [newNome, setNewNome]         = useState("")
-  const [newInsta, setNewInsta]       = useState("")
-  const [newEsp, setNewEsp]           = useState("Endocrinologia")
-  const [newSeg, setNewSeg]           = useState("")
-  const [newFreq, setNewFreq]         = useState("2x/semana")
-  const [newRel, setNewRel]           = useState("Media")
-  const [newNota, setNewNota]         = useState("")
-  const [newSite, setNewSite]         = useState("")
-  const [newTemas, setNewTemas]       = useState("")
-  const [toast, setToast]             = useState<string | null>(null)
-  const [editRef, setEditRef]         = useState<Referencia | null>(null)
-  const [analiseRef, setAnaliseRef]   = useState<Referencia | null>(null)
-  const [showInflModal,  setShowInflModal]  = useState(false)
-  const [inflEsp,        setInflEsp]        = useState("Endocrinologia")
-  const [loadingInfl,    setLoadingInfl]    = useState(false)
-  const [inflResults,    setInflResults]    = useState<Array<{nome:string;instagram:string;especialidade:string;seguidores:string;tema_principal:string;por_que_seguir:string}>>([])
+  const [refs, setRefs] = useState<Referencia[]>([])
+  const [loading, setLoading] = useState(true)
+  const [erroLista, setErroLista] = useState(false)
+  const [busca, setBusca] = useState("")
+  const [filtroEsp, setFiltroEsp] = useState("Todos")
+  const [filtroRel, setFiltroRel] = useState("Todas")
+  const [form, setForm] = useState<Form | null>(null)
+  const [leituraRef, setLeituraRef] = useState<Referencia | null>(null)
+  const [descobrir, setDescobrir] = useState(false)
+  const [confirmando, setConfirmando] = useState<string | null>(null)
+  const [removendo, setRemovendo] = useState<string | null>(null)
+  const [erroAcao, setErroAcao] = useState<string | null>(null)
 
-  const buscarInfluencers = async () => {
-    if (!inflEsp.trim()) return
-    setLoadingInfl(true); setInflResults([])
+  const carregar = useCallback(async () => {
+    setLoading(true); setErroLista(false)
     try {
-      const prompt =
-        'Você é especialista em marketing médico. Liste 5 médicos brasileiros influentes no Instagram na área de ' + inflEsp + '.\n\n' +
-        'Retorne SOMENTE JSON válido:\n' +
-        '{"influencers":[{"nome":"Dr. Nome","instagram":"@handle","especialidade":"' + inflEsp + '","seguidores":"Xk","tema_principal":"tema dominante","por_que_seguir":"motivo estratégico em 1 frase"}]}'
-      const res = await fetch('/api/roteiros', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model: AI_MODEL, max_tokens: 800, messages: [{ role: 'user', content: prompt }] })
-      })
-      const data = await res.json()
-      const text = (data.content?.[0]?.text || '').replace(/```json\n?/g,'').replace(/```\n?/g,'').trim()
-      const idx = text.indexOf('{'); const end = text.lastIndexOf('}')
-      if (idx !== -1 && end !== -1) {
-        const json = JSON.parse(text.slice(idx, end + 1))
-        setInflResults(json.influencers || [])
-      }
-    } catch(e) { console.error(e) }
-    setLoadingInfl(false)
-  }
+      const res = await fetch("/api/referencias")
+      const data = await res.json().catch(() => null)
+      if (!res.ok || !Array.isArray(data)) throw new Error("HTTP " + res.status)
+      setRefs(data)
+    } catch (e) {
+      console.error("[referencias] erro ao carregar:", e)
+      setErroLista(true)
+    } finally { setLoading(false) }
+  }, [])
+  useEffect(() => { carregar() }, [carregar])
 
-  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2600) }
-
-  const fetchRefs = async () => {
-    setLoading(true)
-    try { const res = await fetch('/api/referencias'); setRefs(await res.json() || []) }
-    catch (e) { console.error(e) }
-    setLoading(false)
-  }
-  useEffect(() => { fetchRefs() }, [])
-
-  const filtered = refs
-    .filter(r => {
-      if (filterNicho !== "Todos" && r.especialidade !== filterNicho) return false
-      if (filterRel !== "Todas" && r.relevancia !== filterRel) return false
-      if (search && !r.nome.toLowerCase().includes(search.toLowerCase())) return false
-      return true
-    })
-    .sort((a,b) => { const o:Record<string,number>={Alta:0,Media:1,Baixa:2}; return (o[a.relevancia]??2)-(o[b.relevancia]??2) })
-
-  const addRef = async () => {
-    if (!newNome.trim()) return
-    setSaving(true)
+  async function remover(id: string) {
+    setRemovendo(id); setErroAcao(null)
     try {
-      const res = await fetch('/api/referencias', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({
-          nome:newNome, especialidade:newEsp, instagram:newInsta||"-",
-          seguidores:newSeg||"-", frequencia:newFreq,
-          temas: newTemas ? newTemas.split(",").map(t=>t.trim()).filter(Boolean) : [],
-          relevancia:newRel, nota:newNota, site:newSite,
-        })
-      })
-      if (res.ok) { showToast("Referencia salva!"); setNewNome(""); setNewInsta(""); setNewNota(""); setNewSite(""); setNewSeg(""); setNewTemas(""); setShowForm(false); fetchRefs() }
-      else showToast("Erro ao salvar.")
-    } catch(e) { showToast("Erro ao salvar.") }
-    setSaving(false)
+      const res = await fetch("/api/referencias", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }) })
+      if (!res.ok) throw new Error("HTTP " + res.status)
+      setRefs(prev => prev.filter(r => r.id !== id)); setConfirmando(null)
+    } catch (e) {
+      console.error("[referencias] erro ao remover:", e)
+      setErroAcao("Não foi possível remover. Tente novamente.")
+    } finally { setRemovendo(null) }
   }
 
-  const removeRef = async (id:string) => {
-    try {
-      const res = await fetch('/api/referencias', { method:'DELETE', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id}) })
-      if (res.ok) { showToast("Removida."); setRefs(prev=>prev.filter(r=>r.id!==id)) }
-    } catch(e) { showToast("Erro ao remover.") }
-  }
+  const termo = busca.trim().toLowerCase()
+  const ordem: Record<string, number> = { Alta: 0, Media: 1, Baixa: 2 }
+  const filtradas = refs
+    .filter(r => (filtroEsp === "Todos" || r.especialidade === filtroEsp) && (filtroRel === "Todas" || r.relevancia === filtroRel)
+      && (!termo || r.nome.toLowerCase().includes(termo) || r.instagram.toLowerCase().includes(termo) || (r.temas ?? []).some(t => t.toLowerCase().includes(termo))))
+    .sort((a, b) => (ordem[a.relevancia] ?? 2) - (ordem[b.relevancia] ?? 2) || a.nome.localeCompare(b.nome, "pt-BR"))
 
-  const updateRef = async (ref: Referencia) => {
-    try {
-      const res = await fetch('/api/referencias', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(ref)
-      })
-      if (res.ok) {
-        showToast("Referencia atualizada!")
-        setRefs(prev => prev.map(r => r.id === ref.id ? ref : r))
-        setEditRef(null)
-      } else { showToast("Erro ao atualizar.") }
-    } catch { showToast("Erro ao atualizar.") }
-  }
-
-  const totalSeg = refs.map(r=>parseInt(r.seguidores.replace(/[^0-9]/g,""), 10)||0).reduce((a,b)=>a+b,0)
-  const fmtSeg = totalSeg>0?(totalSeg>=1000000?(totalSeg/1000000).toFixed(1)+"M+":(totalSeg/1000).toFixed(0)+"k+"):"-"
+  const total = refs.reduce((s, r) => s + lerSeguidores(r.seguidores ?? ""), 0)
+  const resumo = refs.length === 0 ? "" :
+    refs.length + (refs.length === 1 ? " perfil" : " perfis") + ", " + refs.filter(r => r.relevancia === "Alta").length + " de alta relevância" +
+    (total > 0 ? ", " + formatarTotal(total) + " de seguidores somados (valores informados por você)" : "")
 
   return (
     <div className="animate-fade-in">
-      {analiseRef && <AnaliseModal referencia={analiseRef} onClose={() => setAnaliseRef(null)} />}
-
-      {/* Modal — Buscar Influencers com IA */}
-      {showInflModal && (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onClick={() => setShowInflModal(false)}>
-          <div className="bg-surface border border-border rounded-xl w-full max-w-lg max-h-[85vh] flex flex-col" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between p-5 border-b border-border flex-shrink-0">
-              <div>
-                <div className="text-[9px] font-mono text-text-muted tracking-widest uppercase mb-0.5">IA · Descoberta</div>
-                <h3 className="text-[15px] font-semibold text-text-primary flex items-center gap-1.5"><Sparkles className="w-4 h-4" /> Buscar Influencers</h3>
-              </div>
-              <button onClick={() => setShowInflModal(false)} className="text-text-muted hover:text-text-primary transition-colors">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="p-5 space-y-3 flex-shrink-0">
-              <div className="flex gap-2">
-                <input
-                  value={inflEsp}
-                  onChange={e => setInflEsp(e.target.value)}
-                  placeholder="Especialidade... Ex: Endocrinologia"
-                  className="flex-1 bg-background border border-border rounded-lg px-4 py-2.5 text-[13px] text-text-primary placeholder:text-text-muted outline-none focus:border-accent/40 transition-colors"
-                  onKeyDown={e => e.key === 'Enter' && !loadingInfl && buscarInfluencers()}
-                />
-                <button
-                  onClick={buscarInfluencers}
-                  disabled={loadingInfl || !inflEsp.trim()}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-accent text-background text-[13px] font-bold hover:bg-accent/90 transition-colors disabled:opacity-50 flex-shrink-0"
-                >
-                  {loadingInfl ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                  {loadingInfl ? 'Buscando...' : 'Buscar'}
-                </button>
-              </div>
-            </div>
-            {inflResults.length > 0 && (
-              <div className="overflow-y-auto flex-1 px-5 pb-5 space-y-3">
-                {inflResults.map((inf, i) => (
-                  <div key={i} className="bg-card border border-border rounded-lg p-4">
-                    <div className="flex items-start justify-between gap-3 mb-2">
-                      <div>
-                        <div className="text-[13px] font-semibold text-text-primary">{inf.nome}</div>
-                        <div className="text-[11px] text-accent">{inf.instagram}</div>
-                      </div>
-                      <span className="text-[10px] font-mono text-text-muted bg-background border border-border rounded px-2 py-0.5 flex-shrink-0">{inf.seguidores}</span>
-                    </div>
-                    <div className="text-[11px] text-text-muted mb-1"><span className="text-text-secondary font-medium">Tema:</span> {inf.tema_principal}</div>
-                    <div className="text-[11px] text-text-muted"><span className="text-text-secondary font-medium">Por quê seguir:</span> {inf.por_que_seguir}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      <TopBar title="Monitor de Referencias" subtitle="MEDICOS INFLUENTES NO SEU NICHO"
+      <PageHeader
+        title="Monitor de Referências"
+        caption={resumo || "Médicos que você acompanha no seu nicho"}
         actions={
-          <div className="flex items-center gap-2">
-            <button onClick={() => setShowInflModal(true)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border text-text-muted text-[12px] hover:border-accent-border hover:text-accent transition-colors">
-              <Sparkles className="w-3.5 h-3.5" /> Buscar influencers
-            </button>
-            <Button variant="accent-ghost" size="lg" onClick={() => setShowForm(v => !v)} leftIcon={Plus} className="py-3 min-h-[44px]">Adicionar</Button>
+          <div className="flex flex-wrap gap-2">
+            <PxButton variant="secondary" size="sm" leftIcon={Sparkles} onClick={() => setDescobrir(true)}>Descobrir perfis</PxButton>
+            <PxButton size="sm" leftIcon={Plus} onClick={() => setForm(FORM_VAZIO)}>Adicionar</PxButton>
           </div>
         }
       />
-      <div className="p-4 md:p-8 space-y-6">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <StatCard label="Perfis"          value={refs.length}                             sub="referencias ativas" icon={Users}      accent="green" />
-          <StatCard label="Alta Relevancia" value={refs.filter(r=>r.relevancia==="Alta").length} sub="prioritarios"  icon={Star}       accent="red"   />
-          <StatCard label="Especialidades"  value={new Set(refs.map(r=>r.especialidade)).size}   sub="nichos"        icon={TrendingUp} accent="blue"  />
-          <StatCard label="Seguidores"      value={fmtSeg}                                  sub="alcance combinado"  icon={Eye}        accent="amber" />
-        </div>
+      {form && <FormularioModal inicial={form} onClose={() => setForm(null)} onSalvo={() => { setForm(null); carregar() }} />}
+      {leituraRef && <LeituraModal referencia={leituraRef} onClose={() => setLeituraRef(null)} />}
+      {descobrir && <DescobrirModal onClose={() => setDescobrir(false)} onAdicionado={carregar} />}
 
-        {showForm && (
-          <div className="bg-card border border-accent-border rounded-lg p-6 space-y-4 animate-fade-in">
-            <div className="text-[11px] font-mono text-accent tracking-widest uppercase">Nova Referencia</div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <input value={newNome} onChange={e=>setNewNome(e.target.value)} placeholder="Nome do medico..."
-                className="bg-background border border-border rounded-lg px-4 py-2.5 text-[13px] text-text-primary placeholder:text-text-muted outline-none focus:border-accent/40 col-span-2" />
-              <input value={newInsta} onChange={e=>setNewInsta(e.target.value)} placeholder="@instagram"
-                className="bg-background border border-border rounded-lg px-4 py-2.5 text-[13px] text-text-primary placeholder:text-text-muted outline-none focus:border-accent/40" />
-              <input value={newSeg} onChange={e=>setNewSeg(e.target.value)} placeholder="Seguidores (ex: 150k)"
-                className="bg-background border border-border rounded-lg px-4 py-2.5 text-[13px] text-text-primary placeholder:text-text-muted outline-none focus:border-accent/40" />
-              <select value={newEsp} onChange={e=>setNewEsp(e.target.value)}
-                className="bg-background border border-border rounded-lg px-3 py-2 text-[12px] text-text-primary outline-none focus:border-accent/40">
-                {NICHOS.filter(n=>n!=="Todos").map(n=><option key={n}>{n}</option>)}
-              </select>
-              <select value={newFreq} onChange={e=>setNewFreq(e.target.value)}
-                className="bg-background border border-border rounded-lg px-3 py-2 text-[12px] text-text-primary outline-none focus:border-accent/40">
-                {["Diaria","3x/semana","2x/semana","1x/semana","Esporadica"].map(f=><option key={f}>{f}</option>)}
-              </select>
-              <select value={newRel} onChange={e=>setNewRel(e.target.value)}
-                className="bg-background border border-border rounded-lg px-3 py-2 text-[12px] text-text-primary outline-none focus:border-accent/40">
-                {["Alta","Media","Baixa"].map(r=><option key={r}>{r}</option>)}
-              </select>
-              <input value={newSite} onChange={e=>setNewSite(e.target.value)} placeholder="Site (opcional)"
-                className="bg-background border border-border rounded-lg px-4 py-2.5 text-[13px] text-text-primary placeholder:text-text-muted outline-none focus:border-accent/40" />
-              <input value={newTemas} onChange={e=>setNewTemas(e.target.value)} placeholder="Temas frequentes (ex: insulina, tireoide, emagrecimento)"
-                className="bg-background border border-border rounded-lg px-4 py-2.5 text-[13px] text-text-primary placeholder:text-text-muted outline-none focus:border-accent/40 col-span-2" />
+      <div className="space-y-4 px-4 pb-10 md:px-10">
+        <Panel as="section" className="space-y-3">
+          <Field label="Buscar" htmlFor="rf-busca">
+            <PxInput id="rf-busca" value={busca} onChange={e => setBusca(e.target.value)} placeholder="Nome, @instagram ou tema" />
+          </Field>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            <div className="space-y-1.5">
+              <p className="text-[13px] font-medium text-px-ink">Especialidade</p>
+              <Segmented label="Especialidade" value={filtroEsp} onChange={setFiltroEsp} options={["Todos", ...ESPECIALIDADES].map(n => ({ value: n, label: n }))} />
             </div>
-            <textarea value={newNota} onChange={e=>setNewNota(e.target.value)} placeholder="Observacoes..." rows={3}
-              className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-[13px] text-text-primary placeholder:text-text-muted outline-none focus:border-accent/40 resize-none" />
-            <div className="flex gap-3">
-              <button onClick={addRef} disabled={saving}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-accent-dim border border-accent-border text-accent text-[12px] font-medium hover:bg-accent/20 transition-colors disabled:opacity-50">
-                <Plus className="w-3.5 h-3.5" /> {saving?"Salvando...":"Adicionar"}
-              </button>
-              <button onClick={()=>setShowForm(false)} className="px-4 py-2 rounded-lg border border-border text-text-muted text-[12px] hover:text-text-secondary transition-colors">
-                Cancelar
-              </button>
+            <div className="space-y-1.5">
+              <p className="text-[13px] font-medium text-px-ink">Relevância</p>
+              <Segmented label="Relevância" value={filtroRel} onChange={setFiltroRel} options={["Todas", ...RELEVANCIAS].map(n => ({ value: n, label: rotulo(n) }))} />
             </div>
           </div>
+        </Panel>
+
+        {erroAcao && <p role="alert" className="rounded-px-card bg-px-danger-soft px-4 py-3 text-[13px] text-px-danger">{erroAcao}</p>}
+        {loading && <p role="status" className="py-16 text-center text-[13px] text-px-muted">Carregando referências</p>}
+        {!loading && erroLista && (
+          <Panel className="py-12 text-center">
+            <p role="alert" className="text-[14px] font-semibold text-px-ink">Não foi possível carregar as referências</p>
+            <div className="mt-3"><PxButton variant="secondary" size="sm" onClick={carregar}>Tentar de novo</PxButton></div>
+          </Panel>
+        )}
+        {!loading && !erroLista && filtradas.length === 0 && (
+          <Panel className="py-14 text-center">
+            <p className="text-[15px] font-semibold text-px-ink">{refs.length === 0 ? "Nenhuma referência cadastrada" : "Nenhuma referência com esses filtros"}</p>
+            <p className="mt-1 text-[13px] text-px-muted">{refs.length === 0 ? "Adicione os médicos que você acompanha ou use Descobrir perfis." : "Mude a busca ou os filtros acima."}</p>
+          </Panel>
         )}
 
-        <div className="bg-card border border-border rounded-lg p-5 space-y-3">
-          <div className="flex items-center gap-3">
-            <Search className="w-3.5 h-3.5 text-text-muted" />
-            <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar por nome ou @instagram..."
-              className="flex-1 bg-transparent text-[13px] text-text-primary placeholder:text-text-muted outline-none" />
-          </div>
-          <div className="border-t border-border pt-3 space-y-2.5">
-            {[
-              {label:"Nicho",      items:NICHOS,     value:filterNicho, set:setFilterNicho},
-              {label:"Relevancia", items:RELEVANCIA, value:filterRel,   set:setFilterRel},
-            ].map(g=>(
-              <div key={g.label} className="flex items-center gap-3">
-                <span className="text-[9px] font-mono text-text-muted tracking-widest uppercase w-16 flex-shrink-0">{g.label}</span>
-                <div className="flex flex-wrap gap-1.5">
-                  {g.items.map(item=>(
-                    <button key={item} onClick={()=>g.set(item)}
-                      className={cn("text-[10px] px-2.5 py-0.5 rounded-full border transition-all",
-                        g.value===item?"bg-accent-dim border-accent-border text-accent-text font-medium":"border-border text-text-muted hover:text-text-secondary")}>
-                      {item}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {loading ? (
-          <div className="text-center py-16 text-text-muted text-[13px]">Carregando referências...</div>
-        ) : filtered.length===0 ? (
-          <div className="text-center py-16 text-text-muted text-[13px]">Nenhuma referência encontrada.</div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filtered.map(r=>(
-              <div key={r.id} className="group bg-card border border-border hover:border-border-hover rounded-lg p-5 transition-all duration-150">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-accent-dim border border-accent-border flex items-center justify-center flex-shrink-0 text-[13px] font-semibold text-accent">
-                      {r.nome.split(" ").slice(0,2).map((n:string)=>n[0]).join("")}
+        {!loading && !erroLista && filtradas.length > 0 && (
+          <ul className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {filtradas.map(r => {
+              const temInsta = handleValido(r.instagram)
+              return (
+                <li key={r.id}>
+                  <Panel as="article" className="flex h-full flex-col gap-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <span aria-hidden className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-px-ink/5 text-[13px] font-semibold text-px-ink">
+                          {r.nome.split(" ").filter(Boolean).slice(0, 2).map(n => n[0]).join("").toUpperCase()}
+                        </span>
+                        <div className="min-w-0">
+                          <h2 className="truncate text-[14px] font-semibold text-px-ink">{r.nome}</h2>
+                          <p className="truncate text-[12.5px] text-px-muted">{temInsta ? r.instagram : "Instagram não informado"}</p>
+                        </div>
+                      </div>
+                      <Tag tone={r.relevancia === "Alta" ? "ink" : "neutral"}>Relevância {rotulo(r.relevancia).toLowerCase()}</Tag>
                     </div>
-                    <div>
-                      <div className="text-[13px] font-semibold text-text-primary">{r.nome}</div>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        <Instagram className="w-3 h-3 text-text-muted" />
-                        <span className="text-[10px] font-mono text-text-secondary">{r.instagram}</span>
+
+                    <dl className="grid grid-cols-3 gap-2 text-[12.5px]">
+                      {[["Especialidade", r.especialidade], ["Seguidores", r.seguidores === "-" ? "Não informado" : r.seguidores], ["Frequência", rotulo(r.frequencia)]].map(([k, v]) => (
+                        <div key={k} className="rounded-px-ctl bg-px-ink/[0.03] px-2.5 py-2">
+                          <dt className="text-px-muted">{k}</dt>
+                          <dd className="font-medium text-px-ink">{v}</dd>
+                        </div>
+                      ))}
+                    </dl>
+
+                    {r.temas?.length > 0 && <div className="flex flex-wrap gap-1.5">{r.temas.map(t => <Tag key={t} tone="neutral">{t}</Tag>)}</div>}
+                    {r.nota && <p className="flex-1 text-[13px] leading-relaxed text-px-ink">{r.nota}</p>}
+
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-px-line pt-3 text-[12.5px]">
+                      {temInsta && <a href={"https://instagram.com/" + r.instagram.slice(1)} target="_blank" rel="noopener noreferrer" className="text-px-accent underline underline-offset-2">Ver perfil</a>}
+                      {r.site && <a href={"https://" + r.site.replace(/^https?:\/\//i, "")} target="_blank" rel="noopener noreferrer" className="text-px-accent underline underline-offset-2">{r.site.replace(/^https?:\/\//i, "")}</a>}
+                      <div className="ml-auto flex flex-wrap items-center gap-2">
+                        <PxButton variant="secondary" size="sm" leftIcon={Search} onClick={() => setLeituraRef(r)}>Leitura estratégica</PxButton>
+                        <PxButton variant="quiet" size="sm" leftIcon={Pencil} aria-label={"Editar " + r.nome} onClick={() => setForm(paraForm(r))}>Editar</PxButton>
+                        {confirmando === r.id ? (
+                          <>
+                            <PxButton variant="danger" size="sm" loading={removendo === r.id} onClick={() => remover(r.id)}>Confirmar remoção</PxButton>
+                            <PxButton variant="quiet" size="sm" onClick={() => setConfirmando(null)}>Cancelar</PxButton>
+                          </>
+                        ) : (
+                          <PxButton variant="quiet" size="sm" leftIcon={Trash2} aria-label={"Remover " + r.nome} onClick={() => { setConfirmando(r.id); setErroAcao(null) }}>Remover</PxButton>
+                        )}
                       </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className={cn("text-badge font-mono font-semibold px-2 py-0.5 rounded-full border", RELEVANCIA_STYLES[r.relevancia]||RELEVANCIA_STYLES["Media"])}>
-                      {r.relevancia}
-                    </span>
-                    <button onClick={()=>removeRef(r.id)}
-                      className="opacity-100 md:opacity-0 md:group-hover:opacity-100 w-6 h-6 rounded border border-border flex items-center justify-center text-text-muted hover:text-red-400 hover:border-red-500/40 transition-all">
-                      <Trash2 className="w-3 h-3" />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-2 mb-3">
-                  {[
-                    {label:"Especialidade", value:r.especialidade, colored:false},
-                    {label:"Seguidores",    value:r.seguidores,    colored:false},
-                    {label:"Frequencia",    value:r.frequencia,    colored:true},
-                  ].map(info=>(
-                    <div key={info.label} className="bg-background border border-border rounded-md px-3 py-2">
-                      <div className="text-[8px] font-mono text-text-muted tracking-widest uppercase mb-0.5">{info.label}</div>
-                      <div className={cn("text-[11px] font-medium", info.colored?(FREQ_STYLES[info.value]||"text-text-secondary"):"text-text-primary")}>{info.value}</div>
-                    </div>
-                  ))}
-                </div>
-
-                {r.temas && r.temas.length>0 && (
-                  <div className="flex flex-wrap gap-1.5 mb-3">
-                    {r.temas.map((t:string)=>(
-                      <span key={t} className="text-badge px-2 py-0.5 rounded-full bg-accent-dim border border-accent-border text-accent-text font-mono">{t}</span>
-                    ))}
-                  </div>
-                )}
-
-                {r.nota && <p className="text-[11px] text-text-secondary leading-relaxed mb-3">{r.nota}</p>}
-
-                <div className="flex items-center gap-2 pt-3 border-t border-border">
-                  <a href={"https://instagram.com/"+r.instagram.replace("@","")} target="_blank" rel="noreferrer"
-                    className="flex items-center gap-1.5 text-[10px] text-text-muted hover:text-text-secondary transition-colors">
-                    <Instagram className="w-3 h-3" /> Ver perfil
-                  </a>
-                  {r.site && (
-                    <a href={"https://"+r.site} target="_blank" rel="noreferrer"
-                      className="flex items-center gap-1.5 text-[10px] text-text-muted hover:text-text-secondary transition-colors">
-                      <Globe className="w-3 h-3" /> {r.site}
-                    </a>
-                  )}
-                  <div className="ml-auto flex items-center gap-2">
-                    <button
-                      onClick={() => setAnaliseRef(r)}
-                      className="opacity-100 md:opacity-0 md:group-hover:opacity-100 flex items-center gap-1 px-2.5 py-1 rounded-md border border-border text-text-muted hover:text-accent hover:border-accent-border text-[10px] font-mono transition-all whitespace-nowrap">
-                      <Search className="w-3 h-3" /> Análise
-                    </button>
-                    <ExternalLink className="w-3 h-3 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+                  </Panel>
+                </li>
+              )
+            })}
+          </ul>
         )}
       </div>
-
-      {/* ── Modal Editar Referência ── */}
-      {editRef && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{background:'rgba(0,0,0,0.8)'}} onClick={()=>setEditRef(null)}>
-          <div className="bg-card border border-border rounded-xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e=>e.stopPropagation()}>
-            <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-              <div className="text-[13px] font-semibold text-text-primary">Editar Referência</div>
-              <button onClick={()=>setEditRef(null)} className="text-text-muted hover:text-text-primary flex items-center"><X className="w-4 h-4" /></button>
-            </div>
-            <div className="p-5 space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <input value={editRef.nome} onChange={e=>setEditRef(p=>p?{...p,nome:e.target.value}:p)}
-                  placeholder="Nome" className="col-span-2 bg-background border border-border rounded-lg px-3 py-2.5 text-[13px] text-text-primary outline-none focus:border-accent/40"/>
-                <input value={editRef.instagram} onChange={e=>setEditRef(p=>p?{...p,instagram:e.target.value}:p)}
-                  placeholder="@instagram" className="bg-background border border-border rounded-lg px-3 py-2.5 text-[13px] text-text-primary outline-none focus:border-accent/40"/>
-                <input value={editRef.seguidores} onChange={e=>setEditRef(p=>p?{...p,seguidores:e.target.value}:p)}
-                  placeholder="Seguidores" className="bg-background border border-border rounded-lg px-3 py-2.5 text-[13px] text-text-primary outline-none focus:border-accent/40"/>
-                <select value={editRef.especialidade} onChange={e=>setEditRef(p=>p?{...p,especialidade:e.target.value}:p)}
-                  className="bg-background border border-border rounded-lg px-3 py-2 text-[12px] text-text-primary outline-none focus:border-accent/40">
-                  {["Nutrologia","Endocrinologia","Longevidade","Metabolismo","Geral"].map(n=><option key={n}>{n}</option>)}
-                </select>
-                <select value={editRef.frequencia} onChange={e=>setEditRef(p=>p?{...p,frequencia:e.target.value}:p)}
-                  className="bg-background border border-border rounded-lg px-3 py-2 text-[12px] text-text-primary outline-none focus:border-accent/40">
-                  {["Diaria","3x/semana","2x/semana","1x/semana","Esporadica"].map(f=><option key={f}>{f}</option>)}
-                </select>
-                <select value={editRef.relevancia} onChange={e=>setEditRef(p=>p?{...p,relevancia:e.target.value}:p)}
-                  className="bg-background border border-border rounded-lg px-3 py-2 text-[12px] text-text-primary outline-none focus:border-accent/40">
-                  {["Alta","Media","Baixa"].map(r=><option key={r}>{r}</option>)}
-                </select>
-                <input value={editRef.site||''} onChange={e=>setEditRef(p=>p?{...p,site:e.target.value}:p)}
-                  placeholder="Site (opcional)" className="bg-background border border-border rounded-lg px-3 py-2.5 text-[13px] text-text-primary outline-none focus:border-accent/40"/>
-                <input value={(editRef.temas||[]).join(', ')} onChange={e=>setEditRef(p=>p?{...p,temas:e.target.value.split(',').map(t=>t.trim()).filter(Boolean)}:p)}
-                  placeholder="Temas (separados por vírgula)" className="col-span-2 bg-background border border-border rounded-lg px-3 py-2.5 text-[13px] text-text-primary outline-none focus:border-accent/40"/>
-              </div>
-              <textarea value={editRef.nota} onChange={e=>setEditRef(p=>p?{...p,nota:e.target.value}:p)}
-                placeholder="Observações..." rows={3} className="w-full bg-background border border-border rounded-lg px-3 py-2.5 text-[13px] text-text-primary outline-none focus:border-accent/40 resize-none"/>
-              <div className="flex gap-3 pt-2">
-                <button onClick={()=>editRef&&updateRef(editRef)}
-                  className="flex-1 py-2.5 rounded-lg bg-accent border border-accent text-background text-[13px] font-semibold hover:opacity-90 transition-opacity">
-                  Salvar alterações
-                </button>
-                <button onClick={()=>setEditRef(null)}
-                  className="px-4 py-2.5 rounded-lg border border-border text-text-muted text-[12px] hover:text-text-secondary transition-colors">
-                  Cancelar
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {toast && (
-        <div className="fixed bottom-6 right-6 flex items-center gap-2 bg-card border border-accent-border text-accent text-[12px] px-4 py-3 rounded-lg shadow-xl animate-fade-in z-50">
-          {toast}
-        </div>
-      )}
     </div>
   )
 }

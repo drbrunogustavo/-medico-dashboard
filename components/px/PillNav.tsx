@@ -30,6 +30,12 @@ interface PillNavProps {
 export function PillNav({ groups, activeId, currentHref, action, trailing, extraPanel, className }: PillNavProps) {
   const [openId, setOpenId] = React.useState<string | null>(null)
   const root = React.useRef<HTMLElement>(null)
+  const tabs = React.useRef<HTMLDivElement>(null)
+
+  React.useEffect(() => {
+    const el = tabs.current?.querySelector<HTMLElement>("[aria-current=page]")
+    if (el && tabs.current) tabs.current.scrollLeft = el.offsetLeft - (tabs.current.clientWidth - el.offsetWidth) / 2
+  }, [activeId])
 
   React.useEffect(() => {
     if (!openId) return
@@ -71,11 +77,12 @@ export function PillNav({ groups, activeId, currentHref, action, trailing, extra
       ) : null}
 
       <div className="px-pill flex max-w-full items-center gap-0.5 rounded-full p-1 sm:gap-1 sm:p-1.5">
+        <div ref={tabs} className="scrollbar-none flex min-w-0 items-center gap-0.5 overflow-x-auto sm:gap-1">
         {groups.map(g => {
           const on = g.id === activeId
           const open = g.id === openId
           const cls = cn(
-            "inline-flex h-10 min-w-0 shrink items-center whitespace-nowrap rounded-full px-2 text-[11.5px] transition-colors min-[400px]:px-2.5 min-[400px]:text-[12px] sm:h-11 sm:px-5 sm:text-[13px]",
+            "inline-flex h-10 shrink-0 items-center whitespace-nowrap rounded-full px-3 text-[12px] transition-colors sm:h-11 sm:px-5 sm:text-[13px]",
             on ? "bg-white font-semibold text-px-ink" : open ? "bg-white/25 font-semibold text-white" : "font-medium text-white hover:bg-white/15"
           )
           if (g.href) {
@@ -94,6 +101,7 @@ export function PillNav({ groups, activeId, currentHref, action, trailing, extra
             </button>
           )
         })}
+        </div>
         {trailing}
         {action ? (
           <button type="button" onClick={action.onClick} aria-label={action.label} className="ml-1 flex h-11 w-11 items-center justify-center rounded-full bg-black text-white hover:bg-px-ink">

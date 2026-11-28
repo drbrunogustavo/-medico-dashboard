@@ -5,17 +5,17 @@ import { erroInterno } from "@/lib/api-erro"
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
 
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
 
   const { data: asset, error: fetchErr } = await supabase
     .from("marca_assets")
     .select("arquivo_url")
-    .eq("id", params.id)
+    .eq("id", (await params).id)
     .eq("user_id", auth.userId)
     .single()
 
@@ -36,7 +36,7 @@ export async function DELETE(
   const { error } = await supabase
     .from("marca_assets")
     .delete()
-    .eq("id", params.id)
+    .eq("id", (await params).id)
     .eq("user_id", auth.userId)
 
   if (error) return erroInterno("[marca-assets/[id]]", error)

@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "nome e email são obrigatórios" }, { status: 400 })
   }
 
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { error } = await supabase
     .from("academy_interesse")
     .insert({ nome: body.nome, email: body.email, especialidade: body.especialidade ?? "" })

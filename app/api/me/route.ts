@@ -9,7 +9,7 @@ export async function GET() {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
 
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
 
   const [perfilRes, planoRes] = await Promise.all([
     supabase.from("perfis").select("*").eq("user_id", auth.userId).single(),

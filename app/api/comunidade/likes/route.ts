@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
   const { post_id } = await req.json() as { post_id?: string }
   if (!post_id) return NextResponse.json({ error: "post_id obrigatório" }, { status: 400 })
 
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
 
   const { data: existing } = await supabase
     .from("comunidade_likes")

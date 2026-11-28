@@ -10,7 +10,7 @@ export async function GET(_req: NextRequest) {
   if (!auth.authenticated) return auth.response
 
   try {
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
     const { data, error } = await supabase
       .from("nps_pesquisas")
       .select("*")
@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
     const at = agendado_para ?? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
     const { data, error } = await supabase
       .from("nps_pesquisas")
@@ -57,7 +57,7 @@ export async function DELETE(req: NextRequest) {
   if (!id) return NextResponse.json({ error: "id obrigatório" }, { status: 400 })
 
   try {
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
     const { error } = await supabase
       .from("nps_pesquisas")
       .delete()

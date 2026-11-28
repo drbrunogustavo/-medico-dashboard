@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
   const paciente_id = typeof bruto?.paciente_id === "string" ? bruto.paciente_id.slice(0, 60) : undefined
   if (!paciente_nome?.trim() && !paciente_id?.trim()) return NextResponse.json({ chips: [] })
 
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   let query = supabase
     .from("copiloto_historico")
     .select("resultado, created_at")

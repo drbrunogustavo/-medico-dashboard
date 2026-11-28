@@ -1,6 +1,6 @@
 import { createSupabaseServerClient } from "@/lib/supabase-server"
 
-type ServerClient = ReturnType<typeof createSupabaseServerClient>
+type ServerClient = Awaited<ReturnType<typeof createSupabaseServerClient>>
 
 // Cota mensal de gerações de IA por plano (alinhado com a página /planos).
 const LIMITES: Record<string, number> = { starter: 30, pro: 200, elite: 999999 }

@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "mes e ano obrigatórios" }, { status: 400 })
   }
 
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from("calendario_posts")
     .select("*")
@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "mes, ano e posts obrigatórios" }, { status: 400 })
   }
 
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
 
   const { error: delError } = await supabase
     .from("calendario_posts")
@@ -81,7 +81,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "id e publicado obrigatórios" }, { status: 400 })
   }
 
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { error } = await supabase
     .from("calendario_posts")
     .update({ publicado })

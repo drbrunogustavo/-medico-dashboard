@@ -120,7 +120,7 @@ export default function NutricaoPacientesPage() {
   // Busca de paciente
   const [searchResults, setSearchResults] = useState<PacienteResult[]>([])
   const [searchLoading, setSearchLoading] = useState(false)
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>()
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   // Geração
   const [generating, setGenerating] = useState(false)

@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
       ? new Date(subAny.current_period_end * 1000).toISOString()
       : null
 
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
     const { error: upsertErr } = await supabase.from("user_planos").upsert(
       {
         user_id:                auth.userId,

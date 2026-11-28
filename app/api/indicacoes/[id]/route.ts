@@ -6,15 +6,15 @@ import { erroInterno } from "@/lib/api-erro"
 
 function errMsg(e: unknown) { return e instanceof Error ? e.message : String(e) }
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
 
   const body = await req.json() as Record<string, unknown>
-  const { id } = params
+  const { id } = await params
 
   try {
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
 
     const { data: current } = await supabase
       .from("indicacoes")
@@ -57,16 +57,16 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
 
   try {
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
     const { error } = await supabase
       .from("indicacoes")
       .delete()
-      .eq("id", params.id)
+      .eq("id", (await params).id)
       .eq("user_id", auth.userId)
     if (error) throw new Error(error.message)
     return NextResponse.json({ ok: true })

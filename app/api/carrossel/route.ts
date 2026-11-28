@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
     // Brand kit context
     let brandCtx = ""
     try {
-      const supabase = createSupabaseServerClient()
+      const supabase = await createSupabaseServerClient()
       const { data: perfil } = await supabase
         .from("perfis")
         .select("nome, especialidade, publico_alvo, marca_slogan, marca_tom_voz")

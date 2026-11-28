@@ -11,16 +11,16 @@ function errMsg(e: unknown): string {
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
 
-  const { id } = params
+  const { id } = await params
   if (!id) return NextResponse.json({ error: "id obrigatório" }, { status: 400 })
 
   try {
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
     const { data, error } = await supabase
       .from("crm_leads")
       .select("*")
@@ -41,7 +41,7 @@ export async function GET(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const originErr = originGuard(req)
   if (originErr) return originErr
@@ -49,12 +49,12 @@ export async function PATCH(
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
 
-  const { id } = params
+  const { id } = await params
   if (!id) return NextResponse.json({ error: "id obrigatório" }, { status: 400 })
 
   try {
     const body = await req.json()
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
     const { data, error } = await supabase
       .from("crm_leads")
       .update({ ...body, updated_at: new Date().toISOString() })
@@ -76,7 +76,7 @@ export async function PATCH(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const originErr = originGuard(req)
   if (originErr) return originErr
@@ -84,11 +84,11 @@ export async function DELETE(
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
 
-  const { id } = params
+  const { id } = await params
   if (!id) return NextResponse.json({ error: "id obrigatório" }, { status: 400 })
 
   try {
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
     const { error } = await supabase
       .from("crm_leads")
       .delete()

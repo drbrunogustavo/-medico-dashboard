@@ -6,7 +6,7 @@ export async function GET() {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
 
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from("depoimentos_publicos")
     .select("*")
@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
   if (!body || !txt(body.nome, 120) || !txt(body.especialidade, 80) || txt(body.depoimento, 1200).length < 30) {
     return NextResponse.json({ error: "Dados inválidos" }, { status: 400 })
   }
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { error } = await supabase
     .from("depoimentos_publicos")
     .insert({

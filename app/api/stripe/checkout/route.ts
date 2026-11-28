@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   const stripe  = new Stripe(process.env.STRIPE_SECRET_KEY)

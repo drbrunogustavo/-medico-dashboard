@@ -32,7 +32,7 @@ export async function GET() {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
 
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from("referencias")
     .select("*")
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
   const dados = body ? campos(body) : {}
   if (!dados.nome) return NextResponse.json({ error: "Informe o nome." }, { status: 400 })
 
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { error } = await supabase.from("referencias").insert({ ...dados, user_id: auth.userId })
   if (error) return falha(error, "POST")
   return NextResponse.json({ success: true })
@@ -67,7 +67,7 @@ export async function PUT(request: NextRequest) {
   if (!id) return NextResponse.json({ error: "Referência não informada." }, { status: 400 })
   if (Object.keys(dados).length === 0 || ("nome" in dados && !dados.nome)) return NextResponse.json({ error: "Dados inválidos." }, { status: 400 })
 
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { error } = await supabase.from("referencias").update(dados).eq("id", id).eq("user_id", auth.userId)
   if (error) return falha(error, "PUT")
   return NextResponse.json({ success: true })
@@ -81,7 +81,7 @@ export async function DELETE(request: NextRequest) {
   const id = typeof body?.id === "string" ? body.id : ""
   if (!id) return NextResponse.json({ error: "Referência não informada." }, { status: 400 })
 
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { error } = await supabase.from("referencias").delete().eq("id", id).eq("user_id", auth.userId)
   if (error) return falha(error, "DELETE")
   return NextResponse.json({ success: true })

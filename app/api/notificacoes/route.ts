@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
   const soNaoLidas = url.searchParams.get("nao_lidas") === "true"
 
   try {
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
     let q = supabase
       .from("notificacoes")
       .select("*")
@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "titulo e mensagem são obrigatórios." }, { status: 400 })
     }
 
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
     const { data, error } = await supabase
       .from("notificacoes")
       .insert({
@@ -78,7 +78,7 @@ export async function PATCH(req: NextRequest) {
 
   try {
     const body = await req.json() as { id?: string; todas?: boolean }
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
 
     if (body.todas) {
       const { error } = await supabase
@@ -120,7 +120,7 @@ export async function DELETE(req: NextRequest) {
     const id  = url.searchParams.get("id")
     if (!id) return NextResponse.json({ error: "id é obrigatório." }, { status: 400 })
 
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
     const { error } = await supabase
       .from("notificacoes")
       .delete()

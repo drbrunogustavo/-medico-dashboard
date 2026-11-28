@@ -76,7 +76,7 @@ Gere um plano de ação. Retorne JSON com EXATAMENTE esta estrutura:
 
     // Save
     try {
-      const supabase = createSupabaseServerClient()
+      const supabase = await createSupabaseServerClient()
       await supabase.from("diagnosticos").insert({
         user_id:       auth.userId,
         respostas:     body.respostas,

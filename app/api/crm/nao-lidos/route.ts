@@ -5,7 +5,7 @@ import { createSupabaseServerClient } from "@/lib/supabase-server"
 export async function GET() {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { count } = await supabase
     .from("crm_leads")
     .select("*", { count: "exact", head: true })
@@ -17,7 +17,7 @@ export async function GET() {
 export async function PATCH() {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   await supabase
     .from("crm_leads")
     .update({ visualizado_em: new Date().toISOString() })

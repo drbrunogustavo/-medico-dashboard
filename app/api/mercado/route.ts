@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
     const { especialidade = "Endocrinologia e Nutrologia" } = await req.json() as { especialidade?: string }
     const semana = getWeekKey()
 
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
 
     const { data: perfil } = await supabase
       .from("perfis")

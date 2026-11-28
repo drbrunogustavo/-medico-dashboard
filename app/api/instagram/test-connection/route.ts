@@ -36,7 +36,7 @@ export async function GET() {
   if (!auth.authenticated) return auth.response
 
   try {
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
 
     // Load stored token for this user
     const { data: tokenRow, error: dbErr } = await supabase

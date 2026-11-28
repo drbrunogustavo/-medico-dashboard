@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
   const postId = new URL(req.url).searchParams.get("post_id")
   if (!postId) return NextResponse.json({ error: "post_id obrigatório" }, { status: 400 })
 
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from("comunidade_comentarios")
     .select("*")
@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "post_id e conteudo obrigatórios" }, { status: 400 })
   }
 
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
 
   const { data: perfil } = await supabase
     .from("perfis")

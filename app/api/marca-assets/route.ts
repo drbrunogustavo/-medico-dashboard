@@ -6,7 +6,7 @@ import { erroInterno } from "@/lib/api-erro"
 export async function GET() {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from("marca_assets")
     .select("id, arquivo_url, nome_arquivo, tamanho_bytes, criado_em")
@@ -20,7 +20,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const body = await req.json() as { arquivo_url: string; nome_arquivo?: string; tamanho_bytes?: number }
   if (!body.arquivo_url) return NextResponse.json({ error: "arquivo_url obrigatório" }, { status: 400 })
   const { data, error } = await supabase

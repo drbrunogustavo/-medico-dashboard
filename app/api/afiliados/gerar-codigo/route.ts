@@ -17,7 +17,7 @@ export async function POST(_req: NextRequest) {
   if (!auth.authenticated) return auth.response
 
   try {
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
 
     // Return existing if already has one
     const { data: existing } = await supabase

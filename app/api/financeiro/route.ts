@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
   const fim     = searchParams.get("fim")     ?? undefined
 
   try {
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
     let query      = supabase
       .from("financeiro_lancamentos")
       .select("*")
@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body     = await req.json()
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
     const { data, error } = await supabase
       .from("financeiro_lancamentos")
       .insert({ ...body, user_id: auth.userId })
@@ -76,7 +76,7 @@ export async function DELETE(req: NextRequest) {
   if (!id) return NextResponse.json({ error: "id obrigatório" }, { status: 400 })
 
   try {
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
     const { error } = await supabase
       .from("financeiro_lancamentos")
       .delete()

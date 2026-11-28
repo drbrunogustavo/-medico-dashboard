@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (!refCode) {
-      const cookieStore = cookies()
+      const cookieStore = await cookies()
       const refCookie   = cookieStore.get("praxis_ref")
       refCode = refCookie?.value ? decodeURIComponent(refCookie.value).trim() : null
       // origem stays "automatica"

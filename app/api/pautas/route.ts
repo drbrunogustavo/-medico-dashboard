@@ -6,7 +6,7 @@ export async function GET() {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
 
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from("pautas")
     .select("*")
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
   if (!auth.authenticated) return auth.response
 
   const body = await request.json() as Record<string, unknown>
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { error } = await supabase
     .from("pautas")
     .insert({ ...body, user_id: auth.userId })
@@ -37,7 +37,7 @@ export async function PUT(request: NextRequest) {
 
   const body = await request.json() as Record<string, unknown>
   const { id, ...updates } = body
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { error } = await supabase
     .from("pautas")
     .update(updates)
@@ -53,7 +53,7 @@ export async function DELETE(request: NextRequest) {
   if (!auth.authenticated) return auth.response
 
   const { id } = await request.json() as { id: string }
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { error } = await supabase
     .from("pautas")
     .delete()

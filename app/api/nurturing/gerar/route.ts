@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
   if (!lead_id) return NextResponse.json({ error: "lead_id obrigatório" }, { status: 400 })
 
   try {
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
 
     const { data: lead } = await supabase
       .from("crm_leads")

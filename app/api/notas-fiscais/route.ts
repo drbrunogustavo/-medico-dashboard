@@ -10,7 +10,7 @@ export async function GET(_req: NextRequest) {
   if (!auth.authenticated) return auth.response
 
   try {
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
     const [notasResult, configResult] = await Promise.all([
       supabase
         .from("notas_fiscais")
@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
     const { data, error } = await supabase
       .from("notas_fiscais")
       .insert({
@@ -84,7 +84,7 @@ export async function PATCH(req: NextRequest) {
   }
 
   try {
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
     const { error } = await supabase
       .from("configuracao_fiscal")
       .upsert({ user_id: auth.userId, ...body })

@@ -11,7 +11,7 @@ function opcional(v: unknown, max: number): string | null {
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const originErr = originGuard(req)
   if (originErr) return originErr
@@ -19,7 +19,7 @@ export async function POST(
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
 
-  const { id } = params
+  const { id } = await params
   const body = await req.json().catch(() => null) as Record<string, unknown> | null
   const nome  = opcional(body?.nome, 120)
   const valor = opcional(body?.valor, 60)
@@ -67,7 +67,7 @@ export async function POST(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const originErr = originGuard(req)
   if (originErr) return originErr
@@ -85,7 +85,7 @@ export async function DELETE(
       .from("paciente_exames")
       .delete()
       .eq("id", exameId)
-      .eq("paciente_id", params.id)
+      .eq("paciente_id", (await params).id)
       .eq("user_id", auth.userId)
     if (error) throw new Error(error.message)
     return NextResponse.json({ ok: true })

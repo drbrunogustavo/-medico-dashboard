@@ -176,7 +176,7 @@ export default function PerfilPage() {
 
   async function enviarImagemUnica(e: React.ChangeEvent<HTMLInputElement>, o: {
     campo: "avatar_url" | "marca_logo_url"; pasta: (uid: string) => string; tipos: (t: string) => boolean
-    msgTipo: string; setBusy: (b: boolean) => void; setErr: (m: string | null) => void; ref: React.RefObject<HTMLInputElement>; versionar: boolean
+    msgTipo: string; setBusy: (b: boolean) => void; setErr: (m: string | null) => void; ref: React.RefObject<HTMLInputElement | null>; versionar: boolean
   }) {
     const file = e.target.files?.[0]
     if (!file) return

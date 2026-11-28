@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
   const leadId = req.nextUrl.searchParams.get("lead_id")
 
   try {
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
     let q = supabase
       .from("nurturing_sequencias")
       .select("id, lead_id, dia, mensagem, status, agendado_para, enviado_em")

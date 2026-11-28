@@ -6,7 +6,7 @@ export async function GET() {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
 
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { data } = await supabase
     .from("user_planos")
     .select("plano, status, stripe_customer_id, stripe_subscription_id, assinatura_termina_em, trial_termina_em")

@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
 
     // ── Salvar lead no Supabase ──────────────────────────────────────────────
     if (action === "salvar") {
-      const supabase = createSupabaseServerClient()
+      const supabase = await createSupabaseServerClient()
       const { data, error } = await supabase
         .from("leads_nutricao")
         .insert({
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
     // ── Atualizar status ─────────────────────────────────────────────────────
     if (action === "status") {
       const { id, ...rest } = body as unknown as { id: string; status: string }
-      const supabase = createSupabaseServerClient()
+      const supabase = await createSupabaseServerClient()
       const { data, error } = await supabase
         .from("leads_nutricao")
         .update(rest)
@@ -154,7 +154,7 @@ export async function GET(req: NextRequest) {
   if (!auth.authenticated) return auth.response
 
   try {
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
     const { data, error } = await supabase
       .from("leads_nutricao")
       .select("*")

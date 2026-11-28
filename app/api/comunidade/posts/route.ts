@@ -9,7 +9,7 @@ export async function GET() {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
 
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
 
   const { data: posts, error } = await supabase
     .from("comunidade_posts")
@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
   }
   const cat = CATEGORIAS_VALIDAS.includes(categoria ?? "") ? (categoria ?? "geral") : "geral"
 
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
 
   const { data: perfil } = await supabase
     .from("perfis")

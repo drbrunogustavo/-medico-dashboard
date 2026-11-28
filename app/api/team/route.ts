@@ -35,7 +35,7 @@ export async function GET() {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
 
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from("team_members")
     .select("id, owner_id, user_id, email, nome, cargo, status, invite_token, created_at, team_permissions(*)")
@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
   const email = body.email.trim().toLowerCase()
   const nome  = body.nome.trim()
 
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
 
   // Idempotência: impede convite duplicado
   const { data: existing } = await supabase
@@ -157,7 +157,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "memberId e permissions obrigatórios." }, { status: 400 })
   }
 
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
 
   // Atualizar cargo em team_members se fornecido
   if (body.cargo !== undefined) {
@@ -192,7 +192,7 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "Parâmetro id obrigatório." }, { status: 400 })
   }
 
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { error } = await supabase
     .from("team_members")
     .delete()

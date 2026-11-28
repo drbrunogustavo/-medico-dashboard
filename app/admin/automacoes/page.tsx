@@ -1,9 +1,8 @@
 "use client"
 
-import { useState, useCallback, useEffect } from "react"
-import { TopBar } from "@/components/TopBar"
-import { cn } from "@/lib/utils"
-import { CheckCircle2, XCircle, AlertTriangle, Loader2, RefreshCw, ChevronDown, ChevronUp } from "lucide-react"
+import { useCallback, useEffect, useState } from "react"
+import { ChevronDown, ChevronUp, RefreshCw } from "lucide-react"
+import { Panel, PxButton, Segmented, Tag, PageHeader } from "@/components/px"
 
 interface AutomacaoLog {
   id:         string
@@ -13,151 +12,118 @@ interface AutomacaoLog {
   created_at: string
 }
 
-const STATUS_CFG = {
-  ok:      { icon: CheckCircle2,  cls: "text-green-400",  bg: "bg-green-500/10 border-green-500/25",  label: "OK"      },
-  parcial: { icon: AlertTriangle, cls: "text-amber-400",  bg: "bg-amber-500/10 border-amber-500/25",  label: "Parcial" },
-  erro:    { icon: XCircle,       cls: "text-red-400",    bg: "bg-red-500/10 border-red-500/25",      label: "Erro"    },
+const STATUS: Record<AutomacaoLog["status"], { label: string; tone: "ok" | "warn" | "danger" }> = {
+  ok:      { label: "Concluída", tone: "ok" },
+  parcial: { label: "Parcial",   tone: "warn" },
+  erro:    { label: "Com erro",  tone: "danger" },
 }
 
 const TIPO_LABELS: Record<string, string> = {
-  diario:    "Automação Diária",
-  nurturing: "Nutrição de Leads",
+  diario:    "Automação diária",
+  nurturing: "Nutrição de leads",
 }
+
+const FILTROS = [
+  { value: "todos",     label: "Todas" },
+  { value: "diario",    label: TIPO_LABELS.diario },
+  { value: "nurturing", label: TIPO_LABELS.nurturing },
+]
 
 function fmtDate(iso: string) {
   const d = new Date(iso)
-  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })
-    + " " + d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" }) +
+    " às " + d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
 }
 
 function LogRow({ log }: { log: AutomacaoLog }) {
   const [open, setOpen] = useState(false)
-  const cfg = STATUS_CFG[log.status] ?? STATUS_CFG.parcial
-  const Icon = cfg.icon
+  const cfg = STATUS[log.status] ?? STATUS.parcial
+  const nome = TIPO_LABELS[log.tipo] ?? log.tipo
+  const painel = "log-" + log.id
 
   return (
-    <div className="bg-card border border-border rounded-xl overflow-hidden">
+    <Panel className="p-0">
       <button
+        type="button"
         onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-white/[0.02] transition-colors"
+        disabled={!log.detalhes}
+        aria-expanded={log.detalhes ? open : undefined}
+        aria-controls={log.detalhes ? painel : undefined}
+        className="flex w-full flex-wrap items-center gap-x-3 gap-y-1 rounded-px-panel px-4 py-3 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-px-ink/40 disabled:cursor-default"
       >
-        <Icon className={cn("w-4 h-4 flex-shrink-0", cfg.cls)} />
-        <span className="flex-1 text-[12px] font-semibold text-text-primary">
-          {TIPO_LABELS[log.tipo] ?? log.tipo}
-        </span>
-        <span className={cn("text-badge font-mono font-semibold px-2 py-0.5 rounded-full border", cfg.bg, cfg.cls)}>
-          {cfg.label}
-        </span>
-        <span className="text-[10px] font-mono text-text-muted">{fmtDate(log.created_at)}</span>
+        <span className="min-w-0 flex-1 text-[14px] font-medium text-px-ink">{nome}</span>
+        <Tag tone={cfg.tone}>{cfg.label}</Tag>
+        <span className="text-[12.5px] tabular-nums text-px-muted">{fmtDate(log.created_at)}</span>
         {log.detalhes
-          ? open ? <ChevronUp className="w-3.5 h-3.5 text-text-muted flex-shrink-0" />
-                 : <ChevronDown className="w-3.5 h-3.5 text-text-muted flex-shrink-0" />
-          : <span className="w-3.5" />
-        }
+          ? (open ? <ChevronUp className="h-4 w-4 text-px-muted" aria-hidden /> : <ChevronDown className="h-4 w-4 text-px-muted" aria-hidden />)
+          : <span className="w-4" aria-hidden />}
       </button>
-
       {open && log.detalhes && (
-        <div className="px-4 pb-4 border-t border-border bg-surface/40">
-          <pre className="text-[10px] font-mono text-text-secondary mt-3 whitespace-pre-wrap break-all leading-relaxed max-h-64 overflow-y-auto">
+        <div id={painel} className="border-t border-px-line px-4 pb-4">
+          <p className="mt-3 text-[12px] text-px-muted">Registro bruto da execução.</p>
+          <pre className="mt-1 max-h-64 overflow-y-auto whitespace-pre-wrap break-all font-mono text-[12px] leading-relaxed text-px-ink">
             {JSON.stringify(log.detalhes, null, 2)}
           </pre>
         </div>
       )}
-    </div>
+    </Panel>
   )
 }
-
-const TIPOS = ["todos", "diario", "nurturing"]
 
 export default function AdminAutomacoesPage() {
   const [logs,    setLogs]    = useState<AutomacaoLog[]>([])
   const [loading, setLoading] = useState(true)
+  const [erro,    setErro]    = useState("")
   const [filtro,  setFiltro]  = useState("todos")
 
-  const fetch_logs = useCallback(async (tipo: string) => {
-    setLoading(true)
+  const carregar = useCallback(async () => {
+    setLoading(true); setErro("")
     try {
-      const q   = tipo !== "todos" ? `?tipo=${tipo}` : ""
-      const res = await fetch(`/api/admin/automacoes-log${q}`)
-      const data = await res.json() as { logs?: AutomacaoLog[] }
-      setLogs(data.logs ?? [])
-    } catch { setLogs([]) }
-    finally  { setLoading(false) }
-  }, [])
+      const q = filtro !== "todos" ? "?tipo=" + encodeURIComponent(filtro) : ""
+      const res = await fetch("/api/admin/automacoes-log" + q)
+      if (res.status === 403) { setErro("Esta área é restrita ao administrador."); setLogs([]); return }
+      const data = await res.json().catch(() => null) as { logs?: AutomacaoLog[] } | null
+      if (!res.ok || !Array.isArray(data?.logs)) throw new Error("HTTP " + res.status)
+      setLogs(data.logs)
+    } catch (e) {
+      console.error("[admin/automacoes] erro ao carregar:", e)
+      setErro("Não foi possível carregar o registro das automações."); setLogs([])
+    } finally { setLoading(false) }
+  }, [filtro])
 
-  useEffect(() => { fetch_logs(filtro) }, [filtro, fetch_logs])
+  useEffect(() => { carregar() }, [carregar])
 
-  const stats = {
-    ok:      logs.filter(l => l.status === "ok").length,
-    parcial: logs.filter(l => l.status === "parcial").length,
-    erro:    logs.filter(l => l.status === "erro").length,
-  }
+  const n = (s: AutomacaoLog["status"]) => logs.filter(l => l.status === s).length
 
   return (
     <div className="animate-fade-in">
-      <TopBar
-        title="Log de Automações"
-        subtitle="ADMIN · CRONS E TAREFAS AUTOMÁTICAS"
-        actions={
-          <button
-            onClick={() => fetch_logs(filtro)}
-            className="flex items-center gap-1.5 px-3 py-1.5 border border-border rounded-lg text-[12px] text-text-muted hover:text-text-primary hover:border-border-hover transition-all"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-            Atualizar
-          </button>
-        }
+      <PageHeader
+        title="Automações"
+        caption="O que as tarefas agendadas fizeram nas últimas execuções"
+        actions={<PxButton variant="secondary" size="sm" leftIcon={RefreshCw} onClick={carregar} loading={loading}>Atualizar</PxButton>}
       />
 
-      <div className="p-6 md:p-8 space-y-5">
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-2 md:gap-3">
-          {[
-            { label: "Sucesso",  count: stats.ok,      cls: "text-green-400 bg-green-500/10 border-green-500/20" },
-            { label: "Parcial",  count: stats.parcial,  cls: "text-amber-400 bg-amber-500/10 border-amber-500/20" },
-            { label: "Erro",     count: stats.erro,     cls: "text-red-400 bg-red-500/10 border-red-500/20" },
-          ].map(s => (
-            <div key={s.label} className={cn("rounded-xl border px-4 py-3 text-center", s.cls)}>
-              <p className="text-[22px] font-bold">{s.count}</p>
-              <p className="text-[10px] font-mono mt-0.5 opacity-80">{s.label}</p>
-            </div>
-          ))}
-        </div>
+      <div className="space-y-4 px-4 pb-10 md:px-10">
+        <Segmented label="Tipo de automação" value={filtro} onChange={setFiltro} options={FILTROS} />
 
-        {/* Filtros */}
-        <div className="flex gap-2 flex-wrap">
-          {TIPOS.map(t => (
-            <button
-              key={t}
-              onClick={() => setFiltro(t)}
-              className={cn(
-                "text-[10px] font-mono px-2.5 py-1 rounded-full border transition-all",
-                filtro === t
-                  ? "bg-accent-dim border-accent-border text-accent font-medium"
-                  : "border-border text-text-muted hover:text-text-secondary"
-              )}
-            >
-              {t === "todos" ? "Todos" : TIPO_LABELS[t] ?? t}
-            </button>
-          ))}
-        </div>
+        {erro && <p role="alert" className="rounded-px-card bg-px-danger-soft px-3 py-2 text-[13px] text-px-danger">{erro}</p>}
 
-        {/* Log list */}
-        {loading ? (
-          <div className="flex items-center justify-center py-16 gap-2 text-text-muted">
-            <Loader2 className="w-4 h-4 animate-spin" />
-            <span className="text-[12px]">Carregando logs...</span>
-          </div>
-        ) : logs.length === 0 ? (
-          <div className="text-center py-16">
-            <p className="text-[13px] text-text-secondary">Nenhuma execução registrada ainda.</p>
-            <p className="text-[11px] text-text-muted mt-1">Os crons registrarão aqui após a próxima execução.</p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {logs.map(log => <LogRow key={log.id} log={log} />)}
-          </div>
-        )}
+        {loading && !erro ? <p role="status" className="py-16 text-center text-[13px] text-px-muted">Carregando registros</p>
+          : !erro && logs.length === 0 ? (
+            <Panel className="space-y-1 py-12 text-center">
+              <p className="text-[14px] text-px-ink">Nenhuma execução registrada ainda.</p>
+              <p className="text-[13px] text-px-muted">As próximas execuções agendadas aparecem aqui.</p>
+            </Panel>
+          ) : !erro && (
+            <>
+              <p className="text-[13px] text-px-muted">
+                Nas {logs.length} execuções mais recentes listadas: {n("ok")} concluídas, {n("parcial")} parciais, {n("erro")} com erro.
+              </p>
+              <ul className="space-y-2">
+                {logs.map(log => <li key={log.id}><LogRow log={log} /></li>)}
+              </ul>
+            </>
+          )}
       </div>
     </div>
   )

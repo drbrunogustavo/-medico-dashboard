@@ -10,7 +10,8 @@ export async function GET(req: NextRequest) {
 
   const url    = new URL(req.url)
   const tipo   = url.searchParams.get("tipo") ?? undefined
-  const limit  = Math.min(Number(url.searchParams.get("limit") ?? "50"), 200)
+  const pedido = Number(url.searchParams.get("limit") ?? "50")
+  const limit  = Number.isFinite(pedido) && pedido > 0 ? Math.min(Math.floor(pedido), 200) : 50
 
   const supabase = createSupabaseServiceClient()
   let query = supabase
@@ -22,6 +23,9 @@ export async function GET(req: NextRequest) {
   if (tipo) query = query.eq("tipo", tipo)
 
   const { data, error } = await query
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    console.error("[admin/automacoes-log] erro ao listar:", error)
+    return NextResponse.json({ error: "Não foi possível carregar o registro." }, { status: 500 })
+  }
   return NextResponse.json({ logs: data ?? [] })
 }

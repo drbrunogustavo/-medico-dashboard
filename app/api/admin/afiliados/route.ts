@@ -23,7 +23,10 @@ export async function GET() {
       .select("user_id, nome, especialidade"),
   ])
 
-  if (afiliadosRes.error) return NextResponse.json({ error: afiliadosRes.error.message }, { status: 500 })
+  if (afiliadosRes.error || indicacoesRes.error || perfisRes.error) {
+    console.error("[admin/afiliados] erro de leitura:", afiliadosRes.error ?? indicacoesRes.error ?? perfisRes.error)
+    return NextResponse.json({ error: "Não foi possível carregar os afiliados." }, { status: 500 })
+  }
 
   const indicacoes = indicacoesRes.data ?? []
   const perfisMap  = Object.fromEntries((perfisRes.data ?? []).map(p => [p.user_id, p]))

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { escapeLike } from "@/lib/like"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
 import { getAnthropicClient, captureAnthropicError } from "@/lib/anthropic"
@@ -20,7 +21,9 @@ export async function POST(req: NextRequest) {
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
 
-  const { paciente_nome, paciente_id } = await req.json() as { paciente_nome?: string; paciente_id?: string }
+  const bruto = await req.json().catch(() => null) as Record<string, unknown> | null
+  const paciente_nome = typeof bruto?.paciente_nome === "string" ? bruto.paciente_nome.slice(0, 120) : undefined
+  const paciente_id = typeof bruto?.paciente_id === "string" ? bruto.paciente_id.slice(0, 60) : undefined
   if (!paciente_nome?.trim() && !paciente_id?.trim()) return NextResponse.json({ chips: [] })
 
   const supabase = createSupabaseServerClient()
@@ -31,7 +34,7 @@ export async function POST(req: NextRequest) {
 
   query = paciente_id?.trim()
     ? query.eq("paciente_id", paciente_id.trim())
-    : query.ilike("paciente_nome", `%${(paciente_nome ?? "").trim()}%`)
+    : query.ilike("paciente_nome", `%${escapeLike((paciente_nome ?? "").trim())}%`)
 
   const { data: historico } = await query
     .order("created_at", { ascending: false })

@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
   if (!auth.authenticated) return auth.response
 
   if (!process.env.GROQ_API_KEY) {
-    return NextResponse.json({ error: "GROQ_API_KEY não configurado." }, { status: 503 })
+    return NextResponse.json({ error: "A transcrição de voz não está disponível no momento." }, { status: 503 })
   }
 
   try {

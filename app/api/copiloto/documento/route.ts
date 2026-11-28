@@ -2,25 +2,31 @@ import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { AI_MODEL } from "@/lib/ai-config"
 import { getAnthropicClient, captureAnthropicError } from "@/lib/anthropic"
+import { originGuard } from "@/lib/check-origin"
 
 export const maxDuration = 30
 
 function errMsg(e: unknown) { return e instanceof Error ? e.message : String(e) }
 
+const curto = (v: unknown, max: number): string | undefined =>
+  typeof v === "string" && v.trim() ? v.trim().slice(0, max) : undefined
+
 export async function POST(req: NextRequest) {
+  const originErr = originGuard(req)
+  if (originErr) return originErr
+
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
 
   const client = getAnthropicClient()
 
-  const { tipo, resumo, plano, nomePaciente } = await req.json() as {
-    tipo:          "carta" | "atestado"
-    resumo:        string
-    plano?:        string
-    nomePaciente?: string
-  }
+  const bruto = await req.json().catch(() => null) as Record<string, unknown> | null
+  const tipo: "carta" | "atestado" | null = bruto?.tipo === "carta" || bruto?.tipo === "atestado" ? bruto.tipo : null
+  const resumo = curto(bruto?.resumo, 12000)
+  const plano = curto(bruto?.plano, 12000)
+  const nomePaciente = curto(bruto?.nomePaciente, 120)
 
-  if (!tipo || !resumo?.trim()) {
+  if (!tipo || !resumo) {
     return NextResponse.json({ error: "tipo e resumo são obrigatórios" }, { status: 400 })
   }
 
@@ -84,6 +90,6 @@ Retorne APENAS o texto do atestado, sem marcações JSON.`,
   } catch (e) {
     captureAnthropicError(e, "/api/copiloto/documento")
     console.error("[copiloto/documento]", errMsg(e))
-    return NextResponse.json({ error: errMsg(e) }, { status: 500 })
+    return NextResponse.json({ error: "Não foi possível gerar o documento agora." }, { status: 500 })
   }
 }

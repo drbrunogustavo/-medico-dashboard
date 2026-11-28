@@ -692,13 +692,7 @@ input:-webkit-autofill:active {
   transition: background-color 9999s ease-in-out 0s;
 }
 
-/* ── Modo Consulta ── oculta Sidebar e colapsa margem sem mudar arquitetura */
-body.consulta-focus aside {
-  width: 0 !important;
-  overflow: hidden;
-  transition: width 200ms ease;
-}
-body.consulta-focus main {
-  margin-left: 0 !important;
-  transition: margin-left 200ms ease;
+/* ── Modo Consulta ── esconde o menu flutuante enquanto o atendimento está em andamento */
+body.consulta-focus nav[aria-label="Principal"] {
+  display: none;
 }

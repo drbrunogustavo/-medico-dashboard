@@ -6,6 +6,7 @@ import { AI_MODEL } from "@/lib/ai-config"
 import { getAnthropicClient, captureAnthropicError } from "@/lib/anthropic"
 import { logAiUsage } from "@/lib/log-ai-usage"
 import { checkAiRateLimit } from "@/lib/rate-limit"
+import { originGuard } from "@/lib/check-origin"
 
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -72,17 +73,24 @@ export async function GET(_req: NextRequest) {
       .order("created_at", { ascending: false })
       .limit(10)
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) {
+      console.error("[api/copiloto GET]", error.message)
+      return NextResponse.json({ error: "Erro ao processar solicitação" }, { status: 500 })
+    }
     return NextResponse.json(data ?? [])
   } catch (e) {
     captureAnthropicError(e, "/api/copiloto")
-    return NextResponse.json({ error: errMsg(e) }, { status: 500 })
+    console.error("[api/copiloto GET]", e)
+    return NextResponse.json({ error: "Erro ao processar solicitação" }, { status: 500 })
   }
 }
 
 // ── DELETE: remove history entry ──────────────────────────────────────────────
 
 export async function DELETE(req: NextRequest) {
+  const originErr = originGuard(req)
+  if (originErr) return originErr
+
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
 
@@ -97,17 +105,27 @@ export async function DELETE(req: NextRequest) {
       .eq("id", id)
       .eq("user_id", auth.userId)
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) {
+      console.error("[api/copiloto DELETE]", error.message)
+      return NextResponse.json({ error: "Erro ao processar solicitação" }, { status: 500 })
+    }
     return NextResponse.json({ ok: true })
   } catch (e) {
     captureAnthropicError(e, "/api/copiloto")
-    return NextResponse.json({ error: errMsg(e) }, { status: 500 })
+    console.error("[api/copiloto DELETE]", e)
+    return NextResponse.json({ error: "Erro ao processar solicitação" }, { status: 500 })
   }
 }
 
 // ── POST: generate or send to MedX ───────────────────────────────────────────
 
+const curto = (v: unknown, max: number): string | undefined =>
+  typeof v === "string" && v.trim() ? v.trim().slice(0, max) : undefined
+
 export async function POST(req: NextRequest) {
+  const originErr = originGuard(req)
+  if (originErr) return originErr
+
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
   const client = getAnthropicClient()
@@ -116,10 +134,9 @@ export async function POST(req: NextRequest) {
 
   try {
     if (action === "prontuario") {
-      const { prontuario, idPaciente } = await req.json() as {
-        prontuario: string
-        idPaciente: string
-      }
+      const bodyP = await req.json().catch(() => null) as Record<string, unknown> | null
+      const prontuario = curto(bodyP?.prontuario, 20000)
+      const idPaciente = curto(bodyP?.idPaciente, 60)
       if (!prontuario || !idPaciente)
         return NextResponse.json({ error: "prontuario e idPaciente obrigatórios" }, { status: 400 })
 
@@ -128,13 +145,16 @@ export async function POST(req: NextRequest) {
     }
 
     // action === "gerar"
-    const body = await req.json() as {
-      relato:         string
-      dados?:         string
-      tipoConsulta?:  string
-      nomePaciente?:  string
-      pacienteId?:    string
-      protocoloId?:   string
+    const bruto = await req.json().catch(() => null) as Record<string, unknown> | null
+    const relatoValido = curto(bruto?.relato, 20000)
+    if (!relatoValido) return NextResponse.json({ error: "O relato da consulta é obrigatório." }, { status: 400 })
+    const body = {
+      relato:       relatoValido,
+      dados:        curto(bruto?.dados, 8000),
+      tipoConsulta: curto(bruto?.tipoConsulta, 60),
+      nomePaciente: curto(bruto?.nomePaciente, 120),
+      pacienteId:   curto(typeof bruto?.pacienteId === "number" ? String(bruto.pacienteId) : bruto?.pacienteId, 60),
+      protocoloId:  curto(bruto?.protocoloId, 60),
     }
 
     const nome = body.nomePaciente ?? "paciente"
@@ -226,6 +246,12 @@ Retorne um JSON com exatamente estas 7 chaves:
       ;(async () => {
         try {
           const sbFF = createSupabaseServerClient()
+          // Gerar de novo para o mesmo paciente não duplica as mensagens: se já há pesquisa agendada, não agenda outra.
+          const { data: jaAgendado } = await sbFF
+            .from("nps_pesquisas").select("id")
+            .eq("user_id", auth.userId).eq("paciente_nome", body.nomePaciente)
+            .gte("agendado_para", new Date().toISOString()).limit(1)
+          if (jaAgendado && jaAgendado.length > 0) return
           const d1   = new Date()
           d1.setDate(d1.getDate() + 1)
           const at = d1.toISOString()
@@ -268,7 +294,7 @@ Retorne um JSON com exatamente estas 7 chaves:
     return NextResponse.json(parsed)
   } catch (e) {
     captureAnthropicError(e, "/api/copiloto")
-    console.error("[api/copiloto]", e)
-    return NextResponse.json({ error: errMsg(e) }, { status: 500 })
+    console.error("[api/copiloto]", errMsg(e))
+    return NextResponse.json({ error: "Não foi possível processar agora. Tente de novo em instantes." }, { status: 500 })
   }
 }

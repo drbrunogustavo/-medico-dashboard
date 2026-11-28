@@ -31,8 +31,10 @@ export async function POST(req: NextRequest) {
 
   const client = getAnthropicClient()
 
-  const { resumo, plano } = await req.json() as { resumo: string; plano?: string }
-  if (!resumo?.trim()) return NextResponse.json({ cids: [] })
+  const bruto = await req.json().catch(() => null) as Record<string, unknown> | null
+  const resumo = typeof bruto?.resumo === "string" ? bruto.resumo.slice(0, 12000) : ""
+  const plano = typeof bruto?.plano === "string" ? bruto.plano.slice(0, 12000) : undefined
+  if (!resumo.trim()) return NextResponse.json({ cids: [] })
 
   try {
     const resp = await client.messages.create({

@@ -3,20 +3,14 @@
 import { useState, useEffect, useRef, useCallback, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useAppContext } from "@/components/AppProvider"
-import { TopBar } from "@/components/TopBar"
 import { Toast } from "@/components/Toast"
-import { Button } from "@/components/ui/Button"
 import { cn } from "@/lib/utils"
+import { Check, Clock, Copy, Mic, Plus, Search, Send, Stethoscope } from "lucide-react"
 import {
-  Search, Loader2, X, User, Phone,
-  FileText, Stethoscope, BookOpen, MessageCircle, Sparkles, ClipboardList,
-  Copy, Check, Bot, RefreshCw, Plus, Tag,
-  AlertCircle, ChevronDown, ChevronUp, Send,
-  Clock, Trash2, FlaskConical, Mic, MicOff, ShieldCheck, Brain,
-  Pill, CalendarDays, Mail, ArrowRight, Salad, Star, UserPlus,
-} from "lucide-react"
+  CopyButton, Field, PageHeader, Panel, PxButton, PxCheckbox, PxInput, PxModal, PxSelect, Segmented, Tag,
+} from "@/components/px"
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+/* ── Tipos ─────────────────────────────────────────────────────────────── */
 
 interface Paciente {
   Id?: string | number; id?: string | number
@@ -26,11 +20,7 @@ interface Paciente {
   [key: string]: unknown
 }
 
-interface FollowupMessages {
-  d1:  string
-  d7:  string
-  d30: string
-}
+interface FollowupMessages { d1: string; d7: string; d30: string }
 
 interface CopilotoResult {
   resumo?:             string
@@ -52,251 +42,288 @@ interface HistoricoEntry {
   created_at:    string
 }
 
+interface Cid { codigo: string; descricao: string; justificativa: string }
+interface Chip { tipo: string; texto: string }
+
 type Phase = "idle" | "loading" | "done"
+type Dia = "d1" | "d7" | "d30"
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+/* ── Auxiliares ────────────────────────────────────────────────────────── */
 
-function getPacId(p: Paciente): string {
-  return String(p.Id ?? p.id ?? p.IdContato ?? p.idContato ?? "")
-}
-function getPacNome(p: Paciente): string {
-  return String(p.Nome ?? p.nome ?? p.nomeCompleto ?? "—")
-}
-function getPacTel(p: Paciente): string {
-  return String(p.Celular ?? p.celular ?? p.Telefone ?? p.telefone ?? "")
-}
-function initials(nome: string): string {
-  return nome.split(" ").filter(Boolean).slice(0, 2).map(n => n[0]).join("").toUpperCase()
-}
+function getPacId(p: Paciente): string { return String(p.Id ?? p.id ?? p.IdContato ?? p.idContato ?? "") }
+function getPacNome(p: Paciente): string { return String(p.Nome ?? p.nome ?? p.nomeCompleto ?? "Sem nome") }
+function getPacTel(p: Paciente): string { return String(p.Celular ?? p.celular ?? p.Telefone ?? p.telefone ?? "") }
+
 function fmtDate(s: string) {
-  if (!s) return "—"
+  if (!s) return "-"
   const d = new Date(s)
-  return `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`
+  if (Number.isNaN(d.getTime())) return "-"
+  return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`
 }
+
 function fmtDateLong(s: string) {
-  if (!s) return "—"
+  if (!s) return "-"
   const d = new Date(s)
-  const months = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"]
-  return `${String(d.getDate()).padStart(2,"0")} ${months[d.getMonth()]} ${d.getFullYear()}`
+  if (Number.isNaN(d.getTime())) return "-"
+  const meses = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"]
+  return `${String(d.getDate()).padStart(2, "0")} ${meses[d.getMonth()]} ${d.getFullYear()}`
 }
 
 function fmtTimer(secs: number): string {
   const h = Math.floor(secs / 3600)
   const m = Math.floor((secs % 3600) / 60)
   const s = secs % 60
-  const mm = String(m).padStart(2, "0")
-  const ss = String(s).padStart(2, "0")
-  if (h > 0) return `${String(h).padStart(2, "0")}:${mm}:${ss}`
-  return `${mm}:${ss}`
+  const mm = String(m).padStart(2, "0"), ss = String(s).padStart(2, "0")
+  return h > 0 ? `${String(h).padStart(2, "0")}:${mm}:${ss}` : `${mm}:${ss}`
 }
 
 function parseFollowup(f?: string | FollowupMessages): FollowupMessages | null {
   if (!f) return null
   if (typeof f === "object" && "d1" in f) return f as FollowupMessages
   const s = String(f)
-  // try to split old string format by D+1 / D+7 / D+30 markers
   const d1m  = s.match(/D\+1[^:]*[:：]?\s*([\s\S]+?)(?=\s*D\+7|\s*D\+30|$)/i)
   const d7m  = s.match(/D\+7[^:]*[:：]?\s*([\s\S]+?)(?=\s*D\+30|$)/i)
   const d30m = s.match(/D\+30[^:]*[:：]?\s*([\s\S]+?)$/i)
-  if (d1m || d7m || d30m) {
-    return { d1: d1m?.[1].trim() ?? "", d7: d7m?.[1].trim() ?? "", d30: d30m?.[1].trim() ?? "" }
-  }
+  if (d1m || d7m || d30m) return { d1: d1m?.[1].trim() ?? "", d7: d7m?.[1].trim() ?? "", d30: d30m?.[1].trim() ?? "" }
   return { d1: s, d7: "", d30: "" }
 }
 
-// ── Prontuário parser ─────────────────────────────────────────────────────────
+/** Telefone para o envio: só dígitos, com o 55 do Brasil quando ele ainda não está lá. */
+function foneParaEnvio(tel: string): string {
+  const d = tel.replace(/\D/g, "")
+  return d.length <= 11 ? "55" + d : d
+}
+
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")
+}
+
+/** Erros 4xx trazem uma mensagem pensada para o usuário (limite do plano, campo faltando). O resto vira texto genérico. */
+function msgDoServidor(status: number, data: unknown, padrao: string): string {
+  const e = (data as { error?: unknown } | null)?.error
+  return status >= 400 && status < 500 && typeof e === "string" && e.trim() ? e : padrao
+}
+
+/* ── Prontuário ────────────────────────────────────────────────────────── */
 
 interface ProntuarioBloco { key: string; label: string; content: string }
 
 const PRONTUARIO_SECTIONS = [
-  { key: "queixa",       label: "Queixa Principal",         iconColor: "text-px-accent",    patterns: ["QUEIXA PRINCIPAL"] },
-  { key: "hda",          label: "História da Doença Atual", iconColor: "text-indigo-400",  patterns: ["HISTÓRIA DA DOENÇA ATUAL", "HISTORIA DA DOENÇA ATUAL", "HDA"] },
-  { key: "antecedentes", label: "Antecedentes",             iconColor: "text-violet-400",  patterns: ["ANTECEDENTES"] },
-  { key: "exame",        label: "Exame Físico",             iconColor: "text-cyan-400",    patterns: ["EXAME FÍSICO", "EXAME FISICO"] },
-  { key: "hipoteses",    label: "Hipótese Diagnóstica",     iconColor: "text-purple-400",  patterns: ["HIPÓTESES DIAGNÓSTICAS", "HIPOTESES DIAGNOSTICAS", "HIPÓTESE DIAGNÓSTICA", "HIPOTESE DIAGNOSTICA"] },
-  { key: "conduta",      label: "Plano / Conduta",          iconColor: "text-emerald-400", patterns: ["CONDUTA", "PLANO TERAPÊUTICO", "PLANO TERAPEUTICO", "PLANO"] },
-  { key: "orientacoes",  label: "Orientações",              iconColor: "text-green-400",   patterns: ["ORIENTAÇÕES", "ORIENTACOES"] },
-  { key: "retorno",      label: "Retorno",                  iconColor: "text-amber-400",   patterns: ["RETORNO"] },
+  { key: "queixa",       label: "Queixa principal",         patterns: ["QUEIXA PRINCIPAL"] },
+  { key: "hda",          label: "História da doença atual", patterns: ["HISTÓRIA DA DOENÇA ATUAL", "HISTORIA DA DOENÇA ATUAL", "HDA"] },
+  { key: "antecedentes", label: "Antecedentes",             patterns: ["ANTECEDENTES"] },
+  { key: "exame",        label: "Exame físico",             patterns: ["EXAME FÍSICO", "EXAME FISICO"] },
+  { key: "hipoteses",    label: "Hipótese diagnóstica",     patterns: ["HIPÓTESES DIAGNÓSTICAS", "HIPOTESES DIAGNOSTICAS", "HIPÓTESE DIAGNÓSTICA", "HIPOTESE DIAGNOSTICA"] },
+  { key: "conduta",      label: "Plano e conduta",          patterns: ["CONDUTA", "PLANO TERAPÊUTICO", "PLANO TERAPEUTICO", "PLANO"] },
+  { key: "orientacoes",  label: "Orientações",              patterns: ["ORIENTAÇÕES", "ORIENTACOES"] },
+  { key: "retorno",      label: "Retorno",                  patterns: ["RETORNO"] },
 ]
-
-function getProntuarioIcon(key: string): React.ElementType {
-  switch (key) {
-    case "queixa":       return MessageCircle
-    case "hda":          return FileText
-    case "antecedentes": return BookOpen
-    case "exame":        return Stethoscope
-    case "hipoteses":    return FlaskConical
-    case "conduta":      return ClipboardList
-    case "orientacoes":  return BookOpen
-    case "retorno":      return Clock
-    default:             return FileText
-  }
-}
 
 function parseProntuario(text: string): ProntuarioBloco[] | null {
   if (!text?.trim()) return null
-  const lines = text.split('\n')
+  const lines = text.split("\n")
   const found: Array<{ lineIdx: number; sectionKey: string; label: string }> = []
-
   for (let i = 0; i < lines.length; i++) {
-    const clean = lines[i].replace(/:\s*$/, '').trim()
-    const section = PRONTUARIO_SECTIONS.find(s =>
-      s.patterns.some(p => p.toUpperCase() === clean.toUpperCase())
-    )
+    const clean = lines[i].replace(/:\s*$/, "").trim()
+    const section = PRONTUARIO_SECTIONS.find(s => s.patterns.some(p => p.toUpperCase() === clean.toUpperCase()))
     if (section) found.push({ lineIdx: i, sectionKey: section.key, label: section.label })
   }
-
   if (found.length < 3) return null
-
   return found.map((curr, i) => {
     const nextLine = i < found.length - 1 ? found[i + 1].lineIdx : lines.length
-    const content  = lines.slice(curr.lineIdx + 1, nextLine).join('\n').trim()
-    return { key: curr.sectionKey, label: curr.label, content }
+    return { key: curr.sectionKey, label: curr.label, content: lines.slice(curr.lineIdx + 1, nextLine).join("\n").trim() }
   })
 }
 
-const TIPOS = ["Nova consulta", "Retorno", "Primeira consulta", "Urgência", "Teleconsulta"]
+const TIPOS = ["Nova consulta", "Retorno", "Primeira consulta", "Urgência", "Teleconsulta"].map(t => ({ value: t, label: t }))
 
-const FOLLOWUP_META = {
-  d1:  { label: "D+1",  badge: "bg-px-ink/10 border-px-ink/20 text-px-accent",    bg: "bg-px-ink/10  border-px-ink/20"    },
-  d7:  { label: "D+7",  badge: "bg-amber-500/12 border-amber-500/30 text-amber-400",  bg: "bg-amber-500/5  border-amber-500/15"  },
-  d30: { label: "D+30", badge: "bg-emerald-500/12 border-emerald-500/30 text-emerald-400", bg: "bg-emerald-500/5 border-emerald-500/15" },
-} as const
+const textareaCls = "w-full resize-none rounded-px-ctl border border-px-line bg-white px-3.5 py-2.5 text-[13.5px] leading-relaxed text-px-ink placeholder:text-px-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-px-ink/40"
+const erroBox = "rounded-px-card bg-px-danger-soft px-3 py-2 text-[13px] text-px-danger"
 
-// ── Sub-components ────────────────────────────────────────────────────────────
+/* ── Gravação de voz ───────────────────────────────────────────────────── */
 
-function SectionCard({
-  title, icon: Icon, iconColor, children, defaultOpen = true, extra,
-}: {
-  title:        string
-  icon:         React.ElementType
-  iconColor:    string
-  children:     React.ReactNode
-  defaultOpen?: boolean
-  extra?:       React.ReactNode
-}) {
-  const [open, setOpen] = useState(defaultOpen)
+/** Grava pelo microfone, envia para transcrição e entrega o texto. Dois campos usam o mesmo mecanismo. */
+function useGravador(onTexto: (t: string) => void, avisar: (msg: string, tipo?: "success" | "error") => void) {
+  const [gravando, setGravando] = useState(false)
+  const [transcrevendo, setTranscrevendo] = useState(false)
+  const [segundos, setSegundos] = useState(0)
+  const recRef = useRef<MediaRecorder | null>(null)
+  const chunksRef = useRef<Blob[]>([])
+  const onTextoRef = useRef(onTexto); onTextoRef.current = onTexto
+  const avisarRef = useRef(avisar); avisarRef.current = avisar
+
+  useEffect(() => {
+    if (!gravando) { setSegundos(0); return }
+    const t = setInterval(() => { if (document.visibilityState === "visible") setSegundos(s => s + 1) }, 1000)
+    return () => clearInterval(t)
+  }, [gravando])
+
+  // Sair da página no meio da gravação desliga o microfone.
+  useEffect(() => () => {
+    const rec = recRef.current
+    if (rec && rec.state !== "inactive") { rec.onstop = null; rec.stop(); rec.stream.getTracks().forEach(t => t.stop()) }
+  }, [])
+
+  async function transcrever(blob: Blob) {
+    setTranscrevendo(true)
+    try {
+      const tipo = blob.type || "audio/webm"
+      const form = new FormData()
+      form.append("audio", blob, `gravacao.${tipo.includes("mp4") ? "mp4" : "webm"}`)
+      const res = await fetch("/api/copiloto/transcricao", { method: "POST", body: form })
+      const data = await res.json().catch(() => null) as { text?: string; error?: string } | null
+      if (!res.ok || data?.error) throw new Error(msgDoServidor(res.status, data, "Falha na transcrição."))
+      const texto = data?.text?.trim() ?? ""
+      if (texto) onTextoRef.current(texto)
+      avisarRef.current(texto ? "Transcrição concluída." : "Nenhuma fala foi reconhecida na gravação.")
+    } catch (e) {
+      avisarRef.current(e instanceof Error ? e.message : "Falha na transcrição.", "error")
+    } finally { setTranscrevendo(false) }
+  }
+
+  async function iniciar() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus"
+        : MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm"
+        : MediaRecorder.isTypeSupported("audio/mp4") ? "audio/mp4" : ""
+      const rec = new MediaRecorder(stream, mimeType ? { mimeType } : undefined)
+      chunksRef.current = []
+      rec.ondataavailable = e => { if (e.data.size > 0) chunksRef.current.push(e.data) }
+      rec.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop())
+        await transcrever(new Blob(chunksRef.current, { type: rec.mimeType || "audio/webm" }))
+      }
+      rec.start()
+      recRef.current = rec
+      setGravando(true)
+    } catch {
+      avisarRef.current("Não foi possível acessar o microfone.", "error")
+    }
+  }
+
+  function parar() {
+    recRef.current?.stop()
+    setGravando(false)
+  }
+
+  return { gravando, transcrevendo, segundos, iniciar, parar }
+}
+
+/* ── Peças da página (fora do componente principal) ────────────────────── */
+
+function Bloco({ titulo, aberto = true, extra, children }: { titulo: string; aberto?: boolean; extra?: React.ReactNode; children: React.ReactNode }) {
+  const [open, setOpen] = useState(aberto)
+  const id = "bloco-" + titulo.toLowerCase().replace(/\W+/g, "-")
   return (
-    <div className="bg-surface border border-border rounded-xl overflow-hidden">
-      <button
-        onClick={() => setOpen(v => !v)}
-        className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-surface-2 transition-colors"
-      >
-        <div className="flex items-center gap-2.5">
-          <Icon className={cn("w-3.5 h-3.5 flex-shrink-0", iconColor)} />
-          <span className="text-[13px] font-semibold text-text-primary" style={{ fontFamily: "var(--font-playfair)" }}>
-            {title}
-          </span>
-        </div>
-        {open ? <ChevronUp className="w-3.5 h-3.5 text-text-muted" /> : <ChevronDown className="w-3.5 h-3.5 text-text-muted" />}
-      </button>
-      {open && (
-        <div className="px-5 pb-5 pt-1 border-t border-border space-y-3">
-          {children}
-          {extra}
-        </div>
-      )}
-    </div>
+    <Panel as="section" className="space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <button type="button" aria-expanded={open} aria-controls={id} onClick={() => setOpen(v => !v)} className="rounded text-left text-[15px] font-semibold text-px-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-px-ink/40">
+          {titulo} <span className="ml-1 text-[12.5px] font-normal text-px-muted">{open ? "Recolher" : "Abrir"}</span>
+        </button>
+        {open ? extra : null}
+      </div>
+      {open && <div id={id} className="space-y-3">{children}</div>}
+    </Panel>
   )
 }
 
-function CopyBtn({ text, className }: { text: string; className?: string }) {
-  const [copied, setCopied] = useState(false)
-  return (
-    <button
-      onClick={() => { navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 1600) }}
-      className={cn(
-        "flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-lg border transition-all flex-shrink-0",
-        copied
-          ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-          : "border-border text-text-muted hover:border-px-ink/40 hover:text-px-ink",
-        className,
-      )}
-    >
-      {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-      {copied ? "Copiado!" : "Copiar"}
-    </button>
-  )
-}
-
-function AutoTextarea({ value, onChange, className }: { value: string; onChange: (v: string) => void; className?: string }) {
+function AutoTextarea({ value, onChange, label }: { value: string; onChange: (v: string) => void; label: string }) {
   const ref = useRef<HTMLTextAreaElement>(null)
   useEffect(() => {
     const el = ref.current
     if (!el) return
     el.style.height = "auto"
-    el.style.height = el.scrollHeight + "px"
+    el.style.height = el.scrollHeight + 2 + "px"
   }, [value])
-  return (
-    <textarea
-      ref={ref}
-      value={value}
-      onChange={e => onChange(e.target.value)}
-      className={cn(
-        "w-full bg-transparent border-none outline-none resize-none overflow-hidden",
-        "text-[12px] text-text-secondary leading-relaxed",
-        className
-      )}
-    />
-  )
+  return <textarea ref={ref} aria-label={label} value={value} onChange={e => onChange(e.target.value)} rows={3} className={cn(textareaCls, "overflow-hidden")} />
 }
 
-function Skeleton() {
+function Esqueleto() {
   return (
-    <div className="space-y-3">
-      {[200, 160, 140, 120].map((w, i) => (
-        <div key={i} className="bg-surface border border-border rounded-xl overflow-hidden">
-          <div className="px-5 py-3.5 flex items-center gap-2.5">
-            <div className="w-3.5 h-3.5 rounded bg-surface-2 shimmer" />
-            <div className="h-4 rounded bg-surface-2 shimmer" style={{ width: w }} />
-          </div>
-          <div className="px-5 pb-4 pt-1 border-t border-border space-y-2">
-            <div className="h-3 rounded bg-surface-2 shimmer w-full" />
-            <div className="h-3 rounded bg-surface-2 shimmer w-5/6" />
-            <div className="h-3 rounded bg-surface-2 shimmer w-4/6" />
-          </div>
-        </div>
+    <div className="space-y-3" role="status" aria-label="Gerando a documentação">
+      {[1, 2, 3].map(i => (
+        <Panel key={i} className="space-y-2">
+          <div className="h-4 w-40 animate-pulse rounded bg-px-ink/10" />
+          <div className="h-3 w-full animate-pulse rounded bg-px-ink/10" />
+          <div className="h-3 w-5/6 animate-pulse rounded bg-px-ink/10" />
+        </Panel>
       ))}
     </div>
   )
 }
 
-function RightPanelEmpty() {
+function PainelVazio() {
+  const itens = ["Resumo clínico", "Plano terapêutico", "Exames solicitados", "Orientações ao paciente", "Mensagens de acompanhamento em D+1, D+7 e D+30", "Sugestão de conteúdo", "Prontuário"]
   return (
-    <div className="flex flex-col items-center justify-center py-16 gap-4 text-center px-8">
-      <div className="w-16 h-16 rounded-2xl bg-px-ink/10 border border-px-ink/20 flex items-center justify-center">
-        <Bot className="w-8 h-8 text-px-accent" />
-      </div>
-      <div>
-        <h3 className="text-[16px] font-semibold text-text-primary" style={{ fontFamily: "var(--font-playfair)" }}>
-          Copiloto pronto
-        </h3>
-        <p className="text-[12px] text-text-muted mt-2 leading-relaxed max-w-xs">
-          Preencha o briefing ao lado e clique em{" "}
-          <span className="text-px-accent font-medium">Gerar Copiloto</span>{" "}
-          para receber o resumo clínico completo.
-        </p>
-      </div>
-      <div className="flex flex-col gap-2 w-full max-w-xs">
-        {[
-          { icon: ClipboardList, label: "Resumo Clínico" },
-          { icon: Pill,          label: "Plano Terapêutico" },
-          { icon: FlaskConical,  label: "Exames Solicitados" },
-          { icon: FileText,      label: "Orientações ao Paciente" },
-          { icon: MessageCircle, label: "Follow-up D+1 / D+7 / D+30" },
-          { icon: Sparkles,      label: "Sugestão de Conteúdo" },
-          { icon: BookOpen,      label: "Prontuário" },
-        ].map(({ icon: Icon, label }) => (
-          <div key={label} className="text-[11px] text-text-muted bg-surface border border-border rounded-lg px-3 py-2 text-left flex items-center gap-2">
-            <Icon className="w-3.5 h-3.5 flex-shrink-0" /> {label}
-          </div>
-        ))}
-      </div>
+    <div className="space-y-3 py-6">
+      <h2 className="text-[16px] font-semibold text-px-ink">O que sai da geração</h2>
+      <p className="max-w-md text-[13.5px] leading-relaxed text-px-muted">Preencha o relato ao lado e use Gerar documentação. O texto gerado é um rascunho para você revisar e editar antes de usar.</p>
+      <ul className="list-inside list-disc space-y-1 text-[13.5px] text-px-ink">{itens.map(i => <li key={i}>{i}</li>)}</ul>
     </div>
   )
 }
 
-// ── Main content ──────────────────────────────────────────────────────────────
+function ItemHistorico({ entry, mostrarPaciente, onAbrir, onExcluir }: {
+  entry: HistoricoEntry; mostrarPaciente: boolean; onAbrir: () => void; onExcluir: () => Promise<void>
+}) {
+  const [confirmando, setConfirmando] = useState(false)
+  const [excluindo, setExcluindo] = useState(false)
+  const trecho = (entry.resultado?.resumo ?? entry.relato ?? "").slice(0, 160)
+  return (
+    <li className="flex flex-wrap items-start justify-between gap-2 rounded-px-card bg-white/70 px-4 py-3">
+      <button type="button" onClick={onAbrir} className="min-w-0 flex-1 rounded text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-px-ink/40">
+        <span className="flex flex-wrap items-center gap-2">
+          <span className="text-[13.5px] font-medium text-px-ink">{mostrarPaciente && entry.paciente_nome ? `${entry.paciente_nome}, ` : ""}{mostrarPaciente ? fmtDate(entry.created_at) : fmtDateLong(entry.created_at)}</span>
+          {entry.tipo_consulta && <Tag tone="neutral">{entry.tipo_consulta}</Tag>}
+        </span>
+        <span className="mt-0.5 block text-[13px] leading-relaxed text-px-muted">{trecho}</span>
+      </button>
+      {confirmando ? (
+        <span className="flex gap-2">
+          <PxButton size="sm" variant="danger" loading={excluindo} onClick={async () => { setExcluindo(true); await onExcluir(); setExcluindo(false); setConfirmando(false) }}>Confirmar exclusão</PxButton>
+          <PxButton size="sm" variant="quiet" disabled={excluindo} onClick={() => setConfirmando(false)}>Manter</PxButton>
+        </span>
+      ) : <PxButton size="sm" variant="quiet" aria-label={`Excluir consulta de ${fmtDateLong(entry.created_at)}`} onClick={() => setConfirmando(true)}>Excluir</PxButton>}
+    </li>
+  )
+}
+
+function CartaoFollowup({ dia, msg, podeEnviar, onEnviar }: { dia: Dia; msg: string; podeEnviar: boolean; onEnviar: () => Promise<boolean> }) {
+  const [confirmando, setConfirmando] = useState(false)
+  const [enviando, setEnviando] = useState(false)
+  const rotulo = dia.replace("d", "D+")
+  return (
+    <div className="space-y-3 rounded-px-card bg-white/70 p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <Tag tone="ink">{rotulo}</Tag>
+        <div className="flex flex-wrap gap-2">
+          <CopyButton text={msg} />
+          {confirmando ? (
+            <>
+              <PxButton size="sm" loading={enviando} leftIcon={Send} onClick={async () => { setEnviando(true); await onEnviar(); setEnviando(false); setConfirmando(false) }}>Confirmar envio</PxButton>
+              <PxButton size="sm" variant="quiet" disabled={enviando} onClick={() => setConfirmando(false)}>Cancelar</PxButton>
+            </>
+          ) : <PxButton size="sm" variant="secondary" leftIcon={Send} disabled={!podeEnviar} onClick={() => setConfirmando(true)} aria-label={`Enviar ${rotulo} por WhatsApp`}>WhatsApp</PxButton>}
+        </div>
+      </div>
+      <p className="whitespace-pre-line text-[13.5px] leading-relaxed text-px-ink">{msg}</p>
+      {!podeEnviar && <p className="text-[12px] text-px-muted">Para enviar, selecione um paciente com telefone cadastrado.</p>}
+      {confirmando && <p className="text-[12px] text-px-muted">A mensagem será enviada agora ao paciente pelo WhatsApp.</p>}
+    </div>
+  )
+}
+
+function LinhaAcao({ titulo, detalhe, onClick }: { titulo: string; detalhe: string; onClick: () => void }) {
+  return (
+    <button type="button" onClick={onClick} className="w-full rounded-px-card border border-px-line bg-white px-4 py-3 text-left transition-colors hover:bg-px-ink/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-px-ink/40">
+      <span className="block text-[13.5px] font-medium text-px-ink">{titulo}</span>
+      <span className="block text-[12.5px] text-px-muted">{detalhe}</span>
+    </button>
+  )
+}
+
+/* ── Conteúdo ──────────────────────────────────────────────────────────── */
 
 function CopilotoContent() {
   const appCtx          = useAppContext()
@@ -304,97 +331,91 @@ function CopilotoContent() {
   const router          = useRouter()
   const pacienteIdParam = searchParams.get("pacienteId") ?? ""
 
-  // Patient
+  // Paciente
   const [query,     setQuery]     = useState("")
   const [results,   setResults]   = useState<Paciente[]>([])
   const [searching, setSearching] = useState(false)
   const [patient,   setPatient]   = useState<Paciente | null>(null)
   const [showDrop,  setShowDrop]  = useState(false)
+  const [erroBusca, setErroBusca] = useState("")
   const debounceRef               = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Form
+  // Formulário
   const [relato,       setRelato]       = useState("")
   const [dados,        setDados]        = useState("")
   const [tipoConsulta, setTipoConsulta] = useState("Primeira consulta")
 
-  // Output
+  // Resultado
   const [phase,    setPhase]    = useState<Phase>("idle")
   const [result,   setResult]   = useState<CopilotoResult | null>(null)
   const [genError, setGenError] = useState("")
 
-  // Editable copies of generated text
   const [editedResumo,      setEditedResumo]      = useState("")
-  const [editedPlano,       setEditedPlano]        = useState("")
-  const [editedOrientacoes, setEditedOrientacoes]  = useState("")
-
-  // Exames checkboxes
-  const [checkedExames, setCheckedExames] = useState<Set<number>>(new Set())
-
-  // WhatsApp send state
-  const [sendingWA, setSendingWA] = useState({ d1: false, d7: false, d30: false })
+  const [editedPlano,       setEditedPlano]       = useState("")
+  const [editedOrientacoes, setEditedOrientacoes] = useState("")
+  const [checkedExames,     setCheckedExames]     = useState<Set<number>>(new Set())
 
   // MedX
-  const [sendingMedx,        setSendingMedx]        = useState(false)
-  const [prontuarioBlocos,   setProntuarioBlocos]   = useState<ProntuarioBloco[] | null>(null)
-  const [editedProntuario,   setEditedProntuario]   = useState<Record<string, string>>({})
+  const [sendingMedx,      setSendingMedx]      = useState(false)
+  const [confirmandoMedx,  setConfirmandoMedx]  = useState(false)
+  const [prontuarioBlocos, setProntuarioBlocos] = useState<ProntuarioBloco[] | null>(null)
+  const [editedProntuario, setEditedProntuario] = useState<Record<string, string>>({})
 
-  // History
+  // Histórico
   const [historico,        setHistorico]        = useState<HistoricoEntry[]>([])
   const [loadingHistorico, setLoadingHistorico] = useState(false)
+  const [erroHistorico,    setErroHistorico]    = useState("")
   const [showHistorico,    setShowHistorico]    = useState(false)
-  const [deletingId,       setDeletingId]       = useState<string | null>(null)
 
-  // Toast
-  const [toast,     setToast]     = useState<{ msg: string; type: "success" | "error" } | null>(null)
+  // Aviso
+  const [toast, setToast] = useState<{ msg: string; type: "success" | "error" } | null>(null)
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const [memoriaChips,    setMemoriaChips]    = useState<{ tipo: string; texto: string }[]>([])
-  const [loadingMemoria,  setLoadingMemoria]  = useState(false)
-  const [cids,            setCids]            = useState<{ codigo: string; descricao: string; justificativa: string }[]>([])
-  const [loadingCids,     setLoadingCids]     = useState(false)
-  const [copiedCid,       setCopiedCid]       = useState<string | null>(null)
-  const [docModal,        setDocModal]        = useState<{ tipo: "carta" | "atestado"; texto: string; loading: boolean } | null>(null)
-  const toastTimer                = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [memoriaChips,   setMemoriaChips]   = useState<Chip[]>([])
+  const [loadingMemoria, setLoadingMemoria] = useState(false)
+  const [cids,           setCids]           = useState<Cid[]>([])
+  const [loadingCids,    setLoadingCids]    = useState(false)
+  const [copiedCid,      setCopiedCid]      = useState<string | null>(null)
+  const [docModal,       setDocModal]       = useState<{ tipo: "carta" | "atestado"; texto: string; loading: boolean; erro: string } | null>(null)
 
-  // Voice
-  // Protocol picker
+  // Protocolo
   const [protocoloId,       setProtocoloId]       = useState<string | null>(null)
   const [protocolosList,    setProtocolosList]    = useState<{ id: string; titulo: string }[]>([])
   const [protocolosLoading, setProtocolosLoading] = useState(true)
 
+  // Voz
   const [voiceConsent,     setVoiceConsent]     = useState<boolean | null>(null)
-  const [showConsentModal, setShowConsentModal]  = useState(false)
-  const [isRecording,      setIsRecording]       = useState(false)
-  const [isTranscribing,   setIsTranscribing]    = useState(false)
-  const [hasMediaRecorder, setHasMediaRecorder]  = useState(false)
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
-  const audioChunksRef   = useRef<Blob[]>([])
-  const [isRecordingDados,    setIsRecordingDados]    = useState(false)
-  const [isTranscribingDados, setIsTranscribingDados] = useState(false)
-  const [recDuration,         setRecDuration]         = useState(0)
-  const mediaRecorderDadosRef = useRef<MediaRecorder | null>(null)
-  const audioChunksDadosRef   = useRef<Blob[]>([])
+  const [showConsentModal, setShowConsentModal] = useState(false)
+  const [erroConsent,      setErroConsent]      = useState("")
+  const [hasMediaRecorder, setHasMediaRecorder] = useState(false)
+  // Qual campo recebeu o clique que abriu o aviso de consentimento: a gravação segue por ele.
+  const campoPendenteRef = useRef<"relato" | "dados">("relato")
 
-  // Focus mode
-  const [focusMode,      setFocusMode]      = useState(false)
-  const [timerSecs,      setTimerSecs]      = useState(0)
+  // Modo consulta
+  const [focusMode,       setFocusMode]       = useState(false)
+  const [timerSecs,       setTimerSecs]       = useState(0)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
-
-  // Pós-consulta modal
-  const [showPostModal,  setShowPostModal]  = useState(false)
+  const [showPostModal,   setShowPostModal]   = useState(false)
   const [consultDuration, setConsultDuration] = useState(0)
 
-  function showToast(msg: string, type: "success" | "error" = "success") {
+  const showToast = useCallback((msg: string, type: "success" | "error" = "success") => {
     if (toastTimer.current) clearTimeout(toastTimer.current)
     setToast({ msg, type })
     toastTimer.current = setTimeout(() => setToast(null), 3500)
-  }
+  }, [])
 
-  // Sync editable fields when result changes
+  const gravRelato = useGravador(t => setRelato(prev => prev ? prev + "\n" + t : t), showToast)
+  const gravDados  = useGravador(t => setDados(prev => prev ? prev + "\n" + t : t), showToast)
+
+  useEffect(() => () => { if (toastTimer.current) clearTimeout(toastTimer.current) }, [])
+
+  // Copia editável do texto gerado
   useEffect(() => {
     setEditedResumo(result?.resumo ?? "")
     setEditedPlano(result?.plano ?? "")
     setEditedOrientacoes(result?.orientacoes ?? "")
     setCheckedExames(new Set())
+    setConfirmandoMedx(false)
     if (result?.prontuario) {
       const blocos = parseProntuario(result.prontuario)
       setProntuarioBlocos(blocos)
@@ -402,21 +423,21 @@ function CopilotoContent() {
         const map: Record<string, string> = {}
         blocos.forEach(b => { map[b.key] = b.content })
         setEditedProntuario(map)
-      } else { setEditedProntuario({}) }
+      } else setEditedProntuario({})
     } else { setProntuarioBlocos(null); setEditedProntuario({}) }
   }, [result])
 
-  // ── History ─────────────────────────────────────────────────────────────────
-
   const fetchHistorico = useCallback(async () => {
-    setLoadingHistorico(true)
+    setLoadingHistorico(true); setErroHistorico("")
     try {
       const res = await fetch("/api/copiloto")
-      if (!res.ok) return
-      setHistorico(await res.json())
-    } catch { /* non-critical */ } finally {
-      setLoadingHistorico(false)
-    }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const data = await res.json()
+      setHistorico(Array.isArray(data) ? data : [])
+    } catch (e) {
+      console.error("[copiloto] histórico:", e)
+      setErroHistorico("Não foi possível carregar o histórico.")
+    } finally { setLoadingHistorico(false) }
   }, [])
 
   useEffect(() => { fetchHistorico() }, [fetchHistorico])
@@ -429,34 +450,18 @@ function CopilotoContent() {
       .finally(() => setProtocolosLoading(false))
   }, [])
 
-  // ── Voice recording setup ────────────────────────────────────────────────────
-
   useEffect(() => {
-    setHasMediaRecorder(
-      typeof MediaRecorder !== "undefined" && !!navigator?.mediaDevices?.getUserMedia
-    )
+    setHasMediaRecorder(typeof MediaRecorder !== "undefined" && !!navigator?.mediaDevices?.getUserMedia)
   }, [])
 
-  useEffect(() => {
-    setVoiceConsent(appCtx?.perfil?.voz_gravacao_autorizada ?? false)
-  }, [appCtx?.perfil])
+  useEffect(() => { setVoiceConsent(appCtx?.perfil?.voz_gravacao_autorizada ?? false) }, [appCtx?.perfil])
 
-  useEffect(() => {
-    if (!isRecording) { setRecDuration(0); return }
-    const t = setInterval(() => {
-      if (document.visibilityState === "visible") setRecDuration(s => s + 1)
-    }, 1000)
-    return () => clearInterval(t)
-  }, [isRecording])
-
-  // ── Focus mode: body class + consultation timer ────────────────────────────
+  // Modo consulta: esconde o menu e conta o tempo
   useEffect(() => {
     if (focusMode) {
       document.body.classList.add("consulta-focus")
       setTimerSecs(0)
-      timerRef.current = setInterval(() => {
-        if (document.visibilityState === "visible") setTimerSecs(s => s + 1)
-      }, 1000)
+      timerRef.current = setInterval(() => { if (document.visibilityState === "visible") setTimerSecs(s => s + 1) }, 1000)
     } else {
       document.body.classList.remove("consulta-focus")
       if (timerRef.current) clearInterval(timerRef.current)
@@ -467,156 +472,35 @@ function CopilotoContent() {
     }
   }, [focusMode])
 
-  // Abre modal automaticamente ao gerar relatório
-  useEffect(() => {
-    if (phase === "done" && result !== null && !showPostModal) {
-      const t = setTimeout(() => setShowPostModal(true), 800)
-      return () => clearTimeout(t)
-    }
-  }, [phase, result, showPostModal])
-
   async function aceitarConsentimento() {
+    setErroConsent("")
     const res = await fetch("/api/perfil", {
-      method:  "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify({ voz_gravacao_autorizada: true }),
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ voz_gravacao_autorizada: true }),
     }).catch(() => null)
-    if (!res || !res.ok) {
-      showToast("Erro ao registrar consentimento. Tente novamente.")
-      return
-    }
+    if (!res || !res.ok) { setErroConsent("Não foi possível registrar o consentimento. Tente de novo."); return }
     appCtx?.refetchPerfil()
     setVoiceConsent(true)
     setShowConsentModal(false)
-    iniciarGravacao()
+    ;(campoPendenteRef.current === "dados" ? gravDados : gravRelato).iniciar()
   }
 
-  function handleMicClick() {
-    if (isRecording) { pararGravacao(); return }
-    if (!voiceConsent) { setShowConsentModal(true); return }
-    iniciarGravacao()
-  }
-
-  async function iniciarGravacao() {
-    try {
-      const stream   = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
-        ? "audio/webm;codecs=opus"
-        : MediaRecorder.isTypeSupported("audio/webm")
-          ? "audio/webm"
-          : MediaRecorder.isTypeSupported("audio/mp4")
-            ? "audio/mp4"
-            : ""
-      const rec = new MediaRecorder(stream, mimeType ? { mimeType } : undefined)
-      audioChunksRef.current = []
-      rec.ondataavailable = e => { if (e.data.size > 0) audioChunksRef.current.push(e.data) }
-      rec.onstop = async () => {
-        stream.getTracks().forEach(t => t.stop())
-        const blob = new Blob(audioChunksRef.current, { type: rec.mimeType || "audio/webm" })
-        await transcrever(blob)
-      }
-      rec.start()
-      mediaRecorderRef.current = rec
-      setIsRecording(true)
-    } catch {
-      showToast("Não foi possível acessar o microfone.", "error")
-    }
-  }
-
-  function pararGravacao() {
-    mediaRecorderRef.current?.stop()
-    setIsRecording(false)
-  }
-
-  async function transcrever(blob: Blob) {
-    setIsTranscribing(true)
-    try {
-      const mimeType = blob.type || "audio/webm"
-      const ext      = mimeType.includes("mp4") ? "mp4" : "webm"
-      const form     = new FormData()
-      form.append("audio", blob, `gravacao.${ext}`)
-      const res  = await fetch("/api/copiloto/transcricao", { method: "POST", body: form })
-      const data = await res.json() as { text?: string; error?: string }
-      if (!res.ok || data.error) throw new Error(data.error ?? "Erro na transcrição")
-      const texto = data.text?.trim() ?? ""
-      if (texto) setRelato(prev => prev ? prev + "\n" + texto : texto)
-      showToast("Transcrição concluída.")
-    } catch (e) {
-      showToast(e instanceof Error ? e.message : "Falha na transcrição.", "error")
-    } finally {
-      setIsTranscribing(false)
-    }
-  }
-
-  function handleMicDadosClick() {
-    if (isRecordingDados) { pararGravacaoDados(); return }
-    if (!voiceConsent) { setShowConsentModal(true); return }
-    iniciarGravacaoDados()
-  }
-
-  async function iniciarGravacaoDados() {
-    try {
-      const stream   = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
-        ? "audio/webm;codecs=opus"
-        : MediaRecorder.isTypeSupported("audio/webm")
-          ? "audio/webm"
-          : MediaRecorder.isTypeSupported("audio/mp4")
-            ? "audio/mp4"
-            : ""
-      const rec = new MediaRecorder(stream, mimeType ? { mimeType } : undefined)
-      audioChunksDadosRef.current = []
-      rec.ondataavailable = e => { if (e.data.size > 0) audioChunksDadosRef.current.push(e.data) }
-      rec.onstop = async () => {
-        stream.getTracks().forEach(t => t.stop())
-        const blob = new Blob(audioChunksDadosRef.current, { type: rec.mimeType || "audio/webm" })
-        await transcreverDados(blob)
-      }
-      rec.start()
-      mediaRecorderDadosRef.current = rec
-      setIsRecordingDados(true)
-    } catch {
-      showToast("Não foi possível acessar o microfone.", "error")
-    }
-  }
-
-  function pararGravacaoDados() {
-    mediaRecorderDadosRef.current?.stop()
-    setIsRecordingDados(false)
-  }
-
-  async function transcreverDados(blob: Blob) {
-    setIsTranscribingDados(true)
-    try {
-      const mimeType = blob.type || "audio/webm"
-      const ext      = mimeType.includes("mp4") ? "mp4" : "webm"
-      const form     = new FormData()
-      form.append("audio", blob, `gravacao.${ext}`)
-      const res  = await fetch("/api/copiloto/transcricao", { method: "POST", body: form })
-      const data = await res.json() as { text?: string; error?: string }
-      if (!res.ok || data.error) throw new Error(data.error ?? "Erro na transcrição")
-      const texto = data.text?.trim() ?? ""
-      if (texto) setDados(prev => prev ? prev + "\n" + texto : texto)
-      showToast("Transcrição concluída.")
-    } catch (e) {
-      showToast(e instanceof Error ? e.message : "Falha na transcrição.", "error")
-    } finally {
-      setIsTranscribingDados(false)
-    }
+  function cliqueMic(campo: "relato" | "dados") {
+    const g = campo === "dados" ? gravDados : gravRelato
+    if (g.gravando) { g.parar(); return }
+    if (!voiceConsent) { campoPendenteRef.current = campo; setErroConsent(""); setShowConsentModal(true); return }
+    g.iniciar()
   }
 
   async function deleteHistorico(id: string) {
-    setDeletingId(id)
     try {
-      const res = await fetch(`/api/copiloto?id=${id}`, { method: "DELETE" })
-      if (!res.ok) throw new Error()
+      const res = await fetch(`/api/copiloto?id=${encodeURIComponent(id)}`, { method: "DELETE" })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
       setHistorico(prev => prev.filter(e => e.id !== id))
-      showToast("Consulta removida do histórico")
+      showToast("Consulta removida do histórico.")
     } catch (e) {
-      console.error("[copiloto] erro ao remover do histórico:", e)
-      showToast("Erro ao remover do histórico", "error")
-    } finally {
-      setDeletingId(null)
+      console.error("[copiloto] remover do histórico:", e)
+      showToast("Não foi possível remover do histórico.", "error")
     }
   }
 
@@ -628,39 +512,40 @@ function CopilotoContent() {
     setQuery(entry.paciente_nome ?? "")
     setPatient(null)
     setShowHistorico(false)
-    setSendingWA({ d1: false, d7: false, d30: false })
+    setCids([])
   }
 
-  // ── Patient from URL param ───────────────────────────────────────────────────
-
+  // Paciente vindo pela URL
   useEffect(() => {
     if (!pacienteIdParam) return
     ;(async () => {
       try {
-        const res  = await fetch(`/api/pacientes?action=get&id=${pacienteIdParam}`)
+        const res = await fetch(`/api/pacientes?action=get&id=${encodeURIComponent(pacienteIdParam)}`)
         if (!res.ok) return
         const data = await res.json()
         if (data && typeof data === "object" && !Array.isArray(data)) {
           setPatient(data as Paciente)
           setQuery(getPacNome(data as Paciente))
         }
-      } catch (e) { console.error("[copiloto] erro ao carregar paciente da URL:", e) }
+      } catch (e) { console.error("[copiloto] paciente da URL:", e) }
     })()
   }, [pacienteIdParam])
 
-  // ── Patient search ───────────────────────────────────────────────────────────
-
   const searchPatients = useCallback(async (q: string) => {
-    if (!q.trim()) { setResults([]); setShowDrop(false); return }
-    setSearching(true)
+    if (!q.trim()) { setResults([]); setShowDrop(false); setErroBusca(""); return }
+    setSearching(true); setErroBusca("")
     try {
-      const res  = await fetch(`/api/pacientes?action=search&nome=${encodeURIComponent(q)}`)
+      const res = await fetch(`/api/pacientes?action=search&nome=${encodeURIComponent(q)}`)
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const data = await res.json()
       const list = Array.isArray(data) ? data : []
       setResults(list)
-      setShowDrop(list.length > 0)
-    } catch { setResults([]) }
-    setSearching(false)
+      setShowDrop(true)
+    } catch (e) {
+      console.error("[copiloto] busca:", e)
+      setResults([]); setShowDrop(false)
+      setErroBusca("Não foi possível buscar pacientes agora.")
+    } finally { setSearching(false) }
   }, [])
 
   const handleQuery = (v: string) => {
@@ -670,17 +555,16 @@ function CopilotoContent() {
   }
 
   const fetchMemoriaPadrao = useCallback(async (paciente_nome: string, paciente_id?: string) => {
-    setMemoriaChips([])
-    setLoadingMemoria(true)
+    setMemoriaChips([]); setLoadingMemoria(true)
     try {
-      const res  = await fetch("/api/copiloto/memoria-padrao", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch("/api/copiloto/memoria-padrao", {
+        method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ paciente_nome, paciente_id: paciente_id || undefined }),
       })
-      const data = await res.json() as { chips?: { tipo: string; texto: string }[] }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const data = await res.json() as { chips?: Chip[] }
       setMemoriaChips(data.chips ?? [])
-    } catch (e) { console.error("[copiloto] memoria:", e) }
+    } catch (e) { console.error("[copiloto] memória:", e) }
     finally { setLoadingMemoria(false) }
   }, [])
 
@@ -689,22 +573,16 @@ function CopilotoContent() {
     fetchMemoriaPadrao(getPacNome(p), getPacId(p) || undefined)
   }
   const clearPatient = () => {
-    setPatient(null); setQuery(""); setResults([]); setShowDrop(false)
+    setPatient(null); setQuery(""); setResults([]); setShowDrop(false); setErroBusca("")
     setMemoriaChips([]); setLoadingMemoria(false)
   }
 
-  // ── Generate ─────────────────────────────────────────────────────────────────
-
   const gerar = async () => {
     if (!relato.trim()) return
-    setPhase("loading")
-    setGenError("")
-    setResult(null)
-
+    setPhase("loading"); setGenError(""); setResult(null)
     try {
       const res = await fetch("/api/copiloto?action=gerar", {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
+        method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           relato,
           dados:        dados || undefined,
@@ -714,1242 +592,525 @@ function CopilotoContent() {
           protocoloId:  protocoloId ?? undefined,
         }),
       })
-
-      const ct = res.headers.get("content-type") ?? ""
-      if (!ct.includes("application/json")) {
-        const txt = await res.text()
-        throw new Error(`Resposta inesperada (${res.status}): ${txt.slice(0, 120)}`)
+      const data = await res.json().catch(() => null) as CopilotoResult | null
+      if (!res.ok || !data || data.error) {
+        setGenError(msgDoServidor(res.status, data, "Não foi possível gerar a documentação agora. Tente de novo em instantes."))
+        setPhase("idle")
+        return
       }
-
-      const data = await res.json() as CopilotoResult
-      if (!res.ok || data.error) throw new Error(data.error ?? `HTTP ${res.status}`)
-      setResult(data)
-      setPhase("done")
+      setResult(data); setPhase("done"); setCids([])
       fetchHistorico()
-      // Fire-and-forget: fetch CID suggestions based on resumo
       if (data.resumo) {
-        setCids([])
         setLoadingCids(true)
         fetch("/api/copiloto/sugerir-cid", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+          method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ resumo: data.resumo, plano: data.plano }),
         })
-          .then(r => r.json())
-          .then((d: { cids?: { codigo: string; descricao: string; justificativa: string }[] }) => setCids(d.cids ?? []))
+          .then(r => r.ok ? r.json() : { cids: [] })
+          .then((d: { cids?: Cid[] }) => setCids(Array.isArray(d.cids) ? d.cids : []))
           .catch(() => {})
           .finally(() => setLoadingCids(false))
       }
     } catch (e) {
-      setGenError(e instanceof Error ? e.message : String(e))
+      console.error("[copiloto] gerar:", e)
+      setGenError("Erro de conexão ao gerar. Tente de novo.")
       setPhase("idle")
     }
   }
 
-  // ── Send prontuário to MedX ──────────────────────────────────────────────────
+  const textoProntuario = prontuarioBlocos && Object.keys(editedProntuario).length > 0
+    ? prontuarioBlocos.map(b => `${b.label.toUpperCase()}:\n${editedProntuario[b.key] ?? b.content}`).join("\n\n")
+    : result?.prontuario ?? ""
 
   const enviarMedx = async () => {
-    const prontuarioTexto = prontuarioBlocos && Object.keys(editedProntuario).length > 0
-      ? prontuarioBlocos.map(b => `${b.label.toUpperCase()}:\n${editedProntuario[b.key] ?? b.content}`).join('\n\n')
-      : result?.prontuario ?? ''
-    if (!prontuarioTexto) return
+    if (!textoProntuario) return
     const idPaciente = patient ? getPacId(patient) : ""
     if (!idPaciente) { showToast("Selecione um paciente para enviar ao MedX.", "error"); return }
     setSendingMedx(true)
     try {
-      const res  = await fetch("/api/copiloto?action=prontuario", {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prontuario: prontuarioTexto, idPaciente }),
+      const res = await fetch("/api/copiloto?action=prontuario", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prontuario: textoProntuario, idPaciente }),
       })
-      const data = await res.json()
-      if (!res.ok || (data as { error?: string }).error)
-        throw new Error((data as { error?: string }).error ?? `HTTP ${res.status}`)
-      showToast("Prontuário enviado ao MedX com sucesso!")
+      const data = await res.json().catch(() => null)
+      if (!res.ok || (data as { error?: string } | null)?.error) throw new Error(msgDoServidor(res.status, data, "Não foi possível enviar ao MedX."))
+      showToast("Prontuário enviado ao MedX.")
+      setConfirmandoMedx(false)
     } catch (e) {
-      showToast(e instanceof Error ? e.message : "Erro ao enviar para MedX", "error")
+      showToast(e instanceof Error ? e.message : "Não foi possível enviar ao MedX.", "error")
     } finally { setSendingMedx(false) }
   }
 
-  // ── Send WhatsApp follow-up ──────────────────────────────────────────────────
-
-  async function enviarWhatsApp(msg: string, dia: "d1" | "d7" | "d30") {
+  async function enviarWhatsApp(msg: string, dia: Dia): Promise<boolean> {
     const tel = patient ? getPacTel(patient) : ""
-    if (!tel) { showToast("Selecione um paciente com telefone para enviar.", "error"); return }
-    setSendingWA(prev => ({ ...prev, [dia]: true }))
+    if (!tel) { showToast("Selecione um paciente com telefone para enviar.", "error"); return false }
     try {
       const res = await fetch("/api/zapi/send", {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: "55" + tel.replace(/\D/g, ""), message: msg }),
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: foneParaEnvio(tel), message: msg }),
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error((data as { error?: string }).error ?? "Erro ao enviar")
-      showToast(`Mensagem ${dia.replace("d", "D+")} enviada via WhatsApp!`)
+      const data = await res.json().catch(() => null)
+      if (!res.ok) throw new Error(msgDoServidor(res.status, data, "Não foi possível enviar a mensagem."))
+      showToast(`Mensagem ${dia.replace("d", "D+")} enviada pelo WhatsApp.`)
+      return true
     } catch (e) {
-      showToast(e instanceof Error ? e.message : "Erro ao enviar", "error")
-    } finally {
-      setSendingWA(prev => ({ ...prev, [dia]: false }))
+      showToast(e instanceof Error ? e.message : "Não foi possível enviar a mensagem.", "error")
+      return false
     }
   }
-
-  // ── Reset ────────────────────────────────────────────────────────────────────
 
   const novaConsulta = () => {
     setRelato(""); setDados(""); setTipoConsulta("Primeira consulta"); setProtocoloId(null)
     setResult(null); setGenError(""); setPhase("idle")
     setEditedResumo(""); setEditedPlano(""); setEditedOrientacoes("")
-    setCheckedExames(new Set()); setSendingWA({ d1: false, d7: false, d30: false })
+    setCheckedExames(new Set())
     setProntuarioBlocos(null); setEditedProntuario({})
     setCids([]); setLoadingCids(false)
   }
 
-  // ── Document generator (carta / atestado) ───────────────────────────────────
-
   const openDocumento = async (tipo: "carta" | "atestado") => {
     if (!result?.resumo) return
-    setDocModal({ tipo, texto: "", loading: true })
+    setDocModal({ tipo, texto: "", loading: true, erro: "" })
     try {
-      const res  = await fetch("/api/copiloto/documento", {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({
+      const res = await fetch("/api/copiloto/documento", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           tipo,
           resumo:       editedResumo || result.resumo,
           plano:        editedPlano  || result.plano,
           nomePaciente: patient ? getPacNome(patient) : undefined,
         }),
       })
-      const data = await res.json() as { texto?: string; error?: string }
-      setDocModal({ tipo, texto: data.texto ?? "", loading: false })
-    } catch {
-      setDocModal({ tipo, texto: "", loading: false })
+      const data = await res.json().catch(() => null) as { texto?: string; error?: string } | null
+      if (!res.ok || !data?.texto) throw new Error(msgDoServidor(res.status, data, "Não foi possível gerar o documento."))
+      setDocModal({ tipo, texto: data.texto, loading: false, erro: "" })
+    } catch (e) {
+      setDocModal({ tipo, texto: "", loading: false, erro: e instanceof Error ? e.message : "Não foi possível gerar o documento." })
     }
   }
 
-  // ── Render ───────────────────────────────────────────────────────────────────
+  function imprimirDocumento() {
+    if (!docModal?.texto) return
+    const w = window.open("", "_blank")
+    if (!w) { showToast("O navegador bloqueou a janela de impressão.", "error"); return }
+    const titulo = docModal.tipo === "carta" ? "Carta de encaminhamento" : "Atestado médico"
+    w.document.write(`<html><head><title>${titulo}</title><style>body{font-family:Arial,sans-serif;font-size:13px;line-height:1.7;margin:60px 80px;white-space:pre-wrap}</style></head><body>${escapeHtml(docModal.texto)}</body></html>`)
+    w.document.close()
+    w.print()
+  }
 
-  const historicoFiltrado = patient
-    ? historico.filter(e => e.paciente_nome === getPacNome(patient))
-    : historico
+  function copiarCid(codigo: string) {
+    navigator.clipboard.writeText(codigo)
+      .then(() => { setCopiedCid(codigo); setTimeout(() => setCopiedCid(null), 2000) })
+      .catch(() => showToast("Não foi possível copiar.", "error"))
+  }
+
+  function cartaParaPaciente() {
+    const params = new URLSearchParams()
+    if (relato)       params.set("relato", relato.slice(0, 2000))
+    if (dados)        params.set("dados", dados.slice(0, 1000))
+    if (patient)      params.set("nomePaciente", getPacNome(patient))
+    if (tipoConsulta) params.set("tipoConsulta", tipoConsulta)
+    router.push(`/conversa?${params.toString()}`)
+  }
+
+  function irPrescrever() {
+    const id = patient ? getPacId(patient) : ""
+    router.push(id ? `/prescricao?pacienteId=${encodeURIComponent(id)}` : "/prescricao")
+  }
+
+  function irAgendar() {
+    const id = patient ? getPacId(patient) : ""
+    const nome = patient ? encodeURIComponent(getPacNome(patient)) : ""
+    router.push(id ? `/agenda?pacienteId=${encodeURIComponent(id)}&pacienteNome=${nome}` : "/agenda")
+  }
+
+  function fecharModoFoco() {
+    if (result !== null) { setConsultDuration(timerSecs); setShowPostModal(true) }
+    setFocusMode(false)
+  }
+
+  const historicoFiltrado = patient ? historico.filter(e => e.paciente_nome === getPacNome(patient)) : historico
+  const msgsFollowup = parseFollowup(result?.followup)
+  const podeEnviarWA = !!(patient && getPacTel(patient))
+  const gravandoAlgo = gravRelato.gravando || gravDados.gravando
+  const ocupadoVoz = gravRelato.transcrevendo || gravDados.transcrevendo
+
+  const gravacaoDados = hasMediaRecorder ? (
+    <div className="flex items-center gap-2">
+      {gravDados.transcrevendo && <span role="status" className="text-[12px] text-px-muted">Transcrevendo</span>}
+      <PxButton size="sm" variant={gravDados.gravando ? "danger" : "secondary"} leftIcon={Mic} disabled={gravDados.transcrevendo || gravRelato.gravando || gravRelato.transcrevendo} onClick={() => cliqueMic("dados")}>
+        {gravDados.gravando ? "Parar gravação" : "Gravar por voz"}
+      </PxButton>
+    </div>
+  ) : null
 
   return (
     <div className="animate-fade-in">
       {focusMode ? (
-        /* ── Mini-header em modo foco ────────────────────────────────────── */
-        <header
-          className="px-glass rounded-px-panel sticky top-3 z-30 mx-4 mt-4 flex items-center gap-3 px-5 py-3 md:mx-10"
-        >
-          <div className="flex items-center gap-2.5 flex-1 min-w-0">
-            <span
-              className="w-2 h-2 rounded-full bg-accent flex-shrink-0 animate-pulse"
-            />
-            <span className="text-[14px] font-semibold text-text-primary truncate">
-              {patient ? getPacNome(patient) : "Modo Consulta"}
-            </span>
-            <span className="hidden sm:block text-badge font-mono border border-accent-border text-accent px-2 py-0.5 rounded-full bg-accent-dim">
-              EM ATENDIMENTO
-            </span>
+        <header className="px-glass sticky top-3 z-30 mx-4 mt-4 flex items-center gap-3 rounded-px-panel px-5 py-3 md:mx-10">
+          <div className="flex min-w-0 flex-1 items-center gap-2.5">
+            <span className="truncate text-[15px] font-semibold text-px-ink">{patient ? getPacNome(patient) : "Modo consulta"}</span>
+            <Tag tone="ink">Em atendimento</Tag>
           </div>
-          <div className="flex items-center gap-3 flex-shrink-0">
-            <span className="text-[16px] font-mono font-semibold text-accent tabular-nums">
-              {fmtTimer(timerSecs)}
-            </span>
-            <button
-              onClick={() => {
-                if (result !== null) {
-                  setConsultDuration(timerSecs)
-                  setShowPostModal(true)
-                }
-                setFocusMode(false)
-              }}
-              className="flex items-center gap-1.5 text-[11px] border border-border text-text-secondary rounded-lg px-3 py-1.5 hover:border-border-hover transition-colors"
-            >
-              <X className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Sair do Foco</span>
-            </button>
-          </div>
+          <span role="timer" aria-label="Tempo de consulta" className="text-[16px] font-semibold tabular-nums text-px-ink">{fmtTimer(timerSecs)}</span>
+          <PxButton size="sm" variant="secondary" onClick={fecharModoFoco}>Sair do modo consulta</PxButton>
         </header>
       ) : (
-        /* ── TopBar normal ───────────────────────────────────────────────── */
-        <TopBar
-          title="Copiloto de Consulta"
-          subtitle="ALA CLÍNICA · ASSISTÊNCIA IA"
+        <PageHeader
+          title="Copiloto de consulta"
+          caption="Rascunho clínico gerado por IA para você revisar"
           actions={
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setFocusMode(true)}
-                className="flex items-center gap-1.5 text-[11px] bg-accent-dim border border-accent-border text-accent font-semibold rounded-lg px-3 py-1.5 hover:opacity-80 transition-all"
-              >
-                <Stethoscope className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Iniciar Consulta</span>
-              </button>
-              <button
-                onClick={() => setShowHistorico(v => !v)}
-                className={cn(
-                  "flex items-center gap-1.5 text-[11px] border rounded-lg px-3 py-1.5 transition-colors",
-                  showHistorico
-                    ? "bg-px-ink/10 border-px-ink/20 text-px-accent"
-                    : "border-border text-text-secondary hover:border-border-hover"
-                )}
-              >
-                <Clock className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Histórico</span>
-                {historico.length > 0 && (
-                  <span className="text-[9px] font-mono bg-px-ink/10 text-px-accent px-1.5 py-0.5 rounded-full">
-                    {historico.length}
-                  </span>
-                )}
-              </button>
-              {phase === "done" && (
-                <button
-                  onClick={novaConsulta}
-                  className="flex items-center gap-1.5 text-[11px] border border-border text-text-secondary rounded-lg px-3 py-1.5 hover:border-border-hover transition-colors"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Nova</span>
-                </button>
-              )}
-            </div>
+            <>
+              <PxButton size="sm" leftIcon={Stethoscope} onClick={() => setFocusMode(true)}>Iniciar consulta</PxButton>
+              <PxButton size="sm" variant="secondary" leftIcon={Clock} aria-pressed={showHistorico} onClick={() => setShowHistorico(v => !v)}>
+                Histórico{historico.length > 0 ? ` (${historico.length})` : ""}
+              </PxButton>
+              {phase === "done" && <PxButton size="sm" variant="secondary" leftIcon={Plus} onClick={novaConsulta}>Nova</PxButton>}
+            </>
           }
         />
       )}
 
-      {/* History panel — full-width strip below TopBar */}
-      {showHistorico && (
-        <div className="border-b border-border bg-surface">
-          {loadingHistorico ? (
-            <div className="flex items-center justify-center py-6">
-              <Loader2 className="w-4 h-4 text-text-muted animate-spin" />
-            </div>
-          ) : historicoFiltrado.length === 0 ? (
-            <div className="px-6 py-5 text-[12px] text-text-muted text-center">
-              {patient
-                ? `Nenhuma consulta salva para ${getPacNome(patient)}.`
-                : "Nenhuma consulta salva ainda. Gere a primeira!"}
-            </div>
-          ) : patient ? (
-            /* Timeline view for selected patient */
-            <div className="px-5 pt-3 pb-4 max-h-72 overflow-y-auto">
-              <div className="text-[11px] font-mono text-text-muted tracking-widest uppercase mb-3">
-                Histórico · {getPacNome(patient)}
-              </div>
-              <div className="relative pl-6 space-y-4">
-                <div className="absolute left-2 top-0 bottom-0 w-px bg-border pointer-events-none" />
-                {historicoFiltrado.map(entry => (
-                  <div key={entry.id} className="relative group">
-                    <div className="absolute -left-[18px] top-1.5 w-2.5 h-2.5 rounded-full bg-px-ink/10 border-2 border-px-ink/20" />
-                    <div className="flex items-start gap-2">
-                      <button onClick={() => loadFromHistorico(entry)} className="flex-1 text-left min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                          <span className="text-[12px] font-semibold text-text-primary">
-                            {fmtDateLong(entry.created_at)}
-                          </span>
-                          {entry.tipo_consulta && (
-                            <span className="text-badge font-mono bg-px-ink/10 border border-px-ink/20 text-px-accent px-1.5 py-0.5 rounded-full">
-                              {entry.tipo_consulta}
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-[11px] text-text-muted leading-relaxed line-clamp-2">
-                          {(entry.resultado?.resumo ?? entry.relato).slice(0, 180)}
-                        </p>
-                      </button>
-                      <button
-                        onClick={() => deleteHistorico(entry.id)}
-                        disabled={deletingId === entry.id}
-                        className="w-6 h-6 rounded flex items-center justify-center text-text-muted hover:text-red-400 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all flex-shrink-0 mt-0.5"
-                        aria-label="Excluir"
-                      >
-                        {deletingId === entry.id
-                          ? <Loader2 className="w-3 h-3 animate-spin" />
-                          : <Trash2 className="w-3 h-3" />}
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            /* Flat list when no patient selected */
-            <div className="divide-y divide-border max-h-56 overflow-y-auto">
-              {historicoFiltrado.map(entry => (
-                <div key={entry.id} className="flex items-start gap-3 px-5 py-3 hover:bg-surface-2 transition-colors group">
-                  <button
-                    onClick={() => loadFromHistorico(entry)}
-                    className="flex-1 text-left min-w-0"
-                  >
-                    <div className="flex items-center gap-2 flex-wrap">
-                      {entry.paciente_nome && (
-                        <span className="text-[12px] font-semibold text-text-primary truncate">
-                          {entry.paciente_nome}
-                        </span>
-                      )}
-                      {entry.tipo_consulta && (
-                        <span className="text-badge font-mono text-text-muted bg-surface-2 border border-border px-1.5 py-0.5 rounded">
-                          {entry.tipo_consulta}
-                        </span>
-                      )}
-                      <span className="text-[9px] font-mono text-text-muted ml-auto flex-shrink-0">
-                        {fmtDate(entry.created_at)}
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-text-muted truncate mt-0.5">
-                      {entry.relato.slice(0, 90)}{entry.relato.length > 90 ? "…" : ""}
-                    </p>
-                  </button>
-                  <button
-                    onClick={() => deleteHistorico(entry.id)}
-                    disabled={deletingId === entry.id}
-                    className="w-6 h-6 rounded flex items-center justify-center text-text-muted hover:text-red-400 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all flex-shrink-0 mt-0.5"
-                    aria-label="Excluir"
-                  >
-                    {deletingId === entry.id
-                      ? <Loader2 className="w-3 h-3 animate-spin" />
-                      : <Trash2 className="w-3 h-3" />}
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+      <div className="space-y-4 px-4 pb-10 pt-4 md:px-10">
+        {showHistorico && (
+          <Panel as="section" className="space-y-3">
+            <h2 className="text-[15px] font-semibold text-px-ink">{patient ? `Histórico de ${getPacNome(patient)}` : "Histórico de consultas"}</h2>
+            {erroHistorico && <p role="alert" className={erroBox}>{erroHistorico}</p>}
+            {loadingHistorico ? <p role="status" className="text-[13px] text-px-muted">Carregando</p>
+              : historicoFiltrado.length === 0 && !erroHistorico ? (
+                <p className="text-[13.5px] text-px-muted">{patient ? `Nenhuma consulta salva para ${getPacNome(patient)}.` : "Nenhuma consulta salva ainda."}</p>
+              ) : (
+                <ul className="max-h-80 space-y-2 overflow-y-auto">
+                  {historicoFiltrado.map(entry => (
+                    <ItemHistorico key={entry.id} entry={entry} mostrarPaciente={!patient} onAbrir={() => loadFromHistorico(entry)} onExcluir={() => deleteHistorico(entry.id)} />
+                  ))}
+                </ul>
+              )}
+          </Panel>
+        )}
 
-      {/* Two-panel layout */}
-      <div className="flex flex-col gap-4 px-4 pb-10 pt-4 md:grid md:grid-cols-[2fr_3fr] md:items-start md:px-10">
-
-        {/* ── LEFT: Briefing ────────────────────────────────────────────────── */}
-        <div className="px-glass rounded-px-panel p-5 md:p-6">
-          <div className="pb-24 md:pb-0 space-y-5">
-
+        <div className="flex flex-col gap-4 md:grid md:grid-cols-[2fr_3fr] md:items-start">
+          {/* Entrada */}
+          <Panel as="section" className="space-y-5">
             <div>
-              <h2 className="text-[15px] font-semibold text-text-primary" style={{ fontFamily: "var(--font-playfair)" }}>
-                Briefing da Consulta
-              </h2>
-              <p className="text-[11px] text-text-muted mt-0.5">
-                Preencha os dados para gerar a documentação clínica completa.
-              </p>
+              <h2 className="text-[16px] font-semibold text-px-ink">Briefing da consulta</h2>
+              <p className="mt-0.5 text-[13px] text-px-muted">O relato é obrigatório. O restante melhora a geração.</p>
             </div>
 
-            {/* Patient search */}
             <div className="space-y-2">
-              <label className="text-[10px] font-mono text-text-muted uppercase tracking-widest">Paciente</label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted pointer-events-none" />
-                {searching
-                  ? <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted animate-spin" />
-                  : query
-                    ? <button onClick={clearPatient} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary transition-colors">
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    : null
-                }
-                <input
-                  value={query}
-                  onChange={e => handleQuery(e.target.value)}
-                  onFocus={() => results.length > 0 && setShowDrop(true)}
-                  placeholder="Buscar paciente pelo nome..."
-                  className="w-full bg-surface border border-border rounded-xl pl-9 pr-9 py-2.5 text-[12px] text-text-primary placeholder:text-text-muted focus:border-px-ink/50 outline-none transition-colors"
-                />
-                {showDrop && results.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-surface border border-border rounded-xl shadow-2xl overflow-hidden z-50 max-h-52 overflow-y-auto">
-                    {results.map((p, i) => (
-                      <button
-                        key={i}
-                        onClick={() => selectPatient(p)}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-surface-2 transition-colors text-left border-b border-border last:border-b-0"
-                      >
-                        <div className="w-7 h-7 rounded-full bg-px-ink/10 border border-px-ink/20 flex items-center justify-center text-[10px] font-bold text-px-accent flex-shrink-0">
-                          {initials(getPacNome(p))}
-                        </div>
-                        <div className="min-w-0">
-                          <div className="text-[12px] font-medium text-text-primary truncate">{getPacNome(p)}</div>
-                          {getPacTel(p) && (
-                            <div className="text-[10px] text-text-muted flex items-center gap-1">
-                              <Phone className="w-2.5 h-2.5" />{getPacTel(p)}
-                            </div>
-                          )}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
+              <Field label="Paciente" htmlFor="cop-paciente" hint="O nome do paciente é enviado à IA junto do relato." error={erroBusca}>
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-px-muted" aria-hidden />
+                  <PxInput
+                    id="cop-paciente" className="pl-10 pr-24" autoComplete="off" value={query}
+                    onChange={e => handleQuery(e.target.value)}
+                    onFocus={() => results.length > 0 && setShowDrop(true)}
+                    onKeyDown={e => { if (e.key === "Escape") setShowDrop(false) }}
+                    placeholder="Buscar pelo nome"
+                  />
+                  {searching ? <span role="status" className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[12px] text-px-muted">Buscando</span>
+                    : query ? <button type="button" onClick={clearPatient} className="absolute right-2 top-1/2 -translate-y-1/2 rounded px-2 py-1 text-[12.5px] font-medium text-px-ink hover:bg-px-ink/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-px-ink/40">Limpar</button> : null}
+                  {showDrop && (
+                    <ul className="px-glass-strong absolute left-0 right-0 top-full z-50 mt-1 max-h-56 overflow-y-auto rounded-px-card shadow-[0_10px_30px_rgba(20,20,20,0.16)]">
+                      {results.length === 0 ? <li className="px-4 py-3 text-[13px] text-px-muted">Nenhum paciente encontrado.</li> : results.map((p, i) => (
+                        <li key={getPacId(p) || i}>
+                          <button type="button" onClick={() => selectPatient(p)} className="w-full border-b border-px-line/60 px-4 py-2.5 text-left last:border-b-0 hover:bg-px-ink/5 focus:outline-none focus-visible:bg-px-ink/5">
+                            <span className="block truncate text-[13.5px] font-medium text-px-ink">{getPacNome(p)}</span>
+                            {getPacTel(p) && <span className="block text-[12px] text-px-muted">{getPacTel(p)}</span>}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </Field>
               {patient && (
-                <div className="flex items-center gap-2.5 px-3 py-2 bg-px-ink/10 border border-px-ink/20 rounded-lg">
-                  <div className="w-6 h-6 rounded-full bg-px-ink/10 border border-px-ink/20 flex items-center justify-center text-[9px] font-bold text-px-accent flex-shrink-0">
-                    {initials(getPacNome(patient))}
-                  </div>
-                  <span className="text-[12px] text-px-accent font-medium truncate flex-1">{getPacNome(patient)}</span>
-                  {getPacId(patient) && (
-                    <span className="text-[9px] font-mono text-px-accent">#{getPacId(patient)}</span>
-                  )}
-                  <button
-                    onClick={() => router.push("/pacientes")}
-                    className="text-[10px] text-px-accent hover:text-px-ink transition-colors"
-                  >
-                    <User className="w-3 h-3" />
-                  </button>
+                <div className="flex items-center justify-between gap-2 rounded-px-card bg-white/70 px-3.5 py-2.5">
+                  <span className="min-w-0 truncate text-[13.5px] font-medium text-px-ink">{getPacNome(patient)}</span>
+                  <PxButton size="sm" variant="quiet" onClick={() => router.push(getPacId(patient) ? `/pacientes/${encodeURIComponent(getPacId(patient))}` : "/pacientes")}>Abrir ficha</PxButton>
                 </div>
               )}
             </div>
 
-            {/* Tipo de consulta */}
             <div className="space-y-1.5">
-              <label className="text-[10px] font-mono text-text-muted uppercase tracking-widest">Tipo de Consulta</label>
-              <div className="flex gap-1.5 flex-wrap">
-                {TIPOS.map(t => (
-                  <button
-                    key={t}
-                    onClick={() => setTipoConsulta(t)}
-                    className={cn(
-                      "text-[11px] px-3 py-1.5 rounded-full border transition-all",
-                      tipoConsulta === t
-                        ? "bg-px-ink/10 border-px-ink/20 text-px-accent font-medium"
-                        : "border-border text-text-muted hover:text-text-secondary"
-                    )}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
+              <span className="block text-[12.5px] font-medium text-px-muted">Tipo de consulta</span>
+              <Segmented label="Tipo de consulta" options={TIPOS} value={tipoConsulta} onChange={setTipoConsulta} />
             </div>
 
-            {/* Botão de gravação proeminente */}
-            {hasMediaRecorder && (
-              <button
-                type="button"
-                onClick={handleMicClick}
-                disabled={isTranscribing || isRecordingDados}
-                className={cn(
-                  "w-full min-h-[64px] rounded-xl border-2 transition-all flex flex-col items-center justify-center gap-2 py-5 disabled:cursor-not-allowed",
-                  isTranscribing
-                    ? "bg-surface border-border opacity-70"
-                    : isRecording
-                    ? "bg-red-500/10 border-red-500/40"
-                    : "bg-surface border-border hover:border-accent hover:bg-accent/5"
-                )}
-              >
-                {isTranscribing ? (
-                  <>
-                    <Loader2 className="w-6 h-6 text-accent animate-spin" />
-                    <span className="text-[15px] font-semibold text-text-muted">Transcrevendo...</span>
-                  </>
-                ) : isRecording ? (
-                  <>
-                    <MicOff className="w-6 h-6 text-red-400 animate-pulse" />
-                    <span className="text-[15px] font-semibold text-red-400">Gravando...</span>
-                    <span className="text-[11px] text-text-muted">
-                      {`${String(Math.floor(recDuration / 60)).padStart(2, "0")}:${String(recDuration % 60).padStart(2, "0")}`}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <Mic className="w-6 h-6 text-accent" />
-                    <span className="text-[15px] font-semibold text-text-primary">Gravar consulta</span>
-                    <span className="text-[11px] text-text-muted">Toque para iniciar a gravação de voz</span>
-                  </>
-                )}
-              </button>
-            )}
-
-            {!hasMediaRecorder && (
-              <div className="w-full flex items-center gap-3 rounded-xl border border-border bg-surface px-4 py-3">
-                <MicOff className="w-5 h-5 text-text-muted flex-shrink-0" />
-                <p className="text-[12px] text-text-muted">Gravação não disponível neste navegador. Use Chrome ou Edge.</p>
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <label htmlFor="cop-relato" className="text-[12.5px] font-medium text-px-muted">Relato da consulta (obrigatório)</label>
+                {hasMediaRecorder ? (
+                  <div className="flex items-center gap-2">
+                    {gravRelato.gravando && <span role="timer" aria-label="Tempo de gravação" className="text-[12.5px] tabular-nums text-px-danger">{fmtTimer(gravRelato.segundos)}</span>}
+                    {gravRelato.transcrevendo && <span role="status" className="text-[12px] text-px-muted">Transcrevendo</span>}
+                    <PxButton size="sm" variant={gravRelato.gravando ? "danger" : "secondary"} leftIcon={Mic} disabled={gravRelato.transcrevendo || gravDados.gravando || gravDados.transcrevendo} onClick={() => cliqueMic("relato")}>
+                      {gravRelato.gravando ? "Parar gravação" : "Gravar consulta"}
+                    </PxButton>
+                  </div>
+                ) : <span className="text-[12px] text-px-muted">Gravação indisponível neste navegador. Use Chrome ou Edge.</span>}
               </div>
-            )}
-
-            {/* Relato */}
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-mono text-text-muted uppercase tracking-widest">
-                Relato da Consulta *
-              </label>
-              <textarea
-                value={relato}
-                onChange={e => setRelato(e.target.value)}
-                rows={6}
-                placeholder="Descreva as queixas do paciente, exame físico, hipóteses diagnósticas, conduta discutida..."
-                className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3 text-[12px] text-text-primary placeholder:text-text-muted focus:border-px-ink/50 outline-none resize-none transition-colors leading-relaxed"
-              />
+              <textarea id="cop-relato" value={relato} onChange={e => setRelato(e.target.value)} rows={7} placeholder="Queixas, exame físico, hipóteses e conduta discutida." className={textareaCls} />
             </div>
 
-            {/* Protocolo */}
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-mono text-text-muted uppercase tracking-widest">Protocolo Clínico</label>
-              <select
-                value={protocoloId ?? ""}
-                onChange={e => setProtocoloId(e.target.value || null)}
-                disabled={protocolosLoading || protocolosList.length === 0}
-                className="w-full rounded-xl px-3 py-2.5 text-[12px] text-text-primary bg-card border border-border outline-none focus:border-accent/40 transition-colors appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {protocolosLoading ? (
-                  <option value="">Carregando protocolos…</option>
-                ) : protocolosList.length === 0 ? (
-                  <option value="">Nenhum protocolo cadastrado</option>
-                ) : (
-                  <>
-                    <option value="">Nenhum — usar protocolos favoritos (padrão)</option>
-                    {protocolosList.map(p => (
-                      <option key={p.id} value={p.id}>{p.titulo}</option>
-                    ))}
-                  </>
-                )}
-              </select>
+            <Field label="Protocolo clínico" htmlFor="cop-protocolo" hint={!protocolosLoading && protocolosList.length === 0 ? undefined : "Sem escolha, a IA usa os protocolos favoritos."}>
+              <PxSelect id="cop-protocolo" value={protocoloId ?? ""} onChange={e => setProtocoloId(e.target.value || null)} disabled={protocolosLoading || protocolosList.length === 0}>
+                {protocolosLoading ? <option value="">Carregando protocolos</option>
+                  : protocolosList.length === 0 ? <option value="">Nenhum protocolo cadastrado</option>
+                  : <>
+                      <option value="">Protocolos favoritos (padrão)</option>
+                      {protocolosList.map(p => <option key={p.id} value={p.id}>{p.titulo}</option>)}
+                    </>}
+              </PxSelect>
               {!protocolosLoading && protocolosList.length === 0 && (
-                <a href="/memoria" className="text-[10px] text-px-accent hover:text-px-ink transition-colors">
-                  Criar protocolos em Memória Clínica →
-                </a>
+                <a href="/memoria" className="mt-1.5 inline-block text-[12.5px] font-medium text-px-accent underline underline-offset-2">Criar protocolos em Memória clínica</a>
               )}
-            </div>
+            </Field>
 
-            {/* Dados objetivos */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="text-[10px] font-mono text-text-muted uppercase tracking-widest">Dados Objetivos</label>
-                <div className="flex items-center gap-2">
-                  {isTranscribingDados && (
-                    <span className="text-[10px] text-px-accent flex items-center gap-1">
-                      <Loader2 className="w-3 h-3 animate-spin" /> transcrevendo...
-                    </span>
-                  )}
-                  {hasMediaRecorder ? (
-                    <button
-                      type="button"
-                      onClick={handleMicDadosClick}
-                      disabled={isTranscribingDados || isRecording}
-                      title={isRecordingDados ? "Parar gravação" : "Gravar dados objetivos por voz"}
-                      className={cn(
-                        "flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-lg border transition-all",
-                        isRecordingDados
-                          ? "bg-red-500/15 border-red-500/40 text-red-400 animate-pulse"
-                          : "border-border text-text-muted hover:border-px-ink/40 hover:text-px-ink disabled:opacity-40"
-                      )}
-                    >
-                      {isRecordingDados
-                        ? <><MicOff className="w-3 h-3" /> Parar</>
-                        : <><Mic className="w-3 h-3" /> Gravar</>}
-                    </button>
-                  ) : voiceConsent !== null && (
-                    <span title="Gravação de voz não disponível neste navegador" className="text-text-muted">
-                      <MicOff className="w-3.5 h-3.5" />
-                    </span>
-                  )}
-                </div>
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <label htmlFor="cop-dados" className="text-[12.5px] font-medium text-px-muted">Dados objetivos</label>
+                {gravacaoDados}
               </div>
-              <textarea
-                value={dados}
-                onChange={e => setDados(e.target.value)}
-                rows={4}
-                placeholder="Sinais vitais, resultados de exames, medicamentos atuais, alergias, peso/altura..."
-                className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3 text-[12px] text-text-primary placeholder:text-text-muted focus:border-px-ink/50 outline-none resize-none transition-colors leading-relaxed"
-              />
-
-              {/* Memória clínica proativa */}
+              {gravDados.gravando && <p role="timer" aria-label="Tempo de gravação" className="text-[12.5px] tabular-nums text-px-danger">Gravando {fmtTimer(gravDados.segundos)}</p>}
+              <textarea id="cop-dados" value={dados} onChange={e => setDados(e.target.value)} rows={4} placeholder="Sinais vitais, exames, medicamentos em uso, alergias, peso e altura." className={textareaCls} />
               {(loadingMemoria || memoriaChips.length > 0) && (
-                <div className="space-y-2 animate-fade-in mt-2">
-                  <div className="flex items-center gap-1.5">
-                    <Brain className="w-3 h-3 text-accent" />
-                    <span className="text-[10px] font-mono text-text-muted uppercase tracking-widest">
-                      {loadingMemoria ? "Buscando padrões..." : "Padrões dos atendimentos anteriores"}
-                    </span>
-                    {loadingMemoria && <Loader2 className="w-3 h-3 text-accent animate-spin" />}
-                  </div>
+                <div className="space-y-2">
+                  <p className="text-[12.5px] text-px-muted">{loadingMemoria ? "Buscando padrões dos atendimentos anteriores" : "Padrões dos atendimentos anteriores. Toque para acrescentar aos dados."}</p>
                   {!loadingMemoria && (
                     <div className="flex flex-wrap gap-2">
-                      {memoriaChips.map((chip, i) => {
-                        const style = {
-                          exame:       "bg-px-ink/10 border-px-ink/20 text-px-accent",
-                          medicamento: "bg-green-500/10 border-green-500/25 text-green-400",
-                          diagnostico: "bg-amber-500/10 border-amber-500/25 text-amber-400",
-                        }[chip.tipo] ?? "bg-surface border-border text-text-secondary"
-                        return (
-                          <button key={i}
-                            onClick={() => setDados(prev => prev ? prev + "\n" + chip.texto : chip.texto)}
-                            className={cn("flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-lg border transition-all hover:opacity-80", style)}
-                          >
-                            <Plus className="w-2.5 h-2.5 flex-shrink-0" />
-                            {chip.texto}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {genError && (
-              <div className="flex items-start gap-2 bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl px-4 py-3 text-[12px]">
-                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                <span>{genError}</span>
-              </div>
-            )}
-
-            {/* Desktop submit */}
-            <div className="hidden md:block space-y-2">
-              <button
-                onClick={gerar}
-                disabled={phase === "loading" || !relato.trim()}
-                title={!relato.trim() ? "Preencha o relato antes de gerar" : undefined}
-                className={cn(
-                  "w-full flex items-center justify-center gap-2 text-[13px] font-semibold rounded-xl py-3 transition-all",
-                  phase === "loading"
-                    ? "bg-px-ink/10 border border-px-ink/20 text-px-accent cursor-wait"
-                    : "bg-px-ink text-white hover:bg-px-ink/85 disabled:opacity-40"
-                )}
-              >
-                {phase === "loading"
-                  ? <><Loader2 className="w-4 h-4 animate-spin" /> Gerando com IA...</>
-                  : <><Sparkles className="w-4 h-4" /> Gerar Copiloto</>}
-              </button>
-              {phase === "done" && (
-                <button
-                  onClick={novaConsulta}
-                  className="w-full flex items-center justify-center gap-2 text-[12px] text-text-muted border border-border rounded-xl py-2.5 hover:border-border-hover hover:text-text-secondary transition-all"
-                >
-                  <RefreshCw className="w-3.5 h-3.5" /> Nova Consulta
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* ── RIGHT: Output ─────────────────────────────────────────────────── */}
-        <div className="px-glass rounded-px-panel p-5 md:p-6">
-          {phase === "idle" && !result && <RightPanelEmpty />}
-          {phase === "loading" && <Skeleton />}
-
-          {phase === "done" && result && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px] font-mono text-text-muted uppercase tracking-widest">
-                  Documentação Gerada{patient && ` · ${getPacNome(patient)}`}
-                </span>
-                <button
-                  onClick={gerar}
-                  className="flex items-center gap-1.5 text-[10px] text-text-muted hover:text-px-ink border border-border hover:border-px-ink/40 rounded-lg px-2.5 py-1 transition-all"
-                >
-                  <RefreshCw className="w-3 h-3" /> Re-gerar
-                </button>
-              </div>
-
-              {/* 1. Resumo Clínico — editable */}
-              {result.resumo && (
-                <SectionCard
-                  title="Resumo Clínico"
-                  icon={FileText}
-                  iconColor="text-px-accent"
-                  extra={<CopyBtn text={editedResumo} />}
-                >
-                  <AutoTextarea value={editedResumo} onChange={setEditedResumo} />
-                </SectionCard>
-              )}
-
-              {/* CIDs Sugeridos */}
-              {(loadingCids || cids.length > 0) && (
-                <div className="border border-border rounded-xl p-4 bg-surface/40 space-y-2">
-                  <div className="flex items-center gap-1.5">
-                    <ShieldCheck className="w-3.5 h-3.5 text-violet-400" />
-                    <span className="text-[10px] font-mono font-semibold text-text-muted uppercase tracking-widest">CID-10 Sugeridos</span>
-                    {loadingCids && <Loader2 className="w-3 h-3 animate-spin text-text-muted ml-1" />}
-                  </div>
-                  {cids.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {cids.map((c, i) => (
-                        <button
-                          key={c.codigo}
-                          title={c.justificativa}
-                          onClick={() => {
-                            navigator.clipboard.writeText(c.codigo).then(() => {
-                              setCopiedCid(c.codigo)
-                              setTimeout(() => setCopiedCid(null), 2000)
-                            })
-                          }}
-                          className={cn(
-                            "flex items-center gap-1.5 text-[11px] font-mono font-semibold px-2.5 py-1.5 rounded-lg border transition-all",
-                            i === 0 ? "bg-violet-500/10 border-violet-500/30 text-violet-300 hover:bg-violet-500/20"
-                                    : "bg-surface border-border text-text-secondary hover:border-border-hover"
-                          )}
-                        >
-                          {copiedCid === c.codigo
-                            ? <Check className="w-3 h-3 flex-shrink-0 text-accent" />
-                            : <Copy className="w-3 h-3 flex-shrink-0 opacity-50" />}
-                          <span>{c.codigo}</span>
-                          <span className="text-[10px] font-sans font-normal opacity-75 hidden sm:inline">{c.descricao}</span>
+                      {memoriaChips.map((chip, i) => (
+                        <button key={i} type="button" onClick={() => setDados(prev => prev ? prev + "\n" + chip.texto : chip.texto)}
+                          className="flex items-center gap-1.5 rounded-full border border-px-line bg-white px-3 py-1.5 text-left text-[12.5px] text-px-ink hover:bg-px-ink/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-px-ink/40">
+                          <Plus className="h-3 w-3 shrink-0" aria-hidden />
+                          <span className="text-px-muted">{chip.tipo}:</span> {chip.texto}
                         </button>
                       ))}
                     </div>
                   )}
                 </div>
               )}
-
-              {/* 2. Plano Terapêutico — editable */}
-              {result.plano && (
-                <SectionCard
-                  title="Plano Terapêutico"
-                  icon={Stethoscope}
-                  iconColor="text-px-accent"
-                  extra={<CopyBtn text={editedPlano} />}
-                >
-                  <AutoTextarea value={editedPlano} onChange={setEditedPlano} />
-                </SectionCard>
-              )}
-
-              {/* 3. Exames Solicitados — checklist */}
-              {result.exames_solicitados && result.exames_solicitados.length > 0 && (
-                <SectionCard
-                  title="Exames Solicitados"
-                  icon={FlaskConical}
-                  iconColor="text-purple-400"
-                  extra={<CopyBtn text={result.exames_solicitados.join("\n")} />}
-                >
-                  <div className="space-y-1.5">
-                    {result.exames_solicitados.map((exame, i) => (
-                      <label
-                        key={i}
-                        className={cn(
-                          "flex items-center gap-2.5 px-3 py-2 rounded-lg border cursor-pointer transition-all",
-                          checkedExames.has(i)
-                            ? "bg-surface-2 border-border opacity-50"
-                            : "bg-background border-border hover:border-purple-500/30"
-                        )}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={checkedExames.has(i)}
-                          onChange={e => {
-                            setCheckedExames(prev => {
-                              const next = new Set(prev)
-                              e.target.checked ? next.add(i) : next.delete(i)
-                              return next
-                            })
-                          }}
-                          className="w-3.5 h-3.5 accent-purple-500 flex-shrink-0"
-                        />
-                        <span className={cn(
-                          "text-[12px] transition-colors",
-                          checkedExames.has(i) ? "text-text-muted line-through" : "text-text-secondary"
-                        )}>
-                          {exame}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                </SectionCard>
-              )}
-
-              {/* 4. Orientações — editable */}
-              {result.orientacoes && (
-                <SectionCard
-                  title="Orientações ao Paciente"
-                  icon={BookOpen}
-                  iconColor="text-emerald-400"
-                  defaultOpen={false}
-                  extra={<CopyBtn text={editedOrientacoes} />}
-                >
-                  <AutoTextarea value={editedOrientacoes} onChange={setEditedOrientacoes} />
-                </SectionCard>
-              )}
-
-              {/* 5. Follow-up — 3 cards individuais */}
-              {result.followup && (() => {
-                const messages = parseFollowup(result.followup)
-                if (!messages) return null
-                return (
-                  <SectionCard
-                    title="Mensagens de Follow-up"
-                    icon={MessageCircle}
-                    iconColor="text-amber-400"
-                    defaultOpen={false}
-                  >
-                    <div className="space-y-3">
-                      {(["d1", "d7", "d30"] as const).map(dia => {
-                        const msg  = messages[dia]
-                        if (!msg) return null
-                        const meta = FOLLOWUP_META[dia]
-                        return (
-                          <div key={dia} className={cn("rounded-xl border p-4 space-y-3", meta.bg)}>
-                            <div className="flex items-center justify-between gap-2 flex-wrap">
-                              <span className={cn("text-[10px] font-mono font-semibold px-2.5 py-0.5 rounded-full border", meta.badge)}>
-                                {meta.label}
-                              </span>
-                              <div className="flex gap-1.5">
-                                <CopyBtn text={msg} />
-                                <button
-                                  onClick={() => enviarWhatsApp(msg, dia)}
-                                  disabled={sendingWA[dia]}
-                                  className="flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-lg border border-emerald-500/30 text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/15 transition-all disabled:opacity-60"
-                                >
-                                  {sendingWA[dia]
-                                    ? <Loader2 className="w-3 h-3 animate-spin" />
-                                    : <Send className="w-3 h-3" />}
-                                  WhatsApp
-                                </button>
-                              </div>
-                            </div>
-                            <p className="text-[12px] text-text-secondary leading-relaxed whitespace-pre-line">{msg}</p>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </SectionCard>
-                )
-              })()}
-
-              {/* 6. Sugestão de Conteúdo */}
-              {result.conteudo && (
-                <SectionCard
-                  title="Sugestão de Conteúdo"
-                  icon={Sparkles}
-                  iconColor="text-purple-400"
-                  defaultOpen={false}
-                  extra={<CopyBtn text={result.conteudo} />}
-                >
-                  <p className="text-[12px] text-text-secondary leading-relaxed whitespace-pre-line">{result.conteudo}</p>
-                </SectionCard>
-              )}
-
-              {/* ── Ações rápidas pós-prontuário ──────────────────────── */}
-              <div className="border border-border rounded-xl p-4 bg-surface/40 space-y-2">
-                <p className="text-[11px] font-mono text-text-muted uppercase tracking-widest">Próximos passos</p>
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    {
-                      icon: Pill, label: "Prescrever",
-                      onClick: () => {
-                        const id = patient ? getPacId(patient) : ""
-                        router.push(id ? `/prescricao?pacienteId=${id}` : "/prescricao")
-                      },
-                      cls: "text-green-400 bg-green-500/10 border-green-500/25 hover:bg-green-500/20",
-                    },
-                    {
-                      icon: FlaskConical, label: "Interpretar exames",
-                      onClick: () => router.push("/interpretacao-exames"),
-                      cls: "text-violet-400 bg-violet-500/10 border-violet-500/25 hover:bg-violet-500/20",
-                    },
-                    {
-                      icon: Mail, label: "Gerar carta ao paciente",
-                      onClick: () => {
-                        const params = new URLSearchParams()
-                        if (relato)            params.set("relato", relato.slice(0, 2000))
-                        if (dados)             params.set("dados", dados.slice(0, 1000))
-                        if (patient)           params.set("nomePaciente", getPacNome(patient))
-                        if (tipoConsulta)      params.set("tipoConsulta", tipoConsulta)
-                        router.push(`/conversa?${params.toString()}`)
-                      },
-                      cls: "text-accent bg-accent-dim border-accent-border hover:bg-accent/20",
-                    },
-                    {
-                      icon: CalendarDays, label: "Agendar retorno",
-                      onClick: () => router.push("/agenda"),
-                      cls: "text-px-accent bg-px-ink/10 border-px-ink/20 hover:bg-px-ink/15",
-                    },
-                    {
-                      icon: FileText, label: "Carta de encaminhamento",
-                      onClick: () => openDocumento("carta"),
-                      cls: "text-amber-400 bg-amber-500/10 border-amber-500/25 hover:bg-amber-500/20",
-                    },
-                    {
-                      icon: ClipboardList, label: "Gerar atestado",
-                      onClick: () => openDocumento("atestado"),
-                      cls: "text-text-secondary bg-surface border-border hover:border-border-hover",
-                    },
-                  ].map(a => (
-                    <button key={a.label} onClick={a.onClick}
-                      className={cn("flex items-center gap-1.5 text-[11px] font-semibold px-3 py-2.5 sm:py-1.5 rounded-lg border transition-all min-h-[44px] sm:min-h-0", a.cls)}>
-                      <a.icon className="w-3 h-3 flex-shrink-0" />
-                      {a.label}
-                      <ArrowRight className="w-2.5 h-2.5 opacity-50" />
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* 7. Prontuário */}
-              {result.prontuario && (
-                <SectionCard
-                  title="Prontuário Gerado"
-                  icon={ClipboardList}
-                  iconColor="text-px-accent"
-                  extra={
-                    <div className="flex gap-2 flex-wrap">
-                      <CopyBtn text={
-                        prontuarioBlocos && Object.keys(editedProntuario).length > 0
-                          ? prontuarioBlocos.map(b => `${b.label.toUpperCase()}:\n${editedProntuario[b.key] ?? b.content}`).join('\n\n')
-                          : result.prontuario
-                      } />
-                      <button
-                        onClick={enviarMedx}
-                        disabled={sendingMedx}
-                        className={cn(
-                          "flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-lg border transition-all",
-                          sendingMedx
-                            ? "border-px-ink/20 text-px-accent bg-px-ink/10 cursor-wait"
-                            : "border-px-ink/20 text-px-accent bg-px-ink/10 hover:bg-px-ink/15"
-                        )}
-                      >
-                        {sendingMedx ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
-                        {sendingMedx ? "Enviando..." : "Enviar para MedX"}
-                      </button>
-                    </div>
-                  }
-                >
-                  {prontuarioBlocos ? (
-                    <div className="space-y-3">
-                      {prontuarioBlocos.map(bloco => {
-                        const Icon      = getProntuarioIcon(bloco.key)
-                        const section   = PRONTUARIO_SECTIONS.find(s => s.key === bloco.key)
-                        const iconColor = section?.iconColor ?? "text-px-accent"
-                        return (
-                          <div key={bloco.key} className="border border-border rounded-lg overflow-hidden">
-                            <div className="flex items-center gap-2 px-4 py-2 bg-surface-2 border-b border-border">
-                              <Icon className={cn("w-3 h-3 flex-shrink-0", iconColor)} />
-                              <span className="text-[10px] font-mono font-semibold text-text-muted uppercase tracking-widest">
-                                {bloco.label}
-                              </span>
-                            </div>
-                            <AutoTextarea
-                              value={editedProntuario[bloco.key] ?? bloco.content}
-                              onChange={v => setEditedProntuario(prev => ({ ...prev, [bloco.key]: v }))}
-                              className="px-4 py-3"
-                            />
-                          </div>
-                        )
-                      })}
-                    </div>
-                  ) : (
-                    <textarea
-                      readOnly
-                      value={result.prontuario}
-                      rows={14}
-                      onClick={e => (e.target as HTMLTextAreaElement).select()}
-                      className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3 text-[11px] text-text-secondary leading-relaxed font-mono resize-y outline-none cursor-text"
-                    />
-                  )}
-                </SectionCard>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Mobile sticky submit */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-surface/95 backdrop-blur-sm border-t border-border px-4 py-3 space-y-2">
-        <button
-          onClick={gerar}
-          disabled={phase === "loading" || !relato.trim()}
-          title={!relato.trim() ? "Preencha o relato antes de gerar" : undefined}
-          className={cn(
-            "w-full flex items-center justify-center gap-2 text-[13px] font-semibold rounded-xl py-3 transition-all",
-            phase === "loading"
-              ? "bg-px-ink/10 border border-px-ink/20 text-px-accent cursor-wait"
-              : "bg-px-ink text-white hover:bg-px-ink/85 disabled:opacity-40"
-          )}
-        >
-          {phase === "loading"
-            ? <><Loader2 className="w-4 h-4 animate-spin" /> Gerando com IA...</>
-            : <><Sparkles className="w-4 h-4" /> Gerar Copiloto</>}
-        </button>
-        {phase === "done" && (
-          <button
-            onClick={novaConsulta}
-            className="w-full flex items-center justify-center gap-2 text-[12px] text-text-muted border border-border rounded-xl py-2 hover:border-border-hover transition-all"
-          >
-            <RefreshCw className="w-3.5 h-3.5" /> Nova Consulta
-          </button>
-        )}
-      </div>
-
-      {/* Voice consent modal */}
-      {showConsentModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-surface border border-border rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-px-ink/10 border border-px-ink/20 flex items-center justify-center flex-shrink-0">
-                <ShieldCheck className="w-5 h-5 text-px-accent" />
-              </div>
-              <div>
-                <h3 className="text-[14px] font-semibold text-text-primary">Autorizar gravação de voz</h3>
-                <p className="text-[11px] text-text-muted">Consentimento LGPD — leia antes de prosseguir</p>
-              </div>
-            </div>
-            <p className="text-[12px] text-text-secondary leading-relaxed">
-              Sua fala será enviada ao serviço{" "}
-              <strong className="text-text-primary">Groq Whisper</strong> para transcrição automática.
-              O áudio <strong className="text-text-primary">não é armazenado</strong> — somente o texto
-              transcrito é utilizado como relato da consulta.
-            </p>
-            <p className="text-[11px] text-text-muted leading-relaxed">
-              Você pode revogar este consentimento a qualquer momento nas Configurações do perfil.
-            </p>
-            <div className="flex gap-2 pt-1">
-              <button
-                onClick={() => setShowConsentModal(false)}
-                className="flex-1 text-[12px] py-2 rounded-xl border border-border text-text-muted hover:border-border-hover transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={aceitarConsentimento}
-                className="flex-1 text-[12px] py-2 rounded-xl bg-px-ink text-white font-semibold hover:bg-px-ink/85 transition-colors"
-              >
-                Autorizar e gravar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── Pós-consulta modal ─────────────────────────────────────────────── */}
-      {showPostModal && (
-        <div className="fixed inset-0 z-[55] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="bg-surface border border-border rounded-2xl w-full max-w-md shadow-2xl animate-fade-in">
-
-            {/* Header */}
-            <div className="px-5 py-4 border-b border-border">
-              <div className="flex items-center justify-between mb-1">
-                <h3 className="text-[15px] font-semibold text-text-primary">Consulta finalizada</h3>
-                <Button variant="secondary" size="sm" onClick={() => setShowPostModal(false)} className="w-7 h-7 p-0 border-0 hover:bg-surface-2" aria-label="Fechar">
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
-              <p className="text-[11px] text-text-muted font-mono">
-                {patient ? getPacNome(patient) : "Paciente"} · {fmtTimer(consultDuration)}
-              </p>
             </div>
 
-            {/* Actions */}
-            <div className="p-4 space-y-2">
-              <p className="text-[11px] font-mono text-text-muted uppercase tracking-widest mb-3">O que fazer agora?</p>
+            {genError && <p role="alert" className={erroBox}>{genError}</p>}
 
-              {/* ① WhatsApp D+1 */}
-              {(() => {
-                const msgs = parseFollowup(result?.followup)
-                if (!msgs?.d1) return null
-                return (
-                  <button
-                    onClick={() => { enviarWhatsApp(msgs.d1, "d1"); setShowPostModal(false) }}
-                    className="w-full flex items-center gap-3 text-left px-4 py-3 rounded-xl border border-emerald-500/25 bg-emerald-500/10 hover:bg-emerald-500/15 text-emerald-400 transition-all"
-                  >
-                    <Send className="w-4 h-4 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-semibold">Enviar mensagem D+1</p>
-                      <p className="text-[10px] text-emerald-400/70">WhatsApp automático de acompanhamento</p>
-                    </div>
-                  </button>
-                )
-              })()}
+            <div className="space-y-2">
+              <PxButton fullWidth loading={phase === "loading"} disabled={!relato.trim() || gravandoAlgo || ocupadoVoz} onClick={gerar}>
+                {phase === "loading" ? "Gerando" : phase === "done" ? "Gerar de novo" : "Gerar documentação"}
+              </PxButton>
+              {!relato.trim() && <p className="text-[12px] text-px-muted">Escreva ou grave o relato para liberar a geração.</p>}
+              {phase === "done" && <PxButton fullWidth variant="secondary" onClick={novaConsulta}>Nova consulta</PxButton>}
+            </div>
+          </Panel>
 
-              {/* ② Gerar carta ao paciente */}
-              <button
-                onClick={() => {
-                  const params = new URLSearchParams()
-                  if (relato)       params.set("relato", relato.slice(0, 2000))
-                  if (dados)        params.set("dados", dados.slice(0, 1000))
-                  if (patient)      params.set("nomePaciente", getPacNome(patient))
-                  if (tipoConsulta) params.set("tipoConsulta", tipoConsulta)
-                  router.push(`/conversa?${params.toString()}`)
-                  setShowPostModal(false)
-                }}
-                className="w-full flex items-center gap-3 text-left px-4 py-3 rounded-xl border border-border hover:border-border-hover text-text-secondary hover:text-text-primary transition-all"
-              >
-                <Mail className="w-4 h-4 flex-shrink-0 text-accent" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-semibold">Gerar carta ao paciente</p>
-                  <p className="text-[10px] text-text-muted">Texto personalizado com resumo da consulta</p>
-                </div>
-              </button>
+          {/* Saída */}
+          <div className="space-y-3">
+            {phase === "idle" && !result && <Panel><PainelVazio /></Panel>}
+            {phase === "loading" && <Esqueleto />}
 
-              {/* ③ Prescrever */}
-              <button
-                onClick={() => {
-                  const id = patient ? getPacId(patient) : ""
-                  router.push(id ? `/prescricao?pacienteId=${id}` : "/prescricao")
-                  setShowPostModal(false)
-                }}
-                className="w-full flex items-center gap-3 text-left px-4 py-3 rounded-xl border border-border hover:border-border-hover text-text-secondary hover:text-text-primary transition-all"
-              >
-                <Pill className="w-4 h-4 flex-shrink-0 text-green-400" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-semibold">Prescrever</p>
-                  <p className="text-[10px] text-text-muted">Abrir prescrição assistida</p>
-                </div>
-              </button>
-
-              {/* ④ Criar carrossel */}
-              <button
-                onClick={() => {
-                  router.push(`/carrossel?tema=${encodeURIComponent(tipoConsulta)}`)
-                  setShowPostModal(false)
-                }}
-                className="w-full flex items-center gap-3 text-left px-4 py-3 rounded-xl border border-border hover:border-border-hover text-text-secondary hover:text-text-primary transition-all"
-              >
-                <Sparkles className="w-4 h-4 flex-shrink-0 text-purple-400" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-semibold">Criar carrossel</p>
-                  <p className="text-[10px] text-text-muted truncate">Tema: {tipoConsulta}</p>
-                </div>
-              </button>
-
-              {/* ⑤ Agendar retorno */}
-              <button
-                onClick={() => {
-                  const id   = patient ? getPacId(patient) : ""
-                  const nome = patient ? encodeURIComponent(getPacNome(patient)) : ""
-                  router.push(id ? `/agenda?pacienteId=${id}&pacienteNome=${nome}` : "/agenda")
-                  setShowPostModal(false)
-                }}
-                className="w-full flex items-center gap-3 text-left px-4 py-3 rounded-xl border border-border hover:border-border-hover text-text-secondary hover:text-text-primary transition-all"
-              >
-                <CalendarDays className="w-4 h-4 flex-shrink-0 text-px-accent" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-semibold">Agendar retorno</p>
-                  <p className="text-[10px] text-text-muted">
-                    {patient ? `${getPacNome(patient)} pré-preenchido` : "Abrir agenda"}
+            {phase === "done" && result && (
+              <>
+                <Panel className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-[13.5px] text-px-ink">
+                    <span className="font-medium">Documentação gerada</span>{patient ? ` para ${getPacNome(patient)}` : ""}. Rascunho de IA: confira antes de usar.
                   </p>
-                </div>
-              </button>
+                  <PxButton size="sm" variant="secondary" onClick={gerar}>Gerar de novo</PxButton>
+                </Panel>
 
-              {/* ⑥a Encaminhar para nutrição */}
-              <button
-                onClick={() => {
-                  const id = patient ? getPacId(patient) : ""
-                  router.push(id ? `/nutricao-pacientes?pacienteId=${id}` : "/nutricao-pacientes")
-                  setShowPostModal(false)
-                }}
-                className="w-full flex items-center gap-3 text-left px-4 py-3 rounded-xl border border-border hover:border-border-hover text-text-secondary hover:text-text-primary transition-all"
-              >
-                <Salad className="w-4 h-4 flex-shrink-0 text-green-400" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-semibold">Encaminhar para nutrição</p>
-                  <p className="text-[10px] text-text-muted">Abrir acompanhamento nutricional</p>
-                </div>
-              </button>
+                {result.resumo && (
+                  <Bloco titulo="Resumo clínico" extra={<CopyButton text={editedResumo} />}>
+                    <AutoTextarea label="Resumo clínico" value={editedResumo} onChange={setEditedResumo} />
+                  </Bloco>
+                )}
 
-              {/* ⑥b Solicitar NPS */}
-              <button
-                onClick={() => { router.push("/nps"); setShowPostModal(false) }}
-                className="w-full flex items-center gap-3 text-left px-4 py-3 rounded-xl border border-border hover:border-border-hover text-text-secondary hover:text-text-primary transition-all"
-              >
-                <Star className="w-4 h-4 flex-shrink-0 text-amber-400" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-semibold">Solicitar avaliação</p>
-                  <p className="text-[10px] text-text-muted">Enviar pesquisa de satisfação NPS</p>
-                </div>
-              </button>
+                {(loadingCids || cids.length > 0) && (
+                  <Panel as="section" className="space-y-2">
+                    <h3 className="text-[15px] font-semibold text-px-ink">CID-10 sugeridos</h3>
+                    <p className="text-[12.5px] text-px-muted">Sugestão da IA a partir do resumo. A escolha do código é sua.</p>
+                    {loadingCids && <p role="status" className="text-[13px] text-px-muted">Buscando sugestões</p>}
+                    <div className="flex flex-wrap gap-2">
+                      {cids.map(c => (
+                        <button key={c.codigo} type="button" title={c.justificativa} onClick={() => copiarCid(c.codigo)} aria-label={`Copiar CID ${c.codigo}, ${c.descricao}`}
+                          className="flex items-center gap-1.5 rounded-full border border-px-line bg-white px-3 py-1.5 text-[12.5px] text-px-ink hover:bg-px-ink/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-px-ink/40">
+                          {copiedCid === c.codigo ? <Check className="h-3 w-3" aria-hidden /> : <Copy className="h-3 w-3 text-px-muted" aria-hidden />}
+                          <span className="font-semibold">{c.codigo}</span>
+                          <span className="hidden text-px-muted sm:inline">{c.descricao}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </Panel>
+                )}
 
-              {/* ⑥c Programa de indicações */}
-              <button
-                onClick={() => { router.push("/indicacoes"); setShowPostModal(false) }}
-                className="w-full flex items-center gap-3 text-left px-4 py-3 rounded-xl border border-border hover:border-border-hover text-text-secondary hover:text-text-primary transition-all"
-              >
-                <UserPlus className="w-4 h-4 flex-shrink-0 text-accent" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-semibold">Programa de indicações</p>
-                  <p className="text-[10px] text-text-muted">Convidar paciente a indicar amigos</p>
-                </div>
-              </button>
+                {result.plano && (
+                  <Bloco titulo="Plano terapêutico" extra={<CopyButton text={editedPlano} />}>
+                    <AutoTextarea label="Plano terapêutico" value={editedPlano} onChange={setEditedPlano} />
+                  </Bloco>
+                )}
 
-              {/* ⑦ Copiar lista de exames */}
-              {result?.exames_solicitados && result.exames_solicitados.length > 0 && (
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(result!.exames_solicitados!.join("\n"))
-                    showToast("Lista de exames copiada!")
-                    setShowPostModal(false)
-                  }}
-                  className="w-full flex items-center gap-3 text-left px-4 py-3 rounded-xl border border-border hover:border-border-hover text-text-secondary hover:text-text-primary transition-all"
-                >
-                  <FlaskConical className="w-4 h-4 flex-shrink-0 text-violet-400" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-semibold">Copiar exames solicitados</p>
-                    <p className="text-[10px] text-text-muted">
-                      {result.exames_solicitados.length} exame{result.exames_solicitados.length !== 1 ? "s" : ""} na lista
-                    </p>
+                {result.exames_solicitados && result.exames_solicitados.length > 0 && (
+                  <Bloco titulo="Exames solicitados" extra={<CopyButton text={result.exames_solicitados.join("\n")} />}>
+                    <ul className="space-y-1.5">
+                      {result.exames_solicitados.map((exame, i) => (
+                        <li key={i} className={cn("rounded-px-card bg-white/70 px-3 py-2", checkedExames.has(i) && "opacity-60")}>
+                          <PxCheckbox
+                            label={exame}
+                            checked={checkedExames.has(i)}
+                            onChange={e => setCheckedExames(prev => { const next = new Set(prev); if (e.target.checked) next.add(i); else next.delete(i); return next })}
+                          />
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="text-[12px] text-px-muted">As marcações servem de conferência nesta tela e não são salvas.</p>
+                  </Bloco>
+                )}
+
+                {result.orientacoes && (
+                  <Bloco titulo="Orientações ao paciente" aberto={false} extra={<CopyButton text={editedOrientacoes} />}>
+                    <AutoTextarea label="Orientações ao paciente" value={editedOrientacoes} onChange={setEditedOrientacoes} />
+                  </Bloco>
+                )}
+
+                {msgsFollowup && (msgsFollowup.d1 || msgsFollowup.d7 || msgsFollowup.d30) && (
+                  <Bloco titulo="Mensagens de acompanhamento" aberto={false}>
+                    <div className="space-y-3">
+                      {(["d1", "d7", "d30"] as const).map(dia => msgsFollowup[dia] ? (
+                        <CartaoFollowup key={dia} dia={dia} msg={msgsFollowup[dia]} podeEnviar={podeEnviarWA} onEnviar={() => enviarWhatsApp(msgsFollowup[dia], dia)} />
+                      ) : null)}
+                    </div>
+                  </Bloco>
+                )}
+
+                {result.conteudo && (
+                  <Bloco titulo="Sugestão de conteúdo" aberto={false} extra={<CopyButton text={result.conteudo} />}>
+                    <p className="whitespace-pre-line text-[13.5px] leading-relaxed text-px-ink">{result.conteudo}</p>
+                  </Bloco>
+                )}
+
+                <Panel as="section" className="space-y-3">
+                  <h3 className="text-[15px] font-semibold text-px-ink">Próximos passos</h3>
+                  <div className="flex flex-wrap gap-2">
+                    <PxButton size="sm" variant="secondary" onClick={irPrescrever}>Prescrever</PxButton>
+                    <PxButton size="sm" variant="secondary" onClick={() => router.push("/interpretacao-exames")}>Interpretar exames</PxButton>
+                    <PxButton size="sm" variant="secondary" onClick={cartaParaPaciente}>Carta ao paciente</PxButton>
+                    <PxButton size="sm" variant="secondary" onClick={irAgendar}>Agendar retorno</PxButton>
+                    <PxButton size="sm" variant="secondary" onClick={() => openDocumento("carta")}>Carta de encaminhamento</PxButton>
+                    <PxButton size="sm" variant="secondary" onClick={() => openDocumento("atestado")}>Atestado</PxButton>
                   </div>
-                </button>
-              )}
-            </div>
+                </Panel>
 
-            {/* Footer */}
-            <div className="px-5 py-3.5 border-t border-border">
-              <button
-                onClick={() => { setShowPostModal(false); router.push("/dashboard") }}
-                className="w-full text-[12px] text-text-muted hover:text-text-secondary transition-colors py-1"
-              >
-                Fechar e ir ao início
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {toast && <Toast message={toast.msg} type={toast.type} />}
-
-      {/* ── Documento Modal (carta / atestado) ─────────────────────────────── */}
-      {docModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-surface border border-border rounded-2xl w-full max-w-2xl shadow-2xl max-h-[90vh] flex flex-col">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-border flex-shrink-0">
-              <div className="flex items-center gap-2">
-                <FileText className="w-4 h-4 text-amber-400" />
-                <span className="text-[14px] font-semibold text-text-primary">
-                  {docModal.tipo === "carta" ? "Carta de Encaminhamento" : "Atestado Médico"}
-                </span>
-              </div>
-              <Button variant="secondary" size="sm" onClick={() => setDocModal(null)} className="w-7 h-7 p-0 border-0 hover:bg-surface-2" aria-label="Fechar">
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-5">
-              {docModal.loading ? (
-                <div className="flex flex-col items-center justify-center py-16 gap-3">
-                  <Loader2 className="w-6 h-6 animate-spin text-accent" />
-                  <p className="text-[12px] text-text-muted">
-                    {docModal.tipo === "carta" ? "Gerando carta de encaminhamento..." : "Gerando atestado..."}
-                  </p>
-                </div>
-              ) : (
-                <textarea
-                  value={docModal.texto}
-                  onChange={e => setDocModal(m => m ? { ...m, texto: e.target.value } : null)}
-                  rows={20}
-                  className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3 text-[12px] text-text-primary leading-relaxed font-mono resize-y outline-none focus:border-px-ink/50 transition-colors"
-                />
-              )}
-            </div>
-
-            {!docModal.loading && docModal.texto && (
-              <div className="flex items-center gap-2 px-5 py-4 border-t border-border flex-shrink-0">
-                <Button variant="primary" size="sm" onClick={() => { navigator.clipboard.writeText(docModal.texto); showToast("Documento copiado!") }} leftIcon={Copy} className="py-2 px-4">
-                  Copiar documento
-                </Button>
-                <Button variant="secondary-medium" size="sm" onClick={() => { const w = window.open("", "_blank"); if (!w) return; w.document.write(`<html><head><title>${docModal.tipo === "carta" ? "Carta de Encaminhamento" : "Atestado"}</title><style>body{font-family:Arial,sans-serif;font-size:13px;line-height:1.7;margin:60px 80px;white-space:pre-wrap}</style></head><body>${docModal.texto}</body></html>`); w.document.close(); w.print() }} leftIcon={ArrowRight} className="px-4 py-2">
-                  Imprimir
-                </Button>
-              </div>
+                {result.prontuario && (
+                  <Bloco
+                    titulo="Prontuário gerado"
+                    extra={
+                      <div className="flex flex-wrap items-center gap-2">
+                        <CopyButton text={textoProntuario} />
+                        {confirmandoMedx ? (
+                          <>
+                            <PxButton size="sm" loading={sendingMedx} leftIcon={Send} onClick={enviarMedx}>Confirmar envio</PxButton>
+                            <PxButton size="sm" variant="quiet" disabled={sendingMedx} onClick={() => setConfirmandoMedx(false)}>Cancelar</PxButton>
+                          </>
+                        ) : <PxButton size="sm" variant="secondary" leftIcon={Send} onClick={() => setConfirmandoMedx(true)}>Enviar para o MedX</PxButton>}
+                      </div>
+                    }
+                  >
+                    {confirmandoMedx && <p className="text-[12.5px] text-px-muted">{patient ? `O prontuário será gravado no MedX de ${getPacNome(patient)}.` : "Selecione um paciente antes de enviar."}</p>}
+                    {prontuarioBlocos ? (
+                      <div className="space-y-3">
+                        {prontuarioBlocos.map(bloco => (
+                          <div key={bloco.key} className="space-y-1.5">
+                            <p className="text-[12.5px] font-medium text-px-muted">{bloco.label}</p>
+                            <AutoTextarea label={bloco.label} value={editedProntuario[bloco.key] ?? bloco.content} onChange={v => setEditedProntuario(prev => ({ ...prev, [bloco.key]: v }))} />
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <textarea readOnly aria-label="Prontuário gerado" value={result.prontuario} rows={14} onClick={e => (e.target as HTMLTextAreaElement).select()} className={cn(textareaCls, "resize-y font-mono text-[12.5px]")} />
+                    )}
+                  </Bloco>
+                )}
+              </>
             )}
           </div>
         </div>
-      )}
+      </div>
+
+      <PxModal open={showConsentModal} onClose={() => setShowConsentModal(false)} title="Autorizar gravação de voz">
+        <div className="space-y-3">
+          <p className="text-[13.5px] leading-relaxed text-px-ink">
+            O que você falar será enviado ao serviço Groq Whisper para virar texto. O áudio não é guardado: só o texto transcrito entra no relato.
+          </p>
+          <p className="text-[12.5px] text-px-muted">A autorização fica registrada no seu perfil.</p>
+          {erroConsent && <p role="alert" className={erroBox}>{erroConsent}</p>}
+          <div className="flex gap-2 pt-1">
+            <PxButton variant="secondary" fullWidth onClick={() => setShowConsentModal(false)}>Cancelar</PxButton>
+            <PxButton fullWidth onClick={aceitarConsentimento}>Autorizar e gravar</PxButton>
+          </div>
+        </div>
+      </PxModal>
+
+      <PxModal open={showPostModal} onClose={() => setShowPostModal(false)} title="Consulta finalizada">
+        <div className="space-y-2">
+          <p className="text-[13px] text-px-muted">{patient ? getPacNome(patient) : "Paciente"}, {fmtTimer(consultDuration)} de atendimento. O que fazer agora?</p>
+          {msgsFollowup?.d1 && podeEnviarWA && (
+            <LinhaAcao titulo="Enviar mensagem D+1" detalhe="Acompanhamento pelo WhatsApp, enviado na hora" onClick={() => { enviarWhatsApp(msgsFollowup.d1, "d1"); setShowPostModal(false) }} />
+          )}
+          <LinhaAcao titulo="Carta ao paciente" detalhe="Texto com o resumo da consulta" onClick={() => { cartaParaPaciente(); setShowPostModal(false) }} />
+          <LinhaAcao titulo="Prescrever" detalhe="Abrir a prescrição assistida" onClick={() => { irPrescrever(); setShowPostModal(false) }} />
+          <LinhaAcao titulo="Agendar retorno" detalhe={patient ? `${getPacNome(patient)} já preenchido` : "Abrir a agenda"} onClick={() => { irAgendar(); setShowPostModal(false) }} />
+          <LinhaAcao titulo="Encaminhar para nutrição" detalhe="Abrir o acompanhamento nutricional" onClick={() => { const id = patient ? getPacId(patient) : ""; router.push(id ? `/nutricao-pacientes?pacienteId=${encodeURIComponent(id)}` : "/nutricao-pacientes"); setShowPostModal(false) }} />
+          <LinhaAcao titulo="Solicitar avaliação" detalhe="Pesquisa de satisfação NPS" onClick={() => { router.push("/nps"); setShowPostModal(false) }} />
+          <LinhaAcao titulo="Programa de indicações" detalhe="Convidar o paciente a indicar" onClick={() => { router.push("/indicacoes"); setShowPostModal(false) }} />
+          {result?.exames_solicitados && result.exames_solicitados.length > 0 && (
+            <LinhaAcao
+              titulo="Copiar exames solicitados"
+              detalhe={`${result.exames_solicitados.length} exame${result.exames_solicitados.length !== 1 ? "s" : ""} na lista`}
+              onClick={() => { navigator.clipboard.writeText(result.exames_solicitados!.join("\n")).then(() => showToast("Lista de exames copiada.")).catch(() => showToast("Não foi possível copiar.", "error")); setShowPostModal(false) }}
+            />
+          )}
+          <PxButton variant="quiet" fullWidth onClick={() => { setShowPostModal(false); router.push("/dashboard") }}>Fechar e ir ao início</PxButton>
+        </div>
+      </PxModal>
+
+      <PxModal open={!!docModal} onClose={() => setDocModal(null)} title={docModal?.tipo === "carta" ? "Carta de encaminhamento" : "Atestado médico"} className="max-w-2xl">
+        {docModal && (
+          <div className="space-y-3">
+            {docModal.loading ? <p role="status" className="py-10 text-center text-[13px] text-px-muted">{docModal.tipo === "carta" ? "Gerando a carta de encaminhamento" : "Gerando o atestado"}</p>
+              : docModal.erro ? (
+                <div className="space-y-3">
+                  <p role="alert" className={erroBox}>{docModal.erro}</p>
+                  <PxButton variant="secondary" onClick={() => openDocumento(docModal.tipo)}>Tentar de novo</PxButton>
+                </div>
+              ) : (
+                <>
+                  <p className="text-[12.5px] text-px-muted">Rascunho de IA. Revise e edite antes de entregar. Dados como CRM e assinatura precisam ser conferidos por você.</p>
+                  <textarea aria-label="Texto do documento" value={docModal.texto} onChange={e => setDocModal(m => m ? { ...m, texto: e.target.value } : null)} rows={18} className={cn(textareaCls, "resize-y font-mono text-[12.5px]")} />
+                  <div className="flex flex-wrap gap-2">
+                    <CopyButton text={docModal.texto} label="Copiar documento" />
+                    <PxButton variant="secondary" size="sm" onClick={imprimirDocumento}>Imprimir</PxButton>
+                  </div>
+                </>
+              )}
+          </div>
+        )}
+      </PxModal>
+
+      {toast && <Toast message={toast.msg} type={toast.type} />}
     </div>
   )
 }
 
-// ── Export with Suspense (required for useSearchParams) ───────────────────────
+/* ── Exportação com Suspense (useSearchParams exige) ───────────────────── */
 
 export default function CopilotoPage() {
   return (
     <Suspense fallback={
       <div className="animate-fade-in">
-        <div className="px-glass rounded-px-panel mx-4 mt-4 flex h-[72px] items-center px-6 md:mx-10">
-          <div className="h-4 w-48 rounded bg-surface-2 shimmer" />
+        <div className="px-glass mx-4 mt-4 flex h-[72px] items-center rounded-px-panel px-6 md:mx-10">
+          <div className="h-4 w-48 animate-pulse rounded bg-px-ink/10" />
         </div>
-        <div className="p-4 md:p-8 space-y-3">
-          {[1,2,3].map(i => <div key={i} className="h-16 rounded-xl bg-surface border border-border shimmer" />)}
+        <div className="space-y-3 p-4 md:p-8">
+          {[1, 2, 3].map(i => <div key={i} className="px-glass h-16 animate-pulse rounded-px-card" />)}
         </div>
       </div>
     }>

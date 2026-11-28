@@ -1,9 +1,10 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
-import { Check, X, Trash2, Loader2, RefreshCw, ExternalLink, Mail, Phone, Calendar } from "lucide-react"
-import { TopBar } from "@/components/TopBar"
-import { cn } from "@/lib/utils"
+import { ExternalLink, RefreshCw } from "lucide-react"
+import { Field, Panel, PxButton, PxInput, PxModal, PxSelect, Segmented, Tag, PageHeader } from "@/components/px"
+
+type Status = "aguardando_pagamento" | "pendente" | "aprovado" | "rejeitado" | "expirado"
 
 interface Anuncio {
   id: string
@@ -18,349 +19,259 @@ interface Anuncio {
   periodo_dias: number
   data_inicio: string | null
   data_fim: string | null
-  status: "aguardando_pagamento" | "pendente" | "aprovado" | "rejeitado" | "expirado"
+  status: Status
   tipo_produto: string | null
 }
 
 type Filtro = "pendente" | "aprovado" | "inativos" | "all"
-const FILTRO_LABELS: Record<Filtro, string> = {
-  pendente: "Pendentes",
-  aprovado: "Aprovados",
-  inativos: "Inativos",
-  all:      "Todos",
-}
+
+const FILTROS: { value: Filtro; label: string }[] = [
+  { value: "pendente", label: "Em revisão" },
+  { value: "aprovado", label: "Aprovados" },
+  { value: "inativos", label: "Inativos" },
+  { value: "all",      label: "Todos" },
+]
 const FILTRO_STATUS: Record<Filtro, string> = {
   pendente: "pendente,aguardando_pagamento",
   aprovado: "aprovado",
   inativos: "expirado,rejeitado",
   all:      "all",
 }
-
-const TIPOS_PRODUTO = [
+const TIPOS = [
   { value: "",            label: "Todos os tipos" },
-  { value: "curso",       label: "🎓 Curso"        },
-  { value: "livro",       label: "📚 Livro"        },
-  { value: "equipamento", label: "🔬 Equipamento"  },
-  { value: "suplemento",  label: "💊 Suplemento"   },
-  { value: "mentoria",    label: "🤝 Mentoria"     },
-  { value: "ferramenta",  label: "⚙️ Ferramenta"   },
+  { value: "curso",       label: "Curso" },
+  { value: "livro",       label: "Livro" },
+  { value: "equipamento", label: "Equipamento" },
+  { value: "suplemento",  label: "Suplemento" },
+  { value: "mentoria",    label: "Mentoria" },
+  { value: "ferramenta",  label: "Ferramenta" },
 ]
+const STATUS_LABEL: Record<Status, string> = {
+  aguardando_pagamento: "Aguardando pagamento",
+  pendente:             "Pago, em revisão",
+  aprovado:             "Aprovado",
+  rejeitado:            "Rejeitado",
+  expirado:             "Expirado",
+}
+const STATUS_TOM: Record<Status, "neutral" | "ok" | "warn" | "danger"> = {
+  aguardando_pagamento: "neutral", pendente: "warn", aprovado: "ok", rejeitado: "danger", expirado: "neutral",
+}
+
+function linkSeguro(url: string): string | null {
+  return /^https?:\/\//i.test(url.trim()) ? url.trim() : null
+}
+
+function dia(iso: string | null) {
+  if (!iso) return "-"
+  const [a, m, d] = iso.slice(0, 10).split("-")
+  return `${d}/${m}/${a}`
+}
+
+type Acao = { tipo: "rejeitar" | "excluir"; anuncio: Anuncio } | null
 
 export default function AdminAnunciosPage() {
-  const [anuncios,  setAnuncios]  = useState<Anuncio[]>([])
-  const [loading,   setLoading]   = useState(true)
-  const [filtro,    setFiltro]    = useState<Filtro>("pendente")
-  const [filtroTipo, setFiltroTipo] = useState("")
-  const [acting,    setActing]    = useState<Record<string, string>>({})
-  const [aprovando, setAprovando] = useState<Record<string, { dataInicio: string; dataFim: string }>>({})
+  const [anuncios, setAnuncios] = useState<Anuncio[]>([])
+  const [loading, setLoading] = useState(true)
+  const [erroCarga, setErroCarga] = useState("")
+  const [filtro, setFiltro] = useState<Filtro>("pendente")
+  const [tipo, setTipo] = useState("")
+  const [ocupado, setOcupado] = useState<string[]>([])
+  const [aprovando, setAprovando] = useState<Record<string, { inicio: string; fim: string }>>({})
+  const [erroAcao, setErroAcao] = useState<Record<string, string>>({})
+  const [acao, setAcao] = useState<Acao>(null)
+  const [erroModal, setErroModal] = useState("")
 
-  const fetchAnuncios = useCallback(async (f: Filtro, tipo: string) => {
-    setLoading(true)
+  const carregar = useCallback(async () => {
+    setLoading(true); setErroCarga("")
     try {
-      const qs   = tipo ? `&tipo=${tipo}` : ""
-      const r    = await fetch(`/api/admin/anuncios?status=${FILTRO_STATUS[f]}${qs}`)
-      const data = await r.json()
-      setAnuncios(Array.isArray(data) ? data : [])
+      const qs = new URLSearchParams({ status: FILTRO_STATUS[filtro] })
+      if (tipo) qs.set("tipo", tipo)
+      const r = await fetch("/api/admin/anuncios?" + qs.toString())
+      if (r.status === 403) { setErroCarga("Esta área é restrita ao administrador."); setAnuncios([]); return }
+      const data = await r.json().catch(() => null)
+      if (!r.ok || !Array.isArray(data)) throw new Error("HTTP " + r.status)
+      setAnuncios(data as Anuncio[])
     } catch (e) {
-      console.error("[admin/anuncios] fetch:", e)
-      setAnuncios([])
+      console.error("[admin/anuncios] erro ao carregar:", e)
+      setErroCarga("Não foi possível carregar os anúncios."); setAnuncios([])
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [filtro, tipo])
 
-  useEffect(() => { fetchAnuncios(filtro, filtroTipo) }, [filtro, filtroTipo, fetchAnuncios])
+  useEffect(() => { carregar() }, [carregar])
 
-  function iniciarAprovacao(id: string, perioDias: number) {
-    const inicio = new Date()
-    const fim    = new Date()
-    fim.setDate(inicio.getDate() + perioDias)
-    setAprovando(prev => ({
-      ...prev,
-      [id]: {
-        dataInicio: inicio.toISOString().split("T")[0],
-        dataFim:    fim.toISOString().split("T")[0],
-      },
-    }))
+  const marcar = (id: string, on: boolean) => setOcupado(o => on ? [...o, id] : o.filter(x => x !== id))
+  const tirar = (id: string) => setAnuncios(a => a.filter(x => x.id !== id))
+
+  function iniciarAprovacao(a: Anuncio) {
+    const ini = new Date(); const fim = new Date(); fim.setDate(ini.getDate() + a.periodo_dias)
+    setErroAcao(e => ({ ...e, [a.id]: "" }))
+    setAprovando(p => ({ ...p, [a.id]: { inicio: ini.toISOString().slice(0, 10), fim: fim.toISOString().slice(0, 10) } }))
   }
 
-  async function confirmarAprovacao(id: string) {
-    const datas = aprovando[id]
-    if (!datas?.dataInicio || !datas?.dataFim) return
-    setActing(a => ({ ...a, [id]: "aprovando" }))
-    try {
-      await fetch("/api/admin/anuncios", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, status: "aprovado", data_inicio: datas.dataInicio, data_fim: datas.dataFim }),
-      })
-      setAnuncios(a => a.filter(x => x.id !== id))
-      setAprovando(prev => { const n = { ...prev }; delete n[id]; return n })
-    } catch (e) {
-      console.error("[admin/anuncios] aprovar:", e)
-    } finally {
-      setActing(a => { const n = { ...a }; delete n[id]; return n })
-    }
-  }
-
-  async function rejeitar(id: string) {
-    if (!confirm("Rejeitar este anúncio? O pagamento será estornado automaticamente.")) return
-    setActing(a => ({ ...a, [id]: "rejeitando" }))
+  async function confirmarAprovacao(a: Anuncio) {
+    const d = aprovando[a.id]
+    if (!d?.inicio || !d?.fim) { setErroAcao(e => ({ ...e, [a.id]: "Informe início e fim da veiculação." })); return }
+    if (d.fim < d.inicio) { setErroAcao(e => ({ ...e, [a.id]: "A data final não pode ser anterior à inicial." })); return }
+    marcar(a.id, true); setErroAcao(e => ({ ...e, [a.id]: "" }))
     try {
       const r = await fetch("/api/admin/anuncios", {
-        method:  "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ id, status: "rejeitado" }),
+        method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: a.id, status: "aprovado", data_inicio: d.inicio, data_fim: d.fim }),
       })
-      if (!r.ok) { const d = await r.json(); alert(d.error ?? "Erro ao rejeitar."); return }
-      setAnuncios(a => a.filter(x => x.id !== id))
+      const data = await r.json().catch(() => null) as { error?: string } | null
+      if (!r.ok) { setErroAcao(e => ({ ...e, [a.id]: data?.error ?? "Não foi possível aprovar." })); return }
+      tirar(a.id)
+      setAprovando(p => { const n = { ...p }; delete n[a.id]; return n })
     } catch (e) {
-      console.error("[admin/anuncios] rejeitar:", e)
-    } finally {
-      setActing(a => { const n = { ...a }; delete n[id]; return n })
-    }
+      console.error("[admin/anuncios] aprovar:", e)
+      setErroAcao(er => ({ ...er, [a.id]: "Erro de conexão. Tente novamente." }))
+    } finally { marcar(a.id, false) }
   }
 
-  async function excluir(id: string) {
-    if (!confirm("Excluir este anúncio permanentemente?")) return
-    setActing(a => ({ ...a, [id]: "excluindo" }))
+  async function executarAcao() {
+    if (!acao) return
+    const { tipo: t, anuncio: a } = acao
+    marcar(a.id, true); setErroModal("")
     try {
-      await fetch(`/api/admin/anuncios?id=${id}`, { method: "DELETE" })
-      setAnuncios(a => a.filter(x => x.id !== id))
+      const r = t === "rejeitar"
+        ? await fetch("/api/admin/anuncios", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: a.id, status: "rejeitado" }) })
+        : await fetch("/api/admin/anuncios?id=" + encodeURIComponent(a.id), { method: "DELETE" })
+      const data = await r.json().catch(() => null) as { error?: string } | null
+      if (!r.ok) { setErroModal(data?.error ?? "Não foi possível concluir."); return }
+      tirar(a.id); setAcao(null)
     } catch (e) {
-      console.error("[admin/anuncios] excluir:", e)
-    } finally {
-      setActing(a => { const n = { ...a }; delete n[id]; return n })
-    }
+      console.error("[admin/anuncios] ação:", e)
+      setErroModal("Erro de conexão. Tente novamente.")
+    } finally { marcar(a.id, false) }
   }
+
+  const emAcao = !!acao && ocupado.includes(acao.anuncio.id)
+  const fecharModal = () => { if (!emAcao) { setAcao(null); setErroModal("") } }
 
   return (
     <div className="animate-fade-in">
-      <TopBar
-        title="Marketplace de Cursos"
-        subtitle="ADMIN · ANÚNCIOS"
-        tagline="Revise e aprove anúncios de cursos submetidos por interessados."
-        actions={
-          <button
-            onClick={() => fetchAnuncios(filtro, filtroTipo)}
-            className="flex items-center gap-1.5 px-3 py-1.5 border border-border rounded-lg text-[12px] text-text-muted hover:text-text-primary hover:border-border-hover transition-all"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-            Atualizar
-          </button>
-        }
+      <PageHeader
+        title="Anúncios do marketplace"
+        caption="Revise os anúncios pagos antes de entrarem no ar"
+        actions={<PxButton variant="secondary" size="sm" leftIcon={RefreshCw} onClick={carregar} loading={loading}>Atualizar</PxButton>}
       />
 
-      <div className="p-6 md:p-8 space-y-6">
-        <div className="space-y-2">
-          <div className="flex gap-2 flex-wrap">
-            {(["pendente", "aprovado", "inativos", "all"] as Filtro[]).map(f => (
-              <button
-                key={f}
-                onClick={() => setFiltro(f)}
-                className={cn(
-                  "text-[11px] px-3 py-1.5 rounded-full border transition-all",
-                  filtro === f
-                    ? "bg-accent-dim border-accent-border text-accent font-semibold"
-                    : "border-border text-text-muted hover:text-text-secondary"
-                )}
-              >
-                {FILTRO_LABELS[f]}
-              </button>
-            ))}
-          </div>
-          <div className="flex gap-2 flex-wrap">
-            {TIPOS_PRODUTO.map(t => (
-              <button
-                key={t.value}
-                onClick={() => setFiltroTipo(t.value)}
-                className={cn(
-                  "text-[11px] px-3 py-1 rounded-full border transition-all",
-                  filtroTipo === t.value
-                    ? "bg-blue-500/10 border-blue-500/30 text-blue-400 font-semibold"
-                    : "border-border text-text-muted hover:text-text-secondary"
-                )}
-              >
-                {t.label}
-              </button>
-            ))}
+      <div className="space-y-4 px-4 pb-10 md:px-10">
+        <div className="flex flex-wrap items-center gap-3">
+          <Segmented label="Situação dos anúncios" value={filtro} onChange={setFiltro} options={FILTROS} />
+          <div className="w-48">
+            <PxSelect aria-label="Tipo de produto" value={tipo} onChange={e => setTipo(e.target.value)}>
+              {TIPOS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+            </PxSelect>
           </div>
         </div>
 
-        {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-5 h-5 animate-spin text-text-muted" />
-          </div>
-        ) : anuncios.length === 0 ? (
-          <div className="text-center py-20 text-[13px] text-text-muted">
-            {filtro === "pendente" ? "Nenhum anúncio pendente de revisão ou aguardando pagamento." : "Nenhum anúncio encontrado."}
-          </div>
-        ) : (
+        {erroCarga && <p role="alert" className="rounded-px-card bg-px-danger-soft px-3 py-2 text-[13px] text-px-danger">{erroCarga}</p>}
+
+        {loading && !erroCarga ? <p role="status" className="py-16 text-center text-[13px] text-px-muted">Carregando anúncios</p>
+          : !erroCarga && anuncios.length === 0 ? <Panel className="py-12 text-center text-[13.5px] text-px-muted">{filtro === "pendente" ? "Nenhum anúncio em revisão ou aguardando pagamento." : "Nenhum anúncio encontrado."}</Panel>
+          : !erroCarga && (
+            <ul className="space-y-3">
+              {anuncios.map(an => {
+                const link = linkSeguro(an.link_destino)
+                const aprov = aprovando[an.id]
+                const busy = ocupado.includes(an.id)
+                return (
+                  <li key={an.id}>
+                    <Panel as="article" className="space-y-3">
+                      <div className="flex items-start gap-3">
+                        {an.anunciante_foto_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={an.anunciante_foto_url} alt="" className="h-10 w-10 shrink-0 rounded-full border border-px-line object-cover" />
+                        ) : (
+                          <div aria-hidden className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-px-line bg-white text-[13px] font-semibold text-px-muted">
+                            {an.anunciante_nome.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h2 className="text-[14.5px] font-semibold text-px-ink">{an.anunciante_nome}</h2>
+                            <Tag tone={STATUS_TOM[an.status]}>{STATUS_LABEL[an.status]}</Tag>
+                            {an.tipo_produto && <Tag tone="neutral">{TIPOS.find(t => t.value === an.tipo_produto)?.label ?? an.tipo_produto}</Tag>}
+                          </div>
+                          <p className="mt-1 flex flex-wrap gap-x-3 text-[12.5px] text-px-muted">
+                            <a href={"mailto:" + an.contato_email} className="underline underline-offset-2">{an.contato_email}</a>
+                            {an.contato_telefone && <span>{an.contato_telefone}</span>}
+                            <span>Enviado em {new Date(an.created_at).toLocaleDateString("pt-BR")}</span>
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1 rounded-px-card bg-white/70 p-3">
+                        <p className="text-[14px] font-medium text-px-ink">{an.titulo}</p>
+                        <p className="text-[13px] leading-relaxed text-px-ink">{an.chamada}</p>
+                        {link ? (
+                          <a href={link} target="_blank" rel="noopener noreferrer" className="flex min-w-0 items-center gap-1 text-[12.5px] text-px-accent underline underline-offset-2">
+                            <ExternalLink className="h-3.5 w-3.5 shrink-0" aria-hidden /><span className="truncate">{an.link_destino}</span>
+                          </a>
+                        ) : (
+                          <p className="break-all text-[12.5px] text-px-danger">Link inválido (não começa com http): {an.link_destino}</p>
+                        )}
+                      </div>
+
+                      <p className="text-[12.5px] text-px-muted">
+                        Período contratado: {an.periodo_dias} dias
+                        {an.data_inicio && an.data_fim ? `. No ar de ${dia(an.data_inicio)} a ${dia(an.data_fim)}.` : "."}
+                      </p>
+
+                      {aprov && (
+                        <div className="space-y-3 rounded-px-card border border-px-line bg-white/70 p-3">
+                          <p className="text-[13px] font-medium text-px-ink">Período de veiculação</p>
+                          <div className="flex flex-wrap gap-3">
+                            <Field label="Início" htmlFor={"ini-" + an.id}>
+                              <PxInput id={"ini-" + an.id} type="date" value={aprov.inicio} onChange={e => setAprovando(p => ({ ...p, [an.id]: { ...p[an.id], inicio: e.target.value } }))} />
+                            </Field>
+                            <Field label="Fim" htmlFor={"fim-" + an.id}>
+                              <PxInput id={"fim-" + an.id} type="date" value={aprov.fim} onChange={e => setAprovando(p => ({ ...p, [an.id]: { ...p[an.id], fim: e.target.value } }))} />
+                            </Field>
+                          </div>
+                          <div className="flex gap-2">
+                            <PxButton size="sm" onClick={() => confirmarAprovacao(an)} loading={busy}>Confirmar aprovação</PxButton>
+                            <PxButton size="sm" variant="quiet" disabled={busy} onClick={() => setAprovando(p => { const n = { ...p }; delete n[an.id]; return n })}>Voltar</PxButton>
+                          </div>
+                        </div>
+                      )}
+
+                      {erroAcao[an.id] && <p role="alert" className="rounded-px-card bg-px-danger-soft px-3 py-2 text-[13px] text-px-danger">{erroAcao[an.id]}</p>}
+
+                      <div className="flex flex-wrap gap-2">
+                        {an.status === "pendente" && !aprov && <PxButton size="sm" onClick={() => iniciarAprovacao(an)} disabled={busy}>Aprovar</PxButton>}
+                        {(an.status === "pendente" || an.status === "aguardando_pagamento") && <PxButton size="sm" variant="secondary" disabled={busy} onClick={() => { setErroModal(""); setAcao({ tipo: "rejeitar", anuncio: an }) }}>Rejeitar</PxButton>}
+                        {an.status !== "pendente" && <PxButton size="sm" variant="danger" disabled={busy} onClick={() => { setErroModal(""); setAcao({ tipo: "excluir", anuncio: an }) }}>Excluir</PxButton>}
+                      </div>
+                    </Panel>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+      </div>
+
+      <PxModal open={!!acao} onClose={fecharModal} title={acao?.tipo === "rejeitar" ? "Rejeitar anúncio" : "Excluir anúncio"}>
+        {acao && (
           <div className="space-y-4">
-            {anuncios.map(an => (
-              <div key={an.id} className="bg-card border border-border rounded-xl p-5 space-y-3">
-
-                <div className="flex items-start gap-3">
-                  {an.anunciante_foto_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={an.anunciante_foto_url}
-                      alt={an.anunciante_nome}
-                      className="w-10 h-10 rounded-full object-cover flex-shrink-0 border border-border"
-                    />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-surface border border-border flex items-center justify-center flex-shrink-0 text-[13px] font-bold text-text-muted">
-                      {an.anunciante_nome.charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-[14px] font-semibold text-text-primary">{an.anunciante_nome}</span>
-                      <span className={cn(
-                        "text-badge font-mono font-bold px-2 py-0.5 rounded-full border",
-                        an.status === "pendente"              && "bg-amber-500/10  border-amber-500/30  text-amber-400",
-                        an.status === "aguardando_pagamento" && "bg-blue-500/10   border-blue-500/30   text-blue-400",
-                        an.status === "aprovado"             && "bg-accent-dim    border-accent-border  text-accent",
-                        an.status === "rejeitado"            && "bg-red-500/10    border-red-500/30    text-red-400",
-                        an.status === "expirado"             && "bg-border/40     border-border        text-text-muted",
-                      )}>
-                        {an.status.toUpperCase()}
-                      </span>
-                      {an.tipo_produto && an.tipo_produto !== "curso" && (
-                        <span className="text-badge font-mono font-semibold px-2 py-0.5 rounded-full border bg-violet-500/10 border-violet-500/30 text-violet-400">
-                          {TIPOS_PRODUTO.find(t => t.value === an.tipo_produto)?.label ?? an.tipo_produto}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-3 mt-1 text-[11px] text-text-muted flex-wrap">
-                      <span className="flex items-center gap-1">
-                        <Mail className="w-2.5 h-2.5" />
-                        <a href={`mailto:${an.contato_email}`} className="hover:text-text-secondary transition-colors">
-                          {an.contato_email}
-                        </a>
-                      </span>
-                      {an.contato_telefone && (
-                        <span className="flex items-center gap-1">
-                          <Phone className="w-2.5 h-2.5" /> {an.contato_telefone}
-                        </span>
-                      )}
-                      <span className="font-mono">· {new Date(an.created_at).toLocaleDateString("pt-BR")}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-surface border border-border rounded-lg p-3 space-y-1.5">
-                  <p className="text-[13px] font-semibold text-text-primary">{an.titulo}</p>
-                  <p className="text-[12px] text-text-secondary leading-relaxed">{an.chamada}</p>
-                  <a
-                    href={an.link_destino}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-[11px] text-accent hover:underline max-w-full min-w-0"
-                  >
-                    <ExternalLink className="w-3 h-3 flex-shrink-0" />
-                    <span className="truncate">{an.link_destino}</span>
-                  </a>
-                </div>
-
-                <div className="text-[11px] text-text-muted font-mono">
-                  Período solicitado: {an.periodo_dias} dias
-                  {an.data_inicio && an.data_fim && (
-                    <span className="ml-2 text-accent">
-                      · {an.data_inicio} → {an.data_fim}
-                    </span>
-                  )}
-                </div>
-
-                {aprovando[an.id] && (
-                  <div className="border border-accent/30 rounded-lg p-3 bg-accent/5 space-y-3">
-                    <p className="text-[11px] font-semibold text-accent flex items-center gap-1.5">
-                      <Calendar className="w-3.5 h-3.5" /> Defina o período de veiculação
-                    </p>
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <div>
-                        <label className="block text-[10px] text-text-muted mb-1">Início</label>
-                        <input
-                          type="date"
-                          value={aprovando[an.id].dataInicio}
-                          onChange={e => setAprovando(prev => ({
-                            ...prev, [an.id]: { ...prev[an.id], dataInicio: e.target.value },
-                          }))}
-                          className="bg-surface border border-border rounded-md px-2 py-1 text-[12px] text-text-primary"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] text-text-muted mb-1">Fim</label>
-                        <input
-                          type="date"
-                          value={aprovando[an.id].dataFim}
-                          onChange={e => setAprovando(prev => ({
-                            ...prev, [an.id]: { ...prev[an.id], dataFim: e.target.value },
-                          }))}
-                          className="bg-surface border border-border rounded-md px-2 py-1 text-[12px] text-text-primary"
-                        />
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => confirmarAprovacao(an.id)}
-                        disabled={!!acting[an.id]}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold bg-accent text-background hover:bg-accent/90 disabled:opacity-50 transition-all"
-                      >
-                        {acting[an.id] === "aprovando"
-                          ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          : <Check className="w-3.5 h-3.5" />}
-                        Confirmar aprovação
-                      </button>
-                      <button
-                        onClick={() => setAprovando(prev => { const n = { ...prev }; delete n[an.id]; return n })}
-                        className="px-3 py-1.5 rounded-lg text-[12px] border border-border text-text-muted hover:text-text-primary transition-all"
-                      >
-                        Cancelar
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex items-center gap-2 pt-1 flex-wrap">
-                  {an.status === "pendente" && !aprovando[an.id] && (
-                    <>
-                      <button
-                        onClick={() => iniciarAprovacao(an.id, an.periodo_dias)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold bg-accent text-background hover:bg-accent/90 transition-all"
-                      >
-                        <Check className="w-3.5 h-3.5" />
-                        Aprovar
-                      </button>
-                      <button
-                        onClick={() => rejeitar(an.id)}
-                        disabled={!!acting[an.id]}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] border border-red-500/30 text-red-400 hover:bg-red-500/10 disabled:opacity-50 transition-all"
-                      >
-                        {acting[an.id] === "rejeitando"
-                          ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          : <X className="w-3.5 h-3.5" />}
-                        Rejeitar
-                      </button>
-                    </>
-                  )}
-                  <button
-                    onClick={() => excluir(an.id)}
-                    disabled={!!acting[an.id]}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] border border-red-500/30 text-red-400 hover:bg-red-500/10 disabled:opacity-50 transition-all"
-                  >
-                    {acting[an.id] === "excluindo"
-                      ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      : <Trash2 className="w-3.5 h-3.5" />}
-                    Excluir
-                  </button>
-                </div>
-
-              </div>
-            ))}
+            <p className="text-[13.5px] leading-relaxed text-px-ink">
+              {acao.tipo === "rejeitar"
+                ? acao.anuncio.status === "pendente"
+                  ? `O anúncio "${acao.anuncio.titulo}" será rejeitado e o pagamento, estornado por completo no Stripe.`
+                  : `O anúncio "${acao.anuncio.titulo}" ainda não foi pago e será rejeitado sem estorno.`
+                : `O anúncio "${acao.anuncio.titulo}" será excluído de vez. A exclusão não estorna pagamento.`}
+            </p>
+            {erroModal && <p role="alert" className="rounded-px-card bg-px-danger-soft px-3 py-2 text-[13px] text-px-danger">{erroModal}</p>}
+            <div className="flex justify-end gap-2">
+              <PxButton variant="quiet" onClick={fecharModal} disabled={emAcao}>Voltar</PxButton>
+              <PxButton variant="danger" onClick={executarAcao} loading={emAcao}>{acao.tipo === "rejeitar" ? "Rejeitar" : "Excluir"}</PxButton>
+            </div>
           </div>
         )}
-      </div>
+      </PxModal>
     </div>
   )
 }

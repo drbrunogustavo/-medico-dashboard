@@ -70,12 +70,12 @@ export function PillNav({ groups, activeId, currentHref, action, trailing, extra
         </div>
       ) : null}
 
-      <div className="px-pill flex items-center gap-1 rounded-full p-1.5">
+      <div className="px-pill flex max-w-full items-center gap-0.5 rounded-full p-1 sm:gap-1 sm:p-1.5">
         {groups.map(g => {
           const on = g.id === activeId
           const open = g.id === openId
           const cls = cn(
-            "inline-flex h-11 items-center rounded-full px-4 text-[13px] transition-colors sm:px-5",
+            "inline-flex h-10 min-w-0 shrink items-center whitespace-nowrap rounded-full px-2 text-[11.5px] transition-colors min-[400px]:px-2.5 min-[400px]:text-[12px] sm:h-11 sm:px-5 sm:text-[13px]",
             on ? "bg-white font-semibold text-px-ink" : open ? "bg-white/25 font-semibold text-white" : "font-medium text-white hover:bg-white/15"
           )
           if (g.href) {

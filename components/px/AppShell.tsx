@@ -69,13 +69,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const linkCls = "flex min-h-[40px] items-center rounded-px-ctl px-3 text-[13px] text-px-ink hover:bg-px-ink/10"
 
   const conta = (
-    <div ref={contaRef} className="relative">
+    <div ref={contaRef} className="relative shrink-0">
       <button
         type="button"
         onClick={() => setContaAberta(o => !o)}
         aria-expanded={contaAberta}
         aria-label="Conta"
-        className={cn("ml-1 flex h-11 w-11 items-center justify-center rounded-full text-[12px] font-semibold", contaAberta ? "bg-white text-px-ink" : "bg-white/20 text-white hover:bg-white/30")}
+        className={cn("ml-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[12px] font-semibold sm:ml-1 sm:h-11 sm:w-11", contaAberta ? "bg-white text-px-ink" : "bg-white/20 text-white hover:bg-white/30")}
       >
         {iniciais(perfil?.nome, user?.email)}
       </button>
@@ -103,7 +103,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   )
 
   return (
-    <div className="px">
+    <div className="px overflow-x-clip">
       <div className="px-stage" aria-hidden="true" />
       <main className="relative z-10 flex min-h-screen min-w-0 flex-1 flex-col pb-28">
         <div className="flex-1">{children}</div>

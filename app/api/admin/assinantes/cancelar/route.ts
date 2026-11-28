@@ -31,9 +31,13 @@ export async function POST(req: NextRequest) {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 
   // 2. Recupera assinatura com último invoice expandido
-  const sub = await stripe.subscriptions.retrieve(subId, {
-    expand: ["latest_invoice"],
-  })
+  let sub: Stripe.Subscription
+  try {
+    sub = await stripe.subscriptions.retrieve(subId, { expand: ["latest_invoice"] })
+  } catch (e) {
+    console.error("[admin/cancelar] Erro ao consultar assinatura:", e)
+    return NextResponse.json({ error: "Não foi possível consultar a assinatura no Stripe." }, { status: 502 })
+  }
 
   if (sub.status === "canceled")
     return NextResponse.json({ error: "Assinatura já está cancelada no Stripe." }, { status: 400 })
@@ -63,7 +67,15 @@ export async function POST(req: NextRequest) {
   }
 
   // 5. Só chega aqui se estorno foi bem-sucedido (ou não havia pagamento)
-  await stripe.subscriptions.update(subId, { cancel_at_period_end: true })
+  try {
+    await stripe.subscriptions.update(subId, { cancel_at_period_end: true })
+  } catch (e) {
+    console.error("[admin/cancelar] Erro ao agendar cancelamento:", e)
+    return NextResponse.json(
+      { error: "O estorno foi feito, mas o cancelamento não foi agendado no Stripe. Verifique manualmente." },
+      { status: 502 },
+    )
+  }
 
   // 6. Atualiza status no banco — só após confirmação do Stripe.
   //    current_period_end em SDK v22 fica no SubscriptionItem (mesmo padrão do webhook).

@@ -11,15 +11,18 @@ export async function GET() {
   const supabase = createSupabaseServiceClient()
 
   const { data: { users }, error: usersError } = await supabase.auth.admin.listUsers({ perPage: 1000 })
-  if (usersError) return NextResponse.json({ error: usersError.message }, { status: 500 })
-
-  const { data: perfis } = await supabase
+  const { data: perfis, error: perfisError } = await supabase
     .from("perfis")
     .select("user_id, nome, especialidade")
 
-  const { data: planos } = await supabase
+  const { data: planos, error: planosError } = await supabase
     .from("user_planos")
     .select("user_id, plano, status, assinatura_termina_em, trial_termina_em, stripe_subscription_id")
+
+  if (usersError || perfisError || planosError) {
+    console.error("[admin/assinantes] erro de leitura:", usersError ?? perfisError ?? planosError)
+    return NextResponse.json({ error: "Não foi possível carregar os assinantes." }, { status: 500 })
+  }
 
   const perfisMap = Object.fromEntries((perfis ?? []).map(p => [p.user_id, p]))
   const planosMap = Object.fromEntries((planos ?? []).map(p => [p.user_id, p]))
@@ -37,7 +40,6 @@ export async function GET() {
       assinatura_termina_em: pl.assinatura_termina_em ?? null,
       trial_termina_em:      pl.trial_termina_em      ?? null,
       tem_stripe:             !!pl.stripe_subscription_id,
-      stripe_subscription_id: pl.stripe_subscription_id ?? null,
       cadastro_em:           u.created_at,
       ultimo_acesso:         u.last_sign_in_at ?? null,
     }

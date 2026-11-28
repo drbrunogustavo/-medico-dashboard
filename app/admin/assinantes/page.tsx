@@ -1,9 +1,8 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
-import { Loader2, RefreshCw, AlertTriangle, Ban } from "lucide-react"
-import { TopBar } from "@/components/TopBar"
-import { cn } from "@/lib/utils"
+import { useCallback, useEffect, useMemo, useState } from "react"
+import { RefreshCw } from "lucide-react"
+import { Panel, PxButton, PxInput, PxModal, Segmented, Tag, PageHeader } from "@/components/px"
 
 interface Assinante {
   id:                     string
@@ -15,261 +14,183 @@ interface Assinante {
   assinatura_termina_em:  string | null
   trial_termina_em:       string | null
   tem_stripe:             boolean
-  stripe_subscription_id: string | null
   cadastro_em:            string
   ultimo_acesso:          string | null
 }
 
 type Filtro = "todos" | "ativo" | "atencao"
+type Tom = "neutral" | "ink" | "accent" | "danger" | "ok" | "warn"
 
 const PLANO_LABEL: Record<string, string> = { trial: "Trial", pro: "Pro", elite: "Elite" }
-const PLANO_STYLE: Record<string, string> = {
-  trial: "bg-blue-500/10 border-blue-500/25 text-blue-400",
-  pro:   "bg-accent-dim border-accent-border text-accent",
-  elite: "bg-purple-500/10 border-purple-500/25 text-purple-400",
-}
+const PLANO_TOM: Record<string, Tom> = { trial: "neutral", pro: "ink", elite: "accent" }
 const STATUS_LABEL: Record<string, string> = {
   ativo:                 "Ativo",
   cancelado:             "Cancelado",
-  past_due:              "Vencido",
-  cancelado_fim_periodo: "Ativo até fim do período",
+  past_due:              "Pagamento vencido",
+  cancelado_fim_periodo: "Cancelado, ativo até o fim do período",
 }
-const STATUS_STYLE: Record<string, string> = {
-  ativo:                 "bg-accent-dim border-accent-border text-accent",
-  cancelado:             "bg-red-500/10 border-red-500/30 text-red-400",
-  past_due:              "bg-amber-500/10 border-amber-500/30 text-amber-400",
-  cancelado_fim_periodo: "bg-amber-500/10 border-amber-500/30 text-amber-400",
-}
+const STATUS_TOM: Record<string, Tom> = { ativo: "ok", cancelado: "danger", past_due: "warn", cancelado_fim_periodo: "warn" }
 
-function isProblematic(status: string) {
+const FILTROS = [
+  { value: "todos" as Filtro,   label: "Todos" },
+  { value: "ativo" as Filtro,   label: "Ativos" },
+  { value: "atencao" as Filtro, label: "Atenção" },
+]
+
+function precisaAtencao(status: string) {
   return status === "past_due" || status === "cancelado" || status === "cancelado_fim_periodo"
 }
 
 function fmt(iso: string | null) {
-  if (!iso) return "—"
+  if (!iso) return "-"
   return new Date(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })
 }
 
 export default function AssinantesPage() {
-  const [lista,   setLista]   = useState<Assinante[]>([])
-  const [loading, setLoading] = useState(true)
-  const [filtro,  setFiltro]  = useState<Filtro>("todos")
-  const [acting,  setActing]  = useState<Record<string, boolean>>({})
+  const [lista,    setLista]    = useState<Assinante[]>([])
+  const [loading,  setLoading]  = useState(true)
+  const [erro,     setErro]     = useState("")
+  const [filtro,   setFiltro]   = useState<Filtro>("todos")
+  const [busca,    setBusca]    = useState("")
+  const [alvo,     setAlvo]     = useState<Assinante | null>(null)
+  const [cancelando, setCancelando] = useState(false)
+  const [erroCancelar, setErroCancelar] = useState("")
 
-  async function fetchData() {
-    setLoading(true)
+  const carregar = useCallback(async () => {
+    setLoading(true); setErro("")
     try {
-      const r    = await fetch("/api/admin/assinantes")
-      const data = await r.json()
-      setLista(Array.isArray(data) ? data : [])
+      const r = await fetch("/api/admin/assinantes")
+      if (r.status === 403) { setErro("Esta área é restrita ao administrador."); return }
+      const data = await r.json().catch(() => null)
+      if (!r.ok || !Array.isArray(data)) throw new Error("HTTP " + r.status)
+      setLista(data as Assinante[])
+    } catch (e) {
+      console.error("[admin/assinantes] erro ao carregar:", e)
+      setErro("Não foi possível carregar os assinantes.")
     } finally {
       setLoading(false)
     }
-  }
-
-  useEffect(() => { fetchData() }, [])
-
-  const cancelar = useCallback(async (userId: string, nome: string | null) => {
-    const label = nome ?? userId.slice(0, 8)
-    const ok = window.confirm(
-      `Cancelar assinatura de "${label}"?\n\n` +
-      `• O acesso continua até o fim do período pago\n` +
-      `• O último pagamento será estornado AUTOMATICAMENTE agora\n\n` +
-      `Esta ação não pode ser desfeita. Confirma?`
-    )
-    if (!ok) return
-    setActing(a => ({ ...a, [userId]: true }))
-    try {
-      const r    = await fetch("/api/admin/assinantes/cancelar", {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ user_id: userId }),
-      })
-      const data = await r.json()
-      if (!r.ok) { alert(data.error ?? "Erro ao cancelar."); return }
-      setLista(prev => prev.map(a =>
-        a.id === userId ? { ...a, status: "cancelado_fim_periodo" } : a
-      ))
-    } catch {
-      alert("Erro de conexão. Tente novamente.")
-    } finally {
-      setActing(a => { const n = { ...a }; delete n[userId]; return n })
-    }
   }, [])
 
-  const filtrado = lista.filter(a => {
-    if (filtro === "ativo")   return a.status === "ativo"
-    if (filtro === "atencao") return isProblematic(a.status)
-    return true
-  })
+  useEffect(() => { carregar() }, [carregar])
 
-  const nProblemas = lista.filter(a => isProblematic(a.status)).length
+  function fechar() { if (!cancelando) { setAlvo(null); setErroCancelar("") } }
+
+  async function confirmarCancelamento() {
+    if (!alvo) return
+    setCancelando(true); setErroCancelar("")
+    try {
+      const r = await fetch("/api/admin/assinantes/cancelar", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ user_id: alvo.id }),
+      })
+      const data = await r.json().catch(() => null) as { error?: string } | null
+      if (!r.ok) { setErroCancelar(data?.error ?? "Não foi possível cancelar a assinatura."); return }
+      const id = alvo.id
+      setLista(prev => prev.map(a => a.id === id ? { ...a, status: "cancelado_fim_periodo" } : a))
+      setAlvo(null)
+    } catch (e) {
+      console.error("[admin/assinantes] erro ao cancelar:", e)
+      setErroCancelar("Erro de conexão. Tente novamente.")
+    } finally {
+      setCancelando(false)
+    }
+  }
+
+  const nAtencao = useMemo(() => lista.filter(a => precisaAtencao(a.status)).length, [lista])
+
+  const filtrado = useMemo(() => {
+    const termo = busca.trim().toLowerCase()
+    return lista.filter(a => {
+      if (filtro === "ativo" && a.status !== "ativo") return false
+      if (filtro === "atencao" && !precisaAtencao(a.status)) return false
+      if (!termo) return true
+      return (a.nome ?? "").toLowerCase().includes(termo) || a.email.toLowerCase().includes(termo)
+    })
+  }, [lista, filtro, busca])
 
   return (
     <div className="animate-fade-in">
-      <TopBar
+      <PageHeader
         title="Assinantes"
-        subtitle="ADMIN · PRAXIS INTERNAL"
-        tagline="Veja todos os assinantes, planos e status de pagamento."
-        actions={
-          <button
-            onClick={fetchData}
-            className="flex items-center gap-1.5 px-3 py-1.5 border border-border rounded-lg text-[12px] text-text-muted hover:text-text-primary hover:border-border-hover transition-all"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-            Atualizar
-          </button>
-        }
+        caption={loading || erro ? "Planos e situação de pagamento" : `${lista.length} usuários cadastrados, ${nAtencao} com situação que pede atenção`}
+        actions={<PxButton variant="secondary" size="sm" leftIcon={RefreshCw} onClick={carregar} loading={loading}>Atualizar</PxButton>}
       />
 
-      <div className="p-6 md:p-8 space-y-6">
+      <div className="space-y-4 px-4 pb-10 md:px-10">
+        {erro && <p role="alert" className="rounded-px-card bg-px-danger-soft px-3 py-2 text-[13px] text-px-danger">{erro}</p>}
 
-        {/* Resumo */}
-        <div className="flex items-center gap-4 flex-wrap">
-          <div className="text-[13px] text-text-muted">
-            <span className="text-text-primary font-semibold text-[20px] mr-1">{lista.length}</span>
-            usuários cadastrados
-          </div>
-          {nProblemas > 0 && (
-            <button
-              onClick={() => setFiltro("atencao")}
-              className="flex items-center gap-1.5 text-[12px] text-amber-400 bg-amber-500/10 border border-amber-500/25 rounded-lg px-3 py-1.5 hover:bg-amber-500/15 transition-all"
-            >
-              <AlertTriangle className="w-3.5 h-3.5" />
-              {nProblemas} com atenção necessária
-            </button>
-          )}
-        </div>
-
-        {/* Filtros */}
-        <div className="flex gap-2">
-          {(["todos", "ativo", "atencao"] as Filtro[]).map(f => (
-            <button
-              key={f}
-              onClick={() => setFiltro(f)}
-              className={cn(
-                "text-[11px] px-3 py-1.5 rounded-full border transition-all",
-                filtro === f
-                  ? "bg-accent-dim border-accent-border text-accent font-semibold"
-                  : "border-border text-text-muted hover:text-text-secondary"
-              )}
-            >
-              {f === "todos" ? "Todos" : f === "ativo" ? "Ativos" : "Atenção"}
-            </button>
-          ))}
-        </div>
-
-        {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-5 h-5 animate-spin text-text-muted" />
-          </div>
-        ) : (
-          <div className="bg-card border border-border rounded-xl overflow-x-auto">
-            <table className="w-full text-[12px] min-w-[800px]">
-              <thead>
-                <tr className="border-b border-border">
-                  {["Nome / Especialidade", "Email", "Plano", "Status", "Cadastro", "Último acesso", "Expira em", "Ações"].map(h => (
-                    <th key={h} className="text-left px-4 py-3 text-[10px] font-mono text-text-muted uppercase tracking-wider whitespace-nowrap">
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filtrado.length === 0 ? (
-                  <tr>
-                    <td colSpan={8} className="text-center py-14 text-text-muted text-[13px]">
-                      Nenhum assinante encontrado.
-                    </td>
-                  </tr>
-                ) : filtrado.map((a, i) => (
-                  <tr
-                    key={a.id}
-                    className={cn(
-                      "border-b border-border/50 hover:bg-background/50 transition-colors",
-                      isProblematic(a.status) && "bg-red-500/[0.025]",
-                      i === filtrado.length - 1 && "border-b-0"
-                    )}
-                  >
-                    {/* Nome / Especialidade */}
-                    <td className="px-4 py-3 max-w-[160px]">
-                      <div className="font-medium text-text-primary truncate">
-                        {a.nome ?? <span className="text-text-muted italic text-[11px]">Sem nome</span>}
-                      </div>
-                      {a.especialidade && (
-                        <div className="text-[10px] text-text-muted mt-0.5 truncate">{a.especialidade}</div>
-                      )}
-                    </td>
-
-                    {/* Email */}
-                    <td className="px-4 py-3 max-w-[200px]">
-                      <span className="font-mono text-[11px] text-text-secondary truncate block">{a.email}</span>
-                    </td>
-
-                    {/* Plano */}
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <span className={cn(
-                        "text-badge font-mono font-bold px-2 py-0.5 rounded-full border",
-                        PLANO_STYLE[a.plano] ?? "border-border text-text-muted"
-                      )}>
-                        {PLANO_LABEL[a.plano] ?? a.plano}
-                      </span>
-                    </td>
-
-                    {/* Status */}
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <span className={cn(
-                        "inline-flex items-center gap-1 text-badge font-mono font-bold px-2 py-0.5 rounded-full border",
-                        STATUS_STYLE[a.status] ?? "border-border text-text-muted"
-                      )}>
-                        {isProblematic(a.status) && <AlertTriangle className="w-2.5 h-2.5" />}
-                        {STATUS_LABEL[a.status] ?? a.status}
-                      </span>
-                    </td>
-
-                    {/* Cadastro */}
-                    <td className="px-4 py-3 font-mono text-[11px] text-text-muted whitespace-nowrap">
-                      {fmt(a.cadastro_em)}
-                    </td>
-
-                    {/* Último acesso */}
-                    <td className="px-4 py-3 font-mono text-[11px] text-text-muted whitespace-nowrap">
-                      {fmt(a.ultimo_acesso)}
-                    </td>
-
-                    {/* Expira em */}
-                    <td className="px-4 py-3 font-mono text-[11px] text-text-muted whitespace-nowrap">
-                      {fmt(a.assinatura_termina_em ?? a.trial_termina_em)}
-                    </td>
-
-                    {/* Ações */}
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      {a.status === "ativo" && (
-                        <button
-                          onClick={() => a.tem_stripe ? cancelar(a.id, a.nome) : undefined}
-                          disabled={acting[a.id] || !a.tem_stripe}
-                          title={!a.tem_stripe ? "Assinante sem cobrança via Stripe ativa — cancelamento automático não disponível" : undefined}
-                          className={cn(
-                            "flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] border transition-all",
-                            a.tem_stripe
-                              ? "border-red-500/25 text-red-400 hover:bg-red-500/10 disabled:opacity-40"
-                              : "border-[--border] text-text-muted cursor-not-allowed opacity-40"
-                          )}
-                        >
-                          {acting[a.id]
-                            ? <Loader2 className="w-3 h-3 animate-spin" />
-                            : <Ban className="w-3 h-3" />}
-                          Cancelar
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        {!erro && (
+          <div className="flex flex-wrap items-center gap-3">
+            <Segmented label="Filtrar assinantes" value={filtro} onChange={setFiltro} options={FILTROS} />
+            <div className="w-full max-w-xs">
+              <PxInput aria-label="Buscar por nome ou e-mail" placeholder="Buscar por nome ou e-mail" value={busca} onChange={e => setBusca(e.target.value)} />
+            </div>
           </div>
         )}
+
+        {loading && !erro ? <p role="status" className="py-16 text-center text-[13px] text-px-muted">Carregando assinantes</p>
+          : !erro && (
+            <Panel className="overflow-hidden p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[860px] text-left text-[13px]">
+                  <thead>
+                    <tr className="border-b border-px-line text-[12px] text-px-muted">
+                      <th scope="col" className="px-4 py-2.5 font-medium">Nome</th>
+                      <th scope="col" className="px-3 py-2.5 font-medium">E-mail</th>
+                      <th scope="col" className="px-3 py-2.5 font-medium">Plano</th>
+                      <th scope="col" className="px-3 py-2.5 font-medium">Situação</th>
+                      <th scope="col" className="px-3 py-2.5 font-medium">Cadastro</th>
+                      <th scope="col" className="px-3 py-2.5 font-medium">Último acesso</th>
+                      <th scope="col" className="px-3 py-2.5 font-medium">Termina em</th>
+                      <th scope="col" className="px-3 py-2.5 font-medium"><span className="sr-only">Ações</span></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filtrado.length === 0 ? (
+                      <tr><td colSpan={8} className="px-4 py-12 text-center text-px-muted">Nenhum assinante encontrado.</td></tr>
+                    ) : filtrado.map(a => (
+                      <tr key={a.id} className="border-b border-px-line/60 align-top last:border-b-0">
+                        <td className="px-4 py-3">
+                          <div className="font-medium text-px-ink">{a.nome ?? "Sem nome"}</div>
+                          {a.especialidade && <div className="text-[12px] text-px-muted">{a.especialidade}</div>}
+                        </td>
+                        <td className="max-w-[220px] break-all px-3 py-3 text-px-ink">{a.email}</td>
+                        <td className="px-3 py-3"><Tag tone={PLANO_TOM[a.plano] ?? "neutral"}>{PLANO_LABEL[a.plano] ?? a.plano}</Tag></td>
+                        <td className="px-3 py-3"><Tag tone={STATUS_TOM[a.status] ?? "neutral"}>{STATUS_LABEL[a.status] ?? a.status}</Tag></td>
+                        <td className="whitespace-nowrap px-3 py-3 tabular-nums text-px-muted">{fmt(a.cadastro_em)}</td>
+                        <td className="whitespace-nowrap px-3 py-3 tabular-nums text-px-muted">{fmt(a.ultimo_acesso)}</td>
+                        <td className="whitespace-nowrap px-3 py-3 tabular-nums text-px-muted">{fmt(a.assinatura_termina_em ?? a.trial_termina_em)}</td>
+                        <td className="px-3 py-2">
+                          {a.status === "ativo" && (a.tem_stripe
+                            ? <PxButton variant="danger" size="sm" onClick={() => { setErroCancelar(""); setAlvo(a) }} aria-label={"Cancelar assinatura de " + (a.nome ?? a.email)}>Cancelar</PxButton>
+                            : <span className="text-[12px] text-px-muted">Sem cobrança no Stripe</span>)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Panel>
+          )}
       </div>
+
+      <PxModal open={!!alvo} onClose={fechar} title="Cancelar assinatura">
+        {alvo && (
+          <div className="space-y-4">
+            <p className="text-[13.5px] leading-relaxed text-px-ink">
+              Assinatura de <span className="font-medium">{alvo.nome ?? alvo.email}</span>. Ao confirmar, o último pagamento é estornado agora, por completo,
+              e o acesso continua até o fim do período já cobrado. Não há como desfazer pelo Praxis.
+            </p>
+            {erroCancelar && <p role="alert" className="rounded-px-card bg-px-danger-soft px-3 py-2 text-[13px] text-px-danger">{erroCancelar}</p>}
+            <div className="flex justify-end gap-2">
+              <PxButton variant="quiet" onClick={fechar} disabled={cancelando}>Voltar</PxButton>
+              <PxButton variant="danger" onClick={confirmarCancelamento} loading={cancelando}>Estornar e cancelar</PxButton>
+            </div>
+          </div>
+        )}
+      </PxModal>
     </div>
   )
 }

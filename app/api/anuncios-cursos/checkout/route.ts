@@ -37,10 +37,26 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Body inválido." }, { status: 400 })
   }
 
-  const { titulo, chamada, link_destino, anunciante_nome, contato_email, periodo_dias } = body
+  const txt = (v: unknown, max: number) => (typeof v === "string" ? v.trim().slice(0, max) : "")
+  const titulo          = txt(body?.titulo, 80)
+  const chamada         = txt(body?.chamada, 120)
+  const link_destino    = txt(body?.link_destino, 500)
+  const anunciante_nome = txt(body?.anunciante_nome, 80)
+  const contato_email   = txt(body?.contato_email, 160)
+  const contato_tel     = txt(body?.contato_telefone, 30)
+  const foto            = txt(body?.anunciante_foto_url, 500)
+  const periodo_dias    = Number(body?.periodo_dias)
+  const TIPOS = ["curso", "livro", "equipamento", "suplemento", "mentoria", "ferramenta"]
+  const tipo_produto    = TIPOS.includes(String(body?.tipo_produto)) ? String(body.tipo_produto) : "curso"
 
   if (!titulo || !chamada || !link_destino || !anunciante_nome || !contato_email || !periodo_dias) {
     return NextResponse.json({ error: "Campos obrigatórios ausentes." }, { status: 400 })
+  }
+  if (!/^https?:\/\/[^\s]+$/i.test(link_destino) || (foto && !/^https?:\/\/[^\s]+$/i.test(foto))) {
+    return NextResponse.json({ error: "Link inválido." }, { status: 400 })
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contato_email)) {
+    return NextResponse.json({ error: "E-mail inválido." }, { status: 400 })
   }
 
   if (![7, 15, 30].includes(periodo_dias)) {
@@ -61,11 +77,11 @@ export async function POST(req: NextRequest) {
       chamada,
       link_destino,
       anunciante_nome,
-      anunciante_foto_url:  body.anunciante_foto_url ?? null,
+      anunciante_foto_url:  foto || null,
       contato_email,
-      contato_telefone:     body.contato_telefone ?? null,
+      contato_telefone:     contato_tel || null,
       periodo_dias,
-      tipo_produto:         body.tipo_produto ?? "curso",
+      tipo_produto,
       status:               "aguardando_pagamento",
     })
     .select("id")
@@ -105,7 +121,7 @@ export async function POST(req: NextRequest) {
   } catch (e) {
     // Se Stripe falhou, limpa o registro para não deixar lixo aguardando_pagamento
     await supabase.from("anuncios_cursos").delete().eq("id", anuncio.id)
-    console.error("[checkout-anuncio] stripe:", e)
-    return NextResponse.json({ error: errMsg(e) }, { status: 500 })
+    console.error("[checkout-anuncio] stripe:", errMsg(e))
+    return NextResponse.json({ error: "Não foi possível iniciar o pagamento." }, { status: 500 })
   }
 }

@@ -1,52 +1,20 @@
-import Link from "next/link"
 import { PraxisLogo } from "@/components/PraxisLogo"
-import { ArrowLeft, Home } from "lucide-react"
+import { PxButton } from "@/components/px/Button"
 
 export default function NotFound() {
   return (
-    <div
-      className="fixed inset-0 flex items-center justify-center"
-      style={{ background: "#F5F0E8" }}>
-      <div className="text-center px-6 max-w-md">
-
-        <div className="flex justify-center mb-10">
-          <PraxisLogo />
+    <div className="px relative flex min-h-screen items-center justify-center px-6">
+      <div className="px-stage" aria-hidden />
+      <main className="relative z-10 max-w-md text-center">
+        <div className="mb-10 flex justify-center"><PraxisLogo /></div>
+        <p className="mb-3 text-[64px] font-semibold leading-none text-px-accent" aria-hidden>404</p>
+        <h1 className="mb-3 text-[24px] font-semibold text-px-ink">Página não encontrada</h1>
+        <p className="mb-8 text-[14px] leading-relaxed text-px-muted">O endereço não existe ou foi movido.</p>
+        <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <PxButton href="/dashboard">Voltar ao Dashboard</PxButton>
+          <PxButton href="/" variant="secondary">Ir para a página inicial</PxButton>
         </div>
-
-        <div
-          className="text-[96px] font-bold leading-none mb-4 select-none"
-          style={{ color: "#b8976a", fontFamily: "var(--font-playfair), Georgia, serif" }}>
-          404
-        </div>
-
-        <h1
-          className="text-[24px] font-semibold mb-3"
-          style={{ color: "#0D1B2A", fontFamily: "var(--font-playfair), Georgia, serif" }}>
-          Página não encontrada
-        </h1>
-
-        <p className="text-[14px] leading-relaxed mb-10" style={{ color: "#6a5a4a" }}>
-          A página que você procura não existe ou foi movida.
-        </p>
-
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-          <Link
-            href="/dashboard"
-            className="flex items-center gap-2 px-6 py-3 rounded-xl text-[13px] font-bold transition-all hover:opacity-90 w-full sm:w-auto justify-center"
-            style={{ background: "#b8976a", color: "#fff" }}>
-            <ArrowLeft className="w-4 h-4" />
-            Voltar ao Dashboard
-          </Link>
-          <Link
-            href="/"
-            className="flex items-center gap-2 px-6 py-3 rounded-xl text-[13px] font-semibold transition-all w-full sm:w-auto justify-center"
-            style={{ background: "#fff", border: "1px solid #e8ddd0", color: "#6a5a4a" }}>
-            <Home className="w-4 h-4" />
-            Ir para página inicial
-          </Link>
-        </div>
-
-      </div>
+      </main>
     </div>
   )
 }

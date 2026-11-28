@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect, useRef, useCallback, useId } from "react"
 import { useRouter, usePathname } from "next/navigation"
-import { Sparkles, Loader2, ArrowRight, X, Command } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { Bot } from "lucide-react"
+import { PxButton } from "@/components/px/Button"
 
 interface CopilotResult {
   action:  "navigate" | "suggest"
@@ -11,199 +11,174 @@ interface CopilotResult {
   message: string
 }
 
-// Sugestões rápidas por rota atual
+// Sugestões por rota. Cada uma é um pedido que a API de navegação sabe resolver.
 const ROUTE_SUGGESTIONS: Record<string, string[]> = {
-  "/agenda":             ["Briefing do dia com IA", "Abrir pacientes", "Ver financeiro"],
-  "/pacientes":          ["Buscar paciente por diagnóstico", "Ideias de conteúdo", "Ir para Copiloto"],
-  "/pautas":             ["Ideias do consultório", "Radar de tendências", "Abrir calendário"],
-  "/executivo":          ["Analisar mês", "Ver leads no CRM", "Ir para diagnóstico"],
-  "/copiloto":           ["Ver histórico de pacientes", "Abrir agenda", "Ir para prescrição"],
-  "/crm":                ["Ver leads novos", "NPS dos pacientes", "Nutrir leads"],
-  "/financeiro":         ["Painel executivo", "Relatório do mês", "Ver consultas"],
-  "/interpretacao-exames":["Abrir prontuário", "Ver protocolos", "Prescrição assistida"],
+  "/agenda":              ["Abrir a lista de pacientes", "Abrir o financeiro"],
+  "/pacientes":           ["Abrir o Copiloto de Consulta", "Abrir o banco de pautas"],
+  "/pautas":              ["Abrir o radar de tendências", "Abrir o calendário editorial"],
+  "/executivo":           ["Abrir o CRM de leads", "Abrir o financeiro"],
+  "/copiloto":            ["Abrir a agenda", "Abrir a prescrição"],
+  "/crm":                 ["Abrir o NPS", "Abrir a lista de pacientes"],
+  "/financeiro":          ["Abrir o painel executivo", "Abrir a agenda"],
+  "/interpretacao-exames":["Abrir a lista de pacientes", "Abrir os protocolos"],
 }
 
 const DEFAULT_SUGGESTIONS = [
-  "Abrir agenda de hoje",
-  "Ver lista de pacientes",
-  "Gerar ideias de conteúdo",
-  "Analisar mês no executivo",
+  "Abrir a agenda",
+  "Abrir a lista de pacientes",
+  "Abrir o banco de pautas",
+  "Abrir o painel executivo",
 ]
+
+/** Só navega para rota interna simples; ignora qualquer outra coisa que venha da resposta. */
+function rotaSegura(r: unknown): string | null {
+  return typeof r === "string" && /^\/[a-z0-9-]+(\?busca=[^&#]{1,100})?$/i.test(r) ? r : null
+}
 
 export function PraxisCopilot() {
   const router   = useRouter()
   const pathname = usePathname()
 
-  const [open,     setOpen]     = useState(false)
-  const [query,    setQuery]    = useState("")
-  const [loading,  setLoading]  = useState(false)
-  const [result,   setResult]   = useState<CopilotResult | null>(null)
-  const [showHint, setShowHint] = useState(false)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const [open,    setOpen]    = useState(false)
+  const [query,   setQuery]   = useState("")
+  const [loading, setLoading] = useState(false)
+  const [result,  setResult]  = useState<CopilotResult | null>(null)
+  const [erro,    setErro]    = useState("")
+  const inputRef   = useRef<HTMLInputElement>(null)
+  const dialogRef  = useRef<HTMLDivElement>(null)
+  const botaoRef   = useRef<HTMLButtonElement>(null)
+  const navTimer   = useRef<ReturnType<typeof setTimeout>>()
+  const pedidoRef  = useRef(0)
+  const tituloId = useId()
 
   const suggestions = ROUTE_SUGGESTIONS[pathname] ?? DEFAULT_SUGGESTIONS
 
-  const openCopilot  = useCallback(() => { setOpen(true); setQuery(""); setResult(null) }, [])
-  const closeCopilot = useCallback(() => { setOpen(false); setQuery(""); setResult(null); setLoading(false) }, [])
-
-  const dismissHint = useCallback(() => {
-    setShowHint(false)
-    if (typeof window !== "undefined") localStorage.setItem("copilot_hint_shown", "1")
+  const fechar = useCallback(() => {
+    pedidoRef.current++            // descarta resposta que ainda esteja a caminho
+    if (navTimer.current) clearTimeout(navTimer.current)
+    setOpen(false); setQuery(""); setResult(null); setErro(""); setLoading(false)
+    botaoRef.current?.focus()
   }, [])
 
-  // Onboarding hint — show once after 2 s if never seen
   useEffect(() => {
-    if (typeof window === "undefined") return
-    if (localStorage.getItem("copilot_hint_shown")) return
-    const t = setTimeout(() => setShowHint(true), 2000)
-    return () => clearTimeout(t)
+    const abrir = () => { setOpen(true); setQuery(""); setResult(null); setErro("") }
+    window.addEventListener("open-copilot", abrir)
+    return () => window.removeEventListener("open-copilot", abrir)
   }, [])
 
-  // Keyboard shortcuts + custom event from sidebar
   useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape" && open) closeCopilot()
-    }
-    function onOpenEvent() { openCopilot(); dismissHint() }
+    if (!open) return
+    const t = setTimeout(() => inputRef.current?.focus(), 30)
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") fechar() }
     window.addEventListener("keydown", onKey)
-    window.addEventListener("open-copilot", onOpenEvent)
-    return () => {
-      window.removeEventListener("keydown", onKey)
-      window.removeEventListener("open-copilot", onOpenEvent)
-    }
-  }, [open, openCopilot, closeCopilot, dismissHint])
+    return () => { clearTimeout(t); window.removeEventListener("keydown", onKey) }
+  }, [open, fechar])
 
-  // Focus input when opened
-  useEffect(() => {
-    if (open) setTimeout(() => inputRef.current?.focus(), 60)
-  }, [open])
+  useEffect(() => () => { if (navTimer.current) clearTimeout(navTimer.current) }, [])
 
-  const submit = async (q: string) => {
-    const trimmed = q.trim()
-    if (!trimmed || loading) return
-    setLoading(true)
-    setResult(null)
+  // Fecha ao mudar de página por outro caminho.
+  useEffect(() => { setOpen(false) }, [pathname])
+
+  async function enviar(q: string) {
+    const texto = q.trim()
+    if (!texto || loading) return
+    const meu = ++pedidoRef.current
+    setLoading(true); setResult(null); setErro("")
     try {
-      const res  = await fetch("/api/copilot", {
+      const res = await fetch("/api/copilot", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: trimmed, currentPath: pathname }),
+        body: JSON.stringify({ query: texto, currentPath: pathname }),
       })
-      const data = await res.json() as CopilotResult
+      const data = await res.json().catch(() => null) as (CopilotResult & { error?: string }) | null
+      if (meu !== pedidoRef.current) return
+      if (!res.ok || !data) { setErro(data?.error ?? "Não foi possível processar o pedido. Tente de novo."); return }
       setResult(data)
-      if (data.action === "navigate" && data.route) {
-        setTimeout(() => {
-          router.push(data.route!)
-          closeCopilot()
-        }, 600)
+      const rota = data.action === "navigate" ? rotaSegura(data.route) : null
+      if (rota) {
+        navTimer.current = setTimeout(() => { router.push(rota); fechar() }, 700)
       }
-    } catch (e) {
-      console.error("[copilot]", e)
-      setResult({ action: "suggest", message: "Erro ao processar. Tente novamente." })
+    } catch {
+      if (meu === pedidoRef.current) setErro("Sem conexão com o servidor. Tente de novo.")
     } finally {
-      setLoading(false)
+      if (meu === pedidoRef.current) setLoading(false)
     }
+  }
+
+  // Tab fica preso dentro do diálogo.
+  const onDialogKey = (e: React.KeyboardEvent) => {
+    if (e.key !== "Tab" || !dialogRef.current) return
+    const foco = Array.from(dialogRef.current.querySelectorAll<HTMLElement>("input, button:not([disabled])"))
+    if (foco.length === 0) return
+    const a = foco[0], z = foco[foco.length - 1]
+    if (e.shiftKey && document.activeElement === a) { e.preventDefault(); z.focus() }
+    else if (!e.shiftKey && document.activeElement === z) { e.preventDefault(); a.focus() }
   }
 
   return (
     <>
-      {/* Onboarding hint tooltip */}
-      {showHint && (
-        <div className="fixed bottom-40 right-4 lg:bottom-20 z-50 animate-fade-in pointer-events-none">
-          <div className="relative bg-card border border-accent-border rounded-xl shadow-2xl px-4 py-3 max-w-[230px] pointer-events-auto">
-            {/* Arrow pointing down-right toward the FAB */}
-            <div className="absolute bottom-[-7px] right-[22px] w-3.5 h-3.5 rotate-45 bg-card border-r border-b border-accent-border" />
-            <p className="text-[12px] text-text-primary leading-relaxed">
-              Pressione{" "}
-              <span className="font-mono text-accent bg-accent-dim border border-accent-border rounded px-1 py-0.5 text-[10px]">⌘K</span>
-              {" "}ou clique no botão para acessar qualquer funcionalidade rapidamente.
-            </p>
-            <button
-              onClick={dismissHint}
-              className="mt-2.5 text-[10px] font-mono text-text-muted hover:text-text-secondary transition-colors flex items-center gap-1"
-            >
-              Entendi <X className="w-2.5 h-2.5" />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* FAB trigger */}
-      <button
-        onClick={() => { dismissHint(); openCopilot() }}
-        className="fixed bottom-24 right-4 lg:bottom-5 lg:right-5 z-40 w-12 h-12 rounded-full bg-card border border-accent-border shadow-xl flex items-center justify-center hover:bg-accent-dim transition-all group"
-        title="Praxis Copilot"
-      >
-        <Sparkles className="w-5 h-5 text-accent group-hover:scale-110 transition-transform" />
-      </button>
-
-      {/* Backdrop */}
-      {open && (
-        <div
-          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center pt-[15vh]"
-          onClick={closeCopilot}
+      <div className="px">
+        <button
+          ref={botaoRef}
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-label="Abrir assistente de navegação"
+          aria-haspopup="dialog"
+          className="px-square fixed bottom-24 right-4 z-40 flex h-12 w-12 items-center justify-center rounded-[18px] transition-colors hover:bg-px-ink/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-px-ink/40 print:hidden lg:bottom-6 lg:right-6"
         >
-          {/* Modal */}
-          <div
-            className="w-full max-w-xl mx-4 bg-card border border-border rounded-2xl shadow-2xl animate-fade-in overflow-hidden"
-            onClick={e => e.stopPropagation()}
-          >
-            {/* Input row */}
-            <div className="flex items-center gap-3 px-4 py-3.5 border-b border-border">
-              {loading
-                ? <Loader2 className="w-4 h-4 text-accent animate-spin flex-shrink-0" />
-                : <Sparkles className="w-4 h-4 text-accent flex-shrink-0" />
-              }
-              <input
-                ref={inputRef}
-                value={query}
-                onChange={e => setQuery(e.target.value)}
-                onKeyDown={e => { if (e.key === "Enter") submit(query) }}
-                placeholder="Para onde ir ou o que fazer..."
-                className="flex-1 bg-transparent text-[14px] text-text-primary placeholder:text-text-muted outline-none"
-              />
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <span className="hidden sm:flex items-center gap-0.5 text-[10px] font-mono text-text-muted border border-border rounded px-1.5 py-0.5">
-                  <Command className="w-2.5 h-2.5" /> K
-                </span>
-                <button onClick={closeCopilot} className="text-text-muted hover:text-text-secondary transition-colors">
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
+          <Bot className="h-5 w-5" aria-hidden />
+        </button>
+      </div>
 
-            {/* Result */}
-            {result && (
-              <div className={cn(
-                "px-4 py-3 border-b border-border text-[13px] flex items-center gap-2",
-                result.action === "navigate" ? "text-accent" : "text-text-secondary"
-              )}>
-                <ArrowRight className="w-3.5 h-3.5 flex-shrink-0" />
-                {result.message}
+      {open && (
+        <div className="px fixed inset-0 z-50">
+          <div className="absolute inset-0 bg-px-ink/40" onClick={fechar} aria-hidden />
+          <div className="relative flex items-start justify-center px-4 pt-[14vh]">
+            <div
+              ref={dialogRef}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby={tituloId}
+              onKeyDown={onDialogKey}
+              className="px-glass-strong w-full max-w-xl overflow-hidden rounded-px-card shadow-[0_16px_48px_rgba(20,20,20,0.22)]"
+            >
+              <div className="border-b border-px-line px-4 pb-3 pt-4">
+                <h2 id={tituloId} className="text-[14px] font-semibold text-px-ink">Assistente de navegação</h2>
+                <p className="mt-0.5 text-[12.5px] text-px-muted">Diga para onde quer ir. Ele abre a página, ele não altera dados.</p>
               </div>
-            )}
 
-            {/* Quick suggestions */}
-            {!result && !loading && (
-              <div className="p-3 space-y-1">
-                <p className="text-[9px] font-mono text-text-muted tracking-widest uppercase px-1 mb-2">Sugestões para esta página</p>
-                {suggestions.map(s => (
-                  <button
-                    key={s}
-                    onClick={() => { setQuery(s); submit(s) }}
-                    className="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] text-text-secondary hover:bg-white/[0.05] hover:text-text-primary transition-colors"
-                  >
-                    <ArrowRight className="w-3 h-3 text-text-muted flex-shrink-0" />
-                    {s}
-                  </button>
-                ))}
+              <form onSubmit={e => { e.preventDefault(); enviar(query) }} className="flex items-center gap-2 border-b border-px-line px-4 py-3">
+                <input
+                  ref={inputRef}
+                  value={query}
+                  onChange={e => setQuery(e.target.value)}
+                  maxLength={300}
+                  aria-label="Para onde você quer ir"
+                  placeholder="Ex.: abrir o financeiro"
+                  className="min-w-0 flex-1 bg-transparent text-[14px] text-px-ink placeholder:text-px-muted focus:outline-none"
+                />
+                <PxButton type="submit" size="sm" loading={loading} disabled={!query.trim()}>Ir</PxButton>
+              </form>
+
+              <div aria-live="polite">
+                {erro && <p role="alert" className="mx-4 mt-3 rounded-px-ctl bg-px-danger-soft px-3 py-2 text-[12.5px] text-px-danger">{erro}</p>}
+                {result && <p className="px-4 py-3 text-[13.5px] text-px-ink">{result.message}</p>}
               </div>
-            )}
 
-            {/* Footer */}
-            <div className="px-4 py-2 border-t border-border flex items-center justify-between">
-              <span className="text-[10px] font-mono text-text-muted">Powered by Claude</span>
-              <span className="text-[10px] font-mono text-text-muted">esc para fechar</span>
+              {!result && !loading && (
+                <ul className="p-2">
+                  {suggestions.map(s => (
+                    <li key={s}>
+                      <button type="button" onClick={() => { setQuery(s); enviar(s) }} className="w-full rounded-px-ctl px-3 py-2 text-left text-[13.5px] text-px-ink hover:bg-px-ink/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-px-ink/40">{s}</button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              <div className="flex items-center justify-between border-t border-px-line px-4 py-2 text-[12px] text-px-muted">
+                <span>Respostas geradas por IA</span>
+                <button type="button" onClick={fechar} className="rounded px-1 font-medium text-px-ink underline underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-px-ink/40">Fechar</button>
+              </div>
             </div>
           </div>
         </div>

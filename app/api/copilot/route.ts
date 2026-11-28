@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/lib/auth-check"
 import { getAnthropicClient, captureAnthropicError } from "@/lib/anthropic"
+import { originGuard } from "@/lib/check-origin"
 
 export const maxDuration = 15
 
@@ -39,18 +40,25 @@ interface CopilotResult {
 }
 
 export async function POST(req: NextRequest) {
+  const blocked = originGuard(req)
+  if (blocked) return blocked
   const auth = await checkAuth()
   if (!auth.authenticated) return auth.response
 
-  const { query, currentPath } = await req.json() as { query: string; currentPath: string }
-  if (!query?.trim()) return NextResponse.json({ error: "query obrigatória" }, { status: 400 })
+  let corpo: { query?: unknown; currentPath?: unknown }
+  try { corpo = await req.json() } catch { return NextResponse.json({ error: "Corpo inválido." }, { status: 400 }) }
+  const query = typeof corpo.query === "string" ? corpo.query.trim().slice(0, 300) : ""
+  const currentPath = typeof corpo.currentPath === "string" && /^\/[a-z0-9\-\/]{0,80}$/i.test(corpo.currentPath) ? corpo.currentPath : "/"
+  if (!query) return NextResponse.json({ error: "Escreva o que você procura." }, { status: 400 })
 
   const rotasList = Object.entries(ROTAS)
     .map(([href, desc]) => `${href} → ${desc}`)
     .join("\n")
 
   const anthropic = getAnthropicClient()
-  const msg = await anthropic.messages.create({
+  let msg
+  try {
+  msg = await anthropic.messages.create({
     model: "claude-sonnet-4-6",
     max_tokens: 200,
     messages: [{
@@ -68,6 +76,10 @@ Interprete a intenção e retorne JSON com uma das seguintes formas:
 Retorne APENAS o JSON, sem markdown.`,
     }],
   })
+  } catch (e) {
+    captureAnthropicError(e, "copilot")
+    return NextResponse.json({ error: "O assistente não respondeu agora. Tente de novo em instantes." }, { status: 502 })
+  }
 
   const raw = msg.content.find(b => b.type === "text")?.text ?? "{}"
   let result: CopilotResult = { action: "suggest", message: "Não entendi. Tente: 'abrir agenda', 'ver pacientes', 'ir para finanças'." }
@@ -78,13 +90,13 @@ Retorne APENAS o JSON, sem markdown.`,
     const parsed = JSON.parse(s !== -1 && e > s ? stripped.slice(s, e + 1) : stripped) as CopilotResult
     if (parsed.action === "navigate" && parsed.route) {
       const base = parsed.route.split("?")[0]
-      if (!ROTAS[base]) {
+      if (!ROTAS[base] || !/^\/[a-z0-9\-]+(\?busca=[^&#]{1,100})?$/i.test(parsed.route)) {
         result = { action: "suggest", message: `Rota não encontrada. Tente: ${Object.keys(ROTAS).slice(0, 4).join(", ")}` }
       } else {
         result = parsed
       }
-    } else {
-      result = parsed
+    } else if (parsed.action === "suggest" && typeof parsed.message === "string") {
+      result = { action: "suggest", message: parsed.message.slice(0, 200) }
     }
   } catch { /* usa default */ }
 

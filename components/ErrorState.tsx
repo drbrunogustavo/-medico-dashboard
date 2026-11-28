@@ -1,6 +1,7 @@
 "use client"
-import { AlertTriangle } from "lucide-react"
+import { TriangleAlert } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { PxButton } from "@/components/px/Button"
 
 interface ErrorStateProps {
   message?:   string
@@ -17,19 +18,10 @@ export function ErrorState({
 }: ErrorStateProps) {
   if (compact) {
     return (
-      <div className={cn(
-        "flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/25",
-        className
-      )}>
-        <div className="flex items-center gap-2 min-w-0">
-          <AlertTriangle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
-          <span className="text-[12px] text-red-400 truncate">{message}</span>
-        </div>
+      <div role="alert" className={cn("flex flex-wrap items-center justify-between gap-3 rounded-px-card bg-px-danger-soft px-4 py-3", className)}>
+        <p className="min-w-0 text-[13px] text-px-danger">{message}</p>
         {onRetry && (
-          <button
-            onClick={onRetry}
-            className="text-[11px] text-red-400 hover:text-red-300 font-medium flex-shrink-0 underline underline-offset-2"
-          >
+          <button type="button" onClick={onRetry} className="shrink-0 rounded px-1 text-[13px] font-medium text-px-danger underline underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-px-ink/40">
             Tentar novamente
           </button>
         )}
@@ -38,22 +30,13 @@ export function ErrorState({
   }
 
   return (
-    <div className={cn("flex flex-col items-center justify-center py-16 gap-4 text-center", className)}>
-      <div className="w-14 h-14 rounded-2xl bg-red-500/10 border border-red-500/25 flex items-center justify-center">
-        <AlertTriangle className="w-7 h-7 text-red-400" />
-      </div>
+    <div role="alert" className={cn("flex flex-col items-center justify-center gap-4 py-16 text-center", className)}>
+      <TriangleAlert className="h-7 w-7 text-px-danger" aria-hidden />
       <div className="max-w-sm">
-        <h3 className="text-[14px] font-semibold text-text-primary">Algo deu errado</h3>
-        <p className="text-[12px] text-text-muted mt-1.5 leading-relaxed">{message}</p>
+        <h3 className="text-[15px] font-semibold text-px-ink">Algo deu errado</h3>
+        <p className="mt-1.5 text-[13px] leading-relaxed text-px-muted">{message}</p>
       </div>
-      {onRetry && (
-        <button
-          onClick={onRetry}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg border border-red-500/25 text-red-400 text-[12px] font-semibold hover:bg-red-500/10 transition-all min-h-[44px]"
-        >
-          Tentar novamente
-        </button>
-      )}
+      {onRetry && <PxButton variant="secondary" onClick={onRetry}>Tentar novamente</PxButton>}
     </div>
   )
 }

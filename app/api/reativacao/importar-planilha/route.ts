@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import Papa from "papaparse"
-import * as XLSX from "xlsx"
+import { readSheet } from "read-excel-file/node"
 import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServiceClient } from "@/lib/supabase-service"
 
@@ -23,6 +23,12 @@ const ALIASES: Record<string, FieldKey> = {
   datanascimento: "data_nascimento", nascimento: "data_nascimento",
   dtnascimento: "data_nascimento", datadenascimento: "data_nascimento",
   birthday: "data_nascimento", datanasc: "data_nascimento",
+}
+
+function celulaParaTexto(c: unknown): string {
+  if (c === null || c === undefined) return ""
+  if (c instanceof Date) return c.toISOString().split("T")[0]
+  return String(c)
 }
 
 function normalizeKey(s: string): string {
@@ -82,8 +88,8 @@ export async function POST(req: NextRequest) {
   if (!file) return NextResponse.json({ error: "Nenhum arquivo enviado" }, { status: 400 })
 
   const ext = file.name.split(".").pop()?.toLowerCase() ?? ""
-  if (!["csv", "xlsx", "xls"].includes(ext))
-    return NextResponse.json({ error: "Formato não suportado. Use .csv, .xlsx ou .xls" }, { status: 400 })
+  if (!["csv", "xlsx"].includes(ext))
+    return NextResponse.json({ error: "Formato não suportado. Use .csv ou .xlsx" }, { status: 400 })
 
   let headers: string[] = []
   let rawRows: string[][] = []
@@ -98,13 +104,16 @@ export async function POST(req: NextRequest) {
     rawRows = all.slice(1) as string[][]
   } else {
     const buf = await file.arrayBuffer()
-    const wb  = XLSX.read(buf, { type: "array" })
-    const ws  = wb.Sheets[wb.SheetNames[0]]
-    const raw = XLSX.utils.sheet_to_json<string[]>(ws, { header: 1, defval: "" })
+    let raw: unknown[][]
+    try {
+      raw = (await readSheet(buf)) as unknown[][]
+    } catch {
+      return NextResponse.json({ error: "Não foi possível ler o arquivo Excel. Confirme que é um .xlsx válido." }, { status: 400 })
+    }
     if (!raw.length)
       return NextResponse.json({ error: "Arquivo Excel vazio" }, { status: 400 })
-    headers = (raw[0] as string[]).map(String)
-    rawRows = raw.slice(1) as string[][]
+    headers = raw[0].map(celulaParaTexto)
+    rawRows = raw.slice(1).map(r => r.map(celulaParaTexto))
   }
 
   const rows = rawRows

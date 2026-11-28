@@ -77,15 +77,13 @@ async function parseCSV(file: File): Promise<{ headers: string[]; rows: string[]
 }
 
 async function parseExcel(file: File): Promise<{ headers: string[]; rows: string[][] }> {
-  const XLSX = await import("xlsx")
-  const buf  = await file.arrayBuffer()
-  const wb   = XLSX.read(buf, { type: "array" })
-  const ws   = wb.Sheets[wb.SheetNames[0]]
-  const raw  = XLSX.utils.sheet_to_json<string[]>(ws, { header: 1, defval: "" })
+  const { readSheet } = await import("read-excel-file/browser")
+  const raw = (await readSheet(file)) as unknown[][]
   if (!raw.length) return { headers: [], rows: [] }
+  const txt = (c: unknown) => c === null || c === undefined ? "" : c instanceof Date ? c.toISOString().split("T")[0] : String(c)
   return {
-    headers: (raw[0] as string[]).map(String),
-    rows:    (raw.slice(1) as string[][]).map(r => r.map(String)),
+    headers: raw[0].map(txt),
+    rows:    raw.slice(1).map(r => r.map(txt)),
   }
 }
 
@@ -165,8 +163,8 @@ export default function ImportarPage() {
   const processFile = useCallback(async (file: File) => {
     setErroGlobal("")
     const ext = file.name.split(".").pop()?.toLowerCase() ?? ""
-    if (!["csv","xlsx","xls"].includes(ext)) {
-      setErroGlobal("Formato não suportado. Use .csv, .xlsx ou .xls")
+    if (!["csv","xlsx"].includes(ext)) {
+      setErroGlobal("Formato não suportado. Use .csv ou .xlsx")
       return
     }
     setLoading(true)
@@ -290,11 +288,11 @@ export default function ImportarPage() {
             <div>
               <h2 className="text-[17px] font-semibold text-px-ink">Importe pacientes de outro sistema</h2>
               <p className="mt-0.5 text-[13px] text-px-muted">
-                Aceita CSV ou Excel (.xlsx, .xls) exportados de prontuário eletrônico, planilha ou outro CRM.
+                Aceita CSV ou Excel (.xlsx) exportados de prontuário eletrônico, planilha ou outro CRM.
               </p>
             </div>
 
-            <input ref={fileRef} id="imp-arquivo" type="file" accept=".csv,.xlsx,.xls" onChange={onFileInput} className="sr-only" />
+            <input ref={fileRef} id="imp-arquivo" type="file" accept=".csv,.xlsx" onChange={onFileInput} className="sr-only" />
             <label
               htmlFor="imp-arquivo"
               onDragOver={e => { e.preventDefault(); setDragging(true) }}
@@ -312,7 +310,7 @@ export default function ImportarPage() {
                   <Upload className="h-9 w-9 text-px-muted" aria-hidden />
                   <span>
                     <span className="block text-[14.5px] font-medium text-px-ink">Arraste o arquivo aqui ou clique para selecionar</span>
-                    <span className="mt-0.5 block text-[12.5px] text-px-muted">.csv, .xlsx ou .xls</span>
+                    <span className="mt-0.5 block text-[12.5px] text-px-muted">.csv ou .xlsx</span>
                   </span>
                   <span className="text-[12px] text-px-muted">A leitura acontece no seu navegador. O arquivo não é enviado para nenhum servidor nesta etapa.</span>
                 </>

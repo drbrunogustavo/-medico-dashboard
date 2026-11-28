@@ -97,8 +97,8 @@ function ImportarPlanilhaModal({ onClose, onSuccess }: { onClose: () => void; on
     setErro("")
     setResult(null)
     const ext = file.name.split(".").pop()?.toLowerCase() ?? ""
-    if (!["csv", "xlsx", "xls"].includes(ext)) {
-      setErro("Formato não suportado. Use .csv, .xlsx ou .xls")
+    if (!["csv", "xlsx"].includes(ext)) {
+      setErro("Formato não suportado. Use .csv ou .xlsx")
       return
     }
     setLoading(true)
@@ -128,7 +128,7 @@ function ImportarPlanilhaModal({ onClose, onSuccess }: { onClose: () => void; on
             <input
               id="reat-arquivo"
               type="file"
-              accept=".csv,.xlsx,.xls"
+              accept=".csv,.xlsx"
               className="sr-only"
               disabled={loading}
               onChange={e => {
@@ -159,7 +159,7 @@ function ImportarPlanilhaModal({ onClose, onSuccess }: { onClose: () => void; on
               ) : (
                 <>
                   <span className="text-[14px] font-medium text-px-ink">Arraste o arquivo aqui ou clique para escolher</span>
-                  <span className="text-[12px] text-px-muted">.csv, .xlsx ou .xls</span>
+                  <span className="text-[12px] text-px-muted">.csv ou .xlsx</span>
                 </>
               )}
             </label>

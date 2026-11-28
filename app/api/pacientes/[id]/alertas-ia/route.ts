@@ -3,6 +3,7 @@ import { checkAuth } from "@/lib/auth-check"
 import { createSupabaseServiceClient } from "@/lib/supabase-service"
 import { AI_MODEL } from "@/lib/ai-config"
 import { getAnthropicClient, captureAnthropicError } from "@/lib/anthropic"
+import { escapeLike } from "@/lib/like"
 
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -27,6 +28,28 @@ interface Alerta {
 
 function errMsg(e: unknown) { return e instanceof Error ? e.message : String(e) }
 
+const TIPOS = ["retorno", "exame", "peso", "medicamento", "protocolo", "outro"]
+const URGENCIAS = ["alta", "media", "baixa"]
+
+// Só passa o que tem a forma esperada: o texto vem de um modelo e vai direto para a tela.
+function normalizar(lista: unknown): Alerta[] {
+  if (!Array.isArray(lista)) return []
+  const saida: Alerta[] = []
+  for (const a of lista.slice(0, 3)) {
+    const o = (a ?? {}) as Record<string, unknown>
+    const titulo = typeof o.titulo === "string" ? o.titulo.trim().slice(0, 80) : ""
+    const descricao = typeof o.descricao === "string" ? o.descricao.trim().slice(0, 200) : ""
+    if (!titulo) continue
+    saida.push({
+      tipo: typeof o.tipo === "string" && TIPOS.includes(o.tipo) ? o.tipo : "outro",
+      titulo,
+      descricao,
+      urgencia: typeof o.urgencia === "string" && URGENCIAS.includes(o.urgencia) ? (o.urgencia as Alerta["urgencia"]) : "baixa",
+    })
+  }
+  return saida
+}
+
 export async function GET(
   _req: NextRequest,
   { params }: { params: { id: string } }
@@ -44,8 +67,9 @@ export async function GET(
       .select("nome, peso, altura, medicamentos, protocolo_ativo, data_nascimento")
       .eq("id", id)
       .eq("user_id", auth.userId)
-      .single()
-    if (error || !pac) return NextResponse.json({ alertas: [] })
+      .maybeSingle()
+    if (error) throw new Error(error.message)
+    if (!pac) return NextResponse.json({ error: "Paciente não encontrado" }, { status: 404 })
 
     const [{ data: exames }, { data: historico }] = await Promise.all([
       supabase
@@ -53,13 +77,13 @@ export async function GET(
         .select("nome, valor, unidade, data_coleta, criado_em")
         .eq("paciente_id", id)
         .eq("user_id", auth.userId)
-        .order("data_coleta", { ascending: false })
+        .order("data_coleta", { ascending: false, nullsFirst: false })
         .limit(8),
       supabase
         .from("copiloto_historico")
         .select("tipo_consulta, created_at")
         .eq("user_id", auth.userId)
-        .ilike("paciente_nome", pac.nome)
+        .ilike("paciente_nome", escapeLike(String(pac.nome ?? "")))
         .order("created_at", { ascending: false })
         .limit(3),
     ])
@@ -69,8 +93,8 @@ export async function GET(
       ? Math.floor((Date.now() - new Date(ultimaConsulta).getTime()) / 86_400_000)
       : null
 
+    // O nome do paciente não vai para o modelo: a análise não precisa dele.
     const contexto = [
-      `Paciente: ${pac.nome}`,
       pac.data_nascimento
         ? `Idade: ${Math.floor((Date.now() - new Date(pac.data_nascimento).getTime()) / (365.25 * 86_400_000))} anos`
         : null,
@@ -121,13 +145,13 @@ Regras:
     const raw   = (resp.content.find(b => b.type === "text") as { text: string } | undefined)?.text ?? ""
     const clean = raw.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim()
     const s = clean.indexOf("{"); const e = clean.lastIndexOf("}")
-    if (s === -1 || e === -1) return NextResponse.json({ alertas: [] })
+    if (s === -1 || e === -1) throw new Error("resposta sem JSON")
 
-    const parsed = parseAIJson(clean.slice(s, e + 1)) as { alertas?: Alerta[] }
-    return NextResponse.json({ alertas: parsed.alertas ?? [] })
+    const parsed = parseAIJson(clean.slice(s, e + 1)) as { alertas?: unknown }
+    return NextResponse.json({ alertas: normalizar(parsed.alertas) })
   } catch (e) {
     captureAnthropicError(e, "/api/pacientes/[id]/alertas-ia")
     console.error("[alertas-ia]", errMsg(e))
-    return NextResponse.json({ alertas: [] })
+    return NextResponse.json({ error: "Não foi possível gerar os alertas agora." }, { status: 502 })
   }
 }

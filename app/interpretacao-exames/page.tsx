@@ -288,16 +288,6 @@ const EXAMS: ExamData[] = [
     conducts: ["HbA1c 5,7–6,4%: pré-diabetes, MEV + metformina; reavaliação em 3–6 meses", "HbA1c ≥6,5%: DM2, iniciar terapia (metformina + GLP-1 RA ou iSGLT2 conforme perfil)", "Meta terapêutica geral: HbA1c <7,0% (individualizar: <6,5% em jovens; <8,0% em idosos frágeis)"],
     related: ["Glicemia jejum", "Insulina", "HOMA-IR", "Microalbuminúria"],
   },
-  {
-    id: "peptC", name: "Peptídeo C", category: "Metabolismo",
-    range: {
-      lab: "0,5–2,0 ng/mL", unit: "ng/mL",
-      classifyFn: (v) => v < 0.5 ? "baixo" : v <= 2.0 ? "normal" : "elevado",
-    },
-    correlations: ["Marcador de produção endógena de insulina (coequipado com insulina na secreção)", "Baixo: DM1, pancreopatia, destruição de células beta", "Alto: hiperinsulinismo endógeno, resistência insulínica avançada, insulinoma"],
-    conducts: ["Peptídeo C baixo em DM2: avaliar insuficiência de células beta, considerar insulina basal", "Peptídeo C alto + hipoglicemia: investigar insulinoma (TC abdome, jejum prolongado)", "Útil para diferenciar DM1 de DM2 em início tardio"],
-    related: ["Insulina", "Glicemia", "HbA1c", "Anticorpos anti-GAD"],
-  },
   // ── Lipídios ──
   {
     id: "apob", name: "ApoB", category: "Lipídios",
@@ -1770,17 +1760,6 @@ const EXAMS: ExamData[] = [
     notes: "Sensibilização (IgE positiva) ≠ alergia clínica. A correlação clínica é obrigatória.",
   },
   {
-    id: "zinco_serico", name: "Zinco Sérico", category: "Dermatologia / Imunologia",
-    range: {
-      lab: "60–120 µg/dL", functional: "70–120 µg/dL", unit: "µg/dL",
-      classifyFn: (v) => v < 60 ? "deficiente" : v < 70 ? "insuficiente" : v <= 120 ? "normal" : "elevado",
-    },
-    correlations: ["Zinco <60: deficiência, alopecia, acne, cicatrização prejudicada, imunidade reduzida", "Zinco 60–70: insuficiência, sintomas subclínicos", "Zinco >120: excesso por suplementação, inibe absorção de cobre"],
-    conducts: ["Deficiência: reposição VO 20–40 mg/dia de zinco elementar por 3 meses", "Monitorar cobre se uso prolongado (antagonismo Zn/Cu)", "Acne inflamatória + deficiência: zinco adjuvante ao tratamento dermatológico"],
-    related: ["Cobre sérico", "Ferritina", "Albumina"],
-    notes: "Zinco sérico subestima deficiência tecidual: valores normais não excluem depleção funcional em contexto sugestivo.",
-  },
-  {
     id: "cobre_serico", name: "Cobre Sérico", category: "Dermatologia / Imunologia",
     range: {
       lab: "70–140 µg/dL", unit: "µg/dL",
@@ -1826,30 +1805,8 @@ const EXAMS: ExamData[] = [
     related: ["Estradiol", "Progesterona", "Prolactina", "AMH", "Testosterona"],
     notes: "Dosar na fase folicular precoce (D2–D5). Interpretar LH e FSH sempre em conjunto com E2.",
   },
-  {
-    id: "prolactina", name: "Prolactina", category: "Saúde da Mulher Avançada",
-    range: {
-      lab: "<29 ng/mL (F), <18 ng/mL (M)", unit: "ng/mL",
-      classifyFn: (v) => v < 18 ? "normal" : v <= 29 ? "limítrofe" : v <= 100 ? "elevado" : "muito_elevado",
-    },
-    correlations: ["Hiperprolactinemia leve (<100): fármacos (antipsicóticos, metoclopramida), hipotireoidismo, estresse", "Prolactina >100–150 ng/mL: suspeitar prolactinoma", "Macroprolactinemia: IgG-aggregated, sem repercussão clínica"],
-    conducts: ["Hiperprolactinemia confirmada: TSH, revisar medicações", "Prolactina >100 persistente: RM hipófise", "Prolactinoma: cabergolina 0,5–2 mg/semana (1ª linha)"],
-    related: ["TSH", "LH", "FSH", "RM hipófise"],
-    notes: "Coletar em jejum, evitar estímulo mamário nas 24h. Repetir se valor inesperado (macroprolactina).",
-  },
 
   // ── Saúde do Homem ──────────────────────────────────────────────────────────
-  {
-    id: "testosterona_total", name: "Testosterona Total", category: "Saúde do Homem",
-    range: {
-      lab: "300–1000 ng/dL (H adulto)", functional: "400–800 ng/dL", unit: "ng/dL",
-      classifyFn: (v) => v < 300 ? "deficiente" : v < 400 ? "insuficiente" : v <= 800 ? "normal" : "elevado",
-    },
-    correlations: ["<300 ng/dL + sintomas (libido, energia, DE, sarcopenia): hipogonadismo masculino", "300–400 ng/dL: zona cinzenta, complementar com T livre e SHBG", ">800 ng/dL em TRT: dose excessiva, risco de policitemia"],
-    conducts: ["T total <300 + sintomas: LH, FSH para diferenciar hipogonadismo primário (LH alto) de secundário (LH baixo)", "TRT: undecilato testosterona IM, gel transdérmico ou pellets", "Antes de TRT: hemograma, PSA, hematócrito, excluir Ca próstata"],
-    related: ["Testosterona Livre", "SHBG", "LH", "FSH", "Hematócrito", "PSA"],
-    notes: "Coletar entre 7h–10h (pico matutino). Confirmar com dois valores baixos em dias diferentes.",
-  },
   {
     id: "testosterona_livre", name: "Testosterona Livre", category: "Saúde do Homem",
     range: {
@@ -1860,17 +1817,6 @@ const EXAMS: ExamData[] = [
     conducts: ["T livre baixa + T total limítrofe: avaliar TRT conforme sintomas e SHBG", "SHBG muito elevada sem causa: investigar cirrose, hipertireoidismo"],
     related: ["Testosterona Total", "SHBG", "Albumina", "LH"],
     notes: "T livre calculada (Vermeulen) é mais confiável que dosagem direta por ensaio comercial.",
-  },
-  {
-    id: "shbg", name: "SHBG", category: "Saúde do Homem",
-    range: {
-      lab: "10–57 nmol/L (H adulto)", unit: "nmol/L",
-      classifyFn: (v) => v < 10 ? "baixo" : v <= 57 ? "normal" : "elevado",
-    },
-    correlations: ["SHBG baixa (<10): obesidade, DM2, síndrome metabólica, mais T biodisponível", "SHBG alta (>57): envelhecimento, cirrose, hipertireoidismo, menos T biodisponível", "SHBG modula T livre: essencial para calcular T livre pela fórmula Vermeulen"],
-    conducts: ["SHBG baixa + SOP em mulher: hiperandrogenismo funcional", "SHBG muito alta em homem: pode mascarar hipogonadismo"],
-    related: ["Testosterona Total", "Testosterona Livre", "Albumina"],
-    notes: "Calcular T livre via fórmula Vermeulen com T total, SHBG e albumina.",
   },
 
   // ── Longevidade / Medicina de Precisão ─────────────────────────────────────
@@ -1895,17 +1841,6 @@ const EXAMS: ExamData[] = [
     conducts: ["ApoB elevado + LDL-c normal: intensificar estatina + ezetimiba", "Alto risco CV: alvo ApoB <70 e LDL-c <70", "Persistência em alto risco: inibidores PCSK9"],
     related: ["LDL-c", "HDL", "Triglicerídeos", "PCR ultrassensível", "Lp(a)"],
     notes: "ApoB supera LDL-c como preditor de risco CV: especialmente em DM2, obesidade e hipertrigliceridemia.",
-  },
-  {
-    id: "homocisteina", name: "Homocisteína", category: "Longevidade / Medicina de Precisão",
-    range: {
-      lab: "<15 µmol/L", functional: "<10 µmol/L", unit: "µmol/L",
-      classifyFn: (v) => v < 10 ? "ótimo" : v < 15 ? "normal" : v < 30 ? "elevado" : "muito_elevado",
-    },
-    correlations: ["10–15 µmol/L: hiperhomocisteinemia leve, FR cardiovascular e neurodegenerativo", ">15 µmol/L: hiperhomocisteinemia, risco trombótico aumentado", ">30 µmol/L: grave, erro inato do metabolismo ou deficiências vitamínicas severas"],
-    conducts: ["Elevada: investigar deficiência de B12, B6 e folato", "Reposição: B12 1000 µg/dia, folato 0,4–5 mg/dia, B6 10–50 mg/dia", "Doença renal: causa frequente, correção vitamínica parcial"],
-    related: ["Vitamina B12", "Ácido fólico", "Vitamina B6", "Creatinina"],
-    notes: "Homocisteína >30 sem deficiência vitamínica: investigar homocistinúria (MTHFR, CBS).",
   },
 ]
 
